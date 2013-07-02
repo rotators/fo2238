@@ -1,0 +1,1519 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// weather.fos
+//
+
+// So-called weather system.
+
+#ifndef __WEATHER__
+#define __WEATHER__
+
+/*
+ * TODO:
+ *	merge 2+ zones into one (bigger), if same type
+ */
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+#ifdef __DEBUG__
+# include "_colors.fos"
+#endif
+
+#include "config_file_h.fos"
+#include "serializator.fos"
+
+#ifdef FO2238
+# include "utils_h.fos"
+# define push                     # (arr, val)arr.insertLast(val)
+# define pop_stable               # (arr, idx)arr.removeAt(idx);
+#endif
+
+#include "weather_h.fos"
+#include "weather_rain.fos"
+#include "weather_radiation.fos"
+
+#define WEATHER_CHECK             (REAL_MINUTE(1))  // used when no weather zones are present
+#define WEATHER_UPDATE            (REAL_SECOND(30)) // used when 1+ weather zones are present
+#define WEATHER_DEFAULT_UPDATE    (REAL_SECOND(15)) // default value for all new weather zones
+
+#define WTH_SAVE                  "WeatherZone:"    // for serializatior
+#define WTH_RUN                                     // comment to disable ~run functions
+
+uint  LastID = 0;
+class CWeatherZone : IWeatherZone
+{
+    // !
+    uint         ID;
+    Serializator save;
+    string       Name;
+    uint         TimeEvent;
+    // !
+
+    uint       Type;
+    int        Flags;
+
+    int        WorldX;
+    int        WorldY;
+    int        DestinationX;
+    int        DestinationY;
+    int        SpeedMove;
+
+    int        CurrentLevel;
+    int        WantedLevel;
+    int        SpeedLevel;
+
+    int        CurrentRadius;
+    int        WantedRadius;
+    int        SpeedRadius;
+
+    int        SubZones;
+    int        WantedSubZones;
+
+    uint       UpdateTime;
+
+    uint       NextAction;
+    array<int> Actions;
+
+    bool       Locked;
+
+    #ifdef __DEBUG__
+    uint locid;
+    #endif
+
+    CWeatherZone(uint coords_x, uint coords_y, uint type)
+    {
+        LastID++;
+        this.ID                         = LastID;
+        this.Name                       = "";
+        this.Type                       = type;
+        this.TimeEvent          = 0;
+        this.Flags                      = 0;
+
+        this.WorldX                     = coords_x;             /*< current position on worldmap, center */
+        this.WorldY                     = coords_y;             /*< current position on worldmap, center */
+        this.DestinationX       = coords_x;
+        this.DestinationY       = coords_y;
+        this.SpeedMove          = 0;                            /*< */
+
+        this.CurrentLevel       = 0;
+        this.WantedLevel        = 0;
+        this.SpeedLevel         = 0;
+
+        this.CurrentRadius      = 0;            /*< */
+        this.WantedRadius       = 0;
+        this.SpeedRadius        = 0;
+
+        this.SubZones           = 1;
+        this.WantedSubZones     = 1;
+
+        this.NextAction         = 0;
+
+        this.UpdateTime         = WEATHER_DEFAULT_UPDATE;
+
+        this.Locked                     = false;
+
+        /*
+           #ifdef __DEBUG__
+           DLog( "  loc try" );
+           this.locid = CreateLocation( LOCATION_TheGlow, this.WorldX, this.WorldY, null );
+           Location@ loc=GetLocation(this.locid);
+           if(valid(loc))
+           {
+                loc.WorldX	= this.WorldX;
+                loc.WorldY	= this.WorldY;
+                loc.Color	= COLOR_RGB(255, 0, 0);
+                loc.Radius	= 0;
+                loc.Update();
+                DLog( "  loc ok" );
+           }
+           #endif
+         */
+
+        // Log( "Added weather zone: coords "+this.WorldX+":"+this.WorldY );
+    }
+
+    CWeatherZone(string name)
+    {
+        LastID++;
+        this.ID                         = LastID;
+        this.Name                       = name;
+        this.Type                       = 0;
+        this.TimeEvent          = 0;
+        this.Flags                      = 0;
+
+        this.WorldX                     = 0;
+        this.WorldY                     = 0;
+        this.DestinationX       = 0;
+        this.DestinationY       = 0;
+        this.SpeedMove          = 0;
+
+        this.CurrentLevel       = 0;
+        this.WantedLevel        = 0;
+        this.SpeedLevel         = 0;
+
+        this.CurrentRadius      = 0;            /*< */
+        this.WantedRadius       = 0;
+        this.SpeedRadius        = 0;
+
+        this.SubZones           = 1;
+        this.WantedSubZones     = 1;
+
+        this.NextAction         = 0;
+
+        this.UpdateTime         = WEATHER_DEFAULT_UPDATE;
+
+        this.Locked                     = false;
+
+        /*
+           #ifdef __DEBUG__
+           DLog( "  loc try" );
+           this.locid = CreateLocation( LOCATION_TheGlow, this.WorldX, this.WorldY, null );
+           Location@ loc=GetLocation(this.locid);
+           if(valid(loc))
+           {
+                loc.WorldX	= this.WorldX;
+                loc.WorldY	= this.WorldY;
+                loc.Color	= COLOR_RGB(255, 0, 0);
+                loc.Radius	= 0;
+                loc.Update();
+                DLog( "  loc ok" );
+           }
+           #endif
+         */
+        // Log( "Added weather zone <"+this.ID+">: "+this.Name );
+    }
+
+    uint GetID()
+    {
+        return(this.ID);
+    }
+
+    bool Load()
+    {
+        this.save.Clear();
+
+        if(!IsAnyData(WTH_SAVE + this.Name))
+            return(false);
+        if(!this.save.Load(WTH_SAVE + this.Name))
+            return(false);
+
+        this.save.
+        Get(this.Type).Get(this.Flags).
+        Get(this.WorldX).Get(this.WorldY).Get(this.DestinationX).Get(this.DestinationY).Get(this.SpeedMove).
+        Get(this.CurrentLevel).Get(this.WantedLevel).Get(this.SpeedLevel).
+        Get(this.CurrentRadius).Get(this.WantedRadius).Get(this.SpeedRadius).
+        Get(this.SubZones).Get(this.WantedSubZones).
+        Get(this.UpdateTime).
+        Get(this.NextAction).Get(this.Actions).
+        Get(this.Locked);
+
+        return(true);
+    }
+
+    bool Save()
+    {
+        this.save.Clear();
+        return(
+            this.save.
+            Set(this.Type).Set(this.Flags).
+            Set(this.WorldX).Set(this.WorldY).Set(this.DestinationX).Set(this.DestinationY).Set(this.SpeedMove).
+            Set(this.CurrentLevel).Set(this.WantedLevel).Set(this.SpeedLevel).
+            Set(this.CurrentRadius).Set(this.WantedRadius).Set(this.SpeedRadius).
+            Set(this.SubZones).Set(this.WantedSubZones).
+            Set(this.UpdateTime).
+            Set(this.NextAction).Set(this.Actions).
+            Set(this.Locked).
+            Save(WTH_SAVE + this.Name)
+            );
+    }
+
+    string GetName()
+    {
+        if(this.Name != "")
+            return("WeatherZone(" + this.ID + ")[" + this.Name + "]");
+        else
+            return("WeatherZone(" + this.ID + ")");
+    }
+
+    void SetName(string name)
+    {
+        this.Name = name;
+    }
+
+    uint GetTimeEvent()
+    {
+        return(this.TimeEvent);
+    }
+
+    void SetTimeEvent(uint id)
+    {
+        this.TimeEvent = id;
+    }
+
+    int GetFlags()
+    {
+        return(this.Flags);
+    }
+
+    bool GetFlag(int flag)
+    {
+        if(FLAG(this.Flags, flag))
+            return(true);
+        else
+            return(false);
+    }
+
+    void SetFlag(int flag)
+    {
+        SETFLAG(this.Flags, flag);
+    }
+
+    void UnsetFlag(int flag)
+    {
+        UNSETFLAG(this.Flags, flag);
+    }
+
+    uint GetSpeedMove()
+    {
+        return(this.SpeedMove);
+    }
+
+    bool SetSpeedMove(uint speed)
+    {
+        if(this.Locked == true)
+            return(false);
+        else
+        {
+            if(this.SpeedMove != int(speed))
+            {
+                DLog(this.GetName() + " speed(move): " + this.SpeedMove + " -> " + speed);
+                this.SpeedMove = speed;
+            }
+            return(true);
+        }
+    }
+
+    uint GetSpeedLevel()
+    {
+        return(this.SpeedLevel);
+    }
+
+    bool SetSpeedLevel(uint speed)
+    {
+        if(this.Locked == true)
+            return(false);
+        else
+        {
+            if(this.SpeedLevel != int(speed))
+            {
+                DLog(this.GetName() + " speed(level): " + this.SpeedLevel + " -> " + speed);
+                this.SpeedLevel = speed;
+            }
+            return(true);
+        }
+    }
+
+    uint GetSpeedRadius()
+    {
+        return(this.SpeedRadius);
+    }
+
+    bool SetSpeedRadius(uint speed)
+    {
+        if(this.Locked == true)
+            return(false);
+        else
+        {
+            if(this.SpeedRadius != int(speed))
+            {
+                DLog(this.GetName() + " speed(radius): " + this.SpeedRadius + " -> " + speed);
+                this.SpeedRadius = speed;
+            }
+            return(true);
+        }
+    }
+
+    uint GetSubZones()
+    {
+        return(this.WantedSubZones);
+    }
+
+    bool SetSubZones(uint subzones)
+    {
+        if(this.Locked == true)
+            return(false);
+        else
+        {
+            if(this.WantedSubZones != int(subzones))
+            {
+                DLog(this.GetName() + " subzones: " + this.WantedSubZones + " -> " + subzones);
+                this.WantedSubZones = subzones;
+            }
+            return(true);
+        }
+    }
+
+    bool SetType(uint type)
+    {
+        if(this.Locked == true)
+        {
+            DLog(this.GetName() + " type: ZONE LOCKED");
+            return(false);
+        }
+        else
+        {
+            if(this.Type != type)
+            {
+                DLog(this.GetName() + " type: " + this.Type + " -> " + type);
+                this.Type = type;
+            }
+            return(true);
+        }
+    }
+
+    bool Position(uint coords_x, uint coords_y)
+    {
+        if(this.Locked == true || this.GetFlag(WEATHER_FLAG_NOMOVE))
+            return(false);
+        else
+        {
+            if(this.WorldX != int(coords_x) || this.WorldY != int(coords_y))
+            {
+                DLog(this.GetName() + " position: " + this.WorldX + ":" + this.WorldY + " -> " + coords_x + ":" + coords_y);
+                this.WorldX = coords_x;
+                this.WorldY = coords_y;
+                this.DestinationX = coords_x;
+                this.DestinationY = coords_y;
+            }
+            return(true);
+        }
+    }
+
+    bool Move(uint coords_x, uint coords_y)
+    {
+        if(this.Locked == true || this.GetFlag(WEATHER_FLAG_NOMOVE))
+            return(false);
+        else
+        {
+            if(this.DestinationX != int(coords_x) || this.DestinationY != int(coords_y))
+            {
+                DLog(this.GetName() + " destination: " + this.DestinationX + ":" + this.DestinationY + " -> " + coords_x + ":" + coords_y);
+                this.DestinationX = coords_x;
+                this.DestinationY = coords_y;
+            }
+            return(true);
+        }
+    }
+
+    bool Level(uint level)
+    {
+        DLog(this.GetName() + ": Level()");
+        if(this.Locked == true)
+        {
+            DLog(this.GetName() + " level: ZONE LOCKED");
+            return(false);
+        }
+        else
+        {
+            if(this.WantedLevel != int(level))
+            {
+                DLog(this.GetName() + " level: " + this.WantedLevel + " -> " + level);
+                this.WantedLevel = level;
+            }
+            return(true);
+        }
+    }
+
+    bool Radius(uint radius)
+    {
+        DLog(this.GetName() + ": Radius()");
+        if(this.Locked == true)
+            return(false);
+        else
+        {
+            if(this.WantedRadius != int(radius))
+            {
+                DLog(this.GetName() + " radius: " + this.WantedRadius + " -> " + radius);
+                this.WantedRadius = radius;
+            }
+            return(true);
+        }
+    }
+
+    bool LoadActions(string& filename)
+    {
+        file actions;
+        if(actions.open(filename, "r") >= 0)
+        {
+            string all;
+            int    l = actions.readString(actions.getSize(), all);
+            actions.close();
+            array<string@>@ lines = splitEx(all, "\n");
+            DLog(this.GetName() + ": reading actions file, " + lines.length() + " line(s)");
+            for(uint l = 0; l < lines.length(); l++)
+            {
+                array<string@>@ action = splitEx(lines[l], " ");
+                if(action.length() < 2)
+                    continue;
+                int arg1 = 0;
+                int arg2 = 0;
+                StrToInt(action[1], arg1);
+                if(action.length() >= 3)
+                    StrToInt(action[2], arg2);
+
+                /* standard actions */
+                if(action[0] == "DELETE")
+                    this.Action(WEATHER_ACTION_DELETE, 0, 0);
+                else if(action[0] == "SETFLAG" || action[0] == "UNSETFLAG")
+                {
+                    int act = (action[0] == "SETFLAG" ? WEATHER_ACTION_SETFLAG : WEATHER_ACTION_UNSETFLAG);
+                    for(uint f = 1; f < action.length(); f++)
+                    {
+                        if(action[f] == "ATDAY")
+                            this.Action(act, WEATHER_FLAG_ATDAY, 0);
+                        else if(action[f] == "ATNIGHT")
+                            this.Action(act, WEATHER_FLAG_ATNIGHT, 0);
+                        else if(action[f] == "NOMOVE")
+                            this.Action(act, WEATHER_FLAG_ATNIGHT, 0);
+                    }
+                }
+                else if(action[0] == "UPDATETIME")
+                    this.Action(WEATHER_ACTION_UPDATETIME, arg1, 0);
+                else if(action[0] == "SPEEDMOVE")
+                    this.Action(WEATHER_ACTION_SPEEDMOVE, arg1, 0);
+                else if(action[0] == "SPEEDLEVEL")
+                    this.Action(WEATHER_ACTION_SPEEDLEVEL, arg1, 0);
+                else if(action[0] == "SPEEDRADIUS")
+                    this.Action(WEATHER_ACTION_SPEEDRADIUS, arg1, 0);
+                else if(action[0] == "POSITION")
+                    this.Action(WEATHER_ACTION_POSITION, arg1, arg2);
+                else if(action[0] == "MOVE")
+                    this.Action(WEATHER_ACTION_MOVE, arg1, arg2);
+                else if(action[0] == "LEVEL")
+                    this.Action(WEATHER_ACTION_LEVEL, arg1, arg2);
+                else if(action[0] == "RADIUS")
+                    this.Action(WEATHER_ACTION_RADIUS, arg1, 0);
+                else if(action[0] == "SUBZONES")
+                    this.Action(WEATHER_ACTION_SUBZONES, arg1, 0);
+                else if(action[0] == "LOCK")
+                    this.Action(WEATHER_ACTION_LOCK, arg1, 0);
+                else if(action[0] == "UNLOCK")
+                    this.Action(WEATHER_ACTION_UNLOCK, arg1, 0);
+
+                /* extended actions */
+                #define randomAction1                                                                \
+                    # (id) { int arg = -1; if(StrToInt(action[Random(1, action.length() - 1)], arg)) \
+                                 this.Action(id, arg, 0);                                            \
+                    }
+                else if(action[0] == "LEVEL_RANDOM")
+                    randomAction1(WEATHER_ACTION_LEVEL)
+                    else if(action[0] == "RADIUS_RANDOM")
+                        randomAction1(WEATHER_ACTION_RADIUS)
+                        else if(action[0] == "SUBZONES_RANDOM")
+                            randomAction1(WEATHER_ACTION_SUBZONES)
+
+                            /* end point */
+                            else
+                            {
+                                Log(this.GetName() + ": unknown action <" + action[0] + ">");
+                            }
+            }
+            return(true);
+        }
+        else
+        {
+            Log(this.GetName() + ": can't open actions file (" + filename + ")");
+            return(false);
+        }
+    }
+
+    void Action(uint action, uint data1, uint data2)
+    {
+        if(action <= WEATHER_ACTION_NONE || action >= WEATHER_ACTION_MAX)
+        {
+            Log(this.GetName() + ": unknown action id: <" + action + ">");
+        }
+        else
+        {
+            DLog(this.GetName() + ": adding action id: <" + action + "> with data <" + data1 + "," + data2 + ">");
+            push(this.Actions, action);
+            push(this.Actions, data1);
+            push(this.Actions, data2);
+        }
+    }
+
+    void RunAction(int action)
+    {
+        DLog("RunAction: " + this.Actions[action] + "(" + this.Actions[action + 1] + "," + this.Actions[action + 2] + ")");
+        bool ok = false;
+        switch(this.Actions[action])
+        {
+        case WEATHER_ACTION_DELETE:
+            this.Delete(false);
+            ok = true;
+            break;
+        case WEATHER_ACTION_SETFLAG:
+            this.SetFlag(this.Actions[action + 1]);
+            ok = true;
+            break;
+        case WEATHER_ACTION_UNSETFLAG:
+            this.UnsetFlag(this.Actions[action + 1]);
+            ok = true;
+            break;
+        case WEATHER_ACTION_UPDATETIME:
+            this.UpdateTime = REAL_SECOND(this.Actions[action + 1]);
+            ok = true;
+            break;
+        case WEATHER_ACTION_SPEEDMOVE:
+            ok = this.SetSpeedMove(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_SPEEDLEVEL:
+            ok = this.SetSpeedLevel(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_SPEEDRADIUS:
+            ok = this.SetSpeedRadius(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_POSITION:
+            ok = this.Position(this.Actions[action + 1], this.Actions[action + 2]);
+            break;
+        case WEATHER_ACTION_MOVE:
+            ok = this.Move(this.Actions[action + 1], this.Actions[action + 2]);
+            break;
+        case WEATHER_ACTION_LEVEL:
+            ok = this.Level(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_RADIUS:
+            ok = this.Radius(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_SUBZONES:
+            ok = this.SetSubZones(this.Actions[action + 1]);
+            break;
+        case WEATHER_ACTION_LOCK:
+            Log(WTH_SAVE + this.Name + " locked");
+            this.Locked = true;
+            ok = true;
+            break;
+        case WEATHER_ACTION_UNLOCK:
+            Log(WTH_SAVE + this.Name + " unlocked");
+            this.Locked = false;
+            ok = true;
+            break;
+        case WEATHER_ACTION_NONE:
+        case WEATHER_ACTION_MAX:
+            break;
+        default:
+            Log(this.GetName() + ": Unknown action id <" + action + ">");
+            ok = false;
+            break;
+        }
+        DLog("RunAction result: " + (ok ? "OK" : "NOT OK"));
+    }
+
+    void Update()
+    {
+        // DLog( "Updating "+this.Name() );
+
+        array<int> old_locations;
+        array<int> new_locations;
+
+        // first, save locations at old position
+        if(this.CurrentRadius > 0)
+        {
+            array<Location@> locations;
+            int count = GetLocations(this.WorldX, this.WorldY, this.CurrentRadius, locations);
+            if(count > 0 || locations.length() > 0)
+            {
+                for(uint l = 0; l < locations.length(); l++)
+                {
+                    #ifdef __DEBUG__
+                    if(locations[l].Id != this.locid)
+                    #endif
+                    push(old_locations, locations[l].Id);
+                }
+                // DLog( "  old locations: "+old_locations.length() );
+            }
+        }
+
+        // update all what needs to be updated
+        // higher Speed* - more "unstable" zone is. intentional, do not fix
+        if(this.SpeedMove > 0 && (this.DestinationX != this.WorldX || this.DestinationY != this.WorldY))
+        {
+
+            int change_x = 0;
+            int change_y = 0;
+            if(this.DestinationX != this.WorldX)
+                change_x = (this.DestinationX > this.WorldX
+                            ? Random(Random(0, 1),   this.SpeedMove)
+                            : Random(Random(0, -1), -this.SpeedMove));
+            if(this.DestinationY != this.WorldY)
+                change_y = (this.DestinationY > this.WorldY
+                            ? Random(Random(0, 1),    this.SpeedMove)
+                            : Random(Random(0, -1),  -this.SpeedMove));
+            // DLog( "  position change("+change_x+","+change_y+"): "+this.WorldX+":"+this.WorldY+" -> "+(this.WorldX+change_x)+":"+(this.WorldY+change_y)+" ["+this.DestinationX+":"+this.DestinationY+"]" );
+            this.WorldX += change_x;
+            this.WorldY += change_y;
+        }
+        if(this.SpeedLevel > 0 && this.WantedLevel != this.CurrentLevel)
+        {
+            int change = (this.WantedLevel > this.CurrentLevel ? Random(1, this.SpeedLevel) : Random(-1, -this.SpeedLevel));
+            // DLog( "  level change("+change+"): "+this.CurrentLevel+" -> "+(this.CurrentLevel+change)+"/"+this.WantedLevel );
+            this.CurrentLevel += change;
+        }
+        if(this.SpeedRadius > 0 && this.WantedRadius != this.CurrentRadius)
+        {
+            int change = (this.WantedRadius > this.CurrentRadius ? Random(1, this.SpeedRadius) : Random(-1, -this.SpeedRadius));
+            // DLog( "  radius change("+change+"): "+this.CurrentRadius+" -> "+(this.CurrentRadius+change)+"/"+this.WantedRadius );
+            this.CurrentRadius += change;
+        }
+
+        if(this.WantedSubZones != this.SubZones)
+        {
+            int change = (this.WantedSubZones > this.SubZones ? int(1) : -1);
+            // DLog( "  subzones change("+change+"): "+this.SubZones+" -> "+(this.SubZones+change)+"/"+this.WantedSubZones );
+            this.SubZones += change;
+        }
+        // fix
+        // this.WorldX = CLAMP( this.WorldX, 0, ? );
+        // this.WorldY = CLAMP( this.WorldY, 0, ? );
+
+        if(this.CurrentLevel < 0)
+            this.CurrentLevel = 0;
+
+        if(this.CurrentRadius < 0)
+            this.CurrentRadius = 0;
+
+        if(this.SubZones < 1)
+            this.SubZones = 1;
+
+        // save locations at new position
+        if(this.CurrentRadius > 0)
+        {
+            array<Location@> locations;
+            int count = GetLocations(this.WorldX, this.WorldY, this.CurrentRadius, locations);
+            if(count > 0 || locations.length() > 0)
+            {
+                for(uint l = 0; l < locations.length(); l++)
+                {
+                    #ifdef __DEBUG__
+                    if(locations[l].Id != this.locid)
+                    #endif
+                    push(new_locations, locations[l].Id);
+                }
+                // DLog( "  new locations: "+new_locations.length() );
+            }
+        }
+
+        // clean settings for locations outside new radius
+        for(uint l = 0; l < old_locations.length(); l++)
+        {
+            if(!Present(old_locations[l], new_locations))
+            {
+                Log(this.GetName() + ": location " + old_locations[l] + " outside weather zone " + this.ID);
+                WeatherUpdate(old_locations[l], this.Type, 0);
+            }
+        }
+
+        // now update weather for all locations inside our subzones
+        if(this.SubZones > 1 && this.CurrentRadius > this.SubZones)
+        {
+            array<int> locations_done;
+            array<int> critters_done;
+            int szRadius = this.CurrentRadius / this.SubZones;
+            for(uint sz = 1; int(sz) <= this.SubZones; sz++)
+            {
+                // DLog( "  subzone "+sz );
+                array<Location@> locations;
+                int ldone = 0;
+                int pdone = 0;
+                int count = GetLocations(this.WorldX, this.WorldY, sz * szRadius, locations);
+                if(count > 0 || locations.length() > 0)
+                {
+                    for(uint l = 0; l < locations.length(); l++)
+                    {
+                        if(
+                            #ifdef __DEBUG__
+                            locations[l].Id != this.locid &&
+                            #endif
+                            !Present(int(locations[l].Id), locations_done))
+                        {
+                            ldone++;
+                            WeatherUpdate(locations[l], this.Type, this.CurrentLevel / sz);
+                            push(locations_done, locations[l].Id);
+                        }
+                    }
+                }
+                array<Critter@> critters;
+                int ccount = GetGlobalMapCritters(this.WorldX, this.WorldY, this.CurrentRadius, FIND_LIFE_AND_KO, critters);
+                if(ccount > 0 || critters.length() > 0)
+                {
+                    for(uint c = 0; c < critters.length(); c++)
+                    {
+                        if(!Present(int(critters[c].Id), critters_done))
+                        {
+                            pdone++;
+                            WeatherUpdate(critters[c], this.Type, this.CurrentLevel);
+                            push(critters_done, critters[c].Id);
+                        }
+                    }
+                }
+                /*if( ldone > 0 || pdone > 0 )
+                   {
+                        DLog( "    locations: "+ldone );
+                        DLog( "    players: "+pdone );
+                        DLog( "    radius: "+(sz*szRadius)+"/"+this.CurrentRadius );
+                        DLog( "    level: "+(this.CurrentLevel/sz)+"/"+this.CurrentLevel );
+                   }*/
+            }
+        }
+        else
+        {
+            array<Location@> locations;
+            int lcount = GetLocations(this.WorldX, this.WorldY, this.CurrentRadius, locations);
+            if(lcount > 0 || locations.length() > 0)
+            {
+                for(uint l = 0; l < locations.length(); l++)
+                {
+                    #ifdef __DEBUG__
+                    if(locations[l].Id != this.locid)
+                    #endif
+                    {
+                        WeatherUpdate(locations[l], this.Type, this.CurrentLevel);
+                    }
+                }
+            }
+            array<Critter@> critters;
+            int ccount = GetGlobalMapCritters(this.WorldX, this.WorldY, this.CurrentRadius, FIND_LIFE_AND_KO, critters);
+            if(ccount > 0 || critters.length() > 0)
+            {
+                for(uint c = 0; c < critters.length(); c++)
+                {
+                    WeatherUpdate(critters[c], this.Type, this.CurrentLevel);
+                }
+            }
+        }
+
+        if(this.Actions.length() > 0 && this.WorldX == this.DestinationX && this.WorldY == this.DestinationY)
+        {
+            // DLog( "  running action "+this.NextAction/3+"/"+((this.Actions.length()-1)/3));
+            // DLog( "  locked: "+(this.Locked?"true":"false") );
+            this.RunAction(this.NextAction);
+
+            this.NextAction += 3;
+
+            if(this.NextAction > this.Actions.length() - 1)
+            {
+                Log(this.GetName() + ": no more actions, resetting");
+                this.NextAction = 0;
+            }
+            // DLog( "  next action: "+this.NextAction/3 );
+        }
+
+        // that's all folks!
+
+        #ifdef __DEBUG__
+        if(this.locid > 0)
+        {
+            Location@ loc = GetLocation(this.locid);
+            if(valid(loc))
+            {
+                loc.WorldX = this.WorldX;
+                loc.WorldY = this.WorldY;
+                loc.Radius = this.CurrentRadius;
+                loc.Update();
+                DLog("  loc updated");
+            }
+        }
+        #endif
+    }
+
+    void UpdateFast(Location@ loc)
+    {
+        if(!valid(loc))
+            return;
+
+        if(this.CurrentRadius == 0 || this.CurrentLevel == 0 || this.SubZones == 0)
+            return;
+
+        if(this.SubZones > 1 && this.CurrentRadius > this.SubZones)
+        {
+            int szRadius = this.CurrentRadius / this.SubZones;
+            for(uint sz = 1; int(sz) <= this.SubZones; sz++)
+            {
+                array<Location@> locations;
+                int lcount = GetLocations(this.WorldX, this.WorldY, sz * szRadius, locations);
+                if(lcount > 0 || locations.length() > 0)
+                {
+                    for(uint l = 0; l < locations.length(); l++)
+                    {
+                        if(locations[l].Id == loc.Id)
+                        {
+                            DLog("UpdateFast: subzone <" + sz + "> location<" + locations[l].Id + ">");
+                            WeatherUpdate(locations[l], this.Type, this.CurrentLevel / sz);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            array<Location@> locations;
+            int lcount = GetLocations(this.WorldX, this.WorldY, this.CurrentRadius, locations);
+            if(lcount > 0 || locations.length() > 0)
+            {
+                for(uint l = 0; l < locations.length(); l++)
+                {
+                    if(locations[l].Id == loc.Id)
+                    {
+                        DLog("UpdateFast: subzone <none> location<" + locations[l].Id + ">");
+                        WeatherUpdate(locations[l], this.Type, this.CurrentLevel);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    void Lock()
+    {
+        DLog(this.GetName() + ": LOCKED");
+        this.Locked = true;
+    }
+
+    void Unlock()
+    {
+        DLog(this.GetName() + ": UNLOCKED");
+        this.Locked = false;
+    }
+
+    uint GetUpdateTime()
+    {
+        return(this.UpdateTime);
+    }
+
+    uint SetUpdateTime(uint time)
+    {
+        if(!Locked && this.UpdateTime != time)
+        {
+            DLog(this.GetName() + " update time: " + time);
+            this.UpdateTime = time;
+        }
+        return(this.GetUpdateTime());
+    }
+
+    void Delete()
+    {
+        this.Delete(false);
+    }
+
+    void Delete(bool fast)
+    {
+        if(fast)
+        {
+            this.CurrentRadius = this.WantedRadius = 0;
+        }
+        else
+        {
+            this.Level(0);
+            this.Radius(0);
+        }
+        this.SetFlag(WEATHER_FLAG_TODELETE);
+    }
+
+};
+array<CWeatherZone@> WeatherZones;
+
+bool initialized = false;
+uint LastUpdate = 0;
+uint event = 0;
+
+void InitWeather() // Export
+{
+    InitWeatherReal();
+    event = CreateTimeEvent(ELAPSED_TIME + REAL_SECOND(5), "e_Update", false);
+}
+
+void InitWeatherReal()
+{
+    if(WeatherZones.length() > 0)
+        WeatherZones.resize(0);
+
+    if(LoadConfig(WEATHER_CONFIG))
+    {
+        IConfigFile@ config = GetConfigFile(WEATHER_CONFIG);
+        if(valid(config))
+        {
+            array<string> sections;
+            config.GetSections(sections);
+            for(uint s = 0; s < sections.length(); s++)
+            {
+                uint id = AddWeatherZone(sections[s]);
+                if(id < 0)
+                {
+                    Log("WeatherZone ID not valid : " + sections[s]);
+                    continue;
+                }
+                IWeatherZone@ zone = GetWeatherZone(sections[s]);
+                if(!valid(zone))
+                {
+                    Log("WeatherZone not valid : " + sections[s]);
+                    continue;
+                }
+                if(zone.Load())
+                {
+                    Log("Loaded " + zone.GetName());
+                }
+                else
+                {
+                    Log("Saving " + zone.GetName());
+                    zone.Save();
+                }
+                IConfigSection @section = GetConfigSection(WEATHER_CONFIG, sections[s]);
+                if(!valid(section))
+                    continue;
+
+                array<string> vars;
+                section.GetVars(vars);
+                for(uint v = 0; v < vars.length(); v++)
+                {
+                    string@ val = GetConfigValue(WEATHER_CONFIG, sections[s], vars[v]);
+                    if(!valid(val) || val.length() == 0)
+                        continue;
+                    int ival = 0;
+                    StrToInt(val, ival);
+                    if(vars[v] == "Position")
+                    {
+                        array<string@>@ position = split(val, " ");
+                        if(position[0] == "LOCATION")
+                        {
+                            if(StrToInt(position[1], ival))
+                            {
+                                Location@ l = GetLocationByPid(ival, 0);
+                                if(valid(l))
+                                {
+                                    zone.Position(l.WorldX, l.WorldY);
+                                }
+                                else
+                                {
+                                    Log("Invalid location <" + ival + ">");
+                                    zone.Delete();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            int x = 0;
+                            int y = 0;
+                            if(StrToInt(position[0], x) && StrToInt(position[1], y))
+                            {
+                                zone.Position(x, y);
+                            }
+                            else
+                            {
+                                Log("Invalid position for " + zone.GetName());
+                                zone.Delete();
+                            }
+                        }
+                    }
+                    else if(vars[v] == "Type")
+                        zone.SetType(ival);
+                    else if(vars[v] == "Level")
+                        zone.Level(ival);
+                    else if(vars[v] == "Radius")
+                        zone.Radius(ival);
+                    else if(vars[v] == "SubZones")
+                        zone.SetSubZones(ival);
+                    else if(vars[v] == "SpeedMove")
+                        zone.SetSpeedMove(ival);
+                    else if(vars[v] == "SpeedLevel")
+                        zone.SetSpeedLevel(ival);
+                    else if(vars[v] == "SpeedRadius")
+                        zone.SetSpeedRadius(ival);
+                    else if(vars[v] == "UpdateTime")
+                        zone.SetUpdateTime(REAL_SECOND(ival));
+                    else if(vars[v] == "Locked")
+                    {
+                        if(ival > 0)
+                            zone.Lock();
+                    }
+                }
+                zone.SetTimeEvent(CreateTimeEvent(ELAPSED_TIME + 1, "e_UpdateZone", zone.GetID(), false));
+            }
+            InitWeather_Rain();
+            InitWeather_Radiation();
+        }
+        else
+        {
+            Log("Weather config not valid : " + WEATHER_CONFIG);
+        }
+    }
+    else
+    {
+        Log("Weather config not found/already loaded : " + WEATHER_CONFIG);
+    }
+
+    initialized = true;
+}
+
+void SaveWeather()
+{
+    if(WeatherZones.length() == 0)
+        return;
+
+    for(uint z = 0; z < WeatherZones.length(); z++)
+    {
+        Log("Saving " + WeatherZones[z].GetName());
+        WeatherZones[z].Save();
+    }
+}
+
+uint e_Update(array<int>@ data)
+{
+    // DLog( "e_Update" );
+    if(!initialized)         // be prepared for module reloading
+    {
+        DLog("Weather update without init, fixing");
+        InitWeatherReal();
+    }
+
+    if(WeatherZones.length() == 0)
+        return(WEATHER_CHECK);
+    /*
+       else if( WeatherZones.length() > 0 && (LastUpdate + WEATHER_UPDATE) > ELAPSED_TIME )
+            return;
+     */
+
+    for(uint z = 0; z < WeatherZones.length(); z++)
+    {
+        // WeatherZones[z].Update();
+        if(WeatherZones[z].GetFlag(WEATHER_FLAG_TODELETE) && WeatherZones[z].CurrentRadius <= 0)
+        {
+            Log("Removing " + WeatherZones[z].GetName());
+            if(IsAnyData(WTH_SAVE + WeatherZones[z].Name))
+            {
+                DLog("- anydata");
+                EraseAnyData(WTH_SAVE + WeatherZones[z].Name);
+            }
+            if(WeatherZones[z].TimeEvent > 0)
+            {
+                DLog("- time event");
+                EraseTimeEvent(WeatherZones[z].TimeEvent);
+            }
+            #ifdef __DEBUG__
+            if(WeatherZones[z].locid > 0)
+                DeleteLocation(WeatherZones[z].locid);
+            #endif
+            pop_stable(WeatherZones, z);
+            z = 0;
+        }
+    }
+    /*
+       LastUpdate = ELAPSED_TIME;
+
+       if( WeatherZones.length() > 0 )
+            DLog( "Weather update: "+(LastUpdate-start)+","+WeatherZones.length() );
+     */
+    return(WEATHER_UPDATE);
+}
+
+uint e_UpdateZone(array<int>@ data)
+{
+    if(data.length() == 0)
+    {
+        Log("Missing WeatherZone ID");
+        return(0);
+    }
+    IWeatherZone@ zone = GetWeatherZone(data[0]);
+    if(!valid(zone))
+    {
+        Log("Invalid WeatherZone: " + data[0]);
+        return(0);
+    }
+
+    zone.Update();
+
+    return(zone.GetUpdateTime());
+}
+
+uint AddWeatherZone(string& name)   // Export
+{
+    Log("Adding weather zone: " + name);
+    push(WeatherZones, CWeatherZone(name));
+    return(LastID);
+}
+
+uint AddWeatherZone(uint coords_x, uint coords_y, uint type)   // Export
+{
+    Log("Adding weather zone: coords " + coords_x + ":" + coords_y);
+    push(WeatherZones, CWeatherZone(coords_x, coords_y, type));
+    return(LastID);
+}
+
+
+IWeatherZone@ GetWeatherZone(uint id)
+{
+    for(uint z = 0; z < WeatherZones.length(); z++)
+    {
+        if(WeatherZones[z].ID == id)
+            return(WeatherZones[z]);
+    }
+    return(null);
+}
+IWeatherZone@ GetWeatherZone(string& name)
+{
+    for(uint z = 0; z < WeatherZones.length(); z++)
+    {
+        if(WeatherZones[z].Name == name)
+            return(WeatherZones[z]);
+    }
+    return(null);
+}
+
+void WeatherUpdate(Critter@ critter, uint& type, int& level)   // Export
+{
+    if(!valid(critter))
+    {
+        Log("Invalid critter");
+    }
+    else
+    {
+        switch(type)
+        {
+        case WEATHER_TYPE_RADIATION:
+            WeatherUpdate_Radiation(critter, level);
+            break;
+        case WEATHER_TYPE_RAIN:
+        default:
+            break;
+        }
+    }
+}
+
+void WeatherUpdate(Location@ loc, uint& type, int& level)   // Export
+{
+    if(!valid(loc))
+    {
+        Log("Invalid location");
+    }
+    else
+    {
+        array<Map@> maps;
+        uint count = loc.GetMaps(maps);
+        if(count > 0 || maps.length() > 0)
+        {
+            for(uint m = 0; m < maps.length(); m++)
+            {
+                switch(type)
+                {
+                case WEATHER_TYPE_RAIN:
+                    WeatherUpdate_Rain(maps[m], level);
+                    break;
+                case WEATHER_TYPE_RADIATION:
+                    WeatherUpdate_Radiation(maps[m], level);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void WeatherUpdate(int locid, uint type, int level)   // Export
+{
+    if(locid <= 0)
+    {
+        Log("Invalid location id");
+        return;
+    }
+    Location@ loc = GetLocation(locid);
+    if(!valid(loc))
+    {
+        Log("Can't get location : " + locid);
+        return;
+    }
+
+    WeatherUpdate(loc, type, level);
+}
+
+void WeatherUpdateFast(Location@ loc)
+{
+    if(!valid(loc))
+    {
+        Log("Invalid location");
+    }
+    else
+    {
+        for(uint z = 0; z < WeatherZones.length(); z++)
+        {
+            WeatherZones[z].UpdateFast(loc);
+        }
+    }
+}
+
+void DeleteWeatherZone(uint& id, uint& speed_level, uint& speed_radius)   // Export
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        DeleteWeatherZone(zone, speed_level, speed_radius);
+    }
+}
+
+void DeleteWeatherZone(string& name, uint& speed_level, uint& speed_radius)   // Export
+{
+    IWeatherZone@ zone = GetWeatherZone(name);
+    if(valid(zone))
+    {
+        DeleteWeatherZone(zone, speed_level, speed_radius);
+    }
+}
+
+void DeleteWeatherZone(IWeatherZone@ zone, uint& speed_level, uint& speed_radius)   // Export
+{
+    if(valid(zone))
+    {
+        Log(zone.GetName() + " marked to deletion");
+        zone.Level(0);
+        zone.Radius(0);
+        zone.SetSpeedLevel(speed_level);
+        zone.SetSpeedRadius(speed_radius);
+        zone.SetFlag(WEATHER_FLAG_TODELETE);
+    }
+}
+
+// abuse/tests
+
+#ifdef WTH_RUN
+void init(Critter& player, int, int, int force)
+{
+    if(!initialized || force > 0)
+    {
+        InitWeather();
+    }
+    ;
+}
+
+void add(Critter& player, int x, int y, int type)
+{
+    if(type <= 0 || type > WEATHER_TYPE_MAX)
+    {
+        player.Say(SAY_NETMSG, "Invalid weather type: " + type);
+        return;
+    }
+    uint id = AddWeatherZone(x > 0 ? x : player.WorldX, y > 0 ? y : player.WorldY, type);
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        zone.SetTimeEvent(CreateTimeEvent(ELAPSED_TIME + 1, "e_UpdateZone", id, false));
+    }
+}
+
+void deleteallzones(Critter& player, int, int, int)
+{
+    player.Say(SAY_NETMSG, "Removing " + WeatherZones.length() + " weather zone(s)");
+    for(uint z = 0; z < WeatherZones.length(); z++)
+        WeatherZones[z].Delete(true);
+}
+
+void deleteevent(Critter& player, int, int, int)
+{
+    if(event > 0)
+    {
+        player.Say(SAY_NETMSG, "Removing time event " + event);
+        EraseTimeEvent(event);
+    }
+}
+
+void cleanup(Critter& player, int, int, int)
+{
+    deleteallzones(player, 0, 0, 0);
+    array<int> dummy;
+    e_Update(dummy);
+    deleteevent(player, 0, 0, 0);
+}
+
+void update(Critter& player, int, int, int)
+{
+    array<int> data;
+    e_Update(data);
+}
+
+void speedmove(Critter& player, int id, int speed, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.SetSpeedMove(speed))
+            player.Say(SAY_NETMSG, "SpeedMove = " + speed);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void speedlevel(Critter& player, int id, int speed, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.SetSpeedLevel(speed))
+            player.Say(SAY_NETMSG, "SpeedLevel = " + speed);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void speedradius(Critter& player, int id, int speed, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.SetSpeedRadius(speed))
+            player.Say(SAY_NETMSG, "SpeedRadius = " + speed);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void move(Critter& player, int id, int x, int y)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.Move(x, y))
+            player.Say(SAY_NETMSG, "Move => " + x + ":" + y);
+        else
+            player.Say(SAY_NETMSG, "Zone locked / NOMOVE");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void level(Critter& player, int id, int level, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.Level(level))
+            player.Say(SAY_NETMSG, "Level => " + level);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void radius(Critter& player, int id, int radius, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.Radius(radius))
+            player.Say(SAY_NETMSG, "Radius => " + radius);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void subzones(Critter& player, int id, int zones, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.SetSubZones(zones))
+            player.Say(SAY_NETMSG, "SubZones => " + zones);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+void updatetime(Critter& player, int id, int sec, int min)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        int res = zone.SetUpdateTime(REAL_SECOND(sec) + REAL_MINUTE(min));
+        player.Say(SAY_NETMSG, "UpdateTime = " + res);
+    }
+}
+
+void type(Critter& player, int id, int type, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(zone.SetType(type))
+            player.Say(SAY_NETMSG, "Type => " + type);
+        else
+            player.Say(SAY_NETMSG, "Zone locked");
+    }
+    else
+        player.Say(SAY_NETMSG, "ERROR");
+}
+
+import bool GodOfTheRealm(uint id) from "cheats";
+void        lock(Critter& player, int id, int state, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(!GodOfTheRealm(player.Id))
+        {
+            player.Say(SAY_NETMSG, "No.");
+            return;
+        }
+
+        zone.Lock();
+    }
+}
+void unlock(Critter& player, int id, int state, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        if(!GodOfTheRealm(player.Id))
+        {
+            player.Say(SAY_NETMSG, "No.");
+            return;
+        }
+
+        zone.Unlock();
+    }
+}
+
+void actiontest(Critter& player, int id, int, int)
+{
+    IWeatherZone@ zone = GetWeatherZone(id);
+    if(valid(zone))
+    {
+        player.Say(SAY_NETMSG, "Loading rain_klam.foweather");
+        zone.LoadActions("weather/rain_klam.foweather");
+    }
+}
+
+# ifdef __DEBUG__
+void cloud(Critter& player, int l, int r, int id)
+{
+    add(player, 0, 0, 0);
+    speedmove(player, LastID, Random(1, 3), 0);
+    speedlevel(player, LastID, Random(1, 5), 0);
+    speedradius(player, LastID, Random(1, 5), 0);
+    radius(player, LastID, r > 0 ? r : 100, 0);
+    level(player, LastID, l > 0 ? l : 100, 0);
+}
+# endif // __DEBUG
+#endif  // WTH_RUN
+#endif  /* __WEATHER__ */

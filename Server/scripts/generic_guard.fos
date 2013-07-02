@@ -1,0 +1,115 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// generic_guard.fos
+//
+
+// Event handlers for generic town guard (without a dedicated script) belonging to an npc faction.
+// The behaviour toward a critter depends on the critter's reputation.
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "groups_h.fos"
+#include "guard_h.fos"
+#include "mapdata_h.fos"
+#include "reputations_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+#define SHOWCRITTER1_TOWNGUARD    (5)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    GuardInit(guard);
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 15);
+        GuardPerks(guard);
+    }
+}
+
+void _FactionGuard(Critter& guard, bool firstTime)
+{
+    critter_init(guard, firstTime);
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_OnIdle");
+    guard.ShowCritterDist1 = SHOWCRITTER1_TOWNGUARD;
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_OnShowCritter1");
+}
+
+///////////////////////////////
+// for standard location guards
+
+void _OnShowCritter(Critter& cr, Critter& target)
+{
+    if(GetGroupsStatus(target, cr) == FACTION_ENEMY)
+    {
+        AddAttackPlane(cr, 0, target);
+        return;
+    }
+    if(!_IsTrueNpc(target) && target.Reputation[_GroupIndex(cr)] < __ReputationHated)
+        if(Random(-2000, -1500) >= target.Reputation[_GroupIndex(cr)])
+            AddAttackPlane(cr, 0, target);
+}
+
+void _OnShowCritter1(Critter& cr, Critter& target)
+{
+    // followers excluded
+    if(target.IsPlayer() && target.Reputation[_GroupIndex(cr)] <= -1000 && Random(1, 25) == 1 && IsHumanoid(cr))
+        cr.Say(SAY_NORM_ON_HEAD, GetSafePlayerName(target.Id) + ". We're watching you, scum.");
+}
+
+
+void _OnIdle(Critter& cr)
+{
+    if(!IsHumanoid(cr))
+        return;
+    array<Critter@> crits;
+    uint            num = cr.GetCritters(false, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if((GetCrittersDistantion(cr, crits[i]) <= SHOWCRITTER1_TOWNGUARD))
+        {
+            if(crits[i].Reputation[_GroupIndex(cr)] > -1000)
+                continue;
+
+            Item@ item = _CritGetItemHand(crits[i]);
+            if(!valid(item))
+                continue;
+            if((item.GetType() == ITEM_TYPE_WEAPON) && (Random(0, 1) == 0))
+            {
+                cr.Say(SAY_SHOUT_ON_HEAD, "Put down your weapon, NOW!");
+                int[] data = { crits[i].Id, cr.Id };
+                CreateTimeEvent(AFTER(REAL_SECOND(Random(4, 6))), "e_CheckWeapon", data, false);
+            }
+        }
+    }
+}
+
+uint e_CheckWeapon(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+    {
+        _TIMEEND;
+        return 0;
+    }
+
+    Item@ item = _CritGetItemHand(player);
+    if(!valid(item))
+    {
+        _TIMEEND;
+        return 0;
+    }
+    if(item.GetType() == ITEM_TYPE_WEAPON && (player.Stat[ST_CURRENT_HP] > 0))
+        AddAttackPlane(guard, 0, player);
+    _TIMEEND;
+    return 0;
+}

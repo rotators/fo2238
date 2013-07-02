@@ -1,0 +1,223 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _basetypes.fos
+//
+
+#ifndef __BASETYPES__
+#define __BASETYPES__
+
+#define NO_CRTYPE_ALIASES
+
+#define CRTYPE_NONE                      (0)                        // Used with ST_BASE_CRTYPE as default
+
+// Player
+// Jumpsuit
+#define CRTYPE_MALE_JUMPSUIT             (11)
+#define CRTYPE_FEMALE_JUMPSUIT           (4)
+// Armors
+// Male
+#define CRTYPE_MALE_LEATHER_ARMOR        (12)
+#define CRTYPE_MALE_LEATHER_JACKET       (13)
+#define CRTYPE_MALE_METAL_ARMOR          (14)
+#define CRTYPE_MALE_COMBAT_ARMOR         (10)
+// Female
+#define CRTYPE_FEMALE_LEATHER_ARMOR      (5)
+#define CRTYPE_FEMALE_LEATHER_JACKET     (6)
+#define CRTYPE_FEMALE_METAL_ARMOR        (7)
+#define CRTYPE_FEMALE_COMBAT_ARMOR       (3)
+// Vault citizen
+#define CRTYPE_MALE_VAULTSUIT            (69)
+#define CRTYPE_FEMALE_VAULTSUIT          (74)
+// Long Hair Dude
+#define CRTYPE_LHD_JUMPSUIT              (106)                // Used with ST_BASE_CRTYPE
+#define CRTYPE_LHD_LEATHER_ARMOR         (107)
+#define CRTYPE_LHD_LEATHER_JACKET        (108)
+#define CRTYPE_LHD_METAL_ARMOR           (109)
+#define CRTYPE_LHD_TRIBAL                (110)
+// Bald Head Dude
+#define CRTYPE_BHD_LEATHER_JACKET        (122)        // Used with ST_BASE_CRTYPE
+#define CRTYPE_BHD_JUMPSUIT              (123)
+#define CRTYPE_BHD_LEATHER_ARMOR         (124)
+#define CRTYPE_BHD_METAL_ARMOR           (125)
+#define CRTYPE_BHD_TRIBAL                (126)
+// 3D
+#define CRTYPE_3D_MALE_NORMAL            (200)
+#define CRTYPE_3D_MALE_WIRY              (201)
+#define CRTYPE_3D_MALE_STRONG            (202)
+#define CRTYPE_3D_MALE_FAT               (203)
+#define CRTYPE_3D_MALE_SKELETON          (204)
+#define CRTYPE_3D_FEMALE_NORMAL          (205)
+#define CRTYPE_3D_FEMALE_WIRY            (206)
+#define CRTYPE_3D_FEMALE_STRONG          (207)
+#define CRTYPE_3D_FEMALE_FAT             (208)
+#define CRTYPE_3D_FEMALE_SKELETON        (209)
+// Kid
+#define CRTYPE_FEMALE_KID                (103)
+#define CRTYPE_MALE_KID                  (27)
+
+/*
+ * Everything else
+ * If crType is used by player, move it to top of file
+ */
+
+#define CRTYPE_POWER_ARMOR               (1)
+#define CRTYPE_ROBE_PURPLE               (2)
+// 3 : Player->Armors->Female
+// 4 : Player->Jumpsuit
+// 5 : Player->Armors->Female
+// 6 : Player->Armors->Female
+// 7 : Player->Armors->Female
+#define CRTYPE_BLACKMALE_VAULT13SUIT     (8)
+#define CRTYPE_BLACKMALE_METAL_ARMOR     (9)
+// 10 : Player->Armors->Male
+// 11 : Player->Jumpsuit
+// 12 : Player->Armors->Male
+// 13 : Player->Armors->Male
+// 14 : Player->Armors->Male
+#define CRTYPE_BRAHMIN                   (15)
+#define CRTYPE_DOG                       (16)
+#define CRTYPE_MRHANDY                   (17)
+#define CRTYPE_MOLERAT                   (19)
+#define CRTYPE_NIGHTKIN                  (20)
+#define CRTYPE_MUTANT                    (21)
+#define CRTYPE_SCORPION                  (22)
+#define CRTYPE_FLOATER                   (23)
+#define CRTYPE_RAT                       (24)
+#define CRTYPE_CENTAUR                   (25)
+#define CRTYPE_ROBE_BLUE                 (26)
+// 27 : Player->Kid
+#define CRTYPE_GHOUL                     (28)
+#define CRTYPE_GLOWING_ONE               (29)
+#define CRTYPE_PA_BOS                    (30)
+#define CRTYPE_MONK                      (31)
+#define CRTYPE_WOMAN_1                   (33)
+#define CRTYPE_PUNK                      (34)
+#define CRTYPE_METALARMOR_FEMALE_YP      (35)
+#define CRTYPE_WOMAN_2                   (36)
+#define CRTYPE_KURWA                     (37)
+#define CRTYPE_REDHAIR_FEMALE            (38)
+#define CRTYPE_POOR_BLACKMALE            (39)
+#define CRTYPE_POOR_MAN                  (40)
+#define CRTYPE_PROPER_MAN                (41)
+#define CRTYPE_DWARF                     (42)
+#define CRTYPE_BEGGAR                    (43)
+#define CRTYPE_TYCHO                     (44)
+#define CRTYPE_RAIDER                    (45)
+// 46 ?
+// 47 ?
+#define CRTYPE_CLERK                     (48)
+#define CRTYPE_RESERVED                  (49)
+#define CRTYPE_DEATHCLAW                 (51)
+#define CRTYPE_MANTIS                    (52)
+#define CRTYPE_ROBOT                     (53)
+#define CRTYPE_ROBOT_2                   (54)
+#define CRTYPE_PIGRAT                    (55)
+#define CRTYPE_ROBE_BROWN                (56)
+#define CRTYPE_BUTCHER                   (57)
+#define CRTYPE_EGG                       (58)
+#define CRTYPE_SCORPION_SMALL            (59)
+#define CRTYPE_DEATHCLAW_SMALL           (60)
+#define CRTYPE_FEMALE_TRIBAL             (61)
+#define CRTYPE_MALE_TRIBAL               (62)
+#define CRTYPE_SPORE_PLANT               (65)
+#define CRTYPE_MECH                      (66)
+#define CRTYPE_GECKO_SMALL               (67)
+#define CRTYPE_GECKO                     (68)
+// 69 : Player->Vault Citizen
+#define CRTYPE_DOG_ROBOT                 (70)
+#define CRTYPE_ENCLAVE                   (71)
+#define CRTYPE_AHS                       (72)
+#define CRTYPE_KITTY                     (73)
+// 74 : Player->Vault Citizen
+// 75 ?
+#define CRTYPE_RAT_GOD                   (76)
+#define CRTYPE_MOBSTER_BLUE              (77)
+#define CRTYPE_MOBSTER_GRAY              (78)
+#define CRTYPE_GHOUL_GECKO               (79)
+#define CRTYPE_ALIEN                     (80)
+#define CRTYPE_GECKO_FIRE                (81)
+#define CRTYPE_MALE_CHINESE              (82)
+#define CRTYPE_LYNETTE                   (83)
+#define CRTYPE_ROBE_GRAY                 (84)
+#define CRTYPE_FRANK                     (85)
+#define CRTYPE_ALIEN_SILVER              (86)
+#define CRTYPE_NCR_POLICE                (87)
+#define CRTYPE_MYRON                     (88)
+#define CRTYPE_SCIENTIST                 (89)
+#define CRTYPE_BIGTURRET                 (90)
+#define CRTYPE_VIC                       (91)
+#define CRTYPE_CHINESE_GUARD_RED         (92)
+#define CRTYPE_CHINESE_GUARD_BLUE        (93)
+#define CRTYPE_FEMALE_CHINESE            (94)
+#define CRTYPE_CYBORG                    (95)
+#define CRTYPE_BOXER                     (96)
+#define CRTYPE_ANT                       (97)
+#define CRTYPE_SALVADORE                 (98)
+#define CRTYPE_BEAR                      (99)
+#define CRTYPE_DEATHCLAW_SPECIAL         (100)
+#define CRTYPE_TURRET                    (101)
+#define CRTYPE_FRANK_CORPSE              (102)
+// 103 : Player->Kid
+#define CRTYPE_METZGER                   (104)
+#define CRTYPE_MASTER                    (105)
+// 106 : Player->Long Haid Dude
+// 107 : Player->Long Haid Dude
+// 108 : Player->Long Haid Dude
+// 109 : Player->Long Haid Dude
+// 110 : Player->Long Haid Dude
+#define CRTYPE_FEMALE_CABLACK            (111)
+#define CRTYPE_MALE_CABLACK              (112)
+#define CRTYPE_FEMALE_CADESERT           (113)
+#define CRTYPE_MALE_CADESERT             (114)
+#define CRTYPE_KHAN_LONGHAIR             (119)
+#define CRTYPE_LIEUTANANT                (120)
+#define CRTYPE_VC_TURRET                 (121)
+// 122 : Player->Long Haid Dude
+// 123 : Player->Long Haid Dude
+// 124 : Player->Long Haid Dude
+// 125 : Player->Long Haid Dude
+// 126 : Player->Long Haid Dude
+#define CRTYPE_ROBE_SAND                 (127)
+#define CRTYPE_OLD_IAN                   (128)
+#define CRTYPE_MALE_COMBAT_ARMOR_BALD    (129)
+#define CRTYPE_DOG_RED                   (130)
+#define CRTYPE_GIZMO                     (131)
+// 132-133 : NOT ASSIGNED
+#define CRTYPE_PUNK_LA                   (134)
+// 135-199 : NOT ASSIGNED
+//	135 CRTYPE_PUNK_METAL
+//	136 CRTYPE_PUNK_COMBAT
+// 200-209 : Player->3D
+#define CRTYPE_3D_ANT                    (210)
+#define CRTYPE_3D_ANT_QUEEN              (211)
+#define CRTYPE_3D_BAT                    (212)
+#define CRTYPE_3D_BEETLE                 (214)
+#define CRTYPE_3D_CENTIPEDE              (215)
+#define CRTYPE_3D_TIGER                  (216)
+#define CRTYPE_3D_COW                    (217)
+#define CRTYPE_3D_DEATHCLAW              (218)
+#define CRTYPE_3D_DESERT_STALKER         (219)
+#define CRTYPE_3D_DOG                    (220)
+#define CRTYPE_3D_MAN_TRAP               (223)
+#define CRTYPE_3D_RAD_TOAD               (224)
+#define CRTYPE_3D_RAT                    (225)
+#define CRTYPE_3D_THORNSLINGER           (226)
+#define CRTYPE_3D_GIANT_WASP             (227)
+
+#ifndef NO_CRTYPE_ALIASES
+
+# define CRTYPE_PA                       (CRTYPE_POWER_ARMOR)
+# define CRTYPE_PURPLE_ROBE              (CRTYPE_ROBE_PURPLE)
+# define CRTYPE_CA_FEMALE                (CRTYPE_FEMALE_COMBAT_ARMOR)
+# define CRTYPE_ROBOT_DOG                (CRTYPE_DOG_ROBOT)
+# define CRTYPE_FIRE_GECKO               (CRTYPE_GECKO_FIRE)
+# define CRTYPE_SAND_ROBE                (CRTYPE_ROBE_SAND)
+# define CRTYPE_RED_DOG                  (CRTYPE_DOG_RED)
+# define CRTYPE_CHINESE_MALE             (CRTYPE_MALE_CHINESE)
+# define CRTYPE_BITCH                    (CRTYPE_LYNETTE)
+# define CRTYPE_SILVER_ALIEN             (CRTYPE_ALIEN_SILVER)
+# define CRTYPE_CHINESE_FEMALE           (CRTYPE_FEMALE_CHINESE)
+#endif // NO_CRTYPE_ALIASES
+#endif // __BASETYPES__

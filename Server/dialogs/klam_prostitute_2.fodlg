@@ -1,0 +1,74 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _param p ST_GENDER = 0 D _var p klam_sally_pay = 0 #
+2 1020 D _param p ST_GENDER = 1 D _var p klam_sally_pay = 0 #
+9 1030 D _var p sex_exp > 500 D _param p ST_GENDER = 1 D _var p klam_sally_pay > 0 #
+8 1040 D _var p sex_exp > 100 D _param p ST_GENDER = 1 D _var p klam_sally_pay > 0 #
+7 1050 D _param p ST_GENDER = 1 D _var p sex_exp < 101 D _var p klam_sally_pay > 0 #
+6 1060 D _var p sex_exp > 500 D _var p klam_sally_pay > 0 #
+5 1070 D _var p sex_exp > 100 D _var p klam_sally_pay > 0 #
+4 1080 D _var p sex_exp < 101 D _var p klam_sally_pay > 0 #
+10 1090 #
+6 1100 D _param p PE_KAMA_SUTRA_MASTER = 1 D _param p ST_GENDER = 0 D _var p klam_sally_pay > 0 #
+9 1110 D _param p PE_KAMA_SUTRA_MASTER = 1 D _param p ST_GENDER = 1 D _var p klam_sally_pay > 0 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+5 5000 None 0 #
+0 5010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+6 6000 None 0 #
+0 6010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+7 7000 None 0 #
+0 7010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+8 8000 None 0 #
+0 8010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+9 9000 None 0 #
+0 9010 R _var p klam_sally_pay = 0 R _var p sex_exp + 10 @
+10 10000 None 0 &
+
+[engl]
+{100}{}{Sophie}
+{200}{}{You’re being mentally undressed by this woman.}
+{200}{}{You see an attractive young woman.}
+{200}{}{You see one of Big Nose Sally’s girls.}
+{200}{}{You see a woman checking you out.}
+{210}{}{You see an attractive woman wearing partially fastened clothing.}
+{210}{}{You see a bath attendant.}
+{210}{}{You see a bored looking woman.}
+{210}{}{You’re being mentally undressed by this woman.}
+{1000}{}{Predialogue installations}
+{1010}{}{Male}
+{1020}{}{Female}
+{1030}{}{Sex Master Female}
+{1040}{}{Reasonable Female}
+{1050}{}{Bad Female}
+{1060}{}{Sex Master}
+{1070}{}{Reasonable}
+{1080}{}{Bad}
+{1090}{}{Generic Greetings}
+{1100}{}{Kama Sutra Male}
+{1110}{}{Kama Sutra Female}
+{2000}{}{You should go talk to Big Nose Sally.@@Aren’t you a cutey?@@Love you long-time!@@Come up and see me sometime.@@You know how to whistle doncha?@@I used to be pure as snow, but then I drifted.@@(Wolf whistles)@@Hey there, tiger.@@Hey, baaaaaby.@@Go talk to Sally if you want some action.@@Scrub a-dub-dub...@@Looks like you could use a wash.@@Like what you see, baby?@@You want me?@@Gotta pay to play, sugar.}
+{3000}{}{You should go talk to Big Nose Sally.@@Aren’t you a cutey?@@Love you long-time!@@Come up and see me sometime.@@You know how to whistle doncha?@@I used to be pure as snow, but then I drifted.@@(Wolf whistles)@@Hey there, tiger.@@Hey, baaaaaby.@@Go talk to Sally if you want some action.@@Scrub a-dub-dub...@@Looks like you could use a wash.@@Like what you see, baby?@@You want me?@@Gotta pay to play, sugar.}
+{4000}{}{That was quick.@@Been a long time, honey?@@Maybe it will last longer next time.@@It’s not a race, you know.@@Do your friends call you ‘Speedy’?@@If all my customers were that quick, I could go home early.@@It’s more fun if you wait ‘til I help you.@@If you waited until I undressed, I bet you’d like it more.}
+{4010}{}{Uh, that never normally happens to me. I swear.}
+{5000}{}{That was real nice. You’re a real man, all right.@@It was special. You’re wonderful. Next!@@Oh yeah, baby, never had it like that before. (yawn)@@You’re the best. Come back soon.@@No, honey, size doesn’t matter at all. That was nice.@@Aren’t you just a hunk o’ hunk o’ burnin’ love.@@What a cute little feller you got there.}
+{5010}{}{I'm glad you enjoyed it as much as me, sweetie.}
+{6000}{}{Size does matter! Sweet mystery of life…. @@I’m putting in for overtime next time you come around.@@You sure get your money’s worth.@@I’m taking the rest of the day off.@@Wow! Did the earth move for you, too?}
+{6010}{}{Well, not to blow my own horn...}
+{7000}{}{Well, a buck’s a buck, I guess.@@That was, uh, different, I guess.@@That was real special. Next!@@No, you can’t use my perfume.@@Well, at least your mustache is smaller than most of my customers'.@@You’re sure you’re a gal?}
+{7010}{}{Hey, just promise you'll give it some thought.}
+{8000}{}{That was kinda nice.@@That was different, but not a bad different.@@I think I’d like to try that again sometime.@@We should do that off-the-clock sometime.@@That was sweet, sugar.@@Wow! My life’s going to be a lot different from here on in.@@I didn’t know it could be like that.}
+{8010}{}{Glad I could open up a new world for you, sweetie.}
+{9000}{}{That was kinda nice.@@That was different, but not a bad different.@@I think I’d like to try that again sometime.@@We should do that off-the-clock sometime.@@That was sweet, sugar.@@Wow! My life’s going to be a lot different from here on in.@@I didn’t know it could be like that.}
+{9010}{}{Glad I could open up a new world for you, sweetie.
+}
+{10000}{}{You should go talk to Big Nose Sally.@@Aren’t you a cutey?@@Love you long-time!@@Come up and see me sometime.@@You know how to whistle doncha?@@I used to be pure as snow, but then I drifted.@@(Wolf whistles)@@Hey there, tiger.@@Hey, baaaaaby.@@Go talk to Sally if you want some action.@@Scrub a-dub-dub...@@Looks like you could use a wash.@@Like what you see, baby?@@You want me?@@Gotta pay to play, sugar.}
+

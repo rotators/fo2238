@@ -1,0 +1,170 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+65506 2010 #
+4 2020 #
+80 2030 D _param p PE_PROFESSION_GUNSMITH_S < 2 #
+90 2040 D _param p PE_PROFESSION_GUNSMITH_B < 2 #
+101 2050 D _var p q_bos_eldridge = 0 D _var p q_bos_initiatequest_start = 15 #
+107 2060 D _var p q_bos_eldridge = 1 #
+109 2070 D _var p q_bos_eldridge = 1 D _item p PID_FIREWOOD } 5 D _item p PID_METAL_PARTS } 1 R _item p PID_FIREWOOD - 5 R _item p PID_METAL_PARTS - 1 #
+30 2080 D _var p q_la_gunr_courier = 4 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_NEW_RENO + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+0 2090 @
+3 3000 None 0 #
+65506 3010 #
+4 3020 #
+80 3030 D _param p PE_PROFESSION_GUNSMITH_S < 2 #
+90 3040 D _param p PE_PROFESSION_GUNSMITH_B < 2 #
+101 3050 D _var p q_bos_eldridge = 0 D _var p q_bos_initiatequest_start = 15 #
+107 3060 D _var p q_bos_eldridge = 1 #
+109 3070 D _var p q_bos_eldridge = 1 D _item p PID_FIREWOOD } 5 D _item p PID_METAL_PARTS } 1 R _item p PID_FIREWOOD - 5 R _item p PID_METAL_PARTS - 1 #
+30 3080 D _var p q_la_gunr_courier = 4 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_NEW_RENO + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+0 3090 @
+4 4000 None 0 #
+2 4010 @
+20 5000 None 0 #
+65506 5010 #
+0 5020 @
+80 6000 None 0 #
+81 6010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithS0 1 0 #
+82 6020 D _script dialog@d_CheckGunsmithS1 1 0 #
+0 6030 @
+81 7000 None 0 #
+83 7010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_S = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 7020 @
+82 8000 None 0 #
+83 8010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_S = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 8020 @
+83 9000 None 0 #
+0 9010 @
+90 10000 None 0 #
+91 10010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithB0 1 0 #
+92 10020 D _script dialog@d_CheckGunsmithB1 1 0 #
+0 10030 @
+91 11000 None 0 #
+93 11010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_B = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 11020 @
+92 12000 None 0 #
+93 12010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_B = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 12020 @
+93 13000 None 0 #
+0 13010 @
+101 14000 None 0 #
+102 14010 #
+0 14020 @
+102 15000 None 0 #
+103 15010 @
+103 16000 None 0 #
+104 16010 @
+104 17000 None 0 #
+106 17010 #
+105 17020 @
+105 18000 None 0 #
+0 18010 R _var p q_bos_initiatequest_start = 18 @
+106 19000 None 0 #
+107 19010 @
+107 20000 None 0 #
+108 20010 D _param p ST_INTELLECT } 7 D or D _param p SK_REPAIR } 85 #
+0 20020 R _var p q_bos_eldridge = 1 @
+108 21000 None 0 #
+0 21010 R _var p q_bos_initiatequest_start = 19 R _item p PID_10MM_AP + 50 R _item p PID_5MM_JHP + 100 R _var p q_bos_eldridge = 2 @
+109 22000 None 0 #
+0 22010 R _var p q_bos_eldridge = 2 R _var p q_bos_initiatequest_start = 19 R _item p PID_5MM_JHP + 100 R _item p PID_10MM_AP + 50 @
+30 23000 None 0 #
+0 23010 &
+
+[engl]
+{100}{}{Eldridge}
+{200}{}{You see Eldridge.}
+{210}{}{You see a heavily armed man covered with grease. He is gazing at his weapon collection on the walls and smiling dreamily.}
+{210}{}{You see Eldridge. He is gazing at his weapon collection and smiling dreamily.}
+{1000}{}{Predialogue installations}
+{1010}{}{Idiot}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{Here at New Reno Arms, we have the latest personal protection devices needed to stop any yellow-bellied sonuvabitch dead in his tracks. [Smiles evilly] What can I do for you?}
+{2010}{}{Can I see what you got in stock?}
+{2020}{}{Can you modify or upgrade weapons?}
+{2030}{}{I've got a few questions about small guns, if you don't mind.}
+{2040}{}{I was wondering if you're the right person to ask about big guns.}
+{2050}{}{We don't take kindly to people who don't deliver what they promise.}
+{2060}{}{What did you need again?}
+{2070}{}{Here. [You hand him the wood and metal.]}
+{2080}{}{I've got your Gun Runners shipment with me.}
+{2090}{}{Not interested right now, thanks.}
+{3000}{}{Welcome back, what can I do for you?}
+{3010}{}{Can I see what you got in stock?}
+{3020}{}{Can you modify or upgrade weapons?}
+{3030}{}{I've got a few questions about small guns, if you don't mind.}
+{3040}{}{I was wondering if you're the right person to ask about big guns.}
+{3050}{}{We don't take kindly to people who don't deliver what they promise.}
+{3060}{}{What did you need again?}
+{3070}{}{Here. [You hand him the wood and metal.]}
+{3080}{}{I've got your Gun Runners shipment with me.}
+{3090}{}{Not interested right now, thanks.}
+{4000}{}{No, no...we used to be in the business of doing that, but... [Looks pained]... well, there's been an accident... and we just don't do it no more. Anything else I can do for you?}
+{4010}{}{All right then. I'm interested in something else...}
+{5000}{}{See anything shiny you want? C'mon, there must be something here that interests you.}
+{5010}{}{Yuh}
+{5020}{}{Nuh}
+{6000}{}{And that would be..? [Stares at you suspiciously]}
+{6010}{}{I want to learn how to make a gun... Nothing special, just the basics.}
+{6020}{}{Say, maybe you could show me how to make some good guns? I'm willing to learn.}
+{6030}{}{Erhm... Actually, nothing right now. I better be going.}
+{7000}{}{Wanna blow off your fingers, huh? Okay, just don't say later I didn't warn you... I guess I can teach you something useful, but it has its price. Let's say $1500. For that price I can give you this magazine as well, you might need it later.}
+{7010}{}{To hell with the money! Knowledge is precious! [You give him $1500]}
+{7020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{8000}{}{Well, ain'tcha the next wasteland's top gunsmith! I guess I could show you something really special for a mere sum of 3000 caps. Whaddya say?}
+{8010}{}{If the preaching justifies the price, then let's start with it, ol' man! [Give him $3000]}
+{8020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{9000}{}{Well, that's the best investement you ever made @sex@|boy||girl|. Come with me... [Eldridge takes you to the table and starts explaining some things about guns]}
+{9010}{}{Well... Thanks for that, Eldridge. I must go now, see you later.}
+{10000}{}{You can bet your ass, I am! What do you need?}
+{10010}{}{I'd like to know how they work, what they're made of... technical stuff.}
+{10020}{}{I thought you could clarify some things about the construction and usage of big guns to me.}
+{10030}{}{Erhm... Actually, nothing right now. I better be going.}
+{11000}{}{I really hope you know what you're talking about, otherwise it'll be a waste of time. I'll need something in return. I'm pretty short on caps right now, maybe you could bring me... Let's say $1500. You'll get this magazine as well, I don't need it anymore.}
+{11010}{}{Okay, I think I've got fifteen hundred right here. Why don't you take it, so we can start right away? [Give him $1500]}
+{11020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{12000}{}{Yeah, I see you're already skilled with those, so this shouldn't take long. But, as you may already know, the caps shortage is going to kill me one day. How about you get me $3000, and I'll show you everything I know?}
+{12010}{}{It wasn't easy to find that many caps... It better be worth it! [Give him $3000]}
+{12020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{13000}{}{Very well, it's a deal then. [Eldridge explains to you everything you ever wanted to know about big guns.]}
+{13010}{}{Thanks Eldridge, that was really something new for me. I have to go now, bye.}
+{14000}{}{I'm sorry, I don't know what you're talking about.}
+{14010}{}{The Brotherhood sent me. You owe us a shipment of weapons.}
+{14020}{}{My mistake. Guess I'll be going.
+}
+{15000}{}{Ah, yes.  [He seems nervous. You'd swear he's getting ready to pull a gun on you.] That shipment. There's been a bit of a hold-up.}
+{15010}{}{What kind of hold-up?}
+{16000}{}{Well the caravan I sent out got caught in some crossfire. They managed to get away, but that cart isn't moving any time soon.
+}
+{16010}{}{Well you have two choices: deliver the weapons or return the money. Three choices if you count me blowing your head into a million pieces.
+}
+{17000}{}{As much as I love money, I'm going to have to give it back. I can't get that caravan up and running in time because I have to watch the shop and my people are out guarding that caravan. Unless you could do it?}
+{17010}{}{What exactly happened?}
+{17020}{}{I don't have time for this shit. Just return the money so I don't have to come back to finalize this deal. And by finalize this deal, I mean shoot your fucking head off.}
+{18000}{}{I'll send it out immediately, you have my word.}
+{18010}{}{You know I'll be back if you don't.}
+{19000}{}{The supports on the cart were already rotten, and I guess the bullet holes in them probably didn't do any good.}
+{19010}{}{And what do you need me to get for you?}
+{20000}{}{If you can bring me five or so big pieces of wood and some metal I can melt down for the braces, I can have this shipment out tonight.}
+{20010}{}{What about that pile of old rifles? Just melt down the barrels and connect pieces of the stocks.}
+{20020}{}{[Exit] God damn it. Why do I always have to do everything myself?}
+{21000}{}{You know, I have been thinking lately what to do with these. I can probably work this thing out in less than an hour. You'll have your weapons by tonight. And take some spare ammo for saving my ass.}
+{21010}{}{Good. I'm done here.}
+{22000}{}{Great. I'll have this shipment there tonight. And for saving my ass, take these.}
+{22010}{}{Thanks, man.}
+{23000}{}{Man, it's about time! Give it to me, had been waiting for the delivery since weeks!@@About time! Give me the package and thanks.@@Thanks for the delivery, @sex@|boy||girl|, it's about time!@@Ah, finally! Hand it over, I'll take care from now on.}
+{23010}{}{Goodbye.}
+

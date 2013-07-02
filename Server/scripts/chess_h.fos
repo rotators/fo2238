@@ -1,0 +1,107 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// chess_h.fos
+//
+
+#ifndef __CHESS_H__
+#define __CHESS_H__
+
+enum ChessColor
+{
+    White = 0,
+    Black = 1
+};
+
+enum ChessFigure
+{
+    Pawn   = 0,
+    Knight = 1,
+    Bishop = 2,
+    Rook   = 3,
+    Queen  = 4,
+    King   = 5
+};
+
+interface IChessTile
+{
+    IChessBoard@ Board   { get; }
+    IChessNpc@   Npc     { get; set; }
+    uint8        X       { get; }
+    uint8        Y       { get; }
+    uint16       HexX    { get; }
+    uint16       HexY    { get; }
+    ChessColor   Color   { get; }
+    bool         IsTaken { get; }
+    bool         IsWhite { get; }
+    bool         IsBlack { get; }
+
+    void  Spawn();
+    Item@ GetItem();
+};
+
+interface IChessNpc
+{
+    IChessBoard@ Board    { get; }
+    IChessTile@  Tile     { get; }
+    ChessFigure  Figure   { get; }
+    ChessColor   Color    { get; }
+    bool         IsPawn   { get; }
+    bool         IsKnight { get; }
+    bool         IsBishop { get; }
+    bool         IsRook   { get; }
+    bool         IsQueen  { get; }
+    bool         IsKing   { get; }
+    bool         IsWhite  { get; }
+    bool         IsBlack  { get; }
+    bool         IsMoved  { get; }
+
+    void Spawn();
+
+    Critter@ GetCritter();
+
+    bool Move(uint8 toX, uint8 toY);       // real
+};
+
+interface IChessBoard
+{
+    uint16 BaseHexX    { get; }
+    uint16 BaseHexY    { get; }
+    string TileWhite   { get; }
+    string TileBlack   { get; }
+    int16  TileOffsetX { get; }
+    int16  TileOffsetY { get; }
+
+    void Create();     // regular 8x8 board, for custom one use AddTile / AddFigure
+    bool AddTile(uint8 x, uint y, ChessColor color);
+    bool AddFigure(uint8 x, uint8 y, ChessFigure figure, ChessColor color);
+    bool AddFigure(IChessTile& tile, ChessFigure figure, ChessColor color);
+
+    void Spawn(Map& map, uint16 hx, uint16 hy);
+
+    bool Move(uint8 fromX, uint8 fromY, uint8 toX, uint8 toY);       // with checks
+
+    IChessTile@ GetTile(uint8 x, uint8 y);
+    IChessNpc@  GetNpc(uint8 x, uint8 y);
+    uint        GetNpcSkin(ChessFigure figure, ChessColor color);
+    Location@   GetLocation();
+    Map@        GetMap();
+    Item@       GetItem(uint8 x, uint8 y);
+    Critter@    GetCritter(uint8 x, uint8 y);
+};
+
+interface IChessMatch
+{
+    IChessBoard@ Board { get; }
+
+    Critter@     White     { get; }
+    Critter@     Black     { get; }
+};
+
+#ifndef __CHESS__
+
+import IChessMatch@ NewChessMatch(IChessBoad& board, Critter& playerWhite, Critter& playerBlack) from "chess";
+import IChessBoard@ NewChessBoard(string& tileWhite, string& tileBlack, array<uint>& npcSkins, int16 tileOffsetX = 0, int16 tileOffsetY = 0) from "chess";
+#endif // __CHESS__
+#endif // __CHESS_H__

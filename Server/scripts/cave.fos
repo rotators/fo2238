@@ -1,0 +1,225 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave.fos
+//
+
+#include "_macros.fos"
+#include "cave_critter_h.fos"
+#include "cave_h.fos"
+#include "cave_item_h.fos"
+#include "entire.fos"
+#include "groups_h.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+#include "worldmap_h.fos"
+
+import void CritterEnterCave(Critter& critter) from "cavelog";
+import void AddCaveGenerated() from "cavelog";
+import void AddCrittersGenerated() from "cavelog";
+import void AddCrittersKilled() from "cavelog";
+import void AddPlayerDeaths() from "cavelog";
+import void AddItemsGenerated() from "cavelog";
+import void AddItemsPicked() from "cavelog";
+
+array<uint> corpse_bags;
+
+ICaveItem@ GetCaveItem(Critter& player)
+{
+    uint rndnum = Random(0, 880);
+    uint rand = CLAMP((rndnum + (10 * player.Stat[ST_LUCK])), 0, 980);
+    uint group = CAVE_ITEM_GROUP_JUNK;
+
+    if(rand < 910)
+        group = CAVE_ITEM_GROUP_JUNK;
+    else if(rand < 920)
+        group = CAVE_ITEM_GROUP_DRUGS;
+    else if(rand < 930)
+        group = CAVE_ITEM_GROUP_MELEE;
+    else if(rand < 940)
+        group = CAVE_ITEM_GROUP_FUN;
+    else if(rand < 950)
+        group = CAVE_ITEM_GROUP_PISTOLS;
+    else if(rand < 960)
+        group = CAVE_ITEM_GROUP_SHOTGUNS;
+    else if(rand < 970)
+        group = CAVE_ITEM_GROUP_RIFLES;
+    else if(rand < 980)
+        group = CAVE_ITEM_GROUP_ARMOR;
+
+    shuffle_ptrarray(items, ICaveItem@);
+    for(uint i = 0; i < items.length(); i++)
+    {
+        ICaveItem@ item = items[i];
+        if((item.GetGroup() == group) && (uint(player.Stat[ST_LUCK]) >= item.GetLuckRequirement()) && (Random(0, 99) > int(item.GetChance())))
+            return item;
+    }
+    return null;
+}
+
+ICaveCritter@ GetCaveCritter(ICaveGroup@ group)
+{
+    array<uint> groupcritters = group.GetCritters();
+    return GetCaveCritterByID(random_from_array(groupcritters));
+}
+
+bool FillItems(Map@ map, Critter& player)
+{
+    uint amount = Random(0, CAVE_ITEM_MAX);
+    DLog("Generating " + amount + " items");
+
+    array<Entire> item_entires;
+    ParseEntires(map, item_entires, ENTIRE_CAVE_ITEM);
+
+    if(item_entires.length() == 0)
+    {
+        Log("No entires found to place items on in cave with PID " + map.GetProtoId());
+        return false;
+    }
+
+    for(uint i = 0; i < amount; i++)
+    {
+        Entire@    entire = random_from_array(item_entires);
+        ICaveItem@ item = GetCaveItem(player);
+        if(valid(item))
+        {
+            DLog("Adding item " + item.GetPID());
+            item.AddItemToMap(map, entire.HexX, entire.HexY);
+            AddItemsGenerated();
+        }
+        else
+            i--;
+    }
+
+    return true;
+}
+
+bool FillCritters(Map@ map, Critter& player)
+{
+    uint amount = Random(0, CAVE_CRITTER_MAX);
+    DLog("Generating " + amount + " critters");
+
+    array<Entire> critter_entires;
+
+    ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_EASY);
+    ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_NORMAL);
+    ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_HARD);
+
+    if(critter_entires.length() == 0)
+    {
+        Log("Couldn't find any entires for critters in cave with PID " + map.GetProtoId());
+        return false;
+    }
+
+    DLog("Generating group");
+    ICaveGroup@ group = random_from_array(groups);
+
+    for(uint i = 0; i < amount; i++)
+    {
+        DLog("Generating critter");
+        ICaveCritter@ critter = GetCaveCritter(group);
+        DLog("Getting entire");
+        Entire@       entire = random_from_array(critter_entires);
+
+        if(!valid(entire))
+        {
+            DLog("Couldn't find entire for critter");
+            i--;
+        }
+        else
+        {
+            if(valid(critter))
+            {
+                DLog("Spawning critter");
+                critter.Spawn(map, entire.HexX, entire.HexY);
+                AddCrittersGenerated();
+            }
+            else
+                Log("Critter not valid, can't spawn");
+        }
+    }
+
+    return true;
+}
+
+int SelectCorpseBag(uint crpid)
+{
+    shuffle_array(corpse_bags, uint);
+    for(uint i = 0; i < corpse_bags.length(); i++)
+    {
+        if(!HasUnusableWeapon(crpid, corpse_bags[i]))
+            return corpse_bags[i];
+    }
+    return 1;
+}
+
+void AddCorpse(Map@ map, Critter& player, Entire@ entire)
+{
+    uint[] corpses = { 1, 2, 14, 23, 24, 30, 31, 32, 40, 41, 63, 69, 91, 92 };
+    uint pid = random_from_array(corpses);
+    uint bag = SelectCorpseBag(pid);
+    DLog("Selected bag " + bag + " for corpse.");
+
+    Critter@ npc = AddNpc(map, pid, entire.HexX, entire.HexY, Random(0, 5), DIALOG_all_traveller, "", 0, 1, TEAM_Mob0, false, 1);
+
+    npc.ToDead(2, null);
+    npc.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+
+    // add bag items to npc corpse
+    // can't be done directly in addnpc because of some bug
+    // when killing them instantly
+    GiveBag(bag, npc);
+}
+
+bool FillMap(Map@ map, Critter& player)
+{
+    if(!valid(map))
+        return false;
+
+    if(Random(0, 1) == 0)
+    {
+        if(!FillItems(map, player))
+            return false;
+
+        if(!FillCritters(map, player))
+            return false;
+    }
+
+    if(map.GetData(MAP_DATA_CAVE_RQ_PID) > 0)       // RQ quest cave
+    {
+        DLog("Quest cave, generating item of pid " + map.GetData(MAP_DATA_CAVE_RQ_PID));
+        array<Entire> item_entires;
+        ParseEntires(map, item_entires, ENTIRE_CAVE_ITEM);
+        Entire@       entire = random_from_array(item_entires);
+        Item@         item = map.AddItem(entire.HexX, entire.HexY, map.GetData(MAP_DATA_CAVE_RQ_PID), 1);
+        item.Val1 = map.GetData(MAP_DATA_CAVE_RQ_PLAYER);
+    }
+
+    array<Entire> dead_entires;
+    ParseEntires(map, dead_entires, ENTIRE_CAVE_CORPSE);
+    if(dead_entires.length() == 0)
+    {
+        DLog("No dead entires in cave with PID " + map.GetProtoId());
+    }
+
+    if((dead_entires.length() > 0) && Random(0, 99) == 0)      // 1%
+    {
+        Entire@ entire = random_from_array(dead_entires);
+        AddCorpse(map, player, entire);
+    }
+
+    AddCaveGenerated();
+    return true;
+}
+
+void InitCaveRandomization()
+{
+    InitItems();
+    InitCritters();
+    InitGroups();
+
+    for(uint i = 146; i < 269; i++)   // TODO: ranges for bags are very dangerous
+        corpse_bags.insertLast(i);
+}

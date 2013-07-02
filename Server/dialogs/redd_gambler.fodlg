@@ -1,0 +1,51 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+502 1010 D _script perks@d_PerkCheck 1 383 D _var n name_mem_npc_player = 1 #
+500 1020 D _script perks@d_PerkCheck 1 383 D _var n name_mem_npc_player = 0 #
+2 1030 @
+2 2000 None 0 @
+500 3000 None 0 #
+501 3010 R _var n name_mem_npc_player = 1 #
+0 3020 @
+501 4000 None 0 #
+503 4010 D _item p PID_BEER > 0 R _param p PE_DEMOLITION_EXPERT = 1 R _item p PID_BEER - 1 #
+0 4020 #
+0 4030 @
+502 5000 None 0 #
+503 5010 D _item p PID_BEER > 0 R _param p PE_DEMOLITION_EXPERT = 1 R _item p PID_BEER - 1 #
+0 5020 #
+0 5030 @
+503 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{ Gambler }
+{200}{}{You see a gambler.}
+{210}{}{You see a nervously excited person gambling.}
+{210}{}{You see a gambler hoping to make some money.}
+{1000}{}{Predialogue options}
+{1010}{}{Perk + Quest ** DO NOT CHANGE POSITION OF ANSWERS IN THIS NODE !!! **}
+{1020}{}{Perk Demolition Expert, Quest unknown}
+{1030}{}{-}
+{2000}{}{Come on, baby needs new shoes.@@Yeah, that's the ticket!@@Shit!@@Why me?@@Can anyone spare me some change?@@I've got a sure thing this time.@@My system always works.@@This system stinks!@@This game is rigged!@@I'm the luckiest person alive!@@What did I do to deserve this?@@Crap!@@Yeee-haaaawww!@@Yippeeee!@@I've never seen anyone get that lucky before.@@That *seems* too good to be true.@@What's the house limit?@@House rules really say that?@@Yeah, you betcha.@@Let it ride.@@I'm going to double-up next time.@@Go baby, go baby…@@There goes my house.@@There goes my land.@@I just need a little more credit.@@My luck's about to change; I can feel it.@@Where's my lucky gecko-foot when I need it?@@What do you want?@@Back off, bub.@@Hey, don't jinx me.@@Are you giving me the evil eye?@@This isn't a spectator sport, pal.@@I hope you don't change the odds.@@Just a few more bucks and I'm going to walk away. I mean it this time.@@Don't crowd me here.@@Did you see that?@@I just can't believe that luck.@@Nice game, isn't it?@@I feel lucky today.@@This time's going to be different.@@Didn't know you folks were much for games of chance.@@It's all skill, I tell ya.@@Stand back and watch it happen.@@We're going to break the bank here, I just know it.}
+{3000}{}{Damn this piece of crap! The only times I had less luck was when I used to work in the mines!}
+{3010}{}{You used to work in the mines? Then you must be familiar with explosives and detonators. You think you could tell me more about that stuff? [Demolition Expert]}
+{3020}{}{How... uninteresting. [Leave]}
+{4000}{}{Tell you what, @sex@|buddy||honey| -- I can't break the game now, it would ruin my system all the way. Why don't you bring me a beer and then we can talk fireworks, okay?}
+{4010}{}{Heavens, I got one cold right here. There you go! [Give beer]}
+{4020}{}{One cold beer -- coming right away, sir!}
+{4030}{}{I'm not your damn waiter, screw you! [Leave]}
+{5000}{}{Did you get me a beer already?}
+{5010}{}{Sure, there you go!}
+{5020}{}{Just a second, I'll be right back!}
+{5030}{}{I'm not your damn waiter, screw you! [Leave]}
+{6000}{}{Good, now listen to me carefully... [You listen and learn how to handle explosives and traps more effectively]}
+{6010}{}{Who would have thought such things were possible? Anyway, thanks for the chit-chat. Goodbye!}
+

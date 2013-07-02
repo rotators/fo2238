@@ -1,0 +1,49 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_sf_china.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "_defines.fos"
+#include "mapdata_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+
+#include "factions_vc_q_scoutsf.fos"
+
+//
+// map.Data:
+// 2 - Bank ID, for more information check _economy.fos
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // 2 - Bank ID, for more information check _economy.fos
+        map.SetData(MAP_DATA_BANK, BANK_SANFRANCISCO);         // This map contains the San Fran bank
+    }
+
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "OnInCritter");
+
+    // FISH
+    if(firstTime)
+    {
+        uint[] maxes = { 20, 15 };
+        SetAlertMap(map, maxes);
+    }
+}
+
+void OnInCritter(Map& map, Critter& player)
+{
+    // We are only interested in players
+    if(!player.IsPlayer())
+        return;
+
+    // Quest related method.
+    ScoutSFMap(map, player);
+
+}

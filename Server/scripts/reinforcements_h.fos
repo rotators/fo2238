@@ -1,0 +1,72 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// reinforcements_h.fos
+//
+
+#ifndef __REINFORCEMENTS_H__
+#define __REINFORCEMENTS_H__
+
+// these are all default values
+
+// thresholds for reinforcement calling
+// if current alert level >= threshold, start calling respective reinforcement type, and every lower type
+#define ALERT_LEVEL_NONE              (0)
+#define ALERT_LEVEL_REGISTER          (8)
+#define ALERT_LEVEL_LIGHT             (24)
+#define ALERT_LEVEL_HEAVY             (60)
+
+// threshold for making all guards reacting to an offense
+#define ALERT_LEVEL_REACT             (12)
+
+// points of alert level increase per death of guard or allied npc
+#define ALERT_COUNT_GUARD             (4)
+#define ALERT_COUNT_NPC               (1)
+
+// main cycle length
+#define ALERT_CYCLE                   (GAME_MINUTE(160))     // ingame minutes
+
+// minimum points of alert level dropped every cycle
+#define ALERT_COUNT_DROP              (4)
+
+// minimum % of alert level points dropped every cycle
+#define ALERT_COUNT_P_DROP            (20)
+
+// delay between showing up of two consecutive batches of single type of reinforcement (lower and upper bound)
+#ifndef __DEBUG__
+# define REINFORCEMENTS_DELAY_LOW     (GAME_MINUTE(15))     // ingame minutes
+# define REINFORCEMENTS_DELAY_HIGH    (GAME_MINUTE(60))     // ingame minutes
+#endif
+#ifdef __DEBUG__
+# define REINFORCEMENTS_DELAY_LOW     (GAME_MINUTE(3))      // ingame minutes, debug mode
+# define REINFORCEMENTS_DELAY_HIGH    (GAME_MINUTE(9))      // ingame minutes, debug mode
+#endif
+
+// delay between death of reinforcement guard and its "respawn" as increased available reinforcements count
+#ifndef __DEBUG__
+# define REINFORCEMENTS_DELAY_RET     (GAME_MINUTE(1200))     // ingame minutes
+#endif
+#ifdef __DEBUG__
+# define REINFORCEMENTS_DELAY_RET     (GAME_MINUTE(20))       // ingame minutes, debug mode
+#endif
+
+// number of npcs in onr reinforcement batch (lower and upper bound)
+#define REINFORCEMENTS_COUNT_LOW      (4)
+#define REINFORCEMENTS_COUNT_HIGH     (8)
+
+// number of types of reinforcements
+// changing this is dangerous because of AnyData usage in the code
+
+#define REINFORCEMENT_COUNT           (2) // changing this value would require wiping current alerts
+
+
+#ifndef __REINFORCEMENTS_MODULE__
+import void SaveAlertMaps() from "reinforcements";
+import void SetAlertMap(Map& map, array<uint>@ maxes) from "reinforcements";
+import bool InitAlertMaps() from "reinforcements";
+import bool IsAlertMap(Map& map) from "reinforcements";
+import uint GetAlertLevel(Map& map) from "reinforcements";
+import void ProcessDeath(Map& map, Critter& cr, Critter@ killer) from "reinforcements";
+#endif // __REINFORCEMENTS_MODULE__
+#endif // __REINFORCEMENTS_H__

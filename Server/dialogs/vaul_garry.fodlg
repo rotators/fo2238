@@ -1,0 +1,66 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _var p acquaintance = 1 D _var p q_vc_collectrent = 1 #
+3 1020 D _param p ST_CHARISMA > 99 #
+2 1030 @
+2 2000 None 0 #
+4 2010 D _var p acquaintance = 0 D _var p q_vc_collectrent = 1 #
+65506 2020 D _param p ST_INTELLECT > 3 #
+65506 2030 D _param p ST_INTELLECT < 4 #
+500 2040 D _script perks@d_PerkCheck 1 454 D _param p PE_STEALTH_GIRL = 0 #
+502 2050 D _script perks@d_PerkCheckFalse 1 454 D _param p PE_STEALTH_GIRL = 0 D _param p SK_SNEAK } 100 D or D _script perks@d_PerkCheckFalse 1 454 D _param p PE_STEALTH_GIRL = 0 D _param p SK_REPAIR } 100 #
+0 2060 @
+3 3000 None 0 @
+4 4000 None 0 #
+65507 4010 R _script dialog@r_AddMoney 1 1000 R _var p acquaintance = 1 #
+0 4020 R _var p acquaintance = 1 R _script dialog@r_AddMoney 1 200 @
+5 5000 None 0 @
+500 6000 None 0 #
+501 6010 R _param p PE_STEALTH_GIRL = 1 #
+0 6020 @
+501 7000 None 0 #
+0 7010 @
+502 8000 None 0 #
+504 8010 #
+0 8020 @
+504 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Harry}
+{200}{}{You see a short, jovial man.}
+{210}{}{You see Happy Harry, the store owner.}
+{1000}{}{Predialogue installations}
+{1010}{}{rent quest}
+{1020}{}{ugly}
+{1030}{}{default}
+{2000}{}{Well, hello there... what can I do for you?}
+{2010}{}{I'm here to collect your rent.}
+{2020}{}{I’m looking to trade. Can I see what you have in stock?}
+{2030}{}{Me Buy}
+{2040}{}{Since you trade in all kind of junk, and there's that vault just under your nose, I thought you might know something about those fancy Stealth Boy devices.}
+{2050}{}{Since you trade in all kind of junk, and there's that vault just under your nose, I thought you might know something about those fancy Stealth Boy devices.}
+{2060}{}{Nothing today, thanks.}
+{3000}{}{I'm gonna have to ask you to leave.@@I can't be seen talking to you, I don't want the guards in here.@@You ain't gonna get in the city, so don't try.@@Get out of here!}
+{4000}{}{I'm glad someone came. Here... The money and a small tip for your trouble.}
+{4010}{}{Thank you. Now you die. [Attack]}
+{4020}{}{Wow. Thanks! Have a nice day.}
+{5000}{}{Have you taken the rent to the guard? No? Well then get to it.@@Hurry with the rent collection.@@You better go speak with the guard.}
+{6000}{}{Stealth Boys, eh? Back in my youth I used to disassemble tons of those. The Council didn't want anyone sneaking around and these things come into wrong hands damn easily, you know what I mean?}
+{6010}{}{Excellent! Say, could you give me any pointers, what to do if I ever find one of them? [Stealth Girl]}
+{6020}{}{I think I changed my mind. Farewell, Harry!}
+{7000}{}{Well, let me fetch some of my old drawings before I tell you all I know about them. [You spend some time with Harry, learning about Stealth Boy technology]}
+{7010}{}{Thanks Harry, @sex@|you're the man||you're a sweetheart|! I think I'll prefer you over other traders from now on. Bye!}
+{8000}{}{Stealth Boys, eh? Back in my youth I used to disassemble tons of those. The Council didn't want anyone sneaking around and these things come into wrong hands damn easily, you know what I mean?}
+{8010}{}{Excellent! Say, could you give me any pointers, what to do if I ever find one of them? [Stealth Girl]}
+{8020}{}{I think I changed my mind. Farewell, Harry!}
+{9000}{}{[You spend some time with Harry, trying to learn about Stealth Boy technology] NO, NO, NO! You got it all wrong! Sorry, but you don't look like someone capable of learning how to use these devices more efficiently.}
+{9010}{}{Oh well... Perhaps I will come back later. Goodbye, Harry!}
+

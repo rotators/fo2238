@@ -1,0 +1,50 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// combat_h.fos
+//
+
+#ifndef _COMBAT_H_
+#define _COMBAT_H_
+
+// Critical hit/miss flags
+#define HF_KNOCKOUT                (0x00000001)
+#define HF_KNOCKDOWN               (0x00000002)
+#define HF_CRIPPLED_LEFT_LEG       (0x00000004)
+#define HF_CRIPPLED_RIGHT_LEG      (0x00000008)
+#define HF_CRIPPLED_LEFT_ARM       (0x00000010)
+#define HF_CRIPPLED_RIGHT_ARM      (0x00000020)
+#define HF_BLINDED                 (0x00000040)
+#define HF_DEATH                   (0x00000080)
+#define HF_ON_FIRE                 (0x00000400)
+#define HF_BYPASS_ARMOR            (0x00000800)
+#define HF_DROPPED_WEAPON          (0x00004000)
+#define HF_LOST_NEXT_TURN          (0x00008000)
+#define HF_RANDOM                  (0x00200000)
+
+#define MF_KNOCKED_DOWN            (0x00000002)
+#define MF_ON_FIRE                 (0x00000400)
+#define MF_WEAPON_EXPLODED         (0x00001000)
+#define MF_WEAPON_DESTROYED        (0x00002000)
+#define MF_WEAPON_DROPPED          (0x00004000)
+#define MF_LOST_NEXT_TURN          (0x00008000)
+#define MF_HIT_SELF                (0x00010000)
+#define MF_LOST_REST_OF_AMMO       (0x00020000)
+#define MF_FIRED_DUD_SHOT          (0x00040000)
+#define MF_HURT_SELF               (0x00080000)
+#define MF_HIT_RANDOMLY            (0x00100000)
+#define MF_CRIPPLED_RANDOM_LIMB    (0x00200000)
+#define MF_WAS_KILLED              (0x10000000)
+
+// for WeaponSubtype
+#define WS_UNARMED                 (1)
+#define WS_MELEE                   (2)
+#define WS_THROWING                (3)
+#define WS_GUN                     (4)
+
+#define _GetCritterArmor           # (cr_, head_)(cr_.GetItem(0, (head_) ? SLOT_HEAD : SLOT_ARMOR))
+#define COMBAT_AMMO_AP             # (ammo_) (valid(ammo_) ? (ammo_.Ammo_DTDiv > 0) : false)
+// todo: move to proto
+#define COMBAT_WEAPON_ALLOWS_SD    # (__weapon)     (__weapon.Proto.ProtoId == PID_14MM_PISTOL || __weapon.Proto.ProtoId == PID_223_PISTOL)
+#endif // _COMBAT_H_

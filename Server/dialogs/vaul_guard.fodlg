@@ -1,0 +1,376 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+406 1010 D _var p q_vc_collectrent = 1 #
+400 1020 D _param p ST_CHARISMA > 99 #
+40 1030 D _param p ST_INTELLECT < 4 #
+51 1040 D _script dialog@d_IsNotMember 0  D _param p ST_KARMA < -100 D _param n ST_NPC_ROLE = 6 #
+52 1050 D _script dialog@d_IsNotMember 0  D _param n ST_NPC_ROLE = 6 #
+0 1060 D _script vaul_guard@d_QuestInProgress 1 0 D _script dialog@d_IsNotMember 0  R _script vaul_guard@r_AboutQuest 1 0 #
+2 1070 D _script dialog@d_IsNotMember 0  D _param n ST_NPC_ROLE = 1 #
+53 1080 D _script dialog@d_IsNotMember 0  D _script dialog@d_CheckNight 0  #
+51 1090 D _script dialog@d_IsNotMember 0  D _script dialog@d_HasValidDayPass 0  #
+54 1100 D _script dialog@d_IsNotMember 0  #
+50 1110 @
+2 2000 None 0 #
+3 2010 #
+10 2020 D _param p ST_CHARISMA > 8 D _param p SK_SPEECH > 49 D _script dialog@d_NotMemberOfAnyFaction 0  R _script dialog@r_AddMember 0  #
+11 2030 D _param p PE_KAMA_SUTRA_MASTER > 0 #
+401 2040 D _var p acquaintance = 0 D _var p q_vc_collectrent = 0 D _param p ST_EXPERIENCE > 14999 #
+0 2050 #
+65507 2060 @
+3 3000 None 0 #
+15 3010 D _script vaul_guard@d_NoQuestActive 1 0 R _script vaul_guard@r_ChooseQuest 1 0 #
+4 3020 #
+4 3030 #
+0 3040 @
+4 4000 None 0 #
+2 4010 #
+0 4020 @
+10 5000 None 0 #
+0 5010 #
+0 5020 @
+11 6000 None 0 #
+0 6010 R _script dialog@r_AddMember 0  @
+12 7000 None 0 #
+0 7010 #
+0 7020 @
+15 8000 None 0 #
+0 8010 D _param p ST_CHARISMA < 5 #
+0 8020 D _param p ST_CHARISMA > 4 @
+40 9000 None 0 #
+41 9010 #
+0 9020 @
+41 10000 None 0 #
+65507 10010 #
+0 10020 #
+0 10030 #
+0 10040 @
+50 11000 None 0 @
+51 12000 None 0 @
+52 13000 None 0 @
+53 14000 Attack 0 @
+54 15000 Attack 0 @
+100 16000 None 0 #
+101 16010 R _script vaul_guard@r_AssignQuest 1 0 #
+0 16020 R _script vaul_guard@r_CancelQuest 1 0 @
+101 17000 None 0 #
+102 17010 D _param p ST_CHARISMA > 3 #
+103 17020 D _param p ST_CHARISMA < 4 #
+104 17030 D _param p ST_CHARISMA > 5 #
+0 17040 @
+102 18000 None 0 #
+0 18010 @
+103 19000 None 0 #
+0 19010 @
+104 20000 None 0 #
+0 20010 @
+110 21000 None 0 #
+12 21010 D _item p PID_HY_MAG_PART > 0 D _script vaul_guard@d_QuestInProgress 1 0 R _item p PID_HY_MAG_PART - 1 R _script vaul_guard@r_FinishQuest 1 1 R _script dialog@r_AddMember 0  #
+111 21020 D _script vaul_guard@d_QuestInProgress 1 0 R _script vaul_guard@r_CancelQuest 1 0 #
+0 21030 @
+111 22000 None 0 #
+0 22010 @
+200 23000 None 0 #
+201 23010 D _var n name_mem_npc_player = 0 #
+210 23020 D _var n name_mem_npc_player > 0 R _script vaul_guard@r_AssignQuest 1 0 #
+0 23030 R _script vaul_guard@r_CancelQuest 1 0 #
+2 23040 @
+201 24000 None 0 #
+202 24010 #
+203 24020 #
+210 24030 R _var n name_mem_npc_player + 1 R _script vaul_guard@r_AssignQuest 1 1 @
+202 25000 None 0 #
+65505 25010 @
+203 26000 None 0 #
+204 26010 @
+204 27000 None 0 #
+205 27010 @
+205 28000 None 0 #
+210 28010 R _var n name_mem_npc_player + 1 R _script vaul_guard@r_AssignQuest 1 0 @
+210 29000 None 0 #
+211 29010 D _param p ST_PERCEPTION > 8 D _param p ST_INTELLECT > 8 D _param p ST_LUCK > 8 D _script vaul_guard@d_QuestInProgress 1 0 R _script vaul_guard@r_FinishQuest 1 1 R _script dialog@r_AddMember 0  #
+212 29020 D _param p ST_PERCEPTION > 7 D _param p ST_INTELLECT > 7 D _param p ST_LUCK > 7 #
+215 29030 R _script vaul_guard@r_CancelQuest 1 0 @
+211 30000 None 0 #
+0 30010 @
+212 31000 None 0 #
+213 31010 @
+213 32000 None 0 #
+214 32010 D _script dialog@d_VCCheckLK 1 7 #
+214 32020 D _param p ST_STRENGTH > 7 #
+216 32030 R _script vaul_guard@r_CancelQuest 1 0 @
+214 33000 None 0 #
+12 33010 D _item p PID_BOTTLE_CAPS > 3999 D _script vaul_guard@d_QuestInProgress 1 0 R _var p factions_q_vc_exam = 11 R _script dialog@r_RemoveMoney 1 4000 R _script vaul_guard@r_FinishQuest 1 0 R _script dialog@r_AddMember 0  #
+0 33020 D _item p PID_BOTTLE_CAPS < 4000 R _script vaul_guard@r_CancelQuest 1 0 #
+0 33030 R _script vaul_guard@r_CancelQuest 1 0 @
+215 34000 None 0 #
+0 34010 #
+65507 34020 @
+216 35000 None 0 #
+0 35010 @
+300 36000 None 0 #
+302 36010 D _param p SK_FIRST_AID > 95 #
+302 36020 D _param p SK_REPAIR > 89 #
+302 36030 D _param p SK_STEAL > 89 #
+302 36040 D _param p SK_DOCTOR > 87 #
+302 36050 D _param p SK_SCIENCE > 95 #
+301 36060 #
+0 36070 R _script vaul_guard@r_CancelQuest 1 0 @
+301 37000 None 0 #
+302 37010 D _param p SK_BARTER > 95 #
+302 37020 D _param p SK_LOCKPICK > 93 #
+302 37030 D _param p SK_OUTDOORSMAN > 95 #
+302 37040 D _param p SK_TRAPS > 93 #
+302 37050 D _param p SK_SPEECH > 101 #
+300 37060 #
+0 37070 R _script vaul_guard@r_CancelQuest 1 0 @
+302 38000 None 0 #
+303 38010 R _script vaul_guard@r_AssignQuest 1 0 @
+303 39000 None 0 #
+10 39010 D _script vaul_guard@d_QuestInProgress 1 0 R _script vaul_guard@r_FinishQuest 1 1 R _script dialog@r_AddMember 0  @
+400 40000 None 0 @
+401 41000 None 0 #
+65507 41010 #
+403 41020 D _param p REPUTATION_VAULT_CITY = 0 #
+402 41030 D _param p REPUTATION_VAULT_CITY > 0 #
+402 41040 D _param p SK_SPEECH > 55 #
+402 41050 D _item p PID_BOTTLE_CAPS < 100 #
+2 41060 #
+0 41070 @
+402 42000 None 0 #
+404 42010 D _param p ST_LEVEL > 8 #
+0 42020 @
+403 43000 None 0 #
+65507 43010 #
+0 43020 @
+404 44000 None 0 #
+405 44010 R _var p q_vc_collectrent = 1 R _var p acquaintance = 1 #
+2 44020 #
+0 44030 @
+405 45000 None 0 #
+0 45010 #
+2 45020 @
+406 46000 None 0 #
+409 46010 #
+2 46020 #
+405 46030 #
+408 46040 #
+408 46050 #
+0 46060 @
+408 47000 None 0 #
+65507 47010 #
+0 47020 @
+409 48000 None 0 #
+411 48010 D _item p PID_BOTTLE_CAPS > 999 R _param p ST_EXPERIENCE + 1000 R _var p q_vc_collectrent = 0 R _script dialog@r_RemoveMoney 1 1000 #
+0 48020 @
+411 49000 None 0 #
+412 49010 D _param p ST_CHARISMA > 7 D _param p SK_SPEECH > 55 R _var p q_vc_collectrent = 0 R _script dialog@r_AddMoney 1 300 #
+0 49020 R _var p q_vc_collectrent = 0 R _script dialog@r_AddMoney 1 200 @
+412 50000 None 0 #
+413 50010 D _param p SK_SPEECH > 100 R _script dialog@r_AddMoney 1 100 #
+0 50020 @
+413 51000 None 0 #
+0 51010 &
+
+[engl]
+{100}{}{Guard}
+{200}{}{You see a Guard.}
+{210}{}{You see a Guard. They never seem to like you.}
+{240}{}{You see a dead Guard.}
+{260}{}{You see a slain Guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Player has collect rent quest.}
+{1020}{}{ugly}
+{1030}{}{player is dumb}
+{1040}{}{player is not VC, player is bad <> guards in courtyard}
+{1050}{}{player is not VC, player is neutral/good <> guards in courtyard}
+{1060}{}{Player is not VC, player took quest}
+{1070}{}{Player is not VC, talking to Gate Guard (NpcRole==1)}
+{1080}{}{Player is not VC, in city during the night}
+{1090}{}{Player is not VC, talking to any other Guard, has Day Pass and it is Daytime}
+{1100}{}{Player is not VC, no DayPass}
+{1110}{}{player is VC <> all guards}
+{2000}{}{What can I help you with ?}
+{2010}{}{Why are you protecting this city so much?}
+{2020}{}{C'mon, you gotta let me in. Make me a Citizen. I won't be able to survive another day out there with those scumbags. I'm begging you, you're my only hope. I'm not gonna make it out there, I know it. I'm not like the rest of them, I swear.}
+{2030}{}{[Lean in close] You let me in, and I promise I'm gonna show you a world of pleasure you didn't even know existed.}
+{2040}{}{I'm looking for an opportunity to get some caps.}
+{2050}{}{Nothing.}
+{2060}{}{Nothing, you bastard. Prepare to die!}
+{3000}{}{We're protecting the city from trash like yourself. If people could just waltz in, then Vault City would've fallen apart in no time.}
+{3010}{}{But this city needs someone of my expertise. Is there anything I can do for you?}
+{3020}{}{I just want to trade, that's all.}
+{3030}{}{There are some important issues I'd like to discuss with the appropriate representatives.}
+{3040}{}{[Leave]}
+{4000}{}{Look, if you need to get inside that badly, go bother the customs officials. They're in the building right next to us.}
+{4010}{}{I had more questions...}
+{4020}{}{That's exactly what I wanted to hear. Thanks.}
+{5000}{}{Well, I can't normally... I... aw, hell. Fine, you can enter. Maybe we can use someone like you. Remember, don't cause any trouble, or you're out on your ass.}
+{5010}{}{Thank you, thank you so much! You won't regret this, I promise!}
+{5020}{}{Yeah, yeah... whatever. Idiot.}
+{6000}{}{Really now? I guess I'll catch you later, cutie... [blushes]}
+{6010}{}{Thanks baby.}
+{7000}{}{Fine, give me the damn thing. You're free to enter. But if I hear you've been causing trouble, I'll be the first one to kick your sorry ass back outside.}
+{7010}{}{I am -so- scared.}
+{7020}{}{Alright, no problem.}
+{8000}{}{No, there's nothing for you to do right now. Maybe later.}
+{8010}{}{Dammit. Alright, I'm going.}
+{8020}{}{Ha! Predictable...}
+{9000}{}{What can I help you with ?}
+{9010}{}{Me.. Wanna sea Volt SSiti..}
+{9020}{}{Nutin.}
+{10000}{}{You fucking retard, get the hell outta here before I shoot you to pieces. Move!}
+{10010}{}{You.. no.. good. Me.. not.. like you! Me hurt you!}
+{10020}{}{Ok.}
+{10030}{}{Why... angry?}
+{10040}{}{[Leave]}
+{11000}{}{Forgive me citizen, but I can't talk while I'm on duty.@@Drop by when I'm off duty.@@Sorry, can't talk right now.@@I have to watch the entrance.@@Have I ever bothered you when you were on guard duty?}
+{12000}{}{Get on about your business.@@I think it's about time for you to leave.@@I don’t like the looks of you.@@Watch yourself, scumbag.}
+{13000}{}{Hello, traveler.@@Be about your business, Outworlder.@@No loitering.@@Talk to Wallace if you’re lookin' to get into the City.}
+{14000}{}{It's forbidden to stay in the city during the night, and you know it! Now I'll make an example of you!}
+{15000}{}{How did you get in here? Guards, get him!}
+{16000}{}{Maybe there is... look, we're pretty much isolated here, but sometimes we have to scavenge the parts we're not able to manufacture. What we're in need of at the moment is a hydroelectric... magneto... uh, something. You find us one of those, and you're in.}
+{16010}{}{Venturing out into the wastelands, huh? Sounds, uh, dangerous... but I'll do it.}
+{16020}{}{Hey, I'm not your gopher! Screw you!}
+{17000}{}{Excellent. Have any questions?}
+{17010}{}{Yeah. Where the fuck am I supposed to find the fucking thing?}
+{17020}{}{You haven't got any ideas about where I should start looking, do you?}
+{17030}{}{Just one, friend. Where do you suppose I find it? If it's for the good of the city, I want to make sure I can get hold of one as quick as possible.}
+{17040}{}{Nope, I'll start searching now.}
+{18000}{}{Watch your mouth. I think I heard mention of one in Gecko or Modoc, but I can't be sure.}
+{18010}{}{Ok thanks, I'll be on my way.}
+{19000}{}{Maybe San Francisco? I hear they got all kinds of high technology there.}
+{19010}{}{Thanks.}
+{20000}{}{Probably the junkyard over in Gecko, buddy. That place has a whole mess of high-end technology just laying around. But be careful, those ghouls don't give it up easy.}
+{20010}{}{Thanks for the info, I'm on my way.}
+{21000}{}{So, you got the hydroelectri... uh, the Hy-Mag?}
+{21010}{}{You bet. Is this what you're looking for?}
+{21020}{}{Naw, I can't find the damn thing anywhere. I'm just gonna give up on it. Forget you ever asked me to find one.}
+{21030}{}{No, not yet. But I'll find it. Eventually.}
+{22000}{}{Fine, we'll just have to find someone more capable to do it. Get out of here.}
+{22010}{}{Alright. I gotta go now, bye.}
+{23000}{}{Well, you could take the Citizenship test. It's one of the few way for Outsiders to become Citizens.}
+{23010}{}{Then I guess I'll have to take the test... but first, I got a couple qustions.}
+{23020}{}{Alright, I'd like to take the test. Say, you got a pen I could borrow?}
+{23030}{}{Test? You can shove that up your ass, buddy.}
+{23040}{}{Test? I don't like the sound of that. I've got some other questions.}
+{24000}{}{What do you wanna know?}
+{24010}{}{What is the test exactly?}
+{24020}{}{How many people have passed this test?}
+{24030}{}{I'm ready. Give me the test, I bet I'll ace it.}
+{25000}{}{It's a comprehensive exam, divided into several parts... advanced mathematics, spatial relations, deductive reasoning, language comprehension... oh, and there is also a thorough physical examination.}
+{25010}{}{OK, a few more questions.}
+{26000}{}{If you get lucky, you'd be our second.}
+{26010}{}{Second!?}
+{27000}{}{Second. C'mon, don't be a pussy, it's not that hard.}
+{27010}{}{Not that hard?!}
+{28000}{}{C'mon, just look at the questions. Number one. Deaf-ayn the Haz-rad function and its cum-yulative... - ah, screw it, you can read it.}
+{28010}{}{[You take the test]}
+{29000}{}{OK, I think think you've had more than enough time. Hand it over.}
+{29010}{}{But, I --}
+{29020}{}{I didn't --}
+{29030}{}{Let me just --}
+{30000}{}{Well, I'll be damned! You got a perfect score! I'll hold onto this, and submit through the proper channels. Heh, wait 'till I tell the other guards, they ain't gonna believe me... oh, I almost to forgot. You're free to enter. Welcome to Vault City, Citizen.}
+{30010}{}{Thank you.}
+{31000}{}{Okay, let's compare your answers with the correct ones. Wrong, wrong... correct... wrong! Haha!}
+{31010}{}{[You wait a while]}
+{32000}{}{Well, you showed SOME aptitude in that test, but there are several wrong answers which means you've failed. Sorry.}
+{32010}{}{Maybe you could go easy on me, I think we can both see the city could use someone like me. Of course, I my acceptance wouldn't be complete without a proper donation...}
+{32020}{}{Maybe that minor lack of knowledge could be overlooked considering my exceptional physical condition?}
+{32030}{}{Several wrong answers, huh? That doesn't sound like a big deal. I mean, I did better than most people, right? Maybe you could just let me in anyway?}
+{33000}{}{Well, I guess I could make an exception. Just this once. Four grand, I let a couple of your mistakes slide, and you'll have passed the test.}
+{33010}{}{Okay, okay... here you go. [You hand over your cash]}
+{33020}{}{Ah, I'm kind of a little short on cash right now. Maybe some other time.}
+{33030}{}{$4,000 to get into this dump? Forget it!}
+{34000}{}{Let's take a look... oh, man! Haha! Ahahaha! Oh man, that's embarrassing. I haven't seen a failure like this in a long while. I think you better give up hope of making it inside, buddy. Get back to your dirt farm.}
+{34010}{}{Hey, I'd like to see you do better. Prick.}
+{34020}{}{Just shut your fucking mouth! Shut up! Fuck you! [Go for your weapon]}
+{35000}{}{No, I can't. Imagine if every guard started making exceptions. The city would be flooded with your kind. We don't want that, got it? Now get the hell away from the gate.}
+{35010}{}{Alright, point taken. Okay, I'll be going then.}
+{36000}{}{Well I'm not sure about that... what exactly is it you're capable of?}
+{36010}{}{I'm a field medic. You guys get hurt defending your fine city, and I can patch you up no problem.}
+{36020}{}{If it's got moving parts, I can fix it. Generators, robots, cars... you name it.}
+{36030}{}{You need something 'reclaimed' from those thugs in the courtyard? Just ask.}
+{36040}{}{I'm a doctor. I've saved more lives than you could possibly imagine, pal.}
+{36050}{}{I'm of the scientific persuasion. My proficiency in the field of physics, technology and geology is without parallel.}
+{36060}{}{[Next]}
+{36070}{}{Okay, maybe I overestimated myself. I better be going.}
+{37000}{}{Well I'm not sure about that... what exactly is it you're capable of?}
+{37010}{}{I'm an experienced trader. I can get you much better deals when you're dealing with Outlanders.}
+{37020}{}{I'm an expert locksmith. A few doors get jammed, maybe your gear locker gets broken? Not a problem if I'm around.}
+{37030}{}{I'm a survivalist. I could teach you people an awful lot about life and survival in the wasteland.}
+{37040}{}{I can arm and disarm all manner of explosive devices. Someone sneaks a bomb into the city? I can take care of it.}
+{37050}{}{I've been told, my friend, that I have a certain way with words. The city could always use a skilled negotiator, don't you think?}
+{37060}{}{[Previous]}
+{37070}{}{Okay, maybe I overestimated myself. I better be going.}
+{38000}{}{Maybe you could be of some use. But are you really that good? You're not the only one out there capable of that, you know.}
+{38010}{}{[You spend some time trying to persuade him you're sufficiently skilled]}
+{39000}{}{Is that all? Sorry, doesn't sound like you're up to it.}
+{39010}{}{Well hold on, that's not all there is to it... [You spend some more time explaining the finer points of your craft]}
+{40000}{}{Get out of here, freak.@@No ghouls inside the city.@@You're lucky you weren't shot on the way in.@@You're fucking hideous, you know that@@It's trash like you we're protecting ourselves from.}
+{41000}{}{Well aren't we all. Now, if you excuse me...}
+{41010}{}{You'll regret talking to me like that! [Attack]}
+{41020}{}{Come on. Give me a chance.}
+{41030}{}{Come on. Give me a chance.}
+{41040}{}{You are making a mistake. You have enough problems on your shoulders. Let me take away the burden for a mere cap or two.}
+{41050}{}{I really need this. I'm in desperate times.}
+{41060}{}{I have other questions.}
+{41070}{}{I'll be on my way then.}
+{42000}{}{Hmm. Since you put it that way, maybe I do have something worth your while...}
+{42010}{}{I'm listening...}
+{42020}{}{I've changed my mind. I gotta go.}
+{43000}{}{I don't have time for this. Step away.}
+{43010}{}{You'll regret talking to me like that! [Attack]}
+{43020}{}{I'll be on my way then.}
+{44000}{}{Some of the courtyard residents haven't paid their rent. I need you to go and collect it from them.}
+{44010}{}{Sounds good. Which of the courtyard residents are behind their rent?}
+{44020}{}{Doesn't sound like a job for me. I have questions for you, though.}
+{44030}{}{Doesn't sound like a job for me. I'll get going now.}
+{45000}{}{Let me see... (Takes out some crumpled sheets of paper and searches through them) Gary, Ed, Joshua, John McRae, and Smith. Each owes a two hundred caps. Don't come back untill you have collected ALL the money.}
+{45010}{}{I'll go pay them a visit.}
+{45020}{}{I have other questions.}
+{46000}{}{You're back. Have you collected the rent?}
+{46010}{}{I have the rent...}
+{46020}{}{Not yet, I have questions.}
+{46030}{}{Who were the residents again?}
+{46040}{}{I've been ruthlessly beaten and my possession have been stolen. I've lost it all.}
+{46050}{}{I've changed my mind. I don't want to do this.}
+{46060}{}{I'll go do that right now.}
+{47000}{}{Not so fast buddy. You wasted my time enough. Now, I don't care how, but you WILL go get me that rent.}
+{47010}{}{You'll regret talking to me like that! [Attack]}
+{47020}{}{I'll go work on it then.}
+{48000}{}{Continue. @@ I'm listening.}
+{48010}{}{I've collected all the money.}
+{48020}{}{Nevermind. I gotta go now.}
+{49000}{}{Great news. Here is your share.}
+{49010}{}{That's not good enough. I want more.}
+{49020}{}{Pleasure doing business with you.}
+{50000}{}{A wise guy, eh? I guess I can spare some more.}
+{50010}{}{Oh come on. You can do better than that.}
+{50020}{}{Pleasure doing business with you.}
+{51000}{}{Here take this. Spend it wisely.}
+{51010}{}{Pleasure doing business with you.}
+{100000001}{}{Hello there, stranger. I'm sorry, but you may not enter.}
+{100000002}{}{Welcome fellow citizen! You may enter.}
+{100000002}{}{Citizen.}
+{100000003}{}{Greetings.}
+{100000004}{}{You are not authorized to enter the council.}
+{100000005}{}{Welcome to the headquarters, citizen.}
+{100000006}{}{Stop right there! You are not allowed to enter this building.}
+{100000007}{}{Welcome to the Vault 8, citizen.}
+{100000008}{}{You have no proper authorization. Stay away from this door.}
+{100000008}{}{I am sorry, but you are not authorized to visit the underground level.}
+{100000009}{}{Day Pass, please... Okay, you can enter. Don't forget to leave the city before the night falls.}
+{100000010}{}{See you in hell!}
+{100000010}{}{I'm gonna dance on your grave!}
+{100000010}{}{Now you're gonna regret it!}
+{100000010}{}{You'll be good riddance soon!}
+{100000010}{}{You're about to meet your maker now!}
+{100000011}{}{Yeah, you have a DAY Pass. Does it look like day to you? Get lost.}
+

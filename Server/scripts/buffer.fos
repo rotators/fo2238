@@ -1,0 +1,560 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// buffer.fos
+//
+
+#ifndef __BUFFER__
+#define __BUFFER__
+
+#include "_macros.fos"
+
+#include "buffer_h.fos"
+
+#ifdef __DEBUG__
+# define final
+// #include "buffer_test.fos" // not ready yet
+#endif
+
+final class CBuffer : Buffer
+{
+    array<uint8> buf;                   // internal buffer
+    uint         readPos;               // reading position
+
+    CBuffer()
+    {
+        ~this;
+    }
+    #define _constructor                                 \
+        # (type)                                         \
+        CBuffer(array<type>@ data)                       \
+        {                                                \
+            ~this;                                       \
+            uint len = 0;                                \
+            if(valid(data) && (len = data.length()) > 0) \
+            {                                            \
+                for(uint d = 0; d < len; d++)            \
+                {                                        \
+                    this << type(data[d]);               \
+                }                                        \
+            }                                            \
+            -this;                                       \
+        }
+
+    #define _opBase    \
+        # (type, init) \
+        Buffer@ Get(type & value)      \   // buffer.Get( value );
+    {                  \
+        value = init;  \
+        this >> value; \
+        return(this);  \
+    }                  \
+    Buffer@ Set(type& value)      \       // buffer.Set( value );
+    {                  \
+        this << value; \
+        return(this);  \
+    }
+
+    #define _opArray   \
+        # (type, init) \
+        Buffer@ opShr(array<type>&value)             \     // buffer >> array;
+    {                                 \
+        value.resize(0);              \
+        BUFFER_LENTYPE len = 0;       \
+        this >> len;                  \
+        for(uint a = 0; a < len; a++) \
+        {                             \
+            type tmp = init;          \
+            this >> tmp;              \
+            value.insertLast(tmp);    \
+        }                             \
+        return(this);                 \
+    }                                 \
+    Buffer@ opShl(array<type>& value)             \       // buffer << array;
+    {                                        \
+        BUFFER_LENTYPE len = value.length(); \
+        this << len;                         \
+        if(len > 0)                          \
+        {                                    \
+            for(uint a = 0; a < len; a++)    \
+                this << type(value[a]);      \
+        }                                    \
+        return(this);                        \
+    }                                        \
+    Buffer@ Get(array<type>& value)               \       // buffer.Get( array );
+    {                  \
+        this >> value; \
+        return(this);  \
+    }                  \
+    Buffer@ Set(array<type>& value)               \       // buffer.Set( array );
+    {                  \
+        this << value; \
+        return(this);  \
+    }
+
+    #define _opDump    \
+        # (type, name) \
+        Buffer@ opUShr(array<type>&value)            \     // buffer >>> array;
+    {                                   \
+        uint oldReadPos = this.readPos; \
+        -this;                          \
+        while(this.IsRaw(1))            \
+        {                               \
+            type tmp = 0;               \
+            this >> type(tmp);          \
+            value.insertLast(tmp);      \
+        }                               \
+        this.readPos = oldReadPos;      \
+        return(this);                   \
+    }                                   \
+    Buffer@ opUShrAssign(array<type>& arr)        \       // buffer >>>= array;
+    {                  \
+        arr.resize(0); \
+        this >> > arr; \
+        return(this);  \
+    }                  \
+    array<type> name()                                                      \     // array = buffer.name();
+    {                    \
+        array<type> tmp; \
+        this >> >= tmp;  \
+        return(tmp);     \
+    }
+
+    _constructor(int8)
+    _constructor(int16)
+    _constructor(int32)
+    _constructor(int64)
+    _constructor(uint8)
+    _constructor(uint16)
+    _constructor(uint32)
+    _constructor(uint64)
+
+    // Check if buffer contains [len] elements, without changing reading position
+    bool IsRaw(uint len)
+    {
+        if(len == 0)
+            return(false);
+
+        if(this.readPos + len > this.buf.length())
+            return(false);
+        else
+            return(true);
+    }
+
+    // Clear buffer, reset reading position
+    // ~Buffer;
+    Buffer@ opCom()
+    {
+        this.buf.resize(0);
+        -this;
+        return(this);
+    }
+
+    // Reset reading position
+    // -Buffer;
+    Buffer@ opNeg()
+    {
+        this.readPos = 0;
+        return(this);
+    }
+
+    /*
+       // Set reading position
+       // Buffer[index];
+       Buffer@ opIndex( int index )
+       {
+            int max = this.buf.length() - 1;
+            if( max < 0 || index > max )
+                    return( this );
+
+            this.readPos = index;
+            return( this );
+       }
+     */
+
+    Buffer@ opShr(int8& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(int8 value)       // Buffer << value
+    {
+        this.buf.insertLast((value) & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(int16& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(int16 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 8) & 0xFF);
+        this.buf.insertLast((value)    & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(int32& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 24;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 16;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(int32 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 24) & 0xFF);
+        this.buf.insertLast((value >> 16) & 0xFF);
+        this.buf.insertLast((value >> 8)  & 0xFF);
+        this.buf.insertLast((value)     & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(int64& value)       // Buffer >> value;
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 56;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 48;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 40;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 32;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 24;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 16;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(int64 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 56) & 0xFF);
+        this.buf.insertLast((value >> 48) & 0xFF);
+        this.buf.insertLast((value >> 40) & 0xFF);
+        this.buf.insertLast((value >> 32) & 0xFF);
+        this.buf.insertLast((value >> 24) & 0xFF);
+        this.buf.insertLast((value >> 16) & 0xFF);
+        this.buf.insertLast((value >> 8)  & 0xFF);
+        this.buf.insertLast((value)     & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(uint8& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(uint8 value)       // Buffer << value
+    {
+        this.buf.insertLast((value) & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(uint16& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(uint16 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 8) & 0xFF);
+        this.buf.insertLast((value)    & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(uint32& value)       // Buffer >> value
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 24;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 16;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(uint32 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 24) & 0xFF);
+        this.buf.insertLast((value >> 16) & 0xFF);
+        this.buf.insertLast((value >> 8)  & 0xFF);
+        this.buf.insertLast((value)     & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(uint64& value)       // Buffer >> value;
+    {
+        value = 0;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 56;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 48;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 40;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 32;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 24;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 16;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++] << 8;
+        if(!this.IsRaw(1))
+            return(this);
+        value |= this.buf[this.readPos++];
+
+        return(this);
+    }
+
+    Buffer@ opShl(uint64 value)       // Buffer << value
+    {
+        this.buf.insertLast((value >> 56) & 0xFF);
+        this.buf.insertLast((value >> 48) & 0xFF);
+        this.buf.insertLast((value >> 40) & 0xFF);
+        this.buf.insertLast((value >> 32) & 0xFF);
+        this.buf.insertLast((value >> 24) & 0xFF);
+        this.buf.insertLast((value >> 16) & 0xFF);
+        this.buf.insertLast((value >> 8)  & 0xFF);
+        this.buf.insertLast((value)     & 0xFF);
+
+        return(this);
+    }
+
+    Buffer@ opShr(bool& value)       // Buffer >> value
+    {
+        uint8 tmp = 0;
+        this >> tmp;
+        value = (tmp <= 0 ? false : true);
+
+        return(this);
+    }
+
+    Buffer@ opShl(bool value)       // Buffer << value
+    {
+        this << uint8(value ? 1 : 0);
+
+        return(this);
+    }
+
+    Buffer@ opShr(string& value)       // Buffer >> value
+    {
+        #ifdef BUFFER_UNICODE
+        value.rawResize(0);
+        #endif
+        #ifndef BUFFER_UNICODE
+        value.resize(0);
+        #endif
+        BUFFER_LENTYPE len = 0;
+        this >> len;
+        for(uint s = 0; s < len; s++)
+        {
+            uint8 char = 0;
+            this >> char;
+            #ifdef BUFFER_UNICODE
+            value.rawResize(s + 1);
+            value.rawSet(s, char);
+            #endif
+            #ifndef BUFFER_UNICODE
+            value.resize(s + 1);
+            value[s] = char;
+            #endif
+        }
+        return(this);
+    }
+
+    Buffer@ opShl(string value)       // Buffer << value
+    {
+        BUFFER_LENTYPE len = value.length();
+        this << len;
+        if(len > 0)
+        {
+            for(uint s = 0; s < len; s++)
+            #ifdef BUFFER_UNICODE
+                this << value.rawGet(s);
+            #endif
+            #ifndef BUFFER_UNICODE
+                this << uint8(value[s]);
+            #endif
+                }
+                return(this);
+        }
+
+        Buffer@ opShr(float& value)   // Buffer >> value
+        {
+            string tmp = "";
+            this >> tmp;
+            if(tmp.length() > 0)
+                StrToFloat(tmp, value);
+
+            return(this);
+        }
+
+        Buffer@ opShl(float value)   // Buffer << value
+        {
+            string tmp = value + "";
+            this << tmp;
+
+            return(this);
+        }
+
+        // primitive
+        _opBase(int8, 0)
+        _opBase(int16, 0)
+        _opBase(int32, 0)
+        _opBase(int64, 0)
+        _opBase(uint8, 0)
+        _opBase(uint16, 0)
+        _opBase(uint32, 0)
+        _opBase(uint64, 0)
+        _opBase(bool, false)
+        _opBase(string, "")
+        _opBase(float, 0.0f)
+
+        // array<primitive>
+        _opArray(int8, 0)
+        _opArray(int16, 0)
+        _opArray(int32, 0)
+        _opArray(int64, 0)
+        _opArray(uint8, 0)
+        _opArray(uint16, 0)
+        _opArray(uint32, 0)
+        _opArray(uint64, 0)
+        _opArray(bool, false)
+        _opArray(string, "")
+        _opArray(float, 0.0f)
+
+        // array<array<primitive>>
+        _opArray(array<int8>, {})
+        _opArray(array<int16>, {})
+        _opArray(array<int32>, {})
+        _opArray(array<int64>, {})
+        _opArray(array<uint8>, {})
+        _opArray(array<uint16>, {})
+        _opArray(array<uint32>, {})
+        _opArray(array<uint64>, {})
+        _opArray(array<bool>, {})
+        _opArray(array<string>, {})
+        _opArray(array<float>, {})
+
+        // array<array<primitive>>
+        _opArray(array<array<int8> >, {})
+        _opArray(array<array<int16> >, {})
+        _opArray(array<array<int32> >, {})
+        _opArray(array<array<int64> >, {})
+        _opArray(array<array<uint8> >, {})
+        _opArray(array<array<uint16> >, {})
+        _opArray(array<array<uint32> >, {})
+        _opArray(array<array<uint64> >, {})
+        _opArray(array<array<bool> >, {})
+        _opArray(array<array<string> >, {})
+        _opArray(array<array<float> >, {})
+
+        _opDump(int8,  AsInt8)
+        _opDump(int16, AsInt16)
+        _opDump(int32, AsInt32)
+        _opDump(int64, AsInt64)
+        _opDump(uint8, AsUint8)
+        _opDump(uint16, AsUint16)
+        _opDump(uint32, AsUint32)
+        _opDump(uint64, AsUint64)
+    };
+
+// Create new Buffer object
+    Buffer@ NewBuffer()
+    {
+        return(@CBuffer());
+    }
+
+    #define _newBuffer                       \
+        # (type)                             \
+        Buffer@ NewBuffer(array<type>@ data) \
+        {                                    \
+            return (@CBuffer(data));         \
+        }
+
+    _newBuffer(int8)
+    _newBuffer(int16)
+    _newBuffer(int32)
+    _newBuffer(int64)
+    _newBuffer(uint8)
+    _newBuffer(uint16)
+    _newBuffer(uint32)
+    _newBuffer(uint64)
+#endif // __BUFFER__ //

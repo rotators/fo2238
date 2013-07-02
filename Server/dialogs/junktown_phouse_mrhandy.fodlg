@@ -1,0 +1,103 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_jt_power_house_handy } 3 #
+6 1020 D _var p name_mem_npc_player = 1 D _var p q_jt_power_house_handy > 0 #
+2 1030 D _var p q_jt_power_house_handy > 0 D _var p name_mem_npc_player = 0 #
+11 1040 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT < 7 D _var p q_jt_power_house_handy > 0 D _var p q_jt_power_house_handy < 3 R _script dialog@r_SkillRoll 2 Science 6 #
+6 2020 D _param p ST_INTELLECT } 7 D _var p q_jt_power_house_handy > 0 D _var p q_jt_power_house_handy < 3 R _var p name_mem_npc_player + 1 #
+0 2030 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+0 4010 @
+6 5000 None 0 #
+13 5010 D _param p ST_PERCEPTION } 5 D _param p ST_LUCK < 5 D _var p q_jt_power_house_handy_special = 0 R _item p PID_PUMP_PARTS + 1 R _var p q_jt_power_house_handy_special = 1 #
+14 5020 D _param p ST_PERCEPTION } 5 D _param p ST_LUCK } 8 D _var p q_jt_power_house_handy_special = 0 R _item p PID_DICE + 1 R _var p q_jt_power_house_handy_special = 1 #
+15 5030 D _param p ST_PERCEPTION } 5 D _param p ST_LUCK } 5 D _param p ST_LUCK < 8 D _var p q_jt_power_house_handy_special = 0 R _item p PID_BEER + 1 R _var p q_jt_power_house_handy_special = 1 #
+7 5040 D _param p SK_SCIENCE < 200 D _param p SK_REPAIR < 75 R _var p name_mem_npc_player = 1 #
+8 5050 D _param p SK_SCIENCE } 200 D _param p SK_REPAIR } 75 R _var p q_jt_power_house_handy = 3 R _param p ST_EXPERIENCE + 2000 R _var p name_mem_npc_player = 1 R _param p PE_MR_FIXIT = 1 #
+10 5060 D _item p PID_ROBOT_MOTIVATOR > 0 R _script dialog@r_SkillRoll 3 Science -50 12 R _var p name_mem_npc_player = 1 #
+0 5070 R _var p name_mem_npc_player = 1 @
+7 6000 None 0 #
+0 6010 @
+8 7000 None 0 #
+9 7010 @
+9 8000 None 0 @
+10 9000 None 0 #
+6 9010 #
+0 9020 @
+11 10000 None 0 #
+0 10010 @
+12 11000 None 0 #
+9 11010 R _var p q_jt_power_house_handy = 3 R _param p ST_EXPERIENCE + 500 R _item p PID_ROBOT_MOTIVATOR - 1 @
+13 12000 None 0 #
+6 12010 #
+0 12020 @
+14 13000 None 0 #
+6 13010 #
+0 13020 @
+15 14000 None 0 #
+6 14010 #
+0 14020 &
+
+[engl]
+{100}{}{Mr. Handy}
+{200}{}{You see a robot.}
+{210}{}{You see an old RobCo Mr. Handy Type 1 robot.}
+{240}{}{You see a dead guard of Junktown.}
+{260}{}{You see a slain guard of Junktown.}
+{1000}{}{Predialogue installations}
+{1010}{}{fixed}
+{1020}{}{quest active, inspected}
+{1030}{}{quest active, not inspected}
+{1040}{}{default}
+{2000}{}{[You see a RobCo Mr. Handy Type 1 robot. It looks rundown, but still capable of doing simple tasks such as maintaining machines. It doesn't seem to work, though.]}
+{2010}{}{[Inspect the robot.]}
+{2020}{}{[Inspect the robot.]}
+{2030}{}{[End]}
+{3000}{}{[You see a RobCo Mr. Handy Type 1 robot. Beside it's rundown look, it seems to be working pretty well.]}
+{3010}{}{[End]}
+{4000}{}{[You inspect the robot but can't find anything unusual. It just doesn't work.]}
+{4010}{}{[End]}
+{5000}{}{[You inspect the robot and find out that it's motivator unit is burnt through. No chance to do anything here without a new robot motivator.]}
+{5010}{}{[Something small is jammed in the backpart of the propulsion.]}
+{5020}{}{[Something small is jammed in the backpart of the propulsion.]}
+{5030}{}{[Something small is jammed in the backpart of the propulsion.]}
+{5040}{}{[Try to fix the robot without a new motivator unit.]}
+{5050}{}{[Try to fix the robot without a new motivator unit.]}
+{5060}{}{[Use the new motivator unit to fix the robot.]}
+{5070}{}{[End]}
+{6000}{}{[Impossible. You can't fix it without a new motivator unit.]}
+{6010}{}{[End]}
+{7000}{}{[You hammer on the machines and try to re-wire other parts of the robot in order to bypass the burned out elementy of the motivator unit. It takes you some hours, but then you can hear the machines starting up again.]}
+{7010}{}{[Start the Mr. Handy robot.]}
+{8000}{}{*bzzzzt*}
+{9000}{}{[The motivator is okay but you don't seem to be able to wire it correctly. The machine won't start.]}
+{9010}{}{[Try again.]}
+{9020}{}{[End]}
+{10000}{}{[You see a rundown RobCo Mr. Handy Type 1 robot. On the front is a paper with the text "PROPERTY OF THOMAS - GET YOUR FILTHY HANDS OFF OF MY ROBOT!" attached.]}
+{10010}{}{[End]}
+{11000}{}{[The motivator is okay and you are able to wire it correctly. Now you can hear the machines starting up again.]}
+{11010}{}{[Start the Mr. Handy robot.]}
+{12000}{}{[You search the propulsion area and find a part that shouldn't be in there... After a few short but powerful strokes, you've got it out. Turn's out, it's just some junk.]}
+{12010}{}{[Continue]}
+{12020}{}{[End]}
+{13000}{}{[You search the propulsion area and find a part that shouldn't be in there... After a few short but powerful strokes, you've got it out. Turn's out, it's just some dices... How the fuck did they jammed in there?!]}
+{13010}{}{[Continue]}
+{13020}{}{[End]}
+{14000}{}{[You search the propulsion area and find a part that shouldn't be in there... After a few short but powerful strokes, you've got it out. Turn's out, it's a beer bottle... What.]}
+{14010}{}{[Continue]}
+{14020}{}{[End]}
+{100000001}{}{Welcome to Junktown, traveller!}
+{100000002}{}{I'm sorry, the gates are closed for the night. Come back in the morning.}
+{100000003}{}{Guys, get him!}
+

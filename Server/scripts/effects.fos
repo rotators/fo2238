@@ -1,0 +1,127 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// effects.fos
+//
+
+#include "_macros.fos"
+#include "world_common_h.fos"
+
+// Screen fading:
+// import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+// import void FlushScreen(Critter& cr, uint fromColor, uint toColor, uint timeMs) from "effects";
+// import void FlushScreen(Map& map, bool fadeOut, uint timeMs) from "effects";
+// import void FlushScreen(Map& map, uint fromColor, uint toColor, uint timeMs) from "effects";
+// Screen quake:
+// import void QuakeScreen(Critter& cr) from "effects";
+// import void QuakeScreen(Critter& cr, uint noise, uint timeMs) from "effects";
+// import void QuakeScreen(Map& map) from "effects";
+// import void QuakeScreen(Map& map, uint noise, uint timeMs) from "effects";
+
+// Default values
+#define QUAKE_NOISE    (8)
+#define QUAKE_TIME     (800)
+
+
+void FlushScreen(Critter& cr, bool fadeOut, uint timeMs)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_FlushScreen", fadeOut ? int(0xFF000000) : 0, fadeOut ? 0 : int(0xFF000000), int(timeMs), null, null);
+}
+
+void FlushScreen(Critter& cr, uint fromColor, uint toColor, uint timeMs)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_FlushScreen", int(fromColor), int(toColor), int(timeMs), null, null);
+}
+
+void FlushScreen(Map& map, bool fadeOut, uint timeMs)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_FlushScreen", fadeOut ? int(0xFF000000) : 0, fadeOut ? 0 : int(0xFF000000), int(timeMs), null, null);
+}
+
+void FlushScreen(Map& map, uint fromColor, uint toColor, uint timeMs)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_FlushScreen", int(fromColor), int(toColor), int(timeMs), null, null);
+}
+
+void QuakeScreen(Critter& cr)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_QuakeScreen", QUAKE_NOISE, QUAKE_TIME, 0, null, null);
+}
+
+void QuakeScreen(Critter& cr, uint noise, uint timeMs)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_QuakeScreen", int(noise), int(timeMs), 0, null, null);
+}
+
+void QuakeScreen(Map& map)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_QuakeScreen", QUAKE_NOISE, QUAKE_TIME, 0, null, null);
+}
+
+void QuakeScreen(Map& map, uint noise, uint timeMs)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_QuakeScreen", int(noise), int(timeMs), 0, null, null);
+}
+
+// lisac2k start
+// Fancy Lights
+
+void TattooSignLights(Item& item, bool firstTime)
+{
+    uint[] values = { item.Id, 0 };
+    CreateTimeEvent(AFTER(REAL_SECOND(5)), "e_SwitchSign", values, false);
+}
+
+uint e_SwitchSign(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+
+    uint16 pid = item.GetProtoId();
+
+    if(!IsNight() && FLAG(item.Flags, ITEM_LIGHT))              // day
+    {
+        UNSETFLAG(item.Flags, ITEM_LIGHT);
+        if(pid == 9922)                                         // east-west sign
+            item.PicMap = GetStrHash("art\\items\\tattoo_sign_day.fofrm");
+        else if(pid == 9923)                                    // north-south sign
+            item.PicMap = GetStrHash("art\\items\\tattoo_sign_day_w.fofrm");
+
+        item.Update();
+        return REAL_MINUTE(1);
+    }
+
+    if(IsNight() && !FLAG(item.Flags, ITEM_LIGHT))                // night
+    {
+        SETFLAG(item.Flags, ITEM_LIGHT);
+        if(pid == 9922)
+            item.PicMap = GetStrHash("art\\items\\tattoo_sign_night.frm");
+        else if(pid == 9923)
+            item.PicMap = GetStrHash("art\\items\\tattoo_sign_night_w.frm");
+
+        item.Update();
+        return REAL_MINUTE(1);
+    }
+
+    // on init
+    return REAL_MINUTE(1);
+}
+// lisac2k end

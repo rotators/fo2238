@@ -1,0 +1,28 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_ncr_army.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+
+//
+// Map Data:
+// faction id (NCR)
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(firstTime)
+    {
+        uint[] maxes = { 10, 25 };
+        SetAlertMap(map, maxes);
+    }
+}

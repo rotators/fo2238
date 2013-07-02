@@ -1,0 +1,75 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// tasks.fos
+//
+
+#ifndef __TASKS__
+#define __TASKS__
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "entire.fos"
+
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+#define _AddTaskTimer    # (name, hours, minutes) { int[] data = { hours, minutes }; CreateTimeEvent(GetNearFullSecond(0, 0, 0, hours, minutes, 0), name, data, false);  }
+#define _AddTask                                                                                       \
+    # (name, id, mappid, role, entire, dir, condition) uint name(array<uint>@ values) { if(!valid(values)) \
+                                                                                        return 0; if(condition) { MoveToTask(id, mappid, role, entire, dir); } _ReturnTime(values[0], values[1]); }
+#define _ReturnTime                                                                                     \
+    # (hours, minutes) uint nexttime = GetNearFullSecond(0, 0, 0, hours, minutes, 0); if(nexttime == 0) \
+        nexttime = 24 * 60; return nexttime
+
+// Macros are evil, so we're doing stuff here :)
+void MoveToTask(uint id, uint mappid, uint role, uint entire, uint dir)
+{
+    Map@ map = GetMapByPid(mappid, 0);
+
+    if(!valid(map))
+    {
+        Log("Invalid map.");
+        return;
+    }
+
+    Critter@ npc = map.GetNpc(role, FIND_ALL, 0);
+    if(!valid(npc))
+    {
+        Log("Invalid npc.");
+        return;
+    }
+
+    DLog("Executing task " + id);
+
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+    if(!GetNearEntire(map, entire, HexX, HexY))
+    {
+        Log("Entire " + entire + " not found");
+        return;
+    }
+    SetLvar(npc, LVAR_current_task, id);
+    npc.SetHomePos(HexX, HexY, dir);
+    AddWalkPlane(npc, 0, HexX, HexY, dir, false, 0);
+
+}
+
+uint GetCurrentTask(Critter& npc)
+{
+    return(GetLvar(npc, LVAR_current_task));
+}
+
+bool d_IsCurrentTask(Critter& player, Critter@ npc, int val)
+{
+    return(GetCurrentTask(npc) == uint(val));
+}
+
+bool d_IsNotCurrentTask(Critter& player, Critter@ npc, int val)
+{
+    return(GetCurrentTask(npc) != uint(val));
+}
+#endif

@@ -1,0 +1,74 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _param p ST_CHARISMA > 99 #
+2 1020 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT < 4 #
+4 2020 D _param p ST_INTELLECT < 4 #
+7 2030 D _param p ST_INTELLECT > 3 #
+6 2040 D _param p ST_CHARISMA < 4 D _param p ST_INTELLECT > 3 #
+10 2050 D _param p ST_CHARISMA > 3 D _param p ST_INTELLECT > 3 #
+5 2060 D _param p ST_INTELLECT > 3 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 #
+8 6020 @
+7 7000 None 0 #
+65506 7010 #
+0 7020 @
+8 8000 None 0 @
+9 9000 None 0 @
+10 10000 None 0 #
+10 10010 D _item p PID_BOTTLE_CAPS } 200 R _item p PID_PURPLE_ROBE + 1 R _script dialog@r_RemoveMoney 1 200 #
+0 10020 @
+11 11000 None 0 #
+7 11010 #
+0 11020 &
+
+[engl]
+{100}{}{Shopkeeper}
+{200}{}{You see a shopkeeper.}
+{240}{}{You see a dead prisoner.}
+{260}{}{You see a slain prisoner.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Answer text}
+{2000}{}{Greetings, my fellow Child.  How can I help you?}
+{2010}{}{Hng!@@Lugga!?}
+{2020}{}{Baarta!}
+{2030}{}{What do you have to trade?@@Perhaps we can make a deal.}
+{2040}{}{Where can I get one of those fancy robes of yours...}
+{2050}{}{Where can I get one of those fancy robes of yours...}
+{2060}{}{Thanks. See you later, alligator.}
+{3000}{}{The Holy Flame does not appreciate thieves and scoundrels in his
+ house of worship.  You will be punished!}
+{4000}{}{The Children do not have to deal with your kind.  And you've been causing us a serious problem. I would like you to go away before I have to call in reinforcements.}
+{4010}{}{[Leave]}
+{5000}{}{After a while, crocodile. I can't believe I just said that.}
+{5010}{}{[Leave]}
+{6000}{}{[Studies you for a moment] My child, I hope you won't be offended if I say there is something suspicious about you. You see, only trusted members of the Cathedral are allowed to wear the holy purple. May I help you in any other way?}
+{6010}{}{Oh, well. What do you have to trade?}
+{6020}{}{I guess that answers my question, thanks!}
+{7000}{}{We have all sorts of special items to remember your trip to the Cathedral. These memories can't be bought cheaply, you understand.}
+{7010}{}{Let me see them...@@I'd be happy to do business with you.@@Good, show me what you have...}
+{7020}{}{Nevermind.}
+{8000}{}{You're welcome. Have pleasant days for the rest of your life.}
+{9000}{}{This one should be Purged by The Holy Flame. Sooner rather than later.@@The Holy Flame accepts all! But not you.@@Alright, you're starting to piss me off, y'ugly bastard.@@Child, I must ask you to leave. You are making this one queasy.}
+{10000}{}{Hmmm... I see no problem in selling you one of our robes. For 200 caps, what do you say?}
+{10010}{}{Sounds good. [You give him 200 caps.]}
+{10020}{}{Maybe later. Bye.}
+{11000}{}{[He gives you a purple robe from one of his chests.] Do you want something else now?}
+{11010}{}{What do you have to trade?}
+{11020}{}{Nothing. Bye.}
+

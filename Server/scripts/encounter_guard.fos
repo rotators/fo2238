@@ -1,0 +1,497 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// encounter_guard.fos
+//
+
+// Default event handlers for encounter guards.
+// See guard.fos for explanation of all guard stuff.
+
+// default event functions
+#include "_basetypes.fos"
+#include "_macros.fos"
+#include "groups_h.fos"
+#include "item_dogtags_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+#include "npc_common_h.fos"
+
+import int  GetGroupsStatus(Critter& c1, Critter& c2) from "reputations_modifiers";
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+import bool IsSoldier(Critter@ cr) from "item_dogtags";
+import bool IsRanger(Critter@ cr) from "item_dogtags";
+
+#define SHOWCRITTER1_ENCGUARD    (1)
+#define SHOWCRITTER1_VIGILANT    (4)
+
+#define _CanHelp                 # (npc, who)(_GroupMode(npc) == FACTION_MODE_NPC_ONLY ? _IsTrueNpc(who) : (_GroupMode(npc) == FACTION_MODE_PLAYER_ONLY ? !_IsTrueNpc(who) : true))
+
+void critter_init(Critter& cr, bool firstTime)
+{
+    if(firstTime)
+        cr.Wait(Random(2500, 3500));
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritterEncounter");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_OnIdleEncounter");
+    cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM, "_OnSmthMoveItemEncounter");
+    cr.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_NpcSmthUseSkill");
+    cr.ShowCritterDist1 = SHOWCRITTER1_ENCGUARD;
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_OnShowCritter1Encounter");
+    cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER_1, "_OnHideCritter1Encounter");
+    cr.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM, "_OnSmthDropItemEncounter");
+    cr.SetEvent(CRITTER_EVENT_PLANE_END, "_NpcPlaneFinish");
+    cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_NpcPlaneStart");
+    cr.SetEvent(CRITTER_EVENT_MOVE_ITEM, "_NpcMoveItem");
+
+    if(firstTime && _IsTrueNpc(cr) && (IsSoldier(cr) || IsRanger(cr)))
+    {
+        int dogtag_chance = Random(15, 20);
+        #ifdef __DEBUG__
+        dogtag_chance = 100;
+        #endif
+        Item@ armor = _CritGetItemArmor(cr);
+
+        if(valid(armor))
+        {
+            uint16 protoid = armor.GetProtoId();
+
+            // PA*
+            if(protoid == PID_ADVANCED_POWER_ARMOR ||
+               protoid == PID_ADVANCED_POWER_ARMOR_MK2)
+                dogtag_chance += Random(10, 15);
+
+            else if(protoid == PID_POWERED_ARMOR ||
+                    protoid == PID_HARDENED_POWER_ARMOR)
+                dogtag_chance += Random(5, 10);
+
+            // CA*
+            else if(protoid == PID_NCR_ARMOR ||
+                    protoid == PID_BROTHERHOOD_COMBAT_ARMOR ||
+                    protoid == PID_ENCLAVE_COMBAT_ARMOR)
+                dogtag_chance += Random(1, 6);
+        }
+
+        if(cr.Param[ST_FACTION_RANK] > 1)           // for future
+            dogtag_chance += Random(0, cr.Param[ST_FACTION_RANK] * 2);
+
+        if(Random(1, 100) <= int(CLAMP(dogtag_chance, 1, 100)))
+        {
+            Item@ dogtag = DogTag(cr);
+            if(valid(dogtag))
+            {
+                for(uint s = SLOT_HEAD; s >= SLOT_HAND1; s--)
+                {
+                    if(s == SLOT_ARMOR)
+                        continue;
+
+                    if(!valid(cr.GetItem(0, s)))
+                    {
+                        if(cr.MoveItem(dogtag.Id, dogtag.GetCount(), s))
+                            break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void _Vigilant(Critter& cr, bool firstTime)
+{
+    critter_init(cr, firstTime);
+    cr.ShowCritterDist1 = SHOWCRITTER1_VIGILANT;
+
+    cr.ShowCritterDist2 = SHOWCRITTER1_ENCGUARD;
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER_2, "_OnShowCritter2Encounter");
+}
+
+void _OnShowCritterEncounter(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    if(!_IsTrueNpc(target))
+    {
+
+        if(GetGroupsStatus(target, cr) == FACTION_ENEMY)
+        {
+            uint[] vals = { cr.Id, target.Id };
+            CreateTimeEvent(AFTER(REAL_SECOND(4)), "e_DelayedAttackPlane", vals, false);
+            return;
+        }
+
+        int crGroup = _GroupIndex(cr);
+        if(_ValidReputationIndex(crGroup) && ((target.Reputation[crGroup] < -2000) || (target.Reputation[crGroup] < __ReputationHated && !HasFactionUniform(target, crGroup, UNIFORM_FULL))))
+        {
+            uint[] vals = { cr.Id, target.Id };
+            CreateTimeEvent(AFTER(REAL_SECOND(4)), "e_DelayedAttackPlane", vals, false);
+            return;
+        }
+
+        if(_ValidReputationIndex(crGroup) && target.Reputation[crGroup] <= __ReputationAntipathy && !HasFactionUniform(target, crGroup, UNIFORM_BODY_ONLY))
+            if(Random(0, 3) != 0)
+                CreateTimeEvent(AFTER(REAL_SECOND(2)), "e_DelayedSayBehave", cr.Id, false);
+    }
+}
+
+
+void _OnShowCritter1Encounter(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD || cr.Timeout[TO_BATTLE] > 0)
+        return;
+
+    // cr.Say(SAY_NORM,"i see you");
+    if(_IsTrueNpc(target))
+        return;
+    if(IsCurrentEnemy(cr, target.Id))
+        return;
+    GameVar@ var = GetUnicumVar(UVAR_proximity_check, cr.Id, target.Id);
+    if(var.GetValue() == 1)
+    {
+        AddAttackPlane(cr, 0, target);
+        var = 2;
+        return;
+    }
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    if(cr.Timeout[TO_BATTLE] == 0)
+    {
+        if(IsHumanoid(cr) && cr.Timeout[TO_BATTLE] == 0)
+        {
+            if(_GroupIndex(cr) != _GroupIndex(target))
+                cr.Say(SAY_NORM_ON_HEAD, "Keep your distance!");
+            else
+                cr.Say(SAY_NORM_ON_HEAD, "Halt!");
+        }
+
+        cr.SetDir(GetDirection(cr.HexX, cr.HexY, target.HexX, target.HexY));
+    }
+
+    // can occur even without a warning:
+    int[] data = { target.Id, cr.Id };
+    CreateTimeEvent(AFTER(REAL_SECOND(Random(5, 8))), "e_CheckDistance", data, false);
+}
+
+void _OnShowCritter2Encounter(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    if(_IsTrueNpc(target))
+        return;
+    if(IsCurrentEnemy(cr, target.Id))
+        return;
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    int[] data = { target.Id, cr.Id };
+    if(Random(1, 4) == 4)
+        cr.Say(SAY_NORM_ON_HEAD, "Get off me!");
+    else
+        cr.Say(SAY_NORM_ON_HEAD, "Get away from me!");
+    if(cr.Timeout[TO_BATTLE] == 0)
+    {
+        cr.SetDir(GetDirection(cr.HexX, cr.HexY, target.HexX, target.HexY));
+        if(IsHumanoid(cr) && cr.Timeout[TO_BATTLE] == 0)
+        {
+            if(target.Timeout[TO_BATTLE] == 0)
+            {
+                CreateTimeEvent(AFTER(REAL_MS(600)), "e_PushAway", data, false);
+            }
+        }
+    }
+
+    // can occur even without a warning:
+    CreateTimeEvent(AFTER(REAL_MS(2000)), "e_CheckDistance2", data, false);
+}
+
+uint e_PushAway(array<uint>@ values)
+{
+    Critter@ target = GetCritter(values[0]);
+    Critter@ cr = GetCritter(values[1]);
+    if(target.Timeout[TO_BATTLE] == 0 && GetDistantion(cr.HexX, cr.HexY, target.HexX, target.HexY) == 1)
+    {
+        cr.Action(ACTION_PICK_CRITTER, 2, null);
+        if(!target.MoveToDir(GetDirection(cr.HexX, cr.HexY, target.HexX, target.HexY)))
+            target.MoveRandom();
+        else
+            target.Wait(0);
+    }
+
+    return 0;
+}
+
+void _OnHideCritter1Encounter(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD || cr.Timeout[TO_BATTLE] > 0)
+        return;
+
+    if(_IsTrueNpc(target) || _GroupIndex(cr) == _GroupIndex(target))
+        return;
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    if(IsHumanoid(cr) && cr.Timeout[TO_BATTLE] == 0)
+    {
+        if(_GroupIndex(cr) != _GroupIndex(target))
+            cr.Say(SAY_NORM_ON_HEAD, "Don't come any closer");
+        else
+            cr.Say(SAY_NORM_ON_HEAD, "No need to get this close");
+    }
+
+    GameVar@ var = GetUnicumVar(UVAR_proximity_check, cr.Id, target.Id);
+    var = 1;
+
+}
+
+void _OnIdleEncounter(Critter& cr)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    array<Critter@> crits;
+    uint            num = cr.GetCritters(false, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(_ValidReputationIndex(_GroupIndex(cr)) && (crits[i].Reputation[_GroupIndex(cr)] >= __ReputationAntipathy || HasFactionUniform(crits[i], _GroupIndex(cr), UNIFORM_BODY_ONLY)))
+            continue;
+
+        Item@ item = _CritGetItemHand(crits[i]);
+        if(!valid(item))
+            continue;
+        if(IsHumanoid(cr) && (item.GetType() == ITEM_TYPE_WEAPON) && (Random(0, 1) == 0))
+        {
+            cr.Say(SAY_SHOUT_ON_HEAD, "Put down your weapon, NOW!");
+            int[] data = { crits[i].Id, cr.Id };
+            CreateTimeEvent(AFTER(REAL_SECOND(Random(8, 12))), "e_CheckWeapon", data, false);
+        }
+    }
+}
+
+void _OnSmthMoveItemEncounter(Critter& crit, Critter& fromCrit, Item& item, uint8 fromSlot)
+{
+    int critGroup = _GroupIndex(crit);
+    if(critGroup == _GroupIndex(fromCrit))
+        return;
+    if(item.Accessory != ACCESSORY_CRITTER)
+        return;
+    if(item.GetType() != ITEM_TYPE_WEAPON)
+        return;
+    if(_ValidReputationIndex(critGroup) && fromCrit.Reputation[_GroupIndex(crit)] > -1000)
+        return;
+    if(item.CritSlot == SLOT_HAND1)
+        AddAttackPlane(crit, 0, fromCrit);
+}
+// taken from encounter_npc
+void _NpcSmthUseSkill(Critter& npc, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(!IsHumanoid(npc))
+        return;
+    if(fromCr.IsPlayer() && (skill == SKILL_LOOT_CRITTER || skill == SK_STEAL) && valid(onCritter) && npc.GetPlanes(PLANE_LOOT, onCritter.Id, null) > 0)
+    {
+        npc.Say(SAY_NORM_ON_HEAD, "Leave this stuff!");
+        AddAttackPlane(npc, AI_PLANE_ATTACK_PRIORITY + 1, fromCr, __RunOnCombat);
+    }
+    else if(fromCr.IsPlayer() && valid(onItem) && skill == SKILL_PICK_ON_GROUND && uint(GetLvar(onItem.Id, LIVAR_npc_wpn_owner)) == npc.Id && npc.GetPlanes(PLANE_PICK_DROPPED_WPN, onItem.Id, null) > 0)
+    {
+        npc.Say(SAY_NORM_ON_HEAD, "That's mine!");
+        AddAttackPlane(npc, AI_PLANE_ATTACK_PRIORITY + 1, fromCr, __RunOnCombat);
+        Map@ map = npc.GetMap();
+        if(valid(map))
+        {
+            array<Critter@> critters;
+            for(uint i = 0, k = map.GetCritters(0, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters); i < k; i++)
+            {
+                if(npc.Id == critters[i].Id)
+                    continue;
+                int crStatus = GetGroupsStatus(npc, critters[i]);
+                if(crStatus == FACTION_ALLY)
+                {
+                    if(_CanHelp(critters[i], npc) && _IsTrueNpc(npc))
+                        AddAttackPlane(critters[i], 0, fromCr);
+                }
+            }
+        }
+    }
+}
+
+void _OnSmthDropItemEncounter(Critter& npc, Critter& fromCr, Item& item)
+{
+    if(!IsHumanoid(npc))
+        return;
+    if(uint(GetLvar(item.Id, LIVAR_npc_wpn_owner)) == npc.Id)
+    {
+        NpcPlane@ plane = CreatePlane();
+
+        plane.Type = AI_PLANE_PICK;
+        plane.Pick_HexX = item.HexX;
+        plane.Pick_HexY = item.HexY;
+        plane.Pick_Pid = item.GetProtoId();
+        plane.Pick_UseItemId = 0;
+        plane.Pick_ToOpen = false;
+        plane.Identifier = PLANE_PICK_DROPPED_WPN;
+        plane.IdentifierExt = item.Id;
+        plane.Run = true;
+        npc.AddPlane(plane);
+    }
+}
+
+// uint ida=0;
+int _NpcPlaneStart(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(!IsHumanoid(npc))
+        return PLANE_RUN_GLOBAL;
+
+    // Log("npc"+npc.Id+" t"+plane.Type+" i"+plane.Identifier+" r"+reason);
+
+    if(reason == REASON_GO_HOME)
+    {
+        ArmFavoriteWeapon(npc);
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+int _NpcPlaneFinish(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(!IsHumanoid(npc))
+        return PLANE_RUN_GLOBAL;
+    if(reason == REASON_HEX_BUSY)
+    {
+        uint   mapId;
+        uint8  dir = 0;
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        npc.GetHomePos(mapId, hexX, hexY, dir);
+        if(plane.Type == AI_PLANE_WALK && plane.Identifier != PLANE_PUSH_CRITTER && plane.Walk_HexX == hexX && plane.Walk_HexY == hexY)
+        {
+            Map@ map = npc.GetMap();
+            if(valid(map))
+            {
+                Critter@ target = map.GetCritter(hexX, hexY);
+                if(valid(target) && target.IsLife())
+                {
+                    AddWalkPlane(npc, AI_PLANE_WALK_PRIORITY, PLANE_PUSH_CRITTER, target.Id, target.HexX, target.HexY, npc.Id == target.Id ? npc.Dir : 0xFF, false, 1);
+                }
+            }
+        }
+    }
+
+    return PLANE_RUN_GLOBAL;
+}
+
+void _NpcMoveItem(Critter& npc, Item& item, uint8 fromSlot)
+{
+    if(fromSlot == SLOT_GROUND && item.GetType() == ITEM_TYPE_WEAPON)
+    {
+        uint ownerId = GetLvar(item.Id, LIVAR_npc_wpn_owner);
+        if(ownerId == 0 || ownerId == npc.Id)
+            return;
+        Critter@ wpnOwner = GetCritter(ownerId);
+        if(valid(wpnOwner) && !wpnOwner.IsPlayer() && wpnOwner.GetMapId() == npc.GetMapId() && _GroupIndex(npc) == _GroupIndex(wpnOwner))
+        {
+            AddWalkPlane(npc, AI_PLANE_WALK_PRIORITY, PLANE_RETURN_WPN, wpnOwner.Id, wpnOwner.HexX, wpnOwner.HexY, 0xFF, false, 1);
+        }
+    }
+}
+
+
+////////////
+// events
+uint e_CheckDistance(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)) || (player.GetMapId() != guard.GetMapId()))
+        return 0;
+
+    if(GetCrittersDistantion(player, guard) > guard.ShowCritterDist1)
+        return 0;
+
+    if(player.Stat[ST_CURRENT_HP] > 0)
+        AddAttackPlane(guard, 0, player);
+    return 0;
+}
+uint e_CheckDistance2(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)) || (player.GetMapId() != guard.GetMapId()))
+        return 0;
+
+    if(GetCrittersDistantion(player, guard) > guard.ShowCritterDist2)
+        return 0;
+
+    if(player.Stat[ST_CURRENT_HP] > 0)
+        AddAttackPlane(guard, 0, player);
+    return 0;
+}
+
+
+uint e_CheckWeapon(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+        return 0;
+
+    Item@ item = _CritGetItemHand(player);
+    if(!valid(item))
+        return 0;
+    if(item.GetType() == ITEM_TYPE_WEAPON && (player.Stat[ST_CURRENT_HP] > 0))
+        AddAttackPlane(guard, 0, player);
+    return 0;
+}
+
+// TODO: Warnings for non-humanoid critter like dogs
+uint e_DelayedSayBehave(array<uint>@ values)
+{
+    Critter@ guard = GetCritter(values[0]);
+    if(valid(guard) && IsHumanoid(guard))
+        switch(Random(0, 4))
+        {
+        case 0:
+            guard.Say(SAY_NORM, "Behave yourself!");
+            break;
+        case 1:
+            guard.Say(SAY_NORM, "Don't do anything stupid");
+            break;
+        case 2:
+            guard.Say(SAY_NORM, "Don't try anything!");
+            break;
+        case 3:
+            guard.Say(SAY_NORM, "Keep your weapons down!");
+            break;
+        case 4:
+        default:
+            guard.Say(SAY_NORM, "No sudden moves!");
+            break;
+        }
+
+    if(valid(guard) && guard.CrType == CRTYPE_DOG)
+        switch(Random(0, 1))
+        {
+        case 0:
+            guard.Say(SAY_NORM, "Woof!");
+            break;
+        case 1:
+            guard.Say(SAY_NORM, "Arrrrouuu");
+            break;
+        default:
+            guard.Say(SAY_NORM, "Wooooooooof!");
+            break;
+        }
+    return 0;
+}
+
+uint e_DelayedAttackPlane(array<uint>@ values)
+{
+    Critter@ attacker = GetCritter(values[0]);
+    Critter@ cr = GetCritter(values[1]);
+
+    if(!valid(attacker) || !valid(cr))
+        return 0;
+
+    AddAttackPlane(attacker, 0, cr);
+    return 0;
+}

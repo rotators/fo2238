@@ -1,0 +1,118 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+17 1010 D _param p ST_CHARISMA > 99 #
+2 1020 D _param p ST_INTELLECT < 4 #
+3 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+8 1040 D _var n name_mem_npc_player = 1 #
+14 1050 D _param p ST_KARMA < -100 @
+2 2000 None 0 #
+4 2010 #
+12 2020 @
+3 3000 None 0 #
+11 3010 #
+65506 3020 #
+6 3030 #
+7 3040 #
+0 3050 @
+4 4000 None 0 #
+0 4010 @
+6 5000 None 0 #
+10 5010 #
+13 5020 @
+7 6000 None 0 #
+11 6010 #
+0 6020 @
+8 7000 None 0 #
+11 7010 #
+65506 7020 #
+7 7030 #
+6 7040 #
+0 7050 @
+10 8000 None 0 #
+8 8010 #
+0 8020 @
+11 9000 None 0 #
+8 9010 #
+0 9020 @
+12 10000 None 0 #
+0 10010 @
+13 11000 None 0 #
+8 11010 #
+0 11020 @
+15 12000 None 0 #
+16 12010 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 0 #
+16 12020 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 1 #
+16 12030 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 2 #
+16 12040 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 3 #
+16 12050 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 4 #
+16 12060 D _item p PID_BOTTLE_CAPS > 14999 R _script trader_container@r_BuyContainer 1 5 #
+0 12070 @
+14 13000 None 0 @
+16 14000 None 0 #
+0 14010 @
+17 15000 None 0 &
+
+[engl]
+{100}{}{Bill}
+{200}{}{You see a medium-size man wearing dusty clothing.}
+{210}{}{You see Bill, the Outfitter.}
+{210}{}{You see a medium-sized man in dusty clothing. He smells like he’s been tending brahmin.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Idiot}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{1050}{}{Low karma}
+{2000}{}{Howdy, pard. What can I do for you?}
+{2010}{}{Nimma ardle ah!}
+{2020}{}{You give job?}
+{3000}{}{Howdy, pard. What can I do for you?}
+{3010}{}{I’m looking for a job.}
+{3020}{}{I need to buy stuff.}
+{3030}{}{What can you tell me about Chad?}
+{3040}{}{Who are you?}
+{3050}{}{Nothing, bye.}
+{4000}{}{Sorry, kid, but I can’t make out a word of what you’re saying. Have a lollipop.}
+{4010}{}{Oooh!}
+{5000}{}{You got questions about Chad? Like what?}
+{5010}{}{Do you trust him?}
+{5020}{}{What can you tell me about him?}
+{6000}{}{Me? I’m Bill. I am, as the man said, the Bill you have to pay. Though technically, I suppose, sometimes I pay you. I’m the caravan outfitter for this town. I plan the caravan routes and arrange for provisioning. I hire people for jobs, and I'm also in charge of the Unity Patrols.}
+{6010}{}{Hiring for jobs? Could I get in on that?}
+{6020}{}{Interesting, bye.}
+{7000}{}{What do you want?}
+{7010}{}{I’m looking for a job.}
+{7020}{}{I need to buy stuff.}
+{7030}{}{Who are you?}
+{7040}{}{What can you tell me about Chad?}
+{7050}{}{Nothing, bye.}
+{8000}{}{Do I trust him? Obviously … to an extent. I trust him to run my caravans for me. He might be shady, but ‘til he gives me a reason not to trust him, I’ll keep on like I have.}
+{8010}{}{I have some more questions.}
+{8020}{}{Great. Thanks for your time.}
+{9000}{}{You want a job? Well, we ordinarily you'd have two choices: Shoveling brahmin dung for a day for $100, or escorting caravans. We got caravans to Gecko, the New California Republic, and Vault City. But at the moment, we're full up. Sorry pal.}
+{9010}{}{I had some more questions.}
+{9020}{}{Bye!}
+{10000}{}{You want a job? Sorry buddy, I don't hire eejits.}
+{10010}{}{Dawwwww}
+{11000}{}{Lessee. He came to Broken Hills out of the desert. He didn’t have much but his smarts. He looked like he was being hunted by someone, but wouldn’t say who. He was always real quiet about his past. And … he’s a hell of a caravan master. That’s all.}
+{11010}{}{I have some more questions.}
+{11020}{}{Thanks. Gotta go.}
+{12000}{}{So you want to buy a container, huh? It ain't cheap, kid. $15,000 for any of the containers. What are you interested in ?}
+{12010}{}{I'll buy a footlocker, with left orientation}
+{12020}{}{I'll buy a footlocker, with right orientation}
+{12030}{}{I'll buy a icechest, with left orientation}
+{12040}{}{I'll buy a icechest, with right orientation}
+{12050}{}{I'll buy a ammo crate, with left orientation}
+{12060}{}{I'll buy a ammo crate, with right orientation}
+{12070}{}{Uh, nevermind}
+{13000}{}{Out of my store. Y’ain’t wanted here.}
+{14000}{}{I hope you're happy with it, boy.}
+{14010}{}{Sure thing, grandpa.}
+{15000}{}{Sorry, kid, but I can’t make out a word of what you’re saying. Have a lollipop.@@Ah, dangit. I hate it when these freaks come outta the woodwork.@@I thought we saw the last of these freaks out on the road.}
+

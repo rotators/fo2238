@@ -1,0 +1,52 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// junktown_skumpitt.fos
+//
+
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+#include "_maps.fos"
+#include "mapdata_h.fos"
+
+#include "entire.fos"
+
+#define SP_OPENED             (0)
+#define SP_CLOSED             (1)
+
+#define SP_LOCK_COMPLEXITY    (120)
+
+void InitSkumpittEvents()
+{
+    DLog("Creating junktown events");
+    CreateTimeEvent(GetNearFullSecond(0, 0, 0, 4, 0, 0), "e_CloseSkumpitt", false);
+    CreateTimeEvent(GetNearFullSecond(0, 0, 0, 17, 0, 0), "e_OpenSkumpitt", false);
+}
+
+void SetBarState(uint mode, Map@ map)
+{
+    map.SetData(MAP_DATA_SKUMPITT, mode);
+}
+
+uint e_CloseSkumpitt(array<uint>@ values)
+{
+    Map@ map = GetMapByPid(MAP_Junktown, 0);
+
+    LockDoor(184, 96, map, SP_LOCK_COMPLEXITY, 100);
+    LockDoor(197, 105, map, SP_LOCK_COMPLEXITY, 100);
+    DLog("It's morning, Skumpitt is closing.");
+    SetBarState(SP_CLOSED, map);
+    _ReturnTime(4, 0);
+}
+
+uint e_OpenSkumpitt(array<uint>@ values)
+{
+    Map@ map = GetMapByPid(MAP_Junktown, 0);
+    DLog("It's evening, Skumpitt is opening.");
+    UnlockDoor(184, 96, map);
+    UnlockDoor(197, 105, map);
+    SetBarState(SP_OPENED, map);
+    _ReturnTime(17, 10);
+}

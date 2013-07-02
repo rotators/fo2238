@@ -1,0 +1,443 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_schedule_h.fos
+//
+
+#ifndef __NPC_SCHEDULE_H__
+#define __NPC_SCHEDULE_H__
+
+enum NpcTaskType
+{
+    TASK_NONE = 0,
+
+    TASK_FIRST_CALL,
+
+    TASK_TIME,
+    TASK_HOUR,
+    TASK_MINUTE,
+    TASK_NIGHT,
+    TASK_DAY,
+    TASK_MORNING,
+    TASK_AFTERNOON,
+    TASK_EVENING,
+    TASK_IDLE
+};
+
+enum NpcTaskActionType
+{
+    ACTION_NONE = 0,
+
+    /*** MULTI-ACTIONS ***/
+
+    ACTION_CONTAINER,
+    ACTION_EDITITEM,
+    ACTION_HOME,
+    ACTION_IF,                  // special handling
+    ACTION_ENDIF,               // special handling
+    ACTION_INVENTORY,
+    ACTION_MAP,
+    ACTION_SAY,
+    ACTION_TASK,
+    ACTION_TASKVAR,
+    ACTION_WAIT,
+
+    /*** SINGLE-ACTIONS ***/
+
+    ACTION_DEMANDANSWER,
+    ACTION_VERBOSE,
+
+    ACTION_ANIMATE,
+    ACTION_SLEEP,
+    ACTION_WAKEUP,
+
+    ACTION_FIXFORCEFIELD,
+
+    ACTION_CUSTOM
+};
+
+enum NpcTaskState
+{
+    TASKSTATE_UNKNOWN = 0,
+
+    // task is not processed
+    TASKSTATE_SKIP,
+
+    // task is processed
+    TASKSTATE_READY,
+
+    // task is waiting for start
+    TASKSTATE_STARTING,
+
+    // task is running
+    TASKSTATE_RUNNING,
+
+    // task is finished
+    TASKSTATE_FINISHED
+};
+
+enum NpcActionContainer
+{
+    CONTAINER_OPEN,
+    CONTAINER_CLOSE,
+    CONTAINER_OPEN_NEAR,
+    CONTAINER_CLOSE_NEAR
+};
+
+enum NpcActionEditItem
+{
+    EDITITEM_UPDATE,
+
+    EDITITEM_SETFLAG,
+    EDITITEM_UNSETFLAG,
+    EDITITEM_FLAGS,
+
+    EDITITEM_SETSCRIPT,
+    EDITITEM_SETEVENT,
+
+    EDITITEM_PICMAP,
+    EDITITEM_PICINV
+};
+
+enum NpcActionHome
+{
+    HOME_SET,
+    HOME_SETRANDOM,
+    HOME_SAVE,
+    HOME_LOAD,
+    HOME_RESET
+};
+
+enum NpcActionIf // special handling
+{
+    IF_NEVER = 0,
+    IF_ALWAYS = 1,
+
+    IF_TASKVAR_LOWER,
+    IF_TASKVAR_LOWEREQUAL,
+    IF_TASKVAR_EQUAL,
+    IF_TASKVAR_NOTEQUAL,
+    IF_TASKVAR_GREATER,
+    IF_TASKVAR_GREATEREQUAL,
+
+    IF_PERCENT,
+
+    IF_NIGHT,
+    IF_DAY,
+    IF_MORNING,
+    IF_AFTERNOON,
+    IF_EVENING,
+    IF_YEAR,
+    IF_MONTH,
+    IF_DAYOFMONTH,
+    IF_HOUR,
+    IF_MINUTE,
+
+    IF_WORLDMAP,
+    IF_NOT_WORLDMAP,
+    IF_MAP_PID,
+    IF_MAP_PIDS,
+    IF_NOT_MAP_PID,
+    IF_NOT_MAP_PIDS,
+
+    IF_CONTAINER_OPENED,
+    IF_CONTAINER_CLOSED,
+
+    IF_PARAMBASE_LOWER,
+    IF_PARAMBASE_LOWEREQUAL,
+    IF_PARAMBASE_EQUAL,
+    IF_PARAMBASE_NOTEQUAL,
+    IF_PARAMBASE_GREATER,
+    IF_PARAMBASE_GREATEREQUAL,
+    IF_PARAM_LOWER,
+    IF_PARAM_LOWEREQUAL,
+    IF_PARAM_EQUAL,
+    IF_PARAM_NOTEQUAL,
+    IF_PARAM_GREATER,
+    IF_PARAM_GREATEREQUAL
+};
+
+enum NpcActionInventory
+{
+    INV_ADDITEM = 0,
+    INV_SUBITEM,
+    INV_FAVITEM
+};
+
+enum NpcActionMap
+{
+    MAP_CREATEITEM,
+    MAP_DELETEITEM,
+};
+
+enum NpcActionSay
+{
+    SAY_SINGLE = 0,
+    SAY_RANDOM,
+
+    SAY_TASKVAR = 100     // __DEBUG__
+};
+
+enum NpcActionTask
+{
+//
+};
+enum NpcActionTaskVar
+{
+    TASKVAR_DELETE = 0,
+    TASKVAR_SET,
+    TASKVAR_ADD,
+    TASKVAR_SUB,
+    TASKVAR_SETRANDOM,
+    TASKVAR_ADDRANDOM,
+    TASKVAR_SUBRANDOM,
+    TASKVAR_COPYTO,
+    TASKVAR_COPYFROM
+};
+
+enum NpcActionWait
+{
+    WAIT_TIME = 0,
+    WAIT_RANDOM,
+    WAIT_HOME,
+    WAIT_FAVITEM
+};
+
+shared interface INpcSchedule
+{
+    #ifndef _MSC_VER
+    uint   PID                     { get; }
+    string Name            { get; }
+    string FullName        { get; }
+    #endif
+
+    INpcTask@ AddTask_OnFirstCall(string& name);
+
+    // Executed when no other tasks are processed/queued
+    INpcTask@ AddTask_OnIdle(string& name);
+
+    INpcTask@ AddTask_OnTime(string& name, uint8 hour, uint8 minute);
+    INpcTask@ AddTask_OnTimes(string& name, array<uint8>& hours, array<uint8>& minutes);
+    INpcTask@ AddTask_OnHour(string& name, uint8 hour);
+    INpcTask@ AddTask_OnMinute(string& name, uint8 minute);
+    INpcTask@ AddTask_OnHours(string& name, array<uint8>& hours);
+    INpcTask@ AddTask_OnMinutes(string& name, array<uint8>& minutes);
+
+    // Executed whole night/day/etc.
+    INpcTask@ AddTask_OnNight(string& name);
+    INpcTask@ AddTask_OnDay(string& name);
+    INpcTask@ AddTask_OnMorning(string& name);
+    INpcTask@ AddTask_OnAfternoon(string& name);
+    INpcTask@ AddTask_OnEvening(string& name);
+
+    // Executed once, when night/day/etc. starts
+    INpcTask@ AddTask_EveryNight(string& name);
+    INpcTask@ AddTask_EveryDay(string& name);
+    INpcTask@ AddTask_EveryMorning(string& name);
+    INpcTask@ AddTask_EveryAfternoon(string& name);
+    INpcTask@ AddTask_EveryEvening(string& name);
+
+    INpcTask@ AddTask_EveryFullHour(string& name);
+
+    uint GetTasks(array<INpcTask@>& tasks);
+};
+
+shared interface INpcScheduleInstance
+{
+    #ifndef _MSC_VER
+    uint   Owner           { get; }
+    string FullName        { get; }
+    #endif
+
+    uint Run(Critter& npc);
+};
+
+shared interface INpcTask
+{
+    #ifndef _MSC_VER
+    string       Name             { get; }
+    string       FullName { get; }
+
+    array<uint8> Hours   { get; }
+    array<uint8> Minutes { get; }
+    #endif
+
+    INpcSchedule@ ParentSchedule();
+    uint          GetActions(array<INpcTaskAction@>& actions);
+
+    /*** SETUP ***/
+    INpcTask@ Roll(uint max);
+
+    /*** MULTI-ACTIONS ***/
+
+    INpcTask@ Container_Open(uint16 pid, uint16 hexX, uint16 hexY, uint anim2);
+    INpcTask@ Container_Close(uint16 pid, uint16 hexX, uint16 hexY, uint anim2);
+    INpcTask@ Container_OpenNear(uint anim2);
+    INpcTask@ Container_CloseNear(uint anim2);
+
+    INpcTask@ EditItem_Update();
+    INpcTask@ EditItem_SetFlag(uint flag);
+    INpcTask@ EditItem_UnsetFlag(uint flag);
+    INpcTask@ EditItem_Flags(uint flags);
+    INpcTask@ EditItem_SetScript(string& script);
+    INpcTask@ EditItem_SetEvent(int event, string& function);
+    INpcTask@ EditItem_PicMap(string& picmap);
+    INpcTask@ EditItem_PicInv(string& picinv);
+
+    INpcTask@ Home_Set(uint16 hexX, uint16 hexY, uint8 dir);
+    INpcTask@ Home_SetRandom(array<array<uint16> > positions);
+    INpcTask@ Home_Save();
+    INpcTask@ Home_Load();
+    INpcTask@ Home_Reset();
+
+    INpcTask@ If_Never();
+    INpcTask@ If_Always();
+    INpcTask@ If_TaskVarLower(string& name, int value);
+    INpcTask@ If_TaskVarLowerEqual(string& name, int value);
+    INpcTask@ If_TaskVarEqual(string& name, int value);
+    INpcTask@ If_TaskVarNotEqual(string& name, int value);
+    INpcTask@ If_TaskVarGreater(string& name, int value);
+    INpcTask@ If_TaskVarGreaterEqual(string& name, int value);
+    INpcTask@ If_Percent(uint8 percent);       // CLAMPed: 1-100
+    INpcTask@ If_Night();
+    INpcTask@ If_Day();
+    INpcTask@ If_Morning();
+    INpcTask@ If_Afternoon();
+    INpcTask@ If_Evening();
+    INpcTask@ If_Year(uint8 year);
+    INpcTask@ If_Month(uint8 month);
+    INpcTask@ If_DayOfMonth(uint8 day);
+    INpcTask@ If_Hour(uint8 hour);
+    INpcTask@ If_Minute(uint8 minute);
+    INpcTask@ If_Worldmap();
+    INpcTask@ If_NotWorldmap();
+    INpcTask@ If_MapPid(uint16 pid);
+    INpcTask@ If_NotMapPid(uint16 pid);
+    INpcTask@ If_MapPids(array<uint16> pids);
+    INpcTask@ If_NotMapPids(array<uint16> pids);
+    INpcTask@ If_ContainerOpened(uint16 pid, uint16 hexX, uint16 hexY);
+    INpcTask@ If_ContainerClosed(uint16 pid, uint16 hexX, uint16 hexY);
+    INpcTask@ If_ParamBaseLower(uint16 param, int value);
+    INpcTask@ If_ParamBaseLowerEqual(uint16 param, int value);
+    INpcTask@ If_ParamBaseEqual(uint16 param, int value);
+    INpcTask@ If_ParamBaseNotEqual(uint16 param, int value);
+    INpcTask@ If_ParamBaseGreater(uint16 param, int value);
+    INpcTask@ If_ParamBaseGreaterEqual(uint16 param, int value);
+    INpcTask@ If_ParamLower(uint16 param, int value);
+    INpcTask@ If_ParamLowerEqual(uint16 param, int value);
+    INpcTask@ If_ParamEqual(uint16 param, int value);
+    INpcTask@ If_ParamNotEqual(uint16 param, int value);
+    INpcTask@ If_ParamGreater(uint16 param, int value);
+    INpcTask@ If_ParamGreaterEqual(uint16 param, int value);
+    INpcTask@ EndIf();
+
+    INpcTask@ Inventory_AddItem(uint16 pid);
+    INpcTask@ Inventory_AddItem(uint16 pid, uint count);
+    INpcTask@ Inventory_SubItem(uint16 pid);                                    // DeleteItem()
+    INpcTask@ Inventory_SubItem(uint16 pid, uint count);                        // _SubItem()
+    INpcTask@ Inventory_SetFavouriteItem(uint8 slot, uint16 pid);
+    INpcTask@ Inventory_UseFavouriteItem(uint8 slot, uint16 pid);
+
+    INpcTask@ Map_CreateItem(uint16 pid, uint16 hexX, uint16 hexY, uint count);
+    INpcTask@ Map_DeleteItem(uint16 pid, uint16 hexX, uint16 hexY);
+
+    INpcTask@ Say(uint8 sayType, string& text);
+    INpcTask@ Say_Wait(uint8 sayType, string& text);
+    INpcTask@ Say_Random(uint8 sayType, array<string>& text);
+    INpcTask@ Say_TaskVar(string& name);       // __DEBUG__
+
+    // INpcTask@ Task_Roll( uint roll );
+    // INpcTask@ Task_RollAlways();
+    // INpcTask@ Task_QueuePush( string& name );
+    // INpcTask@ Task_QueuePushFirst( string& name );
+    // INpcTask@ Task_Finish();
+
+    INpcTask@ TaskVar_Delete(string& name);
+    INpcTask@ TaskVar_Set(string& name, int value);
+    INpcTask@ TaskVar_Add(string& name);
+    INpcTask@ TaskVar_Sub(string& name);
+    INpcTask@ TaskVar_Add(string& name, int value_add);
+    INpcTask@ TaskVar_Sub(string& name, int value_sub);
+    INpcTask@ TaskVar_SetRandom(string& name, int from, int to);
+    INpcTask@ TaskVar_AddRandom(string& name, int from, int to);
+    INpcTask@ TaskVar_SubRandom(string& name, int from, int to);
+    INpcTask@ TaskVar_CopyToGlobalVar(string& name, uint16 GVAR);
+    INpcTask@ TaskVar_CopyFromGlobalVar(string& name, uint16 GVAR);
+    INpcTask@ TaskVar_CopyToLocationVar(string& name, uint16 LLVAR);
+    INpcTask@ TaskVar_CopyFromLocationVar(string& name, uint16 LLVAR);
+    INpcTask@ TaskVar_CopyToMapVar(string& name, uint16 LMVAR);
+    INpcTask@ TaskVar_CopyFromMapVar(string& name, uint16 LMVAR);
+    INpcTask@ TaskVar_CopyToCritterVar(string& name, uint16 LVAR);
+    INpcTask@ TaskVar_CopyFromCritterVar(string& name, uint16 LVAR);
+
+    INpcTask@ Wait(uint time);
+    INpcTask@ Wait_Random(uint min, uint max);
+    INpcTask@ Wait_Home();
+    INpcTask@ Wait_FavouriteItem(uint8 slot);
+
+    /*** SINGLE-ACTIONS ***/
+
+    INpcTask@ VerboseAction(string& text);
+    INpcTask@ DemandAnswer(uint8 sayType, string& text);
+
+    INpcTask@ Animate(uint anim2, bool clearSequence, bool delayPlay);
+
+    INpcTask@ Sleep();
+    INpcTask@ WakeUp();
+    // INpcTask@ SleepFor( uint sleepTime );
+    // INpcTask@ SleepUntil( uint8 hour, uint8 minute );
+
+    // INpcTask@ FixForcefield( uint16 hexX, uint16 hexY, uint anim2 );
+
+    INpcTask@ Walk_Home(uint16 hexX, uint16 hexY, uint8 dir);
+    INpcTask@ Walk_Home(array<uint16>& position);
+    INpcTask@ Walk_RandomHome(array<array<uint16> > positions);
+    INpcTask@ Walk_Patrol(array<array<uint16> >& patrol, bool saveHome);
+
+    INpcTask@ CustomAction(string& functionName, bool requireMap);
+};
+
+shared interface INpcTaskInstance
+{
+    #ifndef _MSC_VER
+    uint WaitTime        { get; set; }
+    #endif
+
+    /*** TASK DATA ***/
+    void SetData(string& name, array<uint8>& data);
+    bool GetData(string& name, array<uint8>& data);
+    void ClearData(string& name);
+};
+
+shared interface INpcTaskAction
+{
+    #ifndef _MSC_VER
+    uint8        Type   { get; }
+    array<uint8> Data       { get; }
+    #endif
+
+    INpcTask@ ParentTask();
+};
+
+// NpcTaskCustomAction and FTaskAction must be equal
+
+class NpcTaskCustomAction : IObject
+{
+    INpcTaskAction@   self;
+    INpcTaskInstance@ task;
+    Critter@          npc;
+};
+
+funcdef bool FTaskAction(INpcTaskAction&, INpcTaskInstance&, Critter&);
+
+#ifndef __NPC_SCHEDULE__
+
+import void InitNpcSchedules() from "npc_schedule";
+import void SaveNpcSchedules() from "npc_schedule";
+
+import INpcSchedule@ CreateNpcSchedule(string& name) from "npc_schedule";
+import bool          AddNpcSchedule(INpcSchedule@ schedule) from "npc_schedule";
+import void          RemoveNpcSchedule(Critter& npc) from "npc_schedule";
+#endif // __NPC_SCHEDULE__
+#endif // __NPC_SCHEDULE_H__ //

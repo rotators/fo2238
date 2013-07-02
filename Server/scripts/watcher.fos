@@ -1,0 +1,362 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// watcher.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+
+#define WATCHER_IDENT       (5414)
+
+#define WATCHER_SINGLE      (0)
+#define WATCHER_MAP         (1)
+#define WATCHER_EVENT       (2)
+
+#define VAR_MASTER          (ST_VAR0)
+#define VAR_VICTIM          (ST_VAR1)
+#define VAR_MODE            (ST_VAR8)
+#define VAR_IDENT           (ST_VAR9)
+
+// gmtools: compatibility with runscript / runscript_unsafe
+#define ServerScriptFunc    # (name, pX, p0, p1, p2, p3, p4) void name(Critter & pX, int p0, int p1, int p2, string@ p3, int[] @ p4) { name(pX, p0, p1, p2); } void name(Critter & pX, int p0, int p1, int p2)
+
+///// public functions /////
+
+ServerScriptFunc(single, player, p0, p1, p2, p3, p4)
+{
+    if(p0 == 0)
+    {
+        player.Say(SAY_NETMSG, "Missing critter id");
+        return;
+    }
+
+    __watcher(player, p0, WATCHER_SINGLE);
+}
+
+ServerScriptFunc(map, player, p0, p1, p2, p3, p4)
+{
+    __watcher(player, 0, WATCHER_MAP);
+}
+
+ServerScriptFunc(event, player, p0, p1, p2, p3, p4)
+{
+    __watcher(player, 0, WATCHER_EVENT);
+}
+
+ServerScriptFunc(find, player, p0, p1, p2, p3, p4)
+{
+    array<Critter@> critters;
+
+    if(p0 == 0)
+    {
+        player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+    }
+    else if(p0 == 1)
+    {
+        array<Map@> maps;
+        uint        allmaps = GetAllMaps(0, maps);
+
+        for(uint x = 0; x < maps.length(); x++)
+        {
+            if(valid(maps[x]))
+            {
+                maps[x].GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+            }
+        }
+    }
+    else
+    {
+        player.Say(SAY_NETMSG, "Unknown find number (" + p0 + ")");
+        return;
+    }
+
+    bool found = false;
+    for(uint c = 0; c < critters.length(); c++)
+    {
+        if(critters[c].Stat[VAR_IDENT] == WATCHER_IDENT)
+        {
+            found = true;
+            string info;
+            switch(critters[c].StatBase[VAR_MODE])
+            {
+            case WATCHER_SINGLE:
+                info = "single (master:" + critters[c].StatBase[VAR_MASTER] + ", victim:" + critters[c].StatBase[VAR_VICTIM] + ")";
+                break;
+            case WATCHER_MAP:
+                info = "map (master:" + critters[c].StatBase[VAR_MASTER] + ")";
+                break;
+            case WATCHER_EVENT:
+                info = "event (master:" + critters[c].StatBase[VAR_MASTER] + ")";
+                break;
+            default:
+                info = "unknown (" + critters[c].StatBase[VAR_MODE] + ")";
+                break;
+            }
+
+            info += " [" + critters[c].GetMapId() + "]";
+
+            player.Say(SAY_NETMSG, "Watcher(" + critters[c].Id + "): " + info);
+        }
+    }
+    if(!found)
+    {
+        if(p0 == 0)
+        {
+            player.Say(SAY_NETMSG, "No watchers on current map.");
+        }
+        else if(p0 == 1)
+        {
+            player.Say(SAY_NETMSG, "No watchers found in world.");
+        }
+        return;
+    }
+}
+
+///// private functions /////
+
+void __watcher(Critter& player, int p0, int p1)
+{
+    Critter@ victim;
+
+    if(player.GetMapId() == 0)
+    {
+        player.Say(SAY_NETMSG, "No way!");
+        return;
+    }
+    if(p1 < WATCHER_SINGLE || p1 > WATCHER_EVENT)
+    {
+        player.Say(SAY_NETMSG, "Invalid p1");
+        return;
+    }
+
+    if(p1 == WATCHER_SINGLE)
+    {
+        @victim = GetCritter(p0);
+        if(!valid(victim))
+        {
+            player.Say(SAY_NETMSG, "Victim don't exists (" + p0 + ")");
+            return;
+        }
+        ;
+    }
+    Critter@ npc = AddNpc(player.GetMap(), (77), player.HexX, player.HexY, Random(0, 5), 0, "watcher@watcher_init", 0, 0, 1, false, 1);
+
+    npc.StatBase[VAR_MASTER] = player.Id;
+    if(p1 == WATCHER_SINGLE)
+        npc.StatBase[VAR_VICTIM] = p0;
+
+    npc.StatBase[VAR_MODE] = p1;
+
+    npc.StatBase[VAR_IDENT] = WATCHER_IDENT;
+
+    if(p1 == WATCHER_SINGLE)
+        watcher_report(npc, "Watching: " + victim.Name + " (" + victim.Id + ")");
+    else if(p1 == WATCHER_MAP)
+        watcher_report(npc, "Watching all map [" + npc.GetMapId() + "]");
+    else if(p1 == WATCHER_EVENT)
+        watcher_report(npc, "Watching event map [" + npc.GetMapId() + "]");
+}
+
+void watcher_init(Critter& npc, bool firstTime)
+{
+    if(firstTime)
+    {
+        // adminlook
+        _CritSetExtMode(npc, MODE_EXT_LOOK_ADMIN);
+        _CritSetExtMode(npc, MODE_EXT_LOOK_INVISIBLE);
+
+        npc.StatBase[ST_BONUS_LOOK] = 1000;
+        npc.StatBase[ST_ARMOR_CLASS] = 100;
+
+        npc.SkillBase[SK_SNEAK] = 300;
+
+        npc.ModeBase[MODE_HIDE] = 1;
+        npc.ModeBase[MODE_NO_STEAL] = 1;
+        npc.ModeBase[MODE_NO_DROP] = 1;
+        npc.ModeBase[MODE_NO_KNOCK] = 1;
+        npc.ModeBase[MODE_NO_LOOT] = 1;
+        npc.ModeBase[MODE_INVULNERABLE] = 1;
+
+        npc.ChangeCrType(56);
+
+        npc.SetEvent(CRITTER_EVENT_FINISH,                     "watcher_finish");
+        npc.SetEvent(CRITTER_EVENT_ATTACK,                     "watcher_attack");
+        npc.SetEvent(CRITTER_EVENT_SMTH_ATTACK,        "watcher_someone_attack");
+        npc.SetEvent(CRITTER_EVENT_SMTH_DEAD,          "watcher_someone_dead");
+
+        if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE || npc.StatBase[VAR_MODE] == WATCHER_MAP)
+        {
+            npc.SetEvent(CRITTER_EVENT_SMTH_DROP_ITEM,     "watcher_someone_dropitem");
+            npc.SetEvent(CRITTER_EVENT_SMTH_USE_ITEM,      "watcher_someone_useitem");
+        }
+        npc.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL,     "watcher_someone_useskill");
+    }
+    return;
+}
+
+void watcher_report(Critter& npc, string what)
+{
+    Critter@ master = GetCritter(npc.Stat[VAR_MASTER]);
+    if(!valid(master))
+        return;
+
+    uint16 undef;
+    uint16 hour = 0;
+    uint16 minute = 0;
+    uint16 seconds = 0;
+    uint16 miliseconds = 0;
+    GetTime(undef, undef, undef, undef, hour, minute, seconds, miliseconds);
+    what = (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute + ":" + (seconds < 10 ? "0" : "") + seconds + "." + miliseconds + "> " + what;
+
+    master.Say(SAY_NETMSG, what);
+}
+
+string watcher_ontext(Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    string text = "on ";
+
+    if(valid(onItem))
+        text += "item " + onItem.GetProtoId();
+    else if(valid(onCritter))
+        text += onCritter.Name;
+    else if(valid(onScenery))
+        text += "scenery " + onScenery.ProtoId;
+    else
+        return("");
+
+    return(text);
+}
+
+///// Critter events /////
+
+void watcher_finish(Critter& npc, bool deleted)
+// single, map, event
+{
+    watcher_report(npc, "Watcher finished" + (deleted ? " (npc deleted)" : ""));
+}
+
+bool watcher_attack(Critter& npc, Critter& victim)
+// single, map, event
+{
+    // no mortal kombat for you
+    npc.ClearEnemyStack();
+    npc.DropPlanes();
+    return true;
+}
+
+void watcher_someone_attack(Critter& npc, Critter& sadist, Critter& victim)
+// single, map, event
+{
+    if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE && (sadist.Id != uint(npc.Stat[VAR_VICTIM])))
+        return;
+    if((npc.StatBase[VAR_MODE] == WATCHER_EVENT || npc.StatBase[VAR_MODE] == WATCHER_MAP) &&
+       (!sadist.IsPlayer() || !victim.IsPlayer()))
+        return;
+
+    watcher_report(npc, sadist.Name + " attacks " + victim.Name);
+}
+
+void watcher_someone_dead(Critter& npc, Critter& victim, Critter@ sadist)
+// single, map, event
+{
+    if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE &&
+       (sadist.Id != uint(npc.Stat[VAR_VICTIM]) || victim.Id != uint(npc.Stat[VAR_VICTIM])))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_MAP && !(sadist.IsPlayer() || victim.IsPlayer()))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_EVENT && !(sadist.IsPlayer() && victim.IsPlayer()))
+        return;
+
+    watcher_report(npc, sadist.Name + " killed " + victim.Name);
+}
+
+void watcher_someone_dropitem(Critter& npc, Critter& fromCr, Item& item)
+// single, map
+{
+    if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE && (fromCr.Id != uint(npc.Stat[VAR_VICTIM])))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_MAP && !fromCr.IsPlayer())
+        return;
+
+    watcher_report(npc, fromCr.Name + " drops item " + item.GetProtoId() + (item.GetCount() > 1 ? " (" + item.GetCount() + ")" : ""));
+}
+
+void watcher_someone_useitem(Critter& npc, Critter& fromCr, Item& item, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+// single, map
+{
+    if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE && (fromCr.Id != uint(npc.Stat[VAR_VICTIM])))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_MAP && (!fromCr.IsPlayer() || !onCritter.IsPlayer()))
+        return;
+
+    watcher_report(npc, fromCr.Name + " uses item " + item.GetProtoId() + " " + watcher_ontext(onCritter, onItem, onScenery));
+}
+
+void watcher_someone_useskill(Critter& npc, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+// single, map, event
+{
+    if(npc.StatBase[VAR_MODE] == WATCHER_SINGLE && (fromCr.Id != uint(npc.Stat[VAR_VICTIM])))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_MAP && (!fromCr.IsPlayer() || !onCritter.IsPlayer()))
+        return;
+    if(npc.StatBase[VAR_MODE] == WATCHER_EVENT && !fromCr.IsPlayer())
+        return;
+
+    if(npc.StatBase[VAR_MODE] != WATCHER_EVENT)
+    {
+        string skillname = skill;
+        switch(skill)
+        {
+        case SKILL_PICK_ON_GROUND:
+            skillname = "pick from ground";
+            break;
+        case SKILL_PUT_CONT:
+            skillname = "put in container";
+            break;
+        case SKILL_TAKE_CONT:
+            skillname = "take from container";
+            break;
+        case SKILL_TAKE_ALL_CONT:
+            skillname = "take all from container";
+            break;
+        case SKILL_LOOT_CRITTER:
+            skillname = "loot critter";
+            break;
+        case SKILL_PUSH_CRITTER:
+            skillname = "push critter";
+            break;
+        case SK_SNEAK:
+            skillname = "sneak";
+            break;
+        case SK_LOCKPICK:
+            skillname = "lockpick";
+            break;
+        case SK_STEAL:
+            skillname = "steal";
+            break;
+        case SK_TRAPS:
+            skillname = "traps";
+            break;
+        case SK_FIRST_AID:
+            skillname = "first aid";
+            break;
+        case SK_DOCTOR:
+            skillname = "doctor";
+            break;
+        case SK_SCIENCE:
+            skillname = "science";
+            break;
+        case SK_REPAIR:
+            skillname = "repair";
+            break;
+        }
+        watcher_report(npc, fromCr.Name + " uses " + skillname + " " + watcher_ontext(onCritter, onItem, onScenery));
+    }
+    else
+    {
+        if(skill == SK_SCIENCE && valid(onItem))
+            watcher_report(npc, fromCr.Name + " uses science on item " + onItem.GetProtoId());
+    }
+}

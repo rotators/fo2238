@@ -1,0 +1,536 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_schedule_instance.fos
+//
+
+#ifndef __NPC_SCHEDULE_INSTANCE__
+#define __NPC_SCHEDULE_INSTANCE__
+
+class CNpcScheduleInstance : INpcScheduleInstance
+{
+    CNpcSchedule@            prototype;
+    uint                     prototypePID;
+
+    uint                     ownerId;
+
+    bool                     firstCall;
+
+    CNpcTaskInstance@        currentTask;
+    array<CNpcTaskInstance@> tasks;
+    array<CNpcTaskInstance@> tasksQueue;
+
+    CNpcScheduleInstance()
+    {
+        this.Init();
+    }
+
+    CNpcScheduleInstance(CNpcSchedule & prototype, Critter & owner)
+    {
+        this.Init();
+
+        this.ownerId = owner.Id;
+        this.SetPrototype(prototype);
+    }
+
+    void Init()
+    {
+        this.prototypePID = this.ownerId = 0;
+        @this.prototype = null;
+
+        this.firstCall = true;
+
+        @this.currentTask = null;
+        this.tasks.resize(0);
+        this.tasksQueue.resize(0);
+    }
+
+    #ifndef _MSC_VER
+    INpcSchedule@ get_Prototype()
+    {
+        return(this.prototype);
+    }
+
+    uint get_Owner()
+    {
+        return(this.ownerId);
+    }
+
+    string get_FullName()
+    {
+        return(this.prototype.Name + "[" + this.prototype.PID + "," + this.Owner + "]");
+    }
+    #endif
+
+    void SetPrototype(CNpcSchedule& proto)
+    {
+        @this.currentTask = null;
+        this.tasks.resize(0);
+        this.tasksQueue.resize(0);
+
+        @this.prototype = proto;
+        this.prototypePID = this.prototype.PID;
+
+        for(uint t = 0, tLen = this.prototype.tasks.length(); t < tLen; t++)
+        {
+            CNpcTaskInstance@ instance = CNpcTaskInstance(this.prototype.tasks[t]);
+            instance.state = TASKSTATE_READY;
+            instance.idx = t;
+
+            this.tasks.insertLast(instance);
+        }
+    }
+
+    uint Run(Critter& npc)
+    {
+        if(this.firstCall)
+        {
+            for(uint t = 0, tLen = this.tasks.length(); t < tLen; t++)
+            {
+                if(this.tasks[t].state == TASKSTATE_READY &&
+                   this.tasks[t].prototype.type == TASK_FIRST_CALL)
+                {
+                    _WLog("Task '" + this.tasks[t].prototype.Name + "' added to queue (first call): " + this.tasks[t].prototype.FullName, DEBUG_MESSAGE);
+                    this.tasks[t].state = TASKSTATE_STARTING;
+                    this.tasksQueue.insertLast(this.tasks[t]);
+                }
+            }
+
+            this.firstCall = false;
+        }
+
+        if(valid(this.currentTask))
+        {
+            // _WLog( "Checking task : "+this.Name+"->"+currentTask.Name, DEBUG_MESSAGE );
+
+            if(this.currentTask.state == TASKSTATE_FINISHED)
+            {
+                if(ELAPSED_TIME >= this.currentTask.lastRun + GAME_MINUTE(1))
+                {
+                    _WLog("Task '" + this.currentTask.prototype.Name + "' finished : " + this.currentTask.prototype.FullName, DEBUG_MESSAGE);
+                    this.currentTask.state = TASKSTATE_READY;
+                    @this.currentTask = null;
+                }
+            }
+            else if(this.currentTask.state == TASKSTATE_STARTING)
+            {
+                _WLog("Task '" + this.currentTask.prototype.Name + "' started : " + this.currentTask.prototype.FullName, DEBUG_MESSAGE);
+
+                this.currentTask.Start();
+                this.currentTask.state = TASKSTATE_RUNNING;
+            }
+
+            if(valid(this.currentTask) && this.currentTask.state == TASKSTATE_RUNNING)
+            {
+                if(ELAPSED_TIME >= this.currentTask.lastRun + this.currentTask.waitTime)
+                {
+                    this.currentTask.Run(npc);
+                    this.currentTask.lastRun = ELAPSED_TIME;
+                }
+            }
+        }
+        else
+        {
+            // _WLog( "Checking queue : "+this.Name, DEBUG_MESSAGE );
+            if(this.tasksQueue.length() > 0)
+            {
+                _WLog("Task '" + this.tasksQueue.first().prototype.Name + "' removed from queue : " + this.tasksQueue.first().prototype.FullName, DEBUG_MESSAGE);
+
+                @this.currentTask = this.tasksQueue.first();
+                this.tasksQueue.removeFirst();
+
+                this.currentTask.state = TASKSTATE_STARTING;
+            }
+        }
+
+        // _WLog( "Checking new : "+this.Name, DEBUG_MESSAGE );
+
+        for(uint t = 0, tLen = this.tasks.length(); t < tLen; t++)
+        {
+            if(this.tasks[t].prototype.type == TASK_FIRST_CALL)
+                continue;
+
+            if(this.tasks[t].state == TASKSTATE_SKIP)
+            {
+                _WLog("Task skipped : " + tasks[t].prototype.FullName, DEBUG_MESSAGE);
+                continue;
+            }
+
+            if(this.tasks[t].state == TASKSTATE_READY)
+            {
+                bool add = false;
+
+                if(this.tasks[t].prototype.Type == TASK_TIME)
+                {
+                    if(this.tasks[t].prototype.Hours.length() == this.tasks[t].prototype.Minutes.length())
+                    {
+                        for(uint h = 0, hLen = this.tasks[t].prototype.Hours.length(); h < hLen; h++)
+                        {
+                            if(this.tasks[t].prototype.Hours[h] == __Hour &&
+                               this.tasks[t].prototype.Minutes[h] == __Minute)
+                            {
+                                add = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if(this.tasks[t].prototype.Type == TASK_HOUR)
+                {
+                    for(uint h = 0, hLen = this.tasks[t].prototype.Hours.length(); h < hLen; h++)
+                    {
+                        if(this.tasks[t].prototype.Hours[h] == __Hour)
+                        {
+                            add = true;
+                            break;
+                        }
+                    }
+                }
+                else if(this.tasks[t].prototype.Type == TASK_MINUTE)
+                {
+                    for(uint m = 0, mLen = this.tasks[t].prototype.Minutes.length(); m < mLen; m++)
+                    {
+                        if(this.tasks[t].prototype.Minutes[m] == __Minute)
+                        {
+                            add = true;
+                            break;
+                        }
+                    }
+                }
+                else if(this.tasks[t].prototype.Type == TASK_NIGHT)
+                {
+                    add = IsNight();
+                }
+                else if(this.tasks[t].prototype.Type == TASK_DAY)
+                {
+                    add = IsDay();
+                }
+                else if(this.tasks[t].prototype.Type == TASK_MORNING)
+                {
+                    add = IsMorning();
+                }
+                else if(this.tasks[t].prototype.Type == TASK_AFTERNOON)
+                {
+                    add = IsAfternoon();
+                }
+                else if(this.tasks[t].prototype.Type == TASK_EVENING)
+                {
+                    add = IsEvening();
+                }
+                else if(this.tasks[t].prototype.Type == TASK_IDLE)
+                {
+                    add = (!valid(this.currentTask) && this.tasksQueue.length() == 0);
+                }
+                else
+                {
+                    _WLog("Unknown task type<" + this.tasks[t].prototype.Type + "> : " + this.tasks[t].prototype.FullName, DEBUG_WARNING);
+                }
+
+                if(add && (this.tasks[t].prototype.roll == uint(-1) || Random(0, this.tasks[t].prototype.roll) == 0))
+                {
+                    _WLog("Task '" + this.tasks[t].prototype.Name + "' added to queue : " + this.tasks[t].prototype.FullName, DEBUG_MESSAGE);
+                    this.tasks[t].state = TASKSTATE_STARTING;
+                    this.tasksQueue.insertLast(this.tasks[t]);
+                }
+            }
+        }
+
+        if(valid(this.currentTask) && currentTask.nextRun > 0)
+        {
+            uint next = currentTask.nextRun;
+            currentTask.nextRun = 0;
+            return(next);
+        }
+        return(GAME_SECOND(10));
+    }
+
+    void Save(Buffer& buffer)
+    {
+        buffer << this.prototype.PID << this.ownerId;
+        buffer << this.tasks.length();
+        if(this.tasks.length() > 0)
+        {
+            for(uint t = 0, tLen = this.tasks.length(); t < tLen; t++)
+            {
+                this.tasks[t].Save(buffer);
+            }
+        }
+        buffer << (valid(this.currentTask) ? this.currentTask.idx : uint(-1));
+        buffer << this.tasksQueue.length();
+        if(this.tasksQueue.length() > 0)
+        {
+            for(uint t = 0, tLen = this.tasksQueue.length(); t < tLen; t++)
+            {
+                buffer << this.tasksQueue[t].idx;
+            }
+        }
+    }
+
+    bool Load(Buffer& buffer)
+    {
+        buffer >> this.prototypePID >> this.ownerId;
+
+        _WLog("Loading schedule instance, " + this.prototypePID + ", " + this.ownerId, DEBUG_MESSAGE);
+
+        CNpcSchedule@ proto = GetSchedulePrototype(this.prototypePID);
+        if(valid(proto))
+            this.SetPrototype(proto);
+
+        uint tasksLength = 0;
+        buffer >> tasksLength;
+
+        for(uint t = 0; t < tasksLength; t++)
+        {
+            if(t >= this.tasks.length())
+            {
+                _WLog("Invalid tasks length : " + tasksLength + " vs " + this.tasks.length(), DEBUG_CRITICAL);
+                return(false);
+            }
+
+            _WLog("Loading task instance #" + t, DEBUG_MESSAGE);
+            this.tasks[t].Load(buffer);
+        }
+
+        uint currentTaskIdx = 0;
+        buffer >> currentTaskIdx;
+        if(currentTaskIdx != uint(-1) && currentTaskIdx < this.tasks.length())
+        {
+            _WLog("Current task: " + currentTaskIdx, DEBUG_MESSAGE);
+            @this.currentTask = this.tasks[currentTaskIdx];
+        }
+
+        uint tasksQueueLength = 0;
+        buffer >> tasksQueueLength;
+        _WLog("Queued tasks: " + tasksQueueLength, DEBUG_MESSAGE);
+        if(tasksQueueLength > 0)
+        {
+            for(uint t = 0; t < tasksQueueLength; t++)
+            {
+                uint taskIdx = uint(-1);
+                buffer >> taskIdx;
+                if(taskIdx != uint(-1) && taskIdx < this.tasks.length())
+                {
+                    _WLog("Queued task idx: " + taskIdx, DEBUG_MESSAGE);
+                    tasksQueue.insertLast(this.tasks[taskIdx]);
+                }
+            }
+        }
+
+        return(true);
+    }
+};
+
+class CNpcTaskInstance : INpcTaskInstance
+{
+    CNpcTask@                    prototype;
+
+    uint                         idx;
+
+    NpcTaskState                 state;
+
+    uint                         lastRun;
+    uint                         nextRun;
+    uint                         waitTime;
+
+    array<CNpcTaskAction@>       actionsQueue;
+    array<bool>                  ifs;
+
+    array<CNpcTaskInstanceData@> data;
+
+    CNpcTaskInstance(CNpcTask & task)
+    {
+        @this.prototype = task;
+        this.idx = uint(-1);
+        this.state = TASKSTATE_SKIP;
+
+        this.lastRun = this.nextRun = this.waitTime = 0;
+
+        this.actionsQueue.resize(0);
+        this.ifs.resize(0);
+        this.data.resize(0);
+    }
+
+    #ifndef _MSC_VER
+    uint get_WaitTime()
+    {
+        return(this.waitTime);
+    }
+
+    void set_WaitTime(uint value)
+    {
+        this.waitTime = value;
+    }
+    #endif
+
+    void SetData(string& name, array<uint8>& data)
+    {
+        for(uint d = 0, dLen = this.data.length(); d < dLen; d++)
+        {
+            if(strlwr(this.data[d].name) == strlwr(name))
+            {
+                this.data[d].data = data;
+                return;
+            }
+        }
+
+        CNpcTaskInstanceData@ newData = CNpcTaskInstanceData(name, data);
+        this.data.insertLast(newData);
+    }
+
+    bool GetData(string& name, array<uint8>& outData)
+    {
+        for(uint d = 0, dLen = this.data.length(); d < dLen; d++)
+        {
+            if(strlwr(this.data[d].name) == strlwr(name))
+            {
+                outData = this.data[d].data;
+                return(true);
+            }
+        }
+
+        return(false);
+    }
+
+    void ClearData(string& name)
+    {
+        for(uint d = 0, dLen = this.data.length(); d < dLen; d++)
+        {
+            if(strlwr(this.data[d].name) == strlwr(name))
+            {
+                this.data.removeAt(d);
+            }
+        }
+    }
+
+    void Start()
+    {
+        this.waitTime = 0;
+        this.actionsQueue = this.prototype.actions;
+        this.ifs.resize(0);
+    }
+
+    void Finish()
+    {
+        this.waitTime = 0;
+        this.actionsQueue.resize(0);
+        this.ifs.resize(0);
+    }
+
+    void Run(Critter& npc)
+    {
+        bool onMap = (valid(npc.GetMap()));
+        this.waitTime = 0;
+
+        if(this.lastRun == 0)
+        {
+            if(npc.IsNpc())
+                npc.ErasePlane(-1, true);
+            npc.SetHomePos(npc.HexX, npc.HexY, npc.Dir);
+        }
+
+        if(this.actionsQueue.length() == 0)
+        {
+            this.state = TASKSTATE_FINISHED;
+            return;
+        }
+
+        CNpcTaskAction@ action = this.actionsQueue.first();
+
+
+        bool finished = true;
+        if(action.Type == ACTION_IF || action.Type == ACTION_ENDIF)
+        {
+            if(action.Type == ACTION_IF)
+            {
+                bool result = action.function(action, this, npc);
+                this.ifs.insertLast(result);
+            }
+            else if(action.Type == ACTION_ENDIF)
+                this.ifs.removeLast();
+
+            finished = true;
+            this.nextRun = GAME_SECOND(1);
+        }
+        else if(this.ifs.length() > 0)
+        {
+            if(this.ifs.last() == true)
+            {
+                if(!action.requireMap || (action.requireMap && onMap))
+                    finished = action.function(action, this, npc);
+                else
+                {
+                    _WLog("Action<" + action.Type + "> skipped : not on map", DEBUG_MESSAGE);
+                    this.nextRun = GAME_SECOND(1);
+                }
+            }
+            else
+                this.nextRun = GAME_SECOND(1);
+        }
+        else
+        {
+            if(!action.requireMap || (action.requireMap && onMap))
+                finished = action.function(action, this, npc);
+            else
+            {
+                _WLog("Action<" + action.Type + "> skipped : not on map", DEBUG_MESSAGE);
+                this.nextRun = GAME_SECOND(1);
+            }
+        }
+
+        if(finished)
+            this.actionsQueue.removeFirst();
+    }
+
+    void Save(Buffer& buffer)
+    {
+        uint dataLength = this.data.length();
+        buffer << int(this.state) << this.lastRun << this.nextRun << this.waitTime;
+        buffer << dataLength;
+        for(uint d = 0; d < dataLength; d++)
+        {
+            this.data[d].Save(buffer);
+        }
+    }
+
+    void Load(Buffer& buffer)
+    {
+        int stateTemp = 0;
+        buffer >> stateTemp >> this.lastRun >> this.nextRun >> this.waitTime;
+        this.state = NpcTaskState(stateTemp);
+
+        uint dataLength = 0;
+        buffer >> dataLength;
+        _WLog("Data: " + dataLength, DEBUG_MESSAGE);
+        for(uint d = 0; d < dataLength; d++)
+        {
+            CNpcTaskInstanceData@ newData = CNpcTaskInstanceData(buffer);
+            _WLog("Data(" + newData.name + "): " + newData.data.length(), DEBUG_MESSAGE);
+
+            this.data.insertLast(newData);
+        }
+    }
+};
+
+class CNpcTaskInstanceData
+{
+    string       name;
+    array<uint8> data;
+
+    CNpcTaskInstanceData(Buffer & buffer)      // loading
+    {
+        buffer >> this.name >> this.data;
+    }
+
+    CNpcTaskInstanceData(string & name, array<uint8>&data)
+    {
+        this.name = name;
+        this.data = data;
+    }
+
+    void Save(Buffer& buffer)
+    {
+        buffer << this.name << this.data;
+    }
+};
+#endif // __NPC_SCHEDULE_INSTANCE__ //

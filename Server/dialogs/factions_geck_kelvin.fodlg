@@ -1,0 +1,114 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 R _item n PID_HY_MAG_PART - 1 #
+20 1020 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 7 D _var p factions_q_vc_parts < 11 D _var p faction_ghoul_hymag = 0 D _var p factions_q_vc_parts > 0 #
+5 2020 D _param p ST_INTELLECT < 8 D _var p factions_q_vc_parts < 11 D _var p faction_ghoul_hymag = 0 D _var p factions_q_vc_parts > 0 #
+65507 2030 #
+0 2040 @
+3 3000 None 0 #
+4 3010 D _param p ST_CHARISMA > 4 #
+6 3020 D _param p ST_CHARISMA < 5 #
+65507 3030 @
+4 4000 None 0 #
+0 4010 R _item p PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 R _var p faction_ghoul_hymag = 1 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 #
+65507 6020 D _param p ST_STRENGTH < 8 R _item n PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 #
+8 6030 D _param p ST_STRENGTH > 7 R _item p PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 R _var p faction_ghoul_hymag = 1 #
+0 6040 @
+7 7000 None 0 #
+9 7010 D _item p PID_BOTTLE_CAPS > 2999 R _item p PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 R _var p faction_ghoul_hymag = 1 R _script dialog@r_RemoveMoney 1 3000 #
+65507 7020 R _item n PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 #
+10 7030 D _param p ST_GENDER = 1 #
+0 7040 #
+0 7050 @
+8 8000 None 0 #
+0 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+9 11010 D _param p ST_CHARISMA > 4 R _item p PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 R _var p faction_ghoul_hymag = 1 #
+12 11020 D _param p ST_CHARISMA < 5 R _item p PID_HY_MAG_PART + 1 R _var p factions_q_vc_parts = 11 R _var p faction_ghoul_hymag = 1 #
+0 11030 @
+12 12000 None 0 #
+9 12010 @
+20 13000 None 0 #
+21 13010 #
+0 13020 @
+21 14000 None 0 #
+0 14010 &
+
+[engl]
+{100}{}{Kelvin}
+{200}{}{You see a ghoul wearing dirty, soiled clothes.}
+{200}{}{You see an eccentric looking ghoul. He is wearing soiled clothes.}
+{210}{}{You see Kelvin}
+{210}{}{You see Kelvin}
+{240}{}{You see a dead ghoul.}
+{250}{}{You see a dead ghoul with an eccentric looking face.}
+{260}{}{You see a massacred ghoul.}
+{270}{}{You see a massacred ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{2000}{}{What do you want, smoothskin ?}
+{2010}{}{I'm here because I've been looking for a hydroelectric magnetosphere regulator and, according to my calculations, you should have one in your possession.}
+{2020}{}{I'm looking for a hyper-magneto, uh...thingie, think you might have one?}
+{2030}{}{Gah! What the fuck are you? I don't care, I'm gonna end you just in case.}
+{2040}{}{Nothing, I was just looking around.}
+{3000}{}{[Surprised] A smoothskin that knows what he's talking about, I'll be damned. We sure don't run into your kind often, I should have it somewhere... [He starts rummaging in nearby containers]}
+{3010}{}{[Wait]}
+{3020}{}{[Wait]}
+{3030}{}{Smoothskin? Fucking racist, I'll show you some manners...}
+{4000}{}{[He triumphantly returns] Yeah, here you go. It's a little beat up, but it'll work. You can just have it, I sure as hell don't need it anymore.}
+{4010}{}{Really? Thanks!}
+{5000}{}{[He sighs] What you need is a hydroelectric magnetosphere regulator. Let ol' Kelvin see what he can do for you...}
+{5010}{}{[Wait]}
+{6000}{}{[He triumphantly returns] Here it is. But this thing sure as hell isn't easy to find. I'm gonna require adequate compensation, smoothskin.}
+{6010}{}{Fine, how much?}
+{6020}{}{I'll kick your head off and give it back to you as compensation, how about that?}
+{6030}{}{I'll kick your head off and give it back to you as compensation, how about that?}
+{6040}{}{Compensation? Go to hell, keep the damn thing.}
+{7000}{}{Let's say $3000, that's about fair for a thingie of this particular calibre.}
+{7010}{}{Ok, deal.}
+{7020}{}{I don't think so, zombie. [Draw your weapon]}
+{7030}{}{Well, a poor little girl like me hasn't got that kind of cash, handsome. Surely there's something else I can do for you...?}
+{7040}{}{Sorry, I can't afford it right now.}
+{7050}{}{Not a chance. [Leave]}
+{8000}{}{Well, now... no need to be rough on a poor ghoul, right? I guess I don't need compensation that bad. Here you go, asshole.}
+{8010}{}{Goddamn right you don't. [You snatch the part out of his hands]}
+{8020}{}{Hmph.}
+{9000}{}{Well, here you go! [He hands it over to you] Pleasure doing business with you, smoothie!}
+{9010}{}{Thank you.}
+{9020}{}{Yeah, right.}
+{10000}{}{Heavens to Betsy. I think there might be something you can do, darlin'. Dangit, I hope my gear's still working okay...}
+{10010}{}{[Lean in close] You do, huh? And what IS that, exactly?}
+{10020}{}{Oh God, what the hell am I doing? [Leave]}
+{11000}{}{Oh Lawdy, I can't stand it anymore! C'mere!}
+{11010}{}{Hold on there, I've got to deliver that part first, then I'm all yours, sugar. Promise I'll be right back.}
+{11020}{}{Oh God, I can't believe I'm gonna do this...}
+{11030}{}{This ain't worth it, get the hell away from me! [Leave]}
+{12000}{}{Huff... huff... boy, you sure did this old ghoul a lot of good. How was it for you, sweetcheeks?}
+{12010}{}{Uh, you're done already? Really? Whatever. Just... just give me the part. I think I'm gonna throw up.}
+{13000}{}{What do you want?}
+{13010}{}{Me, angh... You?}
+{13020}{}{Nutin.}
+{14000}{}{What the hell are you talking about, smoothie? You better go talk to someone down at Harp's, they might understand you better. Skedaddle.}
+{14010}{}{Hmph. Mangs.}
+

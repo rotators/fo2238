@@ -1,0 +1,110 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+7 1020 D _var n name_mem_npc_player = 1 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 #
+5 2020 D _param p ST_INTELLECT > 3 #
+9 2030 D _param p ST_INTELLECT > 3 D _var p q_la_howitzer = 1 #
+3 2040 D _param p ST_INTELLECT < 4 #
+20 2050 D _var p q_la_gunr_courier = 1 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 R _var p q_la_gunr_courier = 7 R _param p REPUTATION_LA + 2 #
+0 2060 D _param p ST_INTELLECT > 3 #
+0 2070 D _param p ST_INTELLECT < 4 @
+7 3000 None 0 #
+4 3010 #
+5 3020 #
+9 3030 D _param p ST_INTELLECT > 3 D _var p q_la_howitzer = 1 #
+20 3040 D _var p q_la_gunr_courier = 1 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_LA + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+0 3050 @
+3 4000 None 0 #
+0 4010 @
+4 5000 None 0 #
+65506 5010 D _param p ST_INTELLECT > 3 #
+0 5020 D _param p ST_INTELLECT > 3 #
+65506 5030 D _param p ST_INTELLECT < 4 #
+0 5040 D _param p ST_INTELLECT < 4 @
+5 6000 None 0 #
+6 6010 #
+0 6020 @
+6 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+65506 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 D _param p SK_SPEECH < 60 R _var p q_la_howitzer = 3 #
+12 10020 D _param p SK_SPEECH > 59 R _var p q_la_howitzer = 2 R _param p ST_EXPERIENCE + 300 #
+11 10030 D _param p SK_BIG_GUNS < 60 R _var p q_la_howitzer = 3 #
+12 10040 D _param p SK_BIG_GUNS > 59 R _var p q_la_howitzer = 2 R _param p ST_EXPERIENCE + 300 @
+11 11000 None 0 #
+65506 11010 #
+0 11020 @
+12 12000 None 0 #
+65506 12010 #
+0 12020 @
+20 13000 None 0 #
+0 13010 &
+
+[engl]
+{100}{}{Jargo}
+{200}{}{You see Jargo, the gunsmith.}
+{1000}{}{Predialogue installations}
+{1010}{}{Unknown}
+{1020}{}{Familiar}
+{2000}{}{Hello, how can I help you?@@Hello, what's up?@@Yeh, what do you want?}
+{2010}{}{I'd like to buy something.@@I want to buy something.@@Show me what you have to sell.}
+{2020}{}{Who are you?}
+{2030}{}{Hey, I've talked with Sergeant from the scavenger camp...}
+{2040}{}{Runk.}
+{2050}{}{I've got your Gun Runners shipment with me.}
+{2060}{}{Nevermind. Bye.@@Nothing. Thanks.}
+{2070}{}{Me going. Bye.@@Me not, me go.}
+{3000}{}{Hello. You again, how can I help you?@@You again, what's up now?@@Yeh, what do you want now?@@Need more ammo, eh?}
+{3010}{}{I'd like to buy something.@@I want to buy something.@@Show me what you have to sell.}
+{3020}{}{Who are you again?}
+{3030}{}{Hey, I've talked with Sergeant from the scavenger camp...}
+{3040}{}{I've got your Gun Runners shipment with me.}
+{3050}{}{Nevermind. Bye.@@Nothing. Thanks.}
+{4000}{}{Sorry, I can't understand you. Come back when you get more of a brain.}
+{4010}{}{Uh.}
+{5000}{}{Great. Here's what I have.@@Great, always looking for new things.}
+{5010}{}{Alright, let me take a look at it.@@Let me see.}
+{5020}{}{Nevermind. Bye.}
+{5030}{}{Me want to see.}
+{5040}{}{Me going. Bye.}
+{6000}{}{I am Jargo, the gunsmith here in Adytum and I don't care who you are... eh, if you wanted to tell me this next.}
+{6010}{}{The gunsmith? So, you produce weapons and ammo?}
+{6020}{}{Nevermind. Bye.@@Nothing. Thanks.}
+{7000}{}{Yes. But mostly only ammo. Scavenger teams are searching the old ruins of this city for junk and stuff we can use for producing everything we need. And until now it works pretty good. That means, we don't live bad here.}
+{7010}{}{Can I buy ammo from you?@@So I can buy ammo from you?}
+{7020}{}{Nevermind. Bye.@@Okay, thanks for the info.@@Thanks for the info, but I need to go.}
+{8000}{}{Sure, this is all I have at the moment...}
+{8010}{}{[Barter]}
+{8020}{}{I changed my mind. Bye.@@Okay, thanks for the info.@@Thanks for the info, but I need to go.}
+{9000}{}{Oh no... Not another one. That 'ol bastard is sending someone every week. What is it this time? More shotgun shells? 5mm boxes?}
+{9010}{}{Eh... actually, it is some shells for the howitzer.}
+{9020}{}{Nothing. See you.}
+{10000}{}{Howitzer shells?! What the fuck is he thinking? We grow the gunpowder on trees? Tell him to fuck off. I can't stand all his requests anymore...}
+{10010}{}{You don't want to think about it a bit more? }
+{10020}{}{You don't want to think about it a bit more? I mean, they *are* effective and I'll guess you want to spend your working time more on something that really works?}
+{10030}{}{But the howitzer shells come pretty handy against the dogs.}
+{10040}{}{But the howitzer shells come pretty handy against the dogs. Sure, it needs a lot work to produce them, but they are much more effective too... And to be serious, blowing up shit is fun!}
+{11000}{}{No! And now leave me alone with this. God damn...}
+{11010}{}{Okay. Anyway... I would like to buy something.}
+{11020}{}{Fine. See you.}
+{12000}{}{Well... okay. But it's the last time, god damn. We have much more important stuff to do than producing his bombs...}
+{12010}{}{Thanks! Now I would like to barter something with you...}
+{12020}{}{Thanks. See you later.}
+{13000}{}{Man, it's about time! Give it to me, had been waiting for the delivery since weeks!@@About time! Give me the package and thanks.@@Thanks for the delivery, @sex@|boy||girl|, it's about time!@@Ah, finally! Hand it over, I'll take care from now on.}
+{13010}{}{Goodbye.}
+

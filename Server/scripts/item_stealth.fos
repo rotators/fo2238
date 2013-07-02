@@ -1,0 +1,253 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_stealth.fos
+//
+
+// Stealth boy and motion sensor
+
+#include "_macros.fos"
+#include "MsgStr.h"
+
+// {4800}{}{You've used a Stealth Boy. You're more stealthy now.}
+// {4801}{}{You've prolonged your increased stealth.}
+// {4802}{}{Your Stealth Boy has been used up.}
+// {4803}{}{Stealth Boy bug. Please report this.}
+// {4900}{}{Motion sensor has no charges left.}
+// {4901}{}{Motion sensor is on.}
+// {4902}{}{Motion sensor is off.}
+// {4903}{}{Motion sensor charged.}
+// {4904}{}{Motion sensor charge will last for another @lex time@.}
+
+#define STR_STEALTHBOY_ON          (4800)
+#define STR_STEALTHBOY_LONGER      (4801)
+#define STR_STEALTHBOY_OFF         (4802)
+#define STR_STEALTHBOY_BUG         (4803)
+
+#define STR_SENSOR_DEPLETED        (4900)
+#define STR_SENSOR_ON              (4901)
+#define STR_SENSOR_OFF             (4902)
+#define STR_SENSOR_CHARGED         (4903)
+#define STR_SENSOR_CHARGES_LEFT    (4904)
+
+#define STEALTH_BOY_DURATION       # (_cr)     (_cr.Perk[PE_STEALTH_GIRL] > 0 ? REAL_MINUTE(40) : REAL_MINUTE(20))
+
+#define MOTION_SENSOR_SEC_TIME     (12) // in real seconds
+#define MOTION_SENSOR_MFC_TIME     (30) // in real seconds
+
+// stealth boy
+void _StealthBoyInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_StealthBoyUse");
+}
+
+bool _StealthBoyUse(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+        return false;
+    array<uint> indexes;
+    int         eff = crit.GetTimeEvents(item.GetProtoId(), indexes, null, null);
+    if(eff > 1)     // bug
+    {
+        Log("ERR: more than one effect in progress!");
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_STEALTHBOY_BUG);
+        return true;
+    }
+
+    _SubItem(item, 1);
+    if(eff == 1)     // prolong
+    {
+        crit.ChangeTimeEvent(indexes[0], STEALTH_BOY_DURATION(crit), 0);
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_STEALTHBOY_LONGER);
+        return true;
+    }
+
+    crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_STEALTHBOY_ON);
+    crit.AddTimeEvent("cte_StealthBoy", STEALTH_BOY_DURATION(crit), item.GetProtoId());
+    OnStealthBoyActivated(crit);
+    return true;
+}
+
+uint cte_StealthBoy(Critter& cr, int identifier, uint& rate)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_STEALTHBOY_OFF);
+    OnStealthBoyDeactivated(cr);
+    return 0;
+}
+
+void OnStealthBoyActivated(Critter& cr)
+{
+    SETFLAG(cr.StatBase[ST_SNEAK_FLAGS], 4);
+    cr.RefreshVisible();
+    // set the effect here?
+}
+
+void OnStealthBoyDeactivated(Critter& cr)
+{
+    UNSETFLAG(cr.StatBase[ST_SNEAK_FLAGS], 4);
+    cr.RefreshVisible();
+    // unset the effect here?
+}
+
+// motion sensor
+// vals: 1 - on/off, 3 - event id
+void _MotionSensorInit(Item& item, bool firstTime)
+{
+    if(firstTime && item.Proto.Misc_ChargeMax > 0 && item.Proto.Misc_ChargeStart > 0)
+    {
+        if(item.Proto.Misc_ChargeStart > item.Proto.Misc_ChargeMax)
+            item.Charge = item.Proto.Misc_ChargeMax;
+        else
+            item.Charge = item.Proto.Misc_ChargeStart;
+    }
+
+    item.SetEvent(ITEM_EVENT_USE, "_MotionSensorUse");
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_MotionSensorUseOnMe");
+    item.SetEvent(ITEM_EVENT_SKILL, "_MotionSensorSkill");
+}
+
+bool _MotionSensorUse(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+        return false;
+    if(item.Val1 == 1)
+    {
+        EraseTimeEvent(item.Val3);
+        OnMotionSensorOff(item);
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_OFF);
+        return true;
+    }
+    if(item.Charge == 0)
+    {
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_DEPLETED);
+        return true;
+    }
+    item.Val3 = CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_MotionSensor", item.Id, true);
+    OnMotionSensorOn(item);
+    crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_ON);
+    return true;
+}
+
+bool _MotionSensorUseOnMe(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(!valid(usedItem))
+        return false;
+    uint16 itemPid = usedItem.GetProtoId();
+    if((int(itemPid) == PID_SMALL_ENERGY_CELL || int(itemPid) == PID_MICRO_FUSION_CELL) && item.Charge < item.Proto.Misc_ChargeMax)
+    {
+        uint needCharge = item.Proto.Misc_ChargeMax - item.Charge;
+        uint charge = (itemPid == PID_SMALL_ENERGY_CELL ? MOTION_SENSOR_SEC_TIME : MOTION_SENSOR_MFC_TIME);
+        uint needItems = needCharge / charge;
+        if((needCharge % charge) != 0)
+            needItems++;
+        if(needItems > usedItem.GetCount())
+            needItems = usedItem.GetCount();
+        item.Charge += CLAMP(needItems * charge, 0, item.Proto.Misc_ChargeMax - item.Charge);
+        item.Update();
+        _SubItem(usedItem, needItems);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_CHARGED);
+        return true;
+    }
+    return false;
+}
+
+bool _MotionSensorSkill(Item& geiger, Critter& cr, int skill)
+{
+    if(skill == SK_SCIENCE)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_CHARGES_LEFT, "$time" + geiger.Charge + (geiger.Charge != 1 ? " seconds" : " second"));
+        return true;
+    }
+    if(skill == SK_REPAIR)
+    {
+        TryRechargeItem(cr, geiger);
+        return true;
+    }
+
+    return false;
+}
+
+bool TryRechargeItem(Critter& cr, Item& item)
+{
+
+    if(item.Charge == item.Proto.Misc_ChargeMax)
+    {
+        cr.Say(SAY_NETMSG, "Item is fully charged already.");
+        return true;
+    }
+
+    cr.RunClientScript("client_interface@_RepairSession", item.GetProtoId(), item.Id, 0, null, null);
+    cr.StatBase[ST_VAR0] = item.Id;
+    cr.ShowScreen(SCREEN_BAG, 0, "RechargeCallback");
+    return true;
+}
+
+void RechargeCallback(Critter& cr, uint n, string& s)
+{
+    Item@ item = GetItem(cr.Stat[ST_VAR0]);
+    Item@ with_item = GetItem(n);
+    #ifdef __DEBUG__
+    cr.Say(SAY_NETMSG, "items " + cr.Stat[ST_VAR0] + " and " + n);
+    #endif
+    if(!valid(item) || !valid(with_item))
+        return;
+
+    if(item.Accessory != ACCESSORY_CRITTER || with_item.Accessory != ACCESSORY_CRITTER ||
+       item.CritId != cr.Id || with_item.CritId != cr.Id)
+        return;
+
+    if(!_MotionSensorUseOnMe(item, cr, with_item))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    }
+}
+
+uint e_MotionSensor(array<uint>@ values)
+{
+    if(!valid(values))
+        return(0);
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    if(--item.Charge == 0)
+    {
+        OnMotionSensorOff(item);
+        return 0;
+    }
+    if((item.Accessory == ACCESSORY_CRITTER && (item.CritSlot == SLOT_HAND1 || item.CritSlot == SLOT_HAND2)) ||
+       item.Charge % 10 == 0)
+        item.Update();
+
+    return REAL_SECOND(1);
+}
+
+void OnMotionSensorOn(Item& item)
+{
+    item.Val1 = 1;
+    item.ChangeProto(PID_ACTIVE_MOTION_SENSOR);
+    item.Update();
+    if(item.Accessory == ACCESSORY_CRITTER)
+    {
+        Critter@ cr = GetCritter(item.CritId);
+        if(valid(cr))
+            cr.RefreshVisible();
+    }
+}
+
+void OnMotionSensorOff(Item& item)
+{
+    item.Val1 = 0;
+    item.ChangeProto(PID_MOTION_SENSOR);
+    item.Update();
+    if(item.Accessory == ACCESSORY_CRITTER)
+    {
+        Critter@ cr = GetCritter(item.CritId);
+        if(valid(cr))
+        {
+            cr.RefreshVisible();
+            if(item.Charge == 0)
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_SENSOR_DEPLETED);
+        }
+    }
+}

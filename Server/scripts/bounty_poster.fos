@@ -1,0 +1,83 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// bounty_poster.fos
+//
+
+// Uses the bounty script by scypior
+
+#include "_macros.fos"
+#include "bounties_h.fos"
+#include "serializator.fos"
+
+#define POSTER_UPDATE    (REAL_MINUTE(1))
+
+import IBountyRecord@ GetRecord(Critter@ npc) from "bounties";
+
+class BountyPoster
+{
+    Critter@ issuer;
+    Item@    poster;
+
+    BountyPoster(Critter & critter, Item@ wposter)
+    {
+        @issuer = critter;
+        @poster = wposter;
+        CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_UpdateDescription", false);
+    }
+
+    uint e_UpdateDescription(array<uint>@ values)
+    {
+        _TIMEBEGIN;
+        IBountyRecord@ record = GetRecord(issuer);
+
+        uint           playerid = 0;
+        uint           amount = 0;
+
+        if(record.GetCount() == 0)
+        {
+            DLog("No bounty records found");
+            SETFLAG(poster.Flags, ITEM_HIDDEN);
+            _TIMEEND;
+            return POSTER_UPDATE;
+        }
+
+        if(!record.GetBounty(Random(0, record.GetCount() - 1), playerid, amount))
+        {
+            DLog("Record could not be retrieved");
+            _TIMEEND;
+            return POSTER_UPDATE;
+        }
+
+        UNSETFLAG(poster.Flags, ITEM_HIDDEN);
+        poster.SetLexems("$poster" + GetPlayerName(playerid) + " is wanted dead. Reward: " + amount);
+        DLog("Settings lexems for bounty poster");
+        _TIMEEND;
+        return POSTER_UPDATE;
+    }
+};
+
+array<BountyPoster> BountyPosters;
+
+void InitBountyPoster(Critter& issuer, Item@ poster)
+{
+    DLog("Initializing bountyposter with issuer " + issuer.Id + " and poster ");
+    push_back(BountyPosters, BountyPoster(issuer, poster));
+}
+
+void InitBountyPosters(Critter& issuer, Map@ map)
+{
+    array<Item@> posters;
+    // TODO: RAW NUMBER, BAD!!!
+    // FIXME:
+    uint num = map.GetItems(1852, posters);
+    // num = num + map.GetItems(1853, posters);
+
+    DLog("Found " + num + " wanted posters on the map " + map.GetProtoId());
+
+    for(uint i = 0; i < num; i++)
+    {
+        InitBountyPoster(issuer, posters[i]);
+    }
+}

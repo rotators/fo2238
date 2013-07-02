@@ -1,0 +1,153 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _script dialog@d_IsMember 0  #
+20 1020 D _var p acquaintance = 1 #
+21 1030 D _var p acquaintance = 2 #
+3 1040 D _script dialog@d_IsDisguised 0  #
+2 1050 @
+3 2000 None 0 @
+2 3000 None 0 #
+4 3010 #
+50 3020 D _var p q_la_gunrunners_caravan > 0 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+0 4030 @
+5 5000 None 0 #
+6 5010 #
+7 5020 #
+0 5030 @
+6 6000 None 0 #
+7 6010 #
+5 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 #
+9 7020 #
+0 7030 @
+8 8000 None 0 #
+9 8010 #
+0 8020 #
+65507 8030 @
+9 9000 None 0 #
+10 9010 D _script dialog@d_NotMemberOfAnyFaction 0  D _var p acquaintance = 0 #
+0 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 #
+0 11020 @
+12 12000 None 0 #
+13 12010 D _param p ST_CHARISMA > 5 #
+14 12020 D _param p ST_CHARISMA < 6 #
+0 12030 @
+13 13000 None 0 #
+0 13010 R _var p acquaintance = 1 #
+30 13020 D _item p PID_5MM_AP > 119 R _item p PID_5MM_AP - 120 @
+14 14000 None 0 #
+0 14010 R _var p acquaintance = 2 #
+30 14020 D _item p PID_ROCKET_AP > 19 R _item p PID_ROCKET_AP - 20 @
+20 15000 None 0 #
+30 15010 D _item p PID_5MM_AP > 119 R _item p PID_5MM_AP - 120 #
+0 15020 @
+21 16000 None 0 #
+30 16010 D _item p PID_ROCKET_AP > 19 R _item p PID_ROCKET_AP - 20 #
+0 16020 @
+30 17000 None 0 #
+31 17010 R _script dialog@r_AddMember 0  @
+31 18000 None 0 #
+0 18010 @
+50 19000 None 0 #
+51 19010 #
+0 19020 @
+51 20000 None 0 #
+0 20010 D _item p PID_Q_GUNRUNNER_BOX > 0 R _item p PID_Q_GUNRUNNER_BOX - 1 R _var p q_la_gunrunners_caravan = 4 R _param p REPUTATION_BOS + 300 R _param p REPUTATION_GUNRUNNERS - 50 R _item p PID_BLUEPRINT_MINIGUN + 1 R _item p PID_BLUEPRINT_SUPER_SLEDGE + 1 R _item p PID_BLUEPRINT_ASSAULT_RIFLE + 1 &
+
+[engl]
+{100}{}{Brotherhood Guard}
+{200}{}{You see a Brotherhood Guard.}
+{210}{}{You see a Paladin of the Brotherhood of Steel.}
+{240}{}{You see a dead Brotherhood Guard.}
+{260}{}{You see a slain Brotherhood Guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Member}
+{1020}{}{Coming back with 5mm}
+{1030}{}{Coming back with rockets}
+{1040}{}{disguised}
+{1050}{}{No Member}
+{2000}{}{Greetings, brother, welcome back to the bunker.}
+{3000}{}{Wastelander, what is your business here?}
+{3010}{}{I have some questions for you.}
+{3020}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{3030}{}{Nothing, I will be on my way.}
+{4000}{}{Very well, proceed.}
+{4010}{}{What is this place?}
+{4020}{}{Who are you?}
+{4030}{}{Actually, I think I'll just leave, Goodbye.}
+{5000}{}{This is the Lost Hills Bunker, the headquarters of the Brotherhood of Steel and outsiders are not welcome here.}
+{5010}{}{I see, but exactly who are you?}
+{5020}{}{The Brotherhood of Steel?}
+{5030}{}{I see, I know where I'm not wanted.}
+{6000}{}{My name is Michael Avery. I am a Paladin of the Brotherhood of Steel.}
+{6010}{}{The Brotherhood of Steel?}
+{6020}{}{What is this place?}
+{6030}{}{Thats interesting, but I really must be going.}
+{7000}{}{We are a group dedicated to finding and preserving pre-war technology for future generations.}
+{7010}{}{Future generations? What's wrong with this current generation?!}
+{7020}{}{Pre-war technology? How can I get some of that?}
+{7030}{}{Good for you, I'm out of here.}
+{8000}{}{The wastelanders are far too interested in their own petty squabbles to be trusted with such a great responsibility. One day Humanity will recover enough to be trusted with such power again, but until that day it is the Brotherhood's duty to safeguard this technology.}
+{8010}{}{Perhaps I could trade with you for some of this technology, I can be trusted.}
+{8020}{}{Yeah, I guess you're right, we couldn't be trusted with it. I'm going to  go and think seriously about my behavior.}
+{8030}{}{You arrogant bastards, I'm going to take that technology if I have to pry it from your cold, dead hands! }
+{9000}{}{Our technology is only to be used by members of the Brotherhood.}
+{9010}{}{Is there any way I can join your order?}
+{9020}{}{I see. Then I have no further business with you, Goodbye.}
+{10000}{}{Sadly, our conflict against the Mutant horde has had a high price, many of our Brothers have paid with their lives to stem this menace. Therefore Elder Maxson has decreed that we must now allow entry for recruits from outside our order.}
+{10010}{}{Great! Where can I sign up?}
+{10020}{}{Mutant... Horde?! I don't think thats for me, bye!}
+{11000}{}{Not so fast. We may have been forced into accepting your kind into our ranks, but we still maintain high standards, To even become an Initiate you must first prove yourself worthy in either physical ability or your mental capacity.}
+{11010}{}{I am ready to prove myself, just tell me how.}
+{11020}{}{I have nothing to prove to the likes of you, your loss.}
+{12000}{}{I presume, for one so capable, it would not be a problem to provide some Armor Piercing 5mm rounds or Rockets for the Brotherhood's stores?}
+{12010}{}{How many rounds of 5mm would I need to bring?}
+{12020}{}{How many Rockets would I need to bring?}
+{12030}{}{I don't want to bother with this anymore, get someone else to do your dirty work.}
+{13000}{}{I would need at least 120 rounds of 5mm AP to even consider your application.}
+{13010}{}{I'll return when I have that ... maybe.}
+{13020}{}{Is that all? I have those right here!}
+{14000}{}{I would need at least 20 AP Rockets to even consider your application.}
+{14010}{}{I'll return when I have that ... maybe.}
+{14020}{}{Is that all? I have those right here!}
+{15000}{}{You again? I'm surprised to see you in one piece, most don't make it back here at all. Were you able to retrieve the ammo I asked for?}
+{15010}{}{Yes, it took a lot of work, but here they are.}
+{15020}{}{Not Yet, still working on it.}
+{16000}{}{You again? I'm surprised to see you in one piece, most don't make it back here at all. Were you able to retrieve the rockets I asked for?}
+{16010}{}{Yes, it took a lot of work, but here they are.}
+{16020}{}{Not Yet, still working on it.}
+{17000}{}{Ahh, Brother. These will aid our cause against the Mutant menace and spare many of our Bretheren's lives. Welcome to the Brotherhood.}
+{17010}{}{Brother? You mean I may enter the bunker as an Initiate now? }
+{18000}{}{Yes Brother, you may.}
+{18010}{}{Thank you, Brother.}
+{19000}{}{You have... what? From where did you got these? Hand them over and I'll guarantee you fair paiment.}
+{19010}{}{Here it is. [You give him the metal box.]}
+{19020}{}{No! I changed my mind. Goodbye.}
+{20000}{}{As far as I know, the Gun Runners are rigging their packages with explosives... Our scribes should be able to take care of that. About your reward... This should be enough to compensate your costs. [He gives you a batch of weapon blueprints in exchange for the Gun Runners box.]}
+{20010}{}{Thanks and goodbye.}
+{100000001}{}{Welcome back, brother.}
+{100000002}{}{Hello wastelander, you are not allowed to enter this building. Please leave this place.}
+{100000003}{}{You are not allowed to be here. This is our last warning.}
+{100000004}{}{You were warned. Now you will be dealt with.}
+{100000005}{}{Brother, you are not allowed to enter the storage room.}
+{100000006}{}{Initiate, you are not allowed to enter the computer room.}
+{100000007}{}{You've been warned. . .}
+

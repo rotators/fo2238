@@ -1,0 +1,178 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+60 1010 D _script dialog@d_CheckNight 0  D _script dialog@d_IsNotMember 0  R _script dialog@r_Alert 0  #
+50 1020 D _var p factions_player_faction = 6 D _script dialog@d_CheckNight 0  #
+40 1030 D _param p ST_INTELLECT < 4 #
+22 1040 D _var p factions_player_faction = 6 D _var n name_mem_npc_player = 0 #
+29 1050 D _var n name_mem_npc_player = 1 D _var p factions_player_faction = 6 #
+2 1060 D _var n name_mem_npc_player = 0 #
+9 1070 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+8 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+7 4020 #
+9 4030 #
+0 4040 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+9 6010 #
+0 6020 @
+7 7000 None 0 #
+9 7010 #
+500 7020 D _script perks@d_PerkCheck 1 346 R _param p PE_SCOUT = 1 #
+0 7030 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+4 9010 #
+8 9020 #
+0 9030 @
+22 10000 None 0 #
+23 10010 R _var n name_mem_npc_player = 1 #
+0 10020 @
+23 11000 None 0 #
+24 11010 #
+28 11020 #
+0 11030 @
+24 12000 None 0 #
+25 12010 #
+27 12020 #
+29 12030 #
+0 12040 @
+25 13000 None 0 #
+26 13010 #
+0 13020 @
+26 14000 None 0 #
+29 14010 #
+0 14020 @
+27 15000 None 0 #
+29 15010 #
+520 15020 D _script perks@d_PerkCheck 1 346 R _param p PE_SCOUT = 1 #
+0 15030 @
+28 16000 None 0 #
+29 16010 #
+0 16020 @
+29 17000 None 0 #
+24 17010 #
+28 17020 #
+0 17030 @
+40 18000 None 0 #
+41 18010 #
+41 18020 @
+41 19000 None 0 #
+42 19010 #
+0 19020 @
+42 20000 None 0 #
+65507 20010 @
+50 21000 None 0 @
+60 22000 None 0 @
+500 23000 None 0 #
+9 23010 #
+0 23020 @
+520 24000 None 0 #
+29 24010 #
+0 24020 &
+
+[engl]
+{100}{}{Sergeant Stark}
+{200}{}{You see Citizen Sergeant Stark.}
+{210}{}{You see a huge black man in heavy armor. He's watching you carefully.}
+{1000}{}{Predialogue installations}
+{1010}{}{night non citizen}
+{1020}{}{night citizen}
+{1030}{}{dumb}
+{1040}{}{citizen unknown}
+{1050}{}{citizen known}
+{1060}{}{non-citizen unknown}
+{1070}{}{non-citizen known}
+{2000}{}{What do you want?}
+{2010}{}{Who are you?}
+{2020}{}{Nothing, sorry to disturb you.}
+{3000}{}{I am Citizen SERGEANT Stark, Outsider. What do you want?}
+{3010}{}{What do you do here?}
+{3020}{}{Can you tell me where the Vault is?}
+{3030}{}{Nothing, sorry to disturb you.}
+{4000}{}{I run the Corrections Center. Keep the Outworlders in line. Make sure the Servants behave. Organize patrols. Try and protect the city from raiders.}
+{4010}{}{Patrols?}
+{4020}{}{Raiders?}
+{4030}{}{Can I ask you something else?}
+{4040}{}{Thanks.  Goodbye.}
+{5000}{}{Yeah, we have a small group of patrols. Can barely spare the men to protect Vault City, much less do all the reconnaissance that needs to be done.}
+{5010}{}{Anything I can help with?}
+{5020}{}{Thanks.  Goodbye.}
+{6000}{}{We don't need help from Outworlders, especially your kind.}
+{6010}{}{Yeah, yeah... I had more questions.}
+{6020}{}{Thanks.  Goodbye.}
+{7000}{}{Yeah, raiders. They've been hitting us pretty hard for a long time already. (Frowns.) Then there are the Enclave remnants and the Brotherhood... as if the damn wasteland isn't bad enough. Hard to maintain security here, I tell ya.}
+{7010}{}{Can I ask you some other questions?}
+{7020}{}{I could scout the surrounding area, if you'd be kind to show me how to do it properly. Your reconnaissance methods must be unmatched in the whole region. [Scout]}
+{7030}{}{Thanks.  Goodbye.}
+{8000}{}{The Vault's right outside the door. Only Citizens are allowed in there, so I don't want to catch you bothering the guards.}
+{8010}{}{Can I ask you something else?}
+{8020}{}{Thanks.  Goodbye.}
+{9000}{}{What do you want?}
+{9010}{}{What do you do here?}
+{9020}{}{Can you tell me where the Vault is?}
+{9030}{}{I better be going.}
+{10000}{}{Was there something I could help you with, Citizen?}
+{10010}{}{Who are you?}
+{10020}{}{Nothing, sorry to disturb you.}
+{11000}{}{I am Citizen SERGEANT Stark, Citizen. Was there something I could help you with?}
+{11010}{}{What do you do here?}
+{11020}{}{Can you tell me where the Vault is?}
+{11030}{}{Nothing, sorry to disturb you.}
+{12000}{}{I run the Corrections Center. Keep the Outworlders in line. Make sure the Servants behave. Organize patrols. Try and protect the city from raiders.}
+{12010}{}{Patrols?}
+{12020}{}{Raiders?}
+{12030}{}{Can I ask you something else?}
+{12040}{}{Thanks.  Goodbye.}
+{13000}{}{Yeah, we have a small group of patrols. Can barely spare the men to protect Vault City, much less do all the reconnaissance that needs to be done.}
+{13010}{}{Anything I can help with?}
+{13020}{}{Thanks.  Goodbye.}
+{14000}{}{You better go to the Vault City Headquarters, that fancy new building right down the street. I heard they might need a hand.}
+{14010}{}{Will do, thanks. I wated to know something else right now...}
+{14020}{}{Thanks.  Goodbye.}
+{15000}{}{Yeah, raiders. They've been hitting us pretty hard for a long time already. (Frowns.) Then there are the Enclave remnants and the Brotherhood... as if the damn wasteland isn't bad enough. Hard to maintain security here, I tell ya.}
+{15010}{}{Can I ask you some other questions?}
+{15020}{}{I could scout the surrounding area, if you'd be kind to show me how to do it properly. Your reconnaissance methods must be unmatched in the whole region. [Scout]}
+{15030}{}{Thanks.  Goodbye.}
+{16000}{}{The Vault's right outside the door. Just tell the guards you're a Citizen, and they'll let you through.}
+{16010}{}{Can I ask you something else?}
+{16020}{}{Thanks.  Goodbye.}
+{17000}{}{Yes, Citizen?}
+{17010}{}{What do you do here?}
+{17020}{}{Can you tell me where the Vault is?}
+{17030}{}{I better be going.}
+{18000}{}{What do you want?}
+{18010}{}{Yah!}
+{18020}{}{[Shamble off]}
+{19000}{}{Leave this place or you'll have to come with me, @sex@|boy||lady|. NOW.}
+{19010}{}{ME NO GO. NOW.}
+{19020}{}{Me leave? Me leave!}
+{20000}{}{You'll wish you left...}
+{20010}{}{ME NO GO LEFT.}
+{21000}{}{No one's permitted in the Corrections Center after dark. Come back in the morning.@@It's past curfew. What are you doing in here?}
+{22000}{}{Guards! Intruder!}
+{23000}{}{Now that you put it that way, and the situation with the raiders has almost completely slipped out of control, I guess we could make an exception and train you as a scout. Come with me. [Follow him and attend the training course]}
+{23010}{}{I am grateful for the training, Sgt. Stark, but I had some more questions as well.}
+{23020}{}{This training will come in handy out there, no doubt. I have to be going now, goodbye!}
+{24000}{}{Now that you put it that way, and the situation with the raiders has almost completely slipped out of control, I guess we could train you as a scout. Come with me, Citizen. [Follow him and attend the training course]}
+{24010}{}{I am grateful for the training, Sgt. Stark, but I had some more questions as well.}
+{24020}{}{This training will come in handy out there, no doubt. I have to be going now, goodbye!}
+

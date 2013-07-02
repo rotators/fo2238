@@ -1,0 +1,122 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+41 1010 D _var n acquaintance > 2 #
+40 1020 D _param p ST_KARMA > 99 R _var n acquaintance + 1 #
+2 1030 D _var n name_mem_npc_player = 0 #
+4 1040 D _param p KARMA_SLAVER = 0 #
+6 1050 R _script merc_dialog@r_GetSlaveTypes 1 0 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+4 3010 D _param p KARMA_SLAVER = 0 #
+6 3020 D _param p KARMA_SLAVER > 0 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 D _script merc_dialog@d_IsSlavePresent 1 14 D or D _script merc_dialog@d_IsSlavePresent 1 13 D or D _script merc_dialog@d_IsSlavePresent 1 12 D or D _script merc_dialog@d_IsSlavePresent 1 21 #
+8 6020 D _script merc_dialog@d_IsSlavePresent 1 17 D or D _script merc_dialog@d_IsSlavePresent 1 16 D or D _script merc_dialog@d_IsSlavePresent 1 15 D or D _script merc_dialog@d_IsSlavePresent 1 22 #
+9 6030 D _script merc_dialog@d_IsSlavePresent 1 20 #
+0 6040 @
+7 7000 None 0 #
+10 7010 D _script merc_dialog@d_IsSlavePresent 1 14 #
+10 7020 D _script merc_dialog@d_IsSlavePresent 1 13 #
+12 7030 D _script merc_dialog@d_IsSlavePresent 1 12 R _script merc_dialog@r_SetMerc 1 12 #
+12 7040 D _script merc_dialog@d_IsSlavePresent 1 21 R _script merc_dialog@r_SetMerc 1 21 #
+0 7050 @
+8 8000 None 0 #
+10 8010 D _script merc_dialog@d_IsSlavePresent 1 17 #
+10 8020 D _script merc_dialog@d_IsSlavePresent 1 16 #
+12 8030 D _script merc_dialog@d_IsSlavePresent 1 15 R _script merc_dialog@r_SetMerc 1 15 #
+12 8040 D _script merc_dialog@d_IsSlavePresent 1 22 R _script merc_dialog@r_SetMerc 1 22 #
+0 8050 @
+9 9000 None 0 #
+6 9010 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 9020 @
+10 10000 None 0 #
+6 10010 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 10020 @
+11 11000 None 0 #
+6 11010 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 11020 @
+12 12000 merc_dialog@dlg_ShowMercSellPrice 0 #
+11 12010 R _script merc_dialog@r_SellCurrentMerc 1 0 #
+0 12020 @
+40 13000 None 0 @
+41 14000 Attack 0 &
+
+[engl]
+{100}{}{Ashdown}
+{200}{}{You see a Khan.}
+{200}{}{You see Ashdown.}
+{210}{}{You see a girl in black leather, watching over the slaves in the pen.}
+{210}{}{You see Ashdown, the Khan in charge of the slaves.}
+{1000}{}{Predialogue installations}
+{1010}{}{Attack if you bother her}
+{1020}{}{Hostile to good people}
+{1030}{}{Unknown}
+{1040}{}{Known, not slaver}
+{1050}{}{Known, slaver}
+{2000}{}{Hello?}
+{2010}{}{Hello. Who are you?}
+{2020}{}{Goodbye.}
+{3000}{}{I'm Ashdown. I deal in slaves.}
+{3010}{}{Okay, lets deal.}
+{3020}{}{Small world, I'm a slaver.}
+{3030}{}{Okay. Not really interested in that.}
+{4000}{}{You're not a slaver. I'm not doing business with you.}
+{4010}{}{How do I become a slaver?}
+{4020}{}{Oh.}
+{5000}{}{Go see Metzger if you want in the guild. In the Den.}
+{5010}{}{Ok.}
+{6000}{}{OK, show me your stock slaver. But I'm not gonna spend caps on anythin' fancy. Slaves don't last long anyway.}
+{6010}{}{Maybe one of those males will be good.}
+{6020}{}{Got a few women, check them out.}
+{6030}{}{Check out those kids.}
+{6040}{}{I don't have any slaves in the moment.}
+{7000}{}{Males will be OK, show me them.}
+{7010}{}{Look at this first class male. He can even read and write.}
+{7020}{}{This one is pretty good. Not too smart, but look at his muscles! He will work like a horse.}
+{7030}{}{Check this one, he is a bit of a mess, but not too expensive.}
+{7040}{}{This one is a pretty messed up junkie, but if you have only a few caps to spare...}
+{7050}{}{I changed my mind.}
+{8000}{}{Alright, show me the females.}
+{8010}{}{This one is first class, she used to be a doctor ...or something like that.}
+{8020}{}{Look at this one. She has all teeth but three.}
+{8030}{}{Check this one, she is a bit of a mess, but not too expensive.}
+{8040}{}{I will be honest, this one is a bit crazy. Usually I sell them in bulk.}
+{8050}{}{I changed my mind.}
+{9000}{}{Kids?! Does this place look like a fuckin' kindergarten to you?}
+{9010}{}{Easy, let me show something else.}
+{9020}{}{Maybe I will come back with something bigger.}
+{10000}{}{Are you deaf? I told ya, I don't want anythin' fancy.}
+{10010}{}{Let me show something cheaper.}
+{10020}{}{Fuck off, I don't sell trash.}
+{11000}{}{Got some more?}
+{11010}{}{Yeah I've got some more.}
+{11020}{}{Nah, I'm outta here.}
+{12000}{}{I can give you @lex price@ for that one.}
+{12010}{}{Okay, deal.}
+{12020}{}{No thanks.}
+{13000}{}{What the fuck are ya doin' here, man? Get lost before someone shoots ya!@@We don't like your kind here. You better get the fuck outta here, before you get a bullet in the back.@@Man, I would dissapear from this place if I were you.}
+{14000}{}{That's it man, you're history!}
+{100000000}{}{Don't touch this.}
+{100000000}{}{What the FUCK are you doing?}
+{100000000}{}{Stay away from the cage.}
+{100000000}{}{You open the door - you die.}
+{100000001}{}{a}
+{100000001}{}{a}
+{100000001}{}{a}
+{100000001}{}{a}
+

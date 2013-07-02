@@ -1,0 +1,275 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave_critter_h.fos
+//
+
+#include "_macros.fos"
+#include "_scripts.fos"
+#include "cave_h.fos"
+#include "groups_h.fos"
+#include "utils_h.fos"
+#include "weap_anim_table_h.fos"
+
+import void SetWear(Item& item, int wearProcent) from "repair";
+import void SetMinWear(Item& item, int wearProcent) from "repair";
+
+array<ICaveCritter@> critters;
+array<ICaveGroup@>   groups;
+
+void InitCritters()
+{
+    CaveCritter@ critter;
+    @critter = CaveCritter();
+
+    #include "cave_critters.fos"
+}
+
+void InitGroups()
+{
+    CaveGroup@ group;
+    @group = CaveGroup();
+
+    #include "cave_groups.fos"
+}
+
+
+uint e_Deteriorate(array<uint>@ values)
+{
+    Critter@ npc = GetCritter(values[0]);
+    if(!valid(npc))
+        return 0;
+
+    array<Item@> items;
+    uint         num = npc.GetItems(-1, items);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(items[i].IsDeteriorable())
+        {
+            SetMinWear(items[i], Random(20, 40));
+            SetWear(items[i], Random(65, 95));
+        }
+    }
+    return 0;
+}
+
+ICaveCritter@ GetCaveCritterByID(uint id)
+{
+    for(uint i = 0; i < critters.length(); i++)
+    {
+        if(critters[i].GetID() == int(id))
+            return critters[i];
+    }
+    return null;
+}
+
+void AddBagToBag(array<int>& bag, array<int> toadd)
+{
+    for(uint i = 0; i < toadd.length(); i++)
+    {
+        bag.insertLast(toadd[i]);
+    }
+}
+
+void AddCaveGroup(array<uint> critters)
+{
+    CaveGroup group();
+    group.AddCritters(critters);
+    groups.insertLast(group);
+}
+
+void AddCaveCritter(uint id, uint pid, uint bag, uint aipack)
+{
+    CaveCritter critter();
+    critter.ID(id).PID(pid).Bag(bag).AI(aipack);
+    critters.insertLast(critter);
+}
+
+void AddCaveCritter(uint id, uint pid, array<int> bags, uint aipack)
+{
+    CaveCritter critter();
+    critter.ID(id).PID(pid).Bag(bags).AI(aipack);
+    critters.insertLast(critter);
+}
+
+shared interface ICaveGroup
+{
+    ICaveGroup@ AddCritters(array<uint> critters);
+    array<uint> GetCritters();
+};
+
+class CaveGroup : ICaveGroup
+{
+    array<uint> critters;
+
+    ICaveGroup@ AddCritters(array<uint> critters)
+    {
+        this.critters = critters;
+        return this;
+    }
+
+    array<uint> GetCritters()
+    {
+        return critters;
+    }
+};
+
+shared interface ICaveCritter
+{
+    ICaveCritter@ Bag(int bagid);
+    ICaveCritter@ Bag(array<int> bags);
+    ICaveCritter@ Team(int team);
+    ICaveCritter@ Level(int level);
+    ICaveCritter@ PID(int pid);
+    ICaveCritter@ ID(int id);
+    ICaveCritter@ AI(int aipack);
+    ICaveCritter@ Difficulty(int difficulty);
+
+    bool Spawn(Map@ map, uint x, uint y);
+
+    uint GetCost();
+    int  GetDifficulty();
+    int  GetID();
+};
+
+class CaveCritter : ICaveCritter
+{
+    array<int> bags;
+    int        bag;
+    int        selectedbag;
+    int        team;
+    int        pid;
+    int        id;
+    int        aipack;
+    string     script;
+    int        level;
+    int        difficulty;
+
+    CaveCritter()
+    {
+        team = 2;
+        pid = 0;
+        id = 0;
+        aipack = 1;
+        level = 0;
+        script = SCRIPT_mob;
+        difficulty = CAVE_CRITTER_NORMAL;
+    }
+
+    ICaveCritter@ Bag(int bag)
+    {
+        this.bags.insertLast(bag);
+        return this;
+    }
+
+    ICaveCritter@ Bag(array<int> bags)
+    {
+        for(uint i = 0; i < bags.length(); i++)
+        {
+            this.bags.insertLast(bags[i]);
+        }
+        return this;
+    }
+
+    ICaveCritter@ Team(int team)
+    {
+        this.team = team;
+        return this;
+    }
+
+    ICaveCritter@ Level(int level)
+    {
+        this.level = level;
+        return this;
+    }
+    ICaveCritter@ PID(int pid)
+    {
+        this.pid = pid;
+        return this;
+    }
+    ICaveCritter@ ID(int id)
+    {
+        this.id = id;
+        return this;
+    }
+
+    ICaveCritter@ AI(int aipack)
+    {
+        this.aipack = aipack;
+        return this;
+    }
+
+    ICaveCritter@ Difficulty(int difficulty)
+    {
+        this.difficulty = difficulty;
+        return this;
+    }
+
+    int GetDifficulty() { return difficulty; }
+    int GetID()         { return id; }
+    int SelectBag()
+    {
+        bool found = false;
+        uint crtype = GetCrType(pid);
+        shuffle_array(bags, int);
+        for(uint i = 0; i < bags.length(); i++)
+        {
+            array<uint>   mincounts, maxcounts;
+            array<int>    slots;
+            array<uint16> pids;
+            uint          num = GetBagItems(bags[i], pids, mincounts, maxcounts, slots);
+            for(uint y = 0; y < num; y++)
+            {
+                if(CanUseWeapon(crtype, pids[y]))
+                {
+                    DLog("Can use weapon " + pids[y] + " in bag " + bags[i]);
+                    return bags[i];
+                }
+            }
+        }
+        // Log("!!!!BAG BUG!!!! No suitable bag found to assign critter pid: " + pid);
+        return 1;
+    }
+
+    uint GetCost()
+    {
+        array<uint>   mincounts, maxcounts;
+        array<int>    slots;
+        array<uint16> pids;
+        selectedbag = SelectBag();
+        if(selectedbag == 1)
+            return 0;
+
+        uint num = GetBagItems(selectedbag, pids, mincounts, maxcounts, slots);
+        uint cost = 0;
+        for(uint i = 0; i < num; i++)
+        {
+            cost += BaseItemValue(pids[i], 7, 80, true) * (mincounts[i] + maxcounts[i]) / 2;
+        }
+        DLog("Cost of cave critter: " + cost);
+        return cost;
+    }
+
+    bool Spawn(Map@ map, uint x, uint y)
+    {
+        if(level == 0)
+            level = Random(1, 10);
+
+        selectedbag = SelectBag();
+
+        DLog("Spawning critter with PID " + pid + " on " + "x:" + x + " y:" + y);
+        Critter@ npc = AddNpc(map, pid, x, y, Random(0, 5), 0, script, aipack, selectedbag, TEAM_Mob0 + team, false, level);
+        if(!valid(npc))
+            return false;
+
+        npc.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+        npc.ChangeCrType(npc.StatBase[ST_BASE_CRTYPE]);
+        _CritSetExtMode(npc, MODE_EXT_NO_DETERIORATION);
+
+        CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_Deteriorate", npc.Id, false);
+
+        return true;
+    }
+};

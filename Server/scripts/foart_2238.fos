@@ -1,0 +1,60 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_2238.fos
+//
+
+#ifndef __FOART_2238__
+#define __FOART_2238__
+
+// inlined in foart_addons.fos
+
+#include "_vals.fos"
+
+#ifdef _MSC_VER
+# include "foart.fos"
+#endif
+
+void FOArt2238_ItemSpawned(uint itemId, uint spawnerId)
+{
+    if(itemId == 0)
+        return;
+
+    Item@ it = GetItem(itemId);
+    if(valid(it))
+    {
+        it.Val8 = SPECIAL_ITEM_FOART;
+        it.Val9 = spawnerId;         // TODO: it.SpawnedBy = spawnerId;
+    }
+    else
+        Log("FOArt2238_ItemSpawned - bad itemId<" + itemId + ">");
+
+    Critter@ cr = GetCritter(spawnerId);
+    if(valid(cr) && valid(it))
+        cr.LastSpawnedItem = itemId;
+    else
+        Log("FOArt2238_ItemSpawned - bad spawnerId<" + spawnerId + ">");
+}
+
+#define FOART_ADDON2238_STUB    (100)
+
+void AddonsInit2238() // called from AddonsInit()
+{
+    Addon2238_Stub();
+}
+
+void Addon2238_Stub()
+{
+    FOArtAddon@ stub = NewFOArtAddon(FOART_ADDON2238_STUB);
+    if(valid(stub))
+    {
+        stub.SetPreSpawn(@Addon2238_Stub_PreSpawn);
+
+        FOArtAddons.insertLast(stub);
+    }
+}
+
+void Addon2238_Stub_PreSpawn(Buffer&, uint16 pid, uint16 hexX, uint16 hexY)
+{}
+#endif // __FOART_2238__ //

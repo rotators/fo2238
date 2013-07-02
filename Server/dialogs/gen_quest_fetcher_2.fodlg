@@ -1,0 +1,72 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n acquaintance = 0 #
+8 1020 D _var n acquaintance = 1 D _item p PID_BOOZE > 0 #
+9 1030 D _var n acquaintance = 1 D _item p PID_BOOZE = 0 #
+10 1040 D _var n acquaintance = 2 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 D _param p ST_CHARISMA < 5 #
+5 3020 D _param p ST_CHARISMA > 4 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 D _param p ST_KARMA > 0 R _var n acquaintance = 1 #
+0 7020 D _param p ST_KARMA < 1 R _var n acquaintance = 1 #
+0 7030 @
+8 8000 None 0 #
+0 8010 D _item p PID_BOOZE } 1 R _item p PID_SLEDGEHAMMER + 1 R _item p PID_BOOZE - 1 R _var n acquaintance = 2 R _param p ST_EXPERIENCE + 100 #
+0 8020 D _item p PID_BOOZE } 1 R _item p PID_KNIFE + 1 R _item p PID_BOOZE - 1 R _var n acquaintance = 2 R _param p ST_EXPERIENCE + 100 #
+0 8030 D _item p PID_BOOZE } 1 R _item p PID_AXE + 1 R _item p PID_BOOZE - 1 R _var n acquaintance = 2 R _param p ST_EXPERIENCE + 100 #
+0 8040 D _item p PID_BOOZE } 1 R _item p PID_BOOZE - 1 R _var n acquaintance = 2 R _param p ST_EXPERIENCE + 300 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 &
+
+[engl]
+{100}{}{April}
+{200}{}{You see a woman.}
+{200}{}{You see April.}
+{210}{}{This woman looks right past you, lost in thought.}
+{1000}{}{Predialogue installations}
+{1010}{}{First meeting.}
+{1020}{}{Return with booze.}
+{1030}{}{Return without booze.}
+{1040}{}{Quest finished.}
+{2000}{}{[She snaps out of her daydreaming as you approach.] Yes?}
+{2010}{}{Hello.}
+{2020}{}{Nothing.}
+{3000}{}{Hello.}
+{3010}{}{Seems like you've got something on your mind, are you doing okay?}
+{3020}{}{Seems like you've got something on your mind, are you doing okay?}
+{4000}{}{Not sure that's any of your business.}
+{4010}{}{Fine, just trying to help.}
+{5000}{}{I'm okay, you know.}
+{5010}{}{You sure? You don't look it.}
+{6000}{}{Just got something on my plate right now I suppose.}
+{6010}{}{Anything I can help with?}
+{7000}{}{I doubt you...well, you could get me a bottle of booze. That would help me some.}
+{7010}{}{Not sure that's the right way to go about it, but sure, I can get you a bottle.}
+{7020}{}{Yeah no sweat, I'll go get you one.}
+{7030}{}{Alcohol is a sin! I will not assist your immoral actions!}
+{8000}{}{Hey, thanks. [She smiles a little.] Here's something for your trouble.}
+{8010}{}{[Take sledgehammer]}
+{8020}{}{[Take knife]}
+{8030}{}{[Take hatchet]}
+{8040}{}{My pleasure! And thank you.}
+{9000}{}{What, the store was closed?}
+{9010}{}{Oh, yeah, sorry. No luck with the booze yet. I'll be back when I get some.}
+{10000}{}{Hey you.@@Hi again.@@::Waves::@@Thanks for before.}
+

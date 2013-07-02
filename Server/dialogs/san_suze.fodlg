@@ -1,0 +1,80 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+3 1020 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 D _param p ST_STRENGTH = 11 #
+10 2020 D _param p ST_INTELLECT < 4 #
+0 2030 D _param p ST_INTELLECT > 3 @
+3 3000 None 0 #
+5 3010 D _param p ST_INTELLECT > 3 #
+10 3020 D _param p ST_INTELLECT < 4 #
+9 3030 D _item p PID_BEER > 19 D _var n factions_npc_gave_leadership = 0 #
+8 3040 D _item n PID_BEER > 19 D _var n factions_npc_gave_leadership = 1 #
+0 3050 @
+4 4000 None 0 #
+6 4010 @
+5 5000 None 0 #
+6 5010 D _var n factions_npc_gave_leadership = 0 #
+0 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+12 8010 R _script dialog@r_AddLeader 0  R _var n factions_npc_gave_leadership = 1 R _item p PID_BEER = 0 @
+9 9000 None 0 #
+0 9010 R _item p PID_BEER = 0 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+0 12010 &
+
+[engl]
+{100}{}{Susie}
+{200}{}{You see a woman with a beautiful figure.}
+{210}{}{You see Susie.}
+{1000}{}{Predialogue installations}
+{1010}{}{First meeting}
+{1020}{}{Already met}
+{2000}{}{Before you stands a young, strikingly beautiful woman. She turns her eyes on you as you approach without saying a word.}
+{2010}{}{(DISABLED, SEE DEMAND) Hey there.}
+{2020}{}{Herro.}
+{2030}{}{Uh, sorry. Wrong person.}
+{3000}{}{Suze turns her eyes on you as you approach, saying nothing.}
+{3010}{}{Hey Suze.}
+{3020}{}{Hay preety lay-dee!}
+{3030}{}{So I got you guys your beer, let's get this party started! All hail king @pname@!}
+{3040}{}{So I got you guys your beer, let's get this party started! All hail king @pname@!}
+{3050}{}{Leave}
+{4000}{}{Mmm, well hello there. Do you want something?}
+{4010}{}{Well hey, I'm @pname@. What's going on around here?}
+{5000}{}{Nice to see you again, @pname@.}
+{5010}{}{What's going on around here?}
+{5020}{}{Leave}
+{6000}{}{Nothing, as usual. We're all bored and sober as hell out here. Those Committee guys don't have a lot of booze, and what they do have they sure as hell don't feel like sharing.}
+{6010}{}{Really? Anything I can help with? I do a lot of travelling, and getting hold of alcohol really isn't a hassle.}
+{7000}{}{You'd do that for us? Well, I'm not gonna refuse the generosity of strangers. You get us enough alcohol, throw a big enough party, and these drunks'll probably crown you their king. 
+
+We've got ourselves enough of the hard stuff, how about you pick us up twenty bottles of beer? None of that irradiated crap that comes out of Gecko, either.}
+{7010}{}{You had me at 'King'. Yeah, sure, I'm on it.}
+{8000}{}{Very impressive. I knew you had it in you, sweetie.}
+{8010}{}{Heh, I think I knew I did too. Now let's get wasted.}
+{9000}{}{Well that's really nice of you sweetie, but someone beat you to it. We already got ourselves a leader. Thanks for the beer, though. [She winks] Hard luck.}
+{9010}{}{You sneaky little b... fine! Screw you!}
+{10000}{}{Well hello to you too. [She notices your vacant stare and sighs] Well, you've not got a lot going on upstairs, have you? Poor thing. You better get out of here, this place isn't for you.}
+{10010}{}{[Spend a few seconds staring at her with your mouth hanging open, then shuffle off]}
+{11000}{}{Oh, it's you again. Are you lost, you poor little thing? [She ruffles your hair]}
+{11010}{}{[Giggle happily, and wander off]}
+{12000}{}{[You end up drinking so much you black out. You wake up feeling terrible, but you seem to have a dim recollection that the Tanker vagrants have made you some kind of leader.]}
+{12010}{}{[Get up, and spend the rest of the day avoiding bright lights and loud noises]}
+

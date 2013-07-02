@@ -1,0 +1,222 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_names.fos
+//
+
+#ifndef __NPC_NAMES__
+#define __NPC_NAMES__
+
+#include "_macros.fos"
+#include "npc_names_h.fos"
+
+string GetFirstName(uint gender, uint index)
+{
+    if(gender == GENDER_FEMALE)
+        return(female[index]);
+    else if(gender == GENDER_MALE)
+        return(male[index]);
+    else
+        return("(unreadable)");
+}
+
+string GetRandomFirstName(uint gender, int& index)
+{
+    if(gender == GENDER_FEMALE)
+    {
+        index = Random(0, female.length() - 1);
+        return(random_from_array(female));
+    }
+    else if(gender == GENDER_MALE)
+    {
+        index = Random(0, male.length() - 1);
+        return(random_from_array(male));
+    }
+    else
+    {
+        index = -1;
+        return("(unreadable)");
+    }
+}
+
+string GetRandomFirstName(uint gender)
+{
+    if(gender == GENDER_FEMALE)
+        return(random_from_array(female));
+    else if(gender == GENDER_MALE)
+        return(random_from_array(male));
+    else
+        return("(unreadable)");
+}
+
+string GetNick(uint gender, uint index, bool genderNick)
+{
+    if(!genderNick)
+        return nick[index];
+    if(gender == GENDER_FEMALE)
+        return femalenick[index];
+    else if(gender == GENDER_MALE)
+        return malenick[index];
+    return nick[index];
+}
+
+string BaseGetRandomNick(uint gender, bool genderNick, int& index)
+{
+    if(!genderNick)
+    {
+        index = Random(0, nick.length() - 1);
+        return nick[index];
+    }
+    if(gender == GENDER_FEMALE)
+    {
+        index = Random(0, femalenick.length() - 1);
+        return femalenick[index];
+    }
+    else if(gender == GENDER_MALE)
+    {
+        index = Random(0, malenick.length() - 1);
+        return malenick[index];
+    }
+    return nick[index];
+}
+
+string GetRandomNick(uint gender, bool& genderNick, int& index)
+{
+    genderNick = (Random(1, 100) <= GENDERNICK_CHANCE);
+    return BaseGetRandomNick(gender, genderNick, index);
+}
+
+string GetRandomNick(uint gender)
+{
+    int  dummy;
+    bool genderNick = (Random(1, 100) <= GENDERNICK_CHANCE);
+    return BaseGetRandomNick(gender, genderNick, dummy);
+}
+
+string GetSurname(uint index)
+{
+    return surname[index];
+}
+
+string GetRandomSurname(int& index)
+{
+    index = Random(0, surname.length() - 1);
+    return surname[index];
+}
+
+string GetRandomSurname()
+{
+    return(random_from_array(surname));
+}
+
+string GetRandomFullName(uint gender, int& firstName, bool& genderNick, int& nick, int& surname)
+{
+    string result = GetRandomFirstName(gender, firstName) + " ";
+    if(Random(1, 100) <= NICK_CHANCE)
+        result += GetRandomNick(gender, genderNick, nick) + " ";
+    result += GetRandomSurname(surname);
+
+    return(result);
+}
+
+string GetRandomFullName(uint gender)
+{
+    string result = GetRandomFirstName(gender) + " ";
+    if(Random(1, 100) <= NICK_CHANCE)
+        result += GetRandomNick(gender) + " ";
+    result += GetRandomSurname();
+
+    return(result);
+}
+
+void LogNames(bool printNames)   // yea, ugly it is
+{
+    file log;
+    if(log.open("logs/npc_names.log", "w") >= 0)
+    {
+        uint fnames = 0, mnames = 0, bnames = 0;
+        uint fnamenicks = 0, mnamenicks = 0, bnicks = 0;
+        uint bsurnames = 0;
+        //
+        for(uint m = 0; m < male.length(); m++)
+        {
+            bnames += male[m].length();
+        }
+        for(uint f = 0; f < female.length(); f++)
+        {
+            bnames += female[f].length();
+        }
+        for(uint n = 0; n < nick.length(); n++)
+        {
+            bnicks += nick[n].length();
+        }
+        for(uint mn = 0; mn < malenick.length(); mn++)
+        {
+            bnicks += malenick[mn].length();
+        }
+        for(uint fn = 0; fn < femalenick.length(); fn++)
+        {
+            bnicks += femalenick[fn].length();
+        }
+        //
+        for(uint s = 0; s < surname.length(); s++)
+        {
+            bsurnames += surname[s].length();
+            for(uint m = 0; m < male.length(); m++)
+            {
+                mnames++;
+                if(printNames)
+                    log.writeString(male[m] + " " + surname[s] + "\r\n");
+                for(uint n = 0; n < nick.length(); n++)
+                {
+                    mnamenicks++;
+                    if(printNames)
+                        log.writeString(male[m] + " " + nick[n] + " " + surname[s] + "\r\n");
+                }
+                for(uint mn = 0; mn < malenick.length(); mn++)
+                {
+                    mnamenicks++;
+                    if(printNames)
+                        log.writeString(male[m] + " " + malenick[mn] + " " + surname[s] + "\r\n");
+                }
+            }
+            for(uint f = 0; f < female.length(); f++)
+            {
+                fnames++;
+                if(printNames)
+                    log.writeString(female[f] + " " + surname[s] + "\r\n");
+                for(uint n = 0; n < nick.length(); n++)
+                {
+                    fnamenicks++;
+                    if(printNames)
+                        log.writeString(female[f] + " " + nick[n] + " " + surname[s] + "\r\n");
+                }
+                for(uint fn = 0; fn < femalenick.length(); fn++)
+                {
+                    fnamenicks++;
+                    if(printNames)
+                        log.writeString(female[f] + " " + femalenick[fn] + " " + surname[s] + "\r\n");
+                }
+            }
+        }
+        if(printNames)
+            log.writeString("-------------------------------------------------------------------------------\r\n");
+        log.writeString("Tables:            names:" + (male.length() + female.length()) + " (male:" + male.length() + " female:" + female.length() + ") [" + bnames + " bytes]\r\n");
+        log.writeString("                   nicknames:" + (nick.length() + malenick.length() + femalenick.length()) + " (no-gender:" + nick.length() + " male:" + malenick.length() + " female:" + femalenick.length() + ") [" + bnicks + " bytes]\r\n");
+        log.writeString("                   surnames:" + surname.length() + " [" + bsurnames + " bytes]\r\n");
+        log.writeString("                   total:" + (male.length() + female.length() + nick.length() + malenick.length() + femalenick.length() + surname.length()) + " [" + (bnames + bnicks + bsurnames) + " bytes]\r\n");
+        log.writeString("Name+Surname:      " + (mnames + fnames) + " (male:" + mnames + " female:" + fnames + ")\r\n");
+        log.writeString("Name+Nick+Surname: " + (mnamenicks + fnamenicks) + " (male:" + mnamenicks + " female:" + fnamenicks + ") [NICK_CHANCE:" + NICK_CHANCE + " GENDERNICK_CHANCE:" + GENDERNICK_CHANCE + "]\r\n");
+        log.writeString("Total:             " + (mnames + fnames + mnamenicks + fnamenicks) + "\r\n");
+        log.close();
+    }
+    else
+        Log("Can't open logs/names.log for writing!");
+}
+
+void lognames(Critter&, int printNames, int, int)
+{
+    LogNames(printNames > 0 ? true : false);
+}
+#endif

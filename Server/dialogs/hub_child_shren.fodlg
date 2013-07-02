@@ -1,0 +1,63 @@
+[comment]
+no vars, this is a dialog for that kid in front of the brahmin pens at the entrance of the hub. He's begging for fruit, giving him 1 fruit grants you 5xp and 5 rep points with Hub. It's not much but it adds a lot of atmosphere to the game. You could literally level up to level 2 quick with this npc so long as you had enough fruit. 
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_CHARISMA > 1 D _script dialog@d_CommonTimeoutReady 0  #
+9 1020 D _script dialog@d_CommonTimeoutNotReady 0  D _param p ST_CHARISMA > 1 #
+6 1030 D _param p ST_CHARISMA = 1 @
+2 2000 None 0 #
+7 2010 D _item p PID_MUTATED_FRUIT > 0 R _item p PID_MUTATED_FRUIT - 1 R _param p ST_EXPERIENCE + 50 R _script dialog@r_CommonTimeout 1 8 #
+3 2020 #
+4 2030 #
+5 2040 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 @
+5 5000 None 0 #
+0 5010 #
+0 5020 @
+6 6000 None 0 @
+7 7000 None 0 #
+8 7010 @
+8 8000 dialog@dlg_ShrenRumour 0 @
+9 9000 None 0 &
+
+[engl]
+{100}{}{Shren}
+{200}{}{You see a young boy.}
+{210}{}{He looks hungry.}
+{1000}{}{Predialogue installations}
+{1010}{}{Hungry}
+{1020}{}{Not hungry}
+{1030}{}{Ugly}
+{2000}{}{Do you have any food @sex@|mister||lady|?}
+{2010}{}{Sure do, kiddo. Here, have a piece of fruit.}
+{2020}{}{No, but I can get you some. What are you lookin' for kiddo?}
+{2030}{}{Yup, and you can't have any of it. *You wave some food around the kid's face* Yum! Delicious!}
+{2040}{}{What do you want the food for? Is this some kind of scam?! Are you actually a midget in disguise!}
+{3000}{}{I'm hungry, and want some fruit! Bring me some please.}
+{3010}{}{Sure thing, I'll be right back.}
+{4000}{}{Gimme! Wahhh! I'm starving!}
+{5000}{}{*The child laughs happily* Ha-ha! Your funny @sex@|mister||lady|, but I'm starving. Ever since my daddy got killed by deathclaws, I'm always hungry. *The child looks down at his feet, and rubs his foot along the ground* Please bring me some fruit.}
+{5010}{}{Alright kiddo, I'll see what I can do.}
+{5020}{}{Well ain't you the saddest little puppy on the block? Go fetch yer' own food, the wasteland is harsh! And I sure as hell don't have time to fetch you some fruit! If I change my mind however, I might come back. Well see ya kiddo!}
+{6000}{}{@@Go away. boogey man!@@Ahh! It's the boogey man!@@Oh no! It's the monster from my dreams!@@Oh no! Mom always said the bad things I do would come to haunt me! Ahh! Get away!!@@Hehe, you look funny@@I'm prettier then you!@@Oh no! It's that thing again! Get awaaay!@@Hehe, you look like a fart@@Maybe you should stop eating the fruit?@@Wow! You look like Frankenstein!@@}
+{7000}{}{Yay! Thanks a lot @sex@|mister||lady|! Hooray, I'm not hungry anymore!}
+{7010}{}{Sure thing, kiddo. I won't let you starve.}
+{8000}{}{By the way @sex@|mister||lady|, I've been watching these Brahmin for days now. Did you know they poo every three hours?@@Thanks @sex@|mister||lady|! You know that those Caravan Drivers will have work for you every 15 hours?@@Hey @sex@|mister||lady|, you should try using a bank sometime. You know that @lex bank@ has the highest interest rate?@@Hey @sex@|mister||lady| if you need some caps, trek from the Hub to the Scavengers and back to keep unloading crates. I would do it, but I'm too young to leave here.@@Thanks @sex@|mister||lady|, I heard that Junktown is buying spears. You might want to head over there.@@By the way @sex@|mister||lady|, did you know that BB's are worth the same to almost everyone? You could use them as currency around the wasteland. Before mah pa' died he used to sell BB's to the Boneyard.@@Hey @sex@|mister||lady|, I heard that you can find broken cars in the destroyed city areas. You might even find a fuel cell thingy!@@By the way @sex@|mister||lady|, remember that the wasteland is harsh. Don't get yourself killed! You shouldn't travel too far if you aren't prepared for fighting!@@Thanks @sex@|mister||lady|, your the reason why I stay in the Hub, it's so safe here.@@Hey @sex@|mister||lady|, I heard that beer is the best drug! It makes people funny, and tough!@@Hey @sex@|mister||lady|! I can't wait till' I'm all grown up, so I can unload some crates and shovel shit all day! I would make hundreds of caps in minutes!@@Bye @sex@|mister||lady|, remember to come back at night. There's much more poop to shovel when everyone is taking a nap!@@Remember to pick up a lot of junk @sex@|mister||lady|, I've seen people make a fortune crafting with it!@@Hey @sex@|mister||lady|, drop by a hospital some time! Those purple people need as much help as they can get!@@Thanks @sex@|mister||lady|! Did you know that they sell Holodisks in town? They're so cool!@@Thanks @sex@|mister||lady|! Did you buy a car yet? Wow! They're so fast!@@Thanks @sex@|mister||lady|! You know, if I had a gun I would shoot some meanie Regulators! I keep hearing how much good stuff they carry!@@Thanks @sex@|mister||lady|, bring me more food and I'll tell you all the rumours I've heard!}
+{9000}{}{I just ate some apples and I'm not hungry anymore!@@I have no time to eat, I want to play!@@Woohoo!@@Weee!@@I will be a farmer when I grow up!}
+{100000001}{}{Sure wish I could go home...}
+{100000002}{}{Phewhee! This stuff stinks!}
+{100000003}{}{I sure am hungry...}
+{100000004}{}{I hate this weather.}
+{100000005}{}{I miss my daddy...}
+{100000006}{}{Daddy?! Oh... nevermind...}
+{100000007}{}{I wish I could take a bath.}
+{100000008}{}{I miss my mommy.}
+{100000009}{}{More boogeymen...}
+

@@ -1,0 +1,424 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_broadcast.fos
+//
+
+#define SKIP_PRAGMAS               // deleteme as soon the pragma bug is fixed
+#ifndef __CLIENT_BROADCAST__
+# define __CLIENT_BROADCAST__
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+# include "MsgStr.h"
+# include "_colors.fos"
+
+# include "config_file_h.fos"
+
+# include "broadcast_h.fos"
+# include "client_utils_h.fos"
+
+# define BROADCAST_START           (50)
+# define BROADCAST_LINE            (12)
+
+# ifdef __DEBUG__
+#  define BroadcastDebugMessage    # (text)   Message("Broadcast: " + text)
+# endif
+
+# ifndef __DEBUG__
+#  define BroadcastDebugMessage    # (text);
+# endif
+
+class CBroadcast
+{
+    int    type;
+    uint   time;
+    string message;             /**< town name (BROADCAST_TC), message (BROADCAST_MESSAGE,BROADCAST_REQUESTHELP) */
+    uint   extra;
+
+    CBroadcast(int type, int time, string message, uint extra)
+    {
+        this.type                       = type;
+        this.time                       = time;
+        this.message            = message;
+        this.extra                      = extra;
+
+        BroadcastDebugMessage("New: type<" + type + "> time<" + time + "> message<" + message + "> extra<" + extra + ">");
+    }
+};
+array<CBroadcast> Broadcast;
+
+int TimeToSeconds(uint& time)
+{
+    if(ELAPSED_TIME > time)
+        return(0);
+    uint ret = (time - ELAPSED_TIME);
+    ret /= REAL_SECOND(1);
+
+    return int(ret);
+}
+
+int FindTimerTC(uint location)
+{
+    if(Broadcast.length() == 0)
+        return(-1);
+
+    for(uint b = 0; b < Broadcast.length(); b++)
+    {
+        if(Broadcast[b].type == BROADCAST_TC && Broadcast[b].extra == location)
+            return(b);
+    }
+    return(-1);
+}
+
+int FindInfluence(uint location)
+{
+    if(Broadcast.length() == 0)
+        return(-1);
+
+    for(uint b = 0; b < Broadcast.length(); b++)
+    {
+        if(Broadcast[b].type == BROADCAST_INFLUENCE && Broadcast[b].extra == location)
+            return(b);
+    }
+    return(-1);
+}
+
+void BroadcastProcess()
+{
+    if(Broadcast.length() == 0)
+        return;
+
+    for(uint b = 0; b < Broadcast.length(); b++)
+    {
+        if(ELAPSED_TIME >= Broadcast[b].time)
+        {
+            Broadcast.removeAt(b);
+            BroadcastDebugMessage("ELAPSED_TIME = " + ELAPSED_TIME);
+            BroadcastDebugMessage("removed idx<" + b + "> left<" + Broadcast.length() + ">");
+            return;
+        }
+    }
+}
+
+void BroadcastDraw()
+{
+    if(Broadcast.length() == 0)
+        return;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+
+    uint lines = 0;
+
+    for(uint b = 0; b < Broadcast.length(); b++)
+    {
+        if(Broadcast[b].type == BROADCAST_MESSAGE)
+        {
+            array<string@>@ msg = split(Broadcast[b].message, "\n");
+            int    seconds = TimeToSeconds(Broadcast[b].time);
+            int    minutes = seconds / 60;
+            seconds = seconds % 60;
+            int    hours = minutes / 60;
+            int    days = hours / 24;
+            int    weeks = days / 7;
+            string time = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+            string text = Broadcast[b].message;
+            text = ReplaceText(text, "%COUNTDOWN%", time);
+            text = ReplaceText(text, "%COUNTDOWN_HUMAN%",
+                               (weeks > 0
+                                ? weeks + " week" + (weeks > 1 ? "s" : "") + " "
+                                : (days > 0
+                                   ? days + " day" + (days > 1 ? "s" : "") + " "
+                                   : (hours > 0
+                                      ? hours + " hour" + (hours > 1 ? "s" : "") + " "
+                                      : (minutes > 0
+                                         ? minutes + " minute" + (minutes > 1 ? "s" : "") + " "
+                                         : "less than one minute")))));
+            DrawText(text
+                     # ifdef __DEBUG__
+                     + " [" + ELAPSED_TIME + "/" + Broadcast[b].time + "]"
+                     # endif
+                     , 0, BROADCAST_START + (lines * BROADCAST_LINE), __ScreenWidth,
+                     BROADCAST_LINE * msg.length(), (Broadcast[b].extra <= 0 ? COLOR_GREEN_RED : Broadcast[b].extra),
+                     FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+            lines += msg.length();
+        }
+    }
+
+    for(uint b = 0; b < Broadcast.length(); b++)
+    {
+        if(Broadcast[b].type == BROADCAST_REQUESTHELP)
+        {
+            DrawText(Broadcast[b].message
+                     # ifdef __DEBUG__
+                     + " [" + ELAPSED_TIME + "/" + Broadcast[b].time + "]"
+                     # endif
+                     , 0, BROADCAST_START + (lines * BROADCAST_LINE), __ScreenWidth, BROADCAST_LINE * (Broadcast[b].extra == 0 ? 2 : 1), COLOR_LRED, FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+            lines += (Broadcast[b].extra == 0 ? 2 : 1);
+        }
+    }
+
+    string @val = GetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayTC");
+    bool   TC = string2bool(val);
+    if(TC)
+    {
+        for(uint b = 0; b < Broadcast.length(); b++)
+        {
+            if(Broadcast[b].type == BROADCAST_TC)
+            {
+                int    seconds = TimeToSeconds(Broadcast[b].time);
+                int    minutes = seconds / 60;
+                seconds = seconds % 60;
+                string time = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+                string text = Broadcast[b].message;
+                text = ReplaceText(text, "%COUNTDOWN%", time);
+                DrawText(text
+                         # ifdef __DEBUG__
+                         + " [" + ELAPSED_TIME + "/" + Broadcast[b].time + "]"
+                         # endif
+                         , 0, BROADCAST_START + (lines * BROADCAST_LINE), __ScreenWidth, BROADCAST_LINE, 0, FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+                lines++;
+            }
+            else if(Broadcast[b].type == BROADCAST_INFLUENCE)
+            {
+                DrawText(Broadcast[b].message
+                         # ifdef __DEBUG__
+                         + " [" + ELAPSED_TIME + "/" + Broadcast[b].time + "]"
+                         # endif
+                         , 0, BROADCAST_START + (lines * BROADCAST_LINE), __ScreenWidth, BROADCAST_LINE, COLOR_RGB(243, 99, 29), FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+                lines++;
+            }
+        }
+    }
+}
+
+/*
+ * BROADCAST_MESSAGE, BROADCAST_MESSAGE
+ *	time, 0, message, null
+ *
+ * BROADCAST_TOWN_CONTROL
+ *	// start counter
+ *	0, BROADCAST_SETUP_TC_SET, "", [town id,time,faction msg name,...]
+ *	// stop counter
+ *	0, BROADCAST_SETUP_TC_STOP, "", [town id,...]
+ *
+ * BROADCAST_REQUESTHELP
+ *	time, 0, "name|message", [player_id,map_id] );
+ */
+
+void _ReceiveDump(int type, int time, int setup, string@ message, array<int>@ data)
+{
+    BroadcastDebugMessage("broadcast dump: <" + message + ">");
+    if(message == "" || message == " ")
+        return;
+    array<string@>@ dump = split(message, BROADCAST_SEPARATOR_MAIN);
+
+    BroadcastDebugMessage("received dump: " + dump.length());
+    Broadcast.resize(0);
+    for(uint u = 0; u < dump.length(); u++)
+    {
+        array<string@>@ rec = split(dump[u], BROADCAST_SEPARATOR_ARGS);
+        if(rec.length() != 5)
+        {
+            BroadcastDebugMessage("part " + u + " broken");
+            continue;
+        }
+        BroadcastDebugMessage(u + ": " + rec[0] + " " + rec[1] + " " + rec[2] + " " + rec[3] + " " + rec[4]);
+        array<string@>@ sdata = split(rec[4], BROADCAST_SEPARATOR_DATA);
+        int        t = 0;
+        int        i = 0;
+        int        s = 0;
+        string     m = "";
+        array<int> d;
+        if(!StrToInt(rec[0], t))
+        {
+            BroadcastDebugMessage("  broken (type)");
+            continue;
+        }
+        if(!StrToInt(rec[1], i))
+        {
+            BroadcastDebugMessage("  broken (time)");
+            continue;
+        }
+        if(!StrToInt(rec[2], s))
+        {
+            BroadcastDebugMessage("  broken (setup)");
+            continue;
+        }
+        m = rec[3];
+        if(sdata.length() > 0)
+        {
+            bool ok = true;
+            for(uint sd = 0; sd < sdata.length(); sd++)
+            {
+                int x = 0;
+                StrToInt(sdata[sd], x);
+                d.insertLast(x);
+            }
+            if(!ok)
+                continue;
+        }
+        _Receive(t, i, s, m, d);
+    }
+    BroadcastDebugMessage("dump end");
+}
+
+void _Receive(int type, int time, int setup, string@ message, array<int>@ data)
+{
+    if(!valid(message) || message == " ")
+        message = "";
+
+    string _data = "";
+    if(valid(data) && data.length() > 0)
+    {
+        for(uint d = 0; d < data.length(); d++)
+        {
+            if(d > 0)
+                _data += ",";
+            _data += "" + data[d];
+        }
+    }
+
+    BroadcastDebugMessage("received type<" + type + "> time<" + time + "> setup<" + setup + "> message<" + message + "> data<" + _data + ">");
+
+    bool isError = true;
+    switch(type)
+    {
+    case BROADCAST_MESSAGE:
+        Broadcast.insertLast(CBroadcast(type, ELAPSED_TIME + time, message, setup));
+        Message("|" + (setup <= 0 ? COLOR_GREEN_RED : setup) + " " + message);
+        isError = false;
+        break;
+    case BROADCAST_REQUESTHELP:
+    {
+        array<string@>@ msg = split(message, BROADCAST_SEPARATOR_MAIN);
+        if(msg.length() != 2)
+            break;
+        Broadcast.insertLast(CBroadcast(type, ELAPSED_TIME + time,
+                                        (setup == 0
+                                         ? "GM help requested: the character " + msg[0] + " has requested help.\n" + msg[1]
+                                         : msg[0] + " is requesting help from " + msg[1]),
+                                        setup));
+        isError = false;
+    };
+        break;
+    case BROADCAST_TC:
+        if(data.length() == 0)
+            break;
+        if(setup == BROADCAST_SETUP_TC_SET)
+        {
+            // half-debug mode
+            string _dx = "";
+            if(valid(data) && data.length() > 0)
+            {
+                for(uint d = 0; d < data.length(); d++)
+                {
+                    if(d > 0)
+                        _dx += ",";
+                    _dx += "" + data[d];
+                }
+            }
+            if(data.length() != 2)
+            {
+                Message("Invalid broadcast data, info saved in logfile.");
+                Log("Data length invalid: got type<" + type + "> time<" + time + "> setup<" + setup + "> message<" + message + "> data<" + _dx + ">");
+            }
+            # define STR_GM_NAME    # (pid)                               ((pid + 100) * 1000 + 0)
+            int old = FindTimerTC(data[0]);
+            string town    = GetMsgStr(TEXTMSG_GM, STR_GM_NAME(data[0]));
+            string faction = GetMsgStr(TEXTMSG_TEXT, data[1]);
+            // half-debug
+            if(town == "error")
+            {
+                Message("Invalid town name, info saved in logfile.");
+                Log("Invalid town name: got type<" + type + "> time<" + time + "> setup<" + setup + "> message<" + message + "> data<" + _dx + ">");
+            }
+            if(message == "" || message == " ")
+                message = faction + " are taking " + town + ". %COUNTDOWN% left until taken.";
+            else
+            {
+                message = ReplaceText(message, "%FACTION%", faction);
+                message = ReplaceText(message, "%TOWN%", town);
+            }
+
+            if(old >= 0)
+            {
+                Broadcast[old].message  = message;
+                Broadcast[old].time             = time;
+            }
+            else
+            {
+                Broadcast.insertLast(CBroadcast(type, time, message, data[0]));
+            }
+            isError = false;
+        }
+        else if(setup == BROADCAST_SETUP_TC_STOP)
+        {
+            for(uint d = 0; d < data.length(); d++)
+            {
+                int old = FindTimerTC(data[d]);
+                if(old >= 0)
+                {
+                    Broadcast[old].time = 0;
+                }
+            }
+            isError = false;
+        }
+        break;
+    case BROADCAST_INFLUENCE:
+    {
+        if(data.length() == 0)
+            break;
+
+        // half-debug mode
+        string _dx = "";
+        if(valid(data) && data.length() > 0)
+        {
+            for(uint d = 0; d < data.length(); d++)
+            {
+                if(d > 0)
+                    _dx += ",";
+                _dx += "" + data[d];
+            }
+        }
+        if(data.length() != 1)
+        {
+            Message("Invalid broadcast data, info saved in logfile.");
+            Log("Data length invalid: got type<" + type + "> time<" + time + "> setup<" + setup + "> message<" + message + "> data<" + _dx + ">");
+        }
+        # define STR_GM_NAME        # (pid)                               ((pid + 100) * 1000 + 0)
+        int old = FindInfluence(data[0]);
+        // string town    = GetMsgStr( TEXTMSG_GM, STR_GM_NAME(data[0]));
+
+        if(old >= 0)
+        {
+            Broadcast[old].message  = message;
+            Broadcast[old].time             = time;
+        }
+        else
+        {
+            Broadcast.insertLast(CBroadcast(type, time, message, data[0]));
+        }
+        isError = false;
+    };
+        break;
+    default:
+        BroadcastDebugMessage("Unknown broadcast type: " + type);
+        break;
+    }
+
+    if(isError)
+    {
+        Message("ERROR Broadcast message corrupted:");
+        Message("ERROR 0<" + type + "> 1<" + time + "> 2<" + setup + "> 3<" + message + "> 4<" + _data + ">");
+        return;
+    }
+
+    BroadcastDebugMessage("total: " + Broadcast.length());
+
+    return;
+}
+#endif /* __CLIENT_BROADCAST__ */

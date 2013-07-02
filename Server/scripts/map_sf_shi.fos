@@ -1,0 +1,101 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_sf_shi.fos
+//
+
+#include "_macros.fos"
+
+#include "factions_vc_q_scoutsf.fos"
+
+
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnInCritter");
+    // sovhoz
+
+}
+
+void _OnInCritter(Map& map, Critter& player)
+{
+    // We are only interested in players
+    if(!player.IsPlayer())
+        return;
+
+    // Quest related method.
+    ScoutSFMap(map, player);
+}
+
+//////////////////////////////////////////////////
+// Emperor
+// - when bos scribe(science req) will use holodisk on it
+//   emperor predicts some abstract stuff, and produce output on that holodisk
+//   which determine score gained
+//////////////////////////////////////////////////
+
+// around this repair level emperor repairing resolves
+#define EMPEROR_REPAIR_DIFFICULTY    (150)
+
+
+// percentage value determining condition of the mainframe
+int EmperorCondition = 50;
+
+bool s_EmperorTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(skill == SK_SCIENCE)
+        return EmperorRepair(player, terminal, skill, item);
+    // if(item.GetProtoID() == PID_HOLODISK)
+    //    return EmperorProcessData(player, terminal, skill, item);
+    return true;
+}
+
+bool s_EmperorMainframe(Critter& player, Scenery& emperor, int skill, Item@ item)
+{
+    if(skill == SK_REPAIR)
+        return EmperorRepair(player, emperor, skill, item);
+    return true;
+}
+
+//
+// Fixing emperor condition
+//
+// This can be done in following ways:
+// - using repair on mainfram objects
+// - usin science on terminal
+//
+bool EmperorRepair(Critter& player, Scenery& scenery, int skill, Item@ item)
+{
+    // science or repair
+    uint skill_value = (skill == SK_REPAIR) ? player.Skill[SK_REPAIR] : player.Skill[SK_SCIENCE];
+
+    uint difficulty = EMPEROR_REPAIR_DIFFICULTY + (100 - EmperorCondition);
+    DPlayerLog(player, "Repairing with skill " + skill + ": " + skill_value + " vs: " + difficulty);
+
+
+    int newCondition = EmperorCondition +
+                       (skill_value - difficulty) +
+                       Random(-50, 50);
+    newCondition = CLAMP(newCondition, 1, 100);
+
+    if(newCondition > EmperorCondition)
+    {
+        player.Say(SAY_NETMSG, "You've succesfully repaired the mainframe.");
+    }
+    else
+    {
+        player.Say(SAY_NETMSG, "You've failed to repair the mainframe.");
+    }
+
+    // set timeout for player (relates to the amount of repairing done)
+    if(skill == SK_REPAIR)
+        _SetTimeout(player, TO_SK_REPAIR, GAME_MINUTE(ABS(newCondition - EmperorCondition)));
+    else if(skill == SK_SCIENCE)
+        _SetTimeout(player, TO_SK_SCIENCE, GAME_MINUTE(ABS(newCondition - EmperorCondition)));
+
+    EmperorCondition = newCondition;
+    DPlayerLog(player, "Emperor condition: " + EmperorCondition);
+
+    return true;
+}

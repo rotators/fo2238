@@ -1,0 +1,259 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// towns.fos
+//
+
+#ifndef __TOWNS__
+#define __TOWNS__
+
+#define GET_CONT_POSITIONS    # (__map) { GetNearEntire(__map, ENTIRE_TC_CONT_REWARD, rx, ry); GetNearEntire(__map, ENTIRE_TC_CONT_LIMBO, lx, ly); }
+#define ADD_TOWN              # (__name, __db, __properties) ITown@ __name = CreateTown(__db); __name.__properties; AddTown(__name)
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "_maps.fos"
+#include "entire.fos"
+#include "town_h.fos"
+#include "polygon_towns.fos"
+
+array<ITown@> Towns;
+
+import ITown@ CreateTown(string Name) from "town";
+
+ITown@ GetTownByIndex(uint index)
+{
+    return Towns[index];
+}
+
+ITown@ GetTown(uint id)
+{
+    for(uint i = 0; i < Towns.length(); i++)
+    {
+        if(id == Towns[i].GetTownID())
+        {
+            return Towns[i];
+        }
+    }
+    return null;
+}
+
+uint GetTownCount()
+{
+    return Towns.length();
+}
+
+void AddTown(ITown& town)
+{
+    Towns.insertLast(town);
+}
+
+uint GetTowns(array<ITown@>@ towns)
+{
+    for(uint i = 0, j = Towns.length(); i < j; i++)
+    {
+        towns.insertLast(Towns[i]);
+    }
+    return Towns.length();
+}
+
+bool VerifyMaps(array<Map@>& maps)
+{
+    for(uint i = 0; i < maps.length(); i++)
+        if(!valid(maps[i]))
+            return false;
+    return true;
+}
+
+void InitTowns()
+{
+    Map@ map_modoc = GetMapByPid(MAP_ModocLarge, 0);
+    Map@ map_klamath = GetMapByPid(MAP_KlamathDowntown, 0);
+    Map@ map_broken = GetMapByPid(MAP_BrokenHills, 0);
+    Map@ map_redding = GetMapByPid(MAP_Redding, 0);
+    Map@ map_den = GetMapByPid(MAP_DenBusiness, 0);
+    Map@ map_gecko = GetMapByPid(MAP_GeckoSettlement, 0);
+
+    Map@[] maps = { map_modoc, map_klamath, map_broken, map_redding, map_den, map_gecko };
+
+    if(!VerifyMaps(maps))
+    {
+        Log("Error while finding TC maps, the TC system in some towns may fail to work properly");
+    }
+
+    uint16 rx, ry, lx, ly;
+    rx = ry = lx = ly = 0;
+
+    GET_CONT_POSITIONS(map_modoc);
+
+    // Modoc
+    IPolygon@ modoc_area = NewPolygon();
+    modoc_area.AddVertices(modoc_area_v);
+    ADD_TOWN(Modoc, "Modoc", SetMapID(map_modoc.Id)
+             .SetTownID(1)
+             .SetBaseRewardValue(9)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             .SetInfluenceMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(4)
+             .SetTotalMemberRequirement(5)
+             .SetInfluenceMemberRequirement(4)
+             #endif
+             .SetSpeechModifier(-5)
+             .SetLimboContainer(map_modoc.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_modoc.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_RIGHT))
+             .SetHour(15)
+             .SetCaptureArea(modoc_area)    // General store + church + area near well and water tank
+             .SetRewardStartCaps(300)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    GET_CONT_POSITIONS(map_klamath);
+
+    // Klamath
+    IPolygon@ klamath_area = NewPolygon();
+    klamath_area.AddVertices(klamath_area_v);
+    ADD_TOWN(Klamath, "Klamath", SetMapID(map_klamath.Id)
+             .SetTownID(2)
+             .SetBaseRewardValue(9)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(4)
+             .SetTotalMemberRequirement(4)
+             #endif
+             .SetSpeechModifier(0)
+             .SetLimboContainer(map_klamath.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_klamath.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetHour(19)
+             .SetCaptureArea(klamath_area)
+             .SetRewardStartCaps(450)
+             .SetInfluenceMemberRequirement(4)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    GET_CONT_POSITIONS(map_gecko);
+
+    // Gecko
+    IPolygon@ gecko_area = NewPolygon();
+    gecko_area.AddVertices(gecko_area_v);
+    ADD_TOWN(Gecko, "Gecko", SetMapID(map_gecko.Id)
+             .SetTownID(3)
+             .SetBaseRewardValue(9)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(4)
+             .SetTotalMemberRequirement(5)
+             #endif
+             .SetSpeechModifier(-10)
+             .SetLimboContainer(map_gecko.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_gecko.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_RIGHT))
+             .SetHour(11)
+             .SetCaptureArea(gecko_area)
+
+             .SetRewardStartCaps(500)
+             .SetInfluenceMemberRequirement(4)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    GET_CONT_POSITIONS(map_broken);
+
+    // Broken Hills
+    IPolygon@ bh_area = NewPolygon();
+    bh_area.AddVertices(bh_area_v);
+    ADD_TOWN(Broken, "Broken Hills", SetMapID(map_broken.Id)
+             .SetTownID(4)
+             .SetBaseRewardValue(11)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(4)
+             .SetTotalMemberRequirement(5)
+             #endif
+             .SetSpeechModifier(-20)
+             .SetLimboContainer(map_broken.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_broken.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_RIGHT))
+             .SetHour(20)
+             .SetCaptureArea(bh_area)
+             .SetRewardStartCaps(1000)
+             .SetInfluenceMemberRequirement(4)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    GET_CONT_POSITIONS(map_den);
+
+    // Den
+    IPolygon@ den_area = NewPolygon();
+    den_area.AddVertices(den_area_v);
+    ADD_TOWN(Den, "Den", SetMapID(map_den.Id)
+             .SetTownID(5)
+             .SetBaseRewardValue(9)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(5)
+             .SetTotalMemberRequirement(6)
+             #endif
+             .SetSpeechModifier(-10)
+             .SetLimboContainer(map_den.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_den.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetHour(22)
+             .SetCaptureArea(den_area)
+             .SetRewardStartCaps(750)
+             .SetInfluenceMemberRequirement(4)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    GET_CONT_POSITIONS(map_redding);
+
+    // Redding
+    IPolygon@ redding_area = NewPolygon();
+    redding_area.AddVertices(redding_area_v);
+    ADD_TOWN(Redding, "Redding", SetMapID(map_redding.Id)
+             .SetTownID(6)
+             .SetBaseRewardValue(11)
+             #ifdef __DEBUG__
+             .SetNearbyMemberRequirement(1)
+             .SetTotalMemberRequirement(1)
+             #endif
+
+             #ifndef __DEBUG__
+             .SetNearbyMemberRequirement(5)
+             .SetTotalMemberRequirement(6)
+             #endif
+             .SetSpeechModifier(-25)
+             .SetLimboContainer(map_redding.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
+             .SetRewardContainer(map_redding.GetItem(rx, ry, PID_FOOTLOCKER_CLEAN_RIGHT))
+             .SetHour(18)
+             .SetCaptureArea(redding_area)
+             .SetRewardStartCaps(850)
+             .SetInfluenceMemberRequirement(4)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
+             );
+
+    for(uint i = 0; i < Towns.length(); i++)
+    {
+        Towns[i].SetScore();
+    }
+
+    InitMilitia();
+}
+#endif

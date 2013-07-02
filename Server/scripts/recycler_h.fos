@@ -1,0 +1,52 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// recycler_h.fos
+//
+
+#ifndef __RECYCLER_H__
+#define __RECYCLER_H__
+
+#include "_time.fos"
+
+shared enum RecyclerType // used internally, do NOT change enum name
+{
+    ENCOUNTER_RECYCLER,
+    TENT_RECYCLER
+};
+
+#define RECYCLER_TYPE                 # (recycler) recycler.Val0
+#define RECYCLER_INTERVAL             # (recycler) recycler.Val1
+
+// Source of recycled items
+#define RECYCLE_FLOOR                 (0x1)
+#define RECYCLE_CONTAINERS            (0x2)
+#define RECYCLE_DEAD                  (0x4)
+
+
+#ifdef __DEBUG__
+# define RECYCLER_INTERVAL_DEFAULT    (REAL_MINUTE(1))
+#endif
+
+#ifndef __DEBUG__
+# define RECYCLER_INTERVAL_DEFAULT    (REAL_MINUTE(10))
+#endif
+
+#ifndef __RECYCLER__
+
+import void ConnectRecycler(Item@ item, uint recyclerId) from "recycler";
+import void DisconnectRecycler(Item@ item, uint recyclerId) from "recycler";
+
+import void RecycleEncounter(Location@ loc) from "recycler";
+import void RecycleTent(Location@ loc) from "recycler";
+
+import Item@ GetRecycler(int type) from "recycler";
+import uint  GetRecyclers(array<int> recyclersTypes, array<Item@>& recyclers) from "recycler";
+import uint  GetRecyclers(array<Item@>& recyclers) from "recycler";
+
+import Item@ GetRecycledItem(int recyclerType, uint16 pid) from "recycler";
+import uint  GetRecycledItems(int recyclerType, uint16 pid, array<Item@>& items) from "recycler";
+import uint  GetRecycledItems(int recyclerType, array<uint16> pids, array<bool>& pidFound, array<Item@>& items) from "recycler";
+#endif // __RECYCLER__
+#endif // __RECYCLER_H__

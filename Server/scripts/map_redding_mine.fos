@@ -1,0 +1,50 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_redding_mine.fos
+//
+
+#include "_macros.fos"
+#include "elevators_h.fos"
+
+array<CElevator> Elevator(2);
+
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    ReddingAddElevators();
+    uint16 x = 0, y = 0;
+    if(map.GetEntireCoords(1, 0, x, y))
+        ReddingAddFloor(0, map.Id, 1);
+    if(map.GetEntireCoords(2, 0, x, y))
+        ReddingAddFloor(1, map.Id, 2);
+
+}
+
+void ReddingAddElevators()
+{
+    if(ElevatorsAdded)
+        return;
+    ElevatorsAdded = true;
+    Elevator[0].type = ELEVATOR_BOS_01;
+    Elevator[1].type = ELEVATOR_BOS_01;
+    AddElevator(Elevator[0]);
+    AddElevator(Elevator[1]);
+}
+
+void ReddingAddFloor(uint elev, uint mapid, uint entirenum)
+{
+    Elevator[elev].AddFloor(mapid, entirenum);
+}
+
+void t_Elevator0(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator[0], critter, entered);
+}
+
+void t_Elevator1(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator[1], critter, entered);
+}

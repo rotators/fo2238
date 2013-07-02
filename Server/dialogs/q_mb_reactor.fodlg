@@ -1,0 +1,124 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+15 1010 D _var p q_mb_location_state > 5 #
+2 1020 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+5 2030 #
+0 2040 @
+3 3000 None 0 #
+2 3010 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 D _param p SK_SCIENCE } 120 #
+0 6020 D _param p SK_SCIENCE < 120 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 D _var p q_mb_location_state = 5 R _var p q_mb_location_state = 6 @
+15 15000 None 0 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{ }
+{1020}{}{ }
+{2000}{}{Reactor Control
+Reactor 1: error                   output 0MW
+Reactor 2: Shut down         output 0MW
+Warning high radiation detected.}
+{2010}{}{Reactor 1 status}
+{2020}{}{Reactor 2 status}
+{2030}{}{run complete diagnostics of Reactor 2}
+{2040}{}{exit}
+{3000}{}{Reactor 1: error
+status: N/A
+error: N/A}
+{3010}{}{back}
+{4000}{}{Reactor 2: Shut down
+status: reactor off-line
+error:  none
+2153 July 18. 4:42
+Structural colapse at reactor room detected. Safety shut down of Reactor 2
+Damage: no damage.}
+{4010}{}{back}
+{5000}{}{Executing. . . . . . . . . 
+Structure OK
+cooling OK
+fuel cartridge OK
+fuses OK
+reaction chamber OK}
+{5010}{}{Start reactor}
+{6000}{}{Command ?}
+{6010}{}{check reactor chamber fuel status}
+{6020}{}{hmm, is there eh manual somewhere ?}
+{7000}{}{reactor chamber
+fuel: none
+store: 10/20 units}
+{7010}{}{Insert fuel cartridge}
+{8000}{}{Fuel cartridge A21. . . . . . . . . .
+fuel cartridge in place}
+{8010}{}{control rods set automatic control}
+{9000}{}{Control rods
+mode: Auto
+done}
+{9010}{}{activate primary and secondary circuits.}
+{10000}{}{Primary circuit: OK - 10,236 MPa
+Secondary circuit: OK - 5,423 MPa}
+{10010}{}{Initialize particle bombardement.}
+{11000}{}{Charging particle cannon
+. . . . . . . . . . . . . . . . . .
+Attempt 1: burst. . . . . . . . 
+failed, no activity detected.
+}
+{11010}{}{Damn, Initialize Attempt 2}
+{12000}{}{Charging particle cannon
+. . . . . . . . . . . . . . . . . .
+Attempt 2: burst. . . . . . . . 
+failed, no activity detected.}
+{12010}{}{Come on, burn a bit for me. Initialize Attempt 3}
+{13000}{}{Charging particle cannon
+. . . . . . . . . . . . . . . . . .
+Attempt 3: burst. . . . . . . . 
+Activity detected
+Detected chain reaction activity increase
+Inserting control rods . . . . . .
+optional reaction temperature reached.
+
+
+}
+{13010}{}{Set full auto control}
+{14000}{}{. . . . . . . 
+Reactor in self control mode.
+
+
+}
+{14010}{}{Ok, this is it, now i have to turn on generators.}
+{15000}{}{It's running well
+
+
+}
+

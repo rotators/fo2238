@@ -1,0 +1,109 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_chemicals.fos
+//
+
+// OBSOLETE
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define TEXT                        (3075)
+// #define TEXT_LOW_SKILLS	(3071)
+#define TEXT_USE_SCIENCE            (3076)
+// #define TEXT_TIMEOUTED	(3073)
+
+
+import bool ShuffleItem(Item& item) from "shuffling_spawner";
+
+#define PILE_CAPACITY_CHEMICALS     (3)
+#define PILE_CAPACITY_CHEMICALS2    (1)
+
+#define PILE_BATCH_CHEMICALS        (2)
+#define PILE_BATCH_CHEMICALS2       (2)
+
+
+void _InitPileChemicals(Item& item, bool firstTime)
+{
+    if(firstTime)
+        item.Val0 = PILE_CAPACITY_CHEMICALS;
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillPileChemicals");
+}
+
+bool _SkillPileChemicals(Item& item, Critter& cr, int skill)
+{
+    _Desneak(cr);
+
+    item.Val0 -= 1;
+    if(item.Val0 <= 0)
+    {
+        ShuffleItem(item);
+    }
+
+    cr.Say(SAY_NETMSG, "You have collected some Chemical Components.");
+    cr.AddItem(PID_CHEMICALS, PILE_BATCH_CHEMICALS);
+
+    return true;
+}
+
+void _InitPileChemicals2(Item& item, bool firstTime)
+{
+    if(firstTime)
+        item.Val0 = PILE_CAPACITY_CHEMICALS2;
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillPileChemicals2");
+}
+
+bool _SkillPileChemicals2(Item& item, Critter& cr, int skill)
+{
+    _Desneak(cr);
+
+    item.Val0 -= 1;
+    if(item.Val0 <= 0)
+    {
+        ShuffleItem(item);
+    }
+
+    cr.Say(SAY_NETMSG, "You have collected some High Quality Chemical Components.");
+    cr.AddItem(PID_CHEMICALS2, PILE_BATCH_CHEMICALS);
+
+    return true;
+}
+
+
+
+
+
+bool s_Use(Critter& crit, Scenery& sc, int skill, Item@ item)
+{
+    Log("Obsolete script used");
+    crit.Say(SAY_NETMSG, "Obsolete script, please report this issue. Thanks.");
+    return true;
+/*	if(skill == -1)
+        {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, TEXT_USE_SCIENCE);
+                return true;
+        }
+        else if(skill == SK_SCIENCE)
+    {
+        if(crit.Timeout[TO_GATHERING]>TIMEOUT_CUMULATIVE)
+        {
+            crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_WEARINESS);
+            return true;
+        }
+        else if(IsOverweighted(crit))
+        {
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+            return true;
+        }
+        else
+        {
+            crit.AddItem(PID_CHEMICALS, __ChemicalsBatch);
+            SET_TIMEOUT(crit, __ChemicalsTimeout);
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, TEXT);
+        }
+
+        return true;
+    }
+    return false;*/
+}

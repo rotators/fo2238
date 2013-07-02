@@ -1,0 +1,124 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// fixboy_h.fos
+//
+
+#ifndef __FIXBOY_H__
+#define __FIXBOY_H__
+
+// shared!
+
+#define ANGELSCRIPT_INTERFACE_ENUM_BUG
+
+#ifdef ANGELSCRIPT_INTERFACE_ENUM_BUG
+# define CraftingRequirement    uint8
+# define REQUIRE_NOTHING        0
+# define REQUIRE_PARAM          1
+# define REQUIRE_PARAMBASE      2
+# define REQUIRE_TOOL           3
+# define REQUIRE_MATERIAL       4
+# define REQUIRE_GROUP          5
+# define CraftingCheck          uint8
+# define CHECK_NONE             0
+# define CHECK_LOWER            1
+# define CHECK_LOWER_EQUAL      2
+# define CHECK_EQUAL            3
+# define CHECK_NOT_EQAL         4
+# define CHECK_GREATER          5
+# define CHECK_GREATER_EQUAL    6
+# define CHECK_OR               7
+# define CHECK_AND              8
+#endif
+
+#ifndef ANGELSCRIPT_INTERFACE_ENUM_BUG
+shared enum CraftingRequirement // uint8
+{
+    REQUIRE_NOTHING = 0,
+    REQUIRE_PARAM,
+    REQUIRE_PARAMBASE,
+    REQUIRE_TOOL,
+    REQUIRE_MATERIAL,
+    REQUIRE_GROUP,
+};
+
+shared enum CraftingCheck // uint8
+{
+    CHECK_NONE = 0,
+    CHECK_LOWER,          // <
+    CHECK_LOWER_EQUAL,    // <=
+    CHECK_EQUAL,          // ==
+    CHECK_NOT_EQAL,       // !=
+    CHECK_GREATER,        // >
+    CHECK_GREATER_EQUAL,  // >=
+    CHECK_OR,             // ||
+    CHECK_AND             // &&
+};
+#endif
+
+#ifdef __CLIENT
+# define Critter                CritterCl
+# define Item                   ItemCl
+#endif
+
+#ifdef __SERVER
+# define __SERVER_set           set;
+#endif
+#ifdef __CLIENT
+# define __SERVER_set
+#endif
+
+shared interface ICraftingItem
+{
+    uint16        ID                               { get; __SERVER_set }
+    string        Name                             { get; __SERVER_set }
+    string        Description              { get; __SERVER_set }
+    uint16        Minimum                  { get; __SERVER_set }
+    uint16        Maximum                  { get; __SERVER_set }
+    uint16        Step                             { get; __SERVER_set }
+    #ifdef __SERVER
+    uint16        Experience               { get; set; }
+    string        Script                   { get; set; }
+
+    array<uint16> Packed    { get; }
+    #endif
+
+    bool CanSee(Critter& cr);
+    bool CanCraft(Critter& cr, uint16 multipler = 1);
+
+    bool HaveParams(Critter& cr);
+    bool HaveTools(Critter& cr);
+    bool HaveMaterials(Critter& cr, uint16 multipler = 1);
+
+    bool AddRequireShow(CraftingRequirement type, uint require, CraftingCheck check, uint16 count);
+    bool AddRequireParam(uint require, CraftingCheck check, uint16 count);
+    bool AddRequireParamBase(uint require, CraftingCheck check, uint16 count);
+    bool AddRequireTool(uint require, CraftingCheck check, uint16 count);
+    bool AddRequireMaterial(uint require, uint16 count);
+
+    uint GetResult(array<uint16>& outResult);
+    uint GetResult(array<array<uint16> >& outResult);
+    uint GetResult(array<ProtoItem@>& proto, array<uint16>& count);
+
+    bool AddResult(uint16 protoId, uint16 count = 1);       // root
+    bool AddResult(array<uint16> newResult);
+    bool AddResult(ProtoItem& proto, uint16 count = 1);
+
+    bool SetResult(array<uint16> newResult);
+    bool SetResult(array<array<uint16> > newResult);
+    #ifdef __SERVER
+    void Pack();
+    #endif
+    void Unpack(array<uint16>& data);
+
+    // DEBUG
+    string Dump();
+};
+
+#ifndef __FIXBOY__
+
+import ICraftingItem@ NewCraftingItem() from "fixboy";
+// import ICraftingItem@ NewCraftingItem( array<uint8>& data ) from "fixboy";
+#endif
+#endif // __FIXBOY_H__ //

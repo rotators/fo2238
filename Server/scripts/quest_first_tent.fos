@@ -1,0 +1,223 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_first_tent.fos
+//
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+
+import void critter_init(Critter& mob, bool firstTime) from "mob";
+
+
+
+#define Q_FIRST_TENT_NOT_STARTED    (0)
+#define Q_FIRST_TENT_STARTED        (1)
+#define Q_FIRST_TENT_ACCEPTED       (2)
+#define Q_FIRST_TENT_RATS_KILLED    (3)
+#define Q_FIRST_TENT_FINISHED       (4)
+#define Q_FIRST_TENT_FAILED         (5)
+
+
+
+void StartFirstTentQuest(Critter& player)
+{
+    GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, player.Id);
+    if(qFirstTent > Q_FIRST_TENT_NOT_STARTED)
+    {
+        return;
+    }
+
+    uint16 worldX = 0;
+    uint16 worldY = 0;
+    if(player.WorldY < 800)     // Spawn family tent near VC
+    {
+        worldX = Random(1300, 1400);
+        worldY = Random(250, 350);
+    }
+    else if(player.WorldY > 1700)     // Spawn family tent near Hub
+    {
+        worldX = Random(1600, 1700);
+        worldY = Random(2050, 2150);
+    }
+    else // Spawn family tent near NCR
+    {
+        worldX = Random(1650, 1750);
+        worldY = Random(1250, 1350);
+    }
+
+    array<Critter@> critters = { player };
+    uint            locId = CreateLocation(LOCATION_Q_FirstTent, worldX, worldY, critters);
+    SetRootMapData(GetLocation(locId), MAP_DATA_OWNER, player.Id);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+    {
+        SetTurnBasedAvailability(GetLocation(locId));
+    }
+
+    GameVar@ qFirstTentLoc1Id = GetLocalVar(LVAR_q_first_tent_loc1_id, player.Id);
+    qFirstTentLoc1Id = locId;
+
+
+
+    qFirstTent = Q_FIRST_TENT_STARTED;
+
+    SetQuestGarbager(0, player.Id, locId, LVAR_q_first_tent, Q_FIRST_TENT_FAILED);
+}
+
+
+
+void r_SpawnFarmhouse(Critter& player, Critter@ npc)
+{
+    Location@       familyTent = npc.GetMap().GetLocation();
+
+    uint16          farmX = familyTent.WorldX - Random(150, 200);
+    uint16          farmY = familyTent.WorldY - 50 + Random(0, 100);
+
+    array<Critter@> critters = { player };
+    uint            locId = CreateLocation(LOCATION_Q_FirstTent2, farmX, farmY, critters);
+    SetRootMapData(GetLocation(locId), MAP_DATA_OWNER, player.Id);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+    {
+        SetTurnBasedAvailability(GetLocation(locId));
+    }
+
+    GameVar@ qFirstTentLoc2Id = GetLocalVar(LVAR_q_first_tent_loc2_id, player.Id);
+    qFirstTentLoc2Id = locId;
+
+    GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, player.Id);
+    qFirstTent = Q_FIRST_TENT_ACCEPTED;
+
+    SetQuestGarbager(0, player.Id, familyTent.Id, LVAR_q_first_tent_loc1_id, 0);
+    SetQuestGarbager(0, player.Id, locId, LVAR_q_first_tent_loc2_id, 0);
+}
+
+
+// Transit all non-true npcs to "abandoned tent" map.
+//
+void r_FamilyLeave(Critter& player, Critter@ npc)
+{
+    Map@     familyTent = npc.GetMap();
+    Map@     emptyFamilyTent = familyTent.GetLocation().GetMapByIndex(1);
+
+    uint     ownerId = GetRootMapData(familyTent.GetLocation(), MAP_DATA_OWNER);
+    GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, ownerId);
+    qFirstTent = Q_FIRST_TENT_FINISHED;
+
+    player.StatBase[ST_EXPERIENCE] += 300;
+
+    familyTent.SetEvent(MAP_EVENT_IN_CRITTER, "_InTent");
+    emptyFamilyTent.SetEvent(MAP_EVENT_OUT_CRITTER, "_OutAbandonedTent");
+
+    array<Critter@> critters;
+    uint            num = familyTent.GetCritters(0, FIND_ALL, critters);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(_IsTrueNpc(critters[i]))
+        {
+            DeleteNpc(critters[i]);
+        }
+        else
+        {
+            critters[i].TransitToMap(emptyFamilyTent.Id, critters[i].HexX, critters[i].HexY, critters[i].Dir);
+        }
+    }
+}
+
+
+void _InitAbandonedTent(Map& map, bool firstTime)
+{
+    Location@ loc = map.GetLocation();
+    uint      ownerId = GetRootMapData(loc, MAP_DATA_OWNER);
+    loc.GetMapByIndex(0).SetEvent(MAP_EVENT_IN_CRITTER, "_InTent");
+    loc.GetMapByIndex(1).SetEvent(MAP_EVENT_OUT_CRITTER, "_OutAbandonedTent");
+}
+
+
+void _InTent(Map& map, Critter& cr)
+{
+    Location@ loc = map.GetLocation();
+    uint      ownerId = GetRootMapData(loc, MAP_DATA_OWNER);
+    if(ownerId == 0)
+    {
+        return;
+    }
+
+    // FIXME
+    // [15:59:932] FOServer::SScriptFunc::Crit_TransitToMapHex : Script error: Transfers locked. : quest_first_tent : void _InTent(Map&inout, Critter&inout) : 379, 3 : Map::PrepareScriptFunc : Map id<166>, pid<122>.
+    // [15:59:932] FOServer::SScriptFunc::Crit_TransitToGlobal : Script error: Transfers locked. : quest_first_tent : void _InTent(Map&inout, Critter&inout) : 382, 4 : Map::PrepareScriptFunc : Map id<166>, pid<122>.
+    //
+    GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, ownerId);
+    if(qFirstTent >= Q_FIRST_TENT_FINISHED)
+    {
+        if(!cr.TransitToMap(loc.GetMapByIndex(1).Id, cr.HexX, cr.HexY, cr.Dir))
+        {
+            cr.Say(SAY_NETMSG, "There is no space in this location.");
+            cr.TransitToGlobal(false);
+        }
+    }
+}
+
+
+void _OutAbandonedTent(Map& map, Critter& cr)
+{
+    Location@ loc = map.GetLocation();
+
+    if(loc.IsNotValid)
+    {
+        return;
+    }
+
+    uint ownerId = GetRootMapData(loc, MAP_DATA_OWNER);
+    if(ownerId == 0)
+    {
+        return;
+    }
+
+    GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, ownerId);
+    if(qFirstTent >= Q_FIRST_TENT_FINISHED)
+    {
+        if(!LocationHasCritters(loc, FIND_ALL))
+        {
+            uint loc1Id = uint(GetLocalVar(LVAR_q_first_tent_loc1_id, ownerId).GetValue());
+            if(loc1Id > 0)
+            {
+                DeleteLocation(loc1Id);
+            }
+            uint loc2Id = uint(GetLocalVar(LVAR_q_first_tent_loc2_id, ownerId).GetValue());
+            if(loc2Id > 0)
+            {
+                DeleteLocation(loc2Id);
+            }
+        }
+    }
+}
+
+
+
+void _Rat(Critter& cr, bool firstTime)
+{
+    critter_init(cr, firstTime);
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_RatDead");
+}
+
+void _RatDead(Critter& cr, Critter@ killer)
+{
+    Map@            farmhouse = cr.GetMap();
+    array<Critter@> rats;
+    if(farmhouse.GetCritters(NPC_PID_MutatedRat, FIND_ONLY_NPC | FIND_LIFE_AND_KO, rats) == 0)
+    {
+        uint ownerId = GetRootMapData(farmhouse.GetLocation(), MAP_DATA_OWNER);
+        if(ownerId == 0)
+        {
+            return;
+        }
+
+        GameVar@ qFirstTent = GetLocalVar(LVAR_q_first_tent, ownerId);
+        qFirstTent = Q_FIRST_TENT_RATS_KILLED;
+    }
+
+}

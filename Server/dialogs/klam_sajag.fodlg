@@ -1,0 +1,211 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+24 1010 D _param p KARMA_SLAVER > 0 #
+23 1020 D _param p ST_INTELLECT < 4 #
+27 1030 D _param p ST_CHARISMA > 99 #
+4 1040 D _var n name_mem_npc_player = 1 #
+24 1050 D _param p ST_KARMA < -100 #
+2 1060 D _var n name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT < 4 #
+3 2020 D _param p ST_INTELLECT < 4 #
+8 2030 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+15 2040 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+9 2050 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+6 2060 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+13 2070 D _param p ST_INTELLECT > 3 D _script rooms@d_NotRentingHere 1 0 D _script rooms@d_IsFreeRoom 1 0 R _var n name_mem_npc_player = 1 #
+25 2080 D _param p ST_INTELLECT > 3 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 @
+4 4000 None 0 #
+8 4010 #
+15 4020 #
+9 4030 #
+6 4040 #
+13 4050 D _script rooms@d_IsFreeRoom 1 0 D _script rooms@d_NotRentingHere 1 0 #
+25 4060 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 #
+26 4070 D _script rooms@d_CanPayRent 1 0 R _script rooms@r_PayRent 1 1 #
+0 4080 @
+6 5000 None 0 #
+65506 5010 #
+7 5020 @
+7 6000 None 0 #
+21 6010 #
+22 6020 #
+18 6030 #
+20 6040 #
+6 6050 #
+4 6060 #
+0 6070 @
+8 7000 None 0 #
+10 7010 #
+11 7020 D _item p PID_BOTTLE_CAPS < 10 #
+7 7030 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 10 #
+0 7040 @
+9 8000 None 0 #
+10 8010 #
+11 8020 D _item p PID_BOTTLE_CAPS < 30 #
+7 8030 D _item p PID_BOTTLE_CAPS > 29 R _item p PID_BOOZE + 1 R _script dialog@r_RemoveMoney 1 30 #
+0 8040 @
+10 9000 None 0 #
+12 9010 #
+3 9020 @
+11 10000 None 0 #
+0 10010 @
+12 11000 None 0 #
+8 11010 #
+15 11020 #
+9 11030 #
+7 11040 #
+0 11050 @
+13 12000 rooms@dlg_ShowInfo 0 #
+14 12010 D _script rooms@d_HasMoneyForRent 1 0 R _script rooms@r_RentRoom 1 25 #
+11 12020 D _script rooms@d_NoMoneyForRent 1 0 #
+4 12030 @
+14 13000 None 0 #
+0 13010 R _script rooms@r_ShowRoom 1 1 @
+15 14000 None 0 #
+16 14010 D _item p PID_BOTTLE_CAPS > 49 R _var p klam_gold_beer = 1 R _script dialog@r_RemoveMoney 1 50 #
+11 14020 D _item p PID_BOTTLE_CAPS < 50 #
+4 14030 @
+16 15000 None 0 #
+17 15010 #
+7 15020 #
+0 15030 @
+17 16000 None 0 #
+7 16010 #
+0 16020 @
+18 17000 None 0 #
+19 17010 @
+19 18000 None 0 #
+7 18010 #
+0 18020 @
+20 19000 None 0 #
+7 19010 #
+0 19020 @
+21 20000 None 0 #
+7 20010 #
+0 20020 @
+22 21000 None 0 #
+7 21010 #
+0 21020 @
+23 22000 None 0 @
+24 23000 None 0 @
+25 24000 None 0 #
+4 24010 #
+0 24020 @
+26 25000 None 0 #
+4 25010 #
+0 25020 @
+27 26000 None 0 &
+
+[engl]
+{100}{}{Sajag}
+{200}{}{You see a short, swarthy man. He is smiling at you.}
+{210}{}{You see Sajag, the Golden Gecko's barman and owner.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{Dumb}
+{1030}{}{ugly}
+{1040}{}{Familiar}
+{1050}{}{Hated}
+{1060}{}{Unknown}
+{2000}{}{Hello there, stranger. Welcome to the Golden Gecko Tavern, Hotel, and Trading Post. I’m Sajag;
+I run the place. What can I get for you?}
+{2010}{}{Me wanna haff drink.}
+{2020}{}{Drink! (Giggle happily)}
+{2030}{}{Just get me a beer.}
+{2040}{}{Christ, what the hell kind of dump is this place?}
+{2050}{}{I don't know, I feel like something a little out of the ordinary.}
+{2060}{}{Trading post, huh? You ready to do some trading now?}
+{2070}{}{Could I get a room here?}
+{2080}{}{Could I get a room here?}
+{3000}{}{Well, if it’s not another dang idiot. Just like Torr. Get the hell out of my bar.}
+{4000}{}{What can I getcha?}
+{4010}{}{Just give me a beer.}
+{4020}{}{Wow, I forgot this place was this big a dump on the inside.}
+{4030}{}{Give me something a little... exotic. What do you got?}
+{4040}{}{Just looking to do some trading.}
+{4050}{}{Can I get a room?}
+{4060}{}{Can I get a room?}
+{4070}{}{I'd like to pay a rent for the room.}
+{4080}{}{Nothing, thanks. I'm out of here.}
+{5000}{}{I’ve got all kinds of things right here, buddy: healing supplies, booze, all kinds of stuff. I've got special sources, ya' might say. Always willing to look at a good gecko pelt, too.}
+{5010}{}{Alright, let me take a look.}
+{5020}{}{I'm actually looking for some information.}
+{6000}{}{Well information’s what it’s all about, pal. What do you want to know about?}
+{6010}{}{Are there any other settlements nearby?}
+{6020}{}{Are there any traders here in Klamath?}
+{6030}{}{Say, I'm looking to set myself and a couple guys up with a camp somewhere. Got any idea where I should start looking?}
+{6040}{}{I’m looking for a job. Any leads?}
+{6050}{}{Where can I get healing supplies?}
+{6060}{}{That’s all I need to know for now. But there’s something else I need.}
+{6070}{}{Alright, I gotta get going.}
+{7000}{}{One tall mug of Golden Gecko Piss coming up. Only 10 caps for the best beer north of Redding.}
+{7010}{}{You're... you're drinking piss? What the hell is wrong with you?}
+{7020}{}{It seems I'm a little short on cash...}
+{7030}{}{Thanks, Sajag. I got a couple questions for ya.}
+{7040}{}{Thanks. That's all I need for now. Goodbye.}
+{8000}{}{I think I've got just what you're looking for. We call it our Premium Filtered Gecko Piss. Cost you $30, pal.}
+{8010}{}{You're drinking piss? What the hell kind of place is this!?}
+{8020}{}{Ah, I think I might've misplaced my wallet...}
+{8030}{}{$30? This better be the best piss I've ever tasted. Say, you got time for a couple questions?}
+{8040}{}{Piss? Uh, no thanks. Excuse me, I've got to go.}
+{9000}{}{Relax, pal; it’s just what we call the beer here. (chuckles) This is the Golden Gecko, remember?}
+{9010}{}{Oh. Right. Heh-heh. Yeah. Piss. I get it.}
+{9020}{}{I'm not drinking piss! I don't care where it's being served or what you call it!}
+{10000}{}{Typical of you scumbags to try and get somethin' for nothin'. Get the hell out.}
+{10010}{}{Alright, I'm leaving.}
+{11000}{}{Well, now that we’ve got first things first out of the way... how can I help you? (smiles)}
+{11010}{}{A beer would be nice.}
+{11020}{}{I don't think there's anything you can do to help me, you greasy bastard.}
+{11030}{}{Give me something with a little kick.}
+{11040}{}{Well, I'm looking for some information.}
+{11050}{}{Nothing, I've got to go. Bye.}
+{12000}{}{Always plenty of rooms here for our friends. Only going to cost you @lex price@ caps for @lex time@ days. A whole room to yourself. Have a party.}
+{12010}{}{Sounds like a fair price to me. I’ll take it.}
+{12020}{}{Uh, this is a little rich for me. You couldn't let me sleep there on the house, could ya?}
+{12030}{}{I don’t think I’ll take you up on that offer just now, Sajag. What about something else?}
+{13000}{}{Alright, let me show you your room...}
+{13010}{}{[Follow]}
+{14000}{}{Whoa there, I think some of my regulars may not take kindly to that kind of talk. Hell, look, you got 'em all riled. It's okay, I'll talk 'em down, you just better buy these guys a couple drinks else you're gonna get the everlovin' tar whooped outta ya.}
+{14010}{}{Alright, fine. If it'll get them off my back. Damn it, I hate small towns.}
+{14020}{}{I can't afford that!}
+{14030}{}{Uh, sorry, how about I just buy myself a drink?}
+{15000}{}{Hear that guys? A round of piss, courtesy of our friend here!}
+{15010}{}{Piss? What the hell?!}
+{15020}{}{Enjoy the beer, everyone. Sajag, I've got some questions.}
+{15030}{}{Happy to help. I've gotta go.}
+{16000}{}{It’s just beer. Golden Gecko, Gecko Piss? Are you slow or what? (shakes his head)}
+{16010}{}{Oh, yeah. I get it. Heh. Piss. It's clever. But I need some information.}
+{16020}{}{I'm not drinking piss! I'm leaving!}
+{17000}{}{You guys aren't a gang, are ya?}
+{17010}{}{Who, us? Oh, heh-heh, no sir, just some honest folks looking for a place to settle down, branch out.}
+{18000}{}{Alright, you've got an honest look about you. Speak to that trapper, Smiley, down at the Buckner place. Guy's always bragging about the loot he picks up from abandoned places he runs into.}
+{18010}{}{Smiley, huh? Thanks. But for now, I've got some other questions.}
+{18020}{}{Alright, maybe I'll look into that. Goodbye.}
+{19000}{}{Well, the Dunton brothers are always looking for someone to do their dirty work for them. You could try them.}
+{19010}{}{Alright, I'll go try them.}
+{19020}{}{Thanks for the info, but I've got to get going.}
+{20000}{}{There are a couple of settlements nearby. There are some tribals northwest of us, then there’s the Den a few days south of here -- that’s the closest -- and there’s a mining town called Redding quite a ways to the southeast.}
+{20010}{}{Thanks for the info, I've got a few other questions.}
+{20020}{}{That's all for me, I'm outta here.}
+{21000}{}{Not too many traders in town. Just Vic, that I can think of. He’s got a house in the east part of town. Stupid bastard went travelling with a tribal a couple years back. Amazed he survived, those guys are nothing but trouble.}
+{21010}{}{Yeah, so I hear. I got a couple more questions.}
+{21020}{}{Well, I got get going.}
+{22000}{}{Hey, what can I get y-oh, jeez. Get out of here, retard. Shoo! SHOO!}
+{23000}{}{Get the fuck out of here. We don't serve scumbags in this establishment.}
+{24000}{}{Hmm, sorry - no free rooms here, pal.}
+{24010}{}{Oh well...}
+{24020}{}{[Leave] Damn!}
+{25000}{}{Good, it's better to be sure about your posessions, am I right?}
+{25010}{}{Right...}
+{25020}{}{[Leave]Right...}
+{26000}{}{Hey, what can I get y-oh, jeez. Get out of here, y'freak!@@Shoo, SHOO!@@Boys, can someone take care of this freak for me?}
+

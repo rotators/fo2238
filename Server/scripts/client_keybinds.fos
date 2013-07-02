@@ -1,0 +1,425 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_keybinds.fos
+//
+
+#ifdef __CLIENT
+#define SKIP_PRAGMAS    // deleteme as soon the pragma bug is fixed
+#define CLIENT_KEYBINDS
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "client_keybinds_h.fos"
+#include "config_file_h.fos"
+
+import string@ GetRecord(const string& filename) from "client_recording";
+import void    StartReplay(string@ rec) from "client_recording";
+import int     GUI_GetActiveScreen() from "client_gui";
+import int     GUI_GetActiveMainScreen() from "client_gui";
+
+/*
+   import void SetFog(bool enabled) from "client_fov";
+   import bool IsFog() from "client_fov";
+ */
+
+array<BindList> bindlists;
+
+dictionary      KeyMap;
+dictionary      KeyMapRaw;
+
+uint8           CurrentAim = HIT_LOCATION_UNCALLED;
+
+uint8 GetCurrentAim() // export
+{
+    return CurrentAim;
+}
+
+// read basic bind string ("Ctrl Alt Del 1")
+bool TryAddBind(string@ s, BaseBind& bind)
+{
+    if(!valid(s))
+        return true;
+    array<string@>@ splitted = split(s, " ");
+    if(!valid(splitted) || splitted.length() == 0)
+        return false;
+    for(uint i = 0, j = splitted.length() - 1; i < j; i++)
+    {
+        if(splitted[i] == "Ctrl")
+            bind.ctrl = true;
+        else if(splitted[i] == "Shift")
+            bind.shift = true;
+        else if(splitted[i] == "Alt")
+            bind.alt = true;
+    }
+
+    int key = 0;
+    if(!KeyMapRaw.get(splitted.last(), key))
+        return false;
+    bindlists[key].AddBind(bind);
+    return true;
+}
+
+// Bind key -> cheat
+void AddGMBind(int key, array<int>& modifiers, string command)
+{
+    GMBind bnd;
+    bnd.commands.insertLast(command);
+    bnd.modifiers = modifiers;
+    bindlists[key].AddBind(bnd);
+}
+
+bool AddAimBind(string& cfgkey, uint8 num)
+{
+    string@ s = GetConfigValue(CONFIG_FILE, "Bindings", cfgkey);
+    AimBind bnd(num);
+    return TryAddBind(s, bnd);
+}
+
+bool ProcessBind(uint8 key)   // export
+{
+    int mainScreen = GUI_GetActiveMainScreen();
+    int screen = GUI_GetActiveScreen();
+    if(mainScreen == CLIENT_MAIN_SCREEN_REGISTRATION ||
+       mainScreen == CLIENT_MAIN_SCREEN_LOGIN ||
+       screen == CLIENT_SCREEN_SAY /*||
+                                      screen == CLIENT_SCREEN_INPUT_BOX*/)
+        return false;
+    return bindlists[key].TryRun();
+}
+
+bool InitBinds() // export
+{
+    InitKeyMap();
+    bindlists.resize(255);
+    bool ret = true;
+    ret = ret && InitGMBinds();
+    ret = ret && InitAimBinds();
+    ret = ret && InitReloadBind();
+    ret = ret && InitUseBinds();
+    ret = ret && InitFogBind();
+    return ret;
+}
+
+bool InitGMBinds()
+{
+    // binds[int(DIK_HOME)]="teleport ncr";
+
+    file f;
+    if(f.open("keybinds.cfg", "r") >= 0)
+    {
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+        // now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            if(lines[i].length() < 5)
+                continue;
+
+            array<string@>@ param = split(lines[i], " ");
+            string     command;
+
+            array<int> modifiers;
+            string     mainkey;
+
+            uint       l = 0;
+            for(uint j = 0; j < param.length(); j++)
+            {
+                if(substring(param[j], 0, 3) == "DIK")
+                    l++;
+            }
+            if(l > 1)
+            {
+                for(uint j = 0; j < l; j++)
+                {
+                    if(j == (l - 1))
+                        mainkey = param[j];
+                    else
+                    {
+                        int modkey;
+                        KeyMap.get(param[j], modkey);
+                        modifiers.insertLast(modkey);
+                    }
+                }
+            }
+            else
+                mainkey = param[0];
+
+            for(uint k = l; k < param.length(); k++)
+            {
+                if(k == param.length() - 1)
+                    command += substring(param[k], 0, param[k].length() - 1);   // don't add \n
+                else
+                    command += param[k] + " ";
+            }
+
+            int key = 0;
+            KeyMap.get(mainkey, key);
+            AddGMBind(key, modifiers, command);
+        }
+    }
+
+    return true;
+}
+
+bool InitUseBinds()
+{
+    for(int i = 0; ; i++)     // infinite loop until break
+    {
+        string@ s = GetConfigValue(CONFIG_FILE, "Bindings", "UseBind" + i);
+        if(!valid(s))
+            break;
+        array<string@>@ splitted = split(s, " ");
+        if(!valid(splitted) || splitted.length() == 0)
+            return false;
+        bool          ctrl = false;
+        bool          alt = false;
+        bool          shift = false;
+
+        bool          parsepids = false;
+        array<uint16> pids;
+        int           key = 0;
+        for(uint i = 0, j = splitted.length(); i < j; i++)
+        {
+            if(!parsepids)
+            {
+                if(splitted[i] == "Ctrl")
+                    ctrl = true;
+                else if(splitted[i] == "Shift")
+                    shift = true;
+                else if(splitted[i] == "Alt")
+                    alt = true;
+                else if(splitted[i] == "|")
+                {
+                    if(i == 0)
+                        return false;
+                    if(!KeyMapRaw.exists(splitted[i - 1]))
+                        return false;
+                    KeyMapRaw.get(splitted[i - 1], key);
+                    parsepids = true;
+                }
+            }
+            else
+            {
+                int pid;
+                StrToInt(splitted[i], pid);
+                pids.insertLast(uint16(pid));
+            }
+        }
+        UseBind bnd;
+        bnd.shift = shift;
+        bnd.ctrl = ctrl;
+        bnd.alt = alt;
+        bnd.pids = pids;
+        bindlists[key].AddBind(bnd);
+    }
+    return true;
+}
+
+bool InitReloadBind()
+{
+    string@    s = GetConfigValue(CONFIG_FILE, "Bindings", "Reload");
+    ReloadBind bnd;
+    return TryAddBind(s, bnd);
+}
+
+bool InitFogBind()
+{
+    string@       s = GetConfigValue(CONFIG_FILE, "Bindings", "ToggleFog");
+    ToggleFogBind bnd;
+    return TryAddBind(s, bnd);
+}
+
+bool InitAimBinds()
+{
+    bool ret = true;
+    ret = ret && AddAimBind("AimUncalled", HIT_LOCATION_UNCALLED);
+    ret = ret && AddAimBind("AimHead", HIT_LOCATION_HEAD);
+    ret = ret && AddAimBind("AimEyes", HIT_LOCATION_EYES);
+    ret = ret && AddAimBind("AimGroin", HIT_LOCATION_GROIN);
+    ret = ret && AddAimBind("AimTorso", HIT_LOCATION_TORSO);
+    ret = ret && AddAimBind("AimLeftLeg", HIT_LOCATION_LEFT_LEG);
+    ret = ret && AddAimBind("AimRightLeg", HIT_LOCATION_RIGHT_LEG);
+    ret = ret && AddAimBind("AimLeftArm", HIT_LOCATION_LEFT_ARM);
+    ret = ret && AddAimBind("AimRightArm", HIT_LOCATION_RIGHT_ARM);
+
+    return ret;
+}
+
+void InitKeyMap()
+{
+    KeyMapRaw.set("1", DIK_1);
+    KeyMapRaw.set("2", DIK_2);
+    KeyMapRaw.set("3", DIK_3);
+    KeyMapRaw.set("4", DIK_4);
+    KeyMapRaw.set("5", DIK_5);
+    KeyMapRaw.set("6", DIK_6);
+    KeyMapRaw.set("7", DIK_7);
+    KeyMapRaw.set("8", DIK_8);
+    KeyMapRaw.set("9", DIK_9);
+    KeyMapRaw.set("0", DIK_0);
+    KeyMapRaw.set("-", DIK_MINUS);
+    KeyMapRaw.set("EQUALS", DIK_EQUALS);
+    KeyMapRaw.set("A", DIK_A);
+    KeyMapRaw.set("B", DIK_B);
+    KeyMapRaw.set("C", DIK_C);
+    KeyMapRaw.set("D", DIK_D);
+    KeyMapRaw.set("E", DIK_E);
+    KeyMapRaw.set("F", DIK_F);
+    KeyMapRaw.set("G", DIK_G);
+    KeyMapRaw.set("H", DIK_H);
+    KeyMapRaw.set("I", DIK_I);
+    KeyMapRaw.set("J", DIK_J);
+    KeyMapRaw.set("K", DIK_K);
+    KeyMapRaw.set("L", DIK_L);
+    KeyMapRaw.set("M", DIK_M);
+    KeyMapRaw.set("N", DIK_N);
+    KeyMapRaw.set("O", DIK_O);
+    KeyMapRaw.set("P", DIK_P);
+    KeyMapRaw.set("Q", DIK_Q);
+    KeyMapRaw.set("R", DIK_R);
+    KeyMapRaw.set("S", DIK_S);
+    KeyMapRaw.set("T", DIK_T);
+    KeyMapRaw.set("U", DIK_U);
+    KeyMapRaw.set("V", DIK_V);
+    KeyMapRaw.set("W", DIK_W);
+    KeyMapRaw.set("X", DIK_X);
+    KeyMapRaw.set("Y", DIK_Y);
+    KeyMapRaw.set("Z", DIK_Z);
+    KeyMapRaw.set("[", DIK_LBRACKET);
+    KeyMapRaw.set("]", DIK_RBRACKET);
+    KeyMapRaw.set(";", DIK_SEMICOLON);
+    KeyMapRaw.set("'", DIK_APOSTROPHE);
+    KeyMapRaw.set(",", DIK_COMMA);
+    KeyMapRaw.set(".", DIK_PERIOD);
+    KeyMapRaw.set("/", DIK_SLASH);
+    KeyMapRaw.set("Tab", DIK_TAB);
+    KeyMapRaw.set("Ins", DIK_INSERT);
+    KeyMapRaw.set("Del", DIK_DELETE);
+    KeyMapRaw.set("Home", DIK_HOME);
+    KeyMapRaw.set("End", DIK_END);
+    KeyMapRaw.set("PgUp", DIK_PRIOR);
+    KeyMapRaw.set("PgDn", DIK_NEXT);
+    KeyMapRaw.set("Num 0", DIK_NUMPAD0);
+    KeyMapRaw.set("Num 1", DIK_NUMPAD1);
+    KeyMapRaw.set("Num 2", DIK_NUMPAD2);
+    KeyMapRaw.set("Num 3", DIK_NUMPAD3);
+    KeyMapRaw.set("Num 4", DIK_NUMPAD4);
+    KeyMapRaw.set("Num 5", DIK_NUMPAD5);
+    KeyMapRaw.set("Num 6", DIK_NUMPAD6);
+    KeyMapRaw.set("Num 7", DIK_NUMPAD7);
+    KeyMapRaw.set("Num 8", DIK_NUMPAD8);
+    KeyMapRaw.set("Num 9", DIK_NUMPAD9);
+    KeyMapRaw.set("Num .", DIK_DECIMAL);
+    KeyMapRaw.set("Num /", DIK_DIVIDE);
+    KeyMapRaw.set("Num *", DIK_MULTIPLY);
+    KeyMapRaw.set("Num -", DIK_SUBTRACT);
+    KeyMapRaw.set("Num +", DIK_ADD);
+
+    KeyMap.set("DIK_ESCAPE", DIK_ESCAPE);
+    KeyMap.set("DIK_1", DIK_1);
+    KeyMap.set("DIK_2", DIK_2);
+    KeyMap.set("DIK_3", DIK_3);
+    KeyMap.set("DIK_4", DIK_4);
+    KeyMap.set("DIK_5", DIK_5);
+    KeyMap.set("DIK_6", DIK_6);
+    KeyMap.set("DIK_7", DIK_7);
+    KeyMap.set("DIK_8", DIK_8);
+    KeyMap.set("DIK_9", DIK_9);
+    KeyMap.set("DIK_0", DIK_0);
+    KeyMap.set("DIK_MINUS", DIK_MINUS);    /* - on main keyboard */
+    KeyMap.set("DIK_EQUALS", DIK_EQUALS);
+    KeyMap.set("DIK_BACK", DIK_BACK);      /* backspace */
+    KeyMap.set("DIK_TAB", DIK_TAB);
+    KeyMap.set("DIK_Q", DIK_Q);
+    KeyMap.set("DIK_W", DIK_W);
+    KeyMap.set("DIK_E", DIK_E);
+    KeyMap.set("DIK_R", DIK_R);
+    KeyMap.set("DIK_T", DIK_T);
+    KeyMap.set("DIK_Y", DIK_Y);
+    KeyMap.set("DIK_U", DIK_U);
+    KeyMap.set("DIK_I", DIK_I);
+    KeyMap.set("DIK_O", DIK_O);
+    KeyMap.set("DIK_P", DIK_P);
+    KeyMap.set("DIK_LBRACKET", DIK_LBRACKET);
+    KeyMap.set("DIK_RBRACKET", DIK_RBRACKET);
+    KeyMap.set("DIK_RETURN", DIK_RETURN);      /* Enter on main keyboard */
+    KeyMap.set("DIK_LCONTROL", DIK_LCONTROL);
+    KeyMap.set("DIK_A", DIK_A);
+    KeyMap.set("DIK_S", DIK_S);
+    KeyMap.set("DIK_D", DIK_D);
+    KeyMap.set("DIK_F", DIK_F);
+    KeyMap.set("DIK_G", DIK_G);
+    KeyMap.set("DIK_H", DIK_H);
+    KeyMap.set("DIK_J", DIK_J);
+    KeyMap.set("DIK_K", DIK_K);
+    KeyMap.set("DIK_L", DIK_L);
+    KeyMap.set("DIK_SEMICOLON", DIK_SEMICOLON);
+    KeyMap.set("DIK_APOSTROPHE", DIK_APOSTROPHE);
+    KeyMap.set("DIK_GRAVE", DIK_GRAVE);      /* accent grave */
+    KeyMap.set("DIK_LSHIFT", DIK_LSHIFT);
+    KeyMap.set("DIK_BACKSLASH", DIK_BACKSLASH);
+    KeyMap.set("DIK_Z", DIK_Z);
+    KeyMap.set("DIK_X", DIK_X);
+    KeyMap.set("DIK_C", DIK_C);
+    KeyMap.set("DIK_V", DIK_V);
+    KeyMap.set("DIK_B", DIK_B);
+    KeyMap.set("DIK_N", DIK_N);
+    KeyMap.set("DIK_M", DIK_M);
+    KeyMap.set("DIK_COMMA", DIK_COMMA);
+    KeyMap.set("DIK_PERIOD", DIK_PERIOD);       /* . on main keyboard */
+    KeyMap.set("DIK_SLASH", DIK_SLASH);         /* / on main keyboard */
+    KeyMap.set("DIK_RSHIFT", DIK_RSHIFT);
+    KeyMap.set("DIK_MULTIPLY", DIK_MULTIPLY);   /* * on numeric keypad */
+    KeyMap.set("DIK_LMENU", DIK_LMENU);         /* left Alt */
+    KeyMap.set("DIK_SPACE", DIK_SPACE);
+    KeyMap.set("DIK_CAPITAL", DIK_CAPITAL);
+    KeyMap.set("DIK_F1", DIK_F1);
+    KeyMap.set("DIK_F2", DIK_F2);
+    KeyMap.set("DIK_F3", DIK_F3);
+    KeyMap.set("DIK_F4", DIK_F4);
+    KeyMap.set("DIK_F5", DIK_F5);
+    KeyMap.set("DIK_F6", DIK_F6);
+    KeyMap.set("DIK_F7", DIK_F7);
+    KeyMap.set("DIK_F8", DIK_F8);
+    KeyMap.set("DIK_F9", DIK_F9);
+    KeyMap.set("DIK_F10", DIK_F10);
+    KeyMap.set("DIK_NUMLOCK", DIK_NUMLOCK);
+    KeyMap.set("DIK_SCROLL", DIK_SCROLL);      /* Scroll Lock */
+    KeyMap.set("DIK_NUMPAD7", DIK_NUMPAD7);
+    KeyMap.set("DIK_NUMPAD8", DIK_NUMPAD8);
+    KeyMap.set("DIK_NUMPAD9", DIK_NUMPAD9);
+    KeyMap.set("DIK_SUBTRACT", DIK_SUBTRACT);      /* - on numeric keypad */
+    KeyMap.set("DIK_NUMPAD4", DIK_NUMPAD4);
+    KeyMap.set("DIK_NUMPAD5", DIK_NUMPAD5);
+    KeyMap.set("DIK_NUMPAD6", DIK_NUMPAD6);
+    KeyMap.set("DIK_ADD", DIK_ADD);      /* + on numeric keypad */
+    KeyMap.set("DIK_NUMPAD1", DIK_NUMPAD1);
+    KeyMap.set("DIK_NUMPAD2", DIK_NUMPAD2);
+    KeyMap.set("DIK_NUMPAD3", DIK_NUMPAD3);
+    KeyMap.set("DIK_NUMPAD0", DIK_NUMPAD0);
+    KeyMap.set("DIK_DECIMAL", DIK_DECIMAL);           /* . on numeric keypad */
+    KeyMap.set("DIK_F11", DIK_F11);
+    KeyMap.set("DIK_F12", DIK_F12);
+    KeyMap.set("DIK_NUMPADENTER", DIK_NUMPADENTER);   /* Enter on numeric keypad */
+    KeyMap.set("DIK_RCONTROL", DIK_RCONTROL);
+    KeyMap.set("DIK_DIVIDE", DIK_DIVIDE);             /* / on numeric keypad */
+    KeyMap.set("DIK_SYSRQ", DIK_SYSRQ);
+    KeyMap.set("DIK_RMENU", DIK_RMENU);               /* right Alt */
+    KeyMap.set("DIK_PAUSE", DIK_PAUSE);               /* Pause */
+    KeyMap.set("DIK_HOME", DIK_HOME);                 /* Home on arrow keypad */
+    KeyMap.set("DIK_UP", DIK_UP);                     /* UpArrow on arrow keypad */
+    KeyMap.set("DIK_PRIOR", DIK_PRIOR);               /* PgUp on arrow keypad */
+    KeyMap.set("DIK_LEFT", DIK_LEFT);                 /* LeftArrow on arrow keypad */
+    KeyMap.set("DIK_RIGHT", DIK_RIGHT);               /* RightArrow on arrow keypad */
+    KeyMap.set("DIK_END", DIK_END);                   /* End on arrow keypad */
+    KeyMap.set("DIK_DOWN", DIK_DOWN);                 /* DownArrow on arrow keypad */
+    KeyMap.set("DIK_NEXT", DIK_NEXT);                 /* PgDn on arrow keypad */
+    KeyMap.set("DIK_INSERT", DIK_INSERT);             /* Insert on arrow keypad */
+    KeyMap.set("DIK_DELETE", DIK_DELETE);             /* Delete on arrow keypad */
+    KeyMap.set("DIK_LWIN", DIK_LWIN);                 /* Left Windows key */
+    KeyMap.set("DIK_RWIN", DIK_RWIN);                 /* Right Windows key */
+}
+#endif // __CLIENT

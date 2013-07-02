@@ -1,0 +1,185 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _bags.fos
+//
+
+#ifndef __BAGS__
+#define __BAGS__
+
+#define BAG_Internal                                (0)
+#define BAG_Empty                                   (1)
+
+#define BAG_FireGecko                               (140)
+#define BAG_SporePlant                              (141)
+
+#define BAG_All_Slaves_HealthyMaleSlave             (146)
+#define BAG_All_Slaves_HealthyFemaleSlave           (146)
+#define BAG_All_Slaves_MaleOrphan                   (146)
+#define BAG_All_Slaves_FemaleOrphan                 (146)
+#define BAG_All_Slaves_CuteFemaleSlave              (146)
+#define BAG_All_Slaves_StrongMaleSlave              (146)
+#define BAG_All_Slaves_GenericFemaleSlave           (146)
+#define BAG_All_Slaves_GenericMaleSlave             (146)
+#define BAG_All_Slaves_MaleSlaver                   (147)
+#define BAG_All_Slaves_FemaleSlaver                 (147)
+
+#define BAG_All_Trappers_MaleTrapper                (148) // Klamath
+#define BAG_All_Trappers_FemaleTrapper              (148) // Klamath
+#define BAG_All_Trappers_MeleeThugMale              (149) // Redding
+#define BAG_All_Trappers_MeleeThugFemale            (149) // Redding
+
+#define BAG_Klamath_Bandits_Guard                   (150) // Weak Melee Guard (male) w/ Crowbar
+#define BAG_Klamath_Bandits_BanditMale              (151) // Bandit (male) w/ Knife
+#define BAG_Klamath_Bandits_BanditFemale            (152) // Bandit (female) w/ Club
+
+#define BAG_Klamath_Caravan_Merchant                (150) // Average Merchant Male w/ Club
+#define BAG_Klamath_Caravan_GuardM                  (153) // Weak Melee Guard Male w/ Sharpened Spear
+#define BAG_Klamath_Caravan_GuardF                  (150) // Weak Melee Guard Felame w/ Sharpened Spear
+#define BAG_Klamath_Caravan_GuardM2                 (150) // Weak Melee Guard Male w/ Sledge Hammer
+
+#define BAG_DMRV_Caravan_Slaver                     (154) // Male Slaver w/ Hunting Rifle and Stimpak
+
+#define BAG_DMRV_Robbers_ToughFemaleThug            (155) // Tough Female Thug w/ Hunting Rifle, Stimpak, Jet
+
+#define BAG_All_MShiners_ToughMaleThug              (156) // Tough Male Thug w/ Shotgun and Shells
+#define BAG_All_MShiners_ToughMaleThug2             (156) // Tough Male Thug w/ Shotgun and Shells
+#define BAG_All_MShiners_ToughFemaleThug            (157) // Tough Female Thug w/ Desert Eagle
+#define BAG_All_MShiners_FemaleCombatSlave          (158) // Female Combat Slave w/ Zip Gun
+#define BAG_All_MShiners_MaleCombatSlave            (159) // Male Combat Slave w/ Switchblade
+
+#define BAG_Redding_HSteaders_HomesteaderMale       (160) // Homesteader male w/ Grease Gun
+#define BAG_Redding_HSteaders_HomesteaderMale2      (161) // Homesteader male w/ Grease Gun
+#define BAG_Redding_HSteaders_HomesteaderFemale     (162) // Homesteader female w/ H&K CAWS
+#define BAG_Redding_HSteaders_HomesteaderFemale2    (163) // Homesteader female w/ H&K G11
+
+#define BAG_RDRC_BHCaravan_MasterTrader             (164) // Master Trader female w/ H&K CAWS
+#define BAG_RDRC_BHCaravan_BigGunGuardMale          (165) // Big Gun Guard male w/ Minigun
+#define BAG_RDRC_BHCaravan_BigGunGuardFemale        (165) // Big Gun Guard female w/ Minigun
+
+#define BAG_RDRC_GCaravan_GenericGhoul              (166) // Generic Ghoul w/ Shotgun  (Caravan Leader)
+#define BAG_RDRC_GCaravan_ReactorGhoul              (167) // Reactor Ghoul w/ Hunting rifle
+#define BAG_RDRC_GCaravan_ReactorGhoul2             (168) // Reactor Ghoul w/ Assault Rifle
+
+#define BAG_RDRC_Raiders_RaiderMale                 (169) // Raider male w/ Assault Rifle
+#define BAG_RDRC_Raiders_RaiderMale2                (170) // Raider male w/ Combat Shotgun
+#define BAG_RDRC_Raiders_RaiderFemale               (171) // Raider female w/ H&K CAWS
+#define BAG_RDRC_Raiders_RaiderFemale2              (172) // Raider female w/ Grease Gun
+
+#define BAG_Navarro_EnclavePatrol_Male              (173) // Enclave Patrol male w/ Avenger Minigun
+#define BAG_Navarro_EnclavePatrol_Male2             (174) // Enclave Patrol male w/ Plasma Pistol
+#define BAG_Navarro_EnclavePatrol_Male3             (175) // Enclave Patrol male w/ H&K G11E
+#define BAG_Navarro_EnclavePatrol_Female            (176) // Enclave Patrol female w/ Gatling Laser
+#define BAG_Navarro_EnclavePatrol_Female2           (177) // Enclave Patrol female w/ YK32 Pulse Pistol
+#define BAG_Navarro_EnclavePatrol_Female3           (178) // Enclave Patrol female w/ PPK12 Gauss Pistol
+
+#define BAG_SF_Band1_MercenaryMale                  (179) // Mercenary male w/ Solar Scorcher
+#define BAG_SF_Band1_MercenaryMale2                 (180) // Mercenary male w/ Needler Pistol
+#define BAG_SF_Band1_MercenearyFemale               (181) // Merceneary female w/ Plasma Grenade
+#define BAG_SF_Band1_MercenearyFemale2              (182) // Merceneary female w/ Ripper
+#define BAG_SF_Band2_ElronologistMale               (183) // Elronologist Male w/ Power Fist
+#define BAG_SF_Band2_ElronologistMale2              (184) // Elronologist Male w/ Laser Rifle
+#define BAG_SF_Band2_ElronologistFemale             (185) // Elronologist Female w/ Light Support Weapon
+#define BAG_SF_Band2_ElronologistFemale2            (186) // Elronologist Female w/ Flamer
+#define BAG_SF_Band3_PressGangMale                  (187) // Press Gang male w/ Power Fist
+#define BAG_SF_Band3_PressGangMale2                 (188) // Press Gang male w/ Ripper
+#define BAG_SF_Band3_PressGangFemale                (189) // Press Gang Female w/ Power Fist
+#define BAG_SF_Band3_PressGangFemale2               (190) // Press Gang female w/ Ripper
+
+#define BAG_SF_Caravan_GrandMasterTraderMale        (191) // Grand Master Trader male w/ Sniper Rifle
+#define BAG_SF_Caravan_VaultCityPatrolMale          (192) // Vault City patrol male w/ Laser Rifle
+#define BAG_SF_Caravan_VaultCityPatrolMale2         (193) // Vault City patrol male w/ Avenger Minigun
+#define BAG_SF_Caravan_VaultCityPatrolFemale        (194) // Vault City patrol female w/ Light Support Weapon
+#define BAG_SF_Caravan_VaultCityPatrolFemale2       (195) // Vault City patrol female w/ H&K P90c
+
+#define BAG_All_Unity_Nightkin                      (196) // Nightkin w/ Minigun
+#define BAG_All_Unity_ToughNightkin                 (197) // Tough Nightkin w/ Rocket Launcher and AP Rockets
+#define BAG_All_Unity_ToughGhoul                    (198) // Tough Ghoul w/ Combat Shotgun
+#define BAG_All_Unity_ToughGhoul2                   (199) // Tough Ghoul w/ Assault Rifle
+#define BAG_All_Unity_BigGunGuardMale               (200) // Big Gun Guard male w/ Minigun
+#define BAG_All_Unity_BigGunGuardFemale             (201) // Big Gun Guard female w/ Rocket Launcher and Explosive Rockets
+
+#define BAG_Broken_Rogues_GunThugMale               (202) // Gun Thug male w/ Needler Pistol
+#define BAG_Broken_Rogues_GunThugFemale             (203) // Gun Thug female w/ Pancor Jackhammer
+#define BAG_Broken_Rogues_BigGunThugFemale          (204) // Big Gun Thug female w/ Flamer
+#define BAG_Broken_Rogues_BugGunThugMale            (205) // Bug Gun Thug male w/ H&K CAWS
+
+#define BAG_NewReno_Mafia1_Mobster                  (206) // Mobster w/ Tommy Gun
+#define BAG_NewReno_Mafia1_Thug                     (207) // thug w/ tommy gun
+#define BAG_NewReno_Mafia1_Thug2                    (208) // thug w/ Sniper Rifle
+#define BAG_NewReno_Mafia2_Yakuza                   (209) // Yakuza w/ Tommy Gun
+#define BAG_NewReno_Mafia2_Yakuza2                  (210) // Yakuza w/ Throwing Knifes
+#define BAG_NewReno_Mafia3_GunThugMale              (211) // Gun Thug male w/ Combat Shotgun
+#define BAG_NewReno_Mafia3_GunThugFemale            (212) // Gun Thug female w/ 14mm Pistol
+#define BAG_NewReno_Mafia3_BigGunThugFemale         (213) // Big Gun Thug female w/ Flamer
+#define BAG_NewReno_Mafia3_ToughThugMale            (214) // Tough Thug Male w/ .223 Autoloader
+
+#define BAG_NewReno_Traveller_FemaleHomesteader     (215) // Female Homesteader w/ Combat Knife
+
+#define BAG_All_Rangers_NCRRangerMale               (216) // NCR Ranger male w/ Combat Shotgun
+#define BAG_All_Rangers_NCRRangerMale2              (217) // NCR Ranger male w/ Flamer
+#define BAG_All_Rangers_NCRRangerFemale             (218) // NCR Ranger female w/ H&K CAWS
+#define BAG_All_Rangers_NCRRangerFemale2            (219) // NCR Ranger female w/ Grease Gun
+
+#define BAG_NCR_Marauders_MauraderMale              (220) // Maurader male w/ H&K CAWS
+#define BAG_NCR_Marauders_MauraderMale2             (221) // Maurader male w/ H&K P90c
+#define BAG_NCR_Marauders_MauraderFemale            (222) // Maurader female w/ Sharpened Spear
+#define BAG_NCR_Marauders_MauraderFemale2           (223) // Maurader female w/ Combat KNife
+
+#define BAG_NCR_Caravan_MasterTraderFemale          (224) // Master Trader female w/ Needler Pistol
+#define BAG_NCR_Caravan_NCRRangerMale               (225) // NCR Ranger male w/ Combat Shotgun
+#define BAG_NCR_Caravan_NCRRangerMale2              (226) // NCR Ranger male w/ Flamer
+#define BAG_NCR_Caravan_NCRRangerFemale             (227) // NCR Ranger female w/ H&K CAWS
+#define BAG_NCR_Caravan_NCRRangerFemale2            (228) // NCR Ranger female w/ Grease Gun
+
+#define BAG_V15_Caravan_MasterTraderFemale          (229) // Master Trader female w/ Grease Gun
+#define BAG_V15_Caravan_NCRRangerMale               (230) // NCR Ranger male w/ Combat Shotgun
+#define BAG_V15_Caravan_NCRRangerMale2              (231) // NCR Ranger male w/ Flamer
+#define BAG_V15_Caravan_NCRRangerFemale             (232) // NCR Ranger female w/ H&K CAWS
+#define BAG_V15_Caravan_NCRRangerFemale2            (233) // NCR Ranger female w/ Grease Gun
+
+#define BAG_All_BountyHunters_1                     (234)
+#define BAG_All_BountyHunters_2                     (235)
+#define BAG_All_BountyHunters_3                     (236)
+#define BAG_All_BountyHunters_4                     (237)
+#define BAG_All_BountyHunters_5                     (238)
+#define BAG_All_BountyHunters_6                     (239)
+#define BAG_All_BountyHunters_7                     (240)
+#define BAG_All_BountyHunters_8                     (241)
+#define BAG_All_BountyHunters_9                     (242)
+#define BAG_All_BountyHunters_10                    (243)
+
+#define BAG_Arroyo_HParty_MaleHunter                (244) // Male Hunter w/ Sharp Spear (Leader)
+#define BAG_Arroyo_HParty_MaleHunter2               (245) // Male Hunter w/ Spear
+#define BAG_Arroyo_HParty_FemaleHunter              (246) // Female Hunter w/ Spear
+
+#define BAG_Arroyo_WParty_MaleHunter                (247) // Male Hunter w/ Sharp Spear
+#define BAG_Arroyo_WParty_MaleCannibal              (248) // Male Cannibal w/ Knife
+#define BAG_Arroyo_WParty_FemaleHunter              (249) // Female Hunter w/ Sharp Spear
+#define BAG_Arroyo_WParty_FemaleCannibal            (250) // Female Cannibal w/ Knife
+
+#define BAG_Arroyo_Cannibals_MaleCannibal           (251) // Male Cannibal w/ Knife
+#define BAG_Arroyo_Cannibals_FemaleCannibal         (252) // Female Cannibal w/ Knife
+#define BAG_Arroyo_Cannibals_MaleCannibal2          (253) // Male Cannibal w/ Spear
+#define BAG_Arroyo_Cannibals_FemaleCannibal2        (254) // Female Cannibal w/ Sharpened Spear
+
+#define BAG_Arroyo_OutCasts_MaleCannibal            (255) // Male Cannibal
+#define BAG_Arroyo_OutCasts_FemaleCannibal          (256) // Female Cannibal
+#define BAG_Arroyo_OutCasts_MaleCannibal2           (257) // Male Cannibal w/ Knife
+#define BAG_Arroyo_OutCasts_FemaleCannibal2         (258) // Female Cannibal w/ Knife
+
+#define BAG_Arroyo_HolyPeople_HolyMan               (259) // Holy Man w/ Spear
+#define BAG_Arroyo_HolyPeople_HolyWoman             (260) // Holy Woman w/ Knife
+
+#define BAG_Arroyo_Nomads_MaleNomad                 (261) // *Male Nomad w/ Antidote, Meat Jerky, and Spear
+#define BAG_Arroyo_Nomads_FemaleNomad               (262) // *Female Nomad w/ Healing Powder and  Knife
+#define BAG_Arroyo_Nomads_MaleOrphan                (263) // Male Orphan
+#define BAG_Arroyo_Nomads_FemaleOrphan              (264) // Female Orphan
+
+#define BAG_All_HighWayMen_ToughMaleThug            (265) // *Tough Male Thug w/ Hunting Rifle, Stimpak, Jet
+#define BAG_All_HighWayMen_AgileMaleThug            (266) // *Agile Male Thug w/ Combat Knife and Stimpak
+#define BAG_All_HighWayMen_AgileFemaleThug          (267) // *Agile Female Thug w/ sharp spear and Stimpak
+#define BAG_All_HighWayMen_MaleGunThug              (268) // *Male Gun Thug w/ 10mm Pistol and Jet
+#define BAG_All_HighWayMen_FemaleGunThug            (269) // *Female Gun Thug w/ 10mm Pistol and Jet
+#endif // __BAGS__

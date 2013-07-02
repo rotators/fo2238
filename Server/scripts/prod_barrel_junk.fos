@@ -1,0 +1,42 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_barrel_junk.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define TEXT_JUNK    (3014)
+
+// OBSOLETE
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_Skill");
+}
+
+void _Junk(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_Gather");
+    AMOUNT(item) = __JunkBatch;
+}
+
+bool _Skill(Item& item, Critter& crit, int skill)
+{
+    crit.Say(SAY_NETMSG, "Obsolete script attached, report");
+    return false;
+}
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter& cr, Item@)
+    {
+        DeleteItem(item);
+    }
+};
+GatherCallback Callback;
+
+bool _Gather(Item& item, Critter& crit, int skill)
+{
+    return Gather(item, crit, null, PID_PUMP_PARTS, __JunkBatch, TEXT_JUNK, 0, @Callback);
+}

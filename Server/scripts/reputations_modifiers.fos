@@ -1,0 +1,212 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// reputations_modifiers.fos
+//
+
+// do not include
+#define __REPUTATIONS_MODULE__
+#include "reputations_h.fos"
+#include "factions_h.fos"
+#include "utils_h.fos"
+
+#define FACTION_NPC_MAX    (100)
+#define IDX                # (_x, _y)(_x * FACTION_NPC_MAX + _y)
+
+// a general notion for all functions that concern two critters or two groups:
+// funcname(group1,group2)==STATUS means "group 1 is perceived by group 2 as STATUS" (where STATUS is ally, enemy etc.)
+// funcname(cr1,cr2)==STATUS means "cr1's group is perceived by cr2's group as STATUS" (where STATUS is ally, enemy etc.)
+// the above is, by no means, symmetric (funcname(p1,p2) may not be equal to funcname(p2,p1) in general case)
+// a player is not a subject of alliances (if c1 is player, alliance-related functions will return neutral status)
+
+array<int> GroupAlliancesSQ(FACTION_NPC_MAX* FACTION_NPC_MAX);
+array<int> ReputationModifiersSQ(FACTION_NPC_MAX* FACTION_NPC_MAX);
+dictionary FactionUniformsDictionary;
+dictionary UniformHelmetsDictionary;
+
+#include "reputations_tables.fos"
+
+void InitGroups() // export
+{
+    for(uint i = 0, j = ReputationModifiersSQ.length(); i < j; i++)
+        ReputationModifiersSQ[i] = 0;
+    for(uint i = 0, j = GroupAlliancesSQ.length(); i < j; i++)
+        GroupAlliancesSQ[i] = 0;
+
+    for(uint i = 0, j = ReputationMods.length(); i < j; i++)
+        for(uint k = 0, l = ReputationMods[i].length(); k < l; k += 2)
+            ReputationModifiersSQ[IDX(i, ReputationMods[i][k])] = ReputationMods[i][k + 1];
+
+    for(uint i = 0, j = AllianceMods.length(); i < j; i++)
+        for(uint k = 0, l = AllianceMods[i].length(); k < l; k += 2)
+            GroupAlliancesSQ[IDX(i, AllianceMods[i][k])] = AllianceMods[i][k + 1];
+
+    FactionUniformsDictionary.set("" + PID_BROTHERHOOD_COMBAT_ARMOR, FACTION_BOS);
+    UniformHelmetsDictionary.set("" + PID_BROTHERHOOD_HELMET, PID_BROTHERHOOD_COMBAT_ARMOR);
+    UniformHelmetsDictionary.set("" + PID_COMBAT_HELMET, PID_BROTHERHOOD_COMBAT_ARMOR);
+
+    FactionUniformsDictionary.set("" + PID_ENCLAVE_COMBAT_ARMOR, FACTION_ENCLAVE);
+    UniformHelmetsDictionary.set("" + PID_ENCLAVE_COMBAT_HELMET, PID_ENCLAVE_COMBAT_ARMOR);
+    UniformHelmetsDictionary.set("" + PID_ENCLAVE_COMBAT_HELMET_MK2, PID_ENCLAVE_COMBAT_ARMOR);
+    UniformHelmetsDictionary.set("" + PID_COMBAT_HELMET_MK_II, PID_ENCLAVE_COMBAT_ARMOR);
+}
+
+
+
+void ApplyReputationModifiers(Critter& cr, uint index)   // export
+{
+    if(!_ValidReputationIndex(index))
+        return;
+    for(uint i = 0, j = ReputationMods[index].length(); i < j; i += 2)
+        cr.ReputationBase[ReputationMods[index][i]] = cr.Reputation[ReputationMods[index][i]] + ReputationMods[index][i + 1];
+}
+
+void ApplyReputationModifiers(Critter& cr, uint index, float fraction)   // export
+{
+    if(!_ValidReputationIndex(index))
+        return;
+    for(uint i = 0, j = ReputationMods[index].length(); i < j; i += 2)
+        cr.ReputationBase[ReputationMods[index][i]] = int(cr.Reputation[ReputationMods[index][i]] + float(ReputationMods[index][i + 1]));
+}
+
+void ApplyReputationModifiers(Critter& cr, uint index, int num, int den)   // export
+{
+    if(!_ValidReputationIndex(index))
+        return;
+    for(uint i = 0, j = ReputationMods[index].length(); i < j; i += 2)
+        cr.ReputationBase[ReputationMods[index][i]] = cr.Reputation[ReputationMods[index][i]] + (num * ReputationMods[index][i + 1]) / den;
+}
+
+int GetReputationModifier(uint fac1, uint fac2)   // export
+{
+    if(!_ValidReputationIndex(MIN(fac1, fac2)) || !_ValidReputationIndex(MAX(fac1, fac2)))
+        return 0;
+    return ReputationModifiersSQ[IDX(fac1, fac2)];
+}
+
+int GetUniform(Critter& cr, int& factionOut)
+{
+    Item@ armor = _CritGetItemArmor(cr);
+    if(valid(armor))
+    {
+        int faction;
+        int uniformPid = armor.GetProtoId();
+        if(FactionUniformsDictionary.get("" + uniformPid, faction))
+        {
+            factionOut = faction;
+            Item@ head = _CritGetItemHead(cr);
+            if(valid(head) && head.GetType() == ITEM_TYPE_ARMOR)
+            {
+                int helmetUniformPid = 0;
+                UniformHelmetsDictionary.get("" + head.GetProtoId(), helmetUniformPid);
+                if(helmetUniformPid == uniformPid)
+                    return UNIFORM_FULL;
+                else
+                    return UNIFORM_BAD_HELMET;
+            }
+            else
+                return UNIFORM_BODY_ONLY;
+        }
+        else
+        {
+            factionOut = 0;
+            return UNIFORM_NONE;
+        }
+    }
+    return UNIFORM_NONE;
+}
+
+bool HasFactionUniform(Critter& cr, int factionIn, int minStatus)
+{
+    int faction = 0;
+    int uniform = GetUniform(cr, faction);
+    return(faction != 0 && factionIn == faction && uniform >= minStatus);
+}
+
+int GetUniformFaction(Critter& cr)
+{
+    Item@ armor = _CritGetItemArmor(cr);
+    if(valid(armor))
+    {
+        int faction;
+        if(FactionUniformsDictionary.get("" + armor.GetProtoId(), faction))
+        {
+            return faction;
+        }
+    }
+    return 0;
+}
+
+int GetGroupsStatus(uint fac1, uint fac2)   // export, don't use with players
+{
+    if(!_ValidReputationIndex(MIN(fac1, fac2)) || !_ValidReputationIndex(MAX(fac1, fac2)))
+        return FACTION_NEUTRAL;
+    if(fac1 == fac2)
+        return FACTION_ALLY;
+    return GroupAlliancesSQ[IDX(fac1, fac2)];
+}
+
+int GetGroupsStatus(Critter& c2, Critter& c1)   // export
+{
+    if(c2.IsPlayer())
+    {
+        return FACTION_NEUTRAL;
+    }
+
+    int groupStatus = GetGroupsStatus(_GroupIndex(c1), _GroupIndex(c2));
+    int uniformFaction = 0;
+    int uniformStatus = GetUniform(c2, uniformFaction);
+    int uniformGroupStatus = GetGroupsStatus(_GroupIndex(c1), uniformFaction);
+    if(uniformGroupStatus == FACTION_ENEMY || (groupStatus == FACTION_ENEMY && !(uniformGroupStatus == FACTION_ALLY && uniformStatus > UNIFORM_BAD_HELMET)))
+    {
+        return FACTION_ENEMY;
+    }
+    if(groupStatus == FACTION_ALLY)
+        return FACTION_ALLY;
+
+    return FACTION_NEUTRAL;
+
+    // return GetGroupsStatus(_GroupIndex(c1), _GroupIndex(c2));
+}
+
+void ReputationsInit(Critter& cr)   // export
+{
+    uint index = _GroupIndex(cr);
+    if(!_ValidReputationIndex(index))
+        return;
+
+    for(uint k = 0, l = ReputationMods[index].length(); k < l; k += 2)
+        cr.ReputationBase[ReputationMods[index][k]] = cr.Reputation[ReputationMods[index][k]] + ReputationMods[index][k + 1];
+}
+
+/**
+ * When there is sub of reputation of given index, there is also
+ * raise in their enemies. Should be small, and up to some cap.
+ */
+void FeedReputations(Critter@ cr, uint index, int cap)   // export
+{
+    if(index >= AllianceMods.length())
+        return;
+    for(uint i = 0, j = AllianceMods[index].length(); i < j; i += 2)
+    {
+        if(AllianceMods[index][i + 1] != FACTION_ENEMY)
+            continue;
+
+        uint faction = AllianceMods[index][i];
+        int  mod = GetReputationModifier(index, faction);
+        // if(mod < __ReputationNeutral)
+        // {
+        int val = -mod / REP_FEED_FACTOR;
+        val = MAX(1, val);
+        int rep = cr.Reputation[faction];
+        DPlayerLog(cr, "Feeding reputation: " + faction + " +" + val);
+        if(rep >= cap)
+            continue;
+        rep += val;
+        if(rep > cap)
+            rep = cap;
+        cr.ReputationBase[faction] = rep;
+        // }
+    }
+}

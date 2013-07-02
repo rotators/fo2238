@@ -1,0 +1,139 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _entires.fos
+//
+
+// Common entires that are reserved. Shouldn't be used for something map specific as they are global
+
+#define ENTIRE_DEFAULT                       (0)
+
+#define ENTIRE_EC_CONT_H                     (70)
+#define ENTIRE_EC_CONT_V                     (71)
+#define ENTIRE_EC_CONT_GRAVE                 (72)
+
+#define ENTIRE_WORKSHOP                      (100) // Used for car spawning
+#define ENTIRE_COMPANION                     (101) // Places where companions may stand. Bars etc. Random dir.
+#define ENTIRE_COMPANION_DIRS_BEG            (102) // dir 0-5
+// entires 102-107 reserved for companion usage (dirs)
+#define ENTIRE_COMPANION_DIRS_END            (107) // dir 0-5
+
+#define ENTIRE_CARAVAN_DROP_ZONE             (110) // Box unloading quest
+#define ENTIRE_CARAVAN                       (125) // Entire marker id where the caravan can spawn in towns
+                                                   // Spots for militia, guarding TC towns
+#define ENTIRE_MILITIA                       (150) // random dir
+#define ENTIRE_MILITIA_DIRS_BEGIN            (151) // dir 0-5
+// entires 151-156 reserved for militia usage (dirs)
+#define ENTIRE_MILITIA_DIRS_END              (156) // dir 0-5
+
+#define ENTIRE_CASINO_WEAPONS                (160)
+
+#define ENTIRE_TC_CONT_REWARD                (180)
+#define ENTIRE_TC_CONT_LIMBO                 (181)
+
+#define ENTIRE_REINFORCEMENTS                (220)
+#define ENTIRE_PLAYER_START                  (240)
+#define ENTIRE_NO_LOG_OFF                    (241)
+#define ENTIRE_REPLICATION                   (242)
+#define ENTIRE_CAR                           (243)
+#define ENTIRE_CAR_CRITTERS                  (244)
+#define ENTIRE_BIG_CAR                       (245)
+#define ENTIRE_BALLOON                       (246) // Not ingame yet, but saved for later.
+#define ENTIRE_TRAIN                         (247)
+#define ENTIRE_BOAT                          (248)
+
+// common end
+
+// brahmin pens
+#define ENTIRE_BRAHMIN_PEN_HUB               (99)
+#define ENTIRE_BRAHMIN_PEN_MODOC             (99)
+#define ENTIRE_BRAHMIN_PEN_BROKEN_HILLS      (99)
+#define ENTIRE_BRAHMIN_PEN_NCR               (99)
+#define ENTIRE_BRAHMIN_PEN_SF                (99)
+
+// tanker quest
+#define ENTIRE_TANKER_ROPE                   (150)
+
+// bos bunker quest
+#define ENTIRE_BOSBUNKER_FORCEFIELD          (150)
+
+// boneyard warehouse quest
+#define ENTIRE_PUNKS_SLEEP                   (150)
+
+// ncr
+#define ENTIRE_NCR_WESTIN_CORNER1            (41)
+#define ENTIRE_NCR_WESTIN_CORNER2            (41)
+#define ENTIRE_NCR_WESTIN_CORNER3            (41)
+#define ENTIRE_NCR_WESTIN_CORNER4            (44)
+#define ENTIRE_NCR_CHILDREN_SLEEP            (150)
+
+// Only in caves
+#define ENTIRE_CAVE_CRITTER_EASY             (10)
+#define ENTIRE_CAVE_CRITTER_NORMAL           (11)
+#define ENTIRE_CAVE_CRITTER_HARD             (12)
+
+#define ENTIRE_CAVE_ITEM                     (20)
+#define ENTIRE_CAVE_CORPSE                   (21)
+
+// Slaveruns
+#define ENTIRE_SLAVERUN_SLAVER               (150)
+#define ENTIRE_SLAVERUN_SLAVE_N              (151)
+#define ENTIRE_SLAVERUN_SLAVE_H              (152)
+#define ENTIRE_SLAVERUN_CONT                 (153)
+#define ENTIRE_SLAVERUN_GECKO                (156)
+#define ENTIRE_SLAVERUN_BRAHMIN              (157)
+
+// Prospects
+#define ENTIRE_PROS_OWNER                    (100)
+#define ENTIRE_PROS_GUARD                    (101)
+#define ENTIRE_PROS_MINER                    (102)
+#define ENTIRE_PROS_CONTAINER                (103)
+
+// Trains
+#define ENTIRE_TRAIN_AREA_BEGIN              (10)
+#define ENTIRE_TRAIN_AREA_END                (13)
+
+// Arena
+#define ENTIRE_ARENA_ROOM0_NORTH             (1)
+#define ENTIRE_ARENA_ROOM0_SOUTH             (2)
+#define ENTIRE_ARENA_ROOM1_NORTH             (3)
+#define ENTIRE_ARENA_ROOM1_SOUTH             (4)
+
+#define ENTIRE_ARENA_ARENA0_TEAM_1           (10) // start points
+#define ENTIRE_ARENA_ARENA0_TEAM_2           (11) // start points
+#define ENTIRE_ARENA_ARENA0_POLYGON_BEGIN    (12) // area polygon by these coords
+#define ENTIRE_ARENA_ARENA0_POLYGON_END      (17)
+#define ENTIRE_ARENA_ARENA1_TEAM_1           (22) // start points
+#define ENTIRE_ARENA_ARENA1_TEAM_2           (23) // start points
+#define ENTIRE_ARENA_ARENA1_POLYGON_BEGIN    (18) // area polygon by these coords
+#define ENTIRE_ARENA_ARENA1_POLYGON_END      (21)
+#define ENTIRE_ARENA_ARENA2_TEAM_1           (24) // start points
+#define ENTIRE_ARENA_ARENA2_TEAM_2           (25) // start points
+#define ENTIRE_ARENA_ARENA2_POLYGON_BEGIN    (26) // area polygon by these coords
+#define ENTIRE_ARENA_ARENA2_POLYGON_END      (29)
+
+#define ENTIRE_ARENA_CONTAINER               (30)
+
+#define ENTIRE_ARENA_DOOR0_OUT               (100)
+#define ENTIRE_ARENA_DOOR0_IN                (101)
+#define ENTIRE_ARENA_DOOR1_OUT               (102)
+#define ENTIRE_ARENA_DOOR1_IN                (103)
+
+// Duel entires, used in maps with duels (only reserved here)
+// Junktown at the moment
+#define ENTIRE_DUEL_RING_PLAYER_1            (60)
+#define ENTIRE_DUEL_RING_PLAYER_2            (61)
+#define ENTIRE_DUEL_EXIT_PLAYER_1            (62)
+#define ENTIRE_DUEL_EXIT_PLAYER_2            (63)
+#define ENTIRE_DUEL_CONTAINER                (70)
+
+// Junktown
+#define ENTIRE_NEAL_BEDROOM                  (11)
+#define ENTIRE_NEAL_BAR                      (12)
+#define ENTIRE_BAR_SPOT                      (13)
+#define ENTIRE_TYLER_BAR                     (14)
+#define ENTIRE_TYLER_RING                    (50)
+
+// Hub
+#define ENTIRE_HUB_ARENA_CONTAINER           (30)

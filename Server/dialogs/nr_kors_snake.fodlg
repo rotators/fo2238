@@ -1,0 +1,66 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+101 1010 D _var p q_nr_corsican_initiate = 1 D _script dialog@d_CheckNight 0  #
+100 1020 D _var p q_nr_corsican_initiate = 1 #
+2 1030 @
+2 2000 None 0 @
+100 3000 None 0 @
+101 4000 None 0 #
+103 4010 D _param p ST_CARRY_WEIGHT } 50000 #
+107 4020 D _param p ST_CARRY_WEIGHT < 50000 #
+102 4030 #
+0 4040 @
+102 5000 None 0 #
+103 5010 D _param p ST_CARRY_WEIGHT } 50000 #
+107 5020 D _param p ST_CARRY_WEIGHT < 50000 #
+65507 5030 @
+103 6000 None 0 #
+104 6010 R _item p PID_Q_CORS_BROS_DEAD_BODY + 1 R _var p q_nr_corsican_initiate = 2 @
+104 7000 None 0 #
+106 7010 R _script dialog@r_StatRoll 2 3 105 #
+0 7020 @
+105 8000 None 0 #
+0 8010 @
+106 9000 None 0 #
+0 9010 @
+107 10000 None 0 #
+0 10010 &
+
+[engl]
+{100}{}{Snake}
+{200}{}{You see one of the Corsican Brothers.}
+{210}{}{You see a well-dressed man who smells like Vaseline. For some reason, he strikes you as faintly reptilian.}
+{1000}{}{Predialogue installations}
+{1010}{}{Initiate Quest - pick up the body, only during night}
+{1020}{}{Initiate Quest - daytime}
+{1030}{}{Answer text}
+{2000}{}{I'm not the one you want. Go hassle Marty.@@Go speak to Marty if you're looking for something.@@Look pal, I'm just the looks in this operation.@@You're not gonna get in a film by bothering me.}
+{3000}{}{You can't tote a dead body around right now, someone could tag you. Come back tonight.}
+{4000}{}{[Snake looks like one cold son-of-a-reptile] You here to pick up the body?}
+{4010}{}{Just give it to me.}
+{4020}{}{Just give it to me.}
+{4030}{}{I'm not sure, what kind of body it is?}
+{4040}{}{Sorry, wrong turn. [Leave]}
+{5000}{}{Look, you shit-for-brains, either you're here to take it or you're fucking around with me, which would be your last will. Pick your poison.}
+{5010}{}{Oh yes, *the* body! I'm here to pick it up, yes.}
+{5020}{}{Oh yes, *the* body! I'm here to pick it up, yes.}
+{5030}{}{Fucking around with you is way too funny for me to break it just like that! [Attack]}
+{6000}{}{[Snake briefly measures you up] Okay, you look strong enough to get it out of town. Wait here.}
+{6010}{}{[Wait]}
+{7000}{}{[Snake comes with a dead body of a young woman in its early twenties. She looks beautiful, but creepy due to her paleness] There you go. Now get it out of town and be sure to stay away from the public.}
+{7010}{}{How should I get rid of her?}
+{7020}{}{Just leave it to me, it's as good as done.}
+{8000}{}{What, new around here? Most of these find their rest on Golgotha, south of New Reno. Just drop it off there and be sure you burry it or burn it down or such... Just don't let anyone know she's dead and hanging around with other corpses on that cursed hill.}
+{8010}{}{Sounds like a plan. Time to roll.}
+{9000}{}{If I've ever seen a dumbass, you've gotta be one. Maybe I should tie you up, take you to Golgotha, kill you and burry you in one of them graves there... Yeah, sounds like an idea.}
+{9010}{}{Yeah, yeah... I get the picture. [Leave]}
+{10000}{}{Listen you wimp, there's no way you could carry a body. You better visit Renesco and boost your blood before speaking to me again, got it? Now, get lost.}
+{10010}{}{I'll be back! [Leave]}
+

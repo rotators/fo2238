@@ -1,0 +1,67 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_plant_barley.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define TEXT_GATHERED    (3008)
+#define TEXT_EMPTY       (3053)
+
+int TotalCount = 0;
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+    item.SetEvent(ITEM_EVENT_FINISH, "_Finish");
+    if(firstTime)
+        AMOUNT(item) = __BarleyCapacity;
+    StartRegeneration(item, "e_Regen");
+    TotalCount++;
+}
+void _Finish(Item& item, bool)
+{
+    TotalCount--;
+    ReduceCounter(PID_BARLEY, COUNTER(item));
+}
+uint e_Regen(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_BARLEY, __BarleyCapacity, __BarleyRegen, TotalCount);
+    UpdatePic(item);
+    return RegenerationInterval;
+}
+
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter& cr, Item@ used_item)
+    {
+        UpdatePic(item);
+    }
+};
+GatherCallback Callback;
+
+bool _UseSkill(Item& item, Critter& cr, int skill)
+{
+    if(skill == -1)
+        return Gather(item, cr, null, PID_BARLEY, __BarleyBatch, TEXT_GATHERED, TEXT_EMPTY, Callback);
+    return false;
+}
+
+array<string@> NormalPics = { "art\\items\\barley1.fofrm", "art\\items\\barley2.fofrm", "art\\items\\barley3.fofrm" };
+PicHashes NormalPicHashes(NormalPics);
+array<string@> FarmedPics = { "art\\items\\farmedbarley1.fofrm", "art\\items\\farmedbarley2.fofrm", "art\\items\\farmedbarley3.fofrm" };
+PicHashes FarmedPicHashes(FarmedPics);
+
+void UpdatePic(Item& item)
+{
+    if(AMOUNT(item) == 0)
+        item.PicMap = FarmedPicHashes.GetRandom();
+    else
+        item.PicMap = NormalPicHashes.GetRandom();
+    item.Update();
+}

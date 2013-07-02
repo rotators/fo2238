@@ -1,0 +1,348 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_fov.fos
+//
+
+#include "client_gui_h.fos"
+#include "_macros.fos"
+#include "polygon_h.fos"
+#include "_client_defines.fos"
+#include "_globalvars.fos"
+
+// bool FogEnabled=false;
+// int FogColor=int(0xA0000000);
+array<uint16> Triangles;
+
+/*
+   bool IsFog() // export
+   {
+        return FogEnabled;
+   }
+
+   void SetFog(bool enabled) // export
+   {
+        FogEnabled=enabled;
+   }
+
+   void SetFogColor(int color) // export
+   {
+        FogColor=color;
+   }
+ */
+
+void DrawFog() // export
+{
+    if(!__ConfigFog)
+        return;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen) || __GmapActive || GetCurrentMapPid() == 0)
+    {
+        MapChanged = true;
+        return;
+    }
+    RebuildFog(chosen);
+    DrawHexArea(Triangles, true, __ConfigFogColor);
+}
+
+bool   MapChanged = true;
+uint8  LastDir    = uint8(-1);
+uint16 LastHexX   = uint16(-1);
+uint16 LastHexY   = uint16(-1);
+uint   LastSight  = uint(-1);
+
+void RebuildFog(CritterCl& cr)
+{
+    uint8  cDir = cr.Dir;
+    uint16 cX = cr.HexX;
+    uint16 cY = cr.HexY;
+    uint   cSight = cr.IsLife() ? __LookNormal + cr.Stat[ST_PERCEPTION] * 3 + cr.Param[PE_SHARPSHOOTER] * 6 : __LookMinimum;
+
+    // Do not rebuild if there's no need for it
+    if(!MapChanged && LastDir == cDir && LastHexX == cX && LastHexY == cY && LastSight == cSight)
+        return;
+    MapChanged = false;
+    LastDir = cDir;
+    LastHexX = cX;
+    LastHexY = cY;
+    LastSight = cSight;
+    // DrawText("Rebuilding",0,10,1000,20,0xFFFF0000,FONT_FALLOUT,0);
+
+    array<uint16> hexes;
+    array<uint16> triangles;
+    GetFovHexes(cX, cY, cDir, cSight, cSight, false, hexes);
+    RemoveDuplicates(hexes);
+
+    // find the smallest and largest x
+    uint minidx = 0;
+    uint maxidx = 0;
+    for(int i = 2, j = hexes.length(); i < j; i += 2)
+    {
+        if(hexes[i] < hexes[minidx])
+            minidx = i;
+        if(hexes[i] > hexes[maxidx])
+            maxidx = i;
+    }
+
+    array<uint16> north;
+    array<uint16> south;
+
+    if(minidx < maxidx)
+    {
+        // southern part
+        south.resize(maxidx - minidx + 10);
+        uint i = 0;
+        for( ; i <= maxidx - minidx + 1; i++)
+            south[i] = hexes[minidx + i];
+
+        south[i++] = GetMapWidth() - 1;
+        south[i++] = hexes[maxidx + 1];
+
+        south[i++] = GetMapWidth() - 1;
+        south[i++] = GetMapHeight() - 1;
+
+        south[i++] = 0;
+        south[i++] = GetMapHeight() - 1;
+
+        south[i++] = 0;
+        south[i++] = hexes[minidx + 1];
+
+        uint len = hexes.length();
+        north.resize(len - maxidx + minidx + 10);
+        i = 0;
+        for( ; i <= len - maxidx + minidx + 1; i++)
+            north[i] = hexes[(maxidx + i) % len];
+
+        north[i++] = 0;
+        north[i++] = hexes[minidx + 1];
+
+        north[i++] = 0;
+        north[i++] = 0;
+
+        north[i++] = GetMapWidth() - 1;
+        north[i++] = 0;
+
+        north[i++] = GetMapWidth() - 1;
+        north[i++] = hexes[maxidx + 1];
+    }
+    else
+    {
+        north.resize(minidx - maxidx + 10);
+        uint i = 0;
+        for( ; i <= minidx - maxidx + 1; i++)
+            north[i] = hexes[maxidx + i];
+
+        north[i++] = 0;
+        north[i++] = hexes[minidx + 1];
+
+        north[i++] = 0;
+        north[i++] = 0;
+
+        north[i++] = GetMapWidth() - 1;
+        north[i++] = 0;
+
+        north[i++] = GetMapWidth() - 1;
+        north[i++] = hexes[maxidx + 1];
+
+        uint len = hexes.length();
+        south.resize(len - minidx + maxidx + 10);
+        i = 0;
+        for( ; i <= len - minidx + maxidx + 1; i++)
+            south[i] = hexes[(minidx + i) % len];
+
+        south[i++] = GetMapWidth() - 1;
+        south[i++] = hexes[maxidx + 1];
+
+        south[i++] = GetMapWidth() - 1;
+        south[i++] = GetMapHeight() - 1;
+
+        south[i++] = 0;
+        south[i++] = GetMapHeight() - 1;
+
+        south[i++] = 0;
+        south[i++] = hexes[minidx + 1];
+    }
+
+    Triangles.resize(0);
+    NewPolygon().AddVertices(north).GetTriangulation(Triangles);
+    NewPolygon().AddVertices(south).GetTriangulation(Triangles);
+}
+
+// helper
+void RemoveDuplicates(array<uint16>& hexes)
+{
+    if(hexes.length() == 0)
+        return;
+    uint k = 1;
+    for(uint i = 2, j = hexes.length(); i < j; i += 2)
+    {
+        if(hexes[i] != hexes[k - 1] || hexes[i + 1] != hexes[k])
+        {
+            hexes[++k] = hexes[i];
+            hexes[++k] = hexes[i + 1];
+        }
+    }
+    hexes.resize(k + 1);
+}
+
+// helper
+void EnumHexes(array<uint16>& hexes)
+{
+    int x = 0, y = 0;
+    for(uint i = 0, j = hexes.length(); i < j; i += 2)
+    {
+        GetHexPos(hexes[i], hexes[i + 1], x, y);
+        DrawText("" + (i / 2), x, y, 20, 20, 0xFF0000FF, FONT_FALLOUT, 0);
+    }
+}
+
+
+uint GetFovHexes(uint16 cX, uint16 cY, uint8 cDir, uint cSight, uint maxRange, bool ccw, array<uint16>& hexes)
+{
+    hexes.resize(720);
+    uint16 preBlockHx = 0, preBlockHy = 0, blockHx = 0, blockHy = 0;
+    uint16 x = 0, y = 0;
+
+    uint   angle = ccw ? 0 : 360;
+    do
+    {
+        GetCrittersPath(cX, cY, cX + 1, cY, float(angle), maxRange, 0, null, preBlockHx, preBlockHy, blockHx, blockHy);
+        uint8 dir = GetDirection(cX, cY, preBlockHx, preBlockHy);
+
+        uint  sight = cSight;
+        if(FLAG(__LookChecks, LOOK_CHECK_DIR))
+            sight -= sight * GetRelativeDirModifier(ABS(int(dir) - int(cDir))) / 100;
+        sight = MAX(sight, __LookMinimum);
+        GetCrittersPath(cX, cY, preBlockHx, preBlockHy, 0, sight, 0, null, preBlockHx, preBlockHy, blockHx, blockHy);
+
+        int xx = 0, yy = 0;
+        GetHexPos(preBlockHx, preBlockHy, xx, yy);
+        // DrawText(""+angle,xx,yy,60,20,0xFFFF0000,FONT_FALLOUT,0);
+        // DrawText(""+dir+","+GetRelativeDirModifier(ABS(dir-cDir)),xx,yy+12,60,20,0xFFFF0000,FONT_FALLOUT,0);
+
+        if(ccw)
+        {
+            hexes[2 * angle] = preBlockHx;
+            hexes[2 * angle + 1] = preBlockHy;
+            angle++;
+        }
+        else
+        {
+            hexes[2 * (360 - angle)] = preBlockHx;
+            hexes[2 * (360 - angle) + 1] = preBlockHy;
+            angle--;
+        }
+    }
+    while((angle % 360) != 0);
+
+    /*if(ccw)
+       {
+            for(uint8 dir=cDir+6;dir>cDir;dir--)
+            {
+                    uint sight=cSight;
+                    if(FLAG(__LookChecks,LOOK_CHECK_DIR)) sight-=sight*GetRelativeDirModifier(dir-cDir)/100;
+                    sight=MAX(sight,__LookMinimum);
+                    CalculateFovSextantHexes(cX,cY,dir%6,sight,maxRange,true,hexes);
+            }
+       }
+       else
+       {
+            for(uint8 dir=cDir;dir<cDir+6;dir++)
+            {
+                    uint sight=cSight;
+                    if(FLAG(__LookChecks,LOOK_CHECK_DIR)) sight-=sight*GetRelativeDirModifier(dir-cDir)/100;
+                    CalculateFovSextantHexes(cX,cY,dir%6,sight,maxRange,false,hexes);
+            }
+       }*/
+    return hexes.length();
+}
+
+uint8 GetRelativeDirModifier(uint8 dir)
+{
+    switch(dir)
+    {
+    case 1:
+    case 5:
+        return __LookDir1;
+    case 2:
+    case 4:
+        return __LookDir2;
+    case 3:
+        return __LookDir3;
+    default:
+        ;
+    }
+    return __LookDir0;
+}
+
+void CalculateFovSextantHexes(uint16 x, uint16 y, uint8 dir, uint sight, uint maxRange, bool ccw, array<uint16>& hexes)
+{
+    uint16 origX = x;
+    uint16 origY = y;
+
+    uint16 preBlockHx = 0;
+    uint16 preBlockHy = 0;
+    uint16 blockHx = 1;
+    uint16 blockHy = 1;
+
+    uint   len = hexes.length();
+    hexes.resize(len + maxRange * 2);
+    MoveHexByDir(x, y, dir, maxRange);
+
+    int monitorX = 0;
+    int monitorY = 0;
+
+    maxRange--;
+    uint8 dirCwise = (dir + 2) % 6;
+    uint8 dirCCwise = (dir + 4) % 6;
+    if(!ccw)
+    {
+        uint8 temp = dirCwise;
+        dirCwise = dirCCwise;
+        dirCCwise = temp;
+    }
+
+    MoveHexByDir(x, y, dirCwise, maxRange / 2);
+    if(FLAG(__LookChecks, LOOK_CHECK_TRACE))
+        GetCrittersPath(origX, origY, x, y, 0, sight, 0, null, preBlockHx, preBlockHy, blockHx, blockHy);
+    else
+    {
+        preBlockHx = x;
+        preBlockHy = y;
+    }
+
+    hexes[len] = preBlockHx;
+    hexes[len + 1] = preBlockHy;
+    len += 2;
+    dir = (dirCwise + 3) % 6;
+    for(uint j = len + (maxRange / 2) * 2; len < j; len += 2)
+    {
+        MoveHexByDir(x, y, dir, 1);
+        if(FLAG(__LookChecks, LOOK_CHECK_TRACE))
+            GetCrittersPath(origX, origY, x, y, 0, sight, 0, null, preBlockHx, preBlockHy, blockHx, blockHy);
+        else
+        {
+            preBlockHx = x;
+            preBlockHy = y;
+        }
+        hexes[len] = preBlockHx;
+        hexes[len + 1] = preBlockHy;
+    }
+
+    dir = dirCCwise;
+    for(uint j = len + (maxRange / 2 + maxRange % 2) * 2; len < j; len += 2)
+    {
+        MoveHexByDir(x, y, dir, 1);
+        if(FLAG(__LookChecks, LOOK_CHECK_TRACE))
+            GetCrittersPath(origX, origY, x, y, 0, sight, 0, null, preBlockHx, preBlockHy, blockHx, blockHy);
+        else
+        {
+            preBlockHx = x;
+            preBlockHy = y;
+        }
+        hexes[len] = preBlockHx;
+        hexes[len + 1] = preBlockHy;
+    }
+}

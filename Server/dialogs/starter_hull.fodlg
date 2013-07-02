@@ -1,0 +1,102 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p starter_hullquest = 0 #
+14 1020 D _var p starter_hullquest = 3 #
+15 1030 D _var p starter_hullquest = 2 #
+5 1040 D _var p starter_hullquest = 1 #
+14 1050 D _param p ST_CHARISMA < 4 @
+2 2000 None 0 #
+3 2010 R _var p starter_hullquest = 1 #
+0 2020 R _var p starter_hullquest = 3 @
+3 3000 None 0 #
+0 3010 #
+4 3020 #
+0 3030 R _var p starter_hullquest = 3 @
+4 4000 None 0 #
+0 4010 #
+0 4020 R _var p starter_hullquest = 3 @
+5 5000 None 0 #
+6 5010 #
+7 5020 D _item p PID_SPRINGER_RIFLE = 1 R _item p PID_SPRINGER_RIFLE - 1 R _var p starter_hullquest = 2 #
+0 5030 @
+6 6000 None 0 #
+0 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 R _param p ST_EXPERIENCE + 180 @
+8 8000 None 0 #
+9 8010 #
+9 8020 @
+9 9000 None 0 #
+10 9010 #
+11 9020 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 #
+12 11020 @
+12 12000 None 0 #
+12 12010 #
+12 12020 #
+12 12030 @
+13 13000 None 0 #
+0 13010 R _var p loyality + 5 @
+14 14000 None 0 @
+15 15000 None 0 &
+
+[engl]
+{100}{}{Hull}
+{200}{}{You see Hull.}
+{210}{}{You see Hull, the town gate guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Start}
+{1020}{}{Refused}
+{1030}{}{Quest complete}
+{1040}{}{Quest in progres}
+{1050}{}{Ugly}
+{2000}{}{Hey! Hey @pname@! C'mere! I got a favour to ask ya.}
+{2010}{}{Sure, what do you need?}
+{2020}{}{Sorry, haven't got the time. Bye.}
+{3000}{}{I woke up a little worse for wear this mornin'. Forgot my damn rifle, and I can't leave my post. I need you to head to my place down on the south side of town and get it for me. It'll be in a footlocker. Don't worry, it ain't locked.}
+{3010}{}{No problem. Back in a second.}
+{3020}{}{What's in it for me?}
+{3030}{}{I don't think I can help you with that. Bye.}
+{4000}{}{Well ain't you all business? Should've expected it by now. Alright you shyster, there's a couple clips of ammo you're welcome to.}
+{4010}{}{That's more like it. I'll be right back.}
+{4020}{}{Changed my mind. Forget it, get your own gun.}
+{5000}{}{You're back. Did you get it?}
+{5010}{}{Not yet. Where did you say it was again?}
+{5020}{}{Sure, here it is.}
+{5030}{}{No, sorry, I'll get right on it.}
+{6000}{}{My house, south side of town. It's in a footlocker. Learn to pay attention, jeez.}
+{6010}{}{Sorry, slipped my mind. I'll be right back.}
+{6020}{}{Alright, I'll go get it.}
+{7000}{}{Thanks buddy, you're a lifesaver. Hey, keep the ammo. Anything I can do for you?}
+{7010}{}{Well, actually, I was thinking of heading out into the wasteland. You got any advice for me?}
+{8000}{}{You're fuckin' kidding me. There's a reason we keep to ourselves down here. That place is dangerous.}
+{8010}{}{I don't care. I'm going.}
+{8020}{}{Don't worry, I can handle myself.}
+{9000}{}{You're really thinking about doing this, ain't ya? Aw, hell, not my job to try and stop ya. If you're that set on going, talk to McMurray. He's done a hell of a lot of travelling, he can give you a few pointers.}
+{9010}{}{You ever been into the wasteland?}
+{9020}{}{Thanks. Take care of yourself, Hull.}
+{10000}{}{Well, uh, no. I was born here, and I'm smart enough to know when I got a good thing going.}
+{10010}{}{I guess you are. See ya when I see ya.}
+{11000}{}{Goddamn it! This ain't right. Wait here a second. Hold my gun. [Hull bolts in the direction of his house, and eventually comes back holding a few handguns] Take one with you. I ain't takin' no for an answer.}
+{11010}{}{Uh, okay. What are they?}
+{11020}{}{Aw, Hull, you shouldn't have...}
+{12000}{}{I got an old Jan-u-wine antique laser pistol, a pretty hefty grenade pistol, and a 10mm semi-automatic.}
+{12010}{}{I'm always had a knack for energy weapons. Give me the laser pistol.}
+{12020}{}{I like the big guns, give me the grenade launcher.}
+{12030}{}{I like to pick 'em off from a distance. Give me the 10mm.}
+{13000}{}{You're welcome to it. I'm not sending anyone out into that mess unarmed. Anyone moves funny, you put 'em under the ground, y'hear?}
+{13010}{}{Got it. Thanks again, Hull. Goodbye. Take care of yourself.}
+{14000}{}{Sorry, ain't got time to talk.@@Don't bother me when I'm on duty.@@Get outta here.@@Look, just quit bothering me, alright?@@Boy, I'm glad I don't look like you.@@Aw, hell, can you.. can you not stand so close?}
+{15000}{}{You take care of yourself, now.@@Be careful out there.@@Make sure you train up before you leave town.@@Once you leave, you ain't coming back.@@The Captain don't let in anyone from the outside.@@Hope you've said your goodbyes.}
+

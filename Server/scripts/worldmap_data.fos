@@ -1,0 +1,128 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// worldmap_data.fos
+//
+
+#include "_macros.fos"
+#include "worldmap_h.fos"
+
+bool LoadWorldmapTables(string@ fileName)
+{
+    file f;
+    DLog("Reading Tables");
+    // Open the file in 'read' mode
+    if(f.open(fileName, "r") >= 0)
+    {
+        // Read the whole file into the string buffer
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+
+        // Now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        DLog("Read " + lines.length() + " lines");
+
+        array<uint> locations;
+        array<uint> groups;
+        array<uint> quantities;
+
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            if(lines[i].length() < 5)
+            {
+                Log("Empty line");
+                continue;
+            }
+
+            array<string@>@ splittedline = split(lines[i], "|");
+            array<string@>@ coords = split(splittedline[0], ",");
+            array<string@>@ params = split(splittedline[1], ",");
+
+            int x = 0;
+            int y = 0;
+            int terrain = 0;
+            int difficulty = 0;
+            int fill = 0;
+            int chance = 0;
+
+            StrToInt(coords[0], x);
+            StrToInt(coords[1], y);
+
+            StrToInt(params[0], difficulty);
+            StrToInt(params[1], terrain);
+            StrToInt(params[2], fill);
+            StrToInt(params[3], chance);
+
+            CZone@ zone = SetZone(x, y, y * ZONE_COUNT_X + x, difficulty, terrain, fill, chance);
+
+            if(splittedline.length() < 3)
+                continue;
+
+            zone.LocationPids.resize(0);
+            zone.Groups.resize(0);
+            zone.Quantities.resize(0);
+
+            array<string@>@ str_locations = split(splittedline[2], ",");
+
+            // Read locations
+            uint loc = 0;
+            for(uint j = 0, k = str_locations.length(); j < k; j++)
+            {
+                if(str_locations[j].length() == 0)
+                    continue;
+                loc = 0;
+                StrToInt(str_locations[j], loc);
+                if(loc == 0)
+                {
+                    Log("Wrong location pid");
+                    continue;
+                }
+                zone.LocationPids.insertLast(loc);
+            }
+
+            if(splittedline.length() < 4)
+                continue;
+
+            if(splittedline[3].length() > 3)
+            {
+                array<string@>@ str_groups = split(splittedline[3], ",");
+
+                // Groups and their quantities
+                uint group = 0;
+                uint quantity = 0;
+                for(uint j = 0, k = str_groups.length(); j < k; j++)
+                {
+                    if(str_groups[j].length() == 0)
+                        continue;
+                    array<string@>@ grch = split(str_groups[j], ":");
+                    group = 0;
+                    chance = 0;
+                    StrToInt(grch[0], group);
+                    StrToInt(grch[1], quantity);
+
+                    zone.Groups.insertLast(group);
+                    zone.Quantities.insertLast(quantity);
+                }
+            }
+
+            if(splittedline.length() < 5)
+            {
+                continue;
+            }
+
+            uint flag;
+            array<string@>@ str_flags = split(splittedline[4], ",");
+            for(uint j = 0, k = str_flags.length(); j < k; j++)
+            {
+                if(str_flags[j].length() == 0)
+                    continue;
+                flag = 0;
+                StrToInt(str_flags[j], flag);
+                zone.Flags.insertLast(flag);
+            }
+        }
+    }
+    return true;
+}

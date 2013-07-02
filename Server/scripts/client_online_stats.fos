@@ -1,0 +1,1109 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_online_stats.fos
+//
+
+#ifndef __CLIENT_ONLINE_STATS__
+#define __CLIENT_ONLINE_STATS__
+
+#include "_colors.fos"
+#include "client_gui_h.fos"
+#include "client_gui_ex.fos"
+#include "client_utils_h.fos"
+
+#pragma bindfunc "void OnlineStats_URL(string@+) -> client_parameters.dll OnlineStats_URL"
+#pragma bindfunc "void XFireDLL_InfoSet( uint id, string@+ name, string@+ value ) -> client_parameters.dll XFireDLL_InfoSet"
+#pragma bindfunc "void XFireDLL_InfoSend( void ) -> client_parameters.dll XFireDLL_InfoSend"
+#pragma bindfunc "void XFireDLL_InfoCleanup( void ) -> client_parameters.dll XFireDLL_InfoCleanup"
+
+#define __ONLINE_STATS_MODULE__
+#include "online_stats_h.fos"
+
+#ifdef __DEBUG__
+# define OSDebugMessage            # (text) do {} while(false)
+#endif
+#ifndef __DEBUG__
+# define OSDebugMessage            # (text);
+#endif
+
+#define OSM_NONE                   (0)
+#define OSM_VTDB                   (1)
+#define OSM_XFIRE                  (2)
+
+#define OS_MSG_NONE                ("Nothing will be available to view by other players.")
+#define OS_MSG_DEFAULT             (" ")
+// ("Current settings:\n\nLocal: "+OnlineStatsBuffer+"\nServer:"+OnlineStats)
+#define OS_MSG_OK                  ("Click to send current settings.")
+#define OS_MSG_CANCEL              ("Click to abandon all changes.")
+#define OS_MSG_LINK                ("Click to visit this page:\n\n" + this.msg)
+#define OS_MSG_URL                 ("http://fonline2238.net/vtdb/")
+#define OS_MSG_URL_ID              ("%ID%")
+#define OS_MSG_URL_CHAR            ("char.php?" + OS_MSG_URL_ID)
+
+#define OS_MSG_VTDB_ALL            ("All informations will be available to view.\n\nRemember that this flag will be used for things added in future.")
+#define OS_MSG_VTDB_SPECIAL        ("Display character SPECIAL points")
+#define OS_MSG_VTDB_XP             ("Display character level, current experience, and points needed for next level")
+#define OS_MSG_VTDB_LIFE           ("Display hit points and body status")
+#define OS_MSG_VTDB_STATS          ("Display character statistics")
+#define OS_MSG_VTDB_SKILLS         ("Display character skills")
+#define OS_MSG_VTDB_TRAITS         ("Display character traits")
+#define OS_MSG_VTDB_PERKS          ("Display character perks")
+#define OS_MSG_VTDB_PROFESSIONS    ("Display character professions")
+#define OS_MSG_VTDB_KARMA          ("Display character karma")
+#define OS_MSG_VTDB_ADDICTIONS     ("Display character addictions")
+#define OS_MSG_VTDB_REPUTATION     ("Display character reputation")
+#define OS_MSG_VTDB_KILLS          ("Display how many creatures meet its creator, thanks to You")
+#define OS_MSG_VTDB_POSITION       ("OS_POSITION - should !be visible")
+
+#define OS_MSG_XFIRE_ALL           ("All informations will be available to view.\n\nRemember that this flag will be used for things added in future.")
+#define OS_MSG_XFIRE_CHARNAME      ("Display character name")
+#define OS_MSG_XFIRE_CHARLEVEL     ("Show character level next to name - works only if you allow display characterr name")
+#define OS_MSG_XFIRE_LOCATION      ("Display current location")
+#define OS_MSG_XFIRE_AWARDS        ("OS_AWARDS - should !be visible")
+
+#define OS_MSG_BOK                 ("OK")
+#define OS_MSG_BCANCEL             ("Cancel")
+#define OS_MSG_BCHARPAGE           ("Character page")
+#define OS_MSG_BHOMEPAGE           ("VTDB Homepage")
+
+#define OS_MSG_INSECT              ("Online")
+
+int OnlineStats                 = 0; // local copy of LVAR_online_stats
+int OnlineStatsBuffer   = 0;         // buffer for changes made by user
+
+
+/*** GUI stuff starts HERE ***/
+
+bool OS_GUI = true;
+
+#define OS_INIPREFIX               ("OnlineStats")
+#define OS_INI                     # (key)           (OS_INIPREFIX + key)
+#define OS_INISTR                  # (key)        (GetIfaceIniStr(OS_INI(key)))
+
+// buttons types
+#define OSB_NORMAL                 (0)
+#define OSB_TOGGLE                 (1)
+#define OSB_ARROW                  (2)
+#define OSB_LINK                   (3)
+
+// link flag
+#define OSB_LINK_NORMAL            (0)
+#define OSB_LINK_CHAR              (1)
+#define OSB_LINK_CHAROK            (2)
+
+class COSButton : Control
+{
+    // universal
+    int       mod;
+    int       ID;
+    int       type;
+    string    sType;                            /**< type, used in .ini */
+    string    name;                             /**< name, used in .ini */
+    Sprite    spriteUp;
+    Sprite    spriteDown;
+    CLabel@   label;
+    CALLBACK@ callback;                         /**< function to run when button is clicked */
+    int       page;                             /**< to which page this button belongs; 0 - always visible */
+    int       flag;
+    string    msg;                              /**< text to display in OnlineStatsWindow;:infobox or page to visit (OSB_LINK) */
+
+    // OSB_TOGGLE
+    bool state;
+
+    // OSB_NORMAL / OSB_TOGGLE / OSB_LINK
+    uint color_on;
+    uint color_off;
+
+    COSButton(int mod, uint type, string sType, string name, int flag, string@ caption, string@ msg)
+    {
+        super();
+
+        this.mod                = mod;
+        this.type               = type;
+        this.sType              = sType;
+        this.name               = name;
+        this.flag               = flag;
+        this.msg                = msg;
+
+        if(this.type != OSB_ARROW)
+        {
+            @this.label = CLabel(0, 0, 0, 0, caption);
+            if(valid(this.label))
+            {
+                this.label.Position(OS_INI("Button" + name + "Text"));
+                this.label.font = string2uint(OS_INISTR("FontButtons" + sType));
+                this.label.SetFormat(FT_BORDERED | FT_CENTERY);
+                if(this.type == OSB_NORMAL)
+                {
+                    this.label.SetColor(rgb_string2uint(OS_INISTR("ColorButtons" + sType)));
+                }
+                else if(this.type == OSB_TOGGLE)
+                {
+                    this.color_on  = rgb_string2uint(OS_INISTR("ColorButtons" + sType + "Enabled"));
+                    this.color_off = rgb_string2uint(OS_INISTR("ColorButtons" + sType + "Disabled"));
+                    this.label.SetColor(this.color_on);
+                }
+                else if(this.type == OSB_LINK)
+                {
+                    this.color_on  = rgb_string2uint(OS_INISTR("ColorButtons" + sType + "MouseOver"));
+                    this.color_off = rgb_string2uint(OS_INISTR("ColorButtons" + sType + "MouseOut"));
+                    this.label.SetColor(this.color_off);
+                }
+                else
+                    this.color_on = this.color_off = 0;
+
+                OnlineStatsWindow.AddControl(@this.label);
+                this.label.Update();
+            }
+            // this should never happen
+            else
+                Message("ERROR: can't create CLabel: button type<" + type + "> sType,name<" + sType + "," + name + ">");
+
+        }
+
+        switch(this.type)
+        {
+        case OSB_LINK:
+            break;
+        case OSB_ARROW:
+            this.spriteUp.Load(OS_INISTR("Buttons" + name + "PicUp"), PT_ART_INTRFACE);
+            this.spriteDown.Load(OS_INISTR("Buttons" + name + "PicDown"), PT_ART_INTRFACE);
+            break;
+        default:
+            this.spriteUp.Load(OS_INISTR("Buttons" + sType + "PicUp"), PT_ART_INTRFACE);
+            this.spriteDown.Load(OS_INISTR("Buttons" + sType + "PicDown"), PT_ART_INTRFACE);
+        }
+
+        if(this.type == OSB_TOGGLE)
+            this.page       = CLAMP(string2uint(OS_INISTR("Button" + name + "Page")), 0, 99);
+        else
+            this.page       = 0;
+
+        if(this.type == OSB_TOGGLE)
+            @this.callback = cb_toggleButton;
+        else if(this.type == OSB_ARROW)
+            @this.callback = cb_arrow;
+        else
+            @this.callback  = cb_nop;
+
+        this.state              = false;
+    }
+
+    void Init()
+    {
+        if(this.sType != "" && this.name != "")
+        {
+            this.Position(OS_INI("Button" + this.name));
+            this.Update();
+        }
+        // OSDebugMessage( "button "+this.sType+this.name+" initialized: "+Left()+","+Top() );
+    }
+
+    void OnShow()
+    {
+        if(valid(this.label))
+        {
+            this.label.Show();
+            this.label.Update();
+        }
+    }
+
+    void OnHide()
+    {
+        if(valid(this.label))
+        {
+            this.label.Hide();
+            this.label.Update();
+        }
+    }
+
+    void OnEnabled()
+    {
+        if(valid(this.label))
+        {
+            OSDebugMessage("BUTT " + this.sType + "->" + this.name + ": OnEnabled()");
+            this.label.SetColor(this.color_on);
+            this.label.Update();
+        }
+    }
+
+    void OnDisabled()
+    {
+        if(valid(this.label))
+        {
+            OSDebugMessage("BUTT " + this.sType + "->" + this.name + ": OnDisabled()");
+            this.label.SetColor(this.color_off);
+            this.label.Update();
+        }
+    }
+
+    void SetClick(CALLBACK@ callback)
+    {
+        @this.callback = callback;
+    }
+
+    void Click()
+    {
+        if(this.type == OSB_TOGGLE)
+            this.state = !this.state;
+
+        if(valid(this.callback))
+            this.callback(this);
+        return;
+    }
+
+    void MouseMove(int fromX, int fromY, int toX, int toY)
+    {
+        bool inside = false;
+
+        if((this.IsInside(fromX, fromY) || this.IsInside(toX, toY)) && this.IsVisible())
+            inside = true;
+
+        if(this.type == OSB_LINK)
+        {
+            if(inside)
+            {
+                this.SetColor(this.color_on);
+                OnlineStatsWindow.infobox.SetCaption(OS_MSG_LINK);
+                OnlineStatsWindow.infoboxID = ID;
+                OnlineStatsWindow.infobox.Update();
+            }
+            else
+                this.SetColor(this.color_off);
+        }
+        else if(OnlineStatsWindow.infoboxID <= -1 && this.type == OSB_NORMAL && this.msg.length() > 0)
+        {
+            if(inside)
+            {
+                OnlineStatsWindow.infobox.SetCaption(this.msg);
+                OnlineStatsWindow.infoboxID = this.ID;
+                OnlineStatsWindow.infobox.Update();
+            }
+        }
+        else if(OnlineStatsWindow.infoboxID <= -1 && this.type == OSB_TOGGLE && this.msg.length() > 0)
+        {
+            if(inside || (this.label.IsInside(fromX, fromY) || this.label.IsInside(toX, toY)))
+            {
+                OnlineStatsWindow.infobox.SetCaption(this.msg);
+                OnlineStatsWindow.infoboxID = this.ID;
+                OnlineStatsWindow.infobox.Update();
+            }
+        }
+    }
+
+    void SetCaption(string caption)
+    {
+        if(valid(this.label))
+            this.label.SetCaption(caption);
+    }
+    void SetColor(uint color)
+    {
+        if(valid(this.label))
+            this.label.SetColor(color);
+    }
+    void SetFormat(uint format)
+    {
+        if(valid(this.label))
+            this.label.SetFormat(format);
+    }
+
+    void Draw()
+    {
+        if(this.Height() == 0 && this.Width() == 0)
+            return;
+
+        switch(this.type)
+        {
+        case OSB_NORMAL:
+        case OSB_ARROW:
+            if(mousePressed)
+                DrawSprite(this.spriteDown.Id, 0, Left(), Top(), 0);
+            else
+                DrawSprite(this.spriteUp.Id, 0, Left(), Top(), 0);
+            break;
+        case OSB_TOGGLE:
+            if(this.state == true)
+                DrawSprite(this.spriteDown.Id, 0, Left(), Top(), 0);
+            else
+                DrawSprite(this.spriteUp.Id, 0, Left(), Top(), 0);
+            break;
+        }
+    }
+};
+
+class COnlineStatsWindow : Window, IGUIScreenCallbackHide
+{
+    CLabel@           title;
+    CLabel@           infobox;
+    uint              infoboxUpdate;
+    int               infoboxID;
+    CLabel@           pageInfo;
+    array<COSButton@> buttons;
+    int               page;
+    int               pages;
+    CLabel@           Author;
+
+    void Init()
+    {
+        @this.title     = CLabel(0, 0, 0, 0, "ONLINE STATS", FONT_FAT);
+        if(valid(this.title))
+        {
+            this.title.Position(OS_INI("MainText"));
+            this.title.SetColor(rgb_string2uint(OS_INISTR("ColorMainText")));
+            this.title.SetFormat(FT_CENTERY);
+            this.AddControl(@this.title);
+        }
+        // this should never happen
+        else
+            Message("ERROR: can't create CLabel: title");
+
+        @this.infobox = CLabel(0, 0, 0, 0, OS_MSG_DEFAULT, FONT_FALLOUT);
+        if(valid(this.infobox))
+        {
+            this.infobox.Position(OS_INI("InfoBoxText"));
+            this.infobox.SetColor(COLOR_BLACK);
+            this.infobox.SetFormat(FT_CENTERY);
+            this.AddControl(@this.infobox);
+        }
+        // this should never happen
+        else
+            Message("ERROR: can't create CLabel: infobox");
+        this.infoboxID = -1;
+
+        // always visible
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_NORMAL, "Normal", "OK", 0, OS_MSG_BOK, OS_MSG_OK));
+        this.buttons[this.buttons.length() - 1].SetFormat(FT_CENTERX | FT_CENTERY);
+        this.buttons[this.buttons.length() - 1].SetClick(@cb_ok);
+
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_NORMAL, "Normal", "Cancel", 0, OS_MSG_BCANCEL, OS_MSG_CANCEL));
+        this.buttons[this.buttons.length() - 1].SetFormat(FT_CENTERX | FT_CENTERY);
+        this.buttons[this.buttons.length() - 1].SetClick(@cb_cancel);
+
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_ARROW, "Arrow", "ArrowUp", -1, "", ""));
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_ARROW, "Arrow", "ArrowDown", 1, "", ""));
+
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_LINK, "Link", "HomePage", OSB_LINK_NORMAL, OS_MSG_BHOMEPAGE, OS_MSG_URL));
+        this.buttons[this.buttons.length() - 1].SetClick(@cb_url);
+
+        // init finished in OnShow() (we need chosen for id)
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_LINK, "Link", "CharPage", OSB_LINK_CHAR, OS_MSG_BCHARPAGE, OS_MSG_URL + OS_MSG_URL_CHAR));
+        this.buttons[this.buttons.length() - 1].SetClick(@cb_url);
+
+        // visible on demand
+        @this.Author = CLabel(0, 0, 0, 0, "WHINE Team", FONT_FAT);
+        if(valid(this.Author))
+        {
+            this.Author.Position(OS_INI("Author"));
+            this.Author.SetColor(COLOR_LIGHT(COLOR_RGB(112, 96, 80), 0));
+            this.Author.SetFormat(FT_CENTERY | FT_ALIGN);
+            this.AddControl(@this.Author);
+            this.Author.Hide();
+        }
+        // this should never happen
+        else
+            Message("ERROR: can't create CLabel: Author");
+
+        // visible if needed
+        @this.pageInfo = CLabel(0, 0, 0, 0, "pageInfo");
+        if(valid(this.pageInfo))
+        {
+            this.pageInfo.Position(OS_INI("PageInfoText"));
+            this.pageInfo.SetColor(rgb_string2uint(OS_INISTR("ColorPageInfoText")));
+            this.pageInfo.SetFormat(FT_CENTERY);
+            AddControl(@this.pageInfo);
+        }
+        // this should never happen
+        else
+            Message("ERROR: can't create CLabel: pageInfo");
+
+        // visible on demand (VTDB)
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBAll", OS_VTDB_ALL, "ALL (VTDB)", OS_MSG_VTDB_ALL));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBSpecial", OS_VTDB_SPECIAL, "SPECIAL", OS_MSG_VTDB_SPECIAL));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBXp", OS_VTDB_XP, "Experience", OS_MSG_VTDB_XP));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBLife", OS_VTDB_LIFE, "Health", OS_MSG_VTDB_LIFE));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBStats", OS_VTDB_STATS, "Statistics", OS_MSG_VTDB_STATS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBSkills", OS_VTDB_SKILLS, "Skills", OS_MSG_VTDB_SKILLS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBTraits", OS_VTDB_TRAITS, "Traits", OS_MSG_VTDB_TRAITS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBPerks", OS_VTDB_PERKS, "Perks", OS_MSG_VTDB_PERKS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBProfessions", OS_VTDB_PROFESSIONS, "Professions", OS_MSG_VTDB_PROFESSIONS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBKarma", OS_VTDB_KARMA, "Karma", OS_MSG_VTDB_KARMA));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBAddictions", OS_VTDB_ADDICTIONS, "Addictions", OS_MSG_VTDB_ADDICTIONS));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBReputation", OS_VTDB_REPUTATION, "Reputation", OS_MSG_VTDB_REPUTATION));
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBKills", OS_VTDB_KILLS, "Kills", OS_MSG_VTDB_KILLS));
+        #ifdef __DEBUG__
+        this.buttons.insertLast(COSButton(OSM_VTDB, OSB_TOGGLE, "Toggle", "VTDBPosition", OS_VTDB_POSITION, "Position", OS_MSG_VTDB_POSITION));
+        #endif
+
+        // visible on demand (XFire)
+        this.buttons.insertLast(COSButton(OSM_XFIRE, OSB_TOGGLE, "Toggle", "XFireAll", OS_XFIRE_ALL, "ALL (XFire)", OS_MSG_XFIRE_ALL));
+        this.buttons.insertLast(COSButton(OSM_XFIRE, OSB_TOGGLE, "Toggle", "XFireCharName", OS_XFIRE_CHARNAME, "Character name", OS_MSG_XFIRE_CHARNAME));
+        this.buttons.insertLast(COSButton(OSM_XFIRE, OSB_TOGGLE, "Toggle", "XFireCharLevel", OS_XFIRE_CHARLEVEL, "Character level", OS_MSG_XFIRE_CHARLEVEL));
+        this.buttons.insertLast(COSButton(OSM_XFIRE, OSB_TOGGLE, "Toggle", "XFireLocation", OS_XFIRE_LOCATION, "Current location", OS_MSG_XFIRE_LOCATION));
+        #ifdef __DEBUG__
+        this.buttons.insertLast(COSButton(OSM_XFIRE, OSB_TOGGLE, "Toggle", "XFireAwards", OS_XFIRE_AWARDS, "Awards", OS_MSG_XFIRE_AWARDS));
+        #endif
+
+        #ifdef __DEBUG__
+        this.buttons.insertLast(COSButton(OSM_NONE, OSB_NORMAL, "Normal", "", 0, "", ""));
+        int MM = this.buttons.length() - 1;
+        this.buttons[MM].Position(OS_INI("::MouseMove"));
+        this.buttons[MM].SetClick(@cb_mouseMove);
+        this.mouseMove = false;
+        #endif
+
+        this.page  = 1;
+        this.pages = 1;
+        for(uint b = 0; b < this.buttons.length(); b++)
+        {
+            this.buttons[b].ID = b;
+            if(this.buttons[b].page > this.pages)
+                this.pages = this.buttons[b].page;
+            AddControl(@this.buttons[b]);
+        }
+        if(this.pages == 1)
+            this.pageInfo.Hide();
+
+        Window::Init();
+    }
+
+    void OnShow()
+    {
+        this.page = 1;
+        // synch
+        for(uint b = 0; b < this.buttons.length(); b++)
+        {
+            if(this.buttons[b].page > 1)
+                this.buttons[b].Hide();
+            else
+                this.buttons[b].Show();
+
+            if(this.buttons[b].type == OSB_TOGGLE)
+            {
+                if(FLAG(OnlineStats, this.buttons[b].flag))
+                    this.buttons[b].state = true;
+                else
+                    this.buttons[b].state = false;
+
+                if((FLAG(OnlineStats, OS_VTDB_ALL) && this.buttons[b].flag != OS_VTDB_ALL  && this.buttons[b].mod == OSM_VTDB) ||
+                   (FLAG(OnlineStats, OS_XFIRE_ALL) && this.buttons[b].flag != OS_XFIRE_ALL && this.buttons[b].mod == OSM_XFIRE))
+                {
+                    this.buttons[b].Disable();
+                }
+                else
+                {
+                    this.buttons[b].Enable();
+                }
+            }
+            else if(this.buttons[b].type == OSB_LINK && this.buttons[b].flag == OSB_LINK_CHAR)
+            {
+                CritterCl@ chosen = GetChosen();
+                if(valid(chosen))
+                {
+                    this.buttons[b].msg = ReplaceText(this.buttons[b].msg, OS_MSG_URL_ID, chosen.Id);
+                    this.buttons[b].flag = OSB_LINK_CHAROK;
+                }
+                // this should never happen
+                else
+                {
+                    this.buttons[b].Hide();
+                    this.buttons[b].Disable();
+                    this.buttons[b].flag = -1;
+                    Message("ERROR: GetChosen() fail, " + this.buttons[b].sType + "->" + this.buttons[b].name);
+                }
+            }
+        }
+        OnlineStatsBuffer = OnlineStats;
+        this.infobox.SetCaption(OS_MSG_DEFAULT);
+        this.infoboxID = -1;
+
+        this.pageInfo.SetCaption("page " + this.page + "/" + this.pages);
+
+        this.Update();
+    }
+
+    void OnHide(int, int, int)
+    {
+        this.infobox.SetCaption(OS_MSG_DEFAULT);
+        this.infoboxID = -1;
+        OnlineStatsBuffer = 0;
+
+        this.Update();
+    }
+
+    #ifdef __DEBUG__
+    bool mouseMove;
+    #endif
+    void MouseMove(int fromX, int fromY, int toX, int toY)
+    {
+        #ifdef __DEBUG__
+        int    x = toX - this.Left();
+        int    y = toY - this.Top();
+        string result;
+        if(x < 0 || y < 0 || x > this.Width() || y > this.Height())
+            result = "outside screen";
+        else
+            result = x + "," + y;
+
+        if(this.mouseMove)
+            Message("MouseMove: " + result + " (" + fromX + "," + fromY + " -> " + toX + "," + toY + ")");
+        #endif
+
+        this.infoboxID = -1;
+        for(uint b = 0; b < this.buttons.length(); b++)
+        {
+            this.buttons[b].MouseMove(fromX, fromY, toX, toY);
+        }
+        if(this.infoboxID == -1)
+        {
+            this.infobox.SetCaption(OS_MSG_DEFAULT);
+            this.infobox.Update();
+        }
+    }
+
+};
+COnlineStatsWindow OnlineStatsWindow;
+
+/* Buttons callbacks */
+funcdef void CALLBACK(COSButton@ button);
+
+#ifdef __DEBUG__
+void cb_mouseMove(COSButton@ button)
+{
+    OSDebugMessage("callback: mouseMove");
+    OnlineStatsWindow.mouseMove = !OnlineStatsWindow.mouseMove;
+}
+#endif
+
+void cb_nop(COSButton@ button)
+{
+    OSDebugMessage("callback: NOP");
+    return;
+};
+
+void cb_ok(COSButton@ button)
+{
+    OSDebugMessage("callback: sendSetup(" + OnlineStatsBuffer + ")");
+    SendSetup(OnlineStatsBuffer);
+    cb_cancel(button);
+    return;
+}
+
+void cb_cancel(COSButton@ button)
+{
+    OSDebugMessage("callback: cancel");
+    button.parent.HideWindow();
+    OnlineStatsBuffer = 0;
+    return;
+}
+
+void cb_toggleButton(COSButton@ button)
+{
+    OSDebugMessage("callback: toggleButton");
+    if(button.flag == 0)
+    {
+        OSDebugMessage("no flag: " + button.sType + "::" + button.name);
+    }
+    if(button.state == false)
+    {
+        OSDebugMessage("unset: " + button.sType + "::" + button.name);
+        UNSETFLAG(OnlineStatsBuffer, button.flag);
+    }
+    else
+    {
+        OSDebugMessage("set: " + button.sType + "::" + button.name);
+        SETFLAG(OnlineStatsBuffer, button.flag);
+    }
+    if(button.flag == OS_VTDB_ALL || button.flag == OS_XFIRE_ALL)
+    {
+        for(uint b = 0; b < OnlineStatsWindow.buttons.length(); b++)
+        {
+            if(OnlineStatsWindow.buttons[b].mod == button.mod &&
+               OnlineStatsWindow.buttons[b].type == OSB_TOGGLE &&
+               OnlineStatsWindow.buttons[b].ID != button.ID)
+            {
+                if(button.state == true)
+                {
+                    OSDebugMessage("toggle disabled: " + OnlineStatsWindow.buttons[b].sType + "->" + OnlineStatsWindow.buttons[b].name);
+                    OnlineStatsWindow.buttons[b].Disable();
+                }
+                else
+                {
+                    OSDebugMessage("toggle enabled: " + OnlineStatsWindow.buttons[b].sType + "->" + OnlineStatsWindow.buttons[b].name);
+                    OnlineStatsWindow.buttons[b].Enable();
+                }
+            }
+        }
+        OnlineStatsWindow.Update();
+    }
+    return;
+}
+
+void cb_arrow(COSButton@ button)
+{
+    int old = OnlineStatsWindow.page;
+    OnlineStatsWindow.page = CLAMP((OnlineStatsWindow.page + button.flag), 1, OnlineStatsWindow.pages);
+    OSDebugMessage("callback: arrow(" + button.flag + "): current page: " + OnlineStatsWindow.page + "/" + OnlineStatsWindow.pages);
+    if(old != OnlineStatsWindow.page)
+    {
+        for(uint b = 0; b < OnlineStatsWindow.buttons.length(); b++)
+        {
+            if(OnlineStatsWindow.buttons[b].page == 0 ||
+               OnlineStatsWindow.buttons[b].page == OnlineStatsWindow.page)
+            {
+                OnlineStatsWindow.buttons[b].Show();
+            }
+            else
+            {
+                OnlineStatsWindow.buttons[b].Hide();
+            }
+        }
+        OnlineStatsWindow.pageInfo.SetCaption("page " + OnlineStatsWindow.page + "/" + OnlineStatsWindow.pages);
+        OnlineStatsWindow.Update();
+    }
+}
+
+
+
+void cb_url(COSButton@ button)
+{
+    OSDebugMessage("callback: url");
+
+    if(valid(button.msg) && button.msg != "" && button.msg.length() > 10 &&
+       (substring(button.msg, 0, 7) == "http://" ||
+        substring(button.msg, 0, 6) == "ftp://"))
+    {
+        OSDebugMessage("opening url: " + button.msg);
+        OnlineStats_URL(button.msg);
+    }
+}
+
+class InjectButton : Control
+{
+    IGUIScreenOpt@ window;
+    bool           infected;
+    Sprite         buttonDown;
+    array<int>     pos;
+
+    InjectButton(IGUIScreenOpt@ window, int infected)
+    {
+        @this.window = window;
+        if(infected > 0)
+        {
+            this.buttonDown.LoadByIni("ChaPrintPicDn", PT_ART_INTRFACE);
+            this.infected = true;
+        }
+        else
+            this.infected = false;
+
+        this.pos.resize(4);
+        int x = 0;
+        int y = 0;
+        GUI_GetIniCoords("ChaPrintText", pos[0], pos[1], x, y);
+        pos[2] = x - pos[0];
+        pos[3] = y - pos[1];
+    }
+
+    void Init()
+    {
+        if(this.infected)
+            this.Position("ChaPrint");
+        else
+        {
+            this.Position(0, 0);
+            this.Size(0, 0);
+        }
+    }
+
+    void Click()
+    {
+        if(this.infected)
+        {
+            OSDebugMessage("I'm infected... by Your genetics!");
+            GUI_HideScreen(CLIENT_SCREEN_CHARACTER, 0, 0, 0);
+            OnlineStatsWindow.ShowWindow();
+        }
+    }
+
+
+    int Left()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosX() + this.left);
+        return(0);
+    }
+
+    int Top()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosY() + this.top);
+        return(0);
+    }
+
+    void Draw()
+    {
+        #define _draw                                                                       \
+            this.window.GetPosX() + pos[0], this.window.GetPosY() + pos[1], pos[2], pos[3], \
+            COLOR_CHANGE_ALPHA(COLOR_LIGHT(COLOR_SAND, 2), 200),                            \
+            FONT_FAT,                                                                       \
+            FT_CENTERY
+        if(this.infected)
+        {
+            if(this.mousePressed)
+                DrawSprite(this.buttonDown.Id, 0, this.Left(), this.Top(), 0);
+
+
+            DrawText(OS_MSG_INSECT, _draw);
+        }
+        else
+        {
+            DrawText("Print", _draw);
+        }
+    }
+};
+
+array<string> XFireInfoName;
+array<string> XFireInfoValue;
+
+
+int XFire_InfoId(string& name)
+{
+    // ignore XFire on CBT
+    if(__Port != 2238)
+        return(-1);
+
+    if(XFireInfoName.length() == 0)
+        return(-1);
+
+    for(uint k = 0; k < XFireInfoName.length(); k++)
+    {
+        if(XFireInfoName[k] == name)
+            return(k);
+    }
+    return(-1);
+}
+
+bool XFire_SetInfo(string name, string value)
+{
+    // ignore XFire on CBT
+    if(__Port != 2238)
+        return(false);
+    if(name.length()  == 0 || name  == "" ||
+       value.length() == 0 || value == "" ||
+       XFireInfoName.length() >= 100)
+        return(false);
+
+    int id = XFire_InfoId(name);
+    if(id >= 0)
+    {
+        XFireInfoName[id]       = name;
+        XFireInfoValue[id]      = value;
+    }
+    else
+    {
+        id = XFireInfoName.length();
+        XFireInfoName.insertLast(name);
+        XFireInfoValue.insertLast(value);
+    }
+    XFireDLL_InfoSet(id, name, value);
+    return(true);
+}
+
+void XFire_Update()
+{
+    // ignore XFire on CBT
+    if(__Port != 2238)
+        return;
+    XFireDLL_InfoSend();
+}
+
+void XFire_LoopCheck()
+{
+    OSDebugMessage("LoopCheck");
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+    {
+        OSDebugMessage("  run cleanup");
+        // no chosen -> login screen
+        XFireDLL_InfoCleanup();
+        XFireInfoName.resize(0);
+        XFireInfoValue.resize(0);
+        XFireDLL_InfoSet(0, "", "");
+        XFireDLL_InfoSend();
+    }
+}
+
+bool initialized = false;
+void InitOnlineStats() // Export
+{
+    if(initialized)
+    {
+        GUI_DeleteScreen(CLIENT_SCREEN_ONLINE_STATS);
+        OnlineStatsWindow.buttons.resize(0);
+    }
+
+    OSDebugMessage((initialized ? "re" : "") + "initializing");
+
+    // if empty, we assume that user don't have our .ini
+    string mainpic = OS_INISTR("MainPic");
+    if(mainpic.length() <= 0)
+    {
+        OSDebugMessage("GUI disabled (missing *MainPic)");
+        OS_GUI = false;
+        Log("OnlineStats GUI disabled : missing <OnlineStatsMainPic>");
+    }
+    else
+    {
+        GUI_CreateScreen(CLIENT_SCREEN_ONLINE_STATS, mainpic)
+        .Control(OnlineStatsWindow)
+        .SetCallbackShow(OnlineStatsWindow)
+        .SetCallbackHide(OnlineStatsWindow)
+        .SetCallbackFocus(OnlineStatsWindow)
+        .CanMove(true)
+        .Modal(false)
+        .Multiinstance(false);
+
+        OS_GUI = true;
+    }
+
+    int infect = 0;
+    StrToInt(OS_INISTR("InfectCharScreen"), infect);
+
+    IGUIScreenOpt@ screen = GUI_GetScreen(CLIENT_SCREEN_CHARACTER);
+    InjectButton@  insect = InjectButton(screen, infect);
+    Control@       control = @Control();
+    control.AddControl(@insect);
+    screen.Control(control).Multiinstance(false);
+
+    OSDebugMessage("initialized");
+    initialized = true;
+}
+
+/*** GUI stuff ends HERE ***/
+
+/*
+   void OnlineStatsPrint( int setup )
+   {
+        if( setup == 0 )
+        {
+                Message( "OnlineStats: NONE" );
+                Message( "  "+OS_MSG_NONE );
+        }
+        else
+        {
+                Message( "Online Stats:" );
+
+   #define _iflag #(flag,text)		if( FLAG(setup,flag) ) Message( "  "+text )
+                Message( " VTDB" );
+                if( FLAG( setup, OS_VTDB_ALL ))
+                {
+                        Message( "  "+OS_MSG_VTDB_ALL );
+                }
+                else
+                {
+                        _iflag( OS_VTDB_SPECIAL,	"SPECIAL" );
+                        _iflag( OS_VTDB_XP,			"Experience" );
+                        _iflag( OS_VTDB_LIFE,		"Health status" );
+                        _iflag( OS_VTDB_STATS,		"Statistics" );
+                        _iflag( OS_VTDB_SKILLS,		"Skills" );
+                        _iflag( OS_VTDB_TRAITS,		"Traits" );
+                        _iflag( OS_VTDB_PERKS,		"Perks" );
+                        _iflag( OS_VTDB_PROFESSIONS,"Proffesions" );
+                        _iflag( OS_VTDB_KARMA,		"Karma" );
+                        _iflag( OS_VTDB_ADDICTIONS,	"Addictions" );
+                        _iflag( OS_VTDB_REPUTATION,	"Reputation" );
+                        _iflag( OS_VTDB_KILLS,		"Kills" );
+                        _iflag( OS_VTDB_POSITION,	"Position" );
+                }
+                Message( " XFire" );
+                if( FLAG( setup, OS_XFIRE_ALL ))
+                {
+                        Message( "  "+OS_MSG_XFIRE_ALL );
+                }
+                else
+                {
+                        _iflag( OS_XFIRE_CHARNAME,	"Character name" );
+                        _iflag( OS_XFIRE_CHARLEVEL,	"Character level" );
+                        _iflag( OS_XFIRE_LOCATION,	"Current map" );
+                        _iflag( OS_XFIRE_AWARDS,	"Current awards" );
+                }
+        }
+   }*/
+
+int OnlineStatsCommand(string& message)
+{
+    array<string@>@ command = split(message, " ");
+
+    if(message == OS_COMMAND || (command.length() >= 1 && command[0] == OS_COMMAND))
+    {
+        /*
+           if( command.length() > 1 )
+           {
+                // command mode
+                OSDebugMessage( "command mode <"+command[1]+">" );
+                if( command[1] == "show" || command[1] == "hide" )
+                {
+                        OSDebugMessage( "show/hide" );
+                        if( command.length() >= 3 )
+                        {
+                                if( command[1] == "show" && command[2] == "all" )
+                                {
+                                        SendSetup( OS_ALL );
+                                        OnlineStatsPrint( OS_ALL );
+                                }
+                                else if( command[1] == "hide" && command[2] == "all" )
+                                {
+                                        SendSetup( 0 );
+                                        OnlineStatsPrint( 0 );
+                                }
+                        }
+                        else
+                                OnlineStatsPrint( OnlineStats );
+                        return( 0 );
+                }
+                OSDebugMessage( "unknown switch <"+command[1]+">" );
+                return( 0 );
+           }
+           else if( message == OS_COMMAND || (command.length() == 1 && command[0] == OS_COMMAND ))
+           {
+         */
+        // window mode
+        OSDebugMessage("window mode");
+        if(OS_GUI == false)
+        {
+            OSDebugMessage("\tignored (OS_GUI==false)");
+            return(0);
+        }
+        else if(!initialized)
+        {
+            OSDebugMessage("!initialized (!)");
+            return(0);
+        }
+        OnlineStatsWindow.ShowWindow();
+        return(0);
+        // }
+    }
+    return(2);
+}
+
+void OnlineStatsGetSetup() // Export
+{
+    OSDebugMessage("fetching setup from server");
+    RunServerScriptUnsafe("online_stats@unsafe_setup", 0, -1, 0, " ", null);
+}
+
+void SendSetup(int setup)
+{
+    OSDebugMessage("sending setup to server <" + setup + ">");
+    RunServerScriptUnsafe("online_stats@unsafe_setup", setup, 0, 0, " ", null);
+}
+
+/**
+ *
+ */
+void _Setup(int setup, int display, int, string@, array<int>@)
+{
+    OnlineStatsWindow.HideWindow();
+    if(display > 0)
+        Message("VTDB updated.");
+
+    #ifdef __DEBUG__
+    if(OnlineStats != setup)
+        OSDebugMessage("overwriting OnlineStats: <" + OnlineStats + "> -> <" + setup + ">");
+    else
+        OSDebugMessage("received OnlineStats <" + setup + ">");
+    #endif
+    OnlineStats = setup;
+    OnlineStatsBuffer = 0;
+}
+
+void _XFire(int mode, int data1, int data2, string@ message, array<int>@ data)
+{
+    // ignore XFire on CBT
+    if(__Port != 2238)
+        return;
+
+    if(!valid(message) || message.length() < 1)
+    {
+        OSDebugMessage("_XFire() invalid message");
+        return;
+    }
+
+    OSDebugMessage("XFire: <" + message + ">");
+
+    bool update = false;
+
+    switch(mode)
+    {
+    /*
+       case XFIRE_GAMEID:
+     */
+
+    case XFIRE_CLEAR:
+    {
+        OSDebugMessage("XFire: clear");
+        XFireDLL_InfoCleanup();
+        update = true;
+    };
+        break;
+
+    case XFIRE_SET:
+    {
+        array<string@>@ keys = split(message, "~");
+        if(keys.length() > 0)
+        {
+            for(uint k = 0; k < keys.length(); k++)
+            {
+                array<string@> @set = split(keys[k], "=");
+                if(set.length() >= 2)
+                {
+                    string name  = set[0];
+                    string value = set[1];
+                    if(name.length() > 0)
+                    {
+                        if(XFire_SetInfo(name, value))
+                        {
+                            OSDebugMessage("XFire: set <" + name + "> = <" + value + ">");
+                            update = true;
+                        }
+                    }
+                }
+            }
+        }
+    };
+        break;
+
+    case XFIRE_MSG:
+    {
+        if(valid(message) && message != "" && message != " " && data1 >= 0 && data2 > 0)
+        {
+            string value = GetMsgStr(data1, data2);
+            if(valid(value) && value != "")
+            {
+                if(XFire_SetInfo(message, value))
+                {
+                    OSDebugMessage("XFire: msg <" + message + "> = <" + data1 + "><" + data2 + "> = <" + value + ">");
+                    update = true;
+                }
+            }
+        }
+    };
+        break;
+
+    default:
+    {
+        OSDebugMessage("XFire: unknown mode <" + mode + ">");
+    };
+        break;
+
+
+    }
+
+    if(update)
+    {
+        OSDebugMessage("XFire: update");
+        XFire_Update();
+    }
+}
+#endif /* __CLIENT_ONLINE_STATS__ */

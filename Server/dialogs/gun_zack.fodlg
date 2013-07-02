@@ -1,0 +1,69 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _var n name_mem_npc_player = 1 #
+9 1020 D _param p ST_CHARISMA > 99 #
+6 1030 D _param p ST_INTELLECT < 4 #
+10 1040 D _param p SK_SMALL_GUNS < 50 D _param p SK_BIG_GUNS < 50 D _param p SK_ENERGY_WEAPONS < 50 #
+2 1050 D _var n name_mem_npc_player = 0 @
+2 2000 None 0 #
+4 2010 #
+12 2020 D _var p q_la_gunrunners_caravan = 3 #
+5 2030 D _param p ST_INTELLECT > 1000 #
+65506 2040 #
+6 2050 @
+4 3000 None 0 #
+65507 3010 D _param p ST_INTELLECT > 1000 R _var n name_mem_npc_player = 1 R _script dialog@r_GunRunnerInsult 0  #
+65506 3020 #
+6 3030 @
+5 4000 None 0 #
+2 4010 @
+6 5000 None 0 @
+9 6000 None 0 @
+10 7000 None 0 @
+11 8000 Attack 0 @
+12 9000 None 0 #
+13 9010 R _var p q_la_gunrunners_caravan = 8 R _item p PID_COMBAT_ARMOR + 1 R _item p PID_TESLA_ARMOR + 1 R _item p PID_METAL_ARMOR_MK_II + 2 #
+13 9020 R _var p q_la_gunrunners_caravan = 8 R _item p PID_LIGHT_SUPPORT_WEAPON + 1 R _item p PID_LASER_RIFLE + 1 R _item p PID_14MM_PISTOL + 1 R _item p PID_FN_FAL + 1 #
+13 9030 R _var p q_la_gunrunners_caravan = 8 R _item p PID_5MM_AP + 1000 R _item p PID_223_FMJ + 200 R _item p PID_MICRO_FUSION_CELL + 400 R _item p PID_7_62MM_AMMO + 100 @
+13 10000 None 0 #
+0 10010 &
+
+[engl]
+{100}{}{Ralph}
+{200}{}{You see Ralph.}
+{210}{}{You see Ralph, the public trader for the gun runners.}
+{1000}{}{Predialogue installations}
+{1010}{}{Insulted}
+{1020}{}{No charisma}
+{1030}{}{idiot.}
+{1040}{}{No gun skills}
+{1050}{}{Not talked to}
+{2000}{}{Hi, I'm Ralph. You want to buy equipment? Let me see what you have to trade.}
+{2010}{}{I'm not showing you shit.}
+{2020}{}{Marshal told me to talk to you about my payment.}
+{2030}{}{Could you upgrade my weapons? [Upgrade] *DEV NOTE: Taken out for now*}
+{2040}{}{Show me what you've got. [Barter]}
+{2050}{}{I think I should leave... [Exit]}
+{3000}{}{I see. Let me put it this way. Do you want to buy or do you want your face blown off?}
+{3010}{}{I think I'd like you to blow me! *DEV NOTE: Taken ouf for now*}
+{3020}{}{Err... This is what I've got. [Barter]}
+{3030}{}{Sorry, I think I should leave! [Exit]}
+{4000}{}{Of course I could. Will I? Hell no.}
+{4010}{}{...}
+{5000}{}{Useless bastard...}
+{6000}{}{You're an ugly little beast ain't ya? Why'd they let you in here?@@Go on, be a good little freak and fuck off now, would you?@@You're getting drool on the floor, asshole.}
+{7000}{}{Seriously? Come back when you can use a gun.}
+{8000}{}{You came back? You're a bigger idiot than I thought!}
+{9000}{}{'Heard about it already. Got something here, tell me what you want to have... [He shows you various objects of high quality on a table.] Tell me what you want to have and you can keep it.}
+{9010}{}{[1 Combat Armor, 1 Tesla Armor and 2 Metal Armor Mark 2.]}
+{9020}{}{[1 Light Support Weapon, 1 Laser Rifle, 1 14mm pistol and 1 FN FAL.]}
+{9030}{}{[1000 5mm AP, 200 .223 FMJ, 400 MFC and 100 7.62mm.]}
+{10000}{}{That's it, then take it.}
+{10010}{}{Goodbye.}
+

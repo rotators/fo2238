@@ -1,0 +1,111 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// critter_age.fos
+//
+
+// Change critter age over time
+
+#ifndef __CRITTER_AGE__
+#define __CRITTER_AGE__
+
+#include "_time.fos"
+#include "utils_h.fos"
+
+#include "critter_age_h.fos"
+
+import uint GetDaysInMonth(uint16 year, uint16 month) from "time";
+
+void SetBirthDate(Critter& cr)
+{
+    uint byear  = __Year - cr.Param[ST_AGE];
+    uint bmonth = Random(1, 12);
+    uint bday   = Random(1, GetDaysInMonth(byear, bmonth));
+
+    uint now = GetFullSecond(__Year, __Month, __Day, __Hour, __Minute, __Second);
+    uint bdt = GetFullSecond(__Year, bmonth, bday, __Hour, __Minute, __Second);
+
+    if(now < bdt)
+    {
+        byear--;
+        bday = CLAMP(bday, 1, GetDaysInMonth(byear, bmonth));
+    }
+
+    SetLvar(cr, LVAR_birth_year,  byear);
+    SetLvar(cr, LVAR_birth_month, bmonth);
+    SetLvar(cr, LVAR_birth_day,   bday);
+}
+
+void CheckBirthDate(Critter& cr)
+{
+    int byear  = GetLvar(cr, LVAR_birth_year);
+    int bmonth = GetLvar(cr, LVAR_birth_month);
+    int bday   = GetLvar(cr, LVAR_birth_day);
+
+    if(byear <= 0 || bmonth <= 0 || bday <= 0 ||
+       bmonth > 12 || bday > int(GetDaysInMonth(byear, bmonth)))
+        SetBirthDate(cr);
+}
+
+void CritterAgeInit(Critter& cr)
+{
+    cr.EraseTimeEvents(CTE_AGE);
+    cr.AddTimeEvent("cte_Age", REAL_SECOND(Random(1, 3)), CTE_AGE);
+}
+
+void SynchronizeAge(Critter& cr)
+{
+    int  byear  = GetLvar(cr, LVAR_birth_year);
+    int  bmonth = GetLvar(cr, LVAR_birth_month);
+    int  bday   = GetLvar(cr, LVAR_birth_day);
+
+    uint now = GetFullSecond(__Year, __Month, __Day, __Hour, __Minute, __Second);
+    uint bdt = GetFullSecond(__Year, bmonth, bday, __Hour, __Minute, __Second);
+
+    int  age = (__Year - byear) - (now < bdt ? 1 : 0);
+    if(age != cr.Param[ST_AGE])
+    {
+        age = CLAMP(age, 1, AGE_CAP);
+        DPlayerLog(cr, "SynchronizeAge: " + cr.Param[ST_AGE] + " -> " + age);
+        cr.ParamBase[ST_AGE] = age;
+    }
+}
+
+uint cte_Age(Critter& cr, int identifier, uint& rate)
+{
+    // try to synch to full hour
+    uint nextUpdate = GAME_MINUTE(60 - __Minute) - GAME_SECOND(__Second);
+
+    SynchronizeAge(cr);
+
+    return(nextUpdate);
+}
+
+#ifdef __DEBUG__
+void start(Critter& cr, int trg, int, int)
+{
+    Critter@ target = GetCritter(trg);
+    if(!valid(target))
+    {
+        cr.Say(SAY_NETMSG, "Target invalid.");
+        return;
+    }
+    stop(cr, trg, 0, 0);
+    cr.Say(SAY_NETMSG, "age started");
+    CritterAgeInit(target);
+}
+
+void stop(Critter& cr, int trg, int, int)
+{
+    Critter@ target = GetCritter(trg);
+    if(!valid(target))
+    {
+        cr.Say(SAY_NETMSG, "Target invalid.");
+        return;
+    }
+    cr.Say(SAY_NETMSG, "age stopped");
+    target.EraseTimeEvents(CTE_AGE);
+}
+#endif
+#endif // __CRITTER_AGE__ //

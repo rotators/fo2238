@@ -1,0 +1,83 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_sad.fos
+//
+
+#include "_macros.fos"
+#include "elevators_h.fos"
+#include "_maps.fos"
+
+//
+// Sierra Army Depot - a place to have fun
+// Level2 - "military" crafting
+// Level3 - drugs experiments(crafting)
+//
+
+
+
+//
+// Initialize map
+//
+
+// elevator 1-2-3
+CElevator Elevator(ELEVATOR_MILITARY_123);
+// elevator 3-4
+CElevator ElevatorPower(ELEVATOR_MILITARY_34);
+
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    // add only one for all floors
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator);
+        AddElevator(ElevatorPower);
+        ElevatorsAdded = true;
+    }
+
+    uint16 x = 0, y = 0;
+    // parse elevators floors (only for vault levels)
+    switch(map.GetProtoId())
+    {
+    case MAP_SierraArmyDepot_Level1:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+        break;
+    case MAP_SierraArmyDepot_Level2:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+        break;
+    case MAP_SierraArmyDepot_Level3:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+        if(map.GetEntireCoords(2, 0, x, y))
+            ElevatorPower.AddFloor(map.Id, 2);
+        break;
+    case MAP_SierraArmyDepot_Level4:
+        if(map.GetEntireCoords(2, 0, x, y))
+            ElevatorPower.AddFloor(map.Id, 2);
+        break;
+    default:
+    }
+
+    // i just can't make up witty comments anymore
+
+}
+
+//
+// Elevator triggers
+//
+
+void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator, critter, entered);
+}
+
+void t_ElevatorPower(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(ElevatorPower, critter, entered);
+}

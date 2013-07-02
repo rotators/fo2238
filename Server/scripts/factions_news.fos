@@ -1,0 +1,100 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_news.fos
+//
+
+#ifndef __FACTIONS_NEWS__
+#define __FACTIONS_NEWS__
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "serializator.fos"
+
+//
+// Manages array that keep tracks of most important events(on members db)
+// in the faction
+//
+
+class FactionNews
+{
+    // array layout:
+    // {master, slave, type, time, ...}
+    array<uint>  news;
+    Serializator serialiser;
+    // name of the faction the news belong
+    string       factionName;
+
+    FactionNews(const string &factionName)
+    {
+        WLog("factions", "Instantiating FactionNews object for " + factionName);
+        this.factionName = factionName;
+        if(IsAnyData("FactionNews: " + factionName))
+        {
+            if(!GetAnyData("FactionNews: " + factionName, news))
+            {
+                Log("ERR: Couldn't read faction news from array: FactionNews: " + factionName);
+                return;
+            }
+        }
+        else
+        {
+            // to save empty array
+            UpdateData();
+        }
+    }
+
+    //
+    // Number of news
+    //
+    uint GetCount()
+    {
+        return news.length() / 5;
+    }
+
+    //
+    // Add news at the end of the array
+    //
+    void AddNews(uint master, uint slave, uint type)
+    {
+        news.insertLast(master);
+        news.insertLast(slave);
+        news.insertLast(type);
+        news.insertLast(uint(__Year));
+        news.insertLast(uint(
+                            (__Month << 24) | (__Day << 16) | (__Hour << 8) | __Minute));
+    }
+
+    //
+    // Gets news data for given index, returns false when not found
+    //
+    bool GetNews(uint index, uint& out master, uint& out slave, uint& out type,
+                 uint16& out year, uint8& out month, uint8& out day, uint8& out hour, uint8& out minute)
+
+    {
+        if(index * 5 + 4 < news.length())
+        {
+            master = news[index * 5];
+            slave = news[index * 5 + 1];
+            type = news[index * 5 + 2];
+            year = uint16(news[index * 5 + 3]);
+            uint dt = news[index * 5 + 4];
+            month = uint8(dt >> 24);
+            day = uint8(dt >> 16);
+            hour = uint8(dt >> 8);
+            minute = uint8(dt);
+            return true;
+        }
+        else
+            return false;
+    }
+    //
+    // Updates AnyData
+    //
+    bool UpdateData()
+    {
+        return SetAnyData("FactionNews: " + factionName, news);
+    }
+};
+#endif

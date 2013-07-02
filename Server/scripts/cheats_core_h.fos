@@ -1,0 +1,31 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cheats_core_h.fos
+//
+
+#ifndef __CHEATS_CORE_H__
+#define __CHEATS_CORE_H__
+
+// shared!
+
+#define SET_CORECHEAT      # (string, setup, switch, flag)       if(GetIndexOfString(string, "+" + switch) != -1) { SETFLAG(setup, flag); } else if(GetIndexOfString(string, "-" + switch) != -1) { UNSETFLAG(setup, flag); }
+#define GET_CORECHEAT                                                  \
+    # (setup, var, flag)                         if(FLAG(setup, flag)) \
+        var = true; else                                               \
+        var = false;
+
+    #define CC_TILE        (0x0000000001)
+#define CC_ROOF            (0x0000000002)
+#define CC_ITEM            (0x0000000004)
+#define CC_SCEN            (0x0000000008)
+#define CC_WALL            (0x0000000010)
+#define CC_CRIT            (0x0000000020)
+#define CC_FAST            (0x0000000040)
+#define CC_NPCNAMES        (0x0000000080)
+#define CC_CRITID          (0x0000000100)
+#define CC_DEBUGINFO       (0x0000000200) // doesn't work?
+#define CC_DEBUGNET        (0x0000000400) // doesn't work?
+#define CC_DEBUGSPRITES    (0x0000000800) // doesn't work?
+#endif /* __CHEATS_CORE_H__ */

@@ -1,0 +1,83 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_antlair.fos
+//
+
+#include "quest_killmobs_h.fos"
+#include "utils_h.fos"
+#include "npc_planes_h.fos"
+
+#define ALL_KILLED     (2)
+
+#define IDLE_NORMAL    (3000)
+
+void r_SpawnLair(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_AntPit1, Random(571, 755), Random(1075, 1288), crits);
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_san_antlair_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    Map@ map = location.GetMapByIndex(0);
+    SetOwnerId(map, player.Id);
+    SetQuestGarbager(12 * 60, player.Id, loc, LVAR_q_san_antlair, 3);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteLair(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_san_antlair_locid, player.Id);
+    DeleteLocation(var.GetValue());
+}
+
+
+// Ants
+void critter_init(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_AntDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_AntIdle");
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_AntShowCritter");
+
+    _CritSetExtMode(cr, MODE_EXT_MOB);
+
+}
+
+void _AntIdle(Critter& mob)
+{
+    MobIdle(mob);
+}
+
+void _AntShowCritter(Critter& mob, Critter& showCrit)
+{
+    MobShowCritter(mob, showCrit);
+}
+
+void _AntDead(Critter& cr, Critter@ killer)
+{
+    uint16[] pids = { cr.GetProtoId() };
+    Map@ map = cr.GetMap();
+    if(MobsDead(map, pids))
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_san_antlair, GetOwnerId(map));
+        var = ALL_KILLED;
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    return MobAttacked(cr, attacker);
+}
+
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    MobOnMessage(cr, fromCr, message, value);
+}

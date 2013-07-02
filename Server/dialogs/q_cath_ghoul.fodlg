@@ -1,0 +1,54 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 #
+5 2020 #
+2 2030 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+3 3030 @
+4 4000 None 0 #
+65507 4010 @
+5 5000 None 0 #
+6 5010 D _param p SK_STEAL } 50 D or D _param p SK_TRAPS } 50 #
+7 5020 D _param p SK_STEAL < 50 D or D _param p SK_TRAPS < 50 #
+0 5030 @
+6 6000 None 0 #
+0 6010 R _param p ST_EXPERIENCE + 200 R _script dialog@r_NinjaKillNpc 1 0 @
+7 7000 None 0 #
+65507 7010 &
+
+[engl]
+{100}{}{Glowing Ghoul}
+{200}{}{You see a crazy glowing ghoul.}
+{210}{}{He looks like a stature of glowing flesh and bone.}
+{1000}{}{Initial preferences}
+{1010}{}{---}
+{2000}{}{[The glowing creature is standing still like frozen. His eyes are fixed on the brickwall in front of him and he doesn't seem to realize you.]}
+{2010}{}{Hello, someone there?}
+{2020}{}{[Search the body.]}
+{2030}{}{[Leave him alone.]}
+{3000}{}{[The ghoul doesn't react on your talking.]}
+{3010}{}{[Push him a little bit.]}
+{3020}{}{[Search the body.]}
+{3030}{}{[Leave him alone.]}
+{4000}{}{[After he reels a step backwards, he seems to wake up. Now his eyes are are fixed on you.]}
+{4010}{}{[Continue]}
+{5000}{}{[While slowly searching his body for whatever you might want to find, you see a small bag on his belt with something in it.]}
+{5010}{}{[Try to open the bag.]}
+{5020}{}{[Try to open the bag.]}
+{5030}{}{[Leave him alone.]}
+{6000}{}{[While you open the bag slowly, you find a key in it. In the moment you want to pick it, the body shakes and is falling down to the ground. The creature seems to be dead.]}
+{6010}{}{[Continue]}
+{7000}{}{[While you open the bag slowly, the creature seems to wake up. Now his eyes are fixed on you.]}
+{7010}{}{[Continue]}
+{100000001}{}{You will not do anything to my plants!}
+

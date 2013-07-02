@@ -1,0 +1,312 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _macros.fos
+//
+
+#ifndef __MACROS__
+#define __MACROS__
+
+#include "_defines.fos"    // Generic constants
+#include "_math.fos"       // Math macros
+#include "_vars.fos"       // Game vars
+#include "_maps.fos"       // Maps and locations
+#include "_dialogs.fos"    // Dialogs
+#include "_animation.fos"  // Animations
+#include "ITEMPID.H"       // Items pids
+#include "_globalvars.fos" // Global vars
+#include "_time.fos"
+#include "groups_h.fos"    // NPC faction defines
+
+// ************** Other ***************************//
+
+// Pointer validation macro
+// Example: if(valid(ptr))... if(not valid(ptr))...
+#define valid                        # (ptr) (@ptr != null)
+#define invalid                      # (ptr) (@ptr == null)
+
+// Removing every occurance of _v from array
+#define remove_all_from_array                                                \
+    # (a, _v) do { uint _len = a.length(); for(uint _i = 0; _i < _len; _i++) \
+                       while(a[_i] == _v) { a.removeAt(_i); _len--; }} while(false)
+// Removing duplicates from array
+#define remove_duplicates_from_array                                                                                                                                                                                           \
+    # (__arr, datatype) do { datatype __tmp; for(uint __a = 0; __a < __arr.length(); __a++) { bool __p = true; for(uint __b = 0; __b < __tmp.length(); __b++) { if(__tmp[__b] == __arr[__a]) { __p = false; break; } } if(__p) \
+                                                                                                  __tmp.insertLast(__arr[__a]); } __arr = __tmp; } while(false)
+
+// appending an array
+#define append_array                 # (a1, a2) do { uint a1len = a1.length(); uint a2len = a2len = a2.length(); a1.resize(a1len + a2len); for(uint iter = 0; iter < a2len; iter++) { a1[a1len + iter] = a2[iter]; } } while(false);
+// Randomize elements
+#define random_from_array            # (__arr) (__arr[Random(0, __arr.length() - 1)])
+#define shuffle_array                # (arr, datatype) do { datatype __temp; uint pos; for(uint __i = 0; __i < arr.length() - 1; __i++) { pos = Random(__i, arr.length() - 1); __temp = arr[pos]; arr[pos] = arr[__i]; arr[__i] = __temp; } } while(false)
+#define shuffle_ptrarray             # (arr, datatype) do { datatype __temp; uint pos; for(uint __i = 0; __i < arr.length() - 1; __i++) { pos = Random(__i, arr.length() - 1); @__temp = arr[pos]; @arr[pos] = arr[__i]; @arr[__i] = __temp; } } while(false)
+// clear
+#define fill_array                                                          \
+    # (arr, filler) for(uint __i = 0, __j = arr.length(); __i < __j; __i++) \
+        arr[__i] = filler
+
+#define _IsWithinRange               # (__var, __x, __y)((__var >= (__x)) && (__var <= (__y)))
+
+// execute code x times without iterating on array(s)
+#define LOOP                         # (__times) for(uint i = 0; i < __times; i++)
+
+// debug log
+#ifdef __DEBUG__
+# define DLog                        # (__s)     { Log(__s); }
+#endif
+#ifndef __DEBUG__
+# define DLog                        # (__s)     {; }
+#endif
+
+#ifdef __DEBUG__
+# define DSay                        # (__cr, __s) { __cr.Say(SAY_NORM, __s); }
+#endif
+#ifndef __DEBUG__
+# define DSay                        # (__cr, __s) {}
+#endif
+
+#ifdef __DEBUG__
+# define DPlayerLog                  # (__player, __s)     { __player.Say(SAY_NETMSG, __s); }
+#endif
+#ifndef __DEBUG__
+# define DPlayerLog                  # (__player, __s)     {}
+#endif
+
+#define DInfo                        # (__cr, __s) { DLog(__s); DPlayerLog(__cr, __s); }
+
+#ifdef __CLIENT
+# ifdef __DEBUG__
+#  define DMessage                   # (__s) { Message(__s); }
+# endif
+# ifndef __DEBUG__
+#  define DMessage                   # (__s) {}
+# endif
+#endif
+
+#define _AdminLog                                                               \
+    # (player, s) { if(player.IsPlayer() && player.GetAccess() == ACCESS_ADMIN) \
+                        player.Say(SAY_NETMSG, s); }
+
+// npc critter id
+#define NPC_ID                       # (i)             (NPC_BASE_ID + (i))
+
+// after wipe
+#define IS_FIRST_TIME                (GetGvar(GVAR_is_first_time) == 1)
+
+// time conv
+#define REAL_SEC2GAME_MINUTE         # (s)   (int(float(s) / float(60) * __TimeMultiplier))
+
+// Flags
+#define FLAG                         # (x, flag)(((x) & (flag)) != 0)
+#define SETFLAG                      # (x, flag)((x) = (x) | (flag))
+#define UNSETFLAG                    # (x, flag)(x = ((x) & (~(flag))))
+#define TOGGLEFLAG                   # (x, flag)((x) ^= (flag))
+
+
+// SPAWNED_NOT_LEGIT flag is a part of spawner id value, which is hold in MAP_DATA_SPAWNER
+// for maps and Val9 for items. If the flag is set, it means the item was spawned by an
+// abuser and is not to be considered a part of the game.
+//
+// Only admins can spawn locations/items without this flag by using [-legit] switch in
+// the item/location spawning commands.
+//
+#define SPAWNED_NOT_LEGIT            (0x80000000)
+#define _IsNotLegit                  # (value) (FLAG((value), SPAWNED_NOT_LEGIT))
+#define _IsLegit                     # (value) (!FLAG((value), SPAWNED_NOT_LEGIT))
+#define _AsNotLegit                  # (value) (int((value) | SPAWNED_NOT_LEGIT))
+#define _AsLegit                     # (value) (int((value) & (~SPAWNED_NOT_LEGIT)))
+
+
+#define _SetTimeout                  # (__cr, __timeout, __time)__cr.TimeoutBase[__timeout] = AFTER(__time)
+
+// ************** Critter *************************//
+// Move
+#define _NpcWalk                     # (npc, hexX, hexY)npc.MoveToHex(hexX, hexY, 0xFF, false, 0)
+#define _NpcRun                      # (npc, hexX, hexY)npc.MoveToHex(hexX, hexY, 0xFF, true, 0)
+
+// Factions
+#define _SameFaction                 # (cr1, cr2)(cr1.Stat[ST_TEAM_ID] == cr2.Stat[ST_TEAM_ID])
+#define _SamePlayerFaction           # (cr1, cr2)(_SameFaction(cr1, cr2) && (cr1.Stat[ST_TEAM_ID] > FACTION_END))
+
+// Items
+#define _CritCountItem               # (cr, pid)cr.CountItem(pid)
+#define _CritAddItem                 # (cr, pid, count)cr.AddItem(pid, count)
+#define _CritDeleteItem              # (cr, pid, count)cr.DeleteItem(pid, count)
+#define _CritGetItem                 # (cr, pid)cr.GetItem(pid, -1)
+#define _CritGetItemHand             # (cr) cr.GetItem(0, SLOT_HAND1)
+#define _CritGetItemHandExt          # (cr) cr.GetItem(0, SLOT_HAND2)
+#define _CritGetItemArmor            # (cr) cr.GetItem(0, SLOT_ARMOR)
+#define _CritGetItemHead             # (cr) cr.GetItem(0, SLOT_HEAD)
+#define _CritGetItemInv              # (cr, pid)cr.GetItem(pid, SLOT_INV)
+#define _CritMoveItem                # (cr, item, toSlot)cr.MoveItem(item.Id, item.GetCount(), toSlot)
+#define _CritDropItem                # (cr, item)cr.MoveItem(item.Id, item.GetCount(), 0xFF)
+#define _CritDropItemCount           # (cr, item, count)cr.MoveItem(item.Id, count, 0xFF)
+#define _CritChangeHand                                                                                            \
+    # (cr) do { Item@ item = cr.GetItem(0, SLOT_HAND1); if(valid(item))                                            \
+                    _CritMoveItem(cr, item, SLOT_HAND2); else { @item = cr.GetItem(0, SLOT_HAND2); if(valid(item)) \
+                                                                    _CritMoveItem(cr, item, SLOT_HAND1); } } while(false)
+#define _IncItem                     # (item, count)item.SetCount(item.GetCount() + (count))
+#define _SubItem                                                            \
+    # (item, count) do { if(item.GetCount() > (count))                      \
+                             item.SetCount(item.GetCount() - (count)); else \
+                             DeleteItem(item); } while(false)
+#define _CritCanDropItemsOnDead      # (cr) (not _CritHasMode(cr, MODE_NO_STEAL) && not _CritHasMode(cr, MODE_NO_DROP) && not _CritHasMode(cr, MODE_NO_LOOT))
+#define _ItemIsBroken                # (item) (item.IsDeteriorable() && FLAG(item.BrokenFlags, BI_BROKEN))
+
+// Parameters
+// Perks, Traits
+#define _CritHasPerk                 # (cr, perk)(cr.Perk[perk] > 0)
+#define _CritGetPerk                 # (cr, perk)(cr.Perk[perk])
+#define _CritSetPerk                 # (cr, perk)cr.PerkBase[perk] = 1
+#define _CritUnsetPerk               # (cr, perk)cr.PerkBase[perk] = 0
+
+#define _CritHasMode                 # (cr, mode)(cr.Mode[mode] > 0)
+#define _CritSetMode                 # (cr, mode)cr.ModeBase[mode] = 1
+#define _CritUnsetMode               # (cr, mode)cr.ModeBase[mode] = 0
+
+#define _CritHasTrait                # (cr, trait)(cr.Trait[trait] > 0)
+
+// Injure body
+#define _CritInjure(cr, damage)    InjureCritter(cr, damage, DAMAGE_NORMAL)
+#define _CritHasInjureBody           # (cr, injure)(cr.Damage[injure] > 0)
+#define _CritDamaged                 # (cr, injure)(cr.Damage[injure] > 0)
+#define _CritInjureBody              # (cr, injure)cr.DamageBase[injure] = 1
+#define _CritUninjureBody            # (cr, injure)cr.DamageBase[injure] = 0
+#define _CritIsInjured               # (cr) (cr.Damage[DAMAGE_EYE] > 0 || cr.Damage[DAMAGE_RIGHT_ARM] > 0 || cr.Damage[DAMAGE_LEFT_ARM] > 0 || cr.Damage[DAMAGE_RIGHT_LEG] > 0 || cr.Damage[DAMAGE_LEFT_LEG] > 0)
+// Hp
+#define _CritChangeHp                                                                                     \
+    # (cr, hp) do { cr.StatBase[ST_CURRENT_HP] += (hp); if(cr.Stat[ST_CURRENT_HP] < 1)                    \
+                        cr.StatBase[ST_CURRENT_HP] = 1; if(cr.Stat[ST_CURRENT_HP] > cr.Stat[ST_MAX_LIFE]) \
+                        cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE]; } while(false)
+#define _CritNeedFirstAid            # (cr) (cr.Stat[ST_CURRENT_HP] < cr.Stat[ST_MAX_LIFE])
+#define _CritNeedDoctor              # (cr) (_CritHasInjureBody(cr, DAMAGE_EYE) || _CritHasInjureBody(cr, DAMAGE_RIGHT_ARM) || _CritHasInjureBody(cr, DAMAGE_LEFT_ARM) || _CritHasInjureBody(cr, DAMAGE_RIGHT_LEG) || _CritHasInjureBody(cr, DAMAGE_LEFT_LEG))
+// Key id
+#define _CritFingersDoorId           # (critterId) (0x80000000 | (critterId))
+#define _CritEyesDoorId              # (critterId) (0x40000000 | (critterId))
+// Skills
+#define _CritIsTagSkill              # (cr, skillNum)(cr.TagSkill[TAG_SKILL1] == int(skillNum) || cr.TagSkill[TAG_SKILL2] == int(skillNum) || cr.TagSkill[TAG_SKILL3] == int(skillNum) || cr.TagSkill[TAG_SKILL4] == int(skillNum))
+// Gender
+#define _CritIsMale                  # (cr) (cr.Stat[ST_GENDER] == GENDER_MALE)
+#define _CritIsFemale                # (cr) (cr.Stat[ST_GENDER] == GENDER_FEMALE)
+#define _CritIsIt                    # (cr) (cr.Stat[ST_GENDER] == GENDER_IT)
+
+// Sneaking
+#define _IsSneaking                  # (cr)   (cr.Mode[MODE_HIDE] != 0)
+#define _EnableSneak                 # (cr)  cr.ModeBase[MODE_HIDE] = 1
+#define _DisableSneak                # (cr) cr.ModeBase[MODE_HIDE] = 0
+
+// Dice throw macros
+#define _D6                          # (chance)       ((chance) <= uint(Random(1, 6)))
+#define _D10                         # (chance)      ((chance) <= uint(Random(1, 10)))
+#define _D20                         # (chance)      ((chance) <= uint(Random(1, 20)))
+#define _D100                        # (chance)     ((chance) <= uint(Random(1, 100)))
+#define _D300                        # (chance)     ((chance) <= uint(Random(1, 300)))
+#define _D1000                       # (chance)    ((chance) <= uint(Random(1, 1000)))
+
+// Changing directions
+#define _TurnRight                   # (dir, times)(((dir) + (times)) % 6)
+#define _TurnLeft                    # (dir, times)(((dir) - (times)) % 6)
+#define _TurnAround                  # (dir) (_TurnRight((dir), 3))
+
+// Npc planes
+#define _NpcEraseFirstPlane          # (npc) npc.ErasePlane(-1, false)
+#define _NpcEraseAllPlanes           # (npc) npc.ErasePlane(-1, true)
+#define _NpcEraseFirstPlaneWalk      # (npc) npc.ErasePlane(AI_PLANE_WALK, false)
+#define _NpcEraseAllPlanesWalk       # (npc) npc.ErasePlane(AI_PLANE_WALK, true)
+#define _NpcEraseFirstPlaneAttack    # (npc) npc.ErasePlane(AI_PLANE_ATTACK, false)
+#define _NpcEraseAllPlanesAttack     # (npc) npc.ErasePlane(AI_PLANE_ATTACK, true)
+#define _NpcEraseFirstPlanePick      # (npc) npc.ErasePlane(AI_PLANE_PICK, false)
+#define _NpcEraseAllPlanesPick       # (npc) npc.ErasePlane(AI_PLANE_PICK, true)
+
+
+// Returns true if it is a player with ACCESS_CLIENT to block staff from influencing
+// the world. Returns true for all players in debug mode for easier testing player
+// features when authenticated.
+//
+#ifdef __DEBUG__
+# define _IsRealPlayer               # (cr) (cr.IsPlayer())
+#endif
+#ifndef __DEBUG__
+# define _IsRealPlayer               # (cr) (cr.IsPlayer() && cr.GetAccess() == ACCESS_CLIENT)
+#endif
+
+// Online/offline status (NPCs are always online)
+//
+#define _IsOffline                   # (cr)    (cr.GetSocket() == -1)
+#define _IsOnline                    # (cr)     (!_IsOffline(cr))
+
+// Ending turn in TB. A better API for TB mode is needed.
+//
+#define _EndTurn                     # (cr) do { if(cr.GetMap().IsTurnBased() && cr.Param[ST_CURRENT_AP] > 0) { cr.ParamBase[ST_CURRENT_AP] = 0; cr.ParamBase[ST_MOVE_AP] = 0; } } while(false)
+
+// Desneak (real players only)
+#define _Desneak                     # (cr) if(cr.Mode[MODE_HIDE] != 0 && _IsRealPlayer(cr)) { cr.ModeBase[MODE_HIDE] = 0; }
+
+
+// ************** Items ***************************//
+// Weapon
+#define _WeaponIsHtHAttack           # (proto, use)(_WeaponSkill(proto, use) == SK_UNARMED || _WeaponSkill(proto, use) == SK_MELEE_WEAPONS)
+#define _WeaponIsGunAttack           # (proto, use)(_WeaponSkill(proto, use) == SK_SMALL_GUNS || _WeaponSkill(proto, use) == SK_BIG_GUNS || _WeaponSkill(proto, use) == SK_ENERGY_WEAPONS)
+#define _WeaponIsRangedAttack        # (proto, use)(_WeaponIsGunAttack(weap, use) || _WeaponSkill(proto, use) == SK_THROWING)
+#define _WeaponIsPrimaryAviable      # (proto) ((proto.Weapon_ActiveUses & 1) != 0)
+#define _WeaponIsSecondaryAviable    # (proto) ((proto.Weapon_ActiveUses & 2) != 0)
+#define _WeaponIsThirdAviable        # (proto) ((proto.Weapon_ActiveUses & 4) != 0)
+#define _WeaponSkill                 # (proto, use)((use) == 0 ? proto.Weapon_Skill_0  : ((use) == 1 ? proto.Weapon_Skill_1  : ((use) == 2 ? proto.Weapon_Skill_2  : 0)))
+#define _WeaponDmgType               # (proto, use)((use) == 0 ? proto.Weapon_DmgType_0 : ((use) == 1 ? proto.Weapon_DmgType_1 : ((use) == 2 ? proto.Weapon_DmgType_2 : 0)))
+#define _WeaponAnim2                 # (proto, use)((use) == 0 ? proto.Weapon_Anim2_0  : ((use) == 1 ? proto.Weapon_Anim2_1  : ((use) == 2 ? proto.Weapon_Anim2_2  : 0)))
+#define _WeaponDmgMin                # (proto, use)((use) == 0 ? proto.Weapon_DmgMin_0 : ((use) == 1 ? proto.Weapon_DmgMin_1 : ((use) == 2 ? proto.Weapon_DmgMin_2 : 0)))
+#define _WeaponDmgMax                # (proto, use)((use) == 0 ? proto.Weapon_DmgMax_0 : ((use) == 1 ? proto.Weapon_DmgMax_1 : ((use) == 2 ? proto.Weapon_DmgMax_2 : 0)))
+#define _WeaponMaxDist               # (proto, use)((use) == 0 ? proto.Weapon_MaxDist_0 : ((use) == 1 ? proto.Weapon_MaxDist_1 : ((use) == 2 ? proto.Weapon_MaxDist_2 : 0)))
+#define _WeaponEffect                # (proto, use)((use) == 0 ? proto.Weapon_Effect_0 : ((use) == 1 ? proto.Weapon_Effect_1 : ((use) == 2 ? proto.Weapon_Effect_2 : 0)))
+#define _WeaponRound                 # (proto, use)((use) == 0 ? proto.Weapon_Round_0  : ((use) == 1 ? proto.Weapon_Round_1  : ((use) == 2 ? proto.Weapon_Round_2  : 0)))
+#define _WeaponApCost                # (proto, use)((use) == 0 ? proto.Weapon_ApCost_0 : ((use) == 1 ? proto.Weapon_ApCost_1 : ((use) == 2 ? proto.Weapon_ApCost_2 : 0)))
+#define _WeaponSoundId               # (proto, use)((use) == 0 ? proto.Weapon_SoundId_0 : ((use) == 1 ? proto.Weapon_SoundId_1 : ((use) == 2 ? proto.Weapon_SoundId_2 : 0)))
+#define _WeaponRemove                # (proto, use)((use) == 0 ? proto.Weapon_Remove_0 : ((use) == 1 ? proto.Weapon_Remove_1 : ((use) == 2 ? proto.Weapon_Remove_2 : false)))
+#define _WeaponAim                   # (proto, use)((use) == 0 ? proto.Weapon_Aim_0    : ((use) == 1 ? proto.Weapon_Aim_1    : ((use) == 2 ? proto.Weapon_Aim_2    : false)))
+#define _WeaponModeUse               # (weaponMode) ((weaponMode) & 0xF)
+#define _WeaponModeAim               # (weaponMode) (((weaponMode) >> 4) & 0xF)
+#define _WeaponModeMake              # (use, aim)((((aim) << 4) | ((use) & 0xF)) & 0xFF)
+
+// Locker
+#define _LockerIsOpen                # (door)   ((door.LockerCondition & LOCKER_ISOPEN) != 0)
+#define _LockerIsClose               # (door)  (not _LockerIsOpen(door))
+
+// Car
+#define _CarIsBioEngine              # (car) ((car.Val0 & CAR_BIO_ENGINE) != 0)
+#define _CarSetBioEngine             # (car) car.Val0 |= CAR_BIO_ENGINE
+#define _CarIsNoLockpick             # (car) ((car.Val0 & CAR_NO_LOCKPICK) != 0)
+#define _CarSetNoLockpick            # (car) car.Val0 |= CAR_NO_LOCKPICK
+#define _CarGetFuelTank              # (car) (car.Proto.Car_TankVolume)
+#define _CarGetMaxDeterioration      # (car) (car.Proto.Car_MaxDeterioration)
+
+// Light
+#define _LightIsIgnoreDir            # (lightItem, dir)(FLAG(lightItem.LightFlags, 1 << CLAMP(dir, 0, 5)))
+#define _LightSetIgnoreDir           # (lightItem, dir)(SETFLAG(lightItem.LightFlags, 1 << CLAMP(dir, 0, 5)))
+#define _LightUnsetIgnoreDir         # (lightItem)   (UNSETFLAG(lightItem.LightFlags, 1 << CLAMP(dir, 0, 5)))
+#define _LightIsGlobal               # (lightItem)         (FLAG(lightItem.LightFlags, 1 << 6))
+#define _LightSetGlobal              # (lightItem)        (SETFLAG(lightItem.LightFlags, 1 << 6))
+#define _LightUnsetGlobal            # (lightItem)      (UNSETFLAG(lightItem.LightFlags, 1 << 6))
+#define _LightIsInverse              # (lightItem)        (FLAG(lightItem.LightFlags, 1 << 7))
+#define _LightSetInverse             # (lightItem)       (SETFLAG(lightItem.LightFlags, 1 << 7))
+#define _LightUnsetInverse           # (lightItem)     (UNSETFLAG(lightItem.LightFlags, 1 << 7))
+
+// Misc
+#define _IsArmedBomb                 # (pid) (pid == PID_ACTIVE_DYNAMITE || pid == PID_ACTIVE_PLASTIC_EXPLOSIVE)
+
+
+// ************************************************//
+
+// ext modes
+
+#define _CritHasExtMode              # (cr, mode)((cr.Mode[MODE_EXT] & (mode)) != 0)
+#define _CritSetExtMode              # (cr, mode)(cr.ModeBase[MODE_EXT] = cr.Mode[MODE_EXT] | (mode))
+#define _CritUnsetExtMode            # (cr, mode)(cr.ModeBase[MODE_EXT] = (cr.Mode[MODE_EXT] | (mode)) ^ (mode))
+
+#define _IsTrader                    # (cr)     (_CritHasExtMode(cr, MODE_EXT_TRADER))
+#define _IsFollower                  # (cr)   (_CritHasExtMode(cr, MODE_EXT_FOLLOWER))
+#define _IsSlave                     # (cr)      (_CritHasExtMode(cr, MODE_EXT_FOLLOWER) && cr.Stat[ST_DIALOG_ID] == DIALOG_follower_slave)
+#define _IsGuard                     # (cr)      (_CritHasExtMode(cr, MODE_EXT_GUARD))
+
+#define _IsTrueNpc                   # (cr)    (cr.IsNpc() && !_IsFollower(cr))
+#endif // __MACROS__

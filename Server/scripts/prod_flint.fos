@@ -1,0 +1,30 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_flint.fos
+//
+
+#include "_macros.fos"
+
+#define STR_GATHERED    (3043)
+#include "production_h.fos"
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_Gather");
+    AMOUNT(item) = __FlintBatch;
+}
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter&, Item@)
+    {
+        DeleteItem(item);
+    }
+};
+GatherCallback Callback;
+
+bool _Gather(Item& item, Critter& crit, int skill)
+{
+    return Gather(item, crit, null, PID_FLINT, __FlintBatch, STR_GATHERED, 0, @Callback);
+}

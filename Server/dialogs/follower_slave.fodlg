@@ -1,0 +1,115 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _script follower@d_IsOwner 1 1 D _script dialog@d_NPCHpVeryLow 0  R _script follower@r_SetFaction 0  #
+10 1020 D _script follower@d_IsOwner 1 1 D _script dialog@d_NPCHpLow 0  R _script follower@r_SetFaction 0  #
+2 1030 D _script follower@d_IsOwner 1 1 R _script follower@r_SetFaction 0  #
+12 1040 @
+2 2000 None 0 #
+6 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_IsNotMode 1 3 R _script follower@r_FollowMode 1 2 #
+5 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_CanLeadMoreFollowers 0  D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+5 2030 R _script npc_common@r_MoveRandom 1 0 #
+13 2040 D _script follower@d_IsGuarding 1 1 R _script follower@r_Rotate 1 0 #
+65506 2050 #
+13 2060 D _script town@d_CanBecomeMilitia 0  R _script town_militia@r_BecomeMilitia 0  #
+13 2070 D _script follower@d_CanMine 0  D _script follower@d_IsNotMode 1 3 R _script follower@r_FollowMode 1 3 #
+8 2080 #
+7 2090 #
+0 2100 @
+7 3000 None 0 #
+3 3010 #
+4 3020 #
+15 3030 D _item p PID_JET > 0 R _item p PID_JET - 1 R _script follower@r_IncreaseLoyality 2 5 10 #
+13 3040 R _script follower@r_PutDownWeapon 0  #
+13 3050 R _script follower@r_ArmBestWeapon 0  #
+2 3060 @
+3 4000 None 0 #
+2 4010 R _script follower@r_Distance 1 0 #
+2 4020 R _script follower@r_Distance 1 1 #
+2 4030 R _script follower@r_Distance 1 2 @
+4 5000 None 0 #
+2 5010 R _script follower@r_AttackPolicy 1 0 #
+2 5020 R _script follower@r_AttackPolicy 1 7 #
+2 5030 R _script follower@r_AttackPolicy 1 6 #
+2 5040 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 2 #
+2 5050 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 3 #
+2 5060 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 4 #
+2 5070 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 5 @
+5 6000 None 0 #
+0 6010 @
+6 7000 None 0 #
+0 7010 @
+8 8000 follower@dlg_GiveFollower 0 #
+2 8010 @
+10 9000 None 0 #
+2 9010 @
+11 10000 None 0 #
+2 10010 @
+12 11000 None 0 @
+13 12000 None 0 #
+0 12010 @
+14 13000 None 0 @
+15 14000 None 0 &
+
+[engl]
+{100}{}{Slave}
+{200}{}{You see a slave.}
+{210}{}{You see a slave.}
+{1000}{}{Predialogue installations}
+{1010}{}{heavy wounded}
+{1020}{}{Wounded}
+{1030}{}{ }
+{1040}{}{Not owner, floats}
+{2000}{}{Yes, master?@@Yes, my master?@@What can I do for you, master?}
+{2010}{}{You stay here. If you run away, I will find and kill you.}
+{2020}{}{Okay, we are ready now. Follow me.}
+{2030}{}{I need you to move, you're blocking my way.}
+{2040}{}{I need you to rotate for me.}
+{2050}{}{Here, I've got something for you.}
+{2060}{}{I want you to join the local militia to protect this town.}
+{2070}{}{I want you to dig me some resources.}
+{2080}{}{I want someone else to command you.}
+{2090}{}{[more options]}
+{2100}{}{Nevermind.}
+{3000}{}{Yes, master?@@Yes, my master?@@What can I do for you, master?}
+{3010}{}{We need to talk about our distance.}
+{3020}{}{I want to talk about your attack style.}
+{3030}{}{Have some Jet. [Give 1 Jet]}
+{3040}{}{Put down your weapon.}
+{3050}{}{Arm yourself.}
+{3060}{}{[back to first page]}
+{4000}{}{Sure, how far do you want me to be, master?}
+{4010}{}{Stay close to me.}
+{4020}{}{Stick at medium range.}
+{4030}{}{Keep your distance, try and snipe them.}
+{5000}{}{What is it you want me to do, master?}
+{5010}{}{Protect me. Attack anyone who attacks us, unless it's our friend.}
+{5020}{}{Protect me and my land. We don't take kindly to strangers lurking 'bout.}
+{5030}{}{Stay out of combat. Flee if hostile contacts are spotted.}
+{5040}{}{Kill any NPC you see. (disabled)}
+{5050}{}{Kill everyone, but don't touch me or my friends. (disabled)}
+{5060}{}{Attack enemies of our faction. (disabled)}
+{5070}{}{Attack anyone who isn't a member of our faction (disabled)}
+{6000}{}{Yes, master.@@Yes, my master.}
+{6010}{}{Alright.}
+{7000}{}{I'll wait here, master.@@Yes, I'll wait here, master.}
+{7010}{}{[Exit]}
+{8000}{}{Who will be my new master?}
+{8010}{}{No one, I changed my mind.}
+{9000}{}{Master, I don't feel very good.@@I don't feel very good, master.}
+{9010}{}{You're gonna make it, don't be a whimp!}
+{10000}{}{I don't think that I will make it any longer, master. I am bleeding very much.@@Master, I don't think that I will make it any longer...@@I am bleeding very much, master. I need help.}
+{10010}{}{You're gonna make it, don't be a whimp!}
+{11000}{}{I'm not allowed to speak to you.@@We'll be keeping an eye on you.}
+{12000}{}{Ok, master, I'll do that if you wish me to!}
+{12010}{}{If you don't do your job properly, I'll kill you.}
+{13000}{}{Ok, master, I'll do that if you wish me to!}
+{14000}{}{*Inhales Jet*}
+{100000001}{}{I feel stronger, master!@@I feel stronger!}
+

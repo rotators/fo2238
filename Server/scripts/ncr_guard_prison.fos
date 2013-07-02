@@ -1,0 +1,262 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// ncr_guard_prison.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+#include "messages_h.fos"
+#include "guard_h.fos"
+#include "patrolling.fos"
+
+#define DIALOG_ID                            (1064)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+#define STR_CONVICT_PLAYER_BORDER_WARNING    (1)
+#define STR_CONVICT_PLAYER_BORDER_ATTACK     (2)
+#define STR_GUARD_WARNING1                   (3)
+#define STR_GUARD_WARNING2                   (4)
+#define STR_DOOR_TAUNT                       (5)
+
+#define SHOWCRITTER1_PRISON_GUARD            (1)
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+    guard.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_OnSkill");
+    // Taken from encounter guard script:
+    guard.ShowCritterDist1 = SHOWCRITTER1_PRISON_GUARD;
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER_1, "_OnShowCritter1Prison");
+    guard.SetEvent(CRITTER_EVENT_HIDE_CRITTER_1, "_OnHideCritter1Prison");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 36);
+        GuardPerks(guard);
+    }
+}
+
+bool IsPatrolling(Critter& guard)
+{
+    // NCR PRISON GUARDS
+    return(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL1 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL2 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL3 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL4 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL5 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL6 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL7 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL8 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL9 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL10 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL11 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL12 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL13);
+}
+
+void _Idle(Critter& guard)
+{
+    GuardOnIdle(guard);
+
+    // NCR PRISON GUARDS START
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL1)
+    {
+        _GetNextNode(guard, 14)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL2)
+    {
+        _GetNextNode(guard, 15)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL3)
+    {
+        _GetNextNode(guard, 16)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL4)
+    {
+        _GetNextNode(guard, 17)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL5)
+    {
+        _GetNextNode(guard, 18)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL6)
+    {
+        _GetNextNode(guard, 19)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL7)
+    {
+        _GetRandomNode(guard, 20)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL8)
+    {
+        _GetNextNode(guard, 21)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL9)
+    {
+        _GetNextNode(guard, 22)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL10)
+    {
+        _GetNextNode(guard, 23)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL11)
+    {
+        _GetNextNode(guard, 24)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL12)
+    {
+        _GetNextNode(guard, 25)
+    }
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_PATROL13)
+    {
+        _GetNextNode(guard, 26)
+    }
+    // NCR PRISON GUARDS END
+
+    if(IsPatrolling(guard))
+    {
+        AddWalkPlane(guard, 0, node.GetX(), node.GetY(), node.GetDir(), false, 0);
+        AddWaitPlan(guard, node.GetWait());
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+
+    // This switch needs refactoring.
+    // Add variable for beeing a convict and replace faction check.
+    switch(num)
+    {
+    case MSG_CONVICT_PLAYER_BORDER_WARNING:
+        // Exchange with "Player is a convict"-Variable
+        if(GetGroupIndex(player) != FACTION_BOS)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_CONVICT_PLAYER_BORDER_WARNING));
+        break;
+
+    case MSG_CONVICT_PLAYER_BORDER_ATTACK:
+        // Exchange with "Player is a convict"-Variable
+        if(GetGroupIndex(player) != FACTION_BOS)
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+        npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_CONVICT_PLAYER_BORDER_ATTACK));
+        break;
+
+    case MSG_PRISON_GUARD_ATTACK:
+        player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+        break;
+
+    case MSG_PRISON_DOOR:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_NCR_GUARD_PRISON_DOORGUARD)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_DOOR_TAUNT));
+        break;
+    }
+}
+
+void _OnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    GuardOnSomeoneSteal(guard, target, thief, success, item, count);
+}
+
+void _OnSkill(Critter& npc, Critter& target, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(target.IsPlayer() && skill == SK_LOCKPICK && valid(onItem))
+    {
+        // Use skill on doors == guards attack
+        if(onItem.GetProtoId() == 3466 || onItem.GetProtoId() == 3467)
+        {
+            // target.Say( SAY_NORM, "Oh shi-" );
+            target.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);               // ?
+            AddAttackPlane(npc, 0, target);
+        }
+    }
+}
+
+void _OnShowCritter(Critter& guard, Critter& player)
+{
+    GuardOnShowCritter(guard, player);
+}
+
+// =============================================
+// Check player distance stuff
+// =============================================
+void _OnShowCritter1Prison(Critter& guard, Critter& target)
+{
+    if(guard.Cond == COND_DEAD || guard.Timeout[TO_BATTLE] > 0)
+        return;
+
+    if(GetGroupIndex(target) != FACTION_NCR || GetGroupIndex(target) != FACTION_NCR_RANGERS)
+    {
+        // guard.Say(SAY_NORM,"i see you");
+        if(_IsTrueNpc(target) || _GroupIndex(guard) == _GroupIndex(target))
+            return;
+        if(IsCurrentEnemy(guard, target.Id))
+            return;
+        GameVar@ var = GetUnicumVar(UVAR_proximity_check, guard.Id, target.Id);
+        if(var.GetValue() == 1)
+        {
+            AddAttackPlane(guard, 0, target);
+            var = 2;
+            return;
+        }
+        if(target.IsKnockout() || target.IsDead())
+            return;
+        if(guard.Timeout[TO_BATTLE] == 0)
+        {
+            if(IsHumanoid(guard) && guard.Timeout[TO_BATTLE] == 0)
+                guard.Say(SAY_NORM_ON_HEAD, "Keep your distance!");
+            // guard.Say(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GUARD_WARNING1));
+
+            guard.SetDir(GetDirection(guard.HexX, guard.HexY, target.HexX, target.HexY));
+        }
+
+        // can occur even without a warning:
+        int[] data = { target.Id, guard.Id };
+        CreateTimeEvent(AFTER(REAL_SECOND(Random(7, 9))), "e_CheckDistance", data, false);
+    }
+}
+
+void _OnHideCritter1Prison(Critter& guard, Critter& target)
+{
+    if(guard.Cond == COND_DEAD || guard.Timeout[TO_BATTLE] > 0)
+        return;
+
+    if(_IsTrueNpc(target) || _GroupIndex(guard) == _GroupIndex(target))
+        return;
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    if(IsHumanoid(guard) && guard.Timeout[TO_BATTLE] == 0)
+        guard.Say(SAY_NORM_ON_HEAD, "Stay back!");
+    // guard.Say(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GUARD_WARNING2));
+
+    GameVar@ var = GetUnicumVar(UVAR_proximity_check, guard.Id, target.Id);
+    var = 1;
+}
+
+uint e_CheckDistance(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)) || (player.GetMapId() != guard.GetMapId()))
+        return 0;
+
+    if(GetCrittersDistantion(player, guard) > SHOWCRITTER1_PRISON_GUARD)
+        return 0;
+
+    if(player.Stat[ST_CURRENT_HP] > 0)
+        AddAttackPlane(guard, 0, player);
+    return 0;
+}

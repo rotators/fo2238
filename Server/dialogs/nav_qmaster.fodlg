@@ -1,0 +1,108 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 3 D _var n name_mem_player_npc = 0 #
+20 1020 D _var n name_mem_player_npc = 1 D _var p factions_player_faction = 3 #
+2 1030 D _script dialog@d_IsDisguised 0  D _var p name_mem_player_npc = 0 #
+20 1040 D _script dialog@d_IsDisguised 0  D _var p name_mem_player_npc = 1 @
+2 2000 None 0 #
+3 2010 D _script dialog@d_IsNotDisguised 0  #
+0 2020 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 #
+5 4020 #
+5 4030 #
+5 4040 #
+5 4050 #
+5 4060 #
+0 4070 @
+5 5000 None 0 #
+6 5010 #
+6 5020 #
+6 5030 #
+6 5040 #
+6 5050 #
+6 5060 @
+6 6000 None 0 #
+7 6010 #
+7 6020 #
+7 6030 #
+7 6040 #
+7 6050 @
+7 7000 None 0 #
+8 7010 #
+8 7020 #
+8 7030 #
+8 7040 #
+8 7050 @
+8 8000 None 0 #
+9 8010 R _var n name_mem_player_npc = 1 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+0 11010 #
+65507 11020 @
+20 12000 None 0 &
+
+[engl]
+{100}{}{Enclave Quartermaster}
+{200}{}{You see the Quartermaster.}
+{210}{}{You see someone wearing power armor of an unusual design. There is an insignia on the breastplate that you are unfamiliar with.}
+{1000}{}{Predialogue installations}
+{1010}{}{unknown}
+{1020}{}{known}
+{1030}{}{disguised unknown}
+{1040}{}{disguised known}
+{2000}{}{Hello, recruit. I'm the Quartermaster here. You want something or are you gonna stand there like a wall?}
+{2010}{}{I don't have a uniform yet.}
+{2020}{}{[Leave]}
+{3000}{}{Are you new here? I don't recall seeing you before.}
+{3010}{}{Yes, I'm new here.}
+{4000}{}{Well, you'll need your standard issue, then. Which one do you need?}
+{4010}{}{Advanced Power Armor MkII}
+{4020}{}{Advanced Power Armor}
+{4030}{}{Power Armor}
+{4040}{}{Combat Armor MkII}
+{4050}{}{Combat Armor}
+{4060}{}{Tesla Armor}
+{4070}{}{I just remembered I already got one a few days ago, it must've been somewhere in my locker. Bye!}
+{5000}{}{All right. Which color do you need?}
+{5010}{}{The standard one.}
+{5020}{}{Blue will do.}
+{5030}{}{Red. To inspire dread, hehe.}
+{5040}{}{Desert camo. I don't want to be spotted right away.}
+{5050}{}{Pink - wanna be unique.}
+{5060}{}{Black. For the black ops, man.}
+{6000}{}{OK, the next one... Size?}
+{6010}{}{S, so I can fit everywhere.}
+{6020}{}{M, the medium one.}
+{6030}{}{L, for the large guy like myself.}
+{6040}{}{XL for these muscles!}
+{6050}{}{XXL... I wanna drop shadow wherever I go.}
+{7000}{}{Very well. Any other custom detail? Maybe something on the right shoulder?}
+{7010}{}{Yeah, put a tribal tattoo on it.}
+{7020}{}{The standard vault insignia would be nice.}
+{7030}{}{Slaver code, please.}
+{7040}{}{A picture of a flower.}
+{7050}{}{No, it's good as it is.}
+{8000}{}{OK, now come closer...}
+{8010}{}{[You approach the quartermaster]}
+{9000}{}{You imbecile!!! Who the fuck do you think you are?!?! The fucking president???}
+{9010}{}{But I...}
+{10000}{}{Shut the fuck up! You think we issue armor to each MO-RON walking around here? Did you ever think about the supply shortages we're facing every fucking day in this shithole?}
+{10010}{}{Well...}
+{11000}{}{I don't wanna hear a fucking word from your maggot-jaw! Get your sorry ass outta here before I call Sarge and tell him to shoot mo-rons like you on sight!}
+{11010}{}{[Leave]}
+{11020}{}{Fuck you, you're the mo-ron! And in a few seconds a dead one!}
+{12000}{}{You still around, maggot?@@Get lost, mo-ron!@@Stupid recruits, always ruining my day...@@Can't you read, imbecile? This is no toilet!@@Get the fuck outta here!}
+

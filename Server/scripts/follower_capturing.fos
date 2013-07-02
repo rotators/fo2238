@@ -1,0 +1,104 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// follower_capturing.fos
+//
+
+#include "_macros.fos"
+#include "follower_h.fos"
+#include "utils_h.fos"
+#include "_basetypes.fos"
+
+#include "npc_common_h.fos"
+#include "follower_common_h.fos"
+
+import int GetMercId(int pid, uint type) from "mercs";
+
+bool CaptureRoll(Critter& capturer)
+{
+    // return ((capturer.Skill[SK_OUTDOORSMAN] - (Random(0, 20 - (2 * capturer.Stat[ST_LUCK])))) > 60);
+    return Random(0, 199 - capturer.Stat[ST_LUCK] * 10) < capturer.Skill[SK_OUTDOORSMAN];
+}
+
+bool CaptureBrahmin(Critter& capturer, Critter& target, bool& out sub)
+{
+    if(target.CrType == CRTYPE_BRAHMIN && !_CritHasExtMode(target, MODE_EXT_NO_SLAVE) && !target.IsDead())
+    {
+        if(IsEncounterMap(capturer.GetMap()))
+        {
+            if(!CanHaveMoreFollowers(capturer, FOLLOWER_TYPE_BRAHMIN))
+            {
+                capturer.Say(SAY_NETMSG, "You can't tame the brahmin, because your party is already full.");
+                AttackCritter(target, capturer);
+                sub = false;
+                return true;
+            }
+
+            if(CaptureRoll(capturer))
+            {
+                MakeFollower(target, FOLLOWER_TYPE_BRAHMIN, "follower@critter_init", FOLLOWER_DLG_BRAHMIN, capturer, true);
+                ClearEnemyStack(target);
+                ClearFollowersEnemy(capturer, target);
+                target.FollowerVarBase[FV_MERCID] = 9; // 9 = one of the brahmin
+                target.FollowerVarBase[FV_TYPE] = FOLLOWER_TYPE_BRAHMIN;
+                capturer.Say(SAY_NETMSG, "You've tamed the wild brahmin.");
+                sub = true;
+                return true;
+            }
+            else
+            {
+                capturer.Say(SAY_NETMSG, "You've failed to tame the wild brahmin.");
+                AttackCritter(target, capturer);
+                sub = false;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// below: change false to check for valid slave material, i.e. cannibal, tribal, homeless etc.
+// this should probably be consulted with the slave database, if such exist (Ghosthack?)
+
+// true - remove rope, false - not
+bool CaptureSlave(Critter& capturer, Critter& target, bool& out sub)
+{
+    if(!CanHaveMoreFollowers(capturer, FOLLOWER_TYPE_SLAVE))
+    {
+        capturer.Say(SAY_NETMSG, "You can't enslave this person, your party is already full.");
+        sub = false;
+        return true;
+    }
+
+    if(_IsFollower(target) && target.FollowerVar[FV_MASTER] == int(capturer.Id))
+    {
+        capturer.Say(SAY_NETMSG, "This is already your slave.");
+        sub = false;
+        return true;
+    }
+
+    if(CanHaveMoreFollowers(capturer, FOLLOWER_TYPE_SLAVE) && IsEncounterMap(capturer.GetMap()) && target.IsKnockout() && !target.IsDead() &&
+       capturer.Karma[KARMA_SLAVER] > 0 && !_CritHasExtMode(target, MODE_EXT_NO_SLAVE))
+    {
+        int id = GetMercId(target.GetProtoId(), FOLLOWER_TYPE_SLAVE);
+        if(id != -1)
+        {
+            MakeFollower(target, FOLLOWER_TYPE_SLAVE, "follower@_Slave", FOLLOWER_DLG_SLAVE, capturer, true);
+            ClearEnemyStack(target);
+            ClearFollowersEnemy(capturer, target);
+            target.SetBagRefreshTime(uint(-1));     // they won't refresh their invs while you have them (not sure if they did anyway, better be safe)
+            target.FollowerVarBase[FV_MERCID] = id;
+            capturer.Say(SAY_NETMSG, (target.Stat[ST_GENDER] == GENDER_MALE ? "He" : "She") + " will make a fine slave.");
+            sub = true;
+            return true;
+        }
+        else
+        {
+            capturer.Say(SAY_NETMSG, "You've failed to enslave this person.");
+            sub = false;
+            return true; // to avoid "that does nothing" message
+        }
+    }
+    return false;
+}

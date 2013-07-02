@@ -1,0 +1,549 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// car.fos
+//
+
+/**
+ * \~english @defgroup CarGroup Car
+ * Module with a bunch of functions related to cars.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+#include "_macros.fos"
+#include "MsgStr.h"
+#include "backend_h.fos"
+#include "debug_h.fos"
+#include "entire.fos"
+
+import void AddScore(Critter@ cr, uint score, uint points) from "utils";
+import bool IsKeyAviable(Critter& cr, uint lockerId) from "lockers";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+#define STR_CAR_INFO    (2100)
+
+
+uint GetCarCost(uint16 protoCar)   // Export
+{
+    uint       count = WorldItemCount(protoCar);
+    ProtoItem@ car = GetProtoItem(protoCar);
+    if(valid(car))
+        return car.Cost + car.Cost * count;
+    return 0;
+}
+
+void CarMessage(Critter@ cr, Item@ car, int msg)   // Export
+{
+    if(IsCaravan(car))
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, msg + 20);
+    else if(IsBarge(car))
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, msg + 40);
+    else
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, msg);
+}
+
+
+bool UseItemOnCar(Critter& cr, Item& car, Item& item)   // Export
+{
+    if(car.GetProtoId() == PID_WRECKED_CAR)
+        return false;
+    uint16 pid = item.GetProtoId();
+    int    octane = 100;
+    if(IsCaravan(car) || IsBarge(car))
+    {
+        if(pid != PID_WATERBAG && pid != PID_BOTTLE_FULL)
+            return false;
+
+        if(car.Charge == _CarGetFuelTank(car))
+        {
+            CarMessage(cr, car, STR_CAR_FUEL_TANK_FULL);
+        }
+        else
+        {
+            uint16 newpid = 0;
+            if(pid == PID_WATERBAG)
+                newpid = PID_WATERBAG_EMPTY;
+            else if(pid == PID_BOTTLE_FULL)
+                newpid = PID_BOTTLE_EMPTY;
+            // else
+
+            cr.DeleteItem(pid, 1);
+            if(newpid > 0)
+                cr.AddItem(newpid, 1);
+
+            car.Charge = MIN(_CarGetFuelTank(car), car.Charge + 100);
+            CarMessage(cr, car, STR_CAR_FUEL_TANK_FILL);
+        }
+    }
+    else
+    {
+        if(IsFiretruck(car))
+        {
+            // ninjafix in case of runtime editing
+            if(car.Val2 > car.Val1)
+                car.Val2 = car.Val1;
+
+            uint16 pid = item.Proto.ProtoId;
+
+            if(pid == PID_WATERBAG || pid == PID_BOTTLE_FULL)
+            {
+                uint16 newpid = 0;
+                if(pid == PID_WATERBAG)
+                    newpid = PID_WATERBAG_EMPTY;
+                else if(pid == PID_BOTTLE_FULL)
+                    newpid = PID_BOTTLE_EMPTY;
+                // else
+
+                int max = CLAMP(int(_CritCountItem(cr, pid)), 0, car.Val1  - car.Val2);
+                if(max > 0)
+                {
+                    _CritDeleteItem(cr, pid, max);
+                    _CritAddItem(cr, newpid, max);
+                    car.Val2 += max;
+                    DSay(cr, "added " + max + " water");
+                }
+                else
+                    DSay(cr, "no space for water");
+
+                return(true);
+            }
+            else if(pid == PID_WATERBAG_EMPTY || pid == PID_BOTTLE_EMPTY)
+            {
+                uint16 newpid = 0;
+                if(pid == PID_WATERBAG_EMPTY)
+                    newpid = PID_WATERBAG;
+                else if(pid == PID_BOTTLE_EMPTY)
+                    newpid = PID_BOTTLE_FULL;
+
+                int max = CLAMP(car.Val2, 0, int(_CritCountItem(cr, pid)));
+                if(max > 0)
+                {
+                    _CritDeleteItem(cr, pid, max);
+                    _CritAddItem(cr, newpid, max);
+                    car.Val2 -= max;
+                    DSay(cr, "removed " + max + " water");
+                }
+                else
+                    DSay(cr, "no water");
+
+                return(true);
+            }
+        }
+
+        bool isEnergo = (pid == PID_SMALL_ENERGY_CELL || pid == PID_MICRO_FUSION_CELL);
+        bool isBio = (pid == PID_BEER || pid == PID_BOOZE || pid == PID_GAMMA_GULP_BEER || pid == PID_ROT_GUT || pid == PID_ROENTGEN_RUM);
+        bool isTool = (item.Proto.Misc_ToolSkillNum == SK_REPAIR);
+
+        if(!isEnergo && !isBio && !isTool)
+            return false;
+
+        if(isTool)
+        {
+            RepairCar(cr, car, item);
+            return true;
+        }
+
+        if(isBio && !_CarIsBioEngine(car))
+        {
+            CarMessage(cr, car, STR_CAR_FUEL_NOT_SUPPORTED);
+            return true;
+        }
+
+        octane = 100;
+        if(pid == PID_BEER || pid == PID_GAMMA_GULP_BEER)
+            octane = 30;
+        else if(pid == PID_SMALL_ENERGY_CELL)
+            octane = 100;
+        else if(pid == PID_MICRO_FUSION_CELL)
+            octane = 150;
+        else
+            octane = 70; // Bio energy
+
+        int need = _CarGetFuelTank(car) - car.Charge;
+        int count = item.GetCount() * octane;
+        if(count > need)
+            count = need;
+
+        if(count <= 0)
+        {
+            CarMessage(cr, car, STR_CAR_FUEL_TANK_FULL);
+        }
+        else
+        {
+            int newCount = item.GetCount() - count / octane;
+            if(newCount <= 0)
+                DeleteItem(item);
+            else
+                item.SetCount(newCount);
+            car.Charge += count;
+            CarMessage(cr, car, STR_CAR_FUEL_TANK_FILL);
+        }
+    }
+    return true;
+}
+
+int GetFumbleThreshold(Item& car)
+{
+    switch(car.GetProtoId())
+    {
+    case PID_BUGGY:
+        return 50;
+    case PID_COCKROACH:
+        return 50;
+    case PID_SCOUT:
+        return 60;
+    case PID_HUMMER:
+        return 75;
+    case PID_HIGHWAYMAN:
+        return 100;
+    default:
+        return 75;
+    }
+    return 75;
+}
+
+void RemoveTool(Item& tool)
+{
+    int newCount = tool.GetCount() - 1;
+    if(newCount <= 0)
+        DeleteItem(tool);
+    else
+        tool.SetCount(newCount);
+}
+
+void RepairCar(Critter& cr, Item& car, Item& tool)
+{
+    if(car.Deterioration == 0)
+    {
+        CarMessage(cr, car, STR_CAR_REPAIR_NO_NEED);
+        return;
+    }
+    else if(cr.IsPlayer() && cr.Timeout[TO_SK_REPAIR] > 0)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+        return;
+    }
+
+    int repair = cr.Skill[SK_REPAIR] > 0 ? cr.Skill[SK_REPAIR] : 1;
+    repair += tool.Proto.Misc_ToolSkillBonus;
+
+    if(cr.Skill[SK_REPAIR] < GetFumbleThreshold(car))
+    {
+        bool SomethingHappened = false;
+        if(Random(0, 1) == 0)
+        {
+            cr.Say(SAY_NETMSG, "Due to your lack of repair skill, you've managed to botch the tools before getting any substantial repair work done. Damn!");
+            RemoveTool(tool);
+            SomethingHappened = true;
+        }
+
+        if((cr.Stat[ST_LUCK] < 3) && (Random(0, 1) == 0))
+        {
+            cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), 0, cr.HexX, cr.HexY);
+            cr.Say(SAY_NETMSG, "You slip and fall during the repair. Ouch!");
+            InjureCritter(cr, Random(5, 15), DAMAGE_NORMAL, cr.Dir, 0);
+            SomethingHappened = true;
+        }
+        if(SomethingHappened)
+            return;
+    }
+
+    int fix = car.Deterioration - (repair) * 100;
+    if(fix < 0)
+        fix = 0;
+    car.Deterioration = fix;
+    CarMessage(cr, car, STR_CAR_REPAIR_SUCCESS);
+    _SetTimeout(cr, TO_SK_REPAIR, REPAIR_TIMEOUT(cr));
+    cr.StatBase[ST_EXPERIENCE] += 10;
+    LogExperience(cr, 10, SK_REPAIR, "Car", car.GetProtoId());
+    cr.PlaySound("CARREPAR.ACM", true);
+
+    int breakBonus = cr.Skill[SK_REPAIR] > 0 ? cr.Skill[SK_REPAIR] / 10 : 0;
+    breakBonus += cr.Stat[ST_LUCK] / 2;
+    if(Random(0, 1 + breakBonus) == 0)
+    {
+        CarMessage(cr, car, STR_CAR_REPAIR_TOOLS_BROKE);
+        RemoveTool(tool);
+    }
+}
+
+bool UseSkillOnCar(Critter& cr, Item& car, int skill)   // Export
+{
+    uint16 pid = car.GetProtoId();
+    if(pid == PID_WRECKED_CAR && skill != SKILL_PICK_ON_GROUND)
+        return false;
+
+    if((pid == PID_VERTIBIRD || pid == PID_TARDIS) && _IsRealPlayer(cr))
+    {
+        cr.Say(SAY_NETMSG, "Sadly you have no idea how this vehicle works.");
+        return false;
+    }
+
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        if(pid == PID_WRECKED_CAR)
+        {
+            if(car.Val1 == 0)
+            {
+                car.Val2 = cr.Id;
+                bool found = false;
+                if((cr.ItemsWeight() >= uint(cr.Stat[ST_CARRY_WEIGHT])))
+                {
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+                    return true;
+                }
+                if((cr.Stat[ST_LUCK] > 5) && (Random(0, 19 - cr.Stat[ST_LUCK]) == 0))
+                {
+                    cr.AddItem(PID_CAR_FUEL_CELL_CONTROLLER, 1);
+                    cr.Say(SAY_NETMSG, "You found a working fuel cell controller.");
+                    found = true;
+                }
+                if(Random(0, 11 - cr.Stat[ST_LUCK]) == 0)
+                {
+                    cr.AddItem(PID_PUMP_PARTS, Random(1, 3));
+                    if(Random(0, 1) == 1)
+                        cr.AddItem(PID_ELECTRONIC_PARTS, 1);
+                    cr.Say(SAY_NETMSG, "You found some junk.");
+                    found = true;
+                }
+
+                if(!found)
+                    cr.Say(SAY_NETMSG, "You find nothing of use.");
+
+                car.Val1 = 1;
+            }
+            else
+            {
+                if(uint(car.Val2) == cr.Id)
+                    cr.Say(SAY_NETMSG, "You've already searched the car.");
+                else
+                    cr.Say(SAY_NETMSG, "Someone else has already searched the car.");
+
+                car.Val1++;
+                if(car.Val1 > 19)
+                    cr.Say(SAY_NETMSG, "Hello there, are you a bot?");
+            }
+            return true;
+        }
+        else
+        {
+            if(!IsKeyAviable(cr, car.LockerId))
+            {
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY);
+            }
+            else if(valid(cr.GetMap()))                // Critter on local map
+            {
+                if(cr.Timeout[TO_TRANSFER] > 0)
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_TRANSFER_WAIT);
+                else if(cr.Timeout[TO_BATTLE] > 0)
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT);
+                else if(car.Charge == 0 && _CarGetFuelTank(car) > 0)
+                    CarMessage(cr, car, STR_CAR_FUEL_EMPTY);
+                else
+                    DriveToGlobal(cr, car, true);
+            }
+        }
+    }
+    else if(skill == SK_SCIENCE)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_CAR_INFO, "$number" + car.LockerId +
+                  "$fuel" + (car.Charge / 100) + "$fuel_tank" + (_CarGetFuelTank(car) / 100) +
+                  "$wear" + (car.Deterioration * 100 / _CarGetMaxDeterioration(car)));
+        if(IsFiretruck(car))
+        {
+            cr.Say(SAY_NETMSG, "Water: " + car.Val2 + "/" + car.Val1);
+        }
+    }
+    else if(skill == SK_REPAIR)
+    {
+        Item@ tool = _CritGetItemHand(cr);
+        if(valid(tool) && (tool.Proto.Misc_ToolSkillNum == SK_REPAIR))
+            RepairCar(cr, car, tool);
+        else
+            CarMessage(cr, car, STR_CAR_REPAIR_NO_TOOLS);
+    }
+    else if(skill == SK_LOCKPICK)
+    {
+        if(cr.Timeout[TO_SK_LOCKPICK] > 0)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+            return true;
+        }
+
+        if(_CarIsNoLockpick(car))
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL);
+            return true;
+        }
+
+        int   base = cr.Skill[SK_LOCKPICK] - 200;
+        uint8 mode = 0;
+        Item@ tool = _CritGetItemHand(cr);
+        if(valid(tool) && tool.Proto.Misc_ToolSkillNum == SK_LOCKPICK)
+        {
+            base += tool.Proto.Misc_ToolSkillBonus;
+            if(Random(0, 30) == 0)
+                cr.DeleteItem(tool.GetProtoId(), 1);                            // hmm.
+        }
+
+        int minChance = cr.Stat[ST_LUCK] / 2;
+        base = CLAMP(base, minChance, 95);
+        if(base >= Random(1, 100) && car.LockerId != 1)
+        {
+            cr.StatBase[ST_EXPERIENCE] += (250 - base);
+            LogExperience(cr, 250 - base, SK_LOCKPICK, "Car", car.GetProtoId());
+            car.LockerId = 0;
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_SUCCESS);
+            AddScore(cr, SCORE_CRACKER, 1);
+        }
+        else
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL);
+        }
+        _SetTimeout(cr, TO_SK_LOCKPICK, LOCKPICK_TIMEOUT(cr));
+    }
+    else
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    }
+    return true;
+}
+
+void DriveToGlobal(Critter& cr, Item& car, bool requestGroup)
+{
+    // become owner
+    GameVar@ ownervar = GetLocalVar(LIVAR_car_owner_id, car.Id);
+    ownervar = cr.Id;
+    // Place car and bags to inventory
+    for(uint i = 0; i < 3; i++)
+    {
+        Item@ bag = car.GetChild(i);
+        if(valid(bag))
+        {
+            SETFLAG(bag.Flags, ITEM_HIDDEN);
+            MoveItem(bag, 0, cr);
+        }
+    }
+    SETFLAG(car.Flags, ITEM_HIDDEN);
+    MoveItem(car, 0, cr);
+    cr.TransitToGlobal(true);
+
+    if(IsCaravan(car))
+        cr.PlaySound("mabromaa.acm", true);
+    else if(IsBarge(car))
+        cr.PlaySound("gustwind.acm", true);
+    else if(IsTardis(car))
+        cr.PlaySound("stardis1.acm", true);
+    else
+        cr.PlaySound("carstart.acm", true);
+}
+
+bool IsCaravan(Item@ car)
+{
+    return car.Proto.ProtoId == PID_CARAVAN_WHITE || car.Proto.ProtoId == PID_CARAVAN_ORANGE;
+}
+
+bool IsBarge(Item@ car)
+{
+    return car.Proto.ProtoId == PID_BARGE;
+}
+
+bool IsFiretruck(Item@ car)
+{
+    return car.Proto.ProtoId == PID_FIRETRUCK;
+}
+
+bool IsTardis(Item@ car)
+{
+    return car.Proto.ProtoId == PID_TARDIS;
+}
+
+bool IsCarTrunk(Item@ item)
+{
+    return item.GetProtoId() == PID_HUMMER_BAG ||
+           item.GetProtoId() == PID_BUGGY_BAG ||
+           item.GetProtoId() == PID_SCOUT_BAG ||
+           item.GetProtoId() == PID_HIGHWAYMAN_BAG ||
+           item.GetProtoId() == PID_VERTIBIRD_BAG ||
+           item.GetProtoId() == PID_CARAVAN_WHITE_BAG ||
+           item.GetProtoId() == PID_CARAVAN_ORANGE_BAG ||
+           item.GetProtoId() == PID_POLICE_BAG ||
+           item.GetProtoId() == PID_MOTORCYCLE_BAG ||
+           item.GetProtoId() == PID_FIRETRUCK_BAG ||
+           item.GetProtoId() == PID_TRUCK_BAG ||
+           item.GetProtoId() == PID_BARGE_BAG;
+}
+
+int GetCarTrunkComplexity(Item@ item)
+{
+    if(item.GetProtoId() == PID_BUGGY_BAG)
+        return item.LockerComplexity;
+    if(item.GetProtoId() == PID_SCOUT_BAG)
+        return item.LockerComplexity + 20;
+    if(item.GetProtoId() == PID_HUMMER_BAG)
+        return item.LockerComplexity + 40;
+    if(item.GetProtoId() == PID_HIGHWAYMAN_BAG)
+        return item.LockerComplexity + 60;
+    if(item.GetProtoId() == PID_VERTIBIRD_BAG)
+        return item.LockerComplexity + 100;
+    if(item.GetProtoId() == PID_POLICE_BAG)
+        return item.LockerComplexity + 60;
+    if(item.GetProtoId() == PID_MOTORCYCLE_BAG)
+        return item.LockerComplexity + 20;
+    if(item.GetProtoId() == PID_FIRETRUCK_BAG)
+        return item.LockerComplexity + 50;
+    if(item.GetProtoId() == PID_TRUCK_BAG)
+        return item.LockerComplexity + 20;
+    if(item.GetProtoId() == PID_BARGE_BAG)
+        return item.LockerComplexity + 10;
+
+    // no bonus for caravan trunks
+    if(item.GetProtoId() == PID_CARAVAN_WHITE_BAG)
+        return item.LockerComplexity;
+    if(item.GetProtoId() == PID_CARAVAN_ORANGE_BAG)
+        return item.LockerComplexity;
+
+    Log("ERR: Improper item - not a car trunk");
+    return 0;
+}
+
+void MoveCars(Map& from, Map& to)   // export
+{
+    array<Item@> cars;
+    uint         num = from.GetItems(PID_HUMMER, cars);
+    num += from.GetItems(PID_BUGGY, cars);
+    num += from.GetItems(PID_SCOUT, cars);
+    num += from.GetItems(PID_VERTIBIRD, cars);
+    num += from.GetItems(PID_HIGHWAYMAN, cars);
+    num += from.GetItems(PID_RUSTY_HIGHWAYMAN, cars);
+    num += from.GetItems(PID_CARAVAN_WHITE, cars);
+    num += from.GetItems(PID_CARAVAN_ORANGE, cars);
+    num += from.GetItems(PID_COCKROACH, cars);
+    num += from.GetItems(PID_POLICE_CAR, cars);
+    num += from.GetItems(PID_MOTORCYCLE, cars);
+    num += from.GetItems(PID_FIRETRUCK, cars);
+    num += from.GetItems(PID_TRUCK, cars);
+    num += from.GetItems(PID_BARGE, cars);
+    num += from.GetItems(PID_BOAT, cars);
+    num += from.GetItems(PID_TARDIS, cars);
+    WLog("cars", num + " cars found");
+    for(uint i = 0; i < num; i++)
+    {
+        uint16 x = 0;
+        uint16 y = 0;
+        if(GetEntireFreeHex(to, ENTIRE_CAR, x, y))
+        {
+            // Workaround, because bag is not easily movable.
+            Critter@ dummy = from.AddNpc(1, 0, 0, 0, null, null, "");
+            DriveToGlobal(dummy, cars[i], false);
+            dummy.TransitToMap(to.Id, 0);
+            DeleteNpc(dummy);
+        }
+        else
+            DLog("No free car entire found");
+    }
+}
+
+/*@}*/

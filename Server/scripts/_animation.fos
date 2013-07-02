@@ -1,0 +1,408 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _animation.fos
+//
+
+#ifndef __ANIMATION__
+#define __ANIMATION__
+
+// Animation macro
+#define _CritAnimate                                                         # (cr, anim)cr.Animate(0, anim, null, true, true)
+#define _CritAnimateUse                                                      # (cr) cr.Animate(0, ANIM2_USE, null, true, true)
+#define _CritAnimatePickup                                                   # (cr) cr.Animate(0, ANIM2_PICKUP, null, true, true)
+#define _CritAnimatePunch                                                    # (cr) cr.Animate(0, ANIM2_PUNCH_RIGHT, null, true, true)
+#define _CritAnimateKick                                                     # (cr) cr.Animate(0, ANIM2_KICK_HI, null, true, true)
+#define _CritAnimateThrow                                                    # (cr) cr.Animate(0, ANIM2_THROW, null, true, true)
+#define _CritAnimateThrust                                                   # (cr) cr.Animate(0, ANIM2_THRUST_1H, null, true, true)
+#define _CritAnimateSwing                                                    # (cr) cr.Animate(0, ANIM2_SWING_1H, null, true, true)
+#define _CritAnimateThrowWeap                                                # (cr) cr.Animate(0, ANIM2_THROW, null, true, true)
+#define _CritAnimateSingle                                                   # (cr) cr.Animate(0, ANIM2_SINGLE, null, true, true)
+#define _CritAnimateBurst                                                    # (cr) cr.Animate(0, ANIM2_BURST, null, true, true)
+#define _CritAnimateFidget                                                   # (cr) cr.Animate(0, ANIM2_FIDGET, null, true, true)
+
+// Anim types
+#define ANIM_TYPE_FALLOUT                                                    (0)
+#define ANIM_TYPE_3D                                                         (1)
+#define ANIM_TYPE_TACTICS                                                    (2)
+#define ANIM_TYPE_ARCANUM                                                    (3)
+#define ANIM_TYPE_EXPERIMENTS                                                (4)
+
+// Anim loading flags
+#define ANIM_FLAG_FIRST_FRAME                                                (0x01)
+#define ANIM_FLAG_LAST_FRAME                                                 (0x02)
+
+// Anim1 Weapon / Flags
+// 0 1 2 3 4 5 6 7
+// |<  Weapon   >|
+// Manage constants
+#define ANIM1_WEAPON_MASK                                                    (0x000000FF)
+#define ANIM1_FLAGS_MASK                                                     (0xFFFFFF00)
+#define ANIM1_FLAGS_BITS                                                     (8)
+// Flags
+// Tactics specific
+// 8        9       10 1 2 3 4 5 6 7 8 9 20  1 2  3 4 5 6  7 8 9 30  1
+// | Crouch | Prone                       | Skin  | | Hair | | Armor |
+#define ANIM1_CROUCH                                                         (0x0100)
+#define ANIM1_PRONE                                                          (0x0200)
+#define ANIM1_COLOR_SKIN                                                     # (index)   (((index) & 0xF) << 20)     // 0..15, colors see in colorOffsets animation.fos
+#define ANIM1_COLOR_HAIR                                                     # (index)   (((index) & 0xF) << 24)     // 0..15, colors see in colorOffsets animation.fos
+#define ANIM1_COLOR_ARMOR                                                    # (index)   (((index) & 0xF) << 28)     // 0..15, colors see in colorOffsets animation.fos
+// Arcanum specific
+// 8 9 10 1 2        3 4 5 6     7     8 9 20 1 2 3 4 5 6 7 8 9 30 1
+//          | Shield       |< Palette >|
+#define ANIM1_SHIELD                                                         (0x1000)
+#define ANIM1_PALETTE                                                        # (num)         (((num) & 3) << (ANIM1_FLAGS_BITS + 8))
+// Weapons
+#define ANIM1_UNARMED                                                        (1) // Hardcoded
+#define ANIM1_KNIFE                                                          (4)
+#define ANIM1_CLUB                                                           (5)
+#define ANIM1_HAMMER                                                         (6)
+#define ANIM1_SPEAR                                                          (7)
+#define ANIM1_PISTOL                                                         (8)
+#define ANIM1_SMG                                                            (9)
+#define ANIM1_SHOOTGUN                                                       (10)
+#define ANIM1_HEAVY_RIFLE                                                    (11)
+#define ANIM1_MINIGUN                                                        (12)
+#define ANIM1_ROCKET_LAUNCHER                                                (13)
+#define ANIM1_FLAMER                                                         (14)
+#define ANIM1_RIFLE                                                          (15)
+#define ANIM1_SWORD                                                          (16)
+#define ANIM1_LONG_SWORD                                                     (17)
+#define ANIM1_AXE                                                            (18)
+#define ANIM1_BOW                                                            (19)
+
+// Anim2 Actions
+// Manage constants
+#define ANIM2_DEAD_BEGIN                                                     (100)
+#define ANIM2_DEAD_END                                                       (120)
+// Animations
+#define ANIM2_IDLE                                                           (1) // Hardcoded
+#define ANIM2_IDLE_STUNNED                                                   (2)
+#define ANIM2_WALK                                                           (3) // Hardcoded
+#define ANIM2_LIMP                                                           (4) // Hardcoded
+#define ANIM2_RUN                                                            (5) // Hardcoded
+#define ANIM2_PANIC_RUN                                                      (6) // Hardcoded
+#define ANIM2_SNEAK_WALK                                                     (7) // Hardcoded
+#define ANIM2_SNEAK_RUN                                                      (8) // Hardcoded
+#define ANIM2_STAND                                                          (10)
+#define ANIM2_CROUCH                                                         (11)
+#define ANIM2_PRONE                                                          (12)
+#define ANIM2_SHOW_WEAPON                                                    (20)
+#define ANIM2_HIDE_WEAPON                                                    (21)
+#define ANIM2_PREPARE_WEAPON                                                 (22)
+#define ANIM2_TURNOFF_WEAPON                                                 (23)
+#define ANIM2_FIDGET                                                         (24)
+#define ANIM2_CLIMBING                                                       (26)
+#define ANIM2_PICKUP                                                         (27)
+#define ANIM2_USE                                                            (28)
+#define ANIM2_SWITCH_ITEMS                                                   (29)
+#define ANIM2_RELOAD                                                         (30)
+#define ANIM2_REPAIR                                                         (31)
+#define ANIM2_LOOT                                                           (35)
+#define ANIM2_STEAL                                                          (36)
+#define ANIM2_PUSH                                                           (37)
+#define ANIM2_BEGIN_COMBAT                                                   (40)
+#define ANIM2_IDLE_COMBAT                                                    (41)
+#define ANIM2_END_COMBAT                                                     (42)
+#define ANIM2_PUNCH_RIGHT                                                    (43)
+#define ANIM2_PUNCH_LEFT                                                     (44)
+#define ANIM2_PUNCH_COMBO                                                    (45)
+#define ANIM2_KICK_HI                                                        (46)
+#define ANIM2_KICK_LO                                                        (47)
+#define ANIM2_KICK_COMBO                                                     (48)
+#define ANIM2_THRUST_1H                                                      (49)
+#define ANIM2_THRUST_2H                                                      (50)
+#define ANIM2_SWING_1H                                                       (51)
+#define ANIM2_SWING_2H                                                       (52)
+#define ANIM2_THROW                                                          (53)
+#define ANIM2_SINGLE                                                         (54)
+#define ANIM2_BURST                                                          (55)
+#define ANIM2_SWEEP                                                          (56)
+#define ANIM2_BUTT                                                           (57)
+#define ANIM2_FLAME                                                          (58)
+#define ANIM2_NO_RECOIL                                                      (59)
+#define ANIM2_DODGE_FRONT                                                    (70)
+#define ANIM2_DODGE_BACK                                                     (71)
+#define ANIM2_DAMAGE_FRONT                                                   (72)
+#define ANIM2_DAMAGE_BACK                                                    (73)
+#define ANIM2_DAMAGE_MUL_FRONT                                               (74)
+#define ANIM2_DAMAGE_MUL_BACK                                                (75)
+#define ANIM2_WALK_DAMAGE_FRONT                                              (76)
+#define ANIM2_WALK_DAMAGE_BACK                                               (77)
+#define ANIM2_LIMP_DAMAGE_FRONT                                              (78)
+#define ANIM2_LIMP_DAMAGE_BACK                                               (79)
+#define ANIM2_RUN_DAMAGE_FRONT                                               (80)
+#define ANIM2_RUN_DAMAGE_BACK                                                (81)
+#define ANIM2_KNOCK_FRONT                                                    (82)
+#define ANIM2_KNOCK_BACK                                                     (83)
+#define ANIM2_LAYDOWN_FRONT                                                  (84)
+#define ANIM2_LAYDOWN_BACK                                                   (85)
+#define ANIM2_IDLE_PRONE_FRONT                                               (86) // Hardcoded
+#define ANIM2_IDLE_PRONE_BACK                                                (87) // Hardcoded
+#define ANIM2_STANDUP_FRONT                                                  (88)
+#define ANIM2_STANDUP_BACK                                                   (89)
+#define ANIM2_DAMAGE_PRONE_FRONT                                             (90)
+#define ANIM2_DAMAGE_PRONE_BACK                                              (91)
+#define ANIM2_DAMAGE_MUL_PRONE_FRONT                                         (92)
+#define ANIM2_DAMAGE_MUL_PRONE_BACK                                          (93)
+#define ANIM2_TWITCH_PRONE_FRONT                                             (94)
+#define ANIM2_TWITCH_PRONE_BACK                                              (95)
+#define ANIM2_DEAD_PRONE_FRONT                                               (100)
+#define ANIM2_DEAD_PRONE_BACK                                                (101)
+#define ANIM2_DEAD_FRONT                                                     (102) // Hardcoded
+#define ANIM2_DEAD_BACK                                                      (103) // Hardcoded
+#define ANIM2_DEAD_BLOODY_SINGLE                                             (110)
+#define ANIM2_DEAD_BLOODY_BURST                                              (111)
+#define ANIM2_DEAD_BURST                                                     (112)
+#define ANIM2_DEAD_PULSE                                                     (113)
+#define ANIM2_DEAD_PULSE_DUST                                                (114)
+#define ANIM2_DEAD_LASER                                                     (115)
+#define ANIM2_DEAD_FUSED                                                     (116)
+#define ANIM2_DEAD_EXPLODE                                                   (117)
+#define ANIM2_DEAD_BURN                                                      (118)
+#define ANIM2_DEAD_BURN_RUN                                                  (119)
+
+// Knockout animations, f - face up/down
+#define KNOCKOUT_ANIM2_DEFAULT                                               # (f)  ((f) ? ANIM2_KNOCK_FRONT : ANIM2_KNOCK_BACK), ((f) ? ANIM2_IDLE_PRONE_FRONT : ANIM2_IDLE_PRONE_BACK), ((f) ? ANIM2_STANDUP_FRONT : ANIM2_STANDUP_BACK)
+#define KNOCKOUT_ANIM2_STUNNED                                               # (f)  ((f) ? ANIM2_DAMAGE_FRONT : ANIM2_DAMAGE_BACK), ANIM2_IDLE_STUNNED, ANIM2_IDLE_STUNNED
+
+// 3d models layers, maximum 30
+// Used in CritterCl::Anim3dLayer
+#define ANIM3D_LAYER_SKIN                                                    (0)
+#define ANIM3D_LAYER_RHANDLE                                                 (1)
+#define ANIM3D_LAYER_LHANDLE                                                 (2)
+#define ANIM3D_LAYER_BODY                                                    (3)
+#define ANIM3D_LAYER_FEET                                                    (4)
+#define ANIM3D_LAYER_HANDS                                                   (5)
+#define ANIM3D_LAYER_HEAD                                                    (6)
+#define ANIM3D_LAYER_HAIR                                                    (7)
+#define ANIM3D_LAYER_EYE                                                     (8)
+#define ANIM3D_LAYER_MUSTACHE                                                (9)
+#define ANIM3D_LAYER_PONYTAIL                                                (10)
+#define ANIM3D_LAYER_BEARD                                                   (11)
+#define ANIM3D_LAYER_SHOULDER                                                (12)
+#define ANIM3D_LAYER_ARMLET                                                  (13)
+#define ANIM3D_LAYER_BACK                                                    (14)
+#define ANIM3D_LAYER_BACKPACK                                                (15)
+#define ANIM3D_LAYERS_COUNT                                                  (30)
+
+// 3d models attributes
+// ANIM3D_LAYER_SKIN      (0)  Skin
+#define ATTRIBUTE_Skin_Human_White01                                         (0)
+#define ATTRIBUTE_Skin_Human_White02                                         (1)
+#define ATTRIBUTE_Skin_Human_White03                                         (2)
+#define ATTRIBUTE_Skin_Human_Black01                                         (3)
+#define ATTRIBUTE_Skin_Human_Black02                                         (4)
+#define ATTRIBUTE_Skin_Human_Black03                                         (5)
+#define ATTRIBUTE_Skin_Human_Brown01                                         (6)
+#define ATTRIBUTE_Skin_Human_Brown02                                         (7)
+#define ATTRIBUTE_Skin_Human_Brown03                                         (8)
+#define ATTRIBUTE_Skin_Human_Red01                                           (9)
+#define ATTRIBUTE_Skin_Human_Red02                                           (10)
+#define ATTRIBUTE_Skin_Human_Red03                                           (11)
+#define ATTRIBUTE_Skin_Human_Tan01                                           (12)
+#define ATTRIBUTE_Skin_Human_Tan02                                           (13)
+#define ATTRIBUTE_Skin_Human_Tan03                                           (14)
+#define ATTRIBUTE_Skin_Human_Yellow01                                        (15)
+#define ATTRIBUTE_Skin_Human_Yellow02                                        (16)
+#define ATTRIBUTE_Skin_Human_Yellow03                                        (17)
+#define ATTRIBUTE_Skin_Centipede_Brown                                       (0)
+#define ATTRIBUTE_Skin_Centipede_Red                                         (1)
+#define ATTRIBUTE_Skin_Centipede_Green                                       (2)
+#define ATTRIBUTE_Skin_Centipede_Blue                                        (3)
+// ANIM3D_LAYER_RHANDLE   (1)  Right Handle
+// ANIM3D_LAYER_LHANDLE   (2)  Left Handle
+#define ATTRIBUTE_Handle_Weapon_15mmArtemisRailGun                           (1)
+#define ATTRIBUTE_Handle_Weapon_223Autoloader                                (2)
+#define ATTRIBUTE_Handle_Weapon_223Autoloader_GunSilencer                    (3)
+#define ATTRIBUTE_Handle_Weapon_223Minigun                                   (4)
+#define ATTRIBUTE_Handle_Weapon_22Autoloader                                 (5)
+#define ATTRIBUTE_Handle_Weapon_22Autoloader_GunSilencer                     (6)
+#define ATTRIBUTE_Handle_Weapon_2mmGaussPistol                               (7)
+#define ATTRIBUTE_Handle_Weapon_44Revolver                                   (8)
+#define ATTRIBUTE_Handle_Weapon_45Autoloader                                 (9)
+#define ATTRIBUTE_Handle_Weapon_45Autoloader_GunExtClip                      (10)
+#define ATTRIBUTE_Handle_Weapon_45Autoloader_GunExtClip_GunSilencer          (11)
+#define ATTRIBUTE_Handle_Weapon_45Autoloader_GunSilencer                     (12)
+#define ATTRIBUTE_Handle_Weapon_45Revolver                                   (13)
+#define ATTRIBUTE_Handle_Weapon_50Revolver                                   (14)
+#define ATTRIBUTE_Handle_Weapon_9mmAutoloader                                (15)
+#define ATTRIBUTE_Handle_Weapon_9mmAutoloader_GunExtClip                     (16)
+#define ATTRIBUTE_Handle_Weapon_9mmAutoloader_GunExtClip_GunSilencer         (17)
+#define ATTRIBUTE_Handle_Weapon_9mmAutoloader_GunSilencer                    (18)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol                             (19)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol_GunExtClip                  (20)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol_GunExtClip_GunSilencer      (21)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol_GunExtClip_GunSuppressor    (22)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol_GunSilencer                 (23)
+#define ATTRIBUTE_Handle_Weapon_9mmMachinePistol_GunSuppressor               (24)
+#define ATTRIBUTE_Handle_Weapon_APOLLOLaserPistol                            (25)
+#define ATTRIBUTE_Handle_Weapon_ArcWelder                                    (26)
+#define ATTRIBUTE_Handle_Weapon_Baseballbat                                  (27)
+#define ATTRIBUTE_Handle_Weapon_CattleProd                                   (28)
+#define ATTRIBUTE_Handle_Weapon_CombatKnife                                  (29)
+#define ATTRIBUTE_Handle_Weapon_Crowbar                                      (30)
+#define ATTRIBUTE_Handle_Weapon_Dynamite                                     (31)
+#define ATTRIBUTE_Handle_Weapon_Flamethrower                                 (32)
+#define ATTRIBUTE_Handle_Weapon_Flamethrower_FlamerExtTank                   (33)
+#define ATTRIBUTE_Handle_Weapon_Flare                                        (34)
+#define ATTRIBUTE_Handle_Weapon_GrenadeBio                                   (35)
+#define ATTRIBUTE_Handle_Weapon_GrenadeEMP                                   (36)
+#define ATTRIBUTE_Handle_Weapon_GrenadeFrag                                  (37)
+#define ATTRIBUTE_Handle_Weapon_GrenadePlasma                                (38)
+#define ATTRIBUTE_Handle_Weapon_HandFlamer                                   (39)
+#define ATTRIBUTE_Handle_Weapon_Hatchet                                      (40)
+#define ATTRIBUTE_Handle_Weapon_HeavyWrench                                  (41)
+#define ATTRIBUTE_Handle_Weapon_KitchenKnife                                 (42)
+#define ATTRIBUTE_Handle_Weapon_LaserArraygun                                (43)
+#define ATTRIBUTE_Handle_Weapon_LaserPistol                                  (44)
+#define ATTRIBUTE_Handle_Weapon_LaserSaw                                     (45)
+#define ATTRIBUTE_Handle_Weapon_LeadPipe                                     (46)
+#define ATTRIBUTE_Handle_Weapon_Machete                                      (47)
+#define ATTRIBUTE_Handle_Weapon_NightStick                                   (48)
+#define ATTRIBUTE_Handle_Weapon_Rock                                         (49)
+#define ATTRIBUTE_Handle_Weapon_SawedOffShotgun                              (50)
+#define ATTRIBUTE_Handle_Weapon_Shiv                                         (51)
+#define ATTRIBUTE_Handle_Weapon_Switchblade                                  (52)
+#define ATTRIBUTE_Handle_Weapon_TableLeg                                     (53)
+#define ATTRIBUTE_Handle_Weapon_ThrowingKnife                                (54)
+#define ATTRIBUTE_Handle_Weapon_Spear                                        (55)
+#define ATTRIBUTE_Handle_Weapon_Sledgehammer                                 (56)
+#define ATTRIBUTE_Handle_Item_FirstAidKit                                    (100)
+#define ATTRIBUTE_Handle_Item_SecurityKit                                    (101)
+#define ATTRIBUTE_Handle_Item_Toolkit                                        (102)
+// ANIM3D_LAYER_BODY      (3)  Body
+#define ATTRIBUTE_Body_LeatherOutfit                                         (1)  // Disabled subsets - Chest, Legs, Shins, UpperArms, Waist, ForeArms
+#define ATTRIBUTE_Body_PowerArmor                                            (2)  // Disabled subsets - Chest, Legs, UpperArms, Waist
+#define ATTRIBUTE_Body_PrisonSuit                                            (3)  // Disabled subsets - Chest, Legs, Shins, UpperArms, Waist
+#define ATTRIBUTE_Body_VaultSuit                                             (4)  // Disabled subsets - Chest, Legs, Shins, UpperArms, Waist, ForeArms
+#define ATTRIBUTE_Body_CombatArmor                                           (5)  // Disabled subsets - Chest, Legs, Shins, UpperArms, Waist, ForeArms
+// ANIM3D_LAYER_FEET      (4)  Feet
+#define ATTRIBUTE_Feet_LeatherOutfit                                         (1)  // Disabled subsets - Feet
+#define ATTRIBUTE_Feet_PowerArmor                                            (2)  // Disabled subsets - Feet, Legs
+#define ATTRIBUTE_Feet_PrisonSuit                                            (3)  // Disabled subsets - Feet
+#define ATTRIBUTE_Feet_VaultSuit                                             (4)  // Disabled subsets - Feet
+#define ATTRIBUTE_Feet_CombatArmor                                           (5)  // Disabled subsets - Feet
+// ANIM3D_LAYER_HANDS     (5)  Hands
+#define ATTRIBUTE_Hands_LeatherOutfit                                        (1)  // Disabled subsets - Hands
+#define ATTRIBUTE_Hands_PowerArmor                                           (2)  // Disabled subsets - Hands, ForeArms
+#define ATTRIBUTE_Hands_LeatherOutfitGauntlet                                (3)  // Disabled subsets - Hands
+#define ATTRIBUTE_Hands_CombatArmor                                          (5)  // Disabled subsets - Hands
+#define ATTRIBUTE_Hands_PowerFist                                            (10) // Disabled subsets - Hands, ForeArms
+// ANIM3D_LAYER_HEAD      (6)  Head
+#define ATTRIBUTE_Head_ArmingCap                                             (1)  // Disabled layers - Hair, Ponytail
+#define ATTRIBUTE_Head_PowerArmor                                            (2)  // Disabled layers - Hair, Eye, Mustache, Ponytail, Beard
+#define ATTRIBUTE_Head_StrawHat                                              (3)  // Disabled layers - Hair
+#define ATTRIBUTE_Head_CombatArmor                                           (5)  // Disabled layers - Hair
+#define ATTRIBUTE_Head_Motorcycle_White                                      (10) // Disabled layers - Hair
+#define ATTRIBUTE_Head_Motorcycle_Black                                      (11)
+#define ATTRIBUTE_Head_Motorcycle_Red                                        (12)
+#define ATTRIBUTE_Head_Motorcycle_Green                                      (13)
+#define ATTRIBUTE_Head_Motorcycle_Blue                                       (14)
+#define ATTRIBUTE_Head_Motorcycle_Grey                                       (15)
+#define ATTRIBUTE_Head_Motorcycle_Yellow                                     (16)
+#define ATTRIBUTE_Head_Motorcycle_8Ball                                      (17)
+#define ATTRIBUTE_Head_Motorcycle_EasyRider                                  (18)
+#define ATTRIBUTE_Head_Motorcycle_EyeRed                                     (19)
+#define ATTRIBUTE_Head_Motorcycle_Flames                                     (20)
+#define ATTRIBUTE_Head_Motorcycle_Police                                     (21)
+#define ATTRIBUTE_Head_Motorcycle_ShotSmiley                                 (22)
+#define ATTRIBUTE_Head_Motorcycle_SkullFull                                  (23)
+#define ATTRIBUTE_Head_Motorcycle_Skull                                      (24)
+// ANIM3D_LAYER_HAIR      (7)  Hair
+#define ATTRIBUTE_Hair_Male_Afro                                             (10)
+#define ATTRIBUTE_Hair_Male_Bald                                             (20)
+#define ATTRIBUTE_Hair_Male_Bowl                                             (30)
+#define ATTRIBUTE_Hair_Male_Crown                                            (40)
+#define ATTRIBUTE_Hair_Male_Greaser                                          (50)
+#define ATTRIBUTE_Hair_Male_Long                                             (60)
+#define ATTRIBUTE_Hair_Male_Military                                         (70)
+#define ATTRIBUTE_Hair_Male_Mohawk                                           (80)
+#define ATTRIBUTE_Hair_Male_Ponytail                                         (90)
+#define ATTRIBUTE_Hair_Male_Shaggy                                           (100)
+#define ATTRIBUTE_Hair_Male_Short                                            (110)
+#define ATTRIBUTE_Hair_Male_Shoulder                                         (120)
+#define ATTRIBUTE_Hair_Female_Afro                                           (210)
+#define ATTRIBUTE_Hair_Female_Bald                                           (220)
+#define ATTRIBUTE_Hair_Female_Beehive                                        (230)
+#define ATTRIBUTE_Hair_Female_BettyPage                                      (240)
+#define ATTRIBUTE_Hair_Female_Bob                                            (250)
+#define ATTRIBUTE_Hair_Female_Bun                                            (260)
+#define ATTRIBUTE_Hair_Female_Chin                                           (270)
+#define ATTRIBUTE_Hair_Female_Flip                                           (280)
+#define ATTRIBUTE_Hair_Female_Frizzy                                         (290)
+#define ATTRIBUTE_Hair_Female_Long                                           (300)
+#define ATTRIBUTE_Hair_Female_Mohawk                                         (310)
+#define ATTRIBUTE_Hair_Female_Ponytail                                       (320)
+#define ATTRIBUTE_Hair_Female_Pulled                                         (330)
+#define ATTRIBUTE_Hair_Female_Short                                          (340)
+// ANIM3D_LAYER_EYE       (8)  Eye
+#define ATTRIBUTE_Eye_PatchLeft                                              (1)
+#define ATTRIBUTE_Eye_PatchRight                                             (2)
+#define ATTRIBUTE_Eye_Authorities                                            (3)
+#define ATTRIBUTE_Eye_Spectacles                                             (4)
+// ANIM3D_LAYER_MUSTACHE  (9)  Mustache
+#define ATTRIBUTE_Mustache_Male_Full                                         (10)
+#define ATTRIBUTE_Mustache_Male_FuManchu                                     (20)
+#define ATTRIBUTE_Mustache_Male_Goatee                                       (30)
+#define ATTRIBUTE_Mustache_Male_Guvner                                       (40)
+#define ATTRIBUTE_Mustache_Male_Handlebar                                    (50)
+#define ATTRIBUTE_Mustache_Male_Hermit                                       (60)
+#define ATTRIBUTE_Mustache_Male_MuttonChops                                  (70)
+#define ATTRIBUTE_Mustache_Male_Small                                        (80)
+#define ATTRIBUTE_Mustache_Male_Stubble                                      (90)
+#define ATTRIBUTE_Mustache_MadMax                                            (200)
+// ANIM3D_LAYER_PONYTAIL  (10)  Ponytail
+#define ATTRIBUTE_Ponytail_Ponytail1                                         (10)
+#define ATTRIBUTE_Ponytail_Ponytail2                                         (20)
+// ANIM3D_LAYER_BEARD     (11)  Beard
+#define ATTRIBUTE_Beard_Male_Amish                                           (10)
+#define ATTRIBUTE_Beard_Male_Full                                            (20)
+#define ATTRIBUTE_Beard_Male_FuManchu                                        (30)
+#define ATTRIBUTE_Beard_Male_Goatee                                          (40)
+#define ATTRIBUTE_Beard_Male_Guvner                                          (50)
+#define ATTRIBUTE_Beard_Male_Hermit                                          (60)
+#define ATTRIBUTE_Beard_Male_Stubble                                         (70)
+// ANIM3D_LAYER_SHOULDER  (12)  Shoulderpieces
+#define ATTRIBUTE_Shoulderpieces_LeatherOutfit                               (1)
+#define ATTRIBUTE_Shoulderpieces_PowerArmor                                  (2)
+#define ATTRIBUTE_Shoulderpieces_CombatArmor                                 (5)
+// ANIM3D_LAYER_ARMLET    (13)  Armlet
+#define ATTRIBUTE_Armlet_PipBoyClosed                                        (1)
+#define ATTRIBUTE_Armlet_PipBoyOpen                                          (2)
+// ANIM3D_LAYER_BACK      (14)  Back
+#define ATTRIBUTE_Back_LeatherOutfit_Skull                                   (1)
+#define ATTRIBUTE_Back_LeatherOutfit_Biohazard                               (2)
+#define ATTRIBUTE_Back_LeatherOutfit_Dragon                                  (3)
+#define ATTRIBUTE_Back_LeatherOutfit_Eagle                                   (4)
+#define ATTRIBUTE_Back_PrisonSuit                                            (100) // + Number
+#define ATTRIBUTE_Back_VaultSuit                                             (200) // + Number
+// ANIM3D_LAYER_BACKPACK  (15)  Backpack
+#define ATTRIBUTE_Backpack_PaLg01                                            (1)
+#define ATTRIBUTE_Backpack_PaSm01                                            (2)
+
+// Textures for Hair, Mustache, Ponytail, Beard
+#define ATTRIBUTE_COLOR_Brown                                                (0) // Default
+#define ATTRIBUTE_COLOR_BrownGrey                                            (1)
+#define ATTRIBUTE_COLOR_Black                                                (2)
+#define ATTRIBUTE_COLOR_BlackGrey                                            (3)
+#define ATTRIBUTE_COLOR_White                                                (4)
+#define ATTRIBUTE_COLOR_WhiteGrey                                            (5)
+#define ATTRIBUTE_COLOR_Blonde                                               (6)
+#define ATTRIBUTE_COLOR_BlondeGrey                                           (7)
+#define ATTRIBUTE_COLOR_Red                                                  (8)
+#define ATTRIBUTE_COLOR_RedGrey                                              (9)
+
+// Humans 3d models body subsets
+#define SUBSET_Human_Chest                                                   (0)
+#define SUBSET_Human_Feet                                                    (1)
+#define SUBSET_Human_ForeArms                                                (2)
+#define SUBSET_Human_Hands                                                   (3)
+#define SUBSET_Human_Head                                                    (4)
+#define SUBSET_Human_Legs                                                    (5)
+#define SUBSET_Human_Shins                                                   (6)
+#define SUBSET_Human_UpperArms                                               (7)
+#define SUBSET_Human_Waist                                                   (8)
+#endif // __ANIMATION__

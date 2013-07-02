@@ -1,0 +1,153 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// dialog_reputations.fos
+//
+
+// This is an inlined file.
+// for dialogs, with caps
+#include "reputations_h.fos"
+
+/** \addtogroup DialogFuncs
+ *  @{
+ */
+
+/**
+ * \~english @name Reputations
+ *
+ * \~ @weight 535
+ */
+// @{
+
+/**
+ * Increase the reputation of the player up to the certain level.
+ * @param index Index of the faction's reputation to change
+ * @param val Number of reputation points
+ * @param cap Maximum value to which the function can increase the reputation
+ */
+void r_AddReputation(Critter& player, Critter@ npc, int index, int val, int cap)
+{
+    _CheckValidIndex(index);
+    int rep = player.Reputation[index];
+    if(rep >= cap)
+        return;
+    rep += val;
+    if(rep > cap)
+        rep = cap;
+    player.ReputationBase[index] = rep;
+}
+
+/**
+ * Decrease the reputation of the player down to the certain level.
+ * @param index Index of the faction's reputation to change
+ * @param val Number of reputation points
+ * @param cap Minimum value to which the function can decrease the reputation
+ */
+void r_SubReputation(Critter& player, Critter@ npc, int index, int val, int cap)
+{
+    _CheckValidIndex(index);
+    int rep = player.Reputation[index];
+    if(rep <= cap)
+        return;
+    rep -= val;
+    if(rep < cap)
+        rep = cap;
+    player.ReputationBase[index] = rep;
+}
+
+void r_AddReputationDogtags(Critter& player, Critter@ npc, int index, int count)
+{
+    _CheckValidIndex(index);
+    if(count <= 0)
+        return;
+    int rep = player.Reputation[index];
+    int boost = 0;
+    for(int d = 0; d < count; d++)
+    {
+        boost += Random(1, player.Param[ST_CHARISMA]);
+        if(Random(0, 4) <= 0 && SkillRoll(player, ST_LUCK, 0))
+            boost += 3;
+    }
+    rep += boost + 5;
+    #ifdef __DEBUG__
+    player.Say(SAY_NETMSG, "dogtags reputation boost: " + boost + "+5 = " + rep);
+    #endif
+    player.ReputationBase[index] = rep;
+}
+
+void r_ApplyReputationModifiers(Critter& player, Critter@ npc, int index, int num, int den)
+{
+    ApplyReputationModifiers(player, index, num, den);
+}
+
+void r_ApplyReputationModifiers(Critter& player, Critter@ npc, int num, int den)
+{
+    ApplyReputationModifiers(player, _GroupIndex(npc), num, den);
+}
+
+/**
+ * Increase the reputation of the player in respect of npc's faction up to the certain level.
+ * @param val Number of reputation points
+ * @param cap Maximum value to which the function can increase the reputation
+ */
+void r_AddReputation(Critter& player, Critter@ npc, int val, int cap)
+{
+    uint index = GetGroupIndex(npc);
+    _CheckValidIndex(index);
+    int  rep = player.Reputation[index];
+    if(rep >= cap)
+        return;
+    rep += val;
+    if(rep > cap)
+        rep = cap;
+    player.ReputationBase[index] = rep;
+}
+
+/**
+ * Decrease the reputation of the player in respect of npc's faction down to the certain level.
+ * @param val Number of reputation points
+ * @param cap Minimum value to which the function can decrease the reputation
+ */
+void r_SubReputation(Critter& player, Critter@ npc, int val, int cap)
+{
+    uint index = GetGroupIndex(npc);
+    _CheckValidIndex(index);
+    int  rep = player.Reputation[index];
+    if(rep <= cap)
+        return;
+    rep -= val;
+    if(rep < cap)
+        rep = cap;
+    player.ReputationBase[index] = rep;
+}
+
+/**
+ * Increase the reputation of the player in respect of npc's faction.
+ * @param val Number of reputation points
+ */
+void r_AddReputation(Critter& player, Critter@ npc, int val)
+{
+    uint index = GetGroupIndex(npc);
+    _CheckValidIndex(index);
+    int  rep = player.Reputation[index];
+    rep += val;
+    player.ReputationBase[index] = rep;
+}
+
+/**
+ * Decrease the reputation of the player in respect of npc's faction.
+ * @param val Number of reputation points
+ */
+void r_SubReputation(Critter& player, Critter@ npc, int val)
+{
+    uint index = GetGroupIndex(npc);
+    _CheckValidIndex(index);
+    int  rep = player.Reputation[index];
+    rep -= val;
+    player.ReputationBase[index] = rep;
+}
+
+// @}
+
+/*@}*/

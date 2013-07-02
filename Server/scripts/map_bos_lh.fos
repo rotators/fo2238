@@ -1,0 +1,215 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_bos_lh.fos
+//
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_maps.fos"
+#include "elevators_h.fos"
+#include "factions_h.fos"
+#include "groups_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "MSGSTR.h"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+
+import bool HandleLocker(Critter& cr, Map@ map, Item& locker, bool disregardKey) from "lockers";
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+
+
+//
+// Map Data:
+// 0 - faction id (BoS)
+//
+
+// elevator 1-2-3-4
+CElevator Elevator(ELEVATOR_BOS_1234);
+// elevator outside - 1
+CElevator OutsideElevator(ELEVATOR_BOS_01);
+
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_BOS);
+    }
+    // to add only one for all floors
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator);
+        AddElevator(OutsideElevator);
+        ElevatorsAdded = true;
+    }
+    // parse elevators floors
+    uint16 x = 0, y = 0;
+
+    switch(map.GetProtoId())
+    {
+    case MAP_LostHills_Entrance:
+        if(map.GetEntireCoords(1, 0, x, y))
+            OutsideElevator.AddFloor(map.Id, 1);
+        break;
+    case MAP_LostHills_Level1:
+        if(map.GetEntireCoords(1, 0, x, y))
+            OutsideElevator.AddFloor(map.Id, 1);
+    case MAP_LostHills_Level2:
+    case MAP_LostHills_Level3:
+    case MAP_LostHills_Level4:
+        if(map.GetEntireCoords(2, 0, x, y))
+            Elevator.AddFloor(map.Id, 2);
+        break;
+    default:
+    }
+}
+
+void Debug(Critter& player, int p0, int p1, int p2)
+{
+    player.Say(SAY_NORM, "Elevator1: " + OutsideElevator.Floors());
+    player.Say(SAY_NORM, "Elevator2: " + Elevator.Floors());
+}
+
+//
+// Elevator triggers
+//
+void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator, critter, entered);
+}
+void t_ElevatorOutside(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(OutsideElevator, critter, entered);
+}
+
+// near hq building entrance
+void t_NearHq(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_NEAR_HQ, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// near hq building entrance
+void t_LastWarning(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_LAST_WARNING, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// at hq building entrance
+void t_EnterHq(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_AT_HQ, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_NearStorage(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_NEAR_STORAGE, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_StorageEnter(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_STORAGE_ENTER, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_NearComputer(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_NEAR_COMPUTER, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_EnterComputer(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_BOS_PLAYER_COMPUTER_ENTER, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void _OutpostDoor(Item& item, bool firstTime)   // not actually LH item, but outposts
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_OutpostDoorSkill");
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_OutpostDoorUseOnMe");
+}
+
+void OutpostIssueWarning(Item& item)
+{
+    array<Critter@> crits;
+    uint            n = GetNearFactionGuards(GetMap(item.MapId), item.HexX, item.HexY, 10, FACTION_BOS, crits);
+    for(uint i = 0; i < n; i++)
+        if(crits[i].Stat[ST_NPC_ROLE] == ROLE_BOS_OUTPOST_GUARD)
+            crits[i].Say(SAY_NORM_ON_HEAD, "Stop right there!");
+}
+
+void OutpostAttack(Item& item, Critter& crit)
+{
+    array<Critter@> crits;
+    uint            n = GetNearFactionGuards(GetMap(item.MapId), item.HexX, item.HexY, 10, FACTION_BOS, crits);
+    for(uint i = 0; i < n; i++)
+        if(crits[i].Stat[ST_NPC_ROLE] == ROLE_BOS_OUTPOST_GUARD)
+            AttackCritter(crits[i], crit);
+}
+
+bool _OutpostDoorUseOnMe(Item& item, Critter& crit, Item@ usedItem)
+{
+    if(crit.Stat[ST_TEAM_ID] == FACTION_BOS)
+        return false;
+    OutpostIssueWarning(item);
+    return false;
+}
+
+bool _OutpostDoorSkill(Item& item, Critter& cr, int skill)
+{
+    if(item.LockerId == 0)
+    {
+        item.LockerId = Random(0, 0x7FFFFFFF);
+        item.LockerComplexity = 300;
+    }
+    if(cr.Stat[ST_TEAM_ID] == FACTION_BOS)
+    {
+        return HandleLocker(cr, GetMap(item.MapId), item, true);
+    }
+    if(skill == SK_LOCKPICK)
+    {
+        OutpostAttack(item, cr);
+        OutpostIssueWarning(item);
+    }
+    else if(!HasFactionUniform(cr, FACTION_BOS, UNIFORM_BODY_ONLY))
+    {
+        OutpostIssueWarning(item);
+    }
+    return false;
+}

@@ -1,0 +1,323 @@
+[comment]
+These are mine #nodes(answers) or combined with the original !#nodes(!answers):
+#2(15,100), !#4, !#5, !#6(!22), !#20, !#21, #22(Barter, 2), #100(101,102), #101(102), #102(2)
+
+These are just my answers or !combined answers; the nodes are original:
+(!8) in #7, (!16) in #15, (!17) in #16, (!18) in #17, (!19) in #18, (!20) in #19
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+54 1010 D _var p q_redding_mcgrew_runner = 3 #
+42 1020 D _var n name_mem_npc_player > 0 D _param p ST_INTELLECT < 4 #
+40 1030 D _var n name_mem_npc_player = 0 D _param p ST_INTELLECT < 4 #
+2 1040 @
+2 2000 None 0 #
+0 2010 D _var n name_mem_npc_player = 0 #
+3 2020 D _var p factions_player_faction = 1 D _var n name_mem_npc_player = 0 #
+4 2030 D _var p factions_player_faction > 1 D _var p factions_player_faction < 7 D _var n name_mem_npc_player = 0 #
+5 2040 D _var p factions_player_faction > 6 D _var n name_mem_npc_player = 0 #
+15 2050 D _var n name_mem_npc_player > 0 #
+7 2060 D _var n name_mem_npc_player > 0 #
+100 2070 D _var n name_mem_npc_player = 1 D _var n acquaintance = 0 D _var p factions_q_vc_kohl_books = 11 #
+23 2080 D _var n name_mem_npc_player > 0 #
+21 2090 D _var n name_mem_npc_player > 0 #
+0 2100 @
+3 3000 None 0 #
+6 3010 D _param p ST_CHARISMA > 4 R _var n name_mem_npc_player = 1 #
+6 3020 D _param p ST_CHARISMA < 5 R _var n name_mem_npc_player = 1 #
+6 3030 D _param p ST_CHARISMA > 6 D _param p ST_STRENGTH > 5 R _var n name_mem_npc_player = 1 #
+6 3040 D _var p factions_player_rank > 2 R _var n name_mem_npc_player = 1 #
+0 3050 @
+4 4000 None 0 #
+6 4010 D _param p ST_CHARISMA > 4 R _var n name_mem_npc_player = 1 #
+6 4020 D _param p ST_CHARISMA < 5 R _var n name_mem_npc_player = 1 #
+6 4030 D _param p ST_CHARISMA > 6 D _param p ST_STRENGTH > 5 R _var n name_mem_npc_player = 1 #
+6 4040 D _var p factions_player_rank > 2 R _var n name_mem_npc_player = 1 #
+0 4050 @
+5 5000 None 0 #
+6 5010 D _param p ST_CHARISMA > 4 R _var n name_mem_npc_player = 1 #
+6 5020 D _param p ST_CHARISMA < 5 R _var n name_mem_npc_player = 1 #
+6 5030 D _param p ST_CHARISMA > 6 D _param p ST_STRENGTH > 5 R _var n name_mem_npc_player = 1 #
+6 5040 D _var p factions_player_rank > 2 R _var n name_mem_npc_player = 1 #
+0 5050 @
+6 6000 None 0 #
+15 6010 #
+7 6020 #
+22 6030 #
+23 6040 #
+0 6050 @
+7 7000 None 0 #
+43 7010 D _var n acquaintance = 0 D _var p q_mordinos_joining_quest = 1 R _var n acquaintance = 1 #
+51 7020 D _var p q_redding_mcgrew_runner = 1 #
+8 7030 #
+65506 7040 #
+22 7050 #
+9 7060 #
+0 7070 @
+8 8000 None 0 #
+2 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+10 9020 #
+10 9030 @
+10 10000 None 0 #
+65506 10010 #
+2 10020 #
+11 10030 #
+0 10040 @
+11 11000 None 0 #
+65506 11010 #
+2 11020 #
+12 11030 #
+0 11040 @
+12 12000 None 0 #
+13 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+14 13020 #
+14 13030 @
+14 14000 None 0 #
+65506 14010 #
+0 14020 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+19 18010 #
+0 18020 @
+19 19000 None 0 #
+20 19010 #
+20 19020 #
+0 19030 @
+20 20000 None 0 #
+2 20010 #
+0 20020 @
+21 21000 None 0 #
+2 21010 #
+0 21020 @
+22 22000 None 0 #
+65506 22010 #
+2 22020 #
+0 22030 @
+23 23000 None 0 #
+2 23010 #
+0 23020 @
+40 24000 None 0 #
+41 24010 D _param p ST_GENDER = 0 R _var n name_mem_npc_player = 1 #
+41 24020 D _param p ST_GENDER = 1 R _var n name_mem_npc_player = 1 #
+41 24030 R _var n name_mem_npc_player = 1 @
+41 25000 None 0 #
+42 25010 D _param p ST_GENDER = 0 #
+42 25020 D _param p ST_GENDER = 1 #
+42 25030 @
+42 26000 None 0 @
+100 27000 None 0 #
+101 27010 #
+102 27020 R _item p PID_FIRST_AID_BOOK + 1 R _var n acquaintance = 1 #
+0 27030 @
+101 28000 None 0 #
+102 28010 R _item p PID_FIRST_AID_BOOK + 1 R _var n acquaintance = 1 #
+0 28020 @
+102 29000 None 0 #
+2 29010 #
+0 29020 @
+43 30000 None 0 #
+44 30010 @
+44 31000 None 0 #
+45 31010 @
+45 32000 None 0 #
+46 32010 @
+46 33000 None 0 #
+47 33010 D _param p ST_CHARISMA > 6 #
+48 33020 D _param p ST_CHARISMA < 7 D _param p ST_CHARISMA > 4 #
+49 33030 D _param p ST_CHARISMA < 5 @
+47 34000 None 0 #
+50 34010 R _var p q_mordinos_induction_doctor + 200 @
+48 35000 None 0 #
+50 35010 R _var p q_mordinos_induction_doctor + 150 @
+49 36000 None 0 #
+50 36010 R _var p q_mordinos_induction_doctor + 100 @
+50 37000 None 0 #
+0 37010 @
+51 38000 None 0 #
+52 38010 @
+52 39000 None 0 #
+53 39010 @
+53 40000 None 0 #
+0 40010 R _var p q_redding_mcgrew_runner = 2 @
+54 41000 None 0 #
+55 41010 @
+55 42000 None 0 #
+56 42010 @
+56 43000 None 0 #
+0 43010 R _var p q_redding_mcgrew_runner = 4 R _param p ST_EXPERIENCE + 2000 @
+57 44000 None 0 &
+
+[engl]
+{100}{}{Renesco}
+{200}{}{You see Renesco the Rocketman.}
+{210}{}{You see an old man with a pair of huge, garish glasses. He sighs irritatedly as you watch.}
+{210}{}{You see Renesco the Rocketman. As you watch, he takes off his cracked glasses and polishes the one good lens.}
+{1000}{}{Predialogue installations}
+{1010}{}{mgcrew quest 2nd visit}
+{1020}{}{dumb known}
+{1030}{}{dumb unknown}
+{1040}{}{normal}
+{2000}{}{[The old man pushes his broken glasses up on his nose and sighs in exasperation] YES? What is it you want? Come on, @sex@|man||woman|, out with it!}
+{2010}{}{[Stare at him for a second, just to make sure he's real, then wander away]}
+{2020}{}{Who are you?}
+{2030}{}{Who are you?}
+{2040}{}{Who are you?}
+{2050}{}{Hey, did I ever tell you about my hometown?}
+{2060}{}{What do you sell here?}
+{2070}{}{Hey, I've heard you've got a couple First Aid manuals lying around. Mind if I have one?}
+{2080}{}{You have an interesting vocabulary... Renesco. Are you from around here?}
+{2090}{}{Hey, nice pair of glasses you got there.}
+{2100}{}{Man, am I in the wrong place. Goodbye.}
+{3000}{}{Me? Oh, I'm just jolly Saint Nick, you cranially challenged half-wit.}
+{3010}{}{Well, I'm glad I don't have to introduce myself then. What do you do here, "Nick?"}
+{3020}{}{Saint Nick? Who the hell is that?}
+{3030}{}{Look grandpa, one more comment like that, and I'll be wearing your teeth as a necklace.}
+{3040}{}{Look, I'm going to let your comment slide... this time. Now, who are you?}
+{3050}{}{Forget this. I'm out of here.}
+{4000}{}{Me? I'm jolly ol' Saint Nick. And YOU must be that stupid piece of big gang trash that's hung like a horse and as stupid as one.}
+{4010}{}{Well, I'm glad I don't have to introduce myself then. What do you do here, "Nick?"}
+{4020}{}{Saint Nick? Who the hell is that?}
+{4030}{}{Look grandpa, one more comment like that, and I'll be wearing your teeth as a necklace.}
+{4040}{}{Look, I'm going to let your comment slide... this time. Now, who are you?}
+{4050}{}{Forget this. I'm out of here.}
+{5000}{}{Me? I'm jolly Saint Nick. And YOU must be that stupid thug-for-hire that's been roaming around town like a starved dog hungry for its own excrement.}
+{5010}{}{Well, I'm glad I don't have to introduce myself then. What do you do here, "Nick?"}
+{5020}{}{Saint Nick? Who the hell is that?}
+{5030}{}{Look grandpa, one more comment like that, and I'll be wearing your teeth as a necklace.}
+{5040}{}{Look, I'm going to let your comment slide... this time. Now, who are you?}
+{5050}{}{Forget this. I'm out of here.}
+{6000}{}{[Glares at you, then snorts] Name's Renesco. Just tell me what it is you want, you... well, whatever it is you are. [Squints at you] You still look like one of those inbred wasteland yokels under all that get-up.}
+{6010}{}{Did I ever tell you about my hometown?}
+{6020}{}{What do you sell here?}
+{6030}{}{What do I WANT? I don't really know. Most of the time I just walk into the homes of others, riffling through people's shelves... oooh, like those over there!}
+{6040}{}{You have an interesting vocabulary... Renesco. Are you from around here?}
+{6050}{}{I'm outta here.}
+{7000}{}{I sell recreational drugs mostly. That's why they gave me that idiotic appellation, 'the Rocketman.' Hmmmph. I also sell some caravan supplies. You NEED anything or can I get back to something important?}
+{7010}{}{Oh no shit you sell drugs? Do you also buy drugs? I mean so that you can sell them on? Cause I have a load of drugs that I could sell you. And then you could sell them!}
+{7020}{}{Doctor-looking guy in what looks like some sort of massively illegal pharmacy...I'm guessing you're the guy who sells jet to Redding.}
+{7030}{}{Rocketman, huh? I think I remember a song that went like that... No? Really? Well, you probably know better than I do, you're the Rocketman, not me.}
+{7040}{}{Can I see what you have in stock?}
+{7050}{}{What do I WANT? I don't really know. Most of the time I ignore what I'm supposed to be doing and walk into the homes of others, riffling through people's shelves... oooh, like those over there!}
+{7060}{}{You sell drugs here in the STORE?}
+{7070}{}{Go on back to what you were doing.}
+{8000}{}{[Renesco glares at you. It looks like he is undressing you mentally, then tearing you limb from limb]}
+{8010}{}{Nevermind, then. I had some other questions...}
+{8020}{}{Nevermind, then.}
+{9000}{}{[Renesco looks at you in disgust] Yes. In the STORE. This isn't the 20th century where drugs are sold by street corner cockroaches who live in constant fear of the authorities.}
+{9010}{}{Well, then -}
+{9020}{}{But -}
+{9030}{}{Uh, I think I better -}
+{10000}{}{This is NEW RENO. There are no cops, no law, and there's plenty of customers who don't mind buying poison at the pharmacy down the street. Does THAT answer your question, hayseed?}
+{10010}{}{All right, all right...what have you got in stock?}
+{10020}{}{Actually, I had some more questions...}
+{10030}{}{But, like you said, the drugs are... poisonous. They kill the spirit. Doesn't it bother you to sell them?}
+{10040}{}{Sure does. I'll be going now.}
+{11000}{}{Does it BOTHER me to sell them to idiots, slavers, crime lords and tribals that the world would be better off without? Yokel, three words: get out more.}
+{11010}{}{OK... can I see what you have in stock?}
+{11020}{}{All right, all right. Look, I had some other questions...}
+{11030}{}{The drugs here in New Reno are finding their way to other places, and hurting people there. Doesn't that concern you?}
+{11040}{}{I'll start by leaving right now.}
+{12000}{}{So? What do I care about them?}
+{12010}{}{The human race suffered a horrible tragedy. Now we are trying to rebuild. Selling Jet seems... counterproductive for that reconstruction.}
+{12020}{}{Well, whatever. I must be going now.}
+{13000}{}{So. What. No one is FORCING those idiots to inhale Jet. No one's going around and jamming it down their throats!}
+{13010}{}{Can I see -}
+{13020}{}{But don't -}
+{13030}{}{That is your -}
+{14000}{}{Far as I'm concerned, Jet weeds out the human trash that shoulda died when the bombs dropped!}
+{14010}{}{Uh, okay. Can I see your stock?}
+{14020}{}{That is your right to feel that way. I must be going now.}
+{15000}{}{[Renesco glares at you in silence]}
+{15010}{}{Boy, you'd love it. It's real pretty and peaceful like. 'Cept for them times the brahmin went rabid and Pa hadta shoot 'em. That sure ain't a pretty sight, no sir. All frothin' and twitchin', scares you half to death when you ain't expecting it.}
+{15020}{}{Okay, then... I'm out of here.}
+{16000}{}{[Renesco continues to glare at you]}
+{16010}{}{And sometimes Uncle Scratchy goes and gets himself all riled at little things, like... heh-heh... that one night I snuck out with the Avery twins to that empty farmhouse.}
+{17000}{}{[Renesco gives you a withering stare]}
+{17010}{}{Shucks, I remember it like it was yesterday. We got all liquored up, and there weren't nothin' but the moon out. Then, outta nowhere, one of 'em knelt down and reached out for my... hey, you know what? You might get along with Mister Avery. He's about your age.}
+{18000}{}{[Renesco continues to glare at you as if he could somehow make you disappear just by imagining it hard enough]}
+{18010}{}{... and boy howdy, the ruckus that happened afterwards... the whole damn town wasn't happy. It's like what Ma used to say during that dang fiasco with the raiders, 'You'd better pay now before the bastards really get ornery'. Guess that's part o' why I upped and left.... that's when I ran into that poor bastard from the vault. Say, you got a glass of moonshine or somethin'? My throat's gettin' awful dry.}
+{18020}{}{Okay then, enough stories... I better be on my way.}
+{19000}{}{[Renesco's glare crumbles] A vault dweller? What the hell's one of those doing mixing with desert trash like you?}
+{19010}{}{Well, we weren't exactly travelling companions. He'd already kicked the bucket when I found him. All pale and dehydrated and such. Sure did have himself a fancy blue jumpsuit and a little wrist-computer thingie, though. I just went and helped myself.}
+{19020}{}{Hey, I just relieved him of his gear. Guy wasn't gonna make it anyhow. He wanted me to have them. Y'know, probably.}
+{19030}{}{Magnetic personality, I guess. I gotta go.}
+{20000}{}{[Renesco doesn't even try to hide his disgust] Sweet Jesus, you wasteland vultures never cease to disgust me. Picking the bones of your betters for technology you'll never be able to comprehend! Get out of my sight!}
+{20010}{}{Whoa, hold on. I just had a couple more questions...}
+{20020}{}{Well if you're gonna get all huffy about it, I'm leaving.}
+{21000}{}{Yeah, got them from a primate a few years ago. A primate who was, by the way, a lot more intellectually capable than a miserable cockroach like yourself. Now, for the last time, what do you WANT?}
+{21010}{}{Very funny. I had some other questions...}
+{21020}{}{Sorry, I have to go.}
+{22000}{}{[Raises his right fist] Keep your dirty paws away from my stuff, you infected product of a preterm birth! If you wanna buy something, get the cash ready.}
+{22010}{}{Yeah, yeah... Here.}
+{22020}{}{Uh, maybe later. For now, I've got some questions.}
+{22030}{}{Okay, then... I'm out of here.}
+{23000}{}{A person's past ain't a smart topic of conversation here in New Reno. Now, what is you want?}
+{23010}{}{Just one more question...}
+{23020}{}{Nothing, nevermind.}
+{24000}{}{[The old man pushes his broken glasses up on his nose and sighs in exasperation] YES? What is it you want? Come on, @sex@|man||woman|, out with it!}
+{24010}{}{Okee dokee it coming out... you better stand back. [Zip]}
+{24020}{}{Okee dokee. Need open bra first. Hold on. [Zip]}
+{24030}{}{Whut me WANT? Whut you GOT?}
+{25000}{}{[Stares in shock] ...another postnatally-aborted wreck in a post-holocaust world replete with idiot man-children. [Raises his fists] Out of my shop! Get out at once! Don't you come back, you hear?!}
+{25010}{}{Me sorry little.}
+{25020}{}{Me not know how to put bra back on.}
+{25030}{}{No shout at @pname@, @pname@ hate you!}
+{26000}{}{Go to hell.@@Get outta here, or I'll have you shot to death. Twice.@@Get OUT of here.@@Out! Out! Out! Out! Out!}
+{27000}{}{[Renesco stares at you surprised] So what if I do? Why the hell would someone like you need a book? ANY book, that is...}
+{27010}{}{Well, I need it to... learn how to handle injuries properly.}
+{27020}{}{Well, it's not really for me, but for a friend of mine... a doctor. He's more the bookish type, you know how it is. You got it or not?}
+{27030}{}{Yeah, right. I'm outta here.}
+{28000}{}{Rat, you couldn't tell apart injuries from excrements. Why don't you tell me why you REALLY need it?}
+{28010}{}{Alright, you got me. It's not for me, but for a friend of mine... a doctor. He's more the bookish type, you know how it is. You got it or not?}
+{28020}{}{Yeah, right. I'm outta here.}
+{29000}{}{[Renesco opens a drawer with a shotgun... and a few books] Don't you feel better for being honest, yokel? At least it'll go to someone with a modicum of learning. They might even be able to teach you some of it. Well, if they speak slowly, and use small words. Here, this one'll do. Now get the hell out of here.}
+{29010}{}{Thanks! Say I had a few more questions...}
+{29020}{}{Thanks, I'll put it to good use. Uh, I mean, he will. Gotta go now.}
+{30000}{}{What on earth are you blathering about you malformed imbecile?}
+{30010}{}{I've got some stock, man. Jet! And I am willing to sell some to you for a decent price!}
+{31000}{}{Why would I want whatever handful of vials you have managed to scrape from the gutter or take from the pockets of absent-minded addicts?}
+{31010}{}{Whoa dude, I'm not talking no chump change here my man! I'm talking wholesale amounts. I've got jet coming out my ass!}
+{32000}{}{You're either exactly as stupid as I expect you are, or you're actually serious.}
+{32010}{}{For real dude, check it out! [Show him the briefcase.]}
+{33000}{}{Well...I see. This is unforeseen. What do you want for them?}
+{33010}{}{50/50 on the selling price. Shit it's all profit to you right?}
+{33020}{}{Wholesale prices dogg, nothing fancy.}
+{33030}{}{Straight standard prices bro! No scam here!}
+{34000}{}{I'll take 200.}
+{34010}{}{[You swap drugs for caps.] A pleasure dealing with you!}
+{35000}{}{I'll take 150.}
+{35010}{}{[You swap drugs for caps.] A pleasure dealing with you!}
+{36000}{}{Just a hundred.}
+{36010}{}{[You swap drugs for caps.] A pleasure dealing with you!}
+{37000}{}{It almost was.}
+{37010}{}{Oh Renesco, you so sassy!}
+{38000}{}{Congratulations, really. Astounding.}
+{38010}{}{Redding needs to increase it's jet supply. There's just not enough to go around.}
+{39000}{}{That's great. I can see where you're going with this so I'll cut right to the chase. Redding already accounts for 50% of my package. The scum here clean the other 50% out faster than the next delivery comes in. The margins are a lot finer on what goes to Redding because I do it in bulk. I can't afford to sell more unless I'm guaranteed the custom.}
+{39010}{}{The people are there, don't worry. I promise you, you'll sell it all.}
+{40000}{}{Guaranteed, moron. I'm not making some idiotic financial decision based on good faith for some vagabond.}
+{40010}{}{I'll see what I can do.}
+{41000}{}{Got a guarantee? I expect not.}
+{41010}{}{Actually I do, you massive tool. [Pass him the papers you took from Johnson's clinic.]}
+{42000}{}{[He takes the papers and rifles through them quickly but adeptly.] Well. Is that whole town addicted? No matter, these seem to check out. Can I keep these? I can run these to Jesus Mordino and get a bigger shipment no problem.}
+{42010}{}{That's great news, then, right?}
+{43000}{}{Yes, yes, for everyone. Go and tell the people of Redding their next shipment will be considerably larger than before.}
+{43010}{}{Fantastic. I'll go tell Dangerous Dan.}
+{44000}{}{Look, I have no idea what makes you think I'd buy anything from a brahmin-thief like you. Just get the hell outta here, pest.}
+

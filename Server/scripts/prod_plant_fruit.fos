@@ -1,0 +1,95 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_plant_fruit.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+#include "prod_plant_h.fos"
+
+#define TEXT         (3011)
+#define TEXT_NONE    (3048)
+
+int TotalCount = 0;
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_UsePlant");
+    item.SetEvent(ITEM_EVENT_FINISH, "_Finish");
+    if(firstTime)
+        AMOUNT(item) = __FibreCapacity;
+    TotalCount++;
+}
+void _Finish(Item& item, bool)
+{
+    TotalCount--;
+    ReduceCounter(PID_MUTATED_FRUIT, COUNTER(item));
+}
+uint e_Regen(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_MUTATED_FRUIT, __FruitCapacity, __FruitRegen, TotalCount);
+    return RegenerationInterval;
+}
+void _EncPlant(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_UsePlant");
+    if(firstTime)
+        AMOUNT(item) = Random(0, __FruitCapacity);
+    UpdatePic(item);
+}
+void UpdatePic(Item& item)
+{
+    if(AMOUNT(item) == 0)
+        item.PicMap = FarmedPicHashes.GetRandom();
+    else
+        item.PicMap = NormalPicHashes.GetRandom();
+    item.Update();
+}
+
+array<string@> NormalPics = { "art\\items\\apptree1.fofrm" };
+PicHashes NormalPicHashes(NormalPics);
+array<string@> FarmedPics = { "art\\scenery\\tre1000.frm" };
+PicHashes FarmedPicHashes(FarmedPics);
+
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter&, Item@)
+    {
+        UpdatePic(item);
+    }
+};
+GatherCallback Callback;
+
+bool _UsePlant(Item& item, Critter& cr, int skill)
+{
+    if(skill == -1)
+        return Gather(item, cr, null, PID_MUTATED_FRUIT, __FruitBatch, TEXT, TEXT_NONE, Callback);
+    return false;
+}
+
+/* // Old Corn images
+   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn1.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn2.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn3.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn4.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn5.frm") );
+
+   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn1.fofrm") );
+   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn2.fofrm") );
+   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn3.fofrm") );
+ */
+
+
+void test(Critter& cr, int p0, int p1, int p2)
+{
+    for(uint i = 0; i < 10; i++)
+    {
+        Item@ it = cr.GetMap().AddItem(cr.HexX + Random(-5, 5), cr.HexY + Random(-5, 5), PID_PLANT_APPLE_TREE, 1);
+        it.SetScript("prod_plant_fruit@item_init");
+    }
+}

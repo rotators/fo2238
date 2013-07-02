@@ -1,0 +1,31 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_npcmap.fos
+//
+
+#include "_defines.fos"
+#include "_animation.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetLoopTime(0, 5000);
+    map.SetEvent(MAP_EVENT_LOOP_0, "_Loop0");
+}
+
+#define _InPool    # (__cr)  ((31 < __cr.HexY) && (__cr.HexY < 50) && (54 < __cr.HexX) && (__cr.HexX < 66))
+void _Loop0(Map& map)
+{
+    array<Critter@> crits;
+    uint            n = map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, crits);
+    for(uint i = 0; i < n; i++)
+        if(crits[i].GetAccess() < ACCESS_ADMIN && _InPool(crits[i]))
+        {
+            int inv = crits[i].ModeBase[MODE_INVULNERABLE];
+            crits[i].ModeBase[MODE_INVULNERABLE] = 0;
+            crits[i].ToDead(ANIM2_DEAD_FUSED, null);
+            if(inv != 0)
+                crits[i].ModeBase[MODE_INVULNERABLE] = inv;
+        }
+}

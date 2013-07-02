@@ -1,0 +1,508 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// duel.fos
+//
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "entire.fos"
+#include "messages_h.fos"
+#include "npc_junktown_tasks.fos"
+#include "utils_h.fos"
+
+#define DUEL_IN_PROGRESS       (npc.StatBase[ST_VAR1])
+#define DUEL_BET_AMOUNT        (npc.StatBase[ST_VAR2])
+#define DUEL_PLAYER_1          (npc.StatBase[ST_VAR3])
+#define DUEL_PLAYER_2          (npc.StatBase[ST_VAR4])
+#define DUEL_COUNT_DOWN        (npc.StatBase[ST_VAR5])
+#define DUEL_WINNER            (npc.StatBase[ST_VAR6])
+#define DUEL_TYPE              (npc.StatBase[ST_VAR7])
+#define DUEL_TIMEOUT_EID       (npc.StatBase[ST_VAR8])
+
+#define DUEL_BET_MIN           (0)
+#define DUEL_BET_MAX           (10000)
+
+#define WIN_REASON_WALKOVER    (1) // Other player left.
+#define WIN_REASON_ATTACK      (2) // Enemy attacked before match started.
+#define WIN_REASON_NORMAL      (3) // Normal, by killing the other person.
+
+#define DUEL_TYPE_UNARMED      (1) // No inventory
+#define DUEL_TYPE_FULL         (2) // Full inventory allowed
+#define DUEL_TYPE_BOXING       (3)
+
+#define DUEL_BEGIN_TIMEOUT     (REAL_SECOND(20))
+#define DUEL_END_TIMEOUT       (REAL_SECOND(5))
+#define DUEL_TIME_TIMEOUT      (REAL_MINUTE(2))
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    DLog("critter_init");
+    npc.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    npc.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_OnSomeoneAttacking");
+    npc.StatBase[ST_BONUS_LOOK] = 100;
+}
+
+void _OnSomeoneAttacking(Critter& npc, Critter& fromCr, Critter& target)
+{
+    DLog("_OnSomeoneAttacking");
+    DLog("npc id:" + npc.Id);
+
+    DLog("DUEL_IN_PROGRESS=" + DUEL_IN_PROGRESS);
+    Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+    Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+
+    if(DUEL_IN_PROGRESS == 1)     // The guy is counting
+    {
+        if((fromCr.Id == uint(DUEL_PLAYER_1)) && (target.Id == uint(DUEL_PLAYER_2)))
+        {
+            DLog("BUG: 1");
+            DeclareWinner(player_2, npc, WIN_REASON_ATTACK);
+            DUEL_IN_PROGRESS = 0;
+            CreateTimeEvent(AFTER(DUEL_END_TIMEOUT), "e_EndTimeout", npc.Id, false);
+        }
+        else if((fromCr.Id == uint(DUEL_PLAYER_2)) && (target.Id == uint(DUEL_PLAYER_1)))
+        {
+            DLog("BUG: 2");
+            DeclareWinner(player_1, npc, WIN_REASON_ATTACK);
+            DUEL_IN_PROGRESS = 0;
+            CreateTimeEvent(AFTER(DUEL_END_TIMEOUT), "e_EndTimeout", npc.Id, false);
+        }
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& sender, int num, int val)
+{
+    DLog("Recv message:" + num + "-" + val);
+    if(num == MSG_PLAYER_KILLED)
+    {
+        Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+        Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+
+        DLog("MSG_PLAYER_KILLED");
+        DLog("DUEL_IN_PROGRESS" + DUEL_IN_PROGRESS);
+        if(DUEL_IN_PROGRESS == 1)     // The guy is counting
+        {
+            if(val == DUEL_PLAYER_2)
+                DeclareWinner(player_2, npc, WIN_REASON_ATTACK);
+            else if(val == DUEL_PLAYER_1)
+                DeclareWinner(player_1, npc, WIN_REASON_ATTACK);
+        }
+
+        if(DUEL_IN_PROGRESS == 2)     // Match has started
+        {
+            if(val == DUEL_PLAYER_2)
+                DeclareWinner(player_1, npc, WIN_REASON_NORMAL);
+            else if(val == DUEL_PLAYER_1)
+                DeclareWinner(player_2, npc, WIN_REASON_NORMAL);
+        }
+
+        if((val == DUEL_PLAYER_1) || (val == DUEL_PLAYER_2))
+        {
+            DUEL_IN_PROGRESS = 0;
+            CreateTimeEvent(AFTER(DUEL_END_TIMEOUT), "e_EndTimeout", npc.Id, false);
+        }
+
+    }
+}
+
+uint e_Count(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+
+    if(DUEL_IN_PROGRESS == 0)
+    {
+        _TIMEEND;
+        return 0;
+    }
+
+    if(DUEL_COUNT_DOWN == 0)
+    {
+        npc.Say(SAY_SHOUT_ON_HEAD, "Let the fight begin!");
+        MatchStart(npc);
+        _TIMEEND;
+        return 0;
+    }
+    npc.Say(SAY_SHOUT_ON_HEAD, DUEL_COUNT_DOWN + "...");
+    DUEL_COUNT_DOWN--;
+    _TIMEEND;
+    return REAL_SECOND(1);
+}
+
+uint e_EndTimeout(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+    Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+    Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+    Critter@ winner = GetCritter(DUEL_WINNER);
+
+    DLog("EndTimeout");
+    if(valid(winner))
+    {
+        npc.Say(SAY_SHOUT_ON_HEAD, "And the winner is... " + GetSafePlayerName(winner.Id) + "!");
+        npc.Say(SAY_SHOUT, "And the winner is... " + GetSafePlayerName(winner.Id) + "!");
+    }
+    MatchOver(npc);
+    _TIMEEND;
+    return 0;
+}
+
+uint e_BeginTimeout(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+    Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+    Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+
+    if(!valid(player_1) || !valid(player_2))
+    {
+        DLog("BeginTimeout occured");
+        if(valid(player_1) && DUEL_BET_AMOUNT > 0)
+            player_1.AddItem(PID_BOTTLE_CAPS, DUEL_BET_AMOUNT);
+        MatchOver(npc);
+    }
+    _TIMEEND;
+    return 0;
+}
+
+uint e_MatchTimeout(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+    npc.Say(SAY_SHOUT, "You're not here to sleep, you pussies.");
+
+    // to prevent server crash - lol
+    DUEL_TIMEOUT_EID = 0;
+
+    MatchOver(npc);
+    _TIMEEND;
+    return 0;
+}
+
+void r_SetMatchType(Critter& player, Critter@ npc, int val)
+{
+    DUEL_TYPE = val;
+}
+
+// Check if storage container exists etc.
+bool d_ValidConditions(Critter& player, Critter@ npc, int val)
+{
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    Map@ map = npc.GetMap();
+
+    // If storage container is valid, it's ok to duel.
+    if(!valid(GetItemContainer(map)))
+        return false;
+    if(!GetNearEntire(map, ENTIRE_DUEL_RING_PLAYER_1, HexX, HexY))
+    {
+        Log("No entire for player 1 in arena found");
+        return false;
+    }
+    if(!GetNearEntire(map, ENTIRE_DUEL_RING_PLAYER_2, HexX, HexY))
+    {
+        Log("No entire for player 2 in arena found");
+        return false;
+    }
+    if(!GetNearEntire(map, ENTIRE_DUEL_EXIT_PLAYER_1, HexX, HexY))
+    {
+        Log("No entire for player 1 exit found");
+        return false;
+    }
+    if(!GetNearEntire(map, ENTIRE_DUEL_EXIT_PLAYER_2, HexX, HexY))
+    {
+        Log("No entire for player 2 exit found");
+        return false;
+    }
+
+    return true;
+}
+
+void r_SignUp(Critter& player, Critter@ npc, int val)
+{
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    player.DeleteItem(PID_BOTTLE_CAPS, DUEL_BET_AMOUNT);
+
+    if(DUEL_PLAYER_1 == 0)
+    {
+        DLog("Duelist joined as player 1 " + player.Id);
+        DUEL_PLAYER_1 = player.Id;
+        if(!GetEntireFreeHex(player.GetMap(), ENTIRE_DUEL_RING_PLAYER_1, HexX, HexY))
+            Log("Couldn't get free entire with num " + ENTIRE_DUEL_RING_PLAYER_1 + " for duel");
+    }
+    else
+    {
+        DLog("Duelist joined as player 2 " + player.Id);
+        DUEL_PLAYER_2 = player.Id;
+        if(!GetEntireFreeHex(player.GetMap(), ENTIRE_DUEL_RING_PLAYER_2, HexX, HexY))
+            Log("Couldn't get free entire with num " + ENTIRE_DUEL_RING_PLAYER_2 + " for duel");
+    }
+
+    player.TransitToHex(HexX, HexY, 0xff);
+    SetLvar(player, LVAR_duel_status, 1);
+    TransferItemsFromPlayer(player);
+    if((DUEL_PLAYER_1 > 0) && (DUEL_PLAYER_2 > 0))
+    {
+        DLog("Beginning countdown");
+        DUEL_IN_PROGRESS = 1;
+        DUEL_COUNT_DOWN = 3; // Count from 3 and down
+        npc.Say(SAY_NORM_ON_HEAD, "Combatants, prepare yourselves. The match will begin shortly!");
+        CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_Count", npc.Id, false);
+    }
+    else
+    {
+        CreateTimeEvent(AFTER(DUEL_BEGIN_TIMEOUT), "e_BeginTimeout", npc.Id, false);
+    }
+}
+
+void dlg_ShowBet(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$bet" + DUEL_BET_AMOUNT;
+}
+
+void dlg_SetBet(Critter& player, Critter@ npc, string@ say)
+{
+    if(!IS_DIALOG_SAY_MODE(say))
+        return;
+
+    int amount = 0;
+    if(!StrToInt(say, amount) || (amount < DUEL_BET_MIN) || (amount > DUEL_BET_MAX))
+    {
+        player.Say(SAY_DIALOG, "Invalid bet sum.");
+        return;
+    }
+
+    if(DUEL_PLAYER_1 != 0)
+    {
+        player.Say(SAY_DIALOG, "Can't change bet while another player is waiting for challangers.");
+        return;
+    }
+    DUEL_BET_AMOUNT = amount;
+}
+
+bool d_CanSignUp(Critter& player, Critter@ npc, int val)
+{
+    return((DUEL_PLAYER_1 == 0) || (DUEL_PLAYER_2 == 0));
+}
+
+void r_ClearVars(Critter& player, Critter@ npc, int val)
+{
+    DLog("ResetVars");
+    ResetVars(npc);
+    MatchOver(npc);
+}
+
+bool d_CanClearVars(Critter& player, Critter@ npc, int val)
+{
+    return(player.GetAccess() > ACCESS_CLIENT);
+}
+
+// Only applies to junktown.
+bool d_IsOpen(Critter& player, Critter@ npc, int val)
+{
+    return(GetCurrentTask(npc) == TASK_TYLER_RING);
+}
+
+// Only applies to junktown.
+bool d_IsNotOpen(Critter& player, Critter@ npc, int val)
+{
+    return(GetCurrentTask(npc) != TASK_TYLER_RING);
+}
+
+bool d_CanSetBet(Critter& player, Critter@ npc, int val)
+{
+    return(DUEL_PLAYER_1 == 0);
+}
+
+bool d_CanAffordBet(Critter& player, Critter@ npc, int val)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) >= uint(DUEL_BET_AMOUNT));
+}
+
+void DeclareWinner(Critter& winner, Critter& npc, uint reason)
+{
+    DLog("DeclareWinner");
+    DUEL_WINNER = winner.Id;
+    winner.AddItem(PID_BOTTLE_CAPS, DUEL_BET_AMOUNT * 2);
+}
+
+void ResetVars(Critter& npc)
+{
+    DUEL_IN_PROGRESS = 0;
+    DUEL_PLAYER_1 = 0;
+    DUEL_PLAYER_2 = 0;
+    DUEL_WINNER = 0;
+}
+
+bool MatchStart(Critter& npc)
+{
+    Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+    Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+
+    if(!valid(player_1) && valid(player_2))
+    {
+        DeclareWinner(player_2, npc, WIN_REASON_WALKOVER);
+    }
+    else if(!valid(player_2) && valid(player_1))
+    {
+        DeclareWinner(player_1, npc, WIN_REASON_WALKOVER);
+    }
+    else if(!valid(player_1) && !valid(player_2))
+    {
+        npc.Say(SAY_SHOUT_ON_HEAD, "No one wins, both combatants left prematurely!");
+    }
+
+    if(!valid(player_1) || !valid(player_2))
+        MatchOver(npc);
+
+    DLog("MatchStart");
+    DUEL_IN_PROGRESS = 2;
+    DLog("DUEL_IN_PROGRESS=" + DUEL_IN_PROGRESS);
+
+    DUEL_TIMEOUT_EID = CreateTimeEvent(AFTER(DUEL_TIME_TIMEOUT), "e_MatchTimeout", npc.Id, false);
+    return true;
+}
+
+bool TransferItemsToPlayer(Critter& cr)
+{
+    if(!valid(cr))
+    {
+        DLog("Invalid critter");
+        return false;
+    }
+
+    Item@ cont = GetItemContainer(cr.GetMap());
+    if(!valid(cont))
+        return false;
+
+    array<Item@> items;
+    cont.GetItems(cr.Id, items);
+    MoveItems(items, cr);
+
+    return true;
+}
+
+bool TransferItemsFromPlayer(Critter& cr)
+{
+    if(!valid(cr))
+    {
+        DLog("Invalid critter");
+        return false;
+    }
+
+    Item@ cont = GetItemContainer(cr.GetMap());
+    if(!valid(cont))
+    {
+        DLog("Invalid container");
+        return false;
+    }
+
+    Item@ hand1 = cr.GetItem(0, SLOT_HAND1);
+    Item@ hand2 = cr.GetItem(0, SLOT_HAND2);
+    Item@ armor = cr.GetItem(0, SLOT_ARMOR);
+    if(valid(hand1))
+        cr.MoveItem(hand1.Id, hand1.GetCount(), SLOT_INV);
+    if(valid(hand2))
+        cr.MoveItem(hand2.Id, hand2.GetCount(), SLOT_INV);
+    if(valid(armor))
+        cr.MoveItem(armor.Id, armor.GetCount(), SLOT_INV);
+    MoveItemsCritterToCont(cr, cont, cr.Id);
+    return true;
+}
+
+Item@ GetItemContainer(Map@ map)
+{
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    GetNearEntire(map, ENTIRE_DUEL_CONTAINER, HexX, HexY);
+    Item@ cont = map.GetItem(HexX, HexY, PID_CONTAINER_FOOTLOCKER_R);
+
+    if(!valid(cont))
+        Log("Duel container in map with PID " + map.GetProtoId() + " is invalid");
+    return cont;
+}
+
+void TransferBack(Critter& critter, uint entire)
+{
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    if(!valid(critter))
+    {
+        DLog("Invalid critter");
+        return;
+    }
+
+    Map@ map = critter.GetMap();
+    if(!valid(map))
+    {
+        DLog("Invalid map");
+    }
+
+    if(!GetNearEntire(map, entire, HexX, HexY))
+        Log("Exit: " + entire + " fail");
+
+    DLog("HexX: " + HexX);
+    DLog("HexY: " + HexY);
+
+    critter.TransitToHex(HexX, HexY, 0);
+
+    if(critter.Cond == COND_DEAD)
+        critter.ToLife();
+
+    critter.StatBase[ST_CURRENT_HP] = critter.Stat[ST_MAX_LIFE];
+}
+
+bool MatchOver(Critter& npc)
+{
+    if(!valid(npc))
+    {
+        Log("Matchmaker npc invalid");
+        return false;
+    }
+
+    DLog("npc id:" + npc.Id);
+
+    Critter@ player_1 = GetCritter(DUEL_PLAYER_1);
+    Critter@ player_2 = GetCritter(DUEL_PLAYER_2);
+
+    if(DUEL_TIMEOUT_EID != 0)
+        EraseTimeEvent(DUEL_TIMEOUT_EID);
+    DUEL_TIMEOUT_EID = 0;
+
+    if(valid(player_1))
+    {
+        SetLvar(DUEL_PLAYER_1, LVAR_duel_status, 0);
+        TransferBack(player_1, ENTIRE_DUEL_EXIT_PLAYER_1);
+    }
+    if(valid(player_2))
+    {
+        SetLvar(DUEL_PLAYER_2, LVAR_duel_status, 0);
+        TransferBack(player_2, ENTIRE_DUEL_EXIT_PLAYER_2);
+    }
+
+    if(DUEL_TYPE == DUEL_TYPE_UNARMED)
+    {
+        if(valid(player_1))
+            TransferItemsToPlayer(player_1);
+        if(valid(player_2))
+            TransferItemsToPlayer(player_2);
+    }
+
+    ResetVars(npc);
+    return true;
+}

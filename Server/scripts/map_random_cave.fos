@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_random_cave.fos
+//
+
+#include "_macros.fos"
+#include "_town.fos"
+#include "mapdata_h.fos"
+
+import bool FillMap(Map@ map, Critter& player) from "cave";
+
+import void CritterEnterCave(Critter& critter) from "cavelog";
+
+// Has the item/critters been generated ?
+#define UNITIALIZED    (0)
+#define INITIALIZED    (1)
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnInCritter");
+    // that would be cool
+    //
+}
+
+void _OnInCritter(Map& map, Critter& player)
+{
+    // We are only interested in players
+    if(!player.IsPlayer())
+        return;
+
+    if(map.GetData(MAP_DATA_CAVE_INIT) == UNITIALIZED)
+    {
+        map.SetData(MAP_DATA_CAVE_INIT, INITIALIZED);
+        FillMap(map, player);
+        CritterEnterCave(player);
+    }
+}

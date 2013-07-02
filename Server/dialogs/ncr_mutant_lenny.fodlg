@@ -1,0 +1,79 @@
+[comment]
+7070 q_iguana_pete_message:
+1 = Recieved Quest
+2 = Spoken to NCR Miky
+3 = Spoken to NCR Mutant Lenny
+4 = Spoken to Bob Jr.
+5 = Visited Golgotha and discovered corpse
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+11 1010 D _var p q_iguana_pete_message = 3 #
+2 1020 D _var p q_iguana_pete_message = 2 #
+10 1030 @
+2 2000 None 0 #
+0 2010 #
+4 2020 D _var p q_iguana_pete_message = 2 #
+3 2030 D _var p q_iguana_pete_message = 2 @
+3 3000 None 0 #
+5 3010 #
+4 3020 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+4 5010 #
+6 5020 D _var p name_mem_npc_player = 0 R _item p PID_BEER + 1 R _var p name_mem_npc_player = 1 #
+6 5030 D _var p name_mem_npc_player = 1 @
+6 6000 None 0 #
+7 6010 #
+7 6020 #
+4 6030 @
+7 7000 None 0 #
+8 7010 #
+4 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 R _var p q_iguana_pete_message = 3 @
+10 10000 None 0 @
+11 11000 None 0 &
+
+[engl]
+{100}{}{Lenny}
+{200}{}{You see an inebriated mutant}
+{210}{}{He looks unwell}
+{1000}{}{Predialogue installations}
+{1010}{}{Player has received Mutant message from Lenny}
+{1020}{}{Player has spoken to Iguana Mike}
+{1030}{}{Player hasn't spoken to Iguana Mike}
+{2000}{}{What now you want? Me busy.}
+{2010}{}{Nothing. Carry on...}
+{2020}{}{Where did you find that Son of Bob stand out in the Bazaar? You know, the pretty white one?}
+{2030}{}{You... know... sonofbob?}
+{3000}{}{Haha.. little.. sonofbob... how you know?}
+{3010}{}{me know... big iguana bob... he looking sunofbob... you know sunofbob?}
+{3020}{}{I know his father, he is looking for him and wants me to deliver a message. You have to tell me where he is!}
+{4000}{}{What... you say? You sound... funny...}
+{4010}{}{...........}
+{5000}{}{Me know... sunofbob... me friend small Bob but.. small Bob gone far away... drink for small Bob!}
+{5010}{}{No more drinking! Please I can't stand this anymore, tell me where he is!}
+{5020}{}{Drink for Small Bob!}
+{5030}{}{Drink for Small Bob!}
+{6000}{}{[burrrrp] what... who you? Me miss sunofbob... you like small Bob... small squishy Bob}
+{6010}{}{You squish... small Bob?}
+{6020}{}{Where find small Bob?}
+{6030}{}{What did you do to Iguana Pete's son? You monster!}
+{7000}{}{Small Bob live desert now... can't visit... drink for... small.. small Bob..}
+{7010}{}{where in desert?}
+{7020}{}{What do you mean in the desert?}
+{8000}{}{Not safe... me.... small Bob go south of town.. town new.... new... n... [throws up in mouth]}
+{8010}{}{New what? Dammnit tell me, I'm sick of this shit already!}
+{9000}{}{urrgg....gorru........uhhh...::burp:: lost small... Bob.... miss sunofbob... ::he starts to cry::}
+{9010}{}{::he doesn't look well. you better leave before they throw you both out::}
+{10000}{}{I'm Lenny and you're pond scum. Get outta here.@@Why you bothering Lenny, you little white grub?@@What you want with Lenny, worthless human?@@Keep poking me and you can tell your maker Lenny sent you.@@Pleased to meet ya. I'm Lenny - you must be Shit-for-brains. Ha, ha!}
+{11000}{}{uhhhhhh@@::burp::@@ugggh@@...small...bob...@@::sob::@@Drink!}
+

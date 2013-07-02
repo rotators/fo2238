@@ -1,0 +1,33 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_cutscene.fos
+//
+
+#ifndef __CLIENT_CUTSCENE__
+#define __CLIENT_CUTSCENE__
+
+#include "sprite.fos"
+
+void CutsceneProcess()
+{}
+
+void CutsceneDraw()
+{}
+
+void mouse(int onoff, int, int, string@, array<int>@)
+{
+    __DisableMouseEvents = (onoff <= 0);
+}
+
+void cursor(int onoff, int, int, string@, array<int>@)
+{
+    __HideCursor = (onoff <= 0);
+}
+
+void keyboard(int onoff, int, int, string@, array<int>@)
+{
+    __DisableKeyboardEvents = (onoff <= 0);
+}
+#endif // __CLIENT_CUTSCENE__ //

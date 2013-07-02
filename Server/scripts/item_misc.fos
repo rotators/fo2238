@@ -1,0 +1,195 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_misc.fos
+//
+
+// Various item scripts not worth own module
+
+#ifndef __ITEM_MISC__
+#define __ITEM_MISC__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_dialogs.fos"
+#include "MsgStr.h"
+
+#include "lexems_h.fos"
+
+#include "item_misc_h.fos"
+
+void _Waterpipe(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillWaterpipe");
+    item.SetEvent(ITEM_EVENT_USE, "_UseWaterpipe");
+}
+
+bool _SkillWaterpipe(Item& item, Critter& cr, int skill)
+{
+    return(_WaterpipeReal(cr));
+}
+
+bool _UseWaterpipe(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    return(_WaterpipeReal(cr));
+}
+
+bool _WaterpipeReal(Critter& cr)
+{
+    uint countBags = _CritCountItem(cr, PID_WATERBAG_EMPTY);
+    uint countBottles = _CritCountItem(cr, PID_BOTTLE_EMPTY);
+    if((countBags + countBottles) > 0)
+    {
+        string what = "";
+        if(countBags > 0)
+        {
+            cr.DeleteItem(PID_WATERBAG_EMPTY, countBags);
+            cr.AddItem(PID_WATERBAG, countBags);
+            what += "bag" + (countBags > 1 ? "s" : "");
+        }
+
+        if(countBags > 0 && countBottles > 0)
+            what += " and ";
+
+        if(countBottles > 0)
+        {
+            cr.DeleteItem(PID_BOTTLE_EMPTY, countBottles);
+            cr.AddItem(PID_BOTTLE_FULL, countBottles);
+            what += "bottle" + (countBags > 1 ? "s" : "");
+        }
+
+        cr.Say(SAY_NETMSG, "You've filled the " + what + " with water.");
+    }
+
+    return(true);
+}
+
+// template for rechargeable items with start value set in proto
+void _Charge(Item& item, bool firstTime)
+{
+    if(firstTime && item.Proto.Misc_ChargeMax > 0 && item.Proto.Misc_ChargeStart > 0)
+    {
+        if(item.Proto.Misc_ChargeStart > item.Proto.Misc_ChargeMax)
+            item.Charge = item.Proto.Misc_ChargeMax;
+        else
+            item.Charge = item.Proto.Misc_ChargeStart;
+    }
+}
+
+uint16[] NpcSkinArmors =
+{
+    PID_WORN_ROBE,
+//	PID_BLUE_ROBE,
+//	PID_RED_ROBE,
+//	PID_GRAY_ROBE,
+    PID_MOBSTER_BLUE,
+    PID_MOBSTER_GRAY,
+    PID_CLOTHES_POLICE,
+    PID_CLOTHES_GENERIC1,
+    PID_CLOTHES_GENERIC2,
+    PID_CLOTHES_SCIENTIST1,
+    PID_CLOTHES_SCIENTIST2,
+    PID_CLOTHES_ELEGANT_SUIT,
+    PID_CLOTHES_RAGS,
+    PID_CLOTHES_DWARF,
+    PID_CLOTHES_RED_SHIRT,
+    PID_CLOTHES_DOCTOR,
+    PID_CLOTHES_CHILD,
+    PID_CLOTHES_GRAY_SHIRT,
+    PID_CLOTHES_FAT1,
+    PID_CLOTHES_BOXER,
+    PID_SF_COMBAT_JACKET,
+    PID_MORDINO_METAL_JACKET,
+    PID_CLOTHES_GENERIC3
+};
+
+void _NpcSkinArmor(Item& item, bool firstTime)
+{
+    if(firstTime)
+    {
+        item.ChangeProto(NpcSkinArmors[Random(0, NpcSkinArmors.length() - 1)]);
+    }
+}
+
+Item@ CreateMapTo(Critter& cr, Location& location, uint flags)
+{
+    return(CreateMapTo(cr, location, flags, ""));
+}
+
+Item@ CreateMapTo(Critter& cr, Location& location, uint flags, string& info)
+{
+    Item@ mapItem = cr.AddItem(PID_MAP_TO_LOCATION, 1);
+    if(valid(mapItem))
+    {
+        if(info.length() > 0)
+            SetLexem(mapItem, "$+", info);
+        ITEM_MAP_TARGET(mapItem) = location.Id;
+        ITEM_MAP_FLAGS(mapItem)  = flags;
+
+        SETFLAG(mapItem.Flags, ITEM_CAN_USE);
+        mapItem.Update();
+
+        return(mapItem);
+    }
+
+    return(null);
+}
+
+void _MapToLocation(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_MapToLocationUse");
+    if(firstTime)
+        UNSETFLAG(item.Flags, ITEM_CAN_USE);
+}
+
+bool _MapToLocationUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+        return(true);
+    }
+
+    if(ITEM_MAP_TARGET(item) == 0)
+    {
+        cr.Say(SAY_NETMSG, "Map does not contain any coordinates.");
+        return(true);
+    }
+
+    Location@ location = GetLocation(ITEM_MAP_TARGET(item));
+    if(!valid(location))
+    {
+        cr.Say(SAY_DIALOGBOX_TEXT, "This map is heavily damaged, it's impossible to read anything from it.");
+        return(true);
+    }
+
+    bool   textOnly = false;
+    string text = "";
+
+    if(cr.IsKnownLoc(true, ITEM_MAP_TARGET(item)))
+    {
+        text = "You already marked that position in your Pip-Boy";
+        textOnly = true;
+    }
+
+    if(text.length() > 0)
+    {
+        cr.ShowScreen(SCREEN_CLOSE, 0, "");
+        cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+        cr.Say(SAY_DIALOGBOX_TEXT, text);
+    }
+    if(textOnly)
+        return(true);
+
+    cr.SetKnownLoc(true, ITEM_MAP_TARGET(item));
+    cr.ShowScreen(SCREEN_CLOSE, 0, "");
+    cr.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+    cr.Say(SAY_DIALOGBOX_TEXT, "You've marked the position in your Pip-Boy");
+
+    if(FLAG(ITEM_MAP_FLAGS(item), ITEM_MAP_DELETE_ON_USE))
+        DeleteItem(item);
+
+    return(true);
+}
+#endif // __ITEM_MISC__ //

@@ -1,0 +1,54 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_rq_cave.fos
+//
+
+#include "_macros.fos"
+#include "cave_h.fos"
+#include "_scripts.fos"
+#include "_ai.fos"
+#include "utils_h.fos"
+#include "entire.fos"
+
+int[] RQCaveData =
+{
+    /* pid, bag, aipacket*/
+    84, 142, AIPACKET_DEATHCLAW,
+    11, 1,   AIPACKET_RAT,
+    12, 1,   AIPACKET_MANTIS,
+    9, 1,   AIPACKET_GENERIC_DOG
+};
+
+int[] Heirloom =
+{ PID_FUZZY_PAINTING, PID_GOLD_LOCKET, PID_URN, PID_NECKLACE };
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        array<Entire> critter_entires;
+
+        ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_EASY);
+        ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_NORMAL);
+        ParseEntires(map, critter_entires, ENTIRE_CAVE_CRITTER_HARD);
+
+        shuffle_array(critter_entires, Entire);
+
+        int n = Random(CAVE_CRITTER_MAX / 2, CAVE_CRITTER_MAX);
+        n = MIN(n, int(critter_entires.length()));
+        int idx = 3 * Random(0, (RQCaveData.length() / 3) - 1);
+
+        for(int i = 0; i < n; i++)
+            AddNpc(map, RQCaveData[idx], critter_entires[i].HexX, critter_entires[i].HexY, Random(0, 5), 0, SCRIPT_mob, RQCaveData[idx + 2], RQCaveData[idx + 1], TEAM_Mob0, false, Random(1, 5));
+
+        array<Entire> item_entires;
+        ParseEntires(map, item_entires, CAVE_ENTIRE_ITEM);
+
+        idx = Random(0, item_entires.length() - 1);
+        Item@ cont = map.AddItem(item_entires[idx].HexX, item_entires[idx].HexY, PID_CONTAINER_WOOD_CRATE, 1);
+        Item@ heirloom = cont.AddItem(Heirloom[Random(0, Heirloom.length() - 1)], 1, 0);
+        // heirloom.Val5 = ... mark it as a quest item or update the quest data
+    }
+}

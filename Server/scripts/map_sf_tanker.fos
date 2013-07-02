@@ -1,0 +1,31 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_sf_tanker.fos
+//
+
+#include "_macros.fos"
+
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+#include "reinforcements_h.fos"
+
+
+//
+// Initialize map, and store the Tanker Vagrants faction id
+// to be read by their terminal
+//
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_VAGRANTS);
+
+        uint[] maxes = { 7, 3 };
+        SetAlertMap(map, maxes);
+    }
+    // assign event handlers
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "map_playerfaction_hq@_OnInCritter");
+}

@@ -1,0 +1,30 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_screen_picture.fos
+//
+
+// Show picture on server request
+
+#ifndef __CLIENT_SCREEN_PICTURE__
+#define __CLIENT_SCREEN_PICTURE__
+
+void picture(int p0, int p1, int p2, string@ pic, array<int>@)
+{
+    if(!valid(pic) || pic.length() == 0)
+        return;
+
+    Sprite spic;
+    if(spic.Load(pic, PT_ART_INTRFACE))
+    {
+        GUI_DeleteScreen(CLIENT_SCREEN_PICTURE);
+        GUI_CreateScreen(CLIENT_SCREEN_PICTURE, pic)
+        .AutoCursor(true, CURSOR_HAND)                   // should be arrow from fallouts main menu
+        .CanMove(false)
+        .CloseOnMiss(false)
+        .Multiinstance(false);
+        GUI_ShowScreen(CLIENT_SCREEN_PICTURE, p0, p1, p2);
+    }
+}
+#endif // __CLIENT_SCREEN_PICTURE__ //

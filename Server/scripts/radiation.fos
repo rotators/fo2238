@@ -1,0 +1,238 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// radiation.fos
+//
+
+// Original Fallout2 system
+
+// import void AffectRadiation(Critter& cr, int value) from "radiation";
+// import void DropRadiation(Critter& cr) from "radiation";
+
+#include "_macros.fos"
+
+#define RADIATION_STAGES           (6)
+#define RADIATION_STATS            (8)
+#define RADIATION_DURATION         (10080)
+#define RADIATION_DAMAGE_VALUE     (66)
+#define RADIATION_HIGH_DOSE        (66)
+#define RADIATION_DEAD_DOSE        (1800)
+
+#define STR_RADIATION_STAGE        # (stage) (12799 + (stage))
+#define STR_RADIATION_DIE          (12806)
+#define STR_RADIATION_HIGH_DOSE    (12807)
+
+const int[] RadiationEffects =
+{
+    1,  100,  200,  400,  600, 1000,                             /*stages values*/
+    ST_STRENGTH,    0,    0,    0,    2,    4,    6,             /*stats amount*/
+    ST_PERCEPTION,    0,    0,    1,    0,    3,    5,
+    ST_ENDURANCE,    0,    0,    0,    1,    3,    5,
+    ST_CHARISMA,    0,    0,    0,    0,    3,    5,
+    ST_INTELLECT,    0,    0,    0,    0,    1,    3,
+    ST_AGILITY,    0,    0,    1,    2,    5,    6,
+    ST_CURRENT_HP,    0,    1,    3,    5,   15,   20,
+    ST_HEALING_RATE,    0,    0,    0,    5,   10,   10,
+};
+
+// Table offsets
+#define TABLE_STAGE_VALUE          # (stage)          RadiationEffects[(stage) - 1]
+#define TABLE_STAT_INDEX           # (stat)            RadiationEffects[6 + (stat) * 7]
+#define TABLE_STAT_AMOUNT          # (stat, stage)RadiationEffects[6 + (stat) * 7 + (stage)]
+
+
+void AffectRadiation(Critter& cr, int value)   // Export
+{
+    if(cr.IsDead())
+        return;
+    if(cr.Stat[ST_BODY_TYPE] == BT_ROBOT || cr.Stat[ST_BODY_TYPE] == BT_ALIEN)
+        return;
+
+    array<uint> indexes;
+    array<uint> rates;
+    bool        isActive = cr.GetTimeEvents(CTE_RADIATION, indexes, null, rates) != 0;
+    int         levelVal = cr.Stat[ST_RADIATION_LEVEL];
+    int         resistVal = cr.Stat[ST_RADIATION_RESISTANCE];
+
+    if(value >= 0)
+        value -= value * resistVal / 100;
+    cr.StatBase[ST_RADIATION_LEVEL] = CLAMP(levelVal + value, 0, 2000);
+    levelVal = cr.Stat[ST_RADIATION_LEVEL];
+
+    if(value > RADIATION_HIGH_DOSE)
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_RADIATION_HIGH_DOSE);
+
+    if(levelVal >= RADIATION_DAMAGE_VALUE)
+    {
+        if(cr.Damage[DAMAGE_RADIATED] == 0)
+            cr.DamageBase[DAMAGE_RADIATED] = 1;
+    }
+    else
+    {
+        if(cr.Damage[DAMAGE_RADIATED] != 0)
+            cr.DamageBase[DAMAGE_RADIATED] = 0;
+    }
+
+    if(isActive)       // Try begin event with new effects
+    {
+        uint stage = rates[0];
+        uint newStage = GetRadiationStage(levelVal);
+        if(stage != newStage)
+            cr.ChangeTimeEvent(indexes[0], 0, stage);
+    }
+    else     // Try start new event
+    {
+        int stage1Val = TABLE_STAGE_VALUE(1);
+        if(levelVal >= stage1Val)
+            cr.AddTimeEvent("cte_Radiation", 0, CTE_RADIATION);
+    }
+
+    if(levelVal >= RADIATION_DEAD_DOSE)
+    {
+        cr.ToDead(ANIM2_DEAD_FUSED, null);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_RADIATION_DIE);
+    }
+}
+
+void DropRadiation(Critter& cr)   // Export
+{
+    bool isActive = cr.GetTimeEvents(CTE_RADIATION, null, null, null) != 0;
+    if(isActive)
+    {
+        uint stage = GetRadiationStage(cr.Stat[ST_RADIATION_LEVEL]);
+        ChangeStage(cr, stage, false);
+        cr.EraseTimeEvents(CTE_RADIATION);
+    }
+    cr.StatBase[ST_RADIATION_LEVEL] = 0;
+    /*if(cr.Damage[DAMAGE_RADIATED]!=0) */ cr.DamageBase[DAMAGE_RADIATED] = 0;
+}
+
+void CapRadiation(Critter& cr)   // export
+{
+    if(cr.Stat[ST_RADIATION_LEVEL] >= RADIATION_DEAD_DOSE)
+        AffectRadiation(cr, -(cr.Stat[ST_RADIATION_LEVEL] - RADIATION_DEAD_DOSE + 1));
+}
+
+uint cte_Radiation(Critter& cr, int identifier, uint& stage)
+{
+    if(cr.IsDead())
+        return GAME_MINUTE(100);
+
+    uint newStage = GetRadiationStage(cr.Stat[ST_RADIATION_LEVEL]);
+    uint duration = RADIATION_DURATION;
+
+    if(stage != newStage)     // Set new effects
+    {
+        ChangeStage(cr, stage, false);
+        ChangeStage(cr, newStage, true);
+        stage = newStage;
+    }
+    else     // Erase effects
+    {
+        ChangeStage(cr, stage, false);
+        duration = 0;
+    }
+    return GAME_MINUTE(duration);
+}
+
+uint GetRadiationStage(int level)
+{
+    for(uint i = 0, j = RADIATION_STAGES; i <= j; i++)
+    {
+        int valMin = (i > 0 ? TABLE_STAGE_VALUE(i) : 0);
+        int valMax = (i < j ? TABLE_STAGE_VALUE(i + 1) : level + 1);
+        if(level >= valMin && level < valMax)
+            return i;
+    }
+    return 0;
+}
+
+void ChangeStage(Critter& cr, uint stage, bool gain)
+{
+    if(stage == 0)
+        return;
+    if(gain)
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_RADIATION_STAGE(stage));
+
+    for(uint i = 0, j = RADIATION_STATS; i < j; i++)
+    {
+        uint statIndex = TABLE_STAT_INDEX(i);
+        int  statAmount = TABLE_STAT_AMOUNT(i, stage);
+
+        if(statAmount != 0)
+        {
+            int curVal = cr.Stat[statIndex];
+
+            if(gain)               // Gain effect
+            {
+                statAmount = -statAmount;
+                if(statIndex < STAT_EXT_BEGIN)
+                    cr.StatBase[STAT_EXT_BEGIN + statIndex] += statAmount;
+                else if(statIndex == ST_CURRENT_HP)
+                {
+                    cr.StatBase[ST_CURRENT_HP] += statAmount;
+                    if(cr.Stat[ST_CURRENT_HP] <= 0)
+                        cr.ToDead(ANIM2_DEAD_FUSED, null);
+                }
+            }
+            else             // Reduce effect
+            {
+                if(statIndex < STAT_EXT_BEGIN)
+                    cr.StatBase[STAT_EXT_BEGIN + statIndex] += statAmount;
+            }
+
+            // Debug messages
+            //	curVal=cr.Stat[statIndex]-curVal;
+            //	if(curVal>0) cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DRUG_STAT_GAIN,"$name @msg game "+STR_STAT_NAME(statIndex)+"@$value"+curVal);
+            //	else if(curVal<0) cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_DRUG_STAT_LOSE,"$name @msg game "+STR_STAT_NAME(statIndex)+"@$value"+(-curVal));
+        }
+    }
+}
+
+
+
+
+
+/*
+   Radiation
+   And now for some stuff on radiation, which does play a small part in the Fallout world.
+   Sources of radiation include Fruit, golden geckos, and aliens and centaurs in random encounters.
+   Whenever you get a huge dose all at once, the message window says "You have received a large dose
+   of radiation." As explained in the patch notes, the radiation sign pops up once you've reached 66 rem.
+
+   As far as I can tell radiation damage works like this: some time after you absorb a dose of radiation,
+   you'll get one of the messages listed below, and you may temporarily lose stat points, Healing Rate and
+   current Hit Points. The severity of the "attack" depends on your total rem count, but also on the amount
+   of recent radiation that triggered the message. After 7 days, your stats will return to normal. A little
+   confusingly, this is signalled by another message identical to the first one. If you absorb more radiation
+   in the meanwhile, your current penalty may be replaced by a more severe one.
+
+   Here's a list of the penalties you may suffer. The rem figures are rough approximations.
+   Rem	    Message	                  HR	CHP	ST	PE	EN	CH	IN	AG
+   >0	    "very nauseous"
+   >150	"slightly fatigued"			    -1
+   >300	"vomiting does not stop"	    -3		-1				-1
+   >450	"hair is falling out"	  -5	-5	-2		-1			-2
+   >600	"skin is falling off"	 -10	-15	-4	-3	-3	-3	-1	-5
+   >1000	"intense agony"	         -10	-20	-6	-5	-5	-5	-3	-6
+
+
+   You will expire from your condition if any of these stats except for Healing Rate (including CH) drops to 0
+   or below. This is checked only at the moment when they are lowered, so you may be able to use drugs to stay alive.
+   Assuming you don't die in this manner, you can live with any kind of rem count and still run around with no penalty
+   whatsoever. In any normal game, radiation is not a significant factor; in fact, in order to reach even 300 rem you'd
+   have to run several laps around the Gecko reactor room or purposely hang around the Toxic waste dump. From what I
+   can tell, there is never any permanent damage resulting from radiation.
+
+   {12800}{}{You feel very nauseous.}
+   {12801}{}{You feel very nauseous, and after some mild vomiting, slightly fatigued.}
+   {12802}{}{You are very fatigued, the vomiting does not stop, and your recovery time is impaired.}
+   {12803}{}{You are hemorrhaging violently. You are very sick, and your hair is falling out.}
+   {12804}{}{You are hemorrhaging violently and continuously. The vomitus is stained red from your blood. Your skin is falling off of your bones.}
+   {12805}{}{There is bleeding from your intestines and you have severe diarrhea. You feel bloated and are in intense agony.}
+   {12806}{}{You have died from radiation sickness.}
+   {12807}{}{You have received a large dose of radiation.}
+   {12808}{}{The geiger counter is clicking.}
+   {12809}{}{The geiger counter is clicking wildly.}
+ */

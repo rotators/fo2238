@@ -1,0 +1,113 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_cathedral.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "elevators_h.fos"
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+
+
+
+//
+// Initialize map, and indicates this map belong to Unity
+//
+
+//
+// Map Data:
+// 0 - faction id (Unity)
+//
+
+// elevator 1-2-3
+CElevator Elevator(ELEVATOR_MASTER_123);
+// elevator 3-4
+CElevator BombElevator(ELEVATOR_MASTER_34);
+
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_UNITY);
+    }
+    // to add only one for all floors
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator);
+        AddElevator(BombElevator);
+        ElevatorsAdded = true;
+    }
+
+    // parse elevators floors (only for vault levels)
+    uint16 x = 0, y = 0;
+    switch(map.GetProtoId())
+    {
+    case MAP_Cathedral_CellarLevel1:
+    case MAP_Cathedral_CellarLevel2:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+        break;
+    case MAP_Cathedral_CellarLevel3:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+    case MAP_Cathedral_CellarLevel4:
+        if(map.GetEntireCoords(2, 0, x, y))
+            BombElevator.AddFloor(map.Id, 2);
+        break;
+    default:
+    }
+}
+
+// ===============================
+// Elevator triggers
+// ===============================
+void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator, critter, entered);
+}
+void t_ElevatorBomb(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(BombElevator, critter, entered);
+}
+
+void t_EnterCave(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_CATH_PLAYER_ENTER_CAVE, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// ===============================
+// Outside doors are locked
+// ===============================
+void _Door(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOnDoor");
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillOnDoor");
+}
+
+bool _UseItemOnDoor(Item& item, Critter& crit, Item@ usedItem)
+{
+    crit.Say(SAY_NETMSG, "The heavy wooden door is locked from the inside.");
+    return true;
+}
+
+bool _UseSkillOnDoor(Item& item, Critter& crit, int skill)
+{
+    crit.Say(SAY_NETMSG, "The heavy wooden door is locked from the inside.");
+    if(skill == -1)
+    {
+        // crit.StatBase[ST_VAR9]=item.Val0;
+        // RunDialog(crit, ARENA_DOOR_DIALOG, item.HexX, item.HexY, false);
+    }
+    return true;
+}

@@ -1,0 +1,215 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// economy_bankaccount.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "serializator.fos"
+#include "utils_h.fos"
+
+// Class for handling personal bank data (money deposited, credit rating, debt etc)
+class BankAccount
+{
+    uint         ownerId;      // The id of the accountowner
+    int          balance;      // The money balance
+    uint         loan;         // The amount of loaned money
+    uint         type;         // Account type, see _economy.fos
+    uint         rating;       // Credit rating
+    string       name;         // This is used for data retrieval
+
+    array<uint>  accesslist;   // List of people who has access to the account (only possible with joint account)
+    uint         accesscount;  // How many other people who have access to the account
+
+    Serializator serializer;
+
+    bool LoadData()
+    {
+        serializer.Clear();
+        if(!serializer.Load(name))
+            return false;
+        serializer.Get(ownerId).Get(balance).Get(loan).Get(type).Get(accesslist).Get(accesscount).Get(rating);
+        return true;
+    }
+
+    bool SaveData()
+    {
+        serializer.Clear();
+        return serializer.Set(ownerId).Set(balance).Set(loan).Set(type).Set(accesslist).Set(accesscount).Set(rating).Save(name);
+    }
+
+    bool Init(string name)
+    {
+        ownerId = balance = loan = type = rating = accesscount = 0;
+        this.name = name;
+
+        if(!LoadData())
+            return SaveData();
+        return true;
+    }
+
+    bool AddLoan(uint amount)
+    {
+        loan += amount;
+        return true;
+    }
+
+    bool AddMoney(uint amount)
+    {
+        balance += amount;
+        return true;
+    }
+
+    bool RemoveMoney(uint amount)
+    {
+        balance -= amount;
+        return true;
+    }
+
+    bool SetOwner(uint ownerId)
+    {
+        this.ownerId = ownerId;
+        return true;
+    }
+
+    uint AddAccess(uint playerid)
+    {
+        if(GetAccountType() == ACCOUNT_TYPE_NORMAL)
+            return FD_BANK_RESULT_INVALID_ACCOUNT_TYPE;
+
+        if(HasAccess(playerid))
+            return FD_BANK_RESULT_ALREADY_HAS_ACCESS;
+
+        accesslist.insertLast(playerid);
+        accesscount += 1;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint RemoveAccess(uint playerid)
+    {
+        if(GetAccountType() == ACCOUNT_TYPE_NORMAL)
+            return FD_BANK_RESULT_INVALID_ACCOUNT_TYPE;
+
+        if(!HasAccess(playerid))
+            return FD_BANK_RESULT_ALREADY_NO_ACCESS;
+
+        int index = FindInArray(accesslist, playerid);
+
+        if(index == -1)
+            return FD_BANK_RESULT_INVALID_PLAYER;
+        else
+            accesslist.removeAt(uint(index));
+
+        accesscount -= 1;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    bool HasAccess(uint playerid)
+    {
+        for(uint i = 0; i < accesscount; i++)
+        {
+            if(accesslist[i] == playerid)
+                return true;
+        }
+        return false;
+    }
+
+    // How many people that have access to the account
+    uint GetAccessCount()
+    {
+        return accesscount;
+    }
+
+    uint GetOwner()
+    {
+        return ownerId;
+    }
+
+    int GetBalance()
+    {
+        return balance;
+    }
+
+    uint SetCreditRating(uint rating)
+    {
+        this.rating = rating;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint GetCreditRating()
+    {
+        return rating;
+    }
+
+    uint SetLoan(uint loan)
+    {
+        this.loan = loan;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint GetLoan()
+    {
+        return loan;
+    }
+
+    uint GetAccountType()
+    {
+        return type;
+    }
+
+    uint SetAccountType(uint type)
+    {
+        if(type > 2)
+            return FD_BANK_RESULT_INVALID_INPUT;
+
+        this.type = type;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint WithdrawMoney(int amount, uint playerid)
+    {
+        if(amount < 0)
+            return FD_BANK_RESULT_INVALID_INPUT;
+
+        if(amount > balance)
+            return FD_BANK_RESULT_NOT_ENOUGH_MONEY;
+
+        Critter@ player = GetCritter(playerid);
+        if(!valid(player))
+            return FD_BANK_RESULT_INVALID_PLAYER;
+
+        if(amount == 0)
+            return FD_BANK_RESULT_SUCCESS;
+
+        _CritAddItem(player, PID_BOTTLE_CAPS, amount);
+        balance -= int(amount);
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint DepositMoney(int amount, uint playerid)
+    {
+        if(amount < 0)
+            return FD_BANK_RESULT_INVALID_INPUT;
+
+        Critter@ player = GetCritter(playerid);
+        if(!valid(player))
+            return FD_BANK_RESULT_INVALID_PLAYER;
+
+        if(amount > int(_CritCountItem(player, PID_BOTTLE_CAPS)))
+            return FD_BANK_RESULT_NOT_ENOUGH_MONEY;
+
+        _CritDeleteItem(player, PID_BOTTLE_CAPS, amount);
+        balance += amount;
+
+        if(balance >= CREDITVALUE_FIRST)
+            rating = CREDITTYPE_FIRST;
+        if(balance >= CREDITVALUE_SECOND)
+            rating = CREDITTYPE_SECOND;
+        if(balance >= CREDITVALUE_THIRD)
+            rating = CREDITTYPE_THIRD;
+
+        return FD_BANK_RESULT_SUCCESS;
+    }
+};

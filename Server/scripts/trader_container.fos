@@ -1,0 +1,40 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// trader_container.fos
+//
+
+#include "_macros.fos"
+#include "ITEMPID.H"
+// This script doesn't use the trader framework as it's not a normal trader script.
+
+#define FOOTLOCKER_PRICE        (15000)
+#define ICECHEST_PRICE          (15000)
+#define AMMO_CRATE_PRICE        (15000)
+
+#define FORCE_DIALOG_SUCCESS    (16)
+
+void BuyContainer(uint pid, uint amount, uint cost, Critter& player)
+{
+    player.AddItem(pid, amount);
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+}
+
+uint r_BuyContainer(Critter& player, Critter@ npc, int val)
+{
+    if(val == 0)
+        BuyContainer(PID_CONTAINER_FOOTLOCKER_L, 1, FOOTLOCKER_PRICE, player);
+    else if(val == 1)
+        BuyContainer(PID_CONTAINER_FOOTLOCKER_R, 1, FOOTLOCKER_PRICE, player);
+    else if(val == 2)
+        BuyContainer(PID_CONTAINER_ICE_CHEST_L, 1, ICECHEST_PRICE, player);
+    else if(val == 3)
+        BuyContainer(PID_CONTAINER_ICE_CHEST_R, 1, ICECHEST_PRICE, player);
+    else if(val == 4)
+        BuyContainer(PID_CONTAINER_AMMOBOX_L, 1, AMMO_CRATE_PRICE, player);
+    else if(val == 5)
+        BuyContainer(PID_CONTAINER_AMMOBOX_R, 1, AMMO_CRATE_PRICE, player);
+
+    return FORCE_DIALOG_SUCCESS;
+}

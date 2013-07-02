@@ -1,0 +1,973 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// rooms.fos
+//
+
+//
+// Script for renting rooms, locks and maybe lock guards?
+//
+// Basically, room/house/whatever or maybe I should say - domicile, is just set of locks
+//
+
+#include "_macros.fos"
+#include "debug_h.fos"
+#include "entire.fos"
+#include "serializator.fos"
+#include "utils_h.fos"
+#include "npc_planes_h.fos"
+#include "debug_h.fos"
+
+import bool LockerOpen(Item& item) from "lockers";
+import bool LockerClose(Item& item) from "lockers";
+import void InjectValue(uint, uint, uint, uint) from "worldmap";
+
+// these item properties denotes npc who rents lock, and player who rented it
+// Val1 == lockerId
+// Val2 == condition
+#define HOTEL_ID         # (item)                (item.Val3)
+#define ROOM_ID          # (item) (item.Val4)
+// val5 - event id for auto-closing
+// real-time days
+// #define PERIOD #(days)		(days*24*60*__TimeMultiplier)
+
+// on npc buffer map, there's container that stores players items
+#define UBER_CONT_X      (74)
+#define UBER_CONT_Y      (67)
+#define UBER_CONT_PID    (128)
+
+/**
+ * @ingroup FOnline2238
+ *
+ * Room info
+ */
+class CRoom
+{
+    uint    ownerNpcId;
+    // Critter@ ownerPlayer;
+    uint    playerId;
+
+    int     roomnumber;
+
+    CHotel@ hotel;
+    // expiration date (full minutes)
+    // uint expirationDate;
+    // room doors/containers
+    array<uint> locks;
+
+    CRoom(Critter@ ownerNpc, uint playerId, CHotel@ hotel, int roomnumber)
+    {
+        this.ownerNpcId = ownerNpc.Id;
+        this.playerId = playerId;
+        @this.hotel = hotel;
+        this.roomnumber = roomnumber;
+    }
+
+    //
+    // Chekcs whether room is free to be rented
+    //
+    bool IsFree()
+    {
+        if(locks.length() == 0)
+            return false;
+
+        // return OWNER_PLAYER(locks[0]) == 0;
+        return playerId == 0;
+    }
+    //
+    // Returns identifier of the room' locks
+    //
+    uint GetLockId()
+    {
+        if(locks.length() == 0)
+        {
+            Log("ERR: empty room <" + roomnumber + "> at hotel <Hotel_" + hotel.GetId() + ">");
+            return 0;
+        }
+        Item@ lock = GetItem(locks[0]);
+        if(!valid(lock))
+        {
+            Log("ERR: lock removed, (hotel, roomnumber): (" + hotel.GetId() + ", " + roomnumber + ")");
+            return 0;
+        }
+        return lock.LockerId;
+    }
+    /**
+     *
+     */
+    int GetRoomNumber()
+    {
+        return roomnumber;
+    }
+
+    /**
+     * Retrieves id of the hotel room belongs too.
+     */
+    uint GetHotelId()
+    {
+        return hotel.GetId();
+    }
+    /**
+     * Returns id of the player that rents a room
+     */
+    uint GetPlayerId()
+    {
+        return playerId;
+    }
+    //
+    // Checks if player rented that room
+    //
+    bool IsOwner(uint Id)
+    {
+        if(locks.length() == 0)
+            return false;
+        // return OWNER_PLAYER(locks[0]) == player.Id;
+        return playerId == Id;
+    }
+    //
+    // Adds lock to the room
+    //
+    void AddLock(Item@ item)
+    {
+        WLog("rooms", "Adding lock: " + item.Id);
+        locks.insertLast(item.Id);
+    }
+    //
+    // Gets the pointer to the door
+    //
+    Item@ GetDoor()
+    {
+        for(uint i = 0, j = locks.length(); i < j; i++)
+        {
+            Item@ lock = GetItem(locks[i]);
+            if(lock.GetType() == ITEM_TYPE_DOOR)
+                return lock;
+        }
+        return null;
+    }
+    Item@ GetContainer()
+    {
+        for(uint i = 0, j = locks.length(); i < j; i++)
+        {
+            Item@ lock = GetItem(locks[i]);
+            if(lock.GetType() == ITEM_TYPE_CONTAINER)
+                return lock;
+        }
+        return null;
+    }
+    //
+    // Rents a room for a given player for specified period of time and price
+    //
+    void Rent(Critter& npc, Critter& player, uint price, uint days)
+    {
+        DPlayerLog(player, "Renting room at hotel (" + hotel.GetId() + "), " + locks.length() + " locks.");
+        playerId = player.Id;
+        GameVar@ var = GetLocalVar(LVAR_renting_id, player.Id);
+        var = hotel.GetId();
+        @var = GetLocalVar(LVAR_renting_balance, player.Id);
+        var = 0;
+        @var = GetLocalVar(LVAR_renting_period, player.Id);
+        var = days;
+        // set locks properties
+        /*for(uint i = 0; i < locks.length(); i++)
+           {
+                OWNER_PLAYER(locks[i]) = player.Id;
+           }*/
+        hotel.SaveData();
+        uint expirationDate = AFTER(REAL_DAY(days));
+
+        // create event that will call Expire method
+        Item@ lock = GetItem(locks[0]);
+        uint[] values = { player.Id, npc.Id, lock.LockerId };
+        @var = GetLocalVar(LVAR_renting_event, player.Id);
+        var = CreateTimeEvent(expirationDate, "e_RoomExpire", values, true);
+    }
+    //
+    // Invalidates current owner and convert items in container
+    //
+    void Expire(bool forced)
+    {
+        WLog("rooms", "Expiring room");
+        GameVar@ var = GetLocalVar(LVAR_renting_id, playerId);
+        var = 0;
+        @var = GetLocalVar(LVAR_renting_balance, playerId);
+        var = 0;
+        @var = GetLocalVar(LVAR_renting_period, playerId);
+        var = 0;
+        if(forced)
+        {
+            @var = GetLocalVar(LVAR_renting_event, playerId);
+            if(var != 0)
+                EraseTimeEvent(var.GetValue());
+        }
+        playerId = 0;
+
+        Map@ map;
+        for(uint i = 0; i < locks.length(); i++)
+        {
+            @map = null;
+            uint16 dummy;
+            Item@  lock = GetItem(locks[i]);
+            if(!lock.IsNotValid)
+                @map = lock.GetMapPosition(dummy, dummy);
+            if(!valid(map))
+                continue;
+            // invalidate owner
+            // OWNER_PLAYER(locks[i]) = 0;
+            // take stuff from containers
+            /*if(locks[i].GetType() == ITEM_TYPE_CONTAINER)
+               {
+                    Item@[] items;
+                    locks[i].GetItems(0, items);
+                    //MoveItems(items, ownerNpc);
+                    for(uint j = 0, len = items.length(); j < len; j++)
+                    {
+                            InjectValue(ownerNpc.WorldX, ownerNpc.WorldY, BaseItemValue(items[j]), INJECTVALUE_ROOMS);
+                            DeleteItem(items[j]);
+                    }
+               }*/
+        }
+        hotel.SaveData();
+    }
+};
+
+//
+// Invalidates current owner and transfers container' items to npc owner
+//
+uint e_RoomExpire(array<uint>@ values)
+{
+    uint     playerId = values[0];
+    GameVar@ var = GetLocalVar(LVAR_renting_id, playerId);
+    if(var.GetValue() == 0)
+        return 0;
+    WLog("rooms", "Rent period for " + GetSafePlayerName(playerId));
+    // check if player has paid for room
+    @var = GetLocalVar(LVAR_renting_balance, playerId);
+    if(var.GetValue() > 0)
+    {
+        // reduce rent
+        var = 0;
+        @var = GetLocalVar(LVAR_renting_period, playerId);
+        WLog("rooms", "Rent had been paid, delaying for " + REAL_DAY(var.GetValue()));
+        // delay expiration, because player have paid for rent
+        return REAL_DAY(var.GetValue());
+    }
+    WLog("rooms", "Rent over");
+    uint npcId = values[1];
+
+    // obtain room to which locks belong
+    Critter@ cr = GetCritter(npcId);
+    if(!valid(cr))
+        return GAME_MINUTE(10);
+
+    CHotel@ hotel = GetHotel(cr);
+    if(!valid(hotel))
+    {
+        Log("ERR: npc hasn't got hotel assigned");
+        return 0;
+    }
+    CRoom@ room;
+    uint   lockerId = values[2];
+    for(uint i = 0; i < hotel.rooms.length(); i++)
+    {
+        if(!valid(hotel.rooms[i]))
+            continue;
+
+        if(hotel.rooms[i].GetLockId() == lockerId)
+        {
+            @room = hotel.rooms[i];
+            room.Expire(false);
+            return 0;
+        }
+    }
+    Log("ERR: Room not found");
+    return 0;
+}
+
+//
+// Set of rentable locks
+//
+class CHotel
+{
+    // hotel owner
+    uint          ownerId;
+    // list of rooms in the hotel
+    array<CRoom@> rooms;
+    // lock numbers that belong to npc
+    array<uint>   locks;
+    // price of a room
+    uint          Price;
+    // amount of time room is rented for (real-time days)
+    uint          RentTime;
+
+    CHotel(Critter & npc, array<uint>&locks, uint price, uint rentTime)
+    {
+        this.ownerId = npc.Id;
+        this.locks = locks;
+        this.Price = price;
+        this.RentTime = rentTime;
+    }
+    /**
+     * Assigns new properties to hotel.
+     */
+    void Set(Critter& npc, array<uint>& locks, uint price, uint rentTime)
+    {
+        this.ownerId = npc.Id;
+        this.locks = locks;
+        this.Price = price;
+        this.RentTime = rentTime;
+        rooms.resize(0);
+    }
+    //
+    // Hotel id - owner' npc role
+    //
+    uint GetId()
+    {
+        Critter@ owner = GetCritter(ownerId);
+        return owner.Stat[ST_NPC_ROLE];
+    }
+
+    /**
+     * Stores info about players that are assigned to locks.
+     */
+    void SaveData()
+    {
+        Serializator serializer;
+        for(uint i = 0, j = rooms.length(); i < j; i++)
+        {
+            // store that infor in case of regenmap
+            serializer.Set(rooms[i].GetPlayerId());
+        }
+        serializer.Save("Hotel_" + GetId());
+    }
+    //
+    // Initializes rooms to be managed by given npc
+    // it just looks for specified locks in the map
+    //
+    void InitRooms(Map@ map)
+    {
+        WLog("rooms", "#################################");
+        WLog("rooms", "Initializing hotel rooms: " + locks.length() + " from " + Locks.length() + "locks");
+
+        Serializator serializer;
+        serializer.Load("Hotel_" + GetId());
+
+        Critter@ owner = GetCritter(ownerId);
+        for(uint i = 0, iend = locks.length(); i < iend; i++)
+        {
+            // maybe we have stored who is renting it actually
+            uint   renting = 0;
+            serializer.Get(renting);
+            CRoom@ room = @CRoom(owner, renting, this, locks[i]);
+            Map@   lockMap;
+            for(uint j = 0, jend = Locks.length(); j < jend; j++)
+            {
+                Item@ Lock = GetItem(Locks[j]);
+                if(!valid(Lock))
+                    continue;
+                @lockMap = null;
+                uint16 dummy;
+                if(!Lock.IsNotValid)
+                    @lockMap = Lock.GetMapPosition(dummy, dummy);
+                if(!valid(lockMap))                 // map with some old loc got deleted
+                    continue;
+
+                // Log("rooms","Checking Lock: " + Locks[j].LockerId + " vs " + locks[i] +
+                //	"; " + map.Id + " vs " + owner.GetMapId());
+
+                if(Lock.LockerId == locks[i] && lockMap.Id == map.Id)
+                {
+                    WLog("rooms", "!!!! " + map.Id);
+                    // this lock belongs to the room
+                    // DEBUG: small assertion
+                    if(i == 0 && rooms.length() > 0)
+                        WLog("rooms", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    room.AddLock(Lock);
+                    HOTEL_ID(Lock) = GetId();
+                    ROOM_ID(Lock) = rooms.length();
+                    // if(renting != 0)
+                    //	OWNER_PLAYER(Locks[j]) = renting;
+                }
+            }
+            if(room.locks.length() == 0)
+                Log("ERR: no locks assigned for room <" + locks[i] + "> at hotel <Hotel_" + GetId() + ">.");
+            rooms.insertLast(room);
+        }
+        WLog("rooms", "#######################################");
+    }
+
+    //
+    // Gets unoccupied room in the hotel
+    //
+    CRoom@ GetFreeRoom()
+    {
+        WLog("rooms", "Getting free room, from: " + rooms.length());
+        // rooms are initialized 'on demand'
+        /*if(rooms.length() == 0)
+                InitRooms();*/
+        // find free room
+        for(uint i = 0; i < rooms.length(); i++)
+        {
+            if(rooms[i].IsFree())
+            {
+                WLog("rooms", "Free room found");
+                return rooms[i];
+            }
+        }
+        WLog("rooms", "No free room found.");
+        return null;
+    }
+
+    void Print()
+    {
+        WLog("rooms", "------------");
+        for(uint i = 0; i < rooms.length(); i++)
+        {
+            Item@ lock = GetItem(rooms[i].locks[0]);
+            WLog("rooms", "Room " + i + ": " + lock.Id);
+        }
+        WLog("rooms", "------------");
+    }
+};
+
+array<CHotel@> Hotels;
+
+//
+// Adds hotel for a given owner
+//
+void AddHotel(Critter& npc, array<uint>& locks, uint price, uint rentTime)
+{
+    WLog("rooms", "Adding hotel...");
+    // check if exist already
+    CHotel@ hotel = GetHotel(npc);
+    if(valid(hotel))       // substitute
+    {
+        WLog("rooms", "Hotel found already, substitute...");
+        hotel.Set(npc, locks, price, rentTime);
+    }
+    else
+    {
+        // add new
+        WLog("rooms", "Creating new hotel object.");
+        Hotels.insertLast(@CHotel(npc, locks, price, rentTime));
+    }
+    // return Hotels[Hotels.length() - 1];
+}
+void InitHotel(Critter@ npc)
+{
+    CHotel@ hotel = GetHotel(npc);
+    if(!valid(hotel))
+    {
+        Log("ERR: Couldn't obtain hotel to initialize.");
+    }
+    hotel.InitRooms(npc.GetMap());
+}
+
+/**
+ * Gets hotel object for a hotel given by an id
+ */
+CHotel@ GetHotel(uint id)
+{
+    if(!valid(Hotels))
+        return null;
+
+    for(uint i = 0; i < Hotels.length(); i++)
+    {
+        if(!valid(Hotels[i]))
+        {
+            WLog("rooms", "Hotel " + i + " is invalid", DEBUG_WARNING);
+            continue;
+        }
+
+        if(Hotels[i].GetId() == id)
+        {
+            return Hotels[i];
+        }
+    }
+    return null;
+}
+/**
+ * Gets hotel object for given npc. (Hotel id is equal to npc' role.
+ */
+CHotel@ GetHotel(Critter@ npc)
+{
+    for(uint i = 0; i < Hotels.length(); i++)
+    {
+        if(Hotels[i].GetId() == uint(npc.Stat[ST_NPC_ROLE]))
+        {
+            // Hotels[i].Print();
+            return Hotels[i];
+        }
+    }
+    return null;
+}
+
+Map@ GetRoomPosition(uint PlayerId, uint16& out hx, uint16& out hy)
+{
+    CRoom@ room = GetRentedRoom(PlayerId);
+    if(!valid(room))
+        return null;
+    Item@ cont = room.GetDoor();
+    return cont.GetMapPosition(hx, hy);
+}
+
+//
+// Checks if there is free room for rent
+//
+bool d_IsFreeRoom(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+
+    return valid(hotel.GetFreeRoom());
+}
+//
+// Checks if all rooms are rented
+//
+bool d_NoFreeRooms(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+
+    return (valid(hotel.GetFreeRoom())) ? false : true;
+}
+
+//
+// Gets room player is already renting
+//
+CRoom@ GetRentedRoom(uint PlayerId)
+{
+    GameVar@ var = GetLocalVar(LVAR_renting_id, PlayerId);
+
+    if(var.GetValue() == 0)
+        // no npc we are renting from
+        return null;
+
+    CHotel@ hotel = GetHotel(var.GetValue());
+    if(!valid(hotel))
+    {
+        Log("ERR: LVAR_renting_id points invalid hotel.");
+        return null;
+    }
+    for(uint i = 0; i < hotel.rooms.length(); i++)
+    {
+        if(hotel.rooms[i].IsOwner(PlayerId))
+            return @hotel.rooms[i];
+    }
+    return null;
+}
+
+//
+// Checks if player is already renting a room
+//
+bool d_AlreadyRenting(Critter& player, Critter@ npc, int val)
+{
+    CRoom@ room = GetRentedRoom(player.Id);
+    return valid(room);
+}
+
+//
+// Checks if player is not renting a room at given npc's alread
+//
+bool d_NotRentingHere(Critter& player, Critter@ npc, int val)
+{
+    CRoom@  room = GetRentedRoom(player.Id);
+    CHotel@ hotel = GetHotel(npc);
+
+    if(!valid(room) || !valid(hotel))       // doesn't make sense to return true if hotel is not valid, but it's true;)
+        return true;
+
+    return room.GetHotelId() != hotel.GetId();
+}
+
+//
+// Checks if player have enough money to rent a room
+//
+bool d_HasMoneyForRent(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+    if(!valid(hotel))
+    {
+        Log("ERR: No hotel for this npc");
+        return false;
+    }
+    return _CritCountItem(player, PID_BOTTLE_CAPS) >= hotel.Price;
+}
+//
+// Checks if player doesn't have enough money to rent a room
+//
+bool d_NoMoneyForRent(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+    if(!valid(hotel))
+    {
+        Log("ERR: No hotel for this npc");
+        return false;
+    }
+    return _CritCountItem(player, PID_BOTTLE_CAPS) < hotel.Price;
+}
+
+//
+// Rents room for a player (for a week), val denotes node where to go when there is no free room
+//
+uint r_RentRoom(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+    CRoom@  room = hotel.GetFreeRoom();
+
+    if(valid(room))
+    {
+        // expire current room
+        CRoom@ curr = GetRentedRoom(player.Id);
+        if(valid(curr))
+            curr.Expire(true);
+        // rent new
+        room.Rent(npc, player, hotel.Price, hotel.RentTime);
+        // deduce money
+        _CritDeleteItem(player, PID_BOTTLE_CAPS, hotel.Price);
+        return 0;
+    }
+    else
+        return val;
+}
+
+void dlg_ShowRentedRoomInfo(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!valid(player) || (!valid(npc)) || !valid(lexems))
+        return;
+
+    CRoom@ curr = GetRentedRoom(player.Id);
+    if(!valid(curr))
+    {
+        player.Say(SAY_DIALOG, "There is no room rented by you.");
+        return;
+    }
+
+    lexems += "$roomnumber" + curr.GetRoomNumber();
+}
+
+//
+// Shows the way to the room
+//
+void r_ShowRoom(Critter& player, Critter@ npc, int val)
+{
+    CRoom@  room = GetRentedRoom(player.Id);
+    CHotel@ hotel = GetHotel(npc);
+
+    if(!valid(room) || !valid(hotel) || room.GetHotelId() != hotel.GetId())
+    {
+        Log("ERR: Player doesn't rent any room here.");
+        return;
+    }
+
+    Item@ door = room.GetDoor();
+    if(!valid(door))
+    {
+        Log("ERR: Couldn't find door for the room.");
+        return;
+    }
+
+    AddWalkPlane(npc, 0, door.HexX, door.HexY, GetDirection(npc.HexX, npc.HexY, door.HexX, door.HexY), false, 1);
+}
+
+//
+// Fills the lexem showing hotel price/rent time (ingame days)
+//
+void dlg_ShowInfo(Critter& player, Critter@ npc, string@ lexems)
+{
+    if(!valid(player) || (!valid(npc)) || !valid(lexems))
+        return;
+
+    CHotel@ hotel = GetHotel(npc);
+    uint    price = 0;
+    uint    time = 0;
+    if(valid(hotel))
+    {
+        price = hotel.Price;
+        time = hotel.RentTime;
+    }
+    lexems += "$price" + price;
+    lexems += "$time" + time * __TimeMultiplier;
+}
+
+//
+// Checks if player have room rented already, and can pay next rent
+//
+bool d_CanPayRent(Critter& player, Critter@ npc, int val)
+{
+    CRoom@ room = GetRentedRoom(player.Id);
+    if(!valid(room))
+        return false;
+
+    CHotel@ hotel = GetHotel(npc);
+    if(!valid(hotel))
+    {
+        Log("ERR: No hotel for this npc");
+        return false;
+    }
+
+    if(room.GetHotelId() != hotel.GetId())
+        return false;
+
+    // no money
+    if(_CritCountItem(player, PID_BOTTLE_CAPS) < hotel.Price)
+        return false;
+    // check if already paid
+    GameVar@ var = GetLocalVar(LVAR_renting_balance, player.Id);
+    if(var.GetValue() > 0)
+        return false;
+    return true;
+}
+
+// overload (since now we don't need to have int val param)
+bool d_CanPayRent(Critter& player, Critter@ npc)
+{
+    return d_CanPayRent(player, npc, 0);
+}
+
+//
+// Pays another rent
+//
+void r_PayRent(Critter& player, Critter@ npc, int val)
+{
+    CHotel@ hotel = GetHotel(npc);
+    if(!valid(hotel))
+    {
+        Log("ERR: No hotel for this npc");
+        return;
+    }
+    // remove money
+    _CritDeleteItem(player, PID_BOTTLE_CAPS, hotel.Price);
+    // set lvar to remember that it's been paid already
+    GameVar@ var = GetLocalVar(LVAR_renting_balance, player.Id);
+    if(var.GetValue() > 0)
+        Log("WARN: rent has been already paid");
+    var = hotel.Price;
+}
+// overload
+void r_PayRent(Critter& player, Critter@ npc)
+{
+    r_PayRent(player, npc, 0);
+}
+
+void test(Critter& crit, int p0, int p1, int p2)
+{
+    Item@ it = crit.AddItem(PID_KEY, 1);
+    it.LockerId = 2;
+    it.LockerCondition = 3;
+    it.LockerComplexity = 4;
+    it.Val1 = 1;
+    it.Val2 = 1;
+    it.Val3 = 1;
+    it.Val4 = 1;
+    Log("m2v1" + it.Val1);
+    Log("m2v2" + it.Val2);
+    Log("m2v3" + it.Val3);
+    Log("m2v4" + it.Val4);
+    Log("lid" + it.LockerId);
+    Log("lcon" + it.LockerId);
+    Log("lcom" + it.LockerId);
+}
+
+void init(Critter& crit, int p0, int p1, int p2)
+{
+    uint[] locks = { 1, 2, 3 };
+    AddHotel(GetCritter(NPC_ID(p0)), locks, 500, 3);
+    WLog("rooms", "Added hotel");
+}
+
+///////////////
+// LOCKS
+///////////////
+
+// global list, created during items initialization
+array<uint> Locks;
+
+void item_init(Item& item, bool firstTime)
+{
+    // add lock
+    Locks.insertLast(item.Id);
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+
+//
+// Lockpicking and opening
+//
+bool _UseSkill(Item& item, Critter& crit, int skill)
+{
+    // Log("rooms@_UseSkill: " + skill);
+    if(!valid(item))
+    {
+        Log("ERROR: Invalid item.");
+        return true;
+    }
+    CHotel@ hotel = GetHotel(HOTEL_ID(item));
+    if(!valid(hotel))
+    {
+        Log("ERROR: Invalid hotel id: " + HOTEL_ID(item));
+        return true;
+    }
+    if(ROOM_ID(item) >= int(hotel.rooms.length()))
+    {
+        crit.Say(SAY_NETMSG, "ERROR: Wrong room id: " + ROOM_ID(item) + "/" + hotel.rooms.length());
+        return true;
+    }
+    CRoom@ room = hotel.rooms[ROOM_ID(item)];
+    if(!valid(room))
+    {
+        crit.Say(SAY_NETMSG, "ERROR: Couldn't obtain room assigned for that door/container.");
+        return true;
+    }
+
+    // opening / closing
+    if(skill == -1)
+    {
+        if(_LockerIsClose(item))
+        {
+            GameVar@ var = GetLocalVar(LVAR_renting_id, crit.Id);
+            // Log("Hotel: " + HOTEL_ID(item) + ", room: " + ROOM_ID(item));
+
+
+            DPlayerLog(crit, "Player assigned to this room: " + room.GetPlayerId());
+            if(crit.Id == room.GetPlayerId() || crit.IsNpc())
+            {
+                if(item.GetType() == ITEM_TYPE_DOOR)
+                {
+                    if(!LockerOpen(item))
+                        Log("can't open: " + item.MapId + " at " + item.HexX + "," + item.HexY);
+                }
+                else if(item.GetType() == ITEM_TYPE_CONTAINER)
+                {
+                    Map@  map = GetMapByPid(MAP_BufferMap, 0);
+                    Item@ uberCont = map.GetItem(UBER_CONT_X, UBER_CONT_Y, UBER_CONT_PID);
+                    if(!valid(uberCont))
+                    {
+                        crit.Say(SAY_NETMSG, "ERROR: Couldn't find global room container!");
+                        return true;
+                    }
+                    array<Item@> items;
+                    // open container
+                    // transfer items from global container
+                    uberCont.GetItems(crit.Id, items);
+                    DPlayerLog(crit, "Transferring " + items.length() + " items from global container");
+                    MoveItems(items, item, 0);
+                    if(item.Proto.Container_Changeble && !LockerOpen(item))
+                        Log("can't open: " + item.MapId + " at " + item.HexX + "," + item.HexY);
+                    crit.ShowContainer(null, item, item.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP);
+                }
+                else
+                {
+                    crit.Say(SAY_NETMSG, "ERR: Improper lock item type");
+                    Log("ERR: Improper lock item type");
+                    return true;
+                }
+                if(item.Val5 != 0)
+                    EraseTimeEvent(item.Val5);
+                item.Val5 = CreateTimeEvent(AFTER(GAME_MINUTE(60)), "e_CloseDoor", item.Id, true);
+                return true;
+            }
+            else
+            {
+                crit.Say(SAY_NETMSG, "It's not your room.");
+                return true;
+            }
+        }
+        else if(_LockerIsOpen(item))
+        {
+            if(item.GetType() == ITEM_TYPE_CONTAINER)               // close container
+            {
+                Map@  map = GetMapByPid(MAP_BufferMap, 0);
+                Item@ uberCont = map.GetItem(UBER_CONT_X, UBER_CONT_Y, UBER_CONT_PID);
+                if(!valid(uberCont))
+                {
+                    crit.Say(SAY_NETMSG, "ERROR: Couldn't find global room container!");
+                    return true;
+                }
+
+                array<Item@> items;
+                // transfer items to global container
+                item.GetItems(0, items);
+                DPlayerLog(crit, "Transferring " + items.length() + " items to global container");
+                MoveItems(items, uberCont, crit.Id);
+            }
+            if(item.Proto.Container_Changeble && !LockerClose(item))
+                Log("can't close: " + item.MapId + " at " + item.HexX + "," + item.HexY);
+            if(item.Val5 != 0)
+                EraseTimeEvent(item.Val5);
+
+            return true;
+        }
+        return false;
+    }
+    else if(skill == SK_LOCKPICK)
+    {
+        return true;
+    }
+    else if(skill == SK_SCIENCE && crit.GetAccess() == ACCESS_ADMIN)
+    {
+        crit.Say(SAY_NETMSG, "LockId: " + item.LockerId + ", Hotel: " + HOTEL_ID(item) + ", room: " + ROOM_ID(item) + "; rented by: " + GetSafePlayerName(room.GetPlayerId()));
+        return true;
+    }
+    else if(skill == SK_REPAIR && crit.GetAccess() == ACCESS_ADMIN)
+    {
+        /*crit.ShowScreen(SCREEN_SAY, 0, "answer_Fix");
+           crit.StatBase[ST_VAR0] = item.Id;
+           crit.Say(SAY_SAY_TITLE, "Enter new owner...");
+           crit.Say(SAY_SAY_TEXT, "");*/
+        room.Expire(true);
+        crit.Say(SAY_NETMSG, "Forced room expiration.");
+        return true;
+    }
+    return false;
+}
+uint e_CloseDoor(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    uint16 x = 0, y = 0;
+    Map@   map = item.GetMapPosition(x, y);
+    if(!valid(map))
+        return 0;
+    if(@map.GetCritter(x, y) != null)
+        return REAL_SECOND(3);                                   // exploit prevention
+
+    if(item.GetType() == ITEM_TYPE_CONTAINER)
+    {
+        CHotel@ hotel = GetHotel(HOTEL_ID(item));
+        if(ROOM_ID(item) >= int(hotel.rooms.length()))
+        {
+            Log("ERROR: Wrong room id: " + ROOM_ID(item) + "/" + hotel.rooms.length());
+            return 0;
+        }
+        CRoom@ room = hotel.rooms[ROOM_ID(item)];
+        if(!valid(room))
+        {
+            Log("ERROR: Couldn't obtain room assigned for that door/container.");
+            return 0;
+        }
+
+        Map@         buff = GetMapByPid(MAP_BufferMap, 0);
+        Item@        uberCont = buff.GetItem(UBER_CONT_X, UBER_CONT_Y, UBER_CONT_PID);
+
+        array<Item@> items;
+        // transfer items to global container
+        item.GetItems(0, items);
+        MoveItems(items, uberCont, room.GetPlayerId());
+    }
+    if(!LockerClose(item))
+        Log("can't close: " + item.MapId + " at " + item.HexX + "," + item.HexY);
+    item.Val5 = 0;
+    return 0;
+}
+/*void answer_Fix(Critter& cr, uint i, string& s)
+   {
+        uint id = GetPlayerId(s);
+        Item@ item = GetItem(cr.Stat[ST_VAR0]);
+        if(id != 0 || not valid(item))
+        {
+                OWNER_PLAYER(item) = id;
+        }
+        else
+                cr.Say(SAY_NETMSG, "Player or item not valid");
+   }*/

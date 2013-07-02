@@ -1,0 +1,156 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_container_volume.fos
+//
+
+#include "_client_defines.fos"
+#include "_macros.fos"
+
+#include "client_gui_h.fos"
+
+InjectLabel@ insect;
+int          itemsVolume = 0;
+int          containerVolume = 0;
+string       indicatorLabel;
+
+void UpdateCaption()
+{
+    // indicatorLabel="Container space: "+itemsVolume+"/"+containerVolume;
+    indicatorLabel = "Space taken: " + (itemsVolume * 100 / (containerVolume == 0 ? 1 : containerVolume)) + "%";
+    if(valid(insect))
+        insect.SetCaption(indicatorLabel);
+}
+
+void HideVolumeIndicator()
+{
+    indicatorLabel = "";
+    if(valid(insect))
+    {
+        insect.visible = false;
+        insect.SetCaption(indicatorLabel);
+    }
+}
+
+void ZeroVolumeFillIndicator()
+{
+    itemsVolume = 0;
+    UpdateCaption();
+}
+
+void SetVolumeFillIndicator(array<ItemCl@> items)
+{
+    itemsVolume = 0;
+    for(uint i = 0, j = items.length(); i < j; i++)
+        itemsVolume += items[i].Proto.Volume * items[i].GetCount();
+    UpdateCaption();
+}
+
+void SetVolumeIndicator(uint pid)
+{
+    ProtoItem@ container = GetProtoItem(pid);
+    if(valid(container) && container.Type == ITEM_TYPE_CONTAINER)
+    {
+        containerVolume = container.Container_Volume;
+        UpdateCaption();
+        insect.visible = true;
+    }
+    else
+        HideVolumeIndicator();
+}
+
+void InitContainerVolume()
+{
+    string         ini = "PupVolumeInd";
+    string         txtIni = "PupVolumeIndText";
+
+    IGUIScreenOpt@ pickupScreen = GUI_GetScreen(CLIENT_SCREEN_PICKUP);
+    @insect = InjectLabel(pickupScreen);
+    insect.PicPosition(ini);
+    insect.TextPosition(txtIni);
+    insect.SetFont(FONT_FALLOUT);
+    insect.SetFormat(FT_CENTERY | FT_CENTERX);
+
+    Control@ control = @Control();
+    control.AddControl(@insect);
+    pickupScreen.Control(control).Multiinstance(false);
+}
+
+class InjectLabel : CLabel
+{
+    IGUIScreenOpt@ window;
+    // bool infected;
+    Sprite         backgroundPic;
+    Control@       picControl;
+
+    InjectLabel(IGUIScreenOpt@ window /*, int infected,*/)
+    {
+        super(0, 0, 0, 0, "");
+        this.backgroundPic.LoadByIni("PupVolumeIndBackPic", PT_ART_INTRFACE);
+        @picControl = Control();
+        @this.window = window;
+        /*if( infected > 0 )
+           {
+                this.buttonDown.LoadByIni( "ChaPrintPicDn", PT_ART_INTRFACE );
+                this.infected = true;
+           }
+           else
+                this.infected = false;*/
+    }
+
+    /*void Init()
+       {
+            if( this.infected )
+                    this.Position( "ChaPrint" );
+            else
+            {
+                    this.Position( 0, 0 );
+                    this.Size( 0, 0 );
+            }
+       }*/
+
+    void PicPosition(string& ini)
+    {
+        picControl.Position(ini);
+    }
+
+    void TextPosition(string& ini)
+    {
+        CLabel::Position(ini);
+    }
+
+    int Left()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosX() + this.left);
+        return(0);
+    }
+
+    int PicLeft()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosX() + this.picControl.left);
+        return(0);
+    }
+
+    int Top()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosY() + this.top);
+        return(0);
+    }
+
+    int PicTop()
+    {
+        if(valid(this.window))
+            return(this.window.GetPosY() + this.picControl.top);
+        return(0);
+    }
+
+    void Draw()
+    {
+        DrawSprite(this.backgroundPic.Id, 0, this.PicLeft(), this.PicTop(), 0);
+        CLabel::Draw();
+    }
+};

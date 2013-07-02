@@ -1,0 +1,65 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+40 1010 D _param p ST_INTELLECT < 4 R _item n PID_BIG_BOOK_OF_SCIENCE - 1 #
+2 1020 R _item n PID_BIG_BOOK_OF_SCIENCE - 1 @
+2 2000 None 0 #
+3 2010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 2020 D _var n name_mem_npc_player = 1 #
+100 2030 D _var n acquaintance < 1 D _var p factions_q_vc_kohl_books = 11 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+2 4010 #
+0 4020 @
+40 5000 None 0 #
+41 5010 #
+0 5020 @
+41 6000 None 0 #
+0 6010 @
+100 7000 None 0 #
+65507 7010 R _item n PID_BIG_BOOK_OF_SCIENCE + 1 #
+101 7020 D _param p ST_CHARISMA > 4 D _param p ST_INTELLECT > 5 R _var n acquaintance = 1 R _item p PID_BIG_BOOK_OF_SCIENCE + 1 #
+0 7030 @
+101 8000 None 0 #
+0 8010 #
+0 8020 &
+
+[engl]
+{100}{}{Professor}
+{200}{}{You see a bemused man in a lab coat.}
+{210}{}{You see the Professor. He looks like he's engaged in some madcap scheme.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{normal}
+{2000}{}{What is it you want? Out with it! I'm a busy man!}
+{2010}{}{Who are you?}
+{2020}{}{Could you tell me once again what are you doing here?}
+{2030}{}{Okay, straight to the point. I want that Big Book of Science you bought in Vault City.}
+{2040}{}{Nothing. Bye.}
+{3000}{}{I am the Professor. What I do is applied intelligence testing. I create chemical compounds to increase intelligence. }
+{3010}{}{Have you made anything that works?}
+{3020}{}{I see. That's all I wanted to know. Bye.}
+{4000}{}{Yes, I have, thank you very much! You ever heard of "Mentats"? I helped develop a method for easy mass-production of that drug! And others! Lots of others!}
+{4010}{}{All right, all right. Another question, please...}
+{4020}{}{All right, I believe you. I'll just be leaving.}
+{5000}{}{What is it you want? Out with it! I'm a busy man!}
+{5010}{}{Noo beezy?}
+{5020}{}{Nutin. Bye-bye.}
+{6000}{}{Why are you wasting my time? I told you I'm busy, didn't I? I have too much to do to stand around wasting time talking to people like ... why am I still talking to you? Good day!}
+{6010}{}{Byeeeeee!}
+{7000}{}{My time is precious, stop wasting it! I am most certainly not going to be giving that book to a knuckle-dragging neanderthal such as yourself. Now leave me alone.}
+{7010}{}{Look, Professor, I didn't want to have to do this the hard way. You're bringing me down to this... [Draw your weapon]}
+{7020}{}{It's not for me, Dr. Troy in Vault City needs it.}
+{7030}{}{Screw you and your book, I'm outta here.}
+{8000}{}{Well, why didn't you say so? Wait here, let me go fetch it... [You wait a minute] Yes, here it is. Send Dr. Troy my regards, will you?}
+{8010}{}{Yes, I will. Thank you, Professor.}
+{8020}{}{Right. [Leave]}
+

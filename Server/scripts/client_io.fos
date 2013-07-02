@@ -1,0 +1,321 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_io.fos
+//
+
+#define SKIP_PRAGMAS    // deleteme as soon the pragma bug is fixed
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "client_interface_h.fos"
+#include "config_file_h.fos"
+#include "client_utils_h.fos"
+#include "client_smart_cursor_h.fos"
+
+import bool IsGMTEnabled() from "client_main";
+
+import bool IsAuthorized() from "client_dev_menu";
+import bool DevMenuProcessKey(uint8 key) from "client_dev_menu";
+
+import bool GMToolsProcessKey(uint8 key) from "client_gmtools";
+import bool GMToolsMenu() from "client_gmtools";
+
+#ifdef __DEBUG__
+import void DialogImageKey(uint8 key) from "client_interface";
+#endif
+
+import bool ProcessBind(uint8 key) from "client_keybinds";
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+import void ThrowingKeyDown(uint8 key) from "throwing";
+import void ThrowingKeyUp(uint8 key) from "throwing";
+import void ThrowingInputLost() from "throwing";
+import bool ThrowingMouseDown(int click) from "throwing";
+
+// import void ShowAimScreen( CritterCl@ target ) from "client_gui_screens";
+
+#define LeftCtrl        GUI_IsKeyPressed(DIK_LCONTROL)
+#define RightCtrl       GUI_IsKeyPressed(DIK_RCONTROL)
+#define LeftAlt         GUI_IsKeyPressed(DIK_LMENU)
+#define RightAlt        GUI_IsKeyPressed(DIK_RMENU)
+
+int PrevMouseX = __MouseX;
+int PrevMouseY = __MouseY;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on mouse/keyboard input lost (alt-tab, minimize, lost focus).
+void input_lost()
+{
+    ThrowingInputLost();
+    IndicatorMouse(false, 0);
+    __MapZooming = false;
+
+    GUI_InputLost();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Keyboard behaviours. Key codes look in _client_defines.fos DirectInput keyboard scan codes.
+// Return true to disable engine events.
+bool key_down(uint8 key)
+{
+    if(key == DIK_LSHIFT && (LeftCtrl || LeftAlt) && __ConfigIgnoreLangChange)
+        return(true);
+
+    #ifdef __DEBUG__
+    if(RightCtrl && (key == DIK_LEFT || key == DIK_RIGHT || key == DIK_UP || key == DIK_DOWN))
+    {
+        DialogImageKey(key);
+        return(true);
+    }
+
+/*
+        if( !__ConsoleActive && key == DIK_F && LeftCtrl )
+        {
+                GUI_ShowScreen( CLIENT_SCREEN_FIXBOY, 0, 0, 0 );
+                return( true );
+        }
+ */
+    #endif
+
+    ThrowingKeyDown(key);
+    if(GMToolsProcessKey(key))
+        return(true);
+    if(DevMenuProcessKey(key))
+        return(true);
+
+    bool oldFog = __ConfigFog;
+    if(ProcessBind(key))
+    {
+        bool newFog = __ConfigFog;
+        if(newFog != oldFog)
+        {
+            if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "Fog", __ConfigFog) &&
+               string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+            {
+                SaveConfig(CONFIG_FILE);
+                Message("Fog: " + GetConfigValue(CONFIG_FILE, CONFIG_2238, "Fog"));
+            }
+        }
+        return true;
+    }
+
+    if(key == DIK_Z)
+        __MapZooming = true;
+
+    switch(key)
+    {
+    case DIK_F4:
+        ToggleInterfaceShown();
+        break;
+    // case DIK_F5: ToggleInterfaceExpanded(); break;
+    case DIK_F6:
+        if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayNames", !__ShowPlayerNames) &&
+           string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+        {
+            SaveConfig(CONFIG_FILE);
+            Message("Display player names: " + GetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayNames"));
+        }
+        break;
+
+    case DIK_F8:
+        if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "MouseScroll", !__MouseScroll) &&
+           string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+        {
+            SaveConfig(CONFIG_FILE);
+            Message("Mouse scroll: " + GetConfigValue(CONFIG_FILE, CONFIG_2238, "MouseScroll"));
+        }
+        break;
+
+    case DIK_F10:
+        __ConfigDisplayTCZones++;
+        __ConfigDisplayTCZones %= 3;
+        if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayTCZones", __ConfigDisplayTCZones) &&
+           string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+        {
+            SaveConfig(CONFIG_FILE);
+            Message("Display TC zones: " + GetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayTCZones"));
+        }
+        break;
+    case DIK_F11:
+        __ConfigDisplayTC = !__ConfigDisplayTC;
+        if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayTC", __ConfigDisplayTC) &&
+           string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+        {
+            SaveConfig(CONFIG_FILE);
+            Message("Display TC messages: " + GetConfigValue(CONFIG_FILE, CONFIG_2238, "DisplayTC"));
+        }
+        break;
+    }
+
+    return(GUI_KeyDown(key));
+}
+
+bool key_up(uint8 key)
+{
+    ThrowingKeyUp(key);
+
+    if(key == DIK_Z)
+        __MapZooming = false;
+
+    return GUI_KeyUp(key);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Mouse behaviours. Click states look in _client_defines.fos, Mouse click states.
+// Return true to disable engine events.
+bool mouse_down(int click)
+{
+    if(ThrowingMouseDown(click))
+        return true;
+    if(TryUseSmartCursor(click))
+        return true;
+
+    IndicatorMouse(true, click);
+
+    if(IsGMTEnabled() && GMToolsMenu() &&
+       GUI_GetActiveScreen() == CLIENT_MAIN_SCREEN_GAME && LeftCtrl)           // show gmtools menu
+    {
+        ChangeCursor(CURSOR_DEFAULT);
+        GUI_ShowScreen(CLIENT_SCREEN_GMTOOLSMENU, __MouseX, __MouseY, 0);
+
+        return(true);
+    }
+    else if(IsAuthorized() &&
+            GUI_GetActiveScreen() == CLIENT_MAIN_SCREEN_GAME && LeftCtrl)               // show devmenu
+    {
+        ChangeCursor(CURSOR_DEFAULT);
+        GUI_ShowScreen(CLIENT_SCREEN_DEVMENU, __MouseX, __MouseY, 0);
+        return(true);
+    }
+    else if(GUI_GetActiveScreen() == CLIENT_MAIN_SCREEN_GAME && LeftAlt)
+    {
+        ChangeCursor(CURSOR_DEFAULT);
+        GUI_ShowScreen(CLIENT_SCREEN_FOLLOWERSMENU, __MouseX, __MouseY, 0);
+        return(true);
+    }
+    /*
+       else if( GetCurrentCursor() == CURSOR_USE_WEAPON && click == MOUSE_CLICK_LEFT &&
+                     GUI_GetActiveScreen() == CLIENT_MAIN_SCREEN_GAME &&
+                     GUI_IsKeyPressed( DIK_LSHIFT ) )
+       {
+            CritterCl@ target = GetMonitorCritter( __MouseX, __MouseY );
+            if( valid(target) )
+            {
+                    DMessage( "target = "+target.Name );
+                    ShowAimScreen( target );
+                    return( true );
+            }
+            return( false );
+       }
+     */
+    else
+        return(GUI_MouseDown(__MouseX, __MouseY, click));
+}
+
+bool mouse_up(int click)
+{
+    IndicatorMouse(false, 0);
+
+    return(GUI_MouseUp(__MouseX, __MouseY, click));
+}
+
+void mouse_move(int x, int y)
+{
+    if(__DisableMouseEvents)         // maybe add __DisableMouseMove?
+    {
+        __MouseX = PrevMouseX;
+        __MouseY = PrevMouseY;
+        return;
+    }
+
+    GUI_MouseMove(PrevMouseX, PrevMouseY, __MouseX, __MouseY);
+    PrevMouseX = __MouseX;
+    PrevMouseY = __MouseY;
+}
+
+void filename_tokens(string& replacement)
+{
+    string     charname = "Unknown";
+    uint       level = 0;
+
+    CritterCl@ chosen = GetChosen();
+    if(valid(chosen))
+    {
+        charname = chosen.Name;
+        level = chosen.Param[ST_LEVEL];
+    }
+
+    stringReplaceText(replacement, "%CHARNAME%",   charname);
+    stringReplaceText(replacement, "%CHARLEVEL%",  "" + level);
+    // ...more to come...
+}
+
+void filename_logfile(string& filename)
+{
+    string@ replacement = GetConfigValue(CONFIG_FILE, CONFIG_2238, "LogfileName");
+
+    if(!valid(replacement))
+        return;
+
+    array<string@>@ fname = split(filename, "messbox_");
+    if(fname.length() == 2 && fname[1].length() == 23)
+    {
+        string day       = substring(fname[1], 8, 2);
+        string month     = substring(fname[1], 5, 2);
+        string year      = substring(fname[1], 0, 4);
+        string hour      = substring(fname[1], 11, 2);
+        string minute    = substring(fname[1], 14, 2);
+        string second    = substring(fname[1], 17, 2);
+        string extension = substring(fname[1], 20, 3);
+
+        stringReplaceText(replacement, "%DAY%",                day);
+        stringReplaceText(replacement, "%MONTH%",              month);
+        stringReplaceText(replacement, "%YEAR%",               year);
+        stringReplaceText(replacement, "%HOUR%",               hour);
+        stringReplaceText(replacement, "%MINUTE%",             minute);
+        stringReplaceText(replacement, "%SECOND%",             second);
+        stringReplaceText(replacement, "%EXTENSION%",  extension);
+        filename_tokens(replacement);
+
+        filename = replacement;
+    }
+    else
+        Log("Invalid filename: " + filename);
+}
+
+void filename_screenshot(string& filename)
+{
+    string@ replacement = GetConfigValue(CONFIG_FILE, CONFIG_2238, "ScreenshotName");
+
+    if(!valid(replacement))
+        return;
+
+    // get basic info
+    array<string@>@ fname = split(filename, "screen_");
+    if(fname.length() == 2 && fname[1].length() == 23)
+    {
+        string day       = substring(fname[1], 8, 2);
+        string month     = substring(fname[1], 5, 2);
+        string year      = substring(fname[1], 0, 4);
+        string hour      = substring(fname[1], 11, 2);
+        string minute    = substring(fname[1], 14, 2);
+        string second    = substring(fname[1], 17, 2);
+        string extension = substring(fname[1], 20, 3);
+
+        stringReplaceText(replacement, "%DAY%",                day);
+        stringReplaceText(replacement, "%MONTH%",              month);
+        stringReplaceText(replacement, "%YEAR%",               year);
+        stringReplaceText(replacement, "%HOUR%",               hour);
+        stringReplaceText(replacement, "%MINUTE%",             minute);
+        stringReplaceText(replacement, "%SECOND%",             second);
+        stringReplaceText(replacement, "%EXTENSION%",  extension);
+        filename_tokens(replacement);
+
+        filename = replacement;
+    }
+    else
+        Log("Invalid filename: " + filename);
+}

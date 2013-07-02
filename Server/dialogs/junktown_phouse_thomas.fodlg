@@ -1,0 +1,250 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+3 1020 @
+2 2000 None 0 #
+4 2010 D _var p q_jt_power_house = 0 #
+0 2020 @
+3 3000 None 0 #
+4 3010 D _var p q_jt_power_house = 0 #
+10 3020 D _var p q_jt_power_house > 0 D _var p q_jt_power_house < 5 #
+15 3030 D _var p q_jt_power_house_handy > 0 D _var p q_jt_power_house_handy_talk = 0 #
+30 3040 #
+0 3050 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 #
+30 5020 @
+6 6000 None 0 #
+7 6010 #
+27 6020 @
+7 7000 None 0 #
+8 7010 D _param p ST_LEVEL } 4 #
+37 7020 D _param p ST_LEVEL < 4 @
+8 8000 None 0 #
+24 8010 #
+9 8020 R _var p q_jt_power_house = 1 #
+28 8030 @
+9 9000 None 0 #
+30 9010 #
+0 9020 @
+10 10000 None 0 #
+26 10010 D _var p q_jt_power_house = 4 D _var p q_jt_power_house_mp ! 2 #
+11 10020 D _var p q_jt_power_house = 4 D _var p q_jt_power_house_mp = 2 #
+17 10030 D _item p PID_TANKER_PUMPPART > 0 D _var p q_jt_power_house_mp ! 2 R _item p PID_TANKER_PUMPPART - 1 R _var p q_jt_power_house_mp = 2 #
+0 10040 @
+11 11000 None 0 #
+12 11010 #
+12 11020 #
+12 11030 @
+12 12000 None 0 #
+14 12010 D _param p SK_BARTER } 150 D or D _param p SK_GAMBLING } 150 R _script dialog@r_AddMoney 1 3000 R _var p q_jt_power_house = 5 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_JUNKTOWN + 150 #
+13 12020 D _param p SK_GAMBLING < 150 D _param p SK_BARTER < 150 #
+14 12030 D _param p SK_BARTER } 100 D or D _param p SK_GAMBLING } 100 R _script dialog@r_AddMoney 1 2000 R _var p q_jt_power_house = 5 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_JUNKTOWN + 300 #
+13 12040 D _param p SK_GAMBLING < 100 D _param p SK_BARTER < 100 #
+14 12050 R _script dialog@r_AddMoney 1 1000 R _var p q_jt_power_house = 5 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_JUNKTOWN + 500 @
+13 13000 None 0 #
+12 13010 @
+14 14000 None 0 #
+30 14010 #
+0 14020 @
+15 15000 None 0 #
+16 15010 D _var p q_jt_power_house_handy = 3 R _var p q_jt_power_house_handy_talk = 1 R _param p REPUTATION_JUNKTOWN + 100 R _param p ST_EXPERIENCE + 500 R _script dialog@r_AddMoney 1 400 R _item p PID_BLUEPRINT_NEEDLER_PISTOL + 1 #
+0 15020 @
+16 16000 None 0 #
+30 16010 #
+0 16020 @
+17 17000 None 0 #
+10 17010 D _var p q_jt_power_house > 0 D _var p q_jt_power_house < 5 #
+15 17020 D _var p q_jt_power_house_handy > 0 D _var p q_jt_power_house_handy_talk = 0 #
+0 17030 @
+18 18000 None 0 #
+19 18010 #
+20 18020 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+21 20010 #
+25 20020 D _param p ST_INTELLECT > 7 R _param p ST_EXPERIENCE + 25 @
+21 21000 None 0 #
+22 21010 @
+22 22000 None 0 #
+23 22010 R _var p q_jt_power_house_handy = 1 @
+23 23000 None 0 #
+30 23010 #
+0 23020 @
+24 24000 None 0 #
+9 24010 R _var p q_jt_power_house = 1 @
+25 25000 None 0 #
+23 25010 R _var p q_jt_power_house_handy = 1 @
+26 26000 None 0 #
+17 26010 D _item p PID_TANKER_PUMPPART > 0 R _item p PID_TANKER_PUMPPART - 1 R _var p q_jt_power_house_mp = 2 #
+0 26020 @
+27 27000 None 0 #
+8 27010 @
+28 28000 None 0 #
+30 28010 #
+0 28020 @
+30 29000 None 0 #
+33 29010 #
+35 29020 #
+31 29030 D _var p q_jt_power_house ! 5 #
+32 29040 D _var p q_jt_power_house = 5 #
+18 29050 D _var p q_jt_power_house_handy = 0 #
+0 29060 @
+31 30000 None 0 #
+30 30010 #
+0 30020 @
+32 31000 None 0 #
+30 31010 #
+0 31020 @
+33 32000 None 0 #
+34 32010 #
+0 32020 @
+34 33000 None 0 #
+30 33010 #
+0 33020 @
+35 34000 None 0 #
+36 34010 #
+0 34020 @
+36 35000 None 0 #
+30 35010 #
+0 35020 @
+37 36000 None 0 #
+30 36010 #
+0 36020 &
+
+[engl]
+{100}{}{Thomas}
+{200}{}{You see Thomas.}
+{210}{}{A young man with glasses and a coat that makes him look like a scientist.}
+{240}{}{You see a dead guard of Junktown.}
+{260}{}{You see a slain guard of Junktown.}
+{1000}{}{Predialogue installations}
+{1010}{}{i dont know you}
+{1020}{}{i know you}
+{2000}{}{I can't remember that I've ever seen your face before. So I'll guess I have to say *Hi and welcome to Junktown!* shouldn't I?}
+{2010}{}{What are you doing here?}
+{2020}{}{Goodbye.}
+{3000}{}{Hello, you again! Everything alright?}
+{3010}{}{What are you doing here?}
+{3020}{}{About the generators...}
+{3030}{}{About the Mr. Handy robot...}
+{3040}{}{I have a question.}
+{3050}{}{Goodbye.}
+{4000}{}{I am in charge of Junktown's power hou...-- hey, wait a second! You shouldn't even be in here! Around us is lots of valuable technology that keeps the town running with energy.}
+{4010}{}{What is the power house?}
+{5000}{}{The power generators for the town are in here. We maintain them and allocate energy into the power grid to places where it is needed. In the night it's the streets and houses, on day the water pumps and what else is important. Though, they aren't very effective anymore.}
+{5010}{}{What's wrong with the generators?}
+{5020}{}{Sounds horrible, but let me ask something else.}
+{6000}{}{They are old, stuttering, day after day I fight them to keep running. It's hard and I don't think it will run like that for more than a few additional years from now on.}
+{6010}{}{Do you think it is possible to fix them up?}
+{6020}{}{Is there any way to prevent that?}
+{7000}{}{We have to, if Junktown shouldn't fall knee deep into an energy crisis. So... You are here and you are asking all these questions. Are you mechanically skilled? As I am not really what one could call a professional technician, I will appreciate any help I can get.}
+{7010}{}{We could try it at least. What is needed?}
+{7020}{}{I would love to, but I don't think I am experienced enough. Sorry.}
+{8000}{}{The power generators are very old. We have to exchange some parts-- a few new electronic parts in each generator should do the trick. Only after this is done, we can try to optimize the machines. But that's not all. If we want to use the full 100% of the generated energy, I need some new machine parts for the control terminal. Boyce should have built some for me...}
+{8010}{}{Where can I find Boyce?}
+{8020}{}{I'll see what I can do.@@I'll see what I can do about it.}
+{8030}{}{I don't think that this is a job for me. I'm not much a mechanic nor scientist.}
+{9000}{}{As said, I appreciate every help I can get. So... thanks, I'll guess.}
+{9010}{}{I have a different question.}
+{9020}{}{See you later.}
+{10000}{}{Say, what's the status?@@Have you been able to do something?@@News? Terrific!@@What's the status on the generators?}
+{10010}{}{Each of the generators is repaired and optimized.}
+{10020}{}{Each of the generators is repaired and optimized.}
+{10030}{}{Here is the replacement machine part from Boyce.}
+{10040}{}{Got nothing new yet.}
+{11000}{}{Let me see it... [He walks over to the generators and inspects them.] This is terrific! The generators are working like never before!}
+{11010}{}{I am not working for free. What's my pay?}
+{11020}{}{Good work requires good payment.}
+{11030}{}{Let's come to the *payment* part.}
+{12000}{}{We are in Junktown. Here we get lot's of junk everywhere... But I'll guess you don't want junk as a reward. How about some bottle caps? The Water Merchants are spreading them like crazy since years and you can buy everything with them. Huh, why do I say that? ... You most probably know.}
+{12010}{}{My work is worth 3.000 caps.}
+{12020}{}{My work is worth 3.000 caps.}
+{12030}{}{Give me 2.000 caps.@@I want to have 2.000 caps. }
+{12040}{}{Give me 2.000 caps.@@I want to have 2.000 caps.}
+{12050}{}{Give me 1.000 caps and we are even.}
+{13000}{}{I... I can't do that. No, sorry, but that's far too much money.}
+{13010}{}{Then maybe something else...}
+{14000}{}{Doubtful the generators would have run longer than the next one or two years without some major overhaul. So I'll guess the pay is just fair. [He hands you a bag of bottle caps.]}
+{14010}{}{There is still something I want to ask, before I go.}
+{14020}{}{Thanks. Goodbye.}
+{15000}{}{You've got anything new about that robot?@@News about the robot?@@Could you fix my robot?@@The Mr. Handy robot is a good machine. Heard they have been produced en mass before the war.}
+{15010}{}{The robot is working and ready for action.}
+{15020}{}{Nothing yet. Bye.}
+{16000}{}{Wait, you really fixed that old thing? God damnit, someone like you should be in charge here, I mean it. }
+{16010}{}{Thanks. But I have still something to ask...}
+{16020}{}{Goodbye.}
+{17000}{}{Good. With the parts, I can modify the control panels-- The surplus on energy shouldn't get lost then anymore. [Thomas opens the console cover and begins to exchange the parts.]}
+{17010}{}{About the generators...}
+{17020}{}{About the Mr. Handy robot...}
+{17030}{}{That's all for now. Bye.}
+{18000}{}{It's a 'Mr. Handy' robot. I don't know much about it, though. Thought it could help me with my job, but it never really worked and I can't figure out why. }
+{18010}{}{From where did you got it?}
+{18020}{}{You tried to repair it?}
+{19000}{}{Has been a few years ago, got it from a Boneyard delivery. I think they found it in some old factory, but I am not sure. Like I said, thought it could be useful and bought it. Since then it was only a piece of junk, though.}
+{19010}{}{You tried to repair it?}
+{20000}{}{Of course. But it's some really old pre-war technology and I just can't figure out how exactly it works. Anyway, could fix some of it's problems over the years. }
+{20010}{}{What's the problem?}
+{20020}{}{As far as I know, robots of such type often get problems with their motivator units. The defects aren't uncommon, especially after so many years without maintenance.}
+{21000}{}{With me not being an expert in robot technology... I'd say a motivator unit is needed.}
+{21010}{}{You think it's possible to get a new one?}
+{22000}{}{Yeah, good question. By now I would say, someone in the Hub might have one. I am pretty sure that Mitch got one, but he doesn't want to sell it to me...}
+{22010}{}{If you want, I could check it out.}
+{23000}{}{It would help me a lot, so yeah. If you could, why not.}
+{23010}{}{I've got another question.}
+{23020}{}{That's all I want for now. See you later.}
+{24000}{}{You can't really miss him. See that big building north of the power house? There you can find him. }
+{24010}{}{I'll see what I can do.@@I'll see what I can do about it.}
+{25000}{}{Guess you know more about it than me then. Mitch in the Hub should have some motivator parts, but I am not sure. Could be worth a checkout, though.}
+{25010}{}{If you want, I could check it out.}
+{26000}{}{Could you get the machine parts from Boyce already? Without them we can't use the generators with full efficience.}
+{26010}{}{Got it right here. [You give him the parts from Boyce.]}
+{26020}{}{Not yet. Going to get them... }
+{27000}{}{If we don't get some new generators - and I doubt this with heart and soul - the only other way obviously is to try to optimize them by hand. Are you mechanically skilled? As I am not really what one could call a professional technician, I will appreciate any help I can get.
+}
+{27010}{}{What is needed for this?}
+{28000}{}{Oh well, but thanks anyway. Can't say I am surprised, though.}
+{28010}{}{I've got a question to ask.}
+{28020}{}{See you later.}
+{29000}{}{Really not sure if I have the time to answer your questions...}
+{29010}{}{Can you tell me something about Junktown?@@Tell me something about Junktown.@@What's going on in Junktown?}
+{29020}{}{Can you tell me something about other towns close to Junktown?@@Any other towns close to Junktown?}
+{29030}{}{Tell me about the power house.}
+{29040}{}{Tell me about the power house.}
+{29050}{}{Tell me about the robot in the backroom.@@What's with that robot in the backroom?}
+{29060}{}{Goodbye.}
+{30000}{}{It's an old building... We had it set up years ago, got the parts from the Boneyard and from traders at the Hub. Since then it's running well, the machines could work better, though. I bet this jury-rigged turf will explode some day, HAH!}
+{30010}{}{Something else...@@Another question...@@I want to ask about something else.}
+{30020}{}{See you later.}
+{31000}{}{It's an old building... We had it set up years ago, got the parts from the Boneyard and from traders at the Hub. Since then it's running well, and thanks to your help, they will keep running for another batch of years! Thank's again.}
+{31010}{}{Something else...@@Another question...@@I want to ask about something else.}
+{31020}{}{See you later.}
+{32000}{}{Junktown is stagnating. Since some nasty fat man called Gizmo was kicked out of the town many years ago, Killian Darkwater took the hard rein with his frontier justice and scared away a lot people, traders and everything else. He died some years ago. Now his son, Jeremiah Darkwater is in charge.}
+{32010}{}{Is is that bad?}
+{32020}{}{That's all I wanted to know. See you later.@@Goodbye.@@See you later.}
+{33000}{}{Not anymore. I mean, living in Junktown is kind of save most of the time and with Jeremiah Darkwater, the town is feeling a nice and smooth updraft again. I've heard there is talking about Junktown joining the NCR... don't know if anything will come out of it, though.}
+{33010}{}{I have another question.@@Got another question.@@I want to ask about something else.}
+{33020}{}{That's all I wanted to know. See you later.@@Goodbye.@@See you later.}
+{34000}{}{There is the Hub in the south. You could call it the main transshipment point for *everything* that goes north or south. Every caravan is heading through the Hub... they have to, because except the Hub, there is nothing else around in this area.}
+{34010}{}{Anything else?}
+{34020}{}{That's all I wanted to know. See you later.@@Goodbye.@@See you later.}
+{35000}{}{If you continue further to the south, there is the Boneyard. It's a dangerous place and I wouldn't go there if I would be you. Has lots of scavengers and other shit that wants to rob you, if you move your feet into their claim. }
+{35010}{}{I have another question.@@Got another question.@@I want to ask about something else.}
+{35020}{}{That's all I wanted to know. See you later.@@Goodbye.@@See you later.}
+{36000}{}{Guess I'll have to look over it on my own again then. }
+{36010}{}{Let me ask you something else.}
+{36020}{}{Goodbye.}
+{100000001}{}{Welcome to Junktown, traveller!}
+{100000002}{}{I'm sorry, the gates are closed for the night. Come back in the morning.}
+{100000003}{}{Guys, get him!}
+

@@ -1,0 +1,129 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// setentry.fos
+//
+
+// inlined
+#define ROLE_NONE           (0)
+#define ROLE_WALL_NW        (1)
+#define ROLE_WALL_SE        (2)
+#define ROLE_WALL_NE        (3)
+#define ROLE_WALL_SW        (4)
+#define ROLE_CORNER_W       (5)
+#define ROLE_CORNER_N       (6)
+#define ROLE_CORNER_E       (7)
+#define ROLE_CORNER_S       (8)
+#define ROLE_JUNCTION_NW    (9)
+#define ROLE_JUNCTION_NE    (10)
+#define ROLE_JUNCTION_SW    (11)
+#define ROLE_JUNCTION_SE    (12)
+#define ROLE_CROSS          (13)
+#define ROLE_TILE           (14)
+#define ROLE_ROOF           (15)
+
+class CSetEntry
+{
+    bool        isGroup;   // group of entries
+    uint8       role;
+    uint        ent1;
+    uint        ent2;
+    array<uint> entries;
+    array<uint> horizincident;
+    array<uint> vertincident;
+
+    CSetEntry()
+    {
+        isGroup = false;
+        role = 0;
+    }
+    CSetEntry(uint part1, uint part2)
+    {
+        isGroup = false;
+        role = ROLE_NONE;
+        ent1 = part1;
+        ent2 = part2;
+    }
+    CSetEntry(uint part1, uint part2, uint8 newrole)
+    {
+        isGroup = false;
+        role = newrole;
+        ent1 = 0;
+        ent2 = 0;
+        entries.resize(2);
+        entries[0] = part1;
+        entries[1] = part2;
+    }
+    CSetEntry(array<uint>&nentries)
+    {
+        isGroup = false;
+        role = ROLE_NONE;
+        ent1 = 0;
+        ent2 = 0;
+        uint len = nentries.length();
+        entries.resize(len);
+        for(uint i = 0; i < len; i++)
+            entries[i] = nentries[i];
+    }
+
+    void AddIncident(uint id, bool verti)
+    {
+        if(verti)
+        {
+            vertincident.insertLast(id);
+        }
+        else
+        {
+            horizincident.insertLast(id);
+        }
+    }
+    void AddIncidents(array<uint>& ids, bool verti)
+    {
+        if(verti)
+        {
+            append_array(vertincident, ids);
+        }
+        else
+        {
+            append_array(horizincident, ids);
+        }
+    }
+
+};
+
+class CWallSet
+{
+    uint        id;
+    string      name;
+    array<uint> walls_nw;
+    array<uint> walls_se;
+    array<uint> walls_ne;
+    array<uint> walls_sw;
+    array<uint> wall_blank_nw;
+    array<uint> wall_blank_se;
+    array<uint> wall_blank_ne;
+    array<uint> wall_blank_sw;
+    array<uint> corners_n;
+    array<uint> corners_e;
+    array<uint> corners_w;
+    array<uint> corners_s;
+    array<uint> junctions_nw;
+    array<uint> junctions_ne;
+    array<uint> junctions_sw;
+    array<uint> junctions_se;
+    array<uint> crosses;
+    array<uint> tilegroups;
+    array<uint> roofgroups;
+
+    CWallSet()
+    {
+        id = 0;
+        name = "";
+    }
+    CWallSet(uint nid)
+    {
+        id = nid;
+        name = "";
+    }
+};

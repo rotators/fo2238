@@ -1,0 +1,124 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_junktown_tasks.fos
+//
+
+#ifndef __NPC_JUNKTOWN_TASKS__
+#define __NPC_JUNKTOWN_TASKS__
+
+#include "_macros.fos"
+#include "_maps.fos"
+
+#include "entire.fos"
+#include "utils_h.fos"
+#include "tasks.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+
+#define TASK_TYLER_BAR     (0)
+#define TASK_TYLER_BAR2    (1)
+#define TASK_TYLER_RING    (2)
+
+void InitJunktownTasks()
+{
+    CreateTimeEvent(GetNearFullSecond(0, 0, 0, 3, 30, 0), "e_MoveRing", false);
+    CreateTimeEvent(GetNearFullSecond(0, 0, 0, 17, 15, 0), "e_MoveBar", false);
+
+    _AddTaskTimer("Tyler_Bar", 17, 30);
+    _AddTaskTimer("Tyler_Bar2", 20, 0);    // Move to bardisk
+    _AddTaskTimer("Tyler_Ring", 3, 10);    // Fight ring
+
+    _AddTaskTimer("Neal_Bar", 16, 55);     // Move to bar when it's opened
+    _AddTaskTimer("Neal_Bedroom", 4, 0);   // Move to bedroom after bar is closed
+}
+
+// Tyler
+_AddTask(Tyler_Bar, 0, MAP_Junktown, ROLE_JNK_TYLER, ENTIRE_TYLER_BAR, 3, true);
+_AddTask(Tyler_Bar2, 1, MAP_Junktown, ROLE_JNK_TYLER, ENTIRE_BAR_SPOT, 5, IsEntireFree(MAP_Junktown, ENTIRE_BAR_SPOT));
+_AddTask(Tyler_Ring, 2, MAP_Junktown, ROLE_JNK_TYLER, ENTIRE_TYLER_RING, 5, true);
+
+// Neal
+_AddTask(Neal_Bar, 0, MAP_Junktown, ROLE_JNK_NEAL, ENTIRE_NEAL_BAR, 3, true);
+_AddTask(Neal_Bedroom, 1, MAP_Junktown, ROLE_JNK_NEAL, ENTIRE_NEAL_BEDROOM, Random(0, 5), true);
+
+
+uint e_MoveRing(array<uint>@ values)
+{
+    DLog("Bar people moves to fight ring...");
+
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    Map@ map = GetMapByPid(MAP_Junktown, 0);
+
+    if(!valid(map))
+    {
+        Log("Invalid map.");
+        _ReturnTime(3, 10);
+    }
+    uint num = map.GetNpcCount(ROLE_JNK_BAR, FIND_ALL);
+    for(uint i = 0; i < num; i++)
+    {
+        uint entire = 51 + i;
+        uint dir = 0;
+
+        GetNearEntire(map, entire, HexX, HexY);
+
+        Critter@ barperson = map.GetNpc(ROLE_JNK_BAR, FIND_ALL, i);
+        if(!valid(barperson))
+        {
+            Log("Invalid barperson.");
+            continue;
+        }
+
+        if((entire == 51) || (entire == 52) || (entire == 57) || (entire == 56))
+            dir = 3;
+        else if(entire == 54)
+            dir = 2;
+        else if((entire == 53) || (entire == 55) || (entire == 58))
+            dir = 0;
+
+        AddWalkPlane(barperson, 0, HexX, HexY, dir, false, 0);
+        barperson.SetHomePos(HexX, HexY, dir);
+
+        barperson.StatBase[ST_VAR0] = barperson.HexX;
+        barperson.StatBase[ST_VAR1] = barperson.HexY;
+        barperson.StatBase[ST_VAR2] = barperson.Dir;
+    }
+    _ReturnTime(3, 10);
+}
+
+uint e_MoveBar(array<uint>@ values)
+{
+    DLog("Bar people moves to bar...");
+
+    Map@ map = GetMapByPid(MAP_Junktown, 0);
+    if(!valid(map))
+    {
+        Log("Invalid map.");
+        _ReturnTime(17, 15);
+    }
+
+    uint num = map.GetNpcCount(ROLE_JNK_BAR, FIND_ALL);
+    for(uint i = 0; i < num; i++)
+    {
+        Critter@ barperson = map.GetNpc(ROLE_JNK_BAR, FIND_ALL, i);
+
+        if(!valid(barperson))
+        {
+            Log("Invalid barperson.");
+            continue;
+        }
+
+        if(barperson.Stat[ST_VAR0] == 0)
+            continue;
+
+        AddWalkPlane(barperson, 0, barperson.Stat[ST_VAR0], barperson.Stat[ST_VAR1], barperson.Stat[ST_VAR2], false, 0);
+        barperson.SetHomePos(barperson.Stat[ST_VAR0], barperson.Stat[ST_VAR1], barperson.Stat[ST_VAR2]);
+    }
+    _ReturnTime(17, 15);
+}
+#endif

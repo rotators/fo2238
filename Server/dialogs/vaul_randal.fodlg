@@ -1,0 +1,132 @@
+[comment]
+
+Most of it is from F2
+#2(100) and #100+ are mine
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+24 1010 D _param p ST_CHARISMA > 99 #
+50 1020 D _script dialog@d_CheckNight 0  #
+40 1030 D _param p ST_INTELLECT < 4 #
+2 1040 D _var n name_mem_npc_player = 0 #
+10 1050 D _var n name_mem_npc_player > 0 @
+2 2000 None 0 #
+3 2010 D _var p factions_player_faction = 6 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 2020 D _script dialog@d_IsNotMember 0  #
+100 2030 D _var p factions_q_vc_kohl_books > 9 D _var p factions_q_vc_kohl_books < 11111 D _var n name_mem_npc_player < 3 R _var n name_mem_npc_player = 2 #
+0 2040 @
+3 3000 None 0 #
+65506 3010 #
+4 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+0 5010 @
+10 6000 None 0 #
+3 6010 #
+4 6020 #
+100 6030 D _var p factions_q_vc_kohl_books > 9 D _var p factions_q_vc_kohl_books < 11111 D _var n acquaintance = 0 #
+0 6040 @
+20 7000 None 0 #
+21 7010 #
+23 7020 #
+0 7030 @
+21 8000 None 0 #
+22 8010 #
+0 8020 @
+22 9000 None 0 #
+23 9010 #
+65507 9020 #
+0 9030 @
+23 10000 None 0 #
+65507 10010 #
+0 10020 @
+40 11000 None 0 #
+41 11010 #
+0 11020 #
+0 11030 @
+41 12000 None 0 #
+0 12010 #
+0 12020 @
+50 13000 None 0 @
+100 14000 None 0 #
+101 14010 #
+0 14020 @
+101 15000 None 0 #
+102 15010 R _var n acquaintance = 1 R _item p PID_SCOUT_HANDBOOK + 1 #
+0 15020 @
+102 16000 None 0 #
+103 16010 D _param p ST_CHARISMA > 4 R _var p factions_q_vc_kohl_books = 11 #
+0 16020 @
+103 17000 None 0 #
+0 17010 @
+24 18000 None 0 &
+
+[engl]
+{100}{}{Randal}
+{200}{}{You see Randal, the Chief Amenities Officer.}
+{210}{}{You see a middle-aged man with thinning black hair.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{night floaters}
+{1030}{}{dumb}
+{1040}{}{unknown}
+{1050}{}{known}
+{2000}{}{Hello there, stranger. Always a pleasure to see a new face. Name's Randal... I'm the Chief Amenities Officer. Need something?}
+{2010}{}{Well, it depends. What is this place?}
+{2020}{}{Well, it depends. What is this place?}
+{2030}{}{Chief Librarian Kohl sends his regards. He wanted me to check if you're still in possession of the books recently sent over from the Information Center.}
+{2040}{}{Nothing today, actually.}
+{3000}{}{This is the Amenities Office. Got your typical stock... basic living necessities, some books, "how to" manuals, some tools, stimpacks, medical supplies. You know, this and that.}
+{3010}{}{Sounds great. Can I see what you have in stock?}
+{3020}{}{Mind if I ask you some other questions?}
+{3030}{}{I may be back some other time.}
+{4000}{}{Not at all. What's on your mind?}
+{4010}{}{Do you know where I could find any other Vaults?}
+{5000}{}{You could go scan the Vault Central Computer, see if it has any coordinates for any other Vaults. I doubt it, but no harm in checking.}
+{5010}{}{Thanks for the information.}
+{6000}{}{Hey there, welcome back. Anything I can do for you?}
+{6010}{}{What is this place again?}
+{6020}{}{Mind if I ask you some other questions?}
+{6030}{}{Chief Librarian Kohl sends his regards. He wanted me to check if you're still in possession of the books and manuals from the Information Center recently sent over here.}
+{6040}{}{Nothing today, actually.}
+{7000}{}{This is the Amenities Office. Got your typical stock... basic living necessities, some books, "how to" manuals, some tools, stimpacks, medical supplies. You know, this and that.}
+{7010}{}{Sounds great. Can I see what you have in stock?}
+{7020}{}{Mind if I ask you some other questions?}
+{7030}{}{Got it. I have to be going now, bye!}
+{8000}{}{Well, sorry to break it to you, but I'm only authorized to do transactions with Citizens. No offense to you, but it's the rule, you know? You might try Happy Harry's out in the Courtyard.}
+{8010}{}{Look, my money's just as good as any Citizen's.}
+{8020}{}{Fine. Goodbye.}
+{9000}{}{I am truly sorry, but rules are rules. I have to respect them.}
+{9010}{}{Fine, whatever. Mind if I ask you some other questions?}
+{9020}{}{Well, let me introduce you to some of my rules... [Draw your weapon]}
+{9030}{}{Fine. Goodbye.}
+{10000}{}{Excuse me, I have to get back to work.}
+{10010}{}{You're gonna answer my questions, right now! [Draw your weapon]}
+{10020}{}{Fine. Goodbye.}
+{11000}{}{Hello there, stranger. Always a pleasure to see a new face. Name's Randal...I'm the Chief Amenities Officer. Need something?}
+{11010}{}{Maaay-beee...}
+{11020}{}{Nooooooooo-pe.}
+{11030}{}{[Shamble off]}
+{12000}{}{Oh, dear, stop it! Stop it right away! My head is going to explode! Get out! Out!}
+{12010}{}{Ye-ep.}
+{12020}{}{[Shamble off]}
+{13000}{}{We're closed. I'm just compiling these lists before I head home.@@Sorry, we're closed for the evening. Come back in the morning.@@The First Citizen still needs those inventory lists...@@This new operating system makes it harder to enter lists.@@Need to compile the latest stock inventories and put them on the list server...@@Need to send distribution charts to Sub-Amenities Offices A and B...}
+{14000}{}{But... I thought he said he doesn't need them any more?}
+{14010}{}{Oh yes, yes he does. Apparently some of the transcription entries were deleted, so he needs one copy of the Scout Handbook, a First Aid Manual, Deans Electronics and a Big Book of Science to make the new entries.}
+{14020}{}{Never mind. Sorry, my mistake.}
+{15000}{}{Hmm, let me see... yes, I did get that shipment recently. And you're right, they were the editions he's looking for. Unfortunately, most of them have already been sold, the only one remaining is this Scout Handbook.}
+{15010}{}{Unfortunate. Can I at least have that one?}
+{15020}{}{Thanks for your help. Bye.}
+{16000}{}{Well, if he needs it that badly, I can't justify keeping it here. Of course, I could sell it sooner or later, but the amount of money I'd get for it is in no way as important as storing its knowledge in our database. Here, take it.}
+{16010}{}{Got any ideas where I could find the other editions he was looking for?}
+{16020}{}{Thank you for your help. Bye.}
+{17000}{}{Of course. Just a moment, please... [He moves over to a computer terminal] Let's see, Deans Electronics was issued to Valerie, she said it was for her father, a trader named Vic down in Klamath. The First Aid Manual went to New Reno - I think they said they were buying it on behalf some guy called Renesco. The Big Book of Science was sold to a Professor from Broken Hills. Normally I'm not authorized to trade with Broken Hills, but the man's supposed to be a good friend of Dr. Troy...}
+{17010}{}{Vic in Klamath, Renesco in New Reno, Professor in Broken Hills... I think I got it. Thanks for the information.}
+{18000}{}{Guards! Who let this ghoul into the city?!@@Guards! Ghoul in vault city!@@I don't know how you got in here, but I'm calling the guards.}
+

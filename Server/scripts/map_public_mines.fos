@@ -1,0 +1,52 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_public_mines.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+
+//
+// Map script for all public mines.
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(firstTime)
+    {
+        // Frisco has it's own map script (map_frisco_mine.fos).
+        /*if(proto==MAP_sf_mine)
+           {
+                uint[] maxes = {35,25};
+                SetAlertMap(map, maxes);
+           }
+           else */
+        if(proto == MAP_KlamathMiningSite)
+        {
+            uint[] maxes = { 12, 20 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_KlamathMiningSiteInside)
+        {
+            uint[] maxes = { 12, 20 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_NCRMiningSite)
+        {
+            uint[] maxes = { 12, 20 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_JunktownMiningSite)
+        {
+            uint[] maxes = { 12, 20 };
+            SetAlertMap(map, maxes);
+        }
+    }
+}

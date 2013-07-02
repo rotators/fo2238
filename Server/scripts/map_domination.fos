@@ -1,0 +1,22 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_domination.fos
+//
+
+#include "mapdata_h.fos"
+#include "_defines.fos"
+#include "domination_h.fos"
+
+void init(Map& map, bool firsttime)
+{
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_OnOutCritter");
+}
+
+void _OnOutCritter(Map& map, Critter& player)
+{
+    if(player.IsNpc())
+        return;
+    ProcessPlayerOut(map.GetData(MAP_DATA_OUTPOST_INDEX), player);
+}

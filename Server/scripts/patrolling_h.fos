@@ -1,0 +1,151 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// patrolling_h.fos
+//
+
+// This is a script for giving NPCs the ability to patrol between nodes.
+#ifndef __PATROLLING_H__
+#define __PATROLLING_H__
+
+#include "_macros.fos"
+#include "debug_h.fos"
+#include "utils_h.fos"
+#include "ITEMPID.H"
+
+#include "patrolnodes_h.fos"
+
+import uint   AddPNode(INode@ node) from "patrolnodes";
+import INode@ GetNode(uint id) from "patrolnodes";
+
+shared interface IPatrolRoute
+{
+    IPatrolRoute@ AddNode(int entireid, uint dir, uint wait);
+    IPatrolRoute@ AddNode(int x, int y, uint dir, uint wait);
+    INode@        GetNextNode(Critter& critter);
+    INode@        GetRandomNode(Critter& critter);
+};
+
+CPosition@ FindItemNode(Map@ map, int nodeid)
+{
+    array<Item@> items;
+    uint         num = map.GetItems(PID_WAYPOINT, items);
+
+    int          index = -1;
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(items[i].Val1 == nodeid)
+        {
+            index = i;
+            break;
+        }
+    }
+
+    if(index == -1)
+        return null;
+
+    CPosition item;
+    item.x = items[index].HexX;
+    item.y = items[index].HexY;
+    return item;
+}
+
+class CPatrolRoute : IPatrolRoute
+{
+    Map@        map;
+    array<uint> nodes;
+    uint        current;    // current node
+    uint        nodetime;   // how long the NPC idled on a node
+
+    CPatrolRoute(uint mapid)
+    {
+        @map = GetMapByPid(mapid, 0);
+        current = 0;
+        if(!valid(map))
+            Log("Warning: map object is invalid");
+    }
+
+    IPatrolRoute@ AddNode(int nodeid, uint dir, uint wait)
+    {
+        CPosition@ node;
+        @node = FindItemNode(map, nodeid);
+
+        if(!valid(node))
+            Log("NodeID " + nodeid + " not found!");
+        else
+            AddNode(node.x, node.y, dir, wait);
+
+        return this;
+    }
+
+    IPatrolRoute@ AddNode(int x, int y, uint dir, uint waitmin, uint waitmax)
+    {
+        // WLog("patrolling", "Adding node");
+        CNode node;
+        node.x = x;
+        node.y = y;
+        node.dir = dir;
+        node.waitmin = waitmin;
+        node.waitmin = waitmax;
+        node.minmax = true;
+        node.map = map.Id;
+        uint id = AddPNode(node);
+        WLog("patrolling", "Adding node, " + "received id " + id);
+        nodes.insertLast(id);
+        // WLog("patrolling", "Added node");
+        return this;
+    }
+
+    IPatrolRoute@ AddNode(int x, int y, uint dir, uint wait)
+    {
+        // WLog("patrolling", "Adding node");
+        CNode node;
+        node.x = x;
+        node.y = y;
+        node.dir = dir;
+        node.wait = wait;
+        node.minmax = false;
+        node.map = map.Id;
+        uint id = AddPNode(node);
+        WLog("patrolling", "Adding node, " + "received id " + id);
+        nodes.insertLast(id);
+        // WLog("patrolling", "Added node");
+        return this;
+    }
+    INode@ GetNextNode(Critter& critter)
+    {
+        if(nodes.length() == 0)
+        {
+            WLog("patrolling", "Couldn't find node", DEBUG_WARNING);
+            return null;
+        }
+
+        current = GetLvar(critter, LVAR_patrol_currentnode);
+
+        if(current + 1 >= nodes.length())
+            current = 0;
+        else
+            current += 1;
+
+        // WLog("patrolling", "current = " + current + " lenght = " + nodes.length());
+        SetLvar(critter, LVAR_patrol_currentnode, current);
+        return GetNode(nodes[current]);
+    }
+
+    INode@ GetRandomNode(Critter& critter)
+    {
+        if(nodes.length() == 0)
+        {
+            WLog("patrolling", "Couldn't find node", DEBUG_WARNING);
+            return null;
+        }
+
+        current = Random(0, nodes.length() - 1);
+        SetLvar(critter, LVAR_patrol_currentnode, current);
+        return GetNode(nodes[current]);
+    }
+
+};
+#endif

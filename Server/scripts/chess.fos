@@ -1,0 +1,845 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// chess.fos
+//
+
+// Chess
+
+#ifndef __CHESS__
+#define __CHESS__
+
+#include "_macros.fos"
+#include "lexems_h.fos"
+#include "npc_planes_h.fos"
+#include "strtoint_h.fos"
+
+#include "chess_h.fos"
+
+#pragma bindfunc "void sigh() -> Utils.dll SERVER"
+
+#define FIGURE_PID    (1)
+
+string[] FIGURE = { "Pawn", "Knight", "Bishop", "Rook", "Queen", "King" };
+string[] FIGUREINFO =
+{
+    "Pawns are cool.",
+    "Knights are cool.",
+    "Bishops are cool.",
+    "Rooks are cool.",
+    "Queens are super cool.",
+    "Kings are cool."
+};
+
+class CChessTile : IChessTile
+{
+    IChessBoard@  board;
+    ChessColor    color;
+    IChessNpc@    npc;
+
+    array<uint8>  coord;
+    array<uint16> hex;
+    uint          itemId;
+
+    CChessTile(IChessBoard & parent, uint8 x, uint8 y, ChessColor & color)
+    {
+        @this.board = parent;
+        this.coord.resize(2);
+        this.coord[0] = x;
+        this.coord[1] = y;
+        this.color = color;
+
+        this.hex.resize(0);
+        this.itemId = 0;
+        @this.npc = null;
+    }
+
+    ~CChessTile()
+    {
+        if(valid(npc))
+        {
+            Critter@ critter = npc.GetCritter();
+            if(valid(critter))
+            {
+                DeleteNpc(critter);
+            }
+        }
+
+        Item@ it = this.GetItem();
+        if(valid(it))
+            DeleteItem(it);
+    }
+
+    IChessBoard@ get_Board()
+    {
+        if(!valid(this.board))           // should never happen
+            return(null);
+
+        return(this.board);
+    }
+
+    IChessNpc@ get_Npc()
+    {
+        if(!valid(this.npc))
+            return(null);
+
+        return(this.npc);
+    }
+
+    void set_Npc(IChessNpc@ npc)
+    {
+        // remove previous npc
+        if(valid(this.npc))
+            @npc = null;
+
+        @this.npc = npc;
+    }
+
+    uint8 get_X()
+    {
+        if(this.coord.length() != 2)
+            return(0);
+
+        return(this.coord[0]);
+    }
+
+    uint8 get_Y()
+    {
+        if(this.coord.length() != 2)
+            return(0);
+
+        return(this.coord[1]);
+    }
+
+    uint16 get_HexX()
+    {
+        if(this.hex.length() != 2)
+            return(0);
+
+        return(this.hex[0]);
+    }
+
+    uint16 get_HexY()
+    {
+        if(this.hex.length() != 2)
+            return(0);
+
+        return(this.hex[1]);
+    }
+
+    ChessColor get_Color()
+    {
+        return(this.color);
+    }
+
+    bool get_IsTaken()
+    {
+        return(valid(this.npc));
+    }
+
+    bool get_IsWhite()
+    {
+        if(this.Color == White)
+            return(true);
+        else
+            return(false);
+    }
+
+    bool get_IsBlack()
+    {
+        if(this.Color == Black)
+            return(true);
+        else
+            return(false);
+    }
+
+    void Spawn()
+    {
+        if(!valid(this.board))
+            return;
+
+        Map@ map = board.GetMap();
+        if(!valid(map))
+            return;
+
+        this.hex.resize(2);
+        this.hex[0] = board.BaseHexX + (int(this.X - 1) * -2);
+        this.hex[1] = board.BaseHexY + (int(this.Y - 1) * -2);
+        Item@ item = map.AddItem(this.HexX, this.HexY, PID_UNVISIBLE_BLOCK, 1);
+        if(!valid(item))
+            return;
+
+        this.itemId = item.Id;
+        item.Flags = 0;
+        SETFLAG(item.Flags, ITEM_FLAT | ITEM_NO_BLOCK | ITEM_SHOOT_THRU | ITEM_LIGHT_THRU | ITEM_ALWAYS_VIEW | ITEM_NO_HIGHLIGHT | ITEM_NO_LIGHT_INFLUENCE | ITEM_NO_LOOT | ITEM_NO_STEAL);
+
+        string coordHuman = "A" + this.Y;
+        coordHuman[0] = coordHuman[0] + (this.X - 1);       // worst itoa() written by human
+        SetLexem(item, "$-", coordHuman);
+        SetLexem(item, "$~", "You see " + coordHuman + " (" + (this.IsWhite ? "white" : "black") + ")");
+
+        item.PicMap = item.PicInv = GetStrHash(this.IsWhite ? board.TileWhite : board.TileBlack);
+
+        if(board.TileOffsetX != 0)
+            item.OffsetX = board.TileOffsetX;
+        if(board.TileOffsetY != 0)
+            item.OffsetY = board.TileOffsetY;
+
+        item.Update();
+
+        // map.SetText( this.HexX, this.HexY, 0, this.ID );
+        // Log( "ID = "+this.Tile.Id );
+    }
+
+    Item@ GetItem()
+    {
+        if(this.itemId == 0)
+            return(null);
+
+        Item@ tile = ::GetItem(this.itemId);
+        if(valid(tile))
+            return(tile);
+        else
+            return(null);
+    }
+};
+
+class CChessNpc : IChessNpc
+{
+    IChessTile@ tile;
+
+    ChessFigure figure;
+    ChessColor  color;
+
+    uint        critterId;
+    bool        moved;
+
+    CChessNpc(IChessTile & parent, ChessFigure figure, ChessColor color)
+    {
+        @this.tile = parent;
+
+        this.figure = figure;
+        this.color = color;
+        this.critterId = 0;
+        this.moved = false;
+    }
+
+    IChessBoard@ get_Board()
+    {
+        if(!valid(this.tile))           // should never happen
+            return(null);
+
+        IChessBoard@ board = tile.Board;
+        if(!valid(board))           // should never happen
+            return(null);
+
+        return(@board);
+    }
+
+    IChessTile@ get_Tile()
+    {
+        if(!valid(this.tile))            // should never happen
+            return(null);
+
+        return(@this.tile);
+    }
+
+    ChessFigure get_Figure()
+    {
+        return(this.figure);
+    }
+
+    ChessColor get_Color()
+    {
+        return(this.color);
+    }
+
+    bool get_IsPawn()
+    {
+        return(this.Figure == Pawn);
+    }
+
+    bool get_IsKnight()
+    {
+        return(this.Figure == Knight);
+    }
+
+    bool get_IsBishop()
+    {
+        return(this.Figure == Bishop);
+    }
+
+    bool get_IsRook()
+    {
+        return(this.Figure == Rook);
+    }
+
+
+    bool get_IsQueen()
+    {
+        return(this.Figure == Queen);
+    }
+
+    bool get_IsKing()
+    {
+        return(this.Figure == King);
+    }
+
+    bool get_IsWhite()
+    {
+        return(this.Color == White);
+    }
+
+    bool get_IsBlack()
+    {
+        return(this.Color == Black);
+    }
+
+    bool get_IsMoved()
+    {
+        return(this.moved);
+    }
+
+    void Spawn()
+    {
+        if(this.Tile.HexX == 0 || this.Tile.HexY == 0)
+            return;
+
+        Map@ map = this.Board.GetMap();
+        if(!valid(map))
+            return;
+
+        Critter@ critter = map.AddNpc(FIGURE_PID, tile.HexX, tile.HexY, this.IsWhite ? 5 : 2, null, null, null);
+        this.critterId = critter.Id;
+        int      skin = this.Board.GetNpcSkin(this.Figure, this.Color);
+        if(critter.ChangeCrType(skin))
+            critter.StatBase[ST_BASE_CRTYPE] = skin;
+        critter.SetHomePos(critter.HexX, critter.HexY, critter.Dir);
+
+        SetLexem(critter, "$name", (this.IsWhite ? "White" : "Black") + " " + FIGURE[this.figure]);
+        SetLexem(critter, "$~", FIGUREINFO[this.figure]);
+
+        critter.StatBase[ST_KILL_EXPERIENCE] =
+            critter.StatBase[ST_DIALOG_ID] =
+                critter.StatBase[ST_POISONING_LEVEL] =
+                    critter.StatBase[ST_RADIATION_LEVEL] =
+                        critter.StatBase[ST_AI_ID] =
+                            critter.StatBase[ST_TEAM_ID] =
+                                critter.StatBase[ST_BAG_ID] =
+                                    0;
+
+        critter.StatBase[ST_ACTION_POINTS] = 9999;
+        critter.StatBase[ST_CURRENT_AP] = 9999;
+        critter.StatBase[ST_CRITICAL_CHANCE] = 100;
+        critter.StatBase[ST_MELEE_DAMAGE] = Random(5, 10);
+        critter.StatBase[ST_MAX_LIFE] = 1;
+        critter.StatBase[ST_MAX_LIFE_EXT] = -6;
+        critter.StatBase[ST_CURRENT_HP] = critter.Stat[ST_MAX_LIFE];
+
+        critter.SkillBase[SK_SMALL_GUNS] =
+            critter.SkillBase[SK_BIG_GUNS] =
+                critter.SkillBase[SK_ENERGY_WEAPONS] =
+                    critter.SkillBase[SK_UNARMED] =
+                        critter.SkillBase[SK_MELEE_WEAPONS] =
+                            critter.SkillBase[SK_THROWING] =
+                                300;
+
+        critter.ModeBase[MODE_NO_STEAL] =
+            critter.ModeBase[MODE_NO_LOOT] =
+                critter.ModeBase[MODE_NO_PUSH] =
+                    critter.ModeBase[MODE_NO_PVP] =
+                        critter.ModeBase[MODE_UNLIMITED_AMMO] =
+                            1;
+
+        string module = "";
+        if(GetCurrentModule(module))
+        {
+            if(!critter.SetScript(module + "@critter_init"))
+                critter.Say(SAY_NORM, "Can't set script: " + module + "@critter_init");
+        }
+
+        critter.RefreshVisible();         // JIC
+
+        // @tile.Npc = @this;
+        @this.tile = @tile;
+    }
+
+    Critter@ GetCritter()
+    {
+        if(this.critterId == 0)
+            return(null);
+
+        Critter@ figure = ::GetCritter(this.critterId);
+        if(valid(figure))
+            return(figure);
+        else
+            return(null);
+    }
+
+    bool Move(uint8 toX, uint8 toY)       // real
+    {
+        Map@ map = this.Board.GetMap();
+        if(!valid(map))
+            return(false);
+
+        IChessTile@ tile = this.Board.GetTile(toX, toY);
+        if(!valid(tile))           // JIC
+            return(false);
+
+
+        Critter@ critter = this.GetCritter();
+        if(!valid(critter))
+            return(false);
+
+        if(tile.IsTaken)
+        {
+            Critter@ enemy = tile.Npc.GetCritter();
+            if(valid(enemy))
+            {
+                if(critter.IsCanWalk())
+                {
+                    AddAttackPlane(critter, 10, enemy);
+                }
+                else
+                {
+                    map.RunEffect(PID_EXPLODE_EMP, enemy.HexX, enemy.HexY, 1);
+                    DeleteNpc(enemy);
+                }
+            }
+        }
+
+        if(critter.IsCanWalk())
+        {
+            AddWalkPlane(critter, 0, tile.HexX, tile.HexY, this.IsWhite ? 5 : 2, false, 0);
+        }
+        else
+        {
+            map.RunEffect(PID_EXPLODE_EMP, critter.HexX, critter.HexY, 1);
+            critter.TransitToHex(tile.HexX, tile.HexY, this.IsWhite ? 5 : 2);
+        }
+
+        critter.SetHomePos(tile.HexX, tile.HexY, this.IsWhite ? 5 : 2);
+
+        @tile.Npc = this;
+        @this.Tile.Npc = null;
+
+        return(true);
+    }
+};
+
+class CChessBoard : IChessBoard
+{
+    uint               mapId;
+    array<uint16>      hex;
+    array<string>      tilePicture;
+    array<int16>       tileOffset;
+
+    array<IChessTile@> tiles;
+    array<uint>        npcSkins;
+
+    CChessBoard(string & tileWhite, string & tileBlack, array<uint> npcSkins, int16 tileOffsetX = 0, int16 tileOffsetY = 0)
+    {
+        // yep, it's ugly
+        string[] _tilePicture = { tileWhite, tileBlack };
+        this.tilePicture = _tilePicture;
+        int16[] _tileOffset = { tileOffsetX, tileOffsetY };
+        this.tileOffset = _tileOffset;
+
+        this.npcSkins = npcSkins;
+
+        // make sure that all skins are correct
+        this.npcSkins.resize(12);
+        for(uint f = 0, flen = this.npcSkins.length(); f < flen; f++)
+        {
+            if(this.npcSkins[f] == 0)
+                this.npcSkins[f] = 1;                 // tribal warrior
+        }
+    }
+
+    ~CChessBoard()
+    {
+        this.tiles.resize(0);
+    }
+
+    uint16 get_BaseHexX()
+    {
+        if(this.hex.length() != 2)
+            return(0);
+
+        return(this.hex[0]);
+    }
+
+    uint16 get_BaseHexY()
+    {
+        if(this.hex.length() != 2)
+            return(0);
+
+        return(this.hex[1]);
+    }
+
+    string get_TileWhite()
+    {
+        return(this.tilePicture[0]);
+    }
+
+    string get_TileBlack()
+    {
+        return(this.tilePicture[1]);
+    }
+
+    int16 get_TileOffsetX()
+    {
+        return(this.tileOffset[0]);
+    }
+
+    int16 get_TileOffsetY()
+    {
+        return(this.tileOffset[1]);
+    }
+
+    void Create()
+    {
+        ChessColor last = White;
+        for(uint8 x = 1; x <= 8; x++)
+        {
+            for(uint8 y = 1; y <= 8; y++)
+            {
+                this.AddTile(x, y, (x + y) % 2 == 0 ? Black : White);
+            }
+        }
+
+        for(uint x = 1; x <= 8; x++)
+        {
+            this.AddFigure(x, 2, Pawn, White);
+            this.AddFigure(x, 7, Pawn, Black);
+        }
+
+        this.AddFigure(1, 1, Rook, White);
+        this.AddFigure(8, 1, Rook, White);
+        this.AddFigure(1, 8, Rook, Black);
+        this.AddFigure(8, 8, Rook, Black);
+
+        this.AddFigure(2, 1, Knight, White);
+        this.AddFigure(7, 1, Knight, White);
+        this.AddFigure(2, 8, Knight, Black);
+        this.AddFigure(7, 8, Knight, Black);
+
+        this.AddFigure(3, 1, Bishop, White);
+        this.AddFigure(6, 1, Bishop, White);
+        this.AddFigure(3, 8, Bishop, Black);
+        this.AddFigure(6, 8, Bishop, Black);
+
+        this.AddFigure(4, 1, Queen, White);
+        this.AddFigure(4, 8, Queen, Black);
+
+        this.AddFigure(5, 1, King, White);
+        this.AddFigure(5, 8, King, Black);
+    }
+
+    bool AddTile(uint8 x, uint y, ChessColor color)
+    {
+        if(valid(this.GetTile(x, y)))
+            return(false);
+
+        IChessTile@ tile = CChessTile(this, x, y, color);
+        if(!valid(tile))
+            return(false);
+
+        this.tiles.insertLast(tile);
+
+        return(true);
+    }
+
+    bool AddFigure(uint8 x, uint8 y, ChessFigure figure, ChessColor color)
+    {
+        IChessTile@ tile = this.GetTile(x, y);
+        if(!valid(tile))
+            return(false);
+
+        return(this.AddFigure(tile, figure, color));
+    }
+
+    bool AddFigure(IChessTile& tile, ChessFigure figure, ChessColor color)
+    {
+        IChessNpc@ npc = @CChessNpc(tile, figure, color);
+        @tile.Npc = npc;
+
+        return(true);
+    }
+
+    void Spawn(Map& map, uint16 hx, uint16 hy)
+    {
+        this.mapId = map.Id;
+
+        this.hex.resize(2);
+        this.hex[0] = hx;
+        this.hex[1] = hy;
+
+        for(uint t = 0, tlen = this.tiles.length(); t < tlen; t++)
+        {
+            this.tiles[t].Spawn();
+
+            IChessNpc@ npc = this.tiles[t].Npc;
+            if(valid(npc))
+                npc.Spawn();
+        }
+    }
+
+    bool Move(uint8 fromX, uint8 fromY, uint8 toX, uint8 toY)
+    {
+        IChessNpc@ npc = this.GetNpc(fromX, fromY);
+        if(!valid(npc))
+        {
+            DLog("ChessNpc missing at (" + fromX + "," + fromY + ")");
+            return(false);
+        }
+
+        int dir = (npc.IsWhite ? int(1) : -1);
+
+        if(0 == 0)
+        {}
+        else
+        {
+            Critter@ critter = npc.GetCritter();
+            if(valid(critter))
+                critter.Say(SAY_NORM_ON_HEAD, "Not implemented");
+
+            return(false);
+        }
+
+        return(npc.Move(toX, toY));
+    }
+
+    IChessTile@ GetTile(uint8 x, uint8 y)
+    {
+        for(uint t = 0, tlen = this.tiles.length(); t < tlen; t++)
+        {
+            if(this.tiles[t].X == x && this.tiles[t].Y == y)
+                return(@this.tiles[t]);
+        }
+
+        return(null);
+    }
+
+    IChessNpc@ GetNpc(uint8 x, uint8 y)
+    {
+        IChessTile@ tile = this.GetTile(x, y);
+        if(!valid(tile))
+            return(null);
+
+        IChessNpc@ npc = tile.Npc;
+        if(!valid(npc))
+            return(null);
+
+        return(@npc);
+    }
+
+    uint GetNpcSkin(ChessFigure figure, ChessColor color)
+    {
+        return(this.npcSkins[figure + (6 * color)]);
+    }
+
+    Location@ GetLocation()
+    {
+        Map@ map = this.GetMap();
+        if(!valid(map))
+            return(null);
+
+        Location@ location = map.GetLocation();
+        if(!valid(location))
+            return(null);
+
+        return(location);
+    }
+
+    Map@ GetMap()
+    {
+        Map@ map = ::GetMap(this.mapId);
+        if(!valid(map))
+            return(null);
+
+        return(map);
+    }
+
+    Item@ GetItem(uint8 x, uint8 y)
+    {
+        IChessTile@ tile = this.GetTile(x, y);
+        if(!valid(tile))
+            return(null);
+
+        Item@ item = tile.GetItem();
+        if(!valid(item))
+            return(null);
+
+        return(item);
+    }
+
+    Critter@ GetCritter(uint8 x, uint8 y)
+    {
+        IChessNpc@ npc = this.GetNpc(x, y);
+        if(!valid(npc))
+            return(null);
+
+        Critter@ critter = npc.GetCritter();
+        if(!valid(critter))
+            return(null);
+
+        return(critter);
+    }
+};
+
+class CChessMatch : IChessMatch
+{
+    IChessBoard@ board;
+
+    array<uint>  player;
+
+    CChessMatch(IChessBoard & board, Critter & playerWhite, Critter & playerBlack)
+    {
+        @this.board = board;
+
+        uint[] _player = { playerWhite.Id, playerBlack.Id };
+        this.player = _player;
+    }
+
+    IChessBoard@ get_Board()
+    {
+        if(!valid(this.board))           // should never happen
+            return(null);
+
+        return(this.board);
+    }
+
+    Critter@ get_White()
+    {
+        if(this.player.length() != 2)
+            return(null);
+
+        Critter@ critter = GetCritter(this.player[0]);
+        if(!valid(critter))
+            return(null);
+
+        return(critter);
+    }
+
+    Critter@ get_Black()
+    {
+        if(this.player.length() != 2)
+            return(null);
+
+        Critter@ critter = GetCritter(this.player[1]);
+        if(!valid(critter))
+            return(null);
+
+        return(critter);
+    }
+};
+
+IChessMatch@ NewChessMatch(IChessBoard& board, Critter& playerWhite, Critter& playerBlack)
+{
+    IChessMatch@ match = CChessMatch(board, playerWhite, playerBlack);
+
+    return(match);
+}
+
+IChessBoard@ NewChessBoard(string& tileWhite, string& tileBlack, array<uint>& npcSkins, int16 tileOffsetX = 0, int16 tileOffsetY = 0)
+{
+    IChessBoard@ board = CChessBoard(tileWhite, tileBlack, npcSkins, tileOffsetX, tileOffsetY);
+
+    return(board);
+}
+
+void ParseMove(Critter& critter, uint inputI, string& inputS)
+{
+    DSay(critter, "PreParseMove <" + inputS + ">");
+    array<string@>@ args;
+
+    @args = splitEx(strupr(inputS), "-");
+    if(args.length() < 2)
+    {
+        @args = splitEx(strupr(inputS), " ");
+        if(args.length() < 2)
+        {
+            DSay(critter, "invalid format");
+            return;
+        }
+    }
+    args.resize(2);
+    DSay(critter, "args <" + args[0] + "><" + args[1] + ">");
+    if(     /*
+                (args[0][0] < 'A' || args[0][0] > 'H') ||
+                (args[1][0] < 'A' || args[1][0] > 'H') ||
+             */
+        (args[0].length() < 2 || args[0].length() > 3) ||
+        (args[1].length() < 2 || args[1].length() > 3))
+    {
+        DSay(critter, "invalid args");
+        return;
+    }
+
+    uint8 fx = (args[0][0] - 'A') + 1;
+    uint8 tx = (args[1][0] - 'A') + 1;
+
+    uint8 fy = 0, ty = 0;
+    if(!StrToInt(substring(args[0], 1, args[0].length() - 1), fy) ||
+       !StrToInt(substring(args[1], 1, args[1].length() - 1), ty))
+    {
+        DSay(critter, "wrong args");
+    }
+
+    DSay(critter, "(" + fx + "," + fy + ")->(" + tx + "," + ty + ")");
+    xboard.Move(fx, fy, tx, ty);
+}
+
+void critter_init(Critter& critter, bool firstTime)
+{
+    critter.SetEvent(CRITTER_EVENT_IDLE, "critter_idle");
+}
+
+void critter_idle(Critter&)
+{}
+
+IChessBoard@ xboard = null;
+void board(Critter& cr, int, int ox, int oy)
+{
+    array<array<uint> > npcSkins =
+    {
+        {        // empty
+                 /*			pawn	knight	bishop	rook	queen	king */
+                 /* white */ 0,          0,              0,              0,              0,              0,
+            /* black */ 0,              0,              0,              0,              0,              0
+        },
+        {        // Atom
+                 /*			pawn	knight	bishop	rook	queen	king */
+                 /* white */ 75,         86,             29,             127,    1,              21,
+            /* black */ 16,             80,             28,             84,             71,             20
+        },
+        {        // Wipe
+                 /*			pawn	knight	bishop	rook	queen	king */
+                 /* white */ 27,         48,             14,             112,    104,    72,
+            /* black */ 103,    36,             35,             111,    34,             73
+        }
+    };
+
+    @xboard = NewChessBoard("art\\tiles\\adb028.frm", "art\\tiles\\bld2043.frm",
+                            npcSkins[Random(1, npcSkins.length() - 1)],
+                            // npcSkins[2],
+                            ox, oy);
+    xboard.Create();
+    xboard.Spawn(cr.GetMap(), cr.HexX + 5, cr.HexY + 5);
+}
+
+void move(Critter& cr, int, int, int who)
+{
+    if(!valid(xboard))
+    {
+        cr.Say(SAY_NETMSG, "no board yet");
+        return;
+    }
+
+    cr.ShowScreen(SCREEN_SAY, 0, "ParseMove");
+    cr.Say(SAY_SAY_TITLE, "Enter your move...");
+    // cr.Say(SAY_SAY_TEXT, "");
+}
+#endif // __CHESS__ //

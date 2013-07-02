@@ -1,0 +1,2083 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// town.fos
+//
+
+// This script should probably be thrown out and be entirely rewritten if you want this functionality.
+// The reason is that this script grew organically over time while we changed the TC mechanics and experimented with different balancing.
+
+// The result is that there are three (or more, depending on how you count) different versions of TC available in the same script which is not very modular and thus
+// hard to use and modify.
+
+/**
+ * \~english @defgroup TownControlGroup Town Control
+ * Module for Town Control functionality.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+#ifndef __TOWN__
+#define __TOWN__
+
+#define FORCE_DIALOG_TOO_FEW_PRESENT        (301)
+#define FORCE_DIALOG_TOO_FEW_MEMBERS        (302)
+#define FORCE_DIALOG_SUCCESS                (310)
+#define FORCE_DIALOG_SPEECH_SUCCESS         (320)
+#define FORCE_DIALOG_MILITIA_ATTACK         (330)
+#define FORCE_DIALOG_SPEECH_FAILURE         (130)
+#define FORCE_DIALOG_RECRUIT_SUCCESS        (410)
+#define FORCE_DIALOG_RECRUIT_TOO_MANY       (420)
+#define FORCE_DIALOG_RECRUIT_CANT_AFFORD    (430)
+#define FORCE_DIALOG_RECRUIT_ERROR          (440)
+#define FORCE_DIALOG_RECRUIT_COMBAT         (450)
+/* also relevant dialog nodes (not used in the code):
+   where is the container (120)
+ */
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "_math.fos"
+#include "_town.fos"
+#include "broadcast_h.fos"
+#include "economy_h.fos"
+#include "entire.fos"
+#include "factions_h.fos"
+#include "follower_common_h.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+#include "polygon_h.fos"
+#include "reputations.fos"
+#include "town_h.fos"
+
+import int  GetWearProcent(Item& item) from "repair";
+import void unsafe_ExecGMHelpCommand(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4) from "unsafe_client";
+
+import void SetCombatZone(Map& map) from "sleepiness";
+import void SetCombatZone(Map& map, uint time) from "sleepiness";
+
+array<uint> bags;   // Militia bags
+array<uint> mil_modoc_pids;
+array<uint> mil_klamath_pids;
+array<uint> mil_bh_pids;
+array<uint> mil_den_pids;
+array<uint> mil_redding_pids;
+array<uint> mil_gecko_pids;
+
+void InitMilitia()
+{
+    for(uint i = 146; i < 269; i++)
+        bags.insertLast(i);
+
+    // Possible militia pids
+    for(uint i = 30; i < 49; i++)
+    {
+        mil_modoc_pids.insertLast(i);
+        mil_klamath_pids.insertLast(i);
+        mil_bh_pids.insertLast(i);
+        mil_den_pids.insertLast(i);
+        mil_redding_pids.insertLast(i);
+        mil_gecko_pids.insertLast(i);
+    }
+}
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseRewardContainer");
+}
+
+// Executed when opening reward chest
+bool _UseRewardContainer(Item& item, Critter& crit, int skill)
+{
+    // Opening / Closing
+    if((skill == -1) || (skill == SK_STEAL))
+    {
+        ITown@ town = GetTown(RetrieveTownId(crit));
+        if(!valid(town))
+        {
+            crit.Say(SAY_NETMSG, "Error. Report this.");
+            return false;
+        }
+
+        if(GetGroupIndex(crit) != town.GetControllingFaction())
+        {
+            crit.Say(SAY_NETMSG, "You don't control this town.");
+            return true;
+        }
+
+        if(town.GetVersion() != TOWN_VERSION_INFLUENCE && town.GetCountdown() > 0)
+        {
+            crit.Say(SAY_NETMSG, "You don't control this town yet. Wait until it's taken");
+            return true;
+        }
+
+        if(town.GetVersion() == TOWN_VERSION_INFLUENCE && town.GetControllingInfluence() < TOWN_INFLUENCE_REWARD)
+        {
+            crit.Say(SAY_NETMSG, "You don't have enough influence.");
+            return true;
+        }
+
+        // open it if closed
+        if(_LockerIsClose(item))
+        {
+            item.LockerId = 0;
+            return false;
+        }
+    }
+    return false;
+}
+
+bool IsTCTown(Map@ map)
+{
+    if(!valid(map))
+    {
+        Log("ERR: Couldn't obtain map object");
+        return false;
+    }
+
+    uint id = map.GetData(MAP_DATA_TOWN);
+
+    return(id != 0);
+}
+
+uint RetrieveTownId(Map@ map)
+{
+    if(!valid(map))
+        return 0;
+    return map.GetData(MAP_DATA_TOWN);
+}
+
+uint RetrieveTownId(Critter& critter)
+{
+    return RetrieveTownId(critter.GetMap());
+}
+
+ITown@ RetrieveTown(Map& map)
+{
+    return(GetTown(RetrieveTownId(map)));
+}
+
+ITown@ RetrieveTown(Critter& critter)
+{
+    return(GetTown(RetrieveTownId(critter)));
+}
+
+bool ValidTown(ITown@ town)
+{
+    if(!valid(town))
+    {
+        Log("Town is not valid.");
+        return false;
+    }
+    return true;
+}
+
+void GainControl(Critter& player)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+    {
+        player.Say(SAY_NETMSG, "Error TC_1. Report this.");
+        Log("Trying to gain control of invalid town");
+        return;
+    }
+
+    town.GainControl(player);
+    player.Say(SAY_NETMSG, "Your faction is now in control.");
+
+    uint faction = town.GetControllingFaction();
+}
+
+uint GetNearMembers(Critter& player)
+{
+    ITown@          town = RetrieveTown(player);
+
+    array<Critter@> crits;
+    uint            num = player.GetMap().GetCritters(0, FIND_ALL, crits);
+
+    uint            nearmembers = 0;
+
+    for(uint i = 0; i < num; i++)
+    {
+        if((GetCrittersDistantion(player, crits[i]) < TOWN_CAPTURE_NEARBY_HEXES) && GetGroupIndex(player) == GetGroupIndex(crits[i]))
+        {
+            if(town.IsValidCaptor(crits[i]))
+                nearmembers++;
+            else
+                crits[i].Say(SAY_NETMSG, "The town considers you weak, and don't want your protection.");
+        }
+    }
+
+    DLog("nearmembers = " + nearmembers);
+
+    return nearmembers;
+}
+
+bool IsPolicy(Critter& player, uint policy)
+{
+    ITown@ town = RetrieveTown(player);
+
+    if(!ValidTown(town))
+        return false;
+
+    return(town.IsLaw(policy));
+}
+
+bool IsControllingTown(Critter& player)
+{
+    ITown@ town = RetrieveTown(player);
+
+    if(!valid(town))
+        return false;
+
+    return(town.GetControllingFaction() == GetGroupIndex(player));
+}
+
+bool d_IsNotControllingTown(Critter& player, Critter@ npc, int val)
+{
+    return(!IsControllingTown(player));
+}
+
+bool d_IsControllingTown(Critter& player, Critter@ npc, int val)
+{
+    return(IsControllingTown(player));
+}
+
+bool d_CanRecruitMilitia(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+        return false;
+    if(!IsControllingTown(player))
+        return false;
+
+    if(town.GetVersion() == TOWN_VERSION_INFLUENCE)
+        return(town.GetControllingInfluence() >= TOWN_INFLUENCE_MILITIA);
+    else
+        return(town.IsMilitiaEnabled());
+}
+
+bool d_CanChangeLaws(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+    if(town.GetVersion() == TOWN_VERSION_INFLUENCE)
+        return(town.GetControllingInfluence() >= TOWN_INFLUENCE_LAWS);
+    return false;
+}
+
+// General check, here any conditions be added, it's possible to disable TC feature here.
+bool d_CanTakeOver(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+
+    if(town.GetCountdown() > 0)
+        return false;
+
+    if(town.GetAreaCount() == 0)
+        return false;
+
+    if(town.GetVersion() == TOWN_VERSION_INFLUENCE)
+        return false;
+
+    if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW)
+        return((town.GetStatus() == TOWN_STATUS_CAN_TAKE) || (town.GetCountdown() > 0));
+    else if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN)
+        return true;
+    return true;
+}
+
+bool d_IsBigEnoughFaction(Critter& player, Critter@ npc, int val)
+{
+    return(GetMembersCount(GetGroupIndex(player)) >= RetrieveTown(player).GetMemberTotalRequirement());
+}
+
+bool d_IsEnoughMembersPresent(Critter& player, Critter@ npc, int val)
+{
+    return(GetNearMembers(player) >= RetrieveTown(player).GetMemberNearbyRequirement());
+}
+
+bool d_CanBecomeMilitia(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+        return false;
+
+    return(town.IsMilitiaEnabled() && IsControllingTown(player) && (CountMilitia(player.GetMap()) < int(town.GetMilitiaMax())));
+}
+
+bool d_IsMilitiaNotFull(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+        return false;
+
+    return(CountMilitia(player.GetMap()) < int(town.GetMilitiaMax()));
+}
+
+void r_FriendlyFactionsBrowse(Critter& player, Critter@ npc, int val)
+{
+    ITown@      town = RetrieveTown(player);
+    array<uint> factions = town.GetFriendlyFactions();
+
+    if(int(npc.StatBase[FRIENDLY_FACTION_INDEX] + val) < 0)
+        npc.StatBase[FRIENDLY_FACTION_INDEX] = 0;
+    else
+        npc.StatBase[FRIENDLY_FACTION_INDEX] += val;
+    if(npc.StatBase[FRIENDLY_FACTION_INDEX] > int(factions.length() - 1))
+        npc.StatBase[FRIENDLY_FACTION_INDEX] = factions.length() - 1;
+}
+
+void r_SetFriendlyFactionsMode(Critter& player, Critter@ npc, int val)
+{
+    npc.StatBase[FRIENDLY_FACTION_MANIPULATE_MODE] = val;
+}
+
+void dlg_ShowMilitiaCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$cost" + TOWN_MILITIA_COST;
+}
+
+void dlg_ManipulateFriendlyFactions(Critter& player, Critter@ npc, string@ say)
+{
+    if(!IS_DIALOG_SAY_MODE(say))
+        return;
+
+    ITown@ town = RetrieveTown(player);
+
+    uint   faction = 0;
+    if(GetFactionId(say, faction))
+    {
+        if(faction == town.GetControllingFaction())
+        {
+            player.Say(SAY_DIALOG, "Don't try to fool me, that's your gang.");
+            return;
+        }
+
+        if(npc.Stat[FRIENDLY_FACTION_MANIPULATE_MODE] == FRIENDLY_FACTION_MODE_ADD)
+        {
+            if(town.AddFriendlyFaction(faction))
+                player.Say(SAY_DIALOG, say + " successfully added to list of friendly factions. If you want to add another faction, you may enter it.");
+            else
+                player.Say(SAY_DIALOG, say + " already exists in the list.");
+        }
+        else
+        {
+            if(town.RemoveFriendlyFaction(faction))
+                player.Say(SAY_DIALOG, say + " successfully removed from list of friendly factions. If you want to remove another faction, you may enter it");
+            else
+                player.Say(SAY_DIALOG, say + " is not in the list.");
+        }
+    }
+    else
+        player.Say(SAY_DIALOG, say + " is not a valid faction.");
+}
+
+void dlg_ShowFriendlyFactions(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    ITown@      town = RetrieveTown(player);
+
+    string      str;
+    array<uint> factions = town.GetFriendlyFactions();
+
+    if(factions.length() == 0)
+    {
+        text += "$faction" + "There's no faction on the list.";
+        return;
+    }
+
+    if(GetFactionNameStr(factions[npc.Stat[FRIENDLY_FACTION_INDEX]], str))
+        text += "$faction" + str;
+    else
+        text += "$faction" + "***Invalid faction***";
+}
+
+bool AlertMilitia(Critter& cr)
+{
+    Map@            map = cr.GetMap();
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, crits);
+    bool            activemilitia = false;
+    for(uint i = 0; i < num; i++)
+    {
+        if(_CritHasExtMode(crits[i], MODE_EXT_MILITIA))
+        {
+            activemilitia = true;
+            AttackCritter(crits[i], cr, 0);
+        }
+    }
+    if(activemilitia)
+        return true;
+
+    return false;
+}
+
+uint r_ClaimControl(Critter& player, Critter@ npc, int val)
+{
+    #ifdef __DEBUG__
+    return FORCE_DIALOG_SUCCESS;
+    #endif
+    #ifndef __DEBUG__
+    ITown@ town = RetrieveTown(player);
+
+    DLog("member total required = " + town.GetMemberTotalRequirement());
+    DLog("member total = " + GetMembersCount(GetGroupIndex(player)));
+
+    if(GetMembersCount(GetGroupIndex(player)) < town.GetMemberTotalRequirement())
+    {
+        return FORCE_DIALOG_TOO_FEW_MEMBERS;
+    }
+
+    DLog("nearby members = " + town.GetMemberNearbyRequirement());
+
+    if(GetNearMembers(player) < town.GetMemberNearbyRequirement())
+    {
+        return FORCE_DIALOG_TOO_FEW_PRESENT;
+    }
+
+    if(AlertMilitia(player))
+    {
+        return FORCE_DIALOG_MILITIA_ATTACK;
+    }
+
+    return FORCE_DIALOG_SUCCESS;
+    #endif
+}
+
+void SpawnInitMilitia(Map@ map)
+{
+    #ifdef TOWN_MILITIA_INITIAL_MILITIA
+    ITown@ town = GetTown(RetrieveTownId(map));
+    if(!valid(town) || town.GetControllingFaction() != 0)
+        return;
+
+    if(!town.IsMilitiaEnabled())
+        return;
+
+    for(uint i = 0; i < TOWN_MILITIA_START_NUM; i++)
+        AddMilitia(map);
+    #endif
+}
+
+// Take some bag militia can use
+int SelectBag(uint crpid)
+{
+    shuffle_array(bags, uint);
+    for(uint i = 0; i < bags.length() - 1; i++)
+    {
+        if(!HasUnusableWeapon(crpid, bags[i]))
+            return bags[i];
+    }
+    return 1;
+}
+
+void dlg_ShowFactionName(Critter& player, Critter@ npc, string@ text)
+{
+    ITown@ town = RetrieveTown(player);
+    if(valid(town))
+    {
+        if(!IS_DIALOG_GENERATED(text))
+            return;
+
+        string name;
+        if(!GetFactionNameStr(town.GetControllingFaction(), name))
+        {
+            Log("Failed to retrieve faction name");
+        }
+
+        if(name == "Unknown")
+        {
+            text += "$faction" + "us";
+            return;
+        }
+
+        text += "$faction" + name;
+    }
+    else
+        text += "$faction" + "us";
+}
+
+int CountMilitia(Map@ map)
+{
+    array<Critter@> crits;
+    uint            count = 0;
+    uint            num = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        if(_CritHasExtMode(crits[i], MODE_EXT_MILITIA))
+            count++;
+    }
+    return count;
+}
+
+int GetMilitiaPid(uint MapProtoId)
+{
+    switch(MapProtoId)
+    {
+    case 6:
+        return random_from_array(mil_den_pids);
+    case 9:
+        return random_from_array(mil_klamath_pids);
+    case 18:
+        return random_from_array(mil_modoc_pids);
+    case 31:
+        return random_from_array(mil_gecko_pids);
+    case 62:
+        return random_from_array(mil_redding_pids);
+    case 115:
+        return random_from_array(mil_bh_pids);
+    default:
+        return -1;
+    }
+    return -1;
+}
+
+void r_ModifyInfluenceBuffer(Critter& cr, Critter@ npc, int value)
+{
+    ModifyInfluenceBuffer(cr, value);
+}
+
+// Some mechanism for slowing influence per player
+// value/1000=real influence value
+
+// influence buffer filled by
+// shovelling crap
+// mining ore
+// quest
+// crafting (not implemented)
+void ModifyInfluenceBuffer(Critter& cr, int value)
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return;
+
+    if(!map.GetLocation().IsTCTown())   // Location is not a TC town
+        return;
+
+    for(uint i = 1; i <= TOWN_COUNT; i++)
+    {
+        ITown@ town = GetTown(i);
+        if(!valid(town))
+            continue;
+
+        if(town.GetLocation().Id == map.GetLocation().Id)
+        {
+            if(town.GetVersion() != TOWN_VERSION_INFLUENCE)
+            {
+                Log("ERR: trying to modify influence in a non-influence town, town id=" + i + ", value=" + value);
+                return;
+            }
+
+            // Only non-controllers can store things in influence buffer.
+            if(GetGroupIndex(cr) != town.GetControllingFaction())
+            {
+                GameVar@ var = GetLocalVar(LVAR_influence_buffer, cr.Id);
+                var += value;
+            }
+            break;
+        }
+    }
+}
+
+void ClearInfluenceBuffer(Critter& cr)
+{
+    GameVar@ var = GetLocalVar(LVAR_influence_buffer, cr.Id);
+    var = 0;
+}
+
+void FlushInfluenceBuffer(Critter& cr, ITown@ town)
+{
+    GameVar@ var = GetLocalVar(LVAR_influence_buffer, cr.Id);
+    if(valid(town))
+    {
+        DLog("flushing influence buffer, " + var.GetValue());
+        float  value = float(var / 1000);
+
+        string s;
+        s.ParseFloat(value, 16);
+        DLog("value: " + s);
+        town.ModifyInfluence(town.GetControllingFaction(), value);
+    }
+    // Clear anyway, might have been teleported to other place
+    // with influence intact, we don't know
+    var = 0;
+}
+
+bool AddMilitia(Map@ map)
+{
+    if(!valid(map))
+        return false;
+
+    if(mil_den_pids.length() == 0)
+        InitMilitia();
+
+
+    int pid = GetMilitiaPid(map.GetProtoId());
+    if(pid == -1)
+    {
+        Log("Unknown town, can't create militia");
+        return false;
+    }
+
+    uint count = CountMilitia(map);
+    if(count >= TOWN_MILITIA_MAX)
+        return false;
+
+    uint          bag = SelectBag(pid);
+
+    array<Entire> entires;
+    ParseEntires(map, entires, ENTIRE_DEFAULT);
+    uint          r = Random(0, entires.length() - 1);
+    Critter@      SpawnedNpc = AddNpc(map, pid, entires[r].HexX, entires[r].HexY, Random(0, 5), DIALOG_militia, "town_militia@critter_init", 0, bag, FACTION_NONE, false, Random(20, 60));
+    if(!valid(SpawnedNpc))
+        return false;
+
+    return true;
+}
+
+uint r_RecruitMilitia(Critter& player, Critter@ npc)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+    {
+        Log("Unknown town, can't create militia");
+        return FORCE_DIALOG_RECRUIT_ERROR;
+    }
+
+    if(town.GetCountdown() > 0)
+    {
+        return FORCE_DIALOG_RECRUIT_COMBAT;
+    }
+
+    if(TOWN_MILITIA_COST > _CritCountItem(player, PID_BOTTLE_CAPS))
+    {
+        return FORCE_DIALOG_RECRUIT_CANT_AFFORD;
+    }
+
+    Map@ map = player.GetMap();
+
+    uint count = CountMilitia(map);
+
+    if(count >= town.GetMilitiaMax())
+    {
+        return FORCE_DIALOG_RECRUIT_TOO_MANY;
+    }
+
+    int pid = GetMilitiaPid(map.GetProtoId());
+    if(pid == -1)
+    {
+        Log("Unknown town, can't create militia");
+        return FORCE_DIALOG_RECRUIT_ERROR;
+    }
+
+    uint bag = SelectBag(pid);
+
+    if(!BanksTransferFromCritter(player, TOWN_MILITIA_COST, TRANSACTION_MERCBUY, false))
+    {
+        Log("Couldn't remove money");
+        return FORCE_DIALOG_RECRUIT_ERROR;
+    }
+
+    Critter@ SpawnedNpc = AddNpc(player.GetMap(), pid, player.HexX, player.HexY, Random(0, 5), DIALOG_militia, "town_militia@critter_init", 0, bag, FACTION_NONE, false, Random(10, 40));
+
+    return FORCE_DIALOG_RECRUIT_SUCCESS;
+}
+
+void r_GainControl(Critter& player, Critter@ npc, int val)
+{
+    GainControl(player);
+}
+
+void r_SetPolicy(Critter& player, Critter@ npc, int policy, int value)
+{
+    ITown@ town = RetrieveTown(player);
+    town.SetLaw(policy, value == 1 ? true : false);
+}
+
+bool d_IsPolicy(Critter& player, Critter@ npc, int policy)
+{
+    return IsPolicy(player, policy);
+}
+
+bool d_IsNotPolicy(Critter& player, Critter@ npc, int policy)
+{
+    return !IsPolicy(player, policy);
+}
+
+void dlg_ShowPolicies(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$stealing" + ((IsPolicy(player, TOWN_LAW_STEALING)) ? "Yes" : "No");
+    text += "$weapons" + ((IsPolicy(player, TOWN_LAW_CARRYING_WEAPONS)) ? "Yes" : "No");
+    text += "$attackflagged" + ((IsPolicy(player, TOWN_LAW_ATTACK_FLAGGED)) ? "Yes" : "No");
+}
+
+void dlg_ShowTownName(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    ITown@ town = RetrieveTown(player);
+
+    text += "$town" + town.GetTownName();
+}
+
+bool d_InfluenceAtLeast(Critter& player, Critter@ npc, int influence)
+{
+    ITown@ town = RetrieveTown(player);
+    return(town.GetInfluence(GetGroupIndex(player)) >= influence);
+}
+
+bool d_IsVersion(Critter& player, Critter@ npc, int version)
+{
+    ITown@ town = RetrieveTown(player);
+    return(town.GetVersion() == uint(version));
+}
+
+// When we need to set the control at the beginning of the dialog
+bool d_GainControl(Critter& player, Critter@ npc, int val)
+{
+    GainControl(player);
+    return true;
+}
+
+// True if one more present faction member implies that the conditions are met
+bool d_PresentAlmost(Critter& player, Critter@ npc, int val)
+{
+    ITown@ town = RetrieveTown(player);
+    return(GetNearMembers(player) + 1 == town.GetMemberNearbyRequirement() &&
+           GetMembersCount(GetGroupIndex(player)) >= town.GetMemberTotalRequirement());
+}
+
+// True if one more faction member implies that the conditions are met
+bool d_MembersAlmost(Critter& player, Critter@ npc, int val)
+{
+    ITown@ town = RetrieveTown(player);
+    return(GetNearMembers(player) >= town.GetMemberNearbyRequirement() &&
+           GetMembersCount(GetGroupIndex(player)) + 1 == town.GetMemberTotalRequirement());
+}
+
+uint r_TakeoverCheck(Critter& player, Critter@ npc, int val)
+{
+    ITown@ town = RetrieveTown(player);
+
+    if(AlertMilitia(player))
+    {
+        return FORCE_DIALOG_MILITIA_ATTACK;
+    }
+
+    if((player.Skill[SK_SPEECH] + town.GetSpeechModifier() >= Random(1, 100)))
+        return FORCE_DIALOG_SPEECH_SUCCESS;
+    return FORCE_DIALOG_SPEECH_FAILURE;
+}
+
+bool _LeaderAttacked(Critter& cr, Critter& attacker)
+{
+    return false;
+}
+
+void _LeaderDead(Critter& cr, Critter@ killer)
+{
+    ITown@ town = RetrieveTown(cr);
+    if(!valid(town) || !valid(killer))
+        return;
+
+    array<Critter@> crits;
+    uint            n = killer.GetCritters(true, FIND_LIFE_AND_KO | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < n; i++)
+        AttackCritter(crits[i], killer);
+
+    if(killer.IsPlayer() && _GroupIndex(killer) == int(town.GetControllingFaction()))
+    {
+        array<Critter@> crits;
+        uint            n = killer.GetMap().GetCritters(0, FIND_ALL, crits);
+        for(uint i = 0; i < n; i++)
+        {
+            if((crits[i].IsPlayer() && (_GroupIndex(crits[i]) == int(town.GetControllingFaction()))))
+                crits[i].Say(SAY_NETMSG, "You've lost control of the town, because a faction member killed the town's leader.");
+        }
+        if(town.GetCountdown() > 0)
+        {
+            Broadcast_TownControl_Stop(town.GetLocation().GetProtoId());
+            town.RevertControl();
+        }
+        else
+            town.ResetControl();
+    }
+}
+
+void setinfluence(Critter& cr, int factionId, int value, int)
+{
+    ITown@ town = RetrieveTown(cr);
+    town.SetInfluence(factionId, value);
+}
+
+// #endif // __TOWNS__
+
+ITown@ CreateTown(string Name)
+{
+    return CTown(Name);
+}
+
+class CTown : ITown
+{
+    uint             tcVersion;
+    array<float>     factionInfluence;     // version 3
+
+    bool             militiaEnabled;       // Militia can be recruited in town
+    uint             militiamax;           // Max number that can be recruited, changes with time (1 additional per hour, up to TOWN_MILITIA_MAX)
+    uint             status;               // Current status, see defines
+    uint             faction;              // Controlling faction.
+    uint             previousfaction;      // Previously controlling faction
+    uint             memberNearbyReq;      // Number of faction members needed to capture town.
+    uint             memberInfluenceReq;   // Number of factions members needed to influence town, version 3
+    uint             memberTotalReq;       // Number of factions member needed in total
+    uint             npcDeaths;            // How many NPCs have died during the current control.
+    uint             controlCycles;        // How many cycles the current faction has controlled the town.
+    uint             rewardCapsStart;      // Reward per hour after restart, can grow every hour.
+    uint             rewardCaps;           // Reward per reward cycle
+    uint             mapid;                // MapID of the town
+    uint             lastHour;
+    uint             lastMinute;
+    uint             lastSecond;
+    uint             townLeaderId;   // Critter ID of leader, not used currently
+    uint             id;             // Town ID
+    uint             hour;           // Which hour it can be taken
+    uint             countdown;      // Countdown timeout
+    int              ch;             // Charisma of the player who took over
+    int              speech;         // Speech of the player who took over
+    int              baseValue;      // baseValue of reward, reward % can't go under this value
+    int              speechModifier;
+    array<uint>      friendsList;    // Friendly factions
+    Location@        location;
+
+    bool             lawIllegalWeapons;
+    bool             lawPunishThieves;
+    bool             lawKillAggressor;
+
+    array<IPolygon@> captureareas;
+    uint             outsideAreaCount;   // How many times capturers have been outside of the combat zone/capture area
+
+    string           name;
+
+    Item@            LimboContainer;
+    Item@            RewardContainer;
+
+    Serializator     serializer;
+
+    CTown(string & name)
+    {
+        Money = faction = countdown = controlCycles = npcDeaths = memberNearbyReq = memberTotalReq = townLeaderId =
+                                                                                                         mapid = ch = speech = baseValue = speechModifier = status = rewardCaps = rewardCapsStart = militiamax = lastMinute = 0;
+
+        militiaEnabled = false;
+
+        this.name = name;
+        if(!LoadData())
+            SaveData();
+
+        if(mapid == 0)
+            return;
+
+        Map@ map = GetMap(mapid);
+        if(!valid(map))
+        {
+            Log("Map invalid, can't init TC in town " + id);
+        }
+        else
+        {
+            Critter@ leader = map.GetNpc(ROLE_TOWN_LEADER, FIND_ALL | FIND_ONLY_NPC, 0);
+            if(valid(leader))
+                InitTownLeader(leader);
+            if(militiaEnabled)
+                InitTownMilitia(map, leader);
+            else
+                RemoveTownMilitia(map);
+            @location = map.GetLocation();
+        }
+    }
+
+    void SetLaw(uint law, bool enabled)
+    {
+        if(law == TOWN_LAW_CARRYING_WEAPONS)
+            lawIllegalWeapons = enabled;
+        if(law == TOWN_LAW_STEALING)
+            lawPunishThieves = enabled;
+        if(law == TOWN_LAW_ATTACK_FLAGGED)
+            lawKillAggressor = enabled;
+    }
+
+    bool IsLaw(uint law)
+    {
+        if(law == TOWN_LAW_CARRYING_WEAPONS)
+            return lawIllegalWeapons;
+        if(law == TOWN_LAW_STEALING)
+            return lawPunishThieves;
+        if(law == TOWN_LAW_ATTACK_FLAGGED)
+            return lawKillAggressor;
+        return false;
+    }
+
+    uint GetMilitias(Map& map, array<Critter@>@ militia)
+    {
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(_CritHasExtMode(crits[i], MODE_EXT_MILITIA))
+                militia.insertLast(crits[i]);
+        }
+        return militia.length();
+    }
+
+    void InitTownMilitia(Map& map, Critter& leader)
+    {
+        array<Critter@> crits;
+        uint            num = GetMilitias(map, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            AssignMilitiaTeam(crits[i]);
+            if(valid(leader))
+                crits[i].StatBase[ST_VAR0] = leader.Id;
+        }
+    }
+
+    void RemoveTownMilitia(Map& map)
+    {
+        array<Critter@> crits;
+        uint            num = GetMilitias(map, crits);
+        for(uint i = 0; i < num; i++)
+            DeleteNpc(crits[i]);
+    }
+
+    void InitTownLeader(Critter& leader)
+    {
+        if(valid(leader))
+        {
+            leader.StatBase[ST_REPLICATION_TIME] = REPLICATION_MINUTE(2);
+            leader.StatBase[FRIENDLY_FACTION_INDEX] = 0;
+            _CritSetExtMode(leader, MODE_EXT_TC_LEADER);
+            leader.SetEvent(CRITTER_EVENT_ATTACKED, "town@_LeaderAttacked");
+            leader.SetEvent(CRITTER_EVENT_DEAD, "town@_LeaderDead");
+        }
+    }
+
+    bool LoadData()
+    {
+        serializer.Clear();
+        if(!IsAnyData(this.name))
+            return false;
+
+        if(!serializer.Load(this.name))
+        {
+            friendsList.resize(0);
+            return false;
+        }
+        serializer.Get(faction).Get(npcDeaths).Get(controlCycles)
+        .Get(mapid).Get(ch).Get(speech).Get(Money).Get(status).Get(countdown)
+        .Get(previousfaction).Get(rewardCaps).Get(friendsList).Get(militiamax)
+        .Get(factionInfluence)
+        .Get(lawIllegalWeapons).Get(lawKillAggressor).Get(lawPunishThieves);
+        return true;
+    }
+
+    bool SaveData()
+    {
+        serializer.Clear();
+        return serializer.Set(faction).Set(npcDeaths).Set(controlCycles)
+               .Set(mapid).Set(ch).Set(speech).Set(Money).Set(status).Set(countdown)
+               .Set(previousfaction).Set(rewardCaps).Set(friendsList).Set(militiamax)
+               .Set(factionInfluence)
+               .Set(lawIllegalWeapons).Set(lawKillAggressor).Set(lawPunishThieves).Save(this.name);
+    }
+
+    float GetControllingInfluence()
+    {
+        return GetInfluence(faction);
+    }
+
+    /**
+     * Retrieves the faction with highest influence in town
+     * @param faction Variable where found faction is saved, if 0 then none found.
+     * @return Influence in float.
+     * @remarks Used in TC version 3
+     */
+    float GetLargestInfluence(uint& factionid)
+    {
+        float largest = -1.0f;
+        factionid = 0;
+        uint  len = factionInfluence.length();
+        for(uint i = 1; i < len; i += 2)
+        {
+            if(factionInfluence[i] > largest)
+            {
+                largest = factionInfluence[i];
+                factionid = factionInfluence[i - 1];
+            }
+        }
+        return largest;
+    }
+
+    void SortInfluence()
+    {
+        for(uint j = factionInfluence.length() - 1; j > 2; j -= 2)
+        {
+            float temp;
+            if(factionInfluence[j] > factionInfluence[j - 2])
+            {
+                temp = factionInfluence[j];
+                factionInfluence[j] = factionInfluence[j - 2];
+                factionInfluence[j - 2] = temp;
+                temp = factionInfluence[j - 1];
+                factionInfluence[j - 1] = factionInfluence[j - 3];
+                factionInfluence[j - 3] = temp;
+            }
+            else
+                continue;
+        }
+    }
+
+    /**
+     * Retrieves factions with highest influence in town.
+     * @param factions Array where found factions while be storedin faction_id,value,faction_id,value format. Array is not cleared.
+     * @param num How many of the top x to retrieve. 3 will retrieve only the three most influential factions.
+     * @return Number of factions found.
+     * @remarks Used in TC version 3
+     */
+    uint GetTopInfluence(array<uint>& factions, uint num)
+    {
+        SortInfluence();
+        uint searchNum = CLAMP(num, 0, factionInfluence.length());
+        for(uint i = 0, j = searchNum; i < j; i += 2)
+            factions.insertLast(factionInfluence[i]);
+
+        return searchNum;
+    }
+
+    float GetInfluence(uint factionId)
+    {
+        uint len = factionInfluence.length();
+        for(uint i = 0; i < len; i += 2)
+        {
+            if(uint(factionInfluence[i]) == factionId)
+                return(factionInfluence[i + 1]);
+        }
+        return 0.0f;
+    }
+
+    void SetInfluence(uint factionId, float value)
+    {
+        uint len = factionInfluence.length();
+        bool found;
+        for(uint i = 0; i < len; i += 2)
+        {
+            if(uint(factionInfluence[i]) == factionId)
+            {
+                DLog("factionId=" + factionId + ",value=" + value);
+                DLog("factionInfluence[" + (i + 1) + "]==" + factionInfluence[i + 1]);
+                factionInfluence[i + 1] = value;
+                factionInfluence[i + 1] = CLAMP(factionInfluence[i + 1], 0.0f, 500.0f);
+                found = true;
+            }
+        }
+        if(found)
+            return;
+
+        DLog("inserting " + factionId + " into influence data");
+        factionInfluence.insertLast(factionId);
+        factionInfluence.insertLast(value);
+    }
+
+    void ModifyInfluence(uint factionId, float value)
+    {
+        SetInfluence(factionId, GetInfluence(factionId) + value);
+    }
+
+    array<uint> GetFriendlyFactions()
+    {
+        return friendsList;
+    }
+
+    bool IsMilitiaEnabled()
+    {
+        return militiaEnabled;
+    }
+
+    bool IsFriendlyFaction(uint factionid)
+    {
+        for(uint i = 0; i < friendsList.length(); i++)
+        {
+            if(friendsList[i] == factionid)
+                return true;
+        }
+        return false;
+    }
+
+    bool IsWithinCaptureArea(Critter& cr)
+    {
+        for(uint i = 0; i < captureareas.length(); i++)
+        {
+            if(captureareas[i].IsWithin(cr))
+                return true;
+        }
+        return false;
+    }
+
+    bool IsFriend(Critter& cr)
+    {
+        if(_GroupIndex(cr) == int(faction))
+            return true;
+        for(uint i = 0; i < friendsList.length(); i++)
+            if(_GroupIndex(cr) == int(friendsList[i]))
+                return true;
+        return false;
+    }
+
+    // maximum 0,00408 per person, per tick (every 10 seconds now)
+    // 1,4688 / hour
+    // 35 / day
+    float GetCaptorInfluence(Critter& cr)
+    {
+        float influence = 0.0f;
+        if(!valid(cr))
+            return 0.0f;
+        influence += (cr.Stat[ST_LEVEL] * 0.0001) + (cr.Stat[ST_CHARISMA] * 0.0002);
+        Item@ armor = cr.GetItem(0, SLOT_ARMOR);
+        if(valid(armor))
+            influence += 0.0003 * ItemLevel(armor);
+
+        Item@ weapon = cr.GetItem(0, SLOT_HAND1);
+        if(valid(weapon) && weapon.GetType() == ITEM_TYPE_WEAPON && ItemLevel(weapon) >= TOWN_CAPTOR_WEAPON_LEVEL_REQ && GetWearProcent(weapon) <= TOWN_CAPTOR_WEAPON_WEAR_REQ)
+            influence += 0.0003 * ItemLevel(weapon);
+        else
+        {
+            @weapon = cr.GetItem(0, SLOT_HAND2);
+            if(valid(weapon) && weapon.GetType() == ITEM_TYPE_WEAPON && ItemLevel(weapon) >= TOWN_CAPTOR_WEAPON_LEVEL_REQ && GetWearProcent(weapon) <= TOWN_CAPTOR_WEAPON_WEAR_REQ)
+                influence += 0.0003 * ItemLevel(weapon);
+        }
+
+        return influence;
+    }
+
+    bool IsValidCaptor(Critter& cr)
+    {
+        if(cr.Mode[MODE_HIDE] != 0 || cr.Cond != COND_LIFE || cr.GetSocket() == -1)
+            return false;
+        if(cr.Stat[ST_LEVEL] < TOWN_CAPTOR_LEVEL_REQ)
+            return false;
+        Item@ armor = cr.GetItem(0, SLOT_ARMOR);
+        if(!valid(armor) || GetWearProcent(armor) > TOWN_CAPTOR_ARMOR_WEAR_REQ)
+            return false;
+        Item@ weapon = cr.GetItem(0, SLOT_HAND1);
+        if(!valid(weapon))
+            return false;
+        if(valid(weapon) && weapon.GetType() == ITEM_TYPE_WEAPON && ItemLevel(weapon) >= TOWN_CAPTOR_WEAPON_LEVEL_REQ && GetWearProcent(weapon) <= TOWN_CAPTOR_WEAPON_WEAR_REQ)
+            return true;
+        @weapon = cr.GetItem(0, SLOT_HAND2);
+        return valid(weapon) && weapon.GetType() == ITEM_TYPE_WEAPON && ItemLevel(weapon) >= TOWN_CAPTOR_WEAPON_LEVEL_REQ && GetWearProcent(weapon) <= TOWN_CAPTOR_WEAPON_WEAR_REQ;
+    }
+
+    bool AddFriendlyFaction(uint factionid)
+    {
+        int index = FindInArray(friendsList, factionid);
+        if(index != -1)
+            return false;
+        friendsList.insertLast(factionid);
+        return true;
+    }
+
+    uint GetAreaCount()
+    {
+        return captureareas.length();
+    }
+
+    bool RemoveFriendlyFaction(uint factionid)
+    {
+        int index = FindInArray(friendsList, factionid);
+        if(index == -1)
+            return false;
+        friendsList.removeAt(uint(index));
+        return true;
+    }
+
+    // Town can only be taken during a one hour period each day or during countdown
+    // Not used
+    uint GetStatus()
+    {
+        return status;
+    }
+
+    void SetStatus(uint status)
+    {
+        this.status = status;
+    }
+
+    void SetPreviousFaction(uint previous)
+    {
+        previousfaction = previous;
+    }
+
+    void RevertControl()
+    {
+        Log("revert: faction " + faction);
+        if(faction == previousfaction)
+            faction = 0;
+        else
+            faction = previousfaction;
+
+        Broadcast_TownControl_Stop(this.location.GetProtoId());
+
+        countdown = ELAPSED_TIME;
+
+        SetCountdownStatus(false);
+        SetScore();
+    }
+
+    void SetScore()
+    {
+        string factionname;
+        GetFactionNameStr(faction, factionname);
+        if(factionname == "")
+            SetBestScore(TOWN_SCORE_BASE + id, null, "None");
+        else
+            SetBestScore(TOWN_SCORE_BASE + id, null, factionname);
+    }
+
+    void AssignMilitiaTeam(Critter@ cr)
+    {
+        if(faction > 0)
+            SetGroupInfo(cr, faction, 3, FACTION_MODE_ALWAYS);
+        else
+        {
+            uint locpid = cr.GetMap().GetLocation().GetProtoId();
+            if(locpid == LOCATION_BrokenHills)
+                SetGroupInfo(cr, FACTION_BH_MUTANTS, 3, FACTION_MODE_ALWAYS);
+            else if(locpid == LOCATION_TheDen)
+                SetGroupInfo(cr, FACTION_SLAVERS_GUILD, 3, FACTION_MODE_ALWAYS);
+            else
+                SetGroupInfo(cr, ReputationIndex(locpid), 3, FACTION_MODE_ALWAYS);
+        }
+    }
+
+    uint NumberOfValidFactionMembersPresent(Map& map, uint someFaction)
+    {
+        array<Critter@> crits;
+        uint            n = map.GetCritters(0, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+        uint            num = 0;
+        for(uint i = 0; i < n; i++)
+        {
+            if((GetGroupIndex(crits[i]) == someFaction) && IsValidCaptor(crits[i]))
+                num++;
+        }
+        return num;
+    }
+
+    // version 3
+    // All broadcast messages are unique in this function, if duplicate broadcast are sent, only one line should be shown.
+    void TownCheck()
+    {
+        // Check who's in town and can gain influence
+        array<PresenceStruct@> factions;         // present factions
+        Map@                   map = GetMap(mapid);
+        if(!valid(map))
+            Log("TC: Invalid map " + mapid + " in town " + id);
+
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+        for(uint i = 0; i < num; i++)
+        {
+
+            bool validCaptor = IsValidCaptor(crits[i]);
+            uint factionId = GetGroupIndex(crits[i]);
+            DLog("id " + crits[i].Id + ", faction " + factionId + ", valid=" + (validCaptor ? "yes" : "no"));
+            if(factionId < FACTION_PLAYER_START || !validCaptor)
+                continue;
+
+            bool found = false;
+            for(uint i = 0, j = factions.length(); i < j; i++)
+            {
+                if(factions[i].factionId == factionId)
+                {
+                    factions[i].count++;
+                    found = true;
+                }
+            }
+            if(!found)
+            {
+                PresenceStruct@ str = PresenceStruct(factionId);
+                factions.insertLast(str);
+            }
+        }
+
+        #ifndef __DEBUG__
+        // remove those below threshold
+        for(uint i = 0, j = factions.length(); i < j; i++)
+        {
+            if(factions[i].count < memberInfluenceReq)
+            {
+                factions.removeAt(i);
+                j--;
+            }
+        }
+        #endif
+
+        #ifdef __DEBUG__
+        if(factions.length() != 0)
+        {
+            Log("Enumerating factions found in " + name);
+            for(uint i = 0, j = factions.length(); i < j; i++)
+            {
+                Log("faction id: " + factions[i].factionId + ", " + factions[i].count);
+            }
+        }
+        #endif
+        if(factions.length() == 0)
+        {
+            // DLog("no one around in " + name);
+            return;
+        }
+
+        // Decrease influence of all other factions
+        DLog("decrease influence");
+
+        for(uint i = 0, j = factionInfluence.length(); i < j; i += 2)
+        {
+            bool Found = false;
+            for(uint k = 0, l = factions.length(); k < l; k++)
+            {
+                if(factionInfluence[i] == float(factions[k].factionId))
+                    Found = true;
+            }
+            if(!Found)
+                factionInfluence[i + 1] -= 0.0005;             // random magic number
+        }
+
+        IBroadcastBuffer@ msgMultipleFactions = Broadcast_Influence(
+            this.location.GetProtoId(),
+            TOWN_UPDATE_TICK,
+            "Multiple factions are now contesting for influence in this town.");
+        bool multipleFactions = (factions.length() > 1);
+
+        if(multipleFactions && Random(0, 4) == 0)
+        {
+            for(uint i = 0; i < num; i++)
+            {
+                uint factionId = GetGroupIndex(crits[i]);
+                if(factionId < FACTION_PLAYER_START || !IsValidCaptor(crits[i]))
+                    continue;
+                msgMultipleFactions.Send(crits[i]);                 // Valid captors, member of a faction
+                // crits[i].Say(SAY_NETMSG, "Multiple factions are now contesting for influence in this town.");
+            }
+            DLog("Multiple factions are contesting for power in " + name + ", no one will gain influence.");
+            return;
+        }
+
+        IBroadcastBuffer@ msgContest = Broadcast_Influence(
+            this.location.GetProtoId(),
+            TOWN_UPDATE_TICK,
+            "Reports are coming in from " + name + " that another gang is trying to gain a foothold there!");
+
+        if(factions[0].factionId != faction)
+        {
+            array<uint> ids;
+            uint        num = GetMembers(faction, ids);
+            for(uint i = 0; i < num; i++)
+            {
+                Critter@ factionMember = GetCritter(num);
+                if(!valid(factionMember))
+                    continue;
+                msgContest.Send(factionMember);                 // Members of faction with largest influence
+            }
+        }
+
+        IBroadcastBuffer@ msgInfluence = Broadcast_Influence(
+            this.location.GetProtoId(),
+            TOWN_UPDATE_TICK,
+            "Your faction is gaining influence in " + name + " now.");
+
+        for(uint i = 0; i < num; i++)
+        {
+            uint factionId = GetGroupIndex(crits[i]);
+            if(factionId != factions[0].factionId)
+                continue;
+            msgInfluence.Send(crits[i]);             // Members of a faction which has enough valid captors to gain influence
+        }
+
+        float modifyNum = 0.0f;
+        for(uint i = 0; i < num; i++)
+        {
+            uint factionId = GetGroupIndex(crits[i]);
+            if(factionId == factions[0].factionId)
+            {
+                modifyNum += GetCaptorInfluence(crits[i]);
+            }
+        }
+        string s;
+        s.ParseFloat(modifyNum, 32);
+        DLog("modifyNum==" + s);
+
+        ModifyInfluence(factions[0].factionId, modifyNum);
+
+        // Maybe do it more rarely?
+        uint influenceFaction = 0;
+        GetLargestInfluence(influenceFaction);
+        if(SetControl(influenceFaction))            // Clear all influence buffers in location, to prevent exploits
+        {
+            array<Critter@> playersLoc;
+            for(uint i = 0, j = GetCrittersLoc(map.GetLocation(), 0, FIND_LIFE | FIND_ONLY_PLAYERS, playersLoc); i < j; i++)
+                ClearInfluenceBuffer(playersLoc[i]);
+        }
+        DLog("SetControl " + influenceFaction);
+    }
+
+    // version 1 and 2
+    void AreaCheck()
+    {
+        if((faction == 0) || (countdown <= ELAPSED_TIME))
+            return;
+        Map@ map = GetMap(mapid);
+        if(!valid(map))
+            return;
+
+        uint            numwithin = 0;
+
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if((GetGroupIndex(crits[i]) == faction) && IsValidCaptor(crits[i]))
+            {
+                if(IsWithinCaptureArea(crits[i]))
+                    numwithin++;
+            }
+        }
+
+        if(GetMemberNearbyRequirement() > numwithin)
+        {
+            if(outsideAreaCount++ > 2)
+            {
+                for(uint i = 0; i < num; i++)
+                {
+                    if((GetGroupIndex(crits[i]) == faction))
+                        crits[i].Say(SAY_NETMSG, "Your faction has lost control of the town due to leaving the combat zone.");
+                }
+                RevertControl();
+
+                // Slacking timer two minutes after end of TC
+                SetCombatZone(map);
+            }
+            else
+            {
+                for(uint i = 0; i < num; i++)
+                {
+                    if((GetGroupIndex(crits[i]) == faction))
+                    {
+                        if(!IsValidCaptor(crits[i]) && (IsWithinCaptureArea(crits[i])))
+                            crits[i].Say(SAY_NETMSG, "You're too weak to help your factions cause.");
+                        if(IsValidCaptor(crits[i]) && (!IsWithinCaptureArea(crits[i])))
+                            crits[i].Say(SAY_NETMSG, "You're outside of the combat zone, return there immediately or your faction may lose control.");
+                    }
+                }
+            }
+        }
+        else
+            outsideAreaCount = 0;
+
+    }
+
+    // Hourly update
+    void Update(uint hour, uint minute)
+    {
+        if(id == 0)
+            return;
+
+        if(lastMinute == minute && lastHour == hour)
+            return;
+        lastHour = hour;
+        lastMinute = minute;
+
+        // Time Window
+        if(GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW && minute == 0)
+        {
+            if(this.hour == hour)
+                SetStatus(TOWN_STATUS_CAN_TAKE);
+            else
+                SetStatus(TOWN_STATUS_CANT_TAKE);
+        }
+
+
+        Map@            map = GetMap(mapid);
+
+        array<Critter@> crits;
+        uint            count = 0;
+        uint            num = map.GetCritters(0, FIND_ALL, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(_CritHasExtMode(crits[i], MODE_EXT_MILITIA))
+            {
+                if(Random(0, 2) == 0)
+                    Heal(crits[i]);
+                count++;
+            }
+
+            if(crits[i].IsPlayer() && GetGroupIndex(crits[i]) == faction)
+            {
+                uint localfaction = ReputationIndex(map.GetLocation().GetProtoId());
+                if(crits[i].ReputationBase[localfaction] < 0)
+                    crits[i].ReputationBase[localfaction] = 0;
+            }
+        }
+
+        #ifdef TOWN_MILITIA_FREE_REINFORCEMENTS
+        if(militiaEnabled && ((count < militiamax) && Random(0, 8 + count) == 0))       // Free reinforcements
+            AddMilitia(map);
+        #endif
+
+        if(faction > 0 && (NumberOfValidFactionMembersPresent(map, faction) > 0))
+        {
+            GiveReward(count);
+        }
+    }
+
+    void GiveReward(uint militiaCount)
+    {
+        Item@ cont = GetRewardContainer();
+
+        if(militiamax < TOWN_MILITIA_MAX)
+            militiamax++;
+
+        uint bonus = 0;
+        if(tcVersion == TOWN_VERSION_INFLUENCE)
+            bonus = int(CLAMP(GetInfluence(this.faction) / 10, 0, 100));
+        else
+            bonus = militiaCount / 2;
+
+        DLog("GiveReward bonus==" + bonus + " in " + name);
+
+        array<uint> ammo =
+        {
+            PID_7_62MM_AMMO, PID_9MM_AMMO, PID_9MM_BALL, PID_10MM_JHP, PID_SHOTGUN_SHELLS, PID_10MM_AP, PID_SMALL_ENERGY_CELL, PID_FLAMETHROWER_FUEL,
+            PID_10MM_AP, PID_44_MAGNUM_JHP, PID_44_FMJ_MAGNUM, PID_44_MAGNUM_FMJ, PID_45_CALIBER_AMMO, PID_223_FMJ, PID_SHOTGUN_SHELLS
+        };
+
+        array<uint> rareAmmo = { PID_5MM_JHP, PID_5MM_AP, PID_14MM_AP, PID_HN_NEEDLER_CARTRIDGE, PID_ADV_SUPERBURN, PID_MICRO_FUSION_CELL };
+
+        uint        dummy;
+
+        #define _AddContItem                                        \
+            # (__pid, __amount) { cont.AddItem(__pid, __amount, 0); \
+            }
+        #define _AddBetterContItem                     \
+            # (__pid, __amount) { if(giveBetterReward) \
+                                      cont.AddItem(__pid, __amount, 0); }
+
+        bool giveBetterReward;
+        if(tcVersion == TOWN_VERSION_INFLUENCE)
+            giveBetterReward = (GetLargestInfluence(dummy) >= TOWN_INFLUENCE_BETTER_REWARDS);
+        else
+            giveBetterReward = (Random(0, 2) == 0);
+
+        if(id == TOWN_MODOC)
+        {
+            _AddContItem(PID_LEATHER_ARMOR_MK_II, Random(0, 4));
+            _AddContItem(PID_BRAHMIN_HIDE,        Random(5, 10 + bonus));
+            _AddContItem(PID_MEAT_JERKY,          Random(10, 20 + bonus));
+            _AddBetterContItem(PID_JET,           Random(1, 5 + bonus));
+            _AddBetterContItem(PID_STIMPAK,       Random(5, 15 + bonus));
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(100, 10 + 10 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(50, 50 + 10 * bonus));
+            rewardCaps = 450 + 100 * bonus;
+        }
+        else if(id == TOWN_KLAMATH)
+        {
+            _AddContItem(PID_LEATHER_ARMOR_MK_II, Random(0, 1));
+            _AddContItem(PID_GOLDEN_GECKO_PELT,   Random(5, 10 + bonus));
+            _AddContItem(PID_GECKO_PELT,          Random(10, 20 + bonus));
+            _AddContItem(PID_ROPE,                Random(1, 5 + bonus));
+            _AddBetterContItem(PID_JET,           Random(1, 2 + bonus));
+            _AddBetterContItem(PID_STIMPAK,       Random(5, 15 + bonus));
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(80, 80 + 10 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(40, 40 + 10 * bonus));
+            rewardCaps = 150 + 100 * bonus;
+        }
+        else if(id == TOWN_GECKO)
+        {
+            _AddContItem(PID_ELECTRONIC_PARTS,    Random(5, 20 + bonus));
+            _AddBetterContItem(PID_JET,           Random(1, 2 + bonus));
+            _AddBetterContItem(PID_STIMPAK,       Random(5, 15 + bonus));
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(100, 100 + 10 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(50, 50 + 10 * bonus));
+            rewardCaps = 550 + 100 * bonus;
+        }
+        else if(id == TOWN_BH)     // Broken Hills
+        {
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(100, 100 + 10 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(50, 50 + 10 * bonus));
+            _AddContItem(PID_URANIUM_ORE,         Random(20, 40 + bonus));
+            _AddBetterContItem(PID_JET,           Random(4, 8 + bonus));
+            _AddBetterContItem(PID_STIMPAK,       Random(5, 15 + bonus));
+            _AddBetterContItem(PID_BUFFOUT,       Random(5, 15 + bonus));
+            rewardCaps = 1000 + 100 * bonus;
+        }
+        else if(id == TOWN_DEN)
+        {
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(100, 100 + 10 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(50, 50 + 10 * bonus));
+            _AddContItem(PID_ROPE,                Random(1, 3 + bonus));
+            _AddContItem(PID_JET,                 Random(5, 10 + bonus));
+            _AddBetterContItem(PID_STIMPAK,       Random(6, 20 + bonus));
+            _AddBetterContItem(PID_BUFFOUT,       Random(5, 15 + bonus));
+            rewardCaps = 220 + 100 * bonus;
+        }
+        else if(id == TOWN_REDDING)
+        {
+            LOOP(10) _AddContItem(random_from_array(ammo), Random(50, 50 + 50 * bonus));
+            _AddContItem(random_from_array(rareAmmo), Random(10, 10 + 10 * bonus));
+            _AddContItem(PID_REFINED_ORE,         Random(10, 20 + bonus));
+            _AddContItem(PID_STIMPAK,             Random(10, 20 + bonus));
+            _AddContItem(PID_JET,                 Random(1, 5 + bonus));
+            rewardCaps = 100 * bonus;
+        }
+
+        BanksRemoveMoney(rewardCaps);
+        cont.AddItem(PID_BOTTLE_CAPS, rewardCaps, 0);
+
+        // For everyone
+        cont.AddItem(PID_NUKA_COLA, Random(1, 25 + bonus), 0);
+        cont.AddItem(PID_CIGARETTES, Random(1, 25 + bonus), 0);
+        cont.AddItem(PID_LIGHTER, Random(0, 5 + bonus), 0);
+    }
+
+    void UpdateTick()
+    {
+        if(tcVersion != 3)
+            UpdateCountdown();
+    }
+
+    void UpdateCountdown()
+    {
+        if(!GetCountdownStatus())
+            return;
+        // Log("town "+id+", countdown "+(GetCountdownStatus()?"ACTIVE":"inactive")+", faction="+GetControllingFaction()+", timer: "+ELAPSED_TIME+"/"+countdown);
+
+        // Has gained full control
+        if(countdown <= ELAPSED_TIME)
+        {
+            // Log("setting control, is controlling faction nonzero?");
+            if(GetControllingFaction() != 0)
+            {
+                // Log("it is, setting score...");
+                DLog("Setting score...");
+                SetScore();
+                countdown = ELAPSED_TIME;
+                rewardCaps = rewardCapsStart;
+                militiamax = TOWN_MILITIA_START_MAX;
+
+                friendsList.resize(0);
+
+                Map@            map = GetMap(mapid);
+                array<Critter@> crits;
+                uint            num = map.GetCritters(0, FIND_ALL, crits);
+                // Log("found "+num+" critters on the map...");
+                for(uint i = 0; i < num; i++)
+                {
+                    // Log("critter "+i+", id="+crits[i].Id);
+                    if(_CritHasExtMode(crits[i], MODE_EXT_MILITIA))
+                    {
+                        // Log("Found militia, setting new team id");
+                        SetGroupInfo(crits[i], faction, 3, FACTION_MODE_ALWAYS);
+                        if(Random(0, 1) == 0)
+                        {
+                            // Log("rejuvenating");
+                            if(crits[i].IsDead())
+                                crits[i].ToLife();
+                            crits[i].StatBase[ST_CURRENT_HP] = crits[i].Stat[ST_MAX_LIFE];
+                            // Log("done.");
+                        }
+                    }
+
+                    if(crits[i].IsPlayer() && GetGroupIndex(crits[i]) == faction)
+                    {
+                        // Log("player, clearing negative rep");
+                        uint localfaction = ReputationIndex(map.GetLocation().GetProtoId());
+                        if(crits[i].ReputationBase[localfaction] < 0)
+                            crits[i].ReputationBase[localfaction] = 0;
+                        crits[i].Say(SAY_NETMSG, "Your faction is now in control of this town.");
+                        // Log("done.");
+                    }
+                }
+                // Log("disabling countdown...");
+
+                SetCountdownStatus(false);
+                // Log("control transferred to faction "+GetControllingFaction());
+                return;
+            }
+        }
+    }
+
+    void IncreaseNPCDeath(uint num)
+    {
+        npcDeaths += num;
+    }
+
+    void IncreasecontrolCycles(uint num)
+    {
+        controlCycles += num;
+    }
+
+    uint GetlastSecond()
+    {
+        return lastSecond;
+    }
+
+    void SetlastSecond(uint sec)
+    {
+        this.lastSecond = sec;
+    }
+
+    uint GetCountdown()
+    {
+        if(ELAPSED_TIME > countdown)
+            return 0;
+        return countdown - ELAPSED_TIME;
+    }
+
+    uint GetVersion() { return tcVersion; }
+
+    uint GetControlCycles()
+    {
+        return controlCycles;
+    }
+
+    uint GetNumberOfKilledNPCs()
+    {
+        return npcDeaths;
+    }
+
+    uint GetControllingFaction()
+    {
+        return faction;
+    }
+
+    uint GetMemberNearbyRequirement()
+    {
+        return memberNearbyReq;
+    }
+
+    uint GetMemberTotalRequirement()
+    {
+        return memberTotalReq;
+    }
+
+    int GetSpeechModifier()
+    {
+        return speechModifier;
+    }
+
+    uint GetMilitiaMax()
+    {
+        return militiamax;
+    }
+
+    Item@ GetLimboContainer()
+    {
+        return LimboContainer;
+    }
+
+    Item@ GetRewardContainer()
+    {
+        return RewardContainer;
+    }
+
+    uint GetMapID()
+    {
+        return mapid;
+    }
+
+    void SendCountdownTime(Critter& player)
+    {
+        string factionname;
+        GetFactionNameStr(faction, factionname);
+        // Log("starting countdown: ELAPSED_TIME="+ELAPSED_TIME+", target="+countdown+", passed ("+int(countdown>>32)+","+int(countdown&(0xFFFFFFFF))+")");
+        player.RunClientScript("_CountDownStart", id - 1, 0 /*int(countdown>>32)*/, int(countdown), factionname, null);
+    }
+
+    bool SetControl(uint newFaction)
+    {
+        if(newFaction == faction)
+            return false;
+
+        faction = newFaction;
+
+        ResetStats();
+        Map@ map = GetMap(GetMapID());
+        ClearEnemyStacksOnMap(map);
+        SetScore();
+        if(tcVersion == 3)
+        {
+            IBroadcastBuffer@ msg = Broadcast_Message("Your faction is now the largest influence in " + name + "!", REAL_SECOND(20), BROADCAST_FILTER_NONE, false);
+            msg.SetFilter(BROADCAST_FILTER_FACTION, newFaction);
+            msg.SendToAll();
+        }
+        return true;
+    }
+
+    // Trying to gain control
+    bool GainControl(Critter& player)
+    {
+        uint newfaction = GetGroupIndex(player);
+        if(newfaction == faction)   // Already controls it
+            return false;
+
+        if((newfaction < FACTION_PLAYER_START) && (player.GetAccess() == ACCESS_CLIENT))
+            return false;
+
+        outsideAreaCount = 0;
+        previousfaction = faction;
+        faction = newfaction;
+
+        array<Critter@> crits;
+
+        uint            num = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, crits);
+        uint            nearmembers = 0;
+        for(uint i = 0; i < num; i++)
+        {
+            if((GetCrittersDistantion(player, crits[i]) < TOWN_CAPTURE_NEARBY_HEXES) && GetGroupIndex(player) == GetGroupIndex(crits[i]))
+            {
+                if(IsValidCaptor(crits[i]))
+                    nearmembers++;
+            }
+        }
+
+        Money = 0;
+        countdown = ELAPSED_TIME + TOWN_CONTROL_TIME;
+        countdown -= REAL_SECOND(player.Skill[SK_SPEECH]);
+        countdown -= ((nearmembers - GetMemberTotalRequirement()) * TOWN_CONTROL_TIME_BONUS);
+        Log("faction " + faction + " gaining control over town " + id + " with countdown target=" + countdown);
+        ResetStats();
+
+        Map@ map = GetMap(mapid);
+        if(valid(map))
+        {
+            SetCombatZone(map, countdown);
+        }
+
+        DLog("Town " + id + " is now controlled by faction " + faction);
+
+        ClearEnemyStacksOnMap(GetMap(GetMapID()));
+
+        Broadcast_TownControl_Set(this.location.GetProtoId(), countdown, this.faction);
+
+        SetCountdownStatus(true);
+
+        return true;
+    }
+
+    void SetCountdownStatus(bool enabled)
+    {
+        Map@ map = GetMap(mapid);
+        if(!valid(map))
+            return;
+        map.SetData(MAP_DATA_ACTIVE_COUNTDOWN, (enabled ? 1 : 0));
+    }
+
+    bool GetCountdownStatus()
+    {
+        Map@ map = GetMap(mapid);
+        if(!valid(map))
+            return false;
+        return map.GetData(MAP_DATA_ACTIVE_COUNTDOWN) == 1;
+    }
+
+    void ResetControl()
+    {
+        Log("reset: faction " + faction);
+        faction = 0;
+        countdown = ELAPSED_TIME;
+        SetScore();
+        ResetStats();
+
+        Broadcast_TownControl_Stop(this.location.GetProtoId());
+
+        SetCountdownStatus(false);
+    }
+
+    void ResetStats()
+    {
+        npcDeaths = 0;
+        controlCycles = 0;
+    }
+
+    void ClearRewardContainer()
+    {
+        ClearContainer(RewardContainer);
+    }
+
+    void ClearLimboContainer()
+    {
+        ClearContainer(LimboContainer);
+    }
+
+    void ClearContainers()
+    {
+        ClearRewardContainer();
+        ClearLimboContainer();
+    }
+
+    uint GetTownID()
+    {
+        return id;
+    }
+
+    string GetTownName()
+    {
+        return name;
+    }
+
+    uint GetTownLeaderId()
+    {
+        return townLeaderId;
+    }
+
+    ITown@ SetRewardStartCaps(uint caps)
+    {
+        rewardCapsStart = caps;
+        return this;
+    }
+
+    ITown@ SetMilitiaEnabled()
+    {
+        militiaEnabled = true;
+        return this;
+    }
+
+    ITown@ SetCaptureArea(IPolygon@ capturearea)
+    {
+        this.captureareas.insertLast(capturearea);
+        return this;
+    }
+
+    ITown@ SetHour(uint hour)
+    {
+        this.hour = hour;
+        return this;
+    }
+
+    ITown@ SetTownID(uint id)
+    {
+        this.id = id;
+        return this;
+    }
+
+    ITown@ SetMapID(uint id)
+    {
+        this.mapid = id;
+        return this;
+    }
+
+    // Not used
+    ITown@ SetTownLeader(Critter@ leader)
+    {
+        if(!valid(leader))
+        {
+            Log("Townleader in town #" + id + " is invalid");
+            return this;
+        }
+        this.townLeaderId = leader.Id;
+        return this;
+    }
+
+    ITown@ SetVersion(uint version)
+    {
+        this.tcVersion = version;
+        return this;
+    }
+
+    // Not used
+    ITown@ SetTownLeader(uint id)
+    {
+        this.townLeaderId = id;
+        return this;
+    }
+
+    ITown@ SetBaseRewardValue(uint baseValue)
+    {
+        this.baseValue = baseValue;
+        return this;
+    }
+
+    ITown@ SetSpeechModifier(int modifier)
+    {
+        speechModifier = modifier;
+        return this;
+    }
+
+    ITown@ SetLimboContainer(Item@ container)
+    {
+        if(!valid(container))
+        {
+            Log("Limbocontainer in " + name + "(" + id + ")is invalid");
+        }
+
+        @this.LimboContainer = container;
+        return this;
+    }
+
+    ITown@ SetRewardContainer(Item@ container)
+    {
+        if(!valid(container))
+        {
+            Log("Rewardcontainer in " + name + "(" + id + ")is invalid");
+        }
+
+        @this.RewardContainer = container;
+        return this;
+    }
+
+    ITown@ SetInfluenceMemberRequirement(uint number)
+    {
+        this.memberInfluenceReq = number;
+        return this;
+    }
+
+    ITown@ SetTotalMemberRequirement(uint number)
+    {
+        this.memberTotalReq = number;
+        return this;
+    }
+
+    ITown@ SetNearbyMemberRequirement(uint number)
+    {
+        this.memberNearbyReq = number;
+        return this;
+    }
+
+    int Money;
+
+    void AddMoney(int money)
+    {
+        Money += money;
+    }
+
+    int GetMoney()
+    {
+        return Money;
+    }
+
+    Location@ GetLocation()
+    {
+        return(this.location);
+    }
+};
+#endif
+
+/*@}*/

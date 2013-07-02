@@ -1,0 +1,17 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_perks_h.fos
+//
+
+#ifndef __ITEM_PERKS_H__
+#define __ITEM_PERKS_H__
+
+#ifndef __ITEM_PERKS__
+
+import void DisableItemPerk(Critter& cr, uint8 type) from "item_perks";
+import void DisableItemPerk(Critter& cr, Item& item, uint8 type) from "item_perks";
+import void EnableItemPerk(Critter& cr, Item& item, uint8 type) from "item_perks";
+#endif // __ITEM_PERKS_H__
+#endif // __ITEM_PERKS_H__ //

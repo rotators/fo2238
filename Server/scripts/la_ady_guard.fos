@@ -1,0 +1,48 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// la_ady_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "npc_roles_h.fos"
+#include "guard_h.fos"
+#include "patrolling.fos"
+
+#define DIALOG_ID    (9421)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 26);
+        GuardPerks(guard);
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+}
+
+void _OnShowCritter(Critter& guard, Critter& critter)
+{
+    GuardOnShowCritter(guard, critter);
+}
+
+void _OnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    GuardOnSomeoneSteal(guard, target, thief, success, item, count);
+}

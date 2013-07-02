@@ -1,0 +1,53 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_bases_h.fos
+//
+
+// this is the header exposing API for factions_bases module
+
+#include "_macros.fos"
+#include "factions_h.fos"
+
+shared interface IFactionBase
+{
+    /** Unique id of the base */
+    uint get_Id() const;
+    /** Id of the faction owning the base */
+    uint get_FactionId() const;
+    /** Name of the base, unique within faction */
+    const string& get_Name() const;
+    /** Id of the underlying location */
+    uint get_LocationId() const;
+
+    /** Shows the underlying location to the critter */
+    void Show(Critter& cr) const;
+    /** Hides the underlying location from critter */
+    void Hide(Critter& cr) const;
+
+    /** Checks if given rank (within owning faction) is allowed to see this base */
+    bool IsRankAllowed(int rank) const;
+    /** Allows/disallows rank to see this base */
+    void AllowRank(int rank, bool allow);
+    /** Checks if players that are filled in owning faction database and have given status are allowed to see the base */
+    bool IsStatusAllowed(int status) const;
+    /** Allows/disallows players with given status to see this base */
+    void AllowStatus(int status, bool allow);
+
+    /** Removes all additional data associated with this IFactionBase object */
+    void Remove();
+};
+
+#ifndef __FACTIONS_BASES_MODULE__
+// imports that are included only if not included by factions_bases module
+import IFactionBase@ GetFactionBase(uint faction_id, const string& faction_name) from "factions_bases";
+import IFactionBase@ GetFactionBase(uint id) from "factions_bases";
+import IFactionBase@ GetFactionBaseByLocId(uint id) from "factions_bases";
+import uint          GetFactionBases(uint faction_id, array<IFactionBase@>@) from "factions_bases";
+import bool          AddFactionBase(IFactionBase&) from "factions_bases";
+import void          AddFactionBase(uint) from "factions_bases";
+import IFactionBase@ CreateFactionBase(uint faction_id, const string& name, uint location_id) from "factions_bases";
+import void          RemoveFactionBase(uint, const string&) from "factions_bases";
+import void          RemoveFactionBase(IFactionBase&) from "factions_bases";
+#endif

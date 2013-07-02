@@ -1,0 +1,202 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cfg_file.fos
+//
+
+// read cfg files in following format:
+// [section]
+// var=value
+
+#ifndef __CFG_FILE__
+#define __CFG_FILE__
+
+#include "_macros.fos"
+
+//
+// Section of the config file
+//
+shared class CSection
+{
+    // all properties of a section (indices to values array)
+    dictionary     indices;
+    // values of properties
+    array<string@> values;
+
+    string         name;
+
+    //
+    // Sets name of a section
+    //
+    void SetName(string& name)
+    {
+        this.name = name;
+    }
+    //
+    // Adds property to dictionary
+    //
+    void AddProperty(string@ name, string@ value)
+    {
+        // TODO: does not handle doubled properties
+        values.insertLast(value);
+        indices.set(name, values.length() - 1);
+    }
+    //
+    // Gets value for a property
+    //
+    string@ GetValue(string& property)
+    {
+        uint id = 0;
+        if(indices.get(property, id))
+        {
+            return values[id];
+        }
+        else
+            return null;
+    }
+};
+
+//
+// Parsing file/creating data representaiton
+//
+shared class CConfig
+{
+    // all sections of config file
+    array<CSection@> sections;
+    // indices to sections
+    dictionary       indices;
+
+    CConfig(string & fileName)
+    {
+        file f;
+
+        if(f.open(fileName, "r") >= 0)
+        {
+            Parse(f);
+        }
+        else
+        {
+            #ifdef __CLIENT
+            // Message("Error while opening cfg file: " + fileName);
+            #endif
+            // Log("Error while opening cfg file: " + fileName);
+        }
+    }
+
+    //
+    // Properties
+    //
+    string@ GetValue(string& sectionName, string& property)
+    {
+        uint id = 0;
+        if(indices.get(sectionName, id))
+        {
+            CSection @section = sections[id];
+            return section.GetValue(property);
+        }
+        else
+            return null;
+    }
+
+    //
+    // Adds section to the list and dicitonary
+    //
+    void AddSection(CSection@ section)
+    {
+        // TODO: does not handle doubled identifiers
+        sections.insertLast(section);
+        indices.set(section.name, sections.length() - 1);
+    }
+    //
+    // Parse content of the file
+    //
+    void Parse(file& f)
+    {
+        // Read the whole file into the string buffer
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+
+        // now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        #ifdef __CLIENT
+        # ifdef __DEBUG__
+        Message("Parsing cfg file, read " + lines.length() + " lines");
+        # endif
+        #endif
+        uint sectionCount = 0;
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            string@ line = lines[i];
+            // new section
+            if(line[0] == '[')
+            {
+                CSection@ section = ParseSection(lines, i);
+                AddSection(section);
+                sectionCount++;
+            }
+        }
+        #ifdef __CLIENT
+        # ifdef __DEBUG__
+        Message("Cfg file parsed, read " + sectionCount + " sections");
+        # endif
+        #endif
+    }
+    //
+    // Parses properties for section
+    //
+    CSection@ ParseSection(array<string@>@ lines, uint& i)
+    {
+        #ifdef __CLIENT
+        # ifdef __DEBUG__
+        Message("Parsing section at line: " + i);
+        # endif
+        #endif
+        CSection@ section = CSection();
+        string@   name = substring(lines[i], 1, lines[i].length() - 2);
+        #ifdef __CLIENT
+        # ifdef __DEBUG__
+        Message("Section name: " + name);
+        # endif
+        #endif
+        section.SetName(name);
+        i++;
+        for(uint j = lines.length(); i < j; i++)
+        {
+            string@ line = lines[i];
+            #ifdef __CLIENT
+            # ifdef __DEBUG__
+            Message("Parsing line: " + line);
+            # endif
+            #endif
+            // end
+            if(line.length() < 2)
+                break;
+            // next section
+            if(line[0] == '[')
+            {
+                i--;
+                break;
+            }
+            // property
+            else
+            {
+                array<string@>@ prop = split(line, "=");
+                if(prop.length() == 2)
+                    section.AddProperty(prop[0], prop[1]);
+                else
+                {
+                    #ifdef __CLIENT
+                    # ifdef __DEBUG__
+                    Message("Error while parsing property line: " + line);
+                    # endif
+                    #endif
+                    Log("Error while parsing property line: " + line);
+                }
+            }
+        }
+        return section;
+    }
+};
+#endif

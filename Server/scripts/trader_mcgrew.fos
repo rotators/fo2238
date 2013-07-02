@@ -1,0 +1,48 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// trader_mcgrew.fos
+//
+
+#include "_macros.fos"
+#include "trader_h.fos"
+
+#define DETONATOR_STOCK    (npc.StatBase[ST_VAR1])
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    if(firstTime)
+        DETONATOR_STOCK = 10;
+
+    CreateTimeEvent(ELAPSED_TIME + TRADER_UPDATE_TIME, "e_Restock", npc.Id, false);
+}
+
+void r_ReduceStock(Critter& player, Critter@ npc)
+{
+    DETONATOR_STOCK = DETONATOR_STOCK - 1;
+}
+
+bool d_HasStock(Critter& player, Critter@ npc)
+{
+    return(DETONATOR_STOCK > 0);
+}
+
+bool d_HasNotStock(Critter& player, Critter@ npc)
+{
+    return(DETONATOR_STOCK == 0);
+}
+
+uint e_Restock(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+    if(!valid(npc))
+    {
+        Log("Can't restock mcgrew");
+        return TRADER_UPDATE_TIME;
+    }
+    DETONATOR_STOCK = DETONATOR_STOCK + Random(5, 10);
+    _TIMEEND;
+    return TRADER_UPDATE_TIME;
+}

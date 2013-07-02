@@ -1,0 +1,28 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 3 D _var p factions_player_rank < 3 #
+3 1020 D _var p factions_player_faction = 3 #
+2 1030 D _script dialog@d_IsDisguised 0  #
+65507 1040 @
+2 2000 Attack 0 @
+3 3000 None 0 &
+
+[engl]
+{100}{}{Enclave Scientist}
+{200}{}{You see a scientist.}
+{210}{}{You see a balding man in a lab coat.}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{important member}
+{1030}{}{disguised}
+{1040}{}{non-member}
+{2000}{}{I don’t have time to chitchat with the grunts!@@Stop interrupting my work, soldier.@@This is the research lab. What are you doing here? Leave immidiately!}
+{3000}{}{We research different organisms in there.@@Insects, mammals, reptiles... They all react different to FEV.@@We have not made any significant progress yet.}
+

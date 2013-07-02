@@ -1,0 +1,108 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+11 1010 D _param p KARMA_SLAVER > 0 #
+12 1020 D _param p ST_CHARISMA > 99 #
+2 1030 D _param p ST_GENDER = 0 #
+3 1040 D _param p ST_GENDER = 1 @
+2 2000 None 0 #
+8 2010 D _script rooms@d_CanPayRent 0  R _script rooms@r_PayRent 0  #
+65506 2020 #
+6 2030 D _param p ST_INTELLECT > 3 D _script rooms@d_NotRentingHere 1 0 D _script rooms@d_IsFreeRoom 1 0 R _var n name_mem_npc_player = 1 #
+9 2040 D _param p ST_INTELLECT > 3 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 R _var n name_mem_npc_player = 1 #
+0 2050 @
+3 3000 None 0 #
+8 3010 D _script rooms@d_CanPayRent 0  R _script rooms@r_PayRent 0  #
+65506 3020 #
+6 3030 D _script rooms@d_IsFreeRoom 1 0 D _script rooms@d_NotRentingHere 1 0 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+9 3040 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+0 3050 @
+4 4000 None 0 #
+4 4010 #
+4 4020 #
+4 4030 #
+0 4040 #
+0 4050 #
+0 4060 #
+0 4070 @
+5 5000 None 0 #
+4 5010 #
+4 5020 #
+4 5030 #
+0 5040 #
+0 5050 #
+0 5060 #
+0 5070 @
+6 6000 rooms@dlg_ShowInfo 0 #
+7 6010 D _script rooms@d_HasMoneyForRent 1 0 R _script rooms@r_RentRoom 1 25 #
+10 6020 D _script rooms@d_NoMoneyForRent 1 0 #
+0 6030 @
+7 7000 None 0 #
+0 7010 R _script rooms@r_ShowRoom 1 1 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 @
+12 12000 None 0 &
+
+[engl]
+{100}{}{Rose}
+{200}{}{A pleasantly plump woman.}
+{210}{}{Her gray hair is done up in a loose bun, and she walks with a slight waddle. You can’t help but feel relaxed around her.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{Ugly}
+{1030}{}{Male}
+{1040}{}{Female}
+{2000}{}{Welcome to Rose’s Bed and Breakfast. My, aren’t you the strapping young man. What can Rose help you with today?}
+{2010}{}{I'd like to pay a rent for my room...}
+{2020}{}{I’m starved! What do you have to eat around here?}
+{2030}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{2040}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{2050}{}{I have to get going.}
+{3000}{}{Welcome to Rose’s Bed and Breakfast. Oh my, what a pretty young lady you are. What can Rose do for you today?}
+{3010}{}{I'd like to pay a rent for my room...}
+{3020}{}{I’m starved! What do you have to eat around here?}
+{3030}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{3040}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{3050}{}{I have to get going.}
+{4000}{}{That’s what I like to hear. A growing young boy needs to eat to keep up his strength, and I can tell you haven’t been eating properly. You just sit right down and look at the menu.}
+{4010}{}{Brahmin fries. [$5]}
+{4020}{}{Wasteland omelet. [$25]}
+{4030}{}{Water. [$1000]}
+{4040}{}{Brahmin dogs. [$5]}
+{4050}{}{Canis burgers. [$7]}
+{4060}{}{Shepherd’s stew. [$3]}
+{4070}{}{No thank you; I’m not hungry right now.}
+{5000}{}{And so you should be. When was the last time you had a good meal, young lady? Why, you’re as thin as a rail. You just look at the menu and tell Rose what you would like to eat.}
+{5010}{}{Brahmin fries. [$5]}
+{5020}{}{Wasteland omelet. [$25]}
+{5030}{}{Water. [$1000]}
+{5040}{}{Brahmin dogs. [$5]}
+{5050}{}{Canis burgers. [$7]}
+{5060}{}{Shepherd’s stew. [$3]}
+{5070}{}{No thank you; I’m not hungry right now.}
+{6000}{}{We still have a room free and this will cost you @lex price@ caps for @lex time@ days. You want it?}
+{6010}{}{Sounds like a fair price to me. I’ll take it.@@Yes, I'll take the room.}
+{6020}{}{Uh, this is a little rich for me. You couldn't let me sleep there on the house, could ya?}
+{6030}{}{No thanks, I've changed my mind.}
+{7000}{}{No problem. This room, follow me.@@No problem. This room, follow me. Don't be shooting any guns in here, okay?}
+{7010}{}{[Follow]}
+{8000}{}{Good, it's better to be sure about your posessions, am I right?}
+{8010}{}{[Leave] Right...}
+{9000}{}{Sorry, but we don't have any rooms free. Maybe you should try later again.}
+{9010}{}{[Leave] Damn!}
+{10000}{}{Sorry hun, no rooms for free.@@Sorry, I got to make a living.}
+{10010}{}{Dang.}
+{11000}{}{I don't take dirty money.@@Suddenly we're fully booked.@@You'll have to look somewhere else.}
+{12000}{}{I'm going to have to ask you to leave.@@We don't serve your, uh... whatever you are around here.@@I... what happened to your face?}
+

@@ -1,0 +1,30 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_cathdead.fos
+//
+
+#include "_macros.fos"
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+
+void map_init(Map& map, bool firstTime)
+{
+    // radiation loop
+    map.SetEvent(MAP_EVENT_LOOP_0, "_Radiate");
+    map.SetLoopTime(0, 10000);
+}
+
+//
+// Irradiate all critters on map
+//
+void _Radiate(Map& map)
+{
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_ALL, crits);
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        AffectRadiation(crits[i], Random(1, 5));
+    }
+}

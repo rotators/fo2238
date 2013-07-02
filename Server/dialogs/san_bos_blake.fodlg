@@ -1,0 +1,55 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script dialog@d_IsNotMember 0  #
+3 1020 D _var n name_mem_npc_player = 0 #
+4 1030 @
+2 2000 None 0 @
+3 3000 None 0 #
+5 3010 R _var n name_mem_npc_player = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+7 5020 #
+0 5030 @
+6 6000 None 0 #
+65505 6010 #
+0 6020 @
+7 7000 None 0 #
+65505 7010 #
+0 7020 &
+
+[engl]
+{100}{}{Blake}
+{200}{}{You see a guard.}
+{210}{}{You see a member of Brotherhood of Steel. He's observing the area carefully.}
+{1000}{}{Predialogue installations}
+{1010}{}{not BoS member}
+{1020}{}{Unknown member}
+{1030}{}{Known member}
+{2000}{}{Move along.@@Nothing to see here.@@Take a hike.@@You better keep going.}
+{3000}{}{Hello there. Name's Blake, haven't seen ya around here before.}
+{3010}{}{Yeah, I was just passing by and thought I might take a look what's going on around here.}
+{3020}{}{I think I'm in the wrong place.}
+{4000}{}{Ah, you again. What's up?}
+{4010}{}{Hi there! I had a few questions for you.}
+{4020}{}{Not much. See you later!}
+{5000}{}{What would you like to know?}
+{5010}{}{What are you doing here?}
+{5020}{}{What's in there?}
+{5030}{}{Nothing for now, maybe later. Bye!}
+{6000}{}{I'm watching the entrance to this outpost. Also, I collect any useful info about this place I can get.}
+{6010}{}{Another question, please!}
+{6020}{}{Right. Time to go, bye!}
+{7000}{}{It's a small outpost, but pretty well equipped. There is a faction terminal and a repair shop... You better check it out yourself, I guess.}
+{7010}{}{Thanks for that, let me ask you something else now.}
+{7020}{}{I see. Gotta go now, bye!}
+

@@ -1,0 +1,188 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 R _script dialog@r_Alert 0  #
+9 1020 D _var n name_mem_npc_player = 0 #
+10 1030 D _var n name_mem_npc_player > 0 D _param p ST_INTELLECT > 3 @
+9 2000 None 0 #
+12 2010 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+0 2020 D _param p ST_INTELLECT > 3 @
+10 3000 None 0 #
+12 3010 #
+0 3020 @
+12 4000 None 0 #
+13 4010 R _var n acquaintance + 1 #
+14 4020 R _var n acquaintance + 1 #
+15 4030 R _var n acquaintance + 1 #
+99 4040 D _script vaul_guard@d_NoQuestActive 1 0 D _var n acquaintance > 1 R _script vaul_guard@r_ChooseQuest 1 0 #
+0 4050 D _script vaul_guard@d_QuestInProgress 1 0 R _script vaul_guard@r_AboutQuest 1 0 #
+0 4060 @
+13 5000 None 0 #
+12 5010 R _var n acquaintance + 1 @
+14 6000 None 0 #
+12 6010 R _var n acquaintance + 1 @
+15 7000 None 0 #
+12 7010 R _var n acquaintance + 1 @
+50 8000 None 0 @
+98 9000 None 0 #
+0 9010 @
+99 10000 None 0 #
+98 10010 @
+100 11000 None 0 #
+101 11010 R _script vaul_guard@r_AssignQuest 1 0 #
+98 11020 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+111 11030 #
+65507 11040 @
+101 12000 None 0 #
+102 12010 #
+0 12020 @
+102 13000 None 0 #
+0 13010 #
+12 13020 @
+111 14000 None 0 #
+0 14010 R _script vaul_guard@r_AssignQuest 1 0 #
+65507 14020 @
+120 15000 None 0 #
+121 15010 D _var p factions_q_vc_scoutsf = 111 D _param p SK_OUTDOORSMAN < 51 #
+121 15020 D _var p factions_q_vc_scoutsf = 111 D _param p SK_OUTDOORSMAN > 50 #
+98 15030 D _script vaul_guard@d_QuestInProgress 1 0 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+0 15040 @
+121 16000 None 0 #
+0 16010 R _param p ST_EXPERIENCE + 600 R _script vaul_guard@r_FinishQuest 1 0 R _var p factions_player_score + 3 #
+65507 16020 @
+200 17000 None 0 #
+201 17010 R _script vaul_guard@r_AssignQuest 1 0 R _item p PID_QUESTIONNAIRE + 15 #
+98 17020 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+65507 17030 @
+201 18000 None 0 #
+0 18010 #
+202 18020 D _param p SK_SPEECH > 50 @
+202 19000 None 0 #
+0 19010 R _var p factions_player_score + 1 R _param p ST_EXPERIENCE + 200 @
+220 20000 None 0 #
+221 20010 D _var p factions_q_vc_questionnaire = 151 R _script vaul_guard@r_FinishQuest 1 0 R _param p ST_EXPERIENCE + 500 R _var p factions_player_score + 2 #
+222 20020 D _var p factions_q_vc_questionnaire < 151 D _item p PID_QUESTIONNAIRE = 0 R _script vaul_guard@r_FinishQuest 1 0 R _param p ST_EXPERIENCE + 200 R _var p factions_player_score + 1 #
+98 20030 D _script vaul_guard@d_QuestInProgress 1 0 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+0 20040 @
+221 21000 None 0 #
+0 21010 #
+0 21020 @
+222 22000 None 0 #
+0 22010 #
+65507 22020 @
+300 23000 None 0 #
+301 23010 R _script vaul_guard@r_AssignQuest 1 0 #
+98 23020 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+65507 23030 @
+301 24000 None 0 #
+0 24010 #
+302 24020 @
+302 25000 None 0 #
+0 25010 #
+0 25020 @
+320 26000 None 0 #
+321 26010 D _var p factions_q_vc_kohl_books = 11111 R _var p factions_player_score + 4 R _param p ST_EXPERIENCE + 1000 R _script vaul_guard@r_FinishQuest 1 0 #
+98 26020 D _script vaul_guard@d_QuestInProgress 1 0 R _var p factions_player_score - 1 R _script vaul_guard@r_CancelQuest 1 0 #
+0 26030 @
+321 27000 None 0 #
+0 27010 #
+65507 27020 &
+
+[engl]
+{100}{}{Lilly}
+{200}{}{You see Lilly.}
+{240}{}{You see dead Lilly.}
+{260}{}{You see slain Lilly.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb attack}
+{1020}{}{Player unknown}
+{1030}{}{Player known}
+{2000}{}{Good day, my name is Lilly. I don't think we've had a chance to meet before... Who are you and what are you doing here?}
+{2010}{}{Hello @nname@, I'm @pname@, glad to meet you. Say, I had some questions for you...}
+{2020}{}{Nothing, I was just leaving.}
+{3000}{}{Lookie here, it's Citizen @pname@. What do you want now?@@Hello again, Citizen @pname@. What is it this time?@@Greetings, Citizen @pname@. Just be quick...}
+{3010}{}{There are a few more things I wanted to ask...}
+{3020}{}{I was just leaving.}
+{4000}{}{OK, I'm listening... but hurry up, I'm busy.}
+{4010}{}{Can you tell me a little about the history of Vault City?}
+{4020}{}{What's the purpose of this building?}
+{4030}{}{Why are there so many guards around here? And what's the deal with the computers?}
+{4040}{}{Any work that needs doing?}
+{4050}{}{About that work...}
+{4060}{}{That's all for now. Bye.}
+{5000}{}{Well, the city was founded back in 2091 by the inhabitants of Vault 8 - that's the complex built into those rocks over there, on the opposite side of the city. The overseer of the vault ruled the city until 2101, when he retired and the Council was established. The head of the Council and the city is the First Citizen, currently First Citizen Lynette.}
+{5010}{}{Thanks. One more question, though...}
+{6000}{}{We are in the Vault City Headquarters right now. This building is the main base of our armed forces. A few years ago, the head of the Bishop family in New Reno organized raids on our city, in the hope of forcing us to join the New California Republic for protection. His plan was to become Vault City's representative in that so-called Republic. He didn't make it, his raiders bit the dust. If that wasn't enough, we've got the Enclave and The Brotherhood to watch out for... one more reason to watch our backs. Because of all this, the council decided to build the Headquarters and establish a significant armed force in order to protect the city, the citizens and the values upon which our society was founded.}
+{6010}{}{I see. Tell me something else now...}
+{7000}{}{This building needs to be well protected at all times. The terminals are used by our members to store the important data about people and events we're interested in. It wouldn't do any harm for you to check it out, we need all the information we can get. On the other side, all terminals are connected to the mainframe computer on the underground level. The only way to access it is to prove your loyalty to the city and get promoted.}
+{7010}{}{Thanks for the info, but I've got another question...}
+{8000}{}{What the... how did you get in here? Guards! Intruder!}
+{9000}{}{Well, nothing else to do right now. You could try later, if you want.}
+{9010}{}{Yeah, whatever.}
+{10000}{}{Just a minute, I need to check my notes...}
+{10010}{}{[Wait]}
+{11000}{}{Good to see you're striving to become an example for the other citizens. I'll make sure your services are properly acknowledged by the council. Now... we're short on scouts and we can't cover the whole damned wasteland. Nobody's checked out San Francisco for weeks - we need to know what the hell's happening there. You've got to go there, scout the city, and report back. Clear?}
+{11010}{}{Yes, ma'am! But I'd like to ask something first.}
+{11020}{}{Uh, no thanks, recon's not really my style. You got anything else for me to do?}
+{11030}{}{Hey wait a minute, I'm young, inexperienced and San Francisco's a long way away. That's a lot of personal risk, I assume I'm gonna be adequately compensated for that, right?}
+{11040}{}{Scouting? Screw that, murder's more lucrative. Starting with you, Lilly.}
+{12000}{}{OK, what do you wanna know?}
+{12010}{}{How do I scout the city, ma'am?}
+{12020}{}{Oh, uh... nothing. Heading to 'Cisco now, ma'am.}
+{13000}{}{Stay around for a while, visit everything worth seeing... just imagine it's a goddamn sightseeing, got it?}
+{13010}{}{Yeah, I'll do my best to imagine... uh, that. On my way.}
+{13020}{}{Thanks for the exceptional briefing, but I've got a couple more questions...}
+{14000}{}{Well, ain't you a smart-ass little shit? Get there on the double - if you ain't back in a day your ass is mine.}
+{14010}{}{Yes, ma'am!}
+{14020}{}{I've had it with your shit. Fuck you, Lilly, you're going down.}
+{15000}{}{[Looking for something among her notes] So, you were supposed to... scout San Francisco. Anything to report?}
+{15010}{}{I've scouted the city and... [You report briefly]}
+{15020}{}{I've scouted the city and... [You report and add some extra useful details to it]}
+{15030}{}{Sorry, I didn't get around to taking care of it... I'd rather work on something else, if I can. Is there anything different you need taken care of?}
+{15040}{}{No, nothing to report yet. I'll head over there as soon as possible.}
+{16000}{}{Good work - for once, you've actually proven yourself to be useful. This information'll be going straight to the top - the First Citizen. You're gonna make her day, trust me.}
+{16010}{}{Just serving the city and its citizens, ma'am! [You move away while she keeps writing down the report]}
+{16020}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+{17000}{}{Let me see... well, we just got some questionnaires from the Council, they seem to be interested in public opinion about what's been happening recently... don't give me that look, all you need to do is to hand 'em over to the citizenry. You gotta tell them to fill it out and hand them back in to the Council in the next 12 hours. Interested?}
+{17010}{}{Sure ma'am, why not?}
+{17020}{}{I didn't join to take damn opinion polls... screw that, give me a real job!}
+{17030}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+{18000}{}{Very well. Your work'll pay off, I assure you. Now, take this [she hands over some papers to you] and you can start right away. Remember, 12 hours -- no more, no less.}
+{18010}{}{Yes, ma'am!}
+{18020}{}{[Take a look at the papers] Excuse me, but I think there's at least one syntax and -- or logic error in these questionnaires... I've got a few corrections to make, if I may... [You show her what needs to be done]}
+{19000}{}{Well, I'm impressed. I wonder how that slipped through...  goddamn Council bookworms! They can't do a single thing right. Well, at least you're around to pull them up on their screw ups.}
+{19010}{}{Glad to help, wherever it's needed. I'll be on my way now.}
+{20000}{}{Yes, about the questionnaires. So, did you finally finish it?}
+{20010}{}{All of them are handed over - the Citizens are happy to have another form to fill out.}
+{20020}{}{All of them are handed over - the Citizens and Servants are happy to have another form to fill out.}
+{20030}{}{I ran into a couple problems... maybe it'd be better for us to forget about me doing this. You got any other work for me?}
+{20040}{}{Actually, nothing.}
+{21000}{}{Outstanding work, Citizen! Glad to have someone like you around. Your work will be rewarded, don't worry. Now, if you'll excuse me... [She turns back to her daily tasklist]}
+{21010}{}{Thanks... I guess.}
+{21020}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+{22000}{}{Wait, you handed them over to servants? This isn't what the council wants! The servants are there for menial tasks only, they're not supposed to be governing the city. Just don't let something like this happen again, got it?}
+{22010}{}{Yeah, right.}
+{22020}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+{23000}{}{Have you talked to our Chief Librarian Kohl? Whatever, it doesn't matter, here's the deal - he had some problems with the library archives recently, it looks like some of the entries have been deleted... intentionally or accidentally, we sure as hell don't know. Now we need to make new entries, but the whole process requires written documents - books, magazines, whatever. He's looking for someone to help him with it. What do you say?}
+{23010}{}{Books? Well, okay, sure.}
+{23020}{}{What the hell? I'm supposed to be dealing with raiders, not books! That ain't for me. You got anything else?}
+{23030}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+{24000}{}{Excellent. Now go straight to the Information Center and talk to Kohl, he'll fill you in with the details.}
+{24010}{}{Of course ma'am, I'm on my way.}
+{24020}{}{Uh, where's the Information Center?}
+{25000}{}{You're kidding me, right? Get the hell out.}
+{25010}{}{Uhh, of course! You know me. I'm a big kidder. Information Center. Got it.}
+{25020}{}{But, I was serious...}
+{26000}{}{What was it last time..? Oh yeah, the books for our Chief Librarian. So, did you manage to help him out?}
+{26010}{}{Yes I did, ma'am. He's probably finishing the new entries by now.}
+{26020}{}{Actually, I didn't. I think he'll have to find another assistant librarian. I'm destined for bigger things. Anything else for me to do around here?}
+{26030}{}{No, not yet... but I'm working on it. Bye!}
+{27000}{}{Very good! One more thing -- [she edits her notes] solved! You're free to go Citizen, and don't forget - serving this City is our priority.}
+{27010}{}{Affirmative, that's our priority. [Leave]}
+{27020}{}{That's it, I'm sick of this bullshit runaround. Eat lead, Lilly.}
+

@@ -1,0 +1,79 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+7 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+5 2010 D _param p ST_INTELLECT > 3 D _script rooms@d_NotRentingHere 1 0 D _script rooms@d_IsFreeRoom 1 0 #
+9 2020 D _param p ST_INTELLECT > 3 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 #
+11 2030 D _param p ST_INTELLECT > 999 #
+0 2040 @
+3 3000 None 0 #
+5 3010 D _script rooms@d_IsFreeRoom 1 0 D _script rooms@d_NotRentingHere 1 0 #
+9 3020 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 #
+10 3030 D _script rooms@d_CanPayRent 1 0 R _script rooms@r_PayRent 1 1 #
+11 3040 D _param p ST_INTELLECT > 999 #
+0 3050 @
+4 4000 None 0 #
+0 4010 @
+5 5000 rooms@dlg_ShowInfo 0 #
+6 5010 D _script rooms@d_HasMoneyForRent 1 0 R _script rooms@r_RentRoom 1 25 #
+4 5020 D _script rooms@d_NoMoneyForRent 1 0 #
+65505 5030 @
+6 6000 rooms@dlg_ShowRentedRoomInfo 0 #
+0 6010 @
+7 7000 None 1 @
+8 8000 None 0 #
+65505 8010 @
+9 9000 None 0 #
+3 9010 #
+0 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 &
+
+[engl]
+{100}{}{Estate Agent}
+{200}{}{You see an estate agent.}
+{210}{}{You see Mr. Jenson, the estate agent.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Unknown}
+{1030}{}{Familiar}
+{2000}{}{Hello, and welcome to the NCR! Are you new here? At least new in this part of the town, aren't you? My name is Mr. Jenson, I am the estate agent in the residence area! If you want to rent a house or further pay the rent for your house, come to me, and we'll see, what can be done!}
+{2010}{}{I want to rent a house in this town. Are there any free ones available?}
+{2020}{}{I want to rent a house in this town. Are there any free ones available?}
+{2030}{}{What can you tell me about this place here? *DEV NOTE: Deactivated for now.*}
+{2040}{}{Nothing.}
+{3000}{}{@sex@|Hello again, sir! Do you want to rent a house?||Hello again, madam! Do you want to rent a house?|}
+{3010}{}{Yes, I want to rent a house in this town. Are there any free ones available?}
+{3020}{}{Yes, I want to rent a house in this town. Are there any free ones available?}
+{3030}{}{I'd like to pay the rent for my house.}
+{3040}{}{What can you tell me about the residental area? *DEV NOTE: Deactivated for now.*}
+{3050}{}{Nothing, thanks. I'm out of here.}
+{4000}{}{I am sorry, but it looks like you need some more money, before I can rent you a house.}
+{4010}{}{Alright, I'm leaving.}
+{5000}{}{We still have a house free for rent and this one will cost you @lex price@ caps for @lex time@ days. Do you want to have it?}
+{5010}{}{Sounds like a fair price to me.}
+{5020}{}{Uh, that's a bit too much for me. }
+{5030}{}{Maybe another day. Goodbye.}
+{6000}{}{Very well! Your house is the one with the number @lex roomnumber@. If you follow the streets, you can easily find it!}
+{6010}{}{Goodbye.}
+{7000}{}{Oh, please, don't touch me!@@He-he- help me, someone, please! This creature wants something!@@Don't touch me!}
+{8000}{}{@sex@|I am sorry, sir, but without money, I can not rent a house to you.||I am sorry, madam, but without money, I can not rent a house to you.|}
+{8010}{}{Goodbye.@@See you later.}
+{9000}{}{I am really sorry, but we don't have any houses free in the moment. But I highly appreciate it, if you would try again later!}
+{9010}{}{Oh well...}
+{9020}{}{[Leave] Damn!}
+{10000}{}{Good, it's better to be sure about your posessions, am I right?}
+{10010}{}{[Leave] Right...}
+{11000}{}{Some yadda-yadda about NCR residental area.}
+{11010}{}{That's all I wanted to know. Bye.@@That's all I wanted to know. Goodbye.}
+

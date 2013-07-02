@@ -1,0 +1,240 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// grave.fos
+//
+
+#include "_ai.fos"
+#include "_macros.fos"
+#include "multihex_h.fos"
+#include "npc_planes_h.fos"
+#include "recycler_h.fos"
+#include "reputations_h.fos"
+#include "utils_h.fos"
+#include "world_common_h.fos"
+
+import void SwitchState(Item& locker) from "lockers";
+
+
+// graveyards
+
+
+void GraveRandomPic(Item@ grave)
+{
+    if(grave.GetProtoId() == PID_GRAVESITE_V)
+        grave.PicMap = GetStrHash("art\\items\\grave" + Random(1, 4) + ".frm");
+    else
+        grave.PicMap = GetStrHash("art\\items\\grave" + Random(5, 7) + ".frm");
+}
+
+
+// Digging up a grave
+//
+void GraveOpen(Item@ grave, Critter@ cr, Item@ shovel)
+{
+    SwitchState(grave);
+    UNSETFLAG(grave.Flags, ITEM_NO_BLOCK);
+
+    // Move pickable items lying on the grave into the grave
+    //
+    Map@ map = GetMap(grave.MapId);
+    if(valid(map))
+    {
+        array<Item@> items;
+        map.GetItems(grave.HexX, grave.HexY, items);
+        for(uint i = 0; i < 5; i++)
+        {
+            Item@ child = grave.GetChild(i);
+            if(valid(child))
+            {
+                if(child.Proto.ProtoId == PID_MHEX)
+                {
+                    map.GetItems(child.HexX, child.HexY, items);
+                }
+            }
+        }
+        for(uint i = 0, j = items.length; i < j; i++)
+        {
+            if(FLAG(items[i].Flags, ITEM_CAN_PICKUP))
+            {
+                MoveItem(items[i], items[i].GetCount(), grave, 0);
+            }
+        }
+    }
+
+    if(valid(cr))
+    {
+        cr.ParamBase[MODE_HIDE] = 0;
+
+        if(cr.IsPlayer())
+        {
+            // Grant grave digger karma
+            //
+            if(cr.Param[KARMA_GRAVE_DIGGER] == 0)
+            {
+                cr.ParamBase[KARMA_GRAVE_DIGGER] = 1;
+                cr.Say(SAY_NETMSG, "You hesitate, but only for a second. After all they're dead, they don't care.");
+            }
+            cr.Say(SAY_NETMSG, "You dug up the grave.");
+
+            // Break old shovel if using it
+            //
+            if(shovel.Proto.ProtoId == PID_OLD_SHOVEL)
+            {
+                cr.Say(SAY_NETMSG, "Your old shovel is broken.");
+                DeleteItem(shovel);
+                if(Random(0, 1) == 0)
+                {
+                    cr.AddItem(PID_FIREWOOD, 1);
+                }
+            }
+
+            // Something special...
+            //
+            uint somethingSpecial = Random(0, 9999);
+            if(somethingSpecial == 0)
+            {
+                cr.Say(SAY_NETMSG, "Something small is glittering in the grave.");
+                grave.AddItem(PID_GOLD_TOOTH, 1, 0);
+            }
+            else if(somethingSpecial == 1)
+            {
+                cr.Say(SAY_NETMSG, "Ahh, that's a fresh one.");
+                grave.AddItem(PID_DECOMPOSING_BODY, 1, 0);
+            }
+
+            // Reputation drop if an NPC noticed digging graves
+            //
+            uint maxRoll = 10;
+            if(IsNight())
+                maxRoll = 50;
+
+            array<Critter@> npc;
+            uint            num = cr.GetCritters(true, FIND_LIFE | FIND_ONLY_NPC, npc);
+
+            for(uint i = 0; i < num; i++)
+            {
+                if(_IsTrueNpc(npc[i]) && _ValidReputationIndex(npc[i].Param[ST_TEAM_ID]) && cr.Reputation[npc[i].Param[ST_TEAM_ID]] > __ReputationHated)
+                {
+                    if(Random(1, maxRoll) < npc[i].Param[ST_PERCEPTION])
+                    {
+                        SubReputation(cr, npc[i].Param[ST_TEAM_ID], Random(3, 7));
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+// Covering a grave
+//
+void GraveClose(Item@ grave, Critter@ cr, Item@ shovel)
+{
+    SwitchState(grave);
+    SETFLAG(grave.Flags, ITEM_NO_BLOCK);
+    GraveRandomPic(grave);
+    if(valid(cr))
+    {
+        cr.ParamBase[MODE_HIDE] = 0;
+        cr.Say(SAY_NETMSG, "You covered the grave.");
+    }
+}
+
+
+
+void _Init(Item& grave, bool firstTime)
+{
+    grave.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+    grave.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItem");
+    grave.SetEvent(ITEM_EVENT_FINISH, "_Finish");
+
+    if(firstTime)
+    {
+        GraveRandomPic(grave);
+        MultihexSpawned(grave);
+    }
+
+    array<uint> values = { grave.Id };
+    CreateTimeEvent(AFTER(0), "e_Init", values, true);
+}
+
+void _Finish(Item& item, bool deleted)
+{
+    if(deleted)
+    {
+        DisconnectRecycler(item, ENCOUNTER_RECYCLER);
+        MultihexDeleted(item);
+    }
+}
+
+uint e_Init(array<uint>@ values)
+{
+    Item@ grave = GetItem(values[0]);
+    if(valid(grave))
+    {
+        uint16 x, y;
+        Map@   map = grave.GetMapPosition(x, y);
+        if(valid(map))
+        {
+            uint16 p = map.GetProtoId();
+            if(p == MAP_DenBusiness || p == MAP_Redding || p == MAP_NewReno_Golgotha || p == MAP_Cathedral_Enter)
+            {
+                ConnectRecycler(grave, ENCOUNTER_RECYCLER);
+            }
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+// Accesssing the grave
+//
+bool _UseSkill(Item& grave, Critter& cr, int skill)
+{
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        if(FLAG(grave.LockerCondition, LOCKER_ISOPEN))
+            cr.ShowContainer(null, grave, TRANSFER_HEX_CONT_DOWN);
+        else
+            cr.Say(SAY_NETMSG, "You need a shovel to dig up the grave.");
+        return true;
+    }
+    return false;
+}
+
+
+// Using shovel on the grave
+//
+bool _UseItem(Item& grave, Critter& cr, Item@ usedItem)
+{
+    if(valid(usedItem))
+    {
+        if(usedItem.GetProtoId() == PID_SHOVEL || usedItem.GetProtoId() == PID_OLD_SHOVEL)
+        {
+            if(FLAG(grave.LockerCondition, LOCKER_ISOPEN))
+            {
+                GraveClose(grave, cr, usedItem);
+            }
+            else
+            {
+                if(IsMultihexBlocked(grave))
+                {
+                    cr.Say(SAY_NETMSG, "You can't dig now, someone or something large is on the grave. Maybe even you?");
+                    return true;
+                }
+                GraveOpen(grave, cr, usedItem);
+            }
+        }
+        else
+        {
+            cr.Say(SAY_NETMSG, "Try to use a shovel.");
+        }
+    }
+    return true;
+}

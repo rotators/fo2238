@@ -1,0 +1,192 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// buffer_h.fos
+//
+
+#ifndef __BUFFER_H__
+#define __BUFFER_H__
+
+////////////////////
+// Buffer control //
+////////////////////
+//
+// ~buffer;
+//	clear buffer from any data, reset reading position
+//
+// -buffer;
+//	reset reading position
+//
+////////////////
+// Primitives //
+////////////////
+//
+// Supported:
+//	int8
+//	int16
+//	int32
+//	int64
+//	uint8
+//	uint16
+//	uint32
+//	uint64
+//	bool
+//	string
+//	float
+//
+////////////////////////
+// Adding/geting data //
+////////////////////////
+//
+// buffer >> primitive;
+// buffer.Get( primitive );
+//	get primitive from buffer
+//
+// buffer << primitive;
+// buffer.Set( primitive );
+//	add primitive to Buffer
+//
+////////////
+// Arrays //
+////////////
+//
+// ...todo...
+//
+// Supported:
+//	array<primitive>
+//	array<array<primitive>>
+//	array<array<array<primitive>>>
+//
+// buffer >>> array;
+//	copy full content of buffer to array, without changing reading position
+//	array must be array<int*> / array<uint*>
+//
+// buffer >>>= array;
+// array = buffer.AsInt8();
+// array = buffer.AsInt16();
+// array = buffer.AsInt32();
+// array = buffer.AsInt64();
+// array = buffer.AsUint8();
+// array = buffer.AsUint16();
+// array = buffer.AsUint32();
+// array = buffer.AsUint64();
+//	copy full content of buffer to array, without changing reading position
+//	any data already stored in array will be removed
+//	array must be array<int*> / array<uint*>
+//
+
+// Module name, as seen by AngelScript, for fast module renaming
+#define BUFFER_MODULE     "buffer"
+
+// How length of string/arrays will be stored in buffer
+#define BUFFER_LENTYPE    uint16
+
+// Backward compatibility
+// Undefine if using SDK older than revision 400
+// #define BUFFER_UNICODE
+
+shared interface Buffer
+{
+    bool IsRaw(uint len);
+
+    Buffer@ opCom();
+
+    Buffer@ opNeg();
+
+    #define _opBase                  \
+        # (type)                     \
+        Buffer@ opShr(type & value); \
+        Buffer@ opShl(type  value);  \
+        Buffer@ Get(type & value);   \
+        Buffer@ Set(type & value);
+
+    #define _opArray                      \
+        # (type)                          \
+        Buffer@ opShr(array<type>&value); \
+        Buffer@ opShl(array<type>&value); \
+        Buffer@ Get(array<type>&value);   \
+        Buffer@ Set(array<type>&value);
+
+    #define _opDump                            \
+        # (type, name)                         \
+        Buffer@ opUShr(array<type>&arr);       \
+        Buffer@ opUShrAssign(array<type>&arr); \
+        array<type> name();
+
+    _opBase(int8)
+    _opBase(int16)
+    _opBase(int32)
+    _opBase(int64)
+    _opBase(uint8)
+    _opBase(uint16)
+    _opBase(uint32)
+    _opBase(uint64)
+    _opBase(bool)
+    _opBase(string)
+    _opBase(float)
+
+    _opArray(int8)
+    _opArray(int16)
+    _opArray(int32)
+    _opArray(int64)
+    _opArray(uint8)
+    _opArray(uint16)
+    _opArray(uint32)
+    _opArray(uint64)
+    _opArray(bool)
+    _opArray(string)
+    _opArray(float)
+
+    _opArray(array<int8>)
+    _opArray(array<int16>)
+    _opArray(array<int32>)
+    _opArray(array<int64>)
+    _opArray(array<uint8>)
+    _opArray(array<uint16>)
+    _opArray(array<uint32>)
+    _opArray(array<uint64>)
+    _opArray(array<bool>)
+    _opArray(array<string>)
+    _opArray(array<float>)
+
+    _opArray(array<array<int8> >)
+    _opArray(array<array<int16> >)
+    _opArray(array<array<int32> >)
+    _opArray(array<array<int64> >)
+    _opArray(array<array<uint8> >)
+    _opArray(array<array<uint16> >)
+    _opArray(array<array<uint32> >)
+    _opArray(array<array<uint64> >)
+    _opArray(array<array<bool> >)
+    _opArray(array<array<string> >)
+    _opArray(array<array<float> >)
+
+    _opDump(int8,  AsInt8)
+    _opDump(int16, AsInt16)
+    _opDump(int32, AsInt32)
+    _opDump(int64, AsInt64)
+    _opDump(uint8, AsUint8)
+    _opDump(uint16, AsUint16)
+    _opDump(uint32, AsUint32)
+    _opDump(uint64, AsUint64)
+};
+
+#ifndef __BUFFER__
+
+import Buffer@ NewBuffer() from BUFFER_MODULE;
+
+# define _newBuffer \
+    # (type)        \
+    import Buffer@ NewBuffer(array<type>@ data) from BUFFER_MODULE;
+
+_newBuffer(int8)
+_newBuffer(int16)
+_newBuffer(int32)
+_newBuffer(int64)
+_newBuffer(uint8)
+_newBuffer(uint16)
+_newBuffer(uint32)
+_newBuffer(uint64)
+#endif // __BUFFER__
+#endif // __BUFFER_H__ //

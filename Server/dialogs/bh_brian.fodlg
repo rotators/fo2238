@@ -1,0 +1,95 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 #
+7 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+5 2020 R _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+7 3020 @
+4 4000 None 0 #
+7 4010 #
+0 4020 @
+5 5000 None 0 #
+7 5010 #
+6 5020 #
+0 5030 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+5 7010 #
+3 7020 #
+80 7030 D _var n name_mem_npc_player = 1 D _script dialog@d_CheckProfession 1 0 #
+0 7040 @
+20 8000 None 0 #
+0 8010 @
+80 9000 None 0 #
+81 9010 D _script dialog@d_CheckEnergyExpert0 1 0 #
+82 9020 D _script dialog@d_CheckEnergyExpert1 1 0 #
+0 9030 @
+81 10000 None 0 #
+83 10010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_DEANS_ELECTRONICS + 1 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_ENERGY_EXPERT = 1 #
+0 10020 @
+82 11000 None 0 #
+83 11010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_ENERGY_EXPERT = 2 #
+0 11020 @
+83 12000 None 0 #
+0 12010 &
+
+[engl]
+{100}{}{Brian}
+{200}{}{You see a squat man wearing squalid clothing.}
+{210}{}{You see Brian.}
+{210}{}{You see a squat man wearing squalid clothing. He has a toothpick in his mouth and is covered in grease. His fingernails are dirty.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{Whaddya want?}
+{2010}{}{Who are you?}
+{2020}{}{What is this place?}
+{2030}{}{Nothing. Bye.}
+{3000}{}{Me? I'm Brian. I work the generator that powers this place.}
+{3010}{}{I see. That's very interesting. Must be rewarding work.}
+{3020}{}{Great. I have more questions.}
+{4000}{}{Well, no, it's not. Not really. I mostly just sit here and make sure none of the dials flip out.  I make some minor adjustments. I flip some switches. That's about it -- anyone could do it.}
+{4010}{}{Anyone, eh? I have other questions.}
+{4020}{}{Thanks. Bye.}
+{5000}{}{This place is the power station for Broken Hills. What I do is essentially a maintenance job on the place... make sure it keeps running. It's pretty damn functional, though... powered by uranium slugs.}
+{5010}{}{That must be great. Say, I have more questions.}
+{5020}{}{Uranium slugs?}
+{5030}{}{Interesting. Bye.}
+{6000}{}{Well, with the uranium mine right there, and with atomic power being the power of the future, it seems only right that we keep up with the times. We might be small, but we're progressive.}
+{6010}{}{Hmm. Right. I have other questions.}
+{6020}{}{Right. Bye.}
+{7000}{}{Whaddya want now?}
+{7010}{}{What is this place?}
+{7020}{}{Who are you?}
+{7030}{}{Say, since you look like the right person to ask... I'm interested in energy production and storage, maybe you could help me with it?}
+{7040}{}{Bye.}
+{8000}{}{Hey! Don't touch anything! This is delicate equipment! Out! Outside! Go on! Go home!}
+{8010}{}{Ooooh! Butunz!}
+{9000}{}{Energy production and storage? You hit the right place, smoothie. Anyway, what did you want to know exactly?}
+{9010}{}{I'm currently interested in energy cells and... [You explain everything to Brian]}
+{9020}{}{Is there any way to store electrical energy more efficiently? I was thinking... [You explain everything to him]}
+{9030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{10000}{}{I see... Well, if you want me to teach you something about it, you better bring me ... 1500 caps should do the trick. Hell, for that money you'll even get one of these Deans Electronics manuals for free!}
+{10010}{}{Alright. I've got that here. [Give him the $1500]}
+{10020}{}{Okay, let me fetch it for you... Be right back.}
+{11000}{}{Well, there is a way to do something like that... I could show you a few more pointers, let's say, for three grand. }
+{11010}{}{Okay, I've got that. Here you go.. [Give him $3000]}
+{11020}{}{Okay, let me fetch it for you... Be right back.}
+{12000}{}{Well, glad to see you got everything we need to start with, hehe... [Puts the money into one of his small pockets] Okay, let's start with it then. [Brian explains you everything you wanted to know. It takes a while.]}
+{12010}{}{Thank you for sharing that knowledge with me, Brian. See you around!}
+

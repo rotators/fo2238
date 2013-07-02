@@ -1,0 +1,201 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_veins.fos
+//
+
+#include "_macros.fos"
+#include "mine_h.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+
+import bool ShuffleItem(Item& item) from "shuffling_spawner";
+import void CheckPrimitiveTool(Critter& crit, Item& item) from "production";
+
+
+#define VEIN_BATCH_IRON            (2)
+#define VEIN_BATCH_IRON2           (1)
+#define VEIN_BATCH_MINERALS        (2)
+#define VEIN_BATCH_MINERALS2       (1)
+#define VEIN_BATCH_URANIUM         (1)
+#define VEIN_BATCH_GOLD            (1)
+
+#define VEIN_CAPACITY_IRON         (4)
+#define VEIN_CAPACITY_IRON2        (4)
+#define VEIN_CAPACITY_MINERALS     (4)
+#define VEIN_CAPACITY_MINERALS2    (4)
+#define VEIN_CAPACITY_URANIUM      (4)
+#define VEIN_CAPACITY_GOLD         (1)
+
+#define VEIN_CAPACITY              # (vein)                   vein.Val0
+
+
+
+
+
+bool Dig(Critter@ miner, Item@ tool, Item@ vein, uint16 productPid, uint amount, uint msgIndex)
+{
+    uint16 veinPid = vein.GetProtoId();
+    uint16 toolPid = tool.GetProtoId();
+    if(((veinPid == PID_VEIN_IRON || veinPid == PID_VEIN_MINERALS) && (toolPid == PID_PRIMITIVE_TOOL || toolPid == PID_SLEDGEHAMMER || toolPid == PID_SUPER_SLEDGE)) ||
+       ((veinPid == PID_VEIN_IRON2) && (toolPid == PID_SLEDGEHAMMER || toolPid == PID_SUPER_SLEDGE)) ||
+       ((veinPid == PID_VEIN_MINERALS2 || veinPid == PID_VEIN_URANIUM || veinPid == PID_VEIN_GOLD) && (toolPid == PID_SUPER_SLEDGE)))
+    {
+        miner.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, msgIndex);
+        miner.AddItem(productPid, amount);
+
+        VEIN_CAPACITY(vein) -= 1;
+        if(VEIN_CAPACITY(vein) <= 0)
+        {
+            miner.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, msgIndex + 1);
+
+            Map@ map = miner.GetMap();
+            if(valid(map) && map.GetProtoId() == MAP_MiningSiteInside)
+            {
+                uint ownerId = GetRootMapData(map, MAP_DATA_OWNER);
+                if(ownerId > 0)
+                {
+                    uint lastTime = uint(GetLvar(ownerId, LVAR_mine_bought_time));
+                    if(ELAPSED_TIME > (lastTime + MINE_TIME))
+                    {
+                        DeleteItem(vein);
+                    }
+                    else
+                        ShuffleItem(vein);
+                }
+                else
+                    ShuffleItem(vein);
+            }
+            else
+                ShuffleItem(vein);
+        }
+
+        CheckPrimitiveTool(miner, tool);
+        _Desneak(miner);
+        return true;
+    }
+
+    miner.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, msgIndex + 2);
+    return true;
+}
+
+
+
+void _InitVeinIron(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_IRON;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinIron");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinIron");
+}
+
+void _InitVeinIron2(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_IRON2;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinIron2");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinIron2");
+}
+
+void _InitVeinMinerals(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_MINERALS;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinMinerals");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinMinerals");
+}
+
+void _InitVeinMinerals2(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_MINERALS2;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinMinerals2");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinMinerals2");
+}
+
+void _InitVeinUranium(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_URANIUM;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinUranium");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinUranium");
+}
+
+void _InitVeinGold(Item& item, bool firstTime)
+{
+    if(firstTime)
+        VEIN_CAPACITY(item) = VEIN_CAPACITY_GOLD;
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseVeinGold");
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillVeinGold");
+}
+
+
+
+bool _UseVeinIron(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_METAL_ORE, VEIN_BATCH_IRON, 3100);
+}
+
+bool _UseVeinIron2(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_ORE2, VEIN_BATCH_IRON2, 3103);
+}
+
+bool _UseVeinMinerals(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_MINERAL, VEIN_BATCH_MINERALS, 3106);
+}
+
+bool _UseVeinMinerals2(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_MINERALS2, VEIN_BATCH_MINERALS2, 3109);
+}
+
+bool _UseVeinUranium(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_URANIUM_ORE, VEIN_BATCH_URANIUM, 3112);
+}
+
+bool _UseVeinGold(Item& item, Critter& cr, Item@ usedItem)
+{
+    return Dig(cr, usedItem, item, PID_GOLD_NUGGET, VEIN_BATCH_GOLD, 3115);
+}
+
+
+
+bool _SkillVeinIron(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3102);
+    return true;
+}
+
+bool _SkillVeinIron2(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3105);
+    return true;
+}
+
+bool _SkillVeinMinerals(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3108);
+    return true;
+}
+
+bool _SkillVeinMinerals2(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3111);
+    return true;
+}
+
+bool _SkillVeinUranium(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3114);
+    return true;
+}
+
+bool _SkillVeinGold(Item& item, Critter& cr, int skill)
+{
+    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3117);
+    return true;
+}

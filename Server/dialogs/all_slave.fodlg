@@ -1,0 +1,39 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p KARMA_SLAVER > 0 #
+5 1020 D _var n free_slave = 1 #
+3 1030 @
+2 2000 None 0 @
+3 3000 None 0 #
+0 3010 #
+4 3020 D _param p ST_INTELLECT > 3 R _param p REPUTATION_SLAVES + 10 R _param p REPUTATION_SLAVERS_GUILD - 10 R _var n free_slave = 1 R _param p REPUTATION_NCR_RANGERS + 2 #
+4 3030 D _param p ST_INTELLECT < 4 R _param p REPUTATION_SLAVERS_GUILD - 10 R _param p REPUTATION_SLAVES + 10 R _var n free_slave = 1 R _param p REPUTATION_NCR_RANGERS + 2 @
+4 4000 None 0 #
+0 4010 #
+65507 4020 D _param p ST_INTELLECT > 3 R _param p REPUTATION_SLAVES - 10 R _param p REPUTATION_NCR_RANGERS - 2 #
+65507 4030 D _param p ST_INTELLECT < 4 R _param p REPUTATION_SLAVES - 10 R _param p REPUTATION_NCR_RANGERS - 2 @
+5 5000 None 0 &
+
+[engl]
+{100}{}{Slave}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{slave free}
+{1030}{}{Answer text}
+{2000}{}{Please don't hurt me!@@Please, no!}
+{3000}{}{Please don't hurt me!@@Please set me free.@@I really want to be free.}
+{3010}{}{[You go away.]}
+{3020}{}{You are free!@@Run, you are free!@@You are free, run!@@Fast, run! You are free!}
+{3030}{}{You go away!@@You free!@@Free!}
+{4000}{}{@sex@|Oh god, thank you sir!||Oh god, thank you, miss!|}
+{4010}{}{[Done]}
+{4020}{}{[Combat] Actually, this was a joke.@@And now I will kill you.@@[Attack] And now I will hunt you down.@@[Attack] This will be a good hunt... }
+{4030}{}{[Attack] This joke, me kill you.@@[Attack] Now me kill you.@@[Attack]You dead now. Me big warrior!}
+{5000}{}{Thank you!@@I will go far away now!@@They killed my family!@@They destroyed my home!@@I am free now!}
+

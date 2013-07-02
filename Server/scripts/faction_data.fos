@@ -1,0 +1,2023 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// faction_data.fos
+//
+
+#include "_macros.fos"
+
+#define __FACTION_DATA__
+#include "factions_h.fos"
+#include "factions_names.fos"
+#include "factions_news.fos"
+#include "groups_h.fos"
+#include "mapdata_h.fos"
+#include "serializator.fos"
+#include "utils_h.fos"
+
+// max size of the array working as "database"
+#define MAX_ARRAY_SIZE    (16000)
+
+import void ApplyReputationModifiers(Critter& cr, uint index, int num, int den) from "reputations_modifiers";
+import void ApplyReputationModifiers(Critter& cr, uint index) from "reputations_modifiers";
+import int  GetFollowers(Critter& player, bool all, array<Critter@>& followers) from "follower_common";
+
+/**
+ * @ingroup FOnline2238
+ * Wrapper class for holding data needed to create Faction database in the array of
+ * uints. It saves all data needed for faction.
+ */
+class FactionData
+{
+    /** Name of the faction */
+    string       factionName;
+    dictionary@  _assignednames;
+    /** Serialiser used to store data in AnyData array */
+    Serializator serialiser;
+
+    /** Identifiers of players whose info is stored in faction database */
+    array<uint> players;
+    /** Identifiers of factions whose info is stored in faction database */
+    array<int>  factions;
+
+    /** 'Owner' faction of that database */
+    uint faction;
+    /** Index to the array holding factions names */
+    uint stringId;
+    /** Radio frequency */
+    uint freq;
+    /**
+     * id of the location if faction uses dynamically created location, otherwise 0
+     */
+    uint locationId;
+    /** prototype id of location */
+    uint locationPid;
+    /** id of the leader */
+    uint leaderId;
+    /** id of the member who claimed leadership, and wants to overthrown current leader */
+    uint claimId;
+    /** time that will allow claimee to claim leadership even without forcing current leader to resign/killing him
+       this is time for leader to act */
+    uint leaderTime;
+    /** time that will allow another player to claim leadership
+       this is time for claimee to act */
+    uint        claimTime;
+    /** index to array with faction news */
+    uint        newsId;
+    /** News */
+    FactionNews news;
+    /** score */
+    uint        score;
+    /** worldmap coord */
+    uint        locX;
+    /** worldmap coord */
+    uint        locY;
+    /** Denotes whether it's player-driven gang or not. */
+    bool        playerDriven;
+    /** Tracks the time when faction has been last accessed. */
+    uint        lastUsed;
+    /** Some features requires us to track the 'update' counter. This is the counter. */
+    uint        update_seq;
+
+    /**
+     * Creates empty FactionData object for given faction with assigned name stringId
+     */
+    FactionData(uint nfaction, uint stringId, bool playerDriven)
+    {
+        @_assignednames = AssignedNames;
+        GetFactionName(stringId, factionName);
+        WLog("factions", "Creating new FactionData object for faction " + nfaction + ": " + factionName + "(" + stringId + ")");
+
+        this.faction = nfaction;
+        this.stringId = stringId;
+        this.score = 0;
+        this.freq = Random(1, 65535);
+        initRecognition();
+
+        // this will be set later(if needed)
+        this.locationId = 0;
+        this.locationPid = 0;
+        this.locX = this.locY = 0;
+
+        this.leaderId = 0;
+        this.claimId = 0;
+        this.leaderTime = 0;
+        this.claimTime = 0;
+
+        this.playerDriven = playerDriven;
+        this.lastUsed = ELAPSED_TIME;
+        this.update_seq = 0;
+
+        this.news = FactionNews(factionName);
+
+        UpdateData();
+    }
+    /**
+     * Creates FactionData object from an array containing its data
+     */
+    FactionData(const string &name)
+    {
+        @_assignednames = AssignedNames;
+        WLog("factions", "Creating new FactionData object for existing faction", DEBUG_MESSAGE);
+
+        if(!serialiser.Load("Faction: " + name))
+        {
+            WLog("factions", "ERR: Couldn't load array for faction: " + name, DEBUG_ERROR);
+            return;
+        }
+
+        // general data
+        serialiser.Get(faction).Get(stringId).Get(score).Get(freq)
+        .Get(locationId).Get(locationPid).Get(locX).Get(locY)
+        .Get(leaderId).Get(claimId).Get(leaderTime).Get(claimTime)
+        .Get(playerDriven).Get(lastUsed).Get(update_seq);
+        GetFactionName(stringId, factionName);
+
+        // player's data
+        if(IsAnyData("FactionPlayers: " + name))
+            GetAnyData("FactionPlayers: " + name, players);
+        else
+            SetAnyData("FactionPlayers: " + name, players);
+        // factions' data
+        if(IsAnyData("FactionFactions: " + name))
+            GetAnyData("FactionFactions: " + name, factions);
+        else
+            SetAnyData("FactionFactions: " + name, factions);
+
+        // read news
+        this.news = FactionNews(factionName);
+
+        // tries to recreate location if needed
+        if(this.locationId != 0 && !valid(GetLocation(this.locationId)))
+        {
+            uint pid = this.locationPid;
+            WLog("factions", "Recreating location, pid: " + pid, DEBUG_MESSAGE);
+            this.locationId = CreateLocation(pid, this.locX, this.locY, null);
+            Location@ loc = GetLocation(this.locationId);
+            if(this.locationId != 0)
+            {
+                SetLocation(this.locationId, pid, this.locX, this.locY);
+                array<Map@> maps;
+                loc.GetMaps(maps);
+                for(uint i = 0; i < maps.length(); i++)
+                    maps[i].SetData(MAP_DATA_FACTION, this.faction);
+                WLog("factions", "Recreated location for faction: " + this.faction, DEBUG_MESSAGE);
+            }
+            else
+                WLog("factions", "ERR: Couldn't recreate faction location", DEBUG_ERROR);
+        }
+        initRecognition();
+        WLog("factions", "Read AnyData for faction " + factionName, DEBUG_MESSAGE);
+        AssignFactionNameByStringId(faction, stringId);
+    }
+
+    /**
+     * Initializes radio text listener for quick info
+     */
+    void initRecognition()
+    {
+        if(AddTextListener(SAY_RADIO, "order recognition", this.freq, "factions_recognition@listen_Recognition"))
+            WLog("factions", "Radio listener at: " + this.freq);
+        else
+            WLog("factions", "Couldn't create recognition listener", DEBUG_ERROR);
+    }
+
+    //////////////////
+    // Properties
+    //////////////////
+
+    /**
+     * Gang or not.
+     */
+    bool IsPlayerDriven()
+    {
+        return playerDriven;
+    }
+    /**
+     * Sets new radio frequency
+     */
+    void SetRadioChannel(uint16 newFreq)
+    {
+        // add new
+        if(!AddTextListener(SAY_RADIO, "order recognition", newFreq, "factions_recognition@listen_Recognition"))
+        {
+            Log("Err: Couldn't create recognition listener");
+            return;
+        }
+        // if all ok, then remove old listener and set proper values
+        EraseTextListener(SAY_RADIO, "order recognition", this.freq);
+        this.freq = newFreq;
+    }
+
+    /**
+     * Sets new location data for player-faction hq
+     */
+    void SetLocation(uint locId, uint pid, uint x, uint y)
+    {
+        this.locationId = locId;
+        this.locationPid = pid;
+
+        this.locX = x;
+        this.locY = y;
+
+        // set new location as known for all members
+        // or not...I think it will be better when location will be set to known
+        // every time where member enters it (and it wasn't marked as known)
+    }
+
+    /**
+     * Gets location data for player-faction hq
+     */
+    bool GetFactionLocation(uint& out locId, uint& out pid, uint& out x, uint& out y)
+    {
+        if(this.locationId == 0)
+            return false;
+
+        locId = this.locationId;
+        pid = this.locationPid;
+        x = this.locX;
+        y = this.locY;
+
+        return true;
+    }
+
+    //
+    // Sets coods for location
+    //
+    // void SetLocationCoords(uint x, uint y)
+    // {
+    //    this.locX = x;
+    //    this.locY = y;
+    //    this.data[IDX_COORDS_X] = this.locX;
+    //    this.data[IDX_COORDS_Y] = this.locY;
+
+    //    UpdateData();
+    // }
+
+    /**
+     * Sets new leader id
+     */
+    void SetLeaderId(uint id)
+    {
+        this.leaderId = id;
+    }
+
+    /**
+     * Sets new claim id
+     */
+    void SetClaimId(uint id)
+    {
+        this.claimId = id;
+    }
+
+    /**
+     * Sets time when claim will be able to confirm leadership without doing anything
+     */
+    void SetLeaderTime(uint time)
+    {
+        this.leaderTime = time;
+    }
+
+    /**
+     * Sets time when another claim will be allowed to be made (previous claimee will lose it)
+     */
+    void SetClaimTime(uint time)
+    {
+        this.claimTime = time;
+    }
+
+    /**
+     * Sets faction score
+     */
+    void SetScore(uint score)
+    {
+        this.score = score;
+    }
+
+    /**
+     * Number of records with player's data
+     */
+    uint GetRecordsCount()
+    {
+        return players.length();
+    }
+    /**
+     * Number of members
+     */
+    uint GetMembersCount()
+    {
+        uint ret = 0;
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] == 0)
+                continue;
+            if(GetPlayerFaction(players[i]) == this.faction)
+                ret++;
+        }
+        return ret;
+    }
+    /**
+     * Ids table with members.
+     */
+    uint GetMembers(array<uint>& members)
+    {
+        uint count = 0;
+        uint start = members.length();
+        members.grow(players.length());          // potentially
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] == 0)
+                continue;
+            if(GetPlayerFaction(players[i]) == this.faction)
+                members[start + count++] = players[i];
+        }
+        members.resize(start + count);
+        return count;
+
+    }
+    /**
+     * Ids table with records.
+     */
+    uint GetRecords(array<uint>& records)
+    {
+        uint count = 0;
+        uint start = records.length();
+        records.grow(players.length());          // potentially
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] != 0)
+                records[start + count++] = players[i];
+        }
+        records.resize(start + count);
+        return count;
+    }
+    /**
+     * Ids table with known factions.
+     */
+    uint GetFactions(array<int>& factions)
+    {
+        uint count = 0;
+        for(uint i = 0, iend = this.factions.length(); i < iend; i++)
+        {
+            if(this.factions[i] == 0)
+                continue;
+            factions.insertLast(this.factions[i]);
+            count++;
+        }
+        return count;
+    }
+    /**
+     * Gets the time when faction was last used/accessed.
+     */
+    uint GetLastUsed()
+    {
+        return lastUsed;
+    }
+
+    ////////////////////
+    // DICTIONARY METHODS
+    ////////////////////
+
+
+    /**
+     * Checks if the key exists in the array
+     */
+    bool Exists(uint key)
+    {
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] == 0)
+                continue;
+            if(players[i] == key)
+                return true;
+        }
+        return false;
+    }
+    /**
+     * Checks if the faction with given id is in the known factions list
+     */
+    bool FactionExists(int faction_id)
+    {
+        for(uint i = 0, iend = factions.length(); i < iend; i++)
+        {
+            if(factions[i] == 0)
+                continue;
+            if(factions[i] == faction_id)
+                return true;
+        }
+        return false;
+    }
+    /**
+     * Updates any_data associated with the array
+     */
+    int UpdateData()
+    {
+        // save general data
+        serialiser.Clear();
+        serialiser.Set(faction).Set(stringId).Set(score).Set(freq)
+        .Set(locationId).Set(locationPid).Set(locX).Set(locY)
+        .Set(leaderId).Set(claimId).Set(leaderTime).Set(claimTime)
+        .Set(playerDriven).Set(lastUsed).Set(update_seq);
+
+        if(!serialiser.Save("Faction: " + factionName))
+            return FD_RESULT_ANY_DATA_ERROR;
+        // players' records
+        if(!SetAnyData("FactionPlayers: " + factionName, players))
+            return FD_RESULT_ANY_DATA_ERROR;
+        // known factions' ids
+        if(!SetAnyData("FactionFactions: " + factionName, factions))
+            return FD_RESULT_ANY_DATA_ERROR;
+
+        // everything ok
+        return FD_RESULT_SUCCESS;
+    }
+    /**
+     * Removes data associated with the faction
+     */
+    int RemoveData()
+    {
+        EraseAnyData("Faction: " + factionName);
+        EraseAnyData("FactionPlayers: " + factionName);
+        EraseAnyData("FactionFactions: " + factionName);
+        UnassignFactionName(stringId, factionName);
+        if(IsPlayerDriven() && locationId != 0)
+            DeleteLocation(locationId);
+        return FD_RESULT_SUCCESS;
+    }
+    /**
+     * Updates any_data associated with the news array
+     */
+    void UpdateNewsData()
+    {
+        news.UpdateData();
+    }
+    /**
+     * Updates last used for actual time.
+     */
+    void UpdateLastUsed()
+    {
+        lastUsed = ELAPSED_TIME;
+    }
+    /**
+     * Logs the content of data array
+     */
+    uint LogData(bool fullLog, array<string>& strings)
+    {
+        strings.insertLast("\nFaction: " + faction);
+        string name;
+        GetFactionName(stringId, name);
+        strings.insertLast("Name: " + name);
+        if(this.locationId != 0)
+        {
+            Location@ loc = GetLocation(this.locationId);
+            Map@      map = loc.GetMapByIndex(0);
+            if(!valid(map))
+            {
+                strings.insertLast("Location: " + this.locationId);
+            }
+            else
+            {
+                strings.insertLast("Location: " + this.locationId + "<" + map.Id + ">");
+            }
+            strings.insertLast("Coords: " + this.locX + ", " + this.locY);
+        }
+        strings.insertLast("Score: " + this.score);
+        strings.insertLast("Freq: " + this.freq);
+        if(IsPlayerDriven())
+        {
+            int ttl = __FactionGarbagerTime - ELAPSED_TIME + this.GetLastUsed();
+            strings.insertLast("TTL: " + MAX(0, ttl));
+        }
+        if(fullLog)
+        {
+            for(uint i = 0, iend = players.length(); i < iend; i++)
+            {
+                if(players[i] == 0)
+                {
+                    strings.insertLast("Empty record");
+                    continue;
+                }
+                strings.insertLast("Name: " + GetSafePlayerName(players[i]) + "<" + players[i] + ">");
+                // strings.insertLast( "Faction: " + GetFactionFromValue(data[i+1]) );
+                // strings.insertLast( "Rank: " + GetRankFromValue(data[i+1]) );
+                // strings.insertLast( "Status: " + GetStatusFromValue(data[i+1]) );
+                // strings.insertLast( "Reputation: " + GetReputationFromValue(data[i+1]) );
+                strings.insertLast("------");
+            }
+        }
+        strings.insertLast("--------------");
+        return strings.length();
+    }
+
+    /**
+     * Gets the id of the next/prev record
+     *
+     *
+     * @param id id of currently selected player
+     * @param dir browsing direction:
+     *			-1 - look for previous (with regard to given id)
+     *			0 - first index
+     *			1 - look for next (with regard to given id)
+     * @param members if true, it looks only for members records when lookingfor next/prev
+     *
+     * @return FD_RESULT_* value (see _factions.fos)
+     */
+    int GetPrevNextId(uint id, int dir, bool members,
+                      uint& out newId)
+    {
+        if(players.length() == 0)
+        {
+            Log("Database empty");
+            return FD_RESULT_DB_EMPTY;
+        }
+        if(members && GetMembersCount() == 0)
+        {
+            Log("Database doesn't contain any member records");
+            return FD_RESULT_DB_EMPTY;
+        }
+        int start = 0;
+        int curr = start;
+
+        // be sure, we will use that dir to move along array
+        dir = CLAMP(dir, -1, 1);
+
+        // ho, ho - I hope this won't loop endlessly
+        while(true)
+        {
+            DLog("First/Curr/Last/Dir: " + 0 + "/" + curr + "/" + (players.length() - 1) + "/" + dir);
+            curr += (dir);
+            // wrap around
+            if(curr < 0)
+            {
+                curr = players.length() - 1;
+                DLog("Wrapping to: " + curr);
+            }
+            else if(curr > int(players.length() - 1))
+            {
+                curr = 0;
+                DLog("Wrapping to: " + curr);
+            }
+            if(curr == start)
+                break;
+            if(!members)
+                break;
+            if(members && GetPlayerFaction(players[curr]) == this.faction)
+                break;
+            // we haven't found what we wanted at first, seek further
+            if(dir == 0)
+                dir = 1;
+        }
+
+        newId = players[curr];
+        return FD_RESULT_SUCCESS;
+    }
+
+    int ModifyRank(uint id, uint newRank)
+    {
+        if(Exists(id))
+        {
+            GameVar@ var = GetUnicumVar(UVAR_faction_rank, id, faction);
+            var = newRank;
+            return FD_RESULT_SUCCESS;
+        }
+        else
+            return FD_RESULT_NOT_FOUND;
+    }
+    int ModifyStatus(uint id, uint newStatus)
+    {
+        if(Exists(id))
+        {
+            GameVar@ var = GetUnicumVar(UVAR_faction_status, id, faction);
+            var = newStatus;
+            return FD_RESULT_SUCCESS;
+        }
+        else
+            return FD_RESULT_NOT_FOUND;
+    }
+    int ModifyFaction(uint id, uint newFaction)
+    {
+        if(Exists(id))
+        {
+            GameVar@ var = GetUnicumVar(UVAR_faction, id, faction);
+            var = newFaction;
+            return FD_RESULT_SUCCESS;
+        }
+        else
+            return FD_RESULT_NOT_FOUND;
+    }
+    /**
+     * Adds player without knowing anything about him
+     *
+     * @return FD_RESULT_* value (see _factions.fos)
+     */
+    int AddPlayer(uint id)
+    {
+        if(players.length() + 1 > MAX_ARRAY_SIZE)
+            // we can't store more
+            return FD_RESULT_DB_FULL;
+        if(Exists(id))
+            return FD_RESULT_ALREADY_EXISTS;
+
+        // check for indices that can be reused(with 0 value)
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] == 0)
+            {
+                players[i] = id;
+                return FD_RESULT_SUCCESS;
+            }
+        }
+        // if we weren't able to find previously cleared area in the array
+        players.insertLast(id);
+        return FD_RESULT_SUCCESS;
+    }
+    /**
+     * Clears the area occupied by a given player in the array
+     * so that it won't be taken into consideration, and may be later be filled by new data
+     *
+     * @return FD_RESULT_* value (see _factions.fos)
+     */
+    int RemovePlayer(uint id)
+    {
+        for(uint i = 0, iend = players.length(); i < iend; i++)
+        {
+            if(players[i] == id)
+            {
+                players[i] = 0;
+                return FD_RESULT_SUCCESS;
+            }
+        }
+        return FD_RESULT_NOT_FOUND;
+    }
+    /**
+     * Adds faction to the list of known factions.
+     */
+    int AddFaction(int faction_id)
+    {
+        if(factions.length() + 1 > MAX_ARRAY_SIZE)
+            // we can't store more
+            return FD_RESULT_DB_FULL;
+        if(FactionExists(faction_id))
+            return FD_RESULT_ALREADY_EXISTS;
+
+        // check for indices that can be reused(with 0 value)
+        for(uint i = 0, iend = factions.length(); i < iend; i++)
+        {
+            if(factions[i] == 0)
+            {
+                factions[i] = faction_id;
+                return FD_RESULT_SUCCESS;
+            }
+        }
+        // if we weren't able to find previously cleared area in the array
+        factions.insertLast(faction_id);
+        return FD_RESULT_SUCCESS;
+    }
+    int RemoveFaction(int id)
+    {
+        for(uint i = 0, iend = factions.length(); i < iend; i++)
+        {
+            if(factions[i] == id)
+            {
+                factions[i] = 0;
+                return FD_RESULT_SUCCESS;
+            }
+        }
+        return FD_RESULT_NOT_FOUND;
+    }
+};
+
+///////////////////////////
+// GLOBAL(MODULE-SCOPE) DECLARATIONS
+///////////////////////////
+
+/**
+ * \~english @defgroup FactionDataGlobals Global FactionData API
+ * Global functions to access the FactionData object.
+ *
+ * \~ @ingroup FOnline2238
+ */
+
+/*@{*/
+
+/**
+ * Registers new faction, initializes database for it
+ *
+ *
+ * @param id faction id, has to be proper id (within FACTION_COUNT range)
+ *			and has to have name assigned in factions_names dictionary
+ * @param name name of the faction (has to be equal to one of the names stored in fotext.msg)
+ * @param playerDriven for player gangs
+ *
+ * @return error code defined by REGRESULT_* macros
+ */
+int RegisterFaction(uint id, const string@ name, bool playerDriven)
+{
+    WLog("factions", "Registering faction with desired id: " + id + ", and name " + name);
+    if(valid(GetFaction(name)))
+    {
+        // already added (with this id, not necesarily name)
+        WLog("factions", "Faction already registered");
+        return REGRESULT_ALREADY_TAKEN;
+    }
+    uint stringId = 0;
+    int  res = AssignFactionName(name, id, stringId);
+    if(res == REGRESULT_ALREADY_TAKEN)
+    {
+        WLog("factions", "Faction name: " + FactionNames[stringId] + " is already assigned", DEBUG_WARNING);
+        return res;
+    }
+    else if(res == REGRESULT_WRONG_NAME)
+    {
+        WLog("factions", "Faction name: " + name + " has got no associated msg string number", DEBUG_WARNING);
+        return res;
+    }
+    else if(res != REGRESULT_SUCCESS)
+    {
+        WLog("factions", "ERR: Couldn't register faction with given name", DEBUG_ERROR);
+        return res;
+    }
+
+    // add the object and anydata id
+    Faction@ faction = Faction(id, name, "", 0);
+    FactionData data(id, stringId, playerDriven);
+    @faction.data = data;
+    AddFaction(faction);
+
+    // update the list of factions
+    Serializator@ list = @Serializator();
+    // nothing stored indices stored
+    if(!list.Load("FactionsList"))
+    {
+        list.Set(name);
+        list.Set(id);
+        return list.Save("FactionsList") ? REGRESULT_SUCCESS : REGRESULT_EXCEPTION;
+    }
+    else
+    {
+        // rebuild list
+        return RebuildList() ? REGRESULT_SUCCESS : REGRESULT_EXCEPTION;
+    }
+}
+bool RebuildList()
+{
+    Serializator@ list = @Serializator();
+    list.Load("FactionsList");
+    list.Clear();
+    string name;
+    for(uint i = 0, j = Factions.length(); i < j; i++)
+    {
+        if(valid(Factions[i]))
+        {
+            GetFactionName(Factions[i].StringId, name);
+            list.Set(name).Set(Factions[i].Id);
+        }
+    }
+    return list.Save("FactionsList");
+}
+/**
+ * Registers faction with given name, reads back the id for it
+ *
+ * @return error code defined by REGRESULT_* macros
+ */
+int RegisterFaction(const string@ name, bool playerDriven, uint& out id)
+{
+    // seek for unocupied id
+    uint i;
+    for(i = playerDriven ? FACTION_PLAYER_START : 0; i < FACTION_COUNT; i++)       // although this should be _always_ called for playerdriven...
+    {
+        if(!valid(GetFaction(i)))
+            break;
+    }
+
+    id = i;
+    // register faction with proper id
+    return RegisterFaction(i, name, playerDriven);
+}
+
+/**
+ * Gets data object for given faction
+ *
+ * @return null for wrong faction id
+ */
+FactionData@ GetDatabase(uint faction_id)
+{
+    IFaction@ ifaction = GetFaction(faction_id);
+    if(!valid(ifaction))
+    {
+        // Log("ERR: failed to get "+faction_id+" database");
+        return null;
+    }
+    Faction@ faction = cast<Faction@>(ifaction);
+
+    // Log("Faction.data valid: " + (valid(faction.data) ? "yes" : "no"));
+    return faction.data;
+}
+
+//////////////////////////////////////////////////////
+// PUBLIC METHODS EXPOSING FACTIONDATA FUNCTIONALITY
+//
+// TODO: Consider giving common prefix (FD?)
+//
+// Only this methods have to be imported in other modules
+// to give access to faction data
+//
+// most functions returns boolean values:
+// true means everything was ok
+// false may mean that:
+// - array full
+// - key already present
+// - wrong parameter
+//
+//////////////////////////////////////////////////////
+
+/**
+ * Adds player without knowing anything about him
+ * I'm not sure whether it's useful actually
+ *
+ * @param faction faction whose database we will update
+ * @param id id of the player we want to add
+ *
+ * @retrun FD_RESULT_* value (see _factions.fos)
+ */
+int AddPlayer(uint faction, uint id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+
+    return data.AddPlayer(id);
+}
+/**
+ * Adds player with specified faction
+ *
+ * @param faction faction whose database we will update
+ * @param id id of the player we want to add
+ * @param playerFaction faction to which given player belongs to
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int AddPlayer(uint faction, uint id, uint playerFaction)
+{
+    return AddPlayer(id, playerFaction, RANK_UNKNOWN, STATUS_UNKNOWN);
+}
+/**
+ * Adds player with specified faction and rank
+ *
+ * @param faction faction whose database we will update
+ * @param id id of the player we want to add
+ * @param playerFaction faction to which given player belongs to
+ * @param rank rank of the player
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int AddPlayer(uint faction, uint id, uint playerFaction, uint rank)
+{
+    return AddPlayer(id, playerFaction, rank, STATUS_UNKNOWN);
+}
+/**
+ * Adds player with specified faction, rank and status
+ *
+ * @param faction faction whose database we will update
+ * @param id id of the player we want to add
+ * @param playerFaction faction to which given player belongs to
+ * @param rank rank of the player
+ * @param status status of the player
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int AddPlayer(uint faction, uint id, uint playerFaction, uint rank, uint status)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    int res = data.AddPlayer(id);
+    if(res == FD_RESULT_SUCCESS)
+    {
+        data.ModifyFaction(id, playerFaction);
+        data.ModifyRank(id, rank);
+        data.ModifyStatus(id, status);
+    }
+    return res;
+}
+
+/**
+ * Removes player's info from faction's database
+ *
+ * @param faction faction whose database we will update
+ * @param id id of the player the info about we want to remove
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int RemovePlayer(uint faction, uint id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    return data.RemovePlayer(id);
+}
+
+///////////////////////////////
+// DATA RETRIEVING
+//////////////////////////////
+
+/**
+ * Fill the given array with member's ids
+ *
+ * @param faction id of the faction to take data from
+ * @param ids array that will be filled with members identifiers
+ *
+ * @return length of created array, 0 if error occured
+ */
+uint GetMembers(uint faction, array<uint>& ids)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    data.GetMembers(ids);
+    DLog("GetMembers returned " + ids.length() + " values.");
+    return ids.length();
+}
+
+/**
+ * Gets the total number of records from the database
+ */
+uint GetRecordsCount(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.GetRecordsCount();
+}
+
+/**
+ * Gets the total number of members
+ */
+uint GetMembersCount(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.GetMembersCount();
+}
+/**
+ * Gets id of the next record, with regard to record containing data for current Id
+ * if members is set to true, seeks for next member record
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int GetNextId(uint faction, uint currId, bool members, uint& out nextId)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return currId;
+    }
+    return data.GetPrevNextId(currId, 1, members, nextId);
+}
+
+/**
+ * Gets id of the previous record, with regard to record containing data for current Id
+ * if members is set to true, seeks for prev member record
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int GetPrevId(uint faction, uint currId, bool members, uint& out prevId)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return currId;
+    }
+    return data.GetPrevNextId(currId, -1, members, prevId);
+}
+
+/**
+ * Gets the id of the player stored at first record
+ * if members is set to true seeks for first stored member
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int GetFirstId(uint faction, bool members, uint& out id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.GetPrevNextId(0, 0, members, id);
+}
+
+/**
+ * Gets the faction of the given player, stores it in the faction argument.
+ *
+ * @param     faction        faction whose database we will check
+ * @param     id             id of the player we want to check
+ */
+int GetFaction(uint faction, uint id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_faction, id, faction);
+    return var.GetValue();
+}
+
+/**
+ * Gets the status of the given player, stores it in the appropriate argument.
+ *
+ * @param     faction    faction whose database we will check
+ * @param     id         id of the player we want to check
+ */
+int GetStatus(uint faction, uint id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_faction_status, id, faction);
+    return var.GetValue();
+}
+
+/**
+ * Gets the rank of the given player, stores it in the appropriate argument.
+ *
+ * @param     faction    faction whose database we will check
+ * @param     id         id of the player we want to check
+ * @param     rank       player's rank will be stored there
+ *
+ */
+int GetRank(uint faction, uint id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_faction_rank, id, faction);
+    return var.GetValue();
+}
+
+/**
+ * Checks if the player with given id is the member of the faction
+ *
+ * @param     faction    faction whose database we will check
+ * @param     cr         critter we want to check
+ *
+ * @return true if player belongs to the given faction, false when otherwise or when not found
+ */
+bool IsMember(uint faction, Critter& cr)
+{
+    return int(faction) == _GroupIndex(cr);
+}
+bool IsMemberOffline(uint faction, uint id)
+{
+    return faction == GetPlayerFaction(id);
+}
+
+/**
+ * Checks if the player with given id exists in the database
+ *
+ * @param     faction    faction whose database we will check
+ * @param     id         id of the player we want to check
+ *
+ * @return true if player is in db, false otherwise
+ */
+bool StoredInDB(uint faction, uint id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return false;
+    }
+    return data.Exists(id);
+}
+
+/**
+ * Gets the id of the leader
+ */
+uint GetLeaderId(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.leaderId;
+}
+
+/**
+ * Sets the id of the leader
+ */
+void SetLeaderId(uint faction, uint id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetLeaderId(id);
+}
+
+/**
+ * Gets the id of the player who claimed leadership
+ */
+uint GetClaimId(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.claimId;
+}
+
+/**
+ * Sets the id of the player who claimed leadership
+ */
+void SetClaimId(uint faction, uint id)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetClaimId(id);
+}
+
+/**
+ * Gets the time when claimee will be able to confirm leadership without doing anything
+ */
+uint GetLeaderTime(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.leaderTime;
+}
+
+/**
+ * Sets the time when claimee will be able to confirm leadership without doing anything
+ * This is time for leader to act
+ */
+void SetLeaderTime(uint faction, uint time)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetLeaderTime(time);
+}
+
+/**
+ * Gets the time when next claim will be allowed (current claimee will loose his claim)
+ */
+uint GetClaimTime(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.claimTime;
+}
+
+/**
+ * Sets the time when next claim will be allowed (current claimee will loose his claim)
+ * This is time for claimee to act
+ */
+void SetClaimTime(uint faction, uint time)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetClaimTime(time);
+}
+
+/*
+** Retrieves the radio frequency of given faction
+*/
+uint16 GetFactionRadioChannel(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.freq;
+}
+
+/**
+ * Sets the radio channel for given faction
+ */
+void SetFactionRadioChannel(uint faction, uint16 channel)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetRadioChannel(channel);
+}
+
+/**
+ * Retrieves location id for the faction
+ * if the returned value is 0 it means faction doesn't use
+ * dynamically created location, or there was some error
+ * that should have been handled earlier (like not checking
+ * returned value of CreateLocation)
+ */
+uint GetFactionLocationId(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.locationId;
+}
+
+/**
+ * Sets new location data for faction hq
+ */
+void SetFactionLocation(uint faction, uint locId, uint pid, uint x, uint y)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetLocation(locId, pid, x, y);
+}
+
+/**
+ * Gets location data for player-faction hq
+ */
+bool GetFactionLocation(uint faction, uint& out locId, uint& out pid, uint& out x, uint& out y)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return false;
+    }
+
+    if(data.locationId == 0)
+        return false;
+
+    locId = data.locationId;
+    pid = data.locationPid;
+    x = data.locX;
+    y = data.locY;
+
+    return true;
+}
+
+/**
+ * Gets location coords
+ */
+void GetFactionLocationCoords(uint faction, uint& out x, uint& out y)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    x = data.locX;
+    y = data.locY;
+}
+
+/**
+ * Gets faction score - some global value used to abstract how succesfull faction is in some of their endeavours
+ */
+uint GetFactionScore(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.score;
+}
+
+/**
+ * Modifies faction score by given amount
+ */
+void ModifyFactionScore(uint faction, int amount)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.SetScore(data.score + amount);
+}
+
+/////////////////////////////////
+// DATA MODIFICATION
+// following functions operate on non-member players
+// stored in db
+/////////////////////////////////
+
+/**
+ * Modfy the player's status stored in db
+ *
+ * @param     faction    faction whose database we will modify
+ * @param     id         player, the info about we want to modify
+ * @param     newStatus  new value for player's status
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ModifyStatus(uint faction, uint id, uint newStatus)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    data.ModifyStatus(id, newStatus);
+    return FD_RESULT_SUCCESS;
+}
+
+/**
+ * Modfy the player's rank stored in db
+ *
+ * @param     faction    faction whose database we will modify
+ * @param     id         player, the info about we want to modify
+ * @param     newRank    new value for player's rank
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ModifyRank(uint faction, uint id, uint newRank)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    data.ModifyRank(id, newRank);
+    return FD_RESULT_SUCCESS;
+}
+
+/**
+ * Modfy the player's faction stored in db
+ *
+ * @param     faction    faction whose database we will modify
+ * @param     id         player, the info about we want to modify
+ * @param     newFaction new value for player's faction
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ModifyFaction(uint faction, uint id, uint newFaction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    data.ModifyFaction(id, newFaction);
+    return FD_RESULT_SUCCESS;
+}
+
+///////////////////////
+// Changing player's faction and ranks
+// these functions operate on players LVARs
+// and are used to modify attributes of faction member's
+// they also automatically update faction's database
+//////////////////////
+
+/**
+ * Invites player to be a member of the faction
+ *
+ * @param     faction    faction whose database we will update
+ * @param     playerId   id of the player we want to add
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int InvitePlayer(uint faction, uint playerId)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Faction database couldn't be retrieved.");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+
+    if(!data.Exists(playerId))
+    {
+        // add new record
+        return AddPlayer(faction, playerId, FACTION_UNKNOWN, RANK_UNKNOWN, STATUS_INVITED);
+    }
+    else
+    {
+        // modify status
+        return data.ModifyStatus(playerId, STATUS_INVITED);
+    }
+}
+
+/**
+ * Adds member, who has been previously invited, to the given faction
+ *
+ * @param     faction    faction whose database we will update
+ * @param     playerId   id of the player we want to add
+ *
+ * @remarks This method also updates local variables:
+ *      * LVAR_factions_player_faction
+ *      * LVAR_factions_player_rank
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ConfirmInvitation(uint faction, uint playerId)
+{
+    // it's the same
+    return AddMember(faction, playerId);
+}
+/**
+ * Adds member to the given faction
+ *
+ * @param     faction    faction whose database we will update
+ * @param     playerId   id of the player we want to add
+ * @param     applyModifiers whether to apply reputation mods or not
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int AddMember(uint faction, uint playerId, bool applyModifiers)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Faction database couldn't be retrieved.");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    Critter@ player = GetCritter(playerId);
+    int      res = data.AddPlayer(playerId);
+
+    // if succesfully added, update his local vars and info
+    if(res == FD_RESULT_SUCCESS || res == FD_RESULT_ALREADY_EXISTS)
+    {
+        GameVar@ var = GetLocalVar(LVAR_factions_player_faction, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve LVAR_factions_player_faction variable");
+            // set db faction value to unknown
+            data.ModifyFaction(playerId, FACTION_UNKNOWN);
+            return FD_RESULT_LVAR_ERROR;
+        }
+        // alter the LVAR value
+        var = faction;
+        DLog("Var: " + var.GetValue());
+        data.ModifyFaction(playerId, faction);
+        // alter teamid
+        if(valid(player))
+            SetGroupIndex(player, faction);
+
+        // retrieve local variable for rank
+        @var = GetLocalVar(LVAR_factions_player_rank, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve LVAR_factions_player_faction variable");
+            // set db rank value to unknown
+            data.ModifyRank(playerId, RANK_UNKNOWN);
+            return FD_RESULT_LVAR_ERROR;
+        }
+        // alter rank local variable value
+        var = FIRST_RANK(faction);
+        data.ModifyRank(playerId, FIRST_RANK(faction));
+        // alter teamid
+        if(valid(player))
+            SetGroupRank(player, FIRST_RANK(faction));
+
+        // clear status
+        data.ModifyStatus(playerId, STATUS_UNKNOWN);
+        // set location as known to player
+        if(data.locationId != 0)
+        {
+            if(!valid(player))
+            {
+                Log("ERR: Adding new member when member is offline. Couldn't call SetKnownLoc");
+            }
+            else
+            {
+                player.SetKnownLoc(true, data.locationId);
+                DLog("Setting KnownLoc " + GetFactionLocationId(faction) + " for player " + player.Id);
+            }
+        }
+
+        // apply joining modifiers
+        if(applyModifiers)
+            ApplyReputationModifiers(player, faction);
+
+        // set player's followers
+        array<Critter@> followers;
+        uint            n = GetFollowers(player, true, followers);
+        for(uint i = 0; i < n; i++)
+            followers[i].FollowerVarBase[FV_FACTION] = faction;
+
+        return FD_RESULT_SUCCESS;
+    }
+    else
+    {
+        if(res == FD_RESULT_DB_FULL)
+            Log("ERR: Database full");
+        else
+            Log("ERR: An error occured " + FD_Result2String(res));
+        return res;
+    }
+}
+// with default param
+int AddMember(uint faction, uint playerId)
+{
+    return AddMember(faction, playerId, true);
+}
+/**
+ * Change the players rank
+ *
+ * That means:
+ * * degradation/promotion
+ *
+ * @param    faction     faction whose database we will modify
+ * @param     playerId   id of the player, whose info about we want to modify
+ * @param     newRank    new value for the player's rank
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ChangeRank(uint faction, uint playerId, uint newRank)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    Critter@ player = GetCritter(playerId);
+
+    if(GetPlayerFaction(playerId) != faction)
+    {
+        Log("ERR: Given player is not a member of the faction you want to change the rank within.");
+        return FD_RESULT_INVALID_ARGUMENT;
+    }
+
+    int res = data.ModifyRank(playerId, newRank);
+
+    if(res == FD_RESULT_SUCCESS)
+    {
+        GameVar@ var = GetLocalVar(LVAR_factions_player_faction, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve local variable LVAR_factions_player_faction");
+            return FD_RESULT_LVAR_ERROR;
+        }
+
+        // check if newRank has correct value
+        if(!RANK_VALID(newRank))
+        {
+            Log("ERR: Invalid rank (" + newRank + ") for faction: " + faction);
+            return FD_RESULT_INVALID_ARGUMENT;
+        }
+        @var = GetLocalVar(LVAR_factions_player_rank, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve local variable LVAR_factions_player_faction");
+            return FD_RESULT_LVAR_ERROR;
+        }
+        if(var.GetValue() == RANK_LEADER && newRank != RANK_LEADER)
+        {
+            DLog("Clearing leaderId for the faction");
+            SetLeaderId(faction, 0);
+        }
+        // alter lvar value
+        var = newRank;
+        // alter teamid
+        if(valid(player))
+            SetGroupRank(player, newRank);
+
+        // and remember leader id
+        if(newRank == RANK_LEADER)
+        {
+            SetLeaderId(faction, playerId);
+            DLog("Setting leaderId for the faction");
+        }
+        return FD_RESULT_SUCCESS;
+    }
+    else
+    {
+        Log("ERR: Error occured while modifying rank: " + FD_Result2String(res));
+        return res;
+    }
+}
+
+/**
+ * Expel member
+ *
+ * @param     faction    faction whose database we will modify
+ * @param     playerId   id of the player, whose info about we want to modify
+ * @param	 applyModifiers	whether to apply reputation modifiers on leaving or not
+ * @remarks
+ *      When player's faction is the same as the database owning faction,
+ *      we also modify appropriate local variable: LVAR_factions_player_faction
+ *
+ * @return FD_RESULT_* value (see _factions.fos)
+ */
+int ExpelMember(uint faction, uint playerId, bool applyModifiers)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    Critter@ player = GetCritter(playerId);
+
+    if(GetPlayerFaction(playerId) != faction)
+    {
+        Log("ERR: Given player is not a member of the faction from which you wan't him to be expelled.");
+        return FD_RESULT_INVALID_ARGUMENT;
+    }
+
+    int res = data.ModifyFaction(playerId, FACTION_NONE);
+
+    if(res == FD_RESULT_SUCCESS)
+    {
+        // obtain the player's faction
+        GameVar@ var = GetLocalVar(LVAR_factions_player_faction, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve local variable LVAR_factions_player_faction");
+            // after such error, player's faction in database is unknown
+            data.ModifyFaction(playerId, FACTION_UNKNOWN);
+            return FD_RESULT_LVAR_ERROR;
+        }
+
+        // alter lvar value
+        var = FACTION_NONE;
+        // alter teamid
+        if(valid(player))
+            SetGroupIndex(player, FACTION_NONE);
+
+        @var = GetLocalVar(LVAR_factions_player_rank, playerId);
+        if(!valid(var))
+        {
+            Log("ERR: Couldn't retrieve LVAR_factions_player_faction variable");
+            // set db rank value to unknown
+            data.ModifyRank(playerId, RANK_UNKNOWN);
+            return FD_RESULT_LVAR_ERROR;
+        }
+        // keep other values integral
+        if(var.GetValue() == RANK_LEADER)
+        {
+            DLog("Leader was removed from faction - clearing leaderId for the faction");
+            SetLeaderId(faction, 0);
+        }
+        if(GetClaimId(faction) == playerId)
+        {
+            DLog("Claim was removed from faction - clearing claimId value");
+            SetClaimId(faction, 0);
+        }
+        // alter rank local variable value
+        var = FIRST_RANK(faction);
+        // alter teamid
+        if(valid(player))
+            SetGroupRank(player, FIRST_RANK(faction));
+        // and the db info
+        data.ModifyRank(playerId, RANK_UNKNOWN);
+        // clear status
+        // TODO: we might as well add status expelled or something
+        data.ModifyStatus(playerId, STATUS_UNKNOWN);
+
+        if(applyModifiers)
+        {
+            // revert reputation modifiers: half of initial ones
+            if(faction < FACTION_PLAYER_START)
+            {
+                // if(valid(player)) // this should always be the case, the only situation when it could happen was garbaging a faction, but only gangs are garbaged...
+                // { // I decided not to silencing such exceptions, if something is wrong, better to be notified about it :)
+                ApplyReputationModifiers(player, faction, -1, 2);
+                player.ReputationBase[faction] = -int(REP_LIMIT);                         // we do not like you anymore
+                // }
+            }
+        }
+        return FD_RESULT_SUCCESS;
+    }
+    else
+    {
+        Log("ERR: " + FD_Result2String(res));
+        return res;
+    }
+}
+// with default param
+int ExpelMember(uint faction, uint playerId)
+{
+    return ExpelMember(faction, playerId, true);
+}
+
+///////////////
+// NEWS
+///////////////
+
+/**
+ * Adds news
+ *
+ * @param     master id of the player performing operation of given type
+ * @param     slave  id of the player on which operation is performed
+ * @param     type   type of the opeartion
+ * @param     time   time at which operation happened (__FullSecond/ELAPSED_TIME)
+ */
+void AddFactionNews(uint faction, uint master, uint slave, uint type)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.news.AddNews(master, slave, type);
+    // data.UpdateNewsData();
+}
+
+/**
+ * Retrieves news stored at given index
+ */
+bool GetFactionNews(uint faction, uint index,
+                    uint& out master, uint& out slave, uint& out type,
+                    uint16& out year, uint8& out month, uint8& out day, uint8& out hour, uint8& out minute)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return false;
+    }
+    return data.news.GetNews(index, master, slave, type, year, month, day, hour, minute);
+}
+
+/**
+ * Retrieves number of news stored for a given faction
+ */
+uint GetFactionNewsCount(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return 0;
+    }
+    return data.news.GetCount();
+}
+
+//////////////////////
+// UTILS FUNCTIONS
+/////////////////////
+
+/**
+ * Helper method to determine faction player belongs too
+ * described in appropriate local variable
+ */
+uint GetPlayerFaction(uint playerId)
+{
+    Critter@ player = GetCritter(playerId);
+    if(valid(player))
+        return _GroupIndex(player);
+
+    GameVar@ var = GetLocalVar(LVAR_factions_player_faction, playerId);
+    if(!valid(var))
+    {
+        Log("Err: couldn't retrieve LVAR_factions_player_faction variable");
+        return FACTION_UNKNOWN;
+    }
+    return var.GetValue();
+}
+
+/**
+ * Helper method to determine rank of the player
+ * which is stored in appropriate local variable
+ */
+uint GetPlayerRank(uint playerId)
+{
+    GameVar@ var = GetLocalVar(LVAR_factions_player_rank, playerId);
+    if(!valid(var))
+    {
+        Log("Err: couldn't retrieve LVAR_factions_player_rank variable");
+        return RANK_UNKNOWN;
+    }
+    return var.GetValue();
+}
+
+/**
+ * Retrieves number of the msg string representing faction name
+ */
+int GetFactionNameMsg(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    return 1000000 + data.stringId * 2;
+}
+/**
+ * Retrieves number of the msg string representing faction variation name(aliases)
+ */
+int GetFactionAliasNameMsg(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return FD_RESULT_DB_NOT_FOUND;
+    }
+    return 1000000 + data.stringId * 2 + 1;
+}
+
+/**
+ * Checks whether given coords are within base area of one of the playerfactions
+ * returns faction id in case of success, 0 otherwise
+ */
+uint CheckFactionBaseCoords(uint x, uint y)
+{
+    for(uint i = 0; i < FACTION_COUNT; i++)
+    {
+        FactionData@ data = GetDatabase(i);
+        if(!valid(data))
+            return 0;
+        if(data.locationId == 0)
+            continue;
+        // 2x circle radius
+        if(GetDistantion(x, y, data.locX, data.locY) <= 12)
+            return i;
+    }
+    return 0;
+}
+
+/**
+ * Checks if faction is playerdriven gang
+ */
+bool IsGang(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return false;
+    }
+    return data.playerDriven;
+}
+
+//
+// Helper to determine whether it is big(npc) faction or playerdriven faction
+//
+bool IsBigFaction(uint faction)   // terminal
+{
+    return !IsGang(faction);
+}
+
+//
+// Helper
+//
+bool IsTheSameFaction(uint player1Id, uint player2Id)   // terminal
+{
+    return GetPlayerFaction(player1Id) == GetPlayerFaction(player2Id);
+}
+
+//
+// Helper
+//
+void _Resign(uint playerId)   // terminal
+{
+    uint faction = GetPlayerFaction(playerId);
+
+    int  res = ExpelMember(faction, playerId);
+    if(res != FD_RESULT_SUCCESS)
+    {
+        Log("ERR: " + FD_Result2String(res));
+    }
+    // add news
+    AddFactionNews(faction, playerId, 0, NEWS_RESIGNED);
+}
+
+/**
+ * Updates 'last used' variable, that tracks time when faction was last time accessed.
+ * It sets the time for current full minute.
+ */
+void UpdateLastUsed(uint faction)
+{
+    FactionData@ data = GetDatabase(faction);
+    if(!valid(data))
+    {
+        Log("ERR: Couldn't retrieve faction database object");
+        return;
+    }
+    data.UpdateLastUsed();
+}
+
+////////////////////
+// DEBUG
+////////////////////
+
+/**
+ * creates array of strings representing log of the faction data
+ * if faction is 0 then all are displayed
+ * returns number of strings
+ */
+uint GetFactionLog(uint faction, bool fullLog, array<string>& strings, uint begin, uint end)
+{
+    FactionData@ data;
+
+    uint         num = 0;
+
+    if(begin == 0)
+        begin = 2;
+    if(end == 0)
+        end = FACTION_COUNT;
+
+    if(faction == 0)
+    {
+        for(uint i = begin; i < end; i++)
+        {
+            @data = GetDatabase(i);
+            if(!valid(data))
+                continue;
+            num += data.LogData(fullLog, strings);
+        }
+        return num;
+    }
+    else
+    {
+        @data = GetDatabase(faction);
+        if(!valid(data))
+            return 0;
+        return data.LogData(fullLog, strings);
+    }
+    // return 0;
+}
+
+bool SaveFactionData(uint faction)
+{
+    FactionData@ data;
+    @data = GetDatabase(faction);
+    if(!valid(data))
+        return false;
+    data.UpdateData();
+    if(valid(data.news))
+        data.news.UpdateData();
+    return true;
+}
+
+bool FactionExists(uint faction)
+{
+    FactionData@ data;
+    @data = GetDatabase(faction);
+    if(!valid(data))
+        return false;
+    return true;
+}
+
+/*@}*/
+
+void test(Critter& cr, int p0, int p1, int p2)
+{
+    FactionData@ data = GetDatabase(_GroupIndex(cr));
+    cr.Say(SAY_NETMSG, "String: " + data.stringId);
+}
+
+// careful!
+void fix(Critter& cr, int p0, int p1, int p2)
+{
+    FactionData@ data = GetDatabase(p0);
+    data.stringId = p1;
+    data.UpdateData();
+}

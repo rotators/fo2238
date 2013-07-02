@@ -1,0 +1,38 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_plugin_h.fos
+//
+
+#ifndef __MAPPER_PLUGIN_H__
+#define __MAPPER_PLUGIN_H__
+
+shared interface IMapperPlugin
+{
+    void Render(uint layer);
+    void RenderMap();
+    bool MouseDown(int click);
+    bool MouseUp(int click);
+    void MouseMove(int x, int y);
+    bool KeyDown(uint8 key);
+    bool KeyUp(uint8 key);
+    void InputLost();
+    void Loop();
+    bool Message(string& message);
+};
+
+#ifndef __MAPPER_PLUGIN_MODULE__
+import bool Plugins_Register(IMapperPlugin@ plugin) from "mapper_plugin";
+import void Plugins_Render(uint layer) from "mapper_plugin";
+import void Plugins_RenderMap() from "mapper_plugin";
+import bool Plugins_MouseDown(int click) from "mapper_plugin";
+import bool Plugins_MouseUp(int click) from "mapper_plugin";
+import void Plugins_MouseMove(int x, int y) from "mapper_plugin";
+import bool Plugins_KeyDown(uint8 key) from "mapper_plugin";
+import bool Plugins_KeyUp(uint8 key) from "mapper_plugin";
+import void Plugins_InputLost() from "mapper_plugin";
+import void Plugins_Loop() from "mapper_plugin";
+import bool Plugins_Message(string& message) from "mapper_plugin";
+#endif
+#endif

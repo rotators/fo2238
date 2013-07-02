@@ -1,0 +1,591 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_brahmin_run.fos
+//
+
+#include "_macros.fos"
+#include "_ai.fos"
+#include "_npc_pids.fos"
+#include "reputations_h.fos"
+#include "utils_h.fos"
+#include "economy_h.fos"
+#include "npc_common_h.fos"
+#include "world_common_h.fos"
+#include "npc_planes_h.fos"
+
+#define ZONE_LENGTH                       (50)
+
+// brahmin for this quest - added in critter2238.txt proto
+#define NPC_PID_BrahminRunQuestBrahmin    (523)
+
+
+
+/*Configuration Constants*/
+// proto id of herdsman
+const uint herdsmanPid = NPC_PID_GrandMasterTrader;
+// proto id of brahmin
+const uint brahminPid = NPC_PID_BrahminRunQuestBrahmin;
+// reputation required to start the quest
+const uint reputationNeeded = 50;
+// number of brahmin to start the quest with
+const uint brahminStartingCount = 10;
+// addiational hp of the herdsman
+const uint herdsmanLifeParam = 200;
+// enable brahmin looting
+const bool brahminLootEnabled = false;
+// reputation drop when player from group kills brahmin/herdsman
+const int  reputationPenaltyForDeathByPlayer = 15;
+// other reputation drop for dead brahmin/herdsman
+const int  reputationPenaltyForDeath = 5;
+// cooldown until the player can take quest again
+const uint cooldownInMinutes = 5;
+// caps reward for each brahmin per 1 zone length
+const uint capsReward = 5;
+// xp reward for each brahmin per 1 zone length
+const uint xpReward = 10;
+// time limit for quest in minutes
+const uint questTimeLimitInMinutes = 60;
+
+// destination specifications
+uint16[] locProtoIds = { LOCATION_Q_BrahminRanch, LOCATION_Q_BrahminRanch };
+uint16[] locXCoord = { 1880, 1920 };
+uint16[] locYCoord = { 1630, 1040 };
+
+#define BRUN_INACTIVE                     (0)
+#define BRUN_ACTIVE                       (1)
+#define BRUN_BRAHMIN_DEAD                 (2)
+#define BRUN_HERDSMAN_DEAD                (3)
+#define BRUN_WRONG_TARGET                 (4)
+#define BRUN_PLAYER_LEFT_RUN              (5)
+#define BRUN_PLAYER_DEAD                  (6)
+#define BRUN_TARGET_REACHED               (7)
+#define BRUN_REWARD_PAID                  (8)
+#define BRUN_TIME_UP                      (9)
+
+// log messages
+#define MSG_BRUN_ACTIVE                   (LVAR_q_brahmin_run * 1000 + 1)
+#define MSG_BRUN_BRAHMIN_DEAD             (LVAR_q_brahmin_run * 1000 + 2)
+#define MSG_BRUN_HERDSMAN_DEAD            (LVAR_q_brahmin_run * 1000 + 3)
+#define MSG_BRUN_WRONG_TARGET             (LVAR_q_brahmin_run * 1000 + 4)
+#define MSG_BRUN_PLAYER_LEFT_RUN          (LVAR_q_brahmin_run * 1000 + 5)
+#define MSG_BRUN_PLAYER_DEAD              (LVAR_q_brahmin_run * 1000 + 6)
+#define MSG_BRUN_TARGET_REACHED           (LVAR_q_brahmin_run * 1000 + 7)
+#define MSG_BRUN_REWARD_PAID              (LVAR_q_brahmin_run * 1000 + 8)
+
+// Quest giver dialog functions
+bool d_CheckReputationTooLow(Critter& player, Critter@ npc, int factionReputationIndex)
+{
+    return(player.Reputation[factionReputationIndex] < reputationNeeded);
+}
+
+bool d_CheckQuestRetakable(Critter& player, Critter@ npc)
+{
+    uint cooldownValue = GetLvar(player, LVAR_q_brahmin_run_cooldown);
+    return(__FullSecond > cooldownValue || cooldownValue == 0);
+}
+
+void r_RewardPlayer(Critter& player, Critter@ npc)
+{
+    int  brahminCount = GetLvar(player, LVAR_q_brahmin_run_counter);
+    int  distance = GetLvar(player, LVAR_q_brahmin_run_length);
+    uint reward = capsReward * distance * brahminCount / ZONE_LENGTH;
+    BanksTransferToCritter(player, reward, TRANSACTION_DEFAULT, false);
+
+    SetLvar(player, LVAR_q_brahmin_run, BRUN_REWARD_PAID);
+    uint cooldownVal = __FullSecond + REAL_MINUTE(cooldownInMinutes);
+    SetLvar(player, LVAR_q_brahmin_run_cooldown, cooldownVal);
+}
+
+void r_InitiateRun(Critter& player, Critter@ npc, int destinationInd, int factionReputationIndex)
+{
+    if(uint(destinationInd) >= locProtoIds.length() || uint(destinationInd) >= locXCoord.length() ||
+       uint(destinationInd) >= locYCoord.length())
+        Log("Brahmin Run Error - destination location index too large");
+
+    Critter@[] critters = { player };
+    uint      locId = CreateLocation(locProtoIds[destinationInd], locXCoord[destinationInd], locYCoord[destinationInd], critters);
+    Location@ loc = GetLocation(locId);
+    if(!valid(loc))
+        return;
+    loc.AutoGarbage = false;
+
+    SetLvar(player, LVAR_q_brahmin_run_counter, brahminStartingCount);
+
+    SetLvar(player, LVAR_q_brahmin_run_faction, factionReputationIndex);
+
+    SetLvar(player, LVAR_q_brahmin_run_loc_id, locId);
+
+    SetLvar(player, LVAR_q_brahmin_run_herd_loc_id, 0);
+
+    // Calculation of distance
+
+    Location@ playerLoc = GetLocationOf(player);
+    if(!valid(playerLoc))
+        return;
+    int xCoordLen = loc.WorldX - playerLoc.WorldX;
+    int yCoordLen = loc.WorldY - playerLoc.WorldY;
+    int pathLength = sqrt(xCoordLen * xCoordLen + yCoordLen * yCoordLen);
+
+    SetLvar(player, LVAR_q_brahmin_run_length, pathLength);
+
+
+    player.TransitToGlobal(true);
+
+    SetLvar(player, LVAR_q_brahmin_run, BRUN_ACTIVE);
+
+    player.SetEventExt(CRITTER_EVENT_EXT_MAP_IN, "quest_brahmin_run@_BrahminRunMapEnter");
+
+    SetQuestGarbager(questTimeLimitInMinutes, player.Id, locId, LVAR_q_brahmin_run, BRUN_TIME_UP);
+}
+
+// Herdsman dialog function
+void r_HerdsmanEncounterLeave(Critter& player, Critter@ herdsman)
+{
+    if(player.Param[TO_BATTLE] <= 0 && deleteBrahminAndHerdsmanFromEncounter(player, herdsman))
+        player.TransitToGlobal(true);
+}
+
+// there's a cooldown before player can leave via dialog, to prevent instant clicking the herdsman and teleportation to worldmap
+bool d_HerdsmanCannotSetOut(Critter& player, Critter@ herdsman)
+{
+    uint cooldownValue = GetLvar(herdsman, LVAR_q_brahmin_run_cooldown);
+    return(__FullSecond < cooldownValue);
+}
+
+bool d_PlayerNotARunner(Critter& player, Critter@ herdsman)
+{
+    uint ownerId = herdsman.Param[FV_MASTER];
+    return(ownerId != player.Id);
+}
+
+bool d_BrahminAndHerdsmanAttacked(Critter& player, Critter@ herdsman)
+{
+    if(player.Param[TO_BATTLE] > 0)
+        return true;
+    if(herdsman.Param[TO_BATTLE] > 0)
+        return true;
+    Map@ map = herdsman.GetMap();
+    if(valid(map))
+    {
+        uint            ownerId;
+        array<Critter@> brahmin;
+        map.GetCritters(brahminPid, FIND_ALL, brahmin);
+        for(uint i = 0; i < brahmin.length(); i++)
+        {
+            ownerId = brahmin[i].Param[FV_MASTER];
+            if(ownerId != player.Id)
+            {
+                continue;
+            }
+            if(brahmin[i].Param[TO_BATTLE] > 0)
+                return true;
+        }
+    }
+    return false;
+}
+
+// Target destination npc dialog functions
+bool d_CheckCorrectLocation(Critter& player, Critter@ npc)
+{
+    return(uint(GetLvar(player, LVAR_q_brahmin_run_loc_id)) == npc.GetMap().GetLocation().Id);
+}
+
+
+
+// Handler for entering a location
+bool _BrahminRunMapEnter(Critter& player, Map& map)
+{
+    if(!player.IsPlayer() || GetLvar(player, LVAR_q_brahmin_run) != BRUN_ACTIVE)
+    {
+        player.SetEventExt(CRITTER_EVENT_EXT_MAP_IN, "");
+        return false;
+    }
+
+    if(!valid(map))
+        return false;
+
+    if(map.GetLocation().Id == uint(GetLvar(player, LVAR_q_brahmin_run_loc_id)))
+    {
+        finishQuest(player, BRUN_TARGET_REACHED, MSG_BRUN_TARGET_REACHED);
+        int  brahminCount = GetLvar(player, LVAR_q_brahmin_run_counter);
+        int  distance = GetLvar(player, LVAR_q_brahmin_run_length);
+        uint reward = xpReward * distance * brahminCount / ZONE_LENGTH;
+        AddExpTeam(player, reward);
+        map.GetLocation().AutoGarbage = true;
+    }
+    else if(IsHospital(map))
+    {
+        finishQuest(player, BRUN_PLAYER_DEAD, MSG_BRUN_PLAYER_DEAD);
+    }
+    else if(IsTown(map))
+    {
+        finishQuest(player, BRUN_WRONG_TARGET, MSG_BRUN_WRONG_TARGET);
+    }
+    else
+    {
+        if(IsEncounterMap(map))
+            brahminRunEncounter(player, map);
+        return false;
+    }
+    return false;
+}
+
+// Player enters encounter
+void brahminRunEncounter(Critter& player, Map@ map)
+{
+    int             numberOfBrahmin = GetLvar(player, LVAR_q_brahmin_run_counter);
+
+    GameVar@        herdLocVar = GetLocalVar(LVAR_q_brahmin_run_herd_loc_id, player.Id);
+    uint            herdLocId = herdLocVar.GetValue();
+
+    array<Critter@> brahmin;
+    brahmin.resize(numberOfBrahmin);
+
+    if(!valid(map))
+        return;
+
+    Location@ loc = map.GetLocation();
+    if(valid(loc))
+    {
+        // player entered map in same location - brahmin not spawned
+        if(loc.Id == herdLocId)
+            return;
+        herdLocVar = loc.Id;
+    }
+
+    array<Critter @> critters;
+    uint             critterCount = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+    uint8            dirToSpawn;
+    if(critterCount > 0)
+    {
+        uint xSum = 0;
+        uint ySum = 0;
+        for(uint i = 0; i < critterCount; i++)
+        {
+            xSum += critters[i].HexX;
+            ySum += critters[i].HexY;
+        }
+        uint16 xAvg = xSum / critterCount;
+        uint16 yAvg = ySum / critterCount;
+        dirToSpawn = GetDirection(xAvg, yAvg, player.HexX, player.HexY);
+    }
+    else
+    {
+        dirToSpawn = Random(0, 5);
+    }
+
+    uint16 hexX = player.HexX;
+    uint16 hexY = player.HexY;
+    uint16 xSpawn = 0;
+    uint16 ySpawn = 0;
+    uint8  spawnDir = (dirToSpawn + 3) % 6;
+    map.MoveHexByDir(hexX, hexY, dirToSpawn, Random(3, 6));
+    FindNearestFreeHex(map, hexX, hexY, xSpawn, ySpawn);
+
+    map.MoveHexByDir(hexX, hexY, dirToSpawn, 3);
+
+    array<uint16> brahmaHexX;
+    array<uint16> brahmaHexY;
+    int           spawnedBrahminNumber = numberOfBrahmin;
+    FindFreeHexes(map, hexX, hexY, spawnedBrahminNumber, brahmaHexX, brahmaHexY);
+
+    // Brahmin and herdsman creation/initialization
+    int[] params = { ST_MAX_LIFE, herdsmanLifeParam, FV_MASTER, player.Id, MODE_NO_PUSH, 1 };
+    Critter @herdsman = AddNpc(map, herdsmanPid, xSpawn, ySpawn, spawnDir, params, DIALOG_q_brahmin_run_herdsman, "quest_brahmin_run@_HerdsmanInit", AIPACKET_TOUGH_MERCHANT, 0, 0, false, 1);
+    if(valid(herdsman))
+    {
+        uint cooldownVal = __FullSecond + REAL_SECOND(10);
+        SetLvar(herdsman, LVAR_q_brahmin_run_cooldown, cooldownVal);
+    }
+
+    for(int i = 0; i < spawnedBrahminNumber; i++)
+    {
+        @brahmin[i] = map.AddNpc(brahminPid, brahmaHexX[i], brahmaHexY[i], spawnDir, null, null, "_BrahminInit");
+        if(valid(brahmin[i]))
+        {
+            brahmin[i].ParamBase[FV_MASTER] = player.Id;
+            if(!brahminLootEnabled)
+                brahmin[i].ModeBase[MODE_NO_LOOT] = 1;
+        }
+
+    }
+
+    // adding attack planes to make player's attackers attack also the herd
+    for(uint j = 0; j < critterCount; j++)
+    {
+        if(critters[j].CheckEnemyInStack(player.Id))
+        {
+            if(valid(herdsman))
+            {
+                AddAttackPlane(critters[j], Random(50, 70), herdsman);
+                critters[j].AddEnemyInStack(herdsman.Id);
+            }
+            for(int i = 0; i < spawnedBrahminNumber; i++)
+            {
+                AddAttackPlane(critters[j], Random(50, 70), brahmin[i]);
+                critters[j].AddEnemyInStack(brahmin[i].Id);
+            }
+        }
+    }
+}
+
+
+// Encounter npc(brahmin+herdsman) event handlers funcions
+void _HerdsmanInit(Critter& herdsman, bool firstTime)
+{
+    herdsman.SetEvent(CRITTER_EVENT_ATTACKED, "_BrahminRunNPCAttacked");
+    herdsman.SetEvent(CRITTER_EVENT_DEAD, "_HerdsmanKilled");
+
+    herdsman.SetEvent(CRITTER_EVENT_IDLE, "_HerdsmanIdle");
+    herdsman.SetEvent(CRITTER_EVENT_FINISH, "_HerdsmanFinish");
+}
+
+void _BrahminInit(Critter& brahmin, bool firstTime)
+{
+    brahmin.SetEvent(CRITTER_EVENT_ATTACKED, "_BrahminRunNPCAttacked");
+    brahmin.SetEvent(CRITTER_EVENT_DEAD, "_BrahminKilled");
+    brahmin.SetEvent(CRITTER_EVENT_FINISH, "_BrahminFinish");
+}
+
+bool _BrahminRunNPCAttacked(Critter& cr, Critter& attacker)
+{
+    if(!valid(attacker))
+        return true;
+    uint16 hexX = cr.HexX;
+    uint16 hexY = cr.HexY;
+    uint8  dir = GetDirection(attacker.HexX, attacker.HexY, hexX, hexY);
+    Map@   map = cr.GetMap();
+    if(!valid(map))
+        return true;
+    map.MoveHexByDir(hexX, hexY, dir, 8);
+    cr.DropPlanes();
+    AddWalkPlane(cr, AI_PLANE_WALK_PRIORITY, hexX, hexY, dir, true, 0);
+    return true;
+}
+
+void _BrahminKilled(Critter& brahmin, Critter@ killer)
+{
+    uint     playerId = brahmin.Param[FV_MASTER];
+    Critter@ questingPlayer = GetCritter(playerId);
+
+    punishGroup(killer, questingPlayer);
+
+    GameVar@ brahminCounterVar = GetLocalVar(LVAR_q_brahmin_run_counter, playerId);
+    brahminCounterVar = brahminCounterVar.GetValue() - 1;
+
+    // Cheking quest failure
+    if(brahminCounterVar.GetValue() < 1)
+    {
+        if(GetLvar(questingPlayer, LVAR_q_brahmin_run) != BRUN_ACTIVE)
+            return;
+
+        finishQuest(questingPlayer, BRUN_BRAHMIN_DEAD, MSG_BRUN_BRAHMIN_DEAD);
+    }
+}
+
+void _HerdsmanKilled(Critter& herdsman, Critter@ killer)
+{
+    uint     playerId = herdsman.Param[FV_MASTER];
+    Critter@ questingPlayer = GetCritter(playerId);
+
+    punishGroup(killer, questingPlayer);
+
+    if(!valid(questingPlayer))
+        return;
+
+    if(GetLvar(questingPlayer, LVAR_q_brahmin_run) != BRUN_ACTIVE)
+        return;
+
+    finishQuest(questingPlayer, BRUN_HERDSMAN_DEAD, MSG_BRUN_HERDSMAN_DEAD);
+}
+
+void _HerdsmanIdle(Critter& herdsman)
+{
+    Critter@ questingPlayer = GetCritter(herdsman.Param[FV_MASTER]);
+    if(!valid(questingPlayer))
+        return;
+    Location @ playerLoc = GetLocationOf(questingPlayer);
+    Location @ herdsmanLoc = GetLocationOf(questingPlayer);
+    uint playerLocId = (valid(playerLoc) ? playerLoc.Id : 0);
+    uint herdsmanLocId = (valid(herdsmanLoc) ? herdsmanLoc.Id : 0);
+    if(playerLocId == herdsmanLocId)
+        return;
+
+    // Player left encounter via grid and encounter still exists
+    // Attempts to delete npcs from encounter if they're not in combat, else quest fails
+
+    if(!deleteBrahminAndHerdsmanFromEncounter(questingPlayer, herdsman))
+    {
+        if(GetLvar(questingPlayer, LVAR_q_brahmin_run) == BRUN_ACTIVE)
+            finishQuest(questingPlayer, BRUN_PLAYER_LEFT_RUN, MSG_BRUN_PLAYER_LEFT_RUN);
+        herdsman.SetEvent(CRITTER_EVENT_IDLE, "");
+        herdsman.ParamBase[FV_MASTER] = 0;
+    }
+
+    // fleeBrahminAndHerdsmanFromEncounter(questingPlayer, herdsman);
+}
+
+void _HerdsmanFinish(Critter& herdsman, bool deleted)
+{
+    // Player left encounter via grid and encounter gets deleted
+    // Npc dies if in combat
+    if(!herdsman.IsDead() && herdsman.Param[TO_BATTLE] > 0)
+    {
+        _HerdsmanKilled(herdsman, null);
+        return;
+    }
+    Critter@ questingPlayer = GetCritter(herdsman.Param[FV_MASTER]);
+    if(playerTravelsWithCar(questingPlayer))
+    {
+        if(GetLvar(questingPlayer, LVAR_q_brahmin_run) != BRUN_ACTIVE)
+            return;
+
+        finishQuest(questingPlayer, BRUN_PLAYER_LEFT_RUN, MSG_BRUN_PLAYER_LEFT_RUN);
+    }
+
+}
+
+void _BrahminFinish(Critter& brahmin, bool deleted)
+{
+    // Player left encounter via grid and encounter gets deleted
+    // Npc dies if in combat
+    if(!brahmin.IsDead() && brahmin.Param[TO_BATTLE] > 0)
+        _BrahminKilled(brahmin, null);
+}
+
+
+// Reputation penalty functions
+void punishGroup(Critter@ killer, Critter@ questingPlayer)
+{
+    if(!valid(questingPlayer))
+        return;
+    int      cap;
+    int      penalty;
+    Critter@ groupLeader;
+    if(valid(killer))
+        @groupLeader = killer.GetFollowLeader();
+    if(valid(killer) && killer.IsPlayer() &&
+       (killer.Id == questingPlayer.Id || (valid(groupLeader) && groupLeader.Id == questingPlayer.Id)))
+    {
+        // brahmin killed by player from group - greater reputation penalty
+        cap = -2000000000;
+        penalty = reputationPenaltyForDeathByPlayer;
+
+    }
+    else
+    {
+        cap = 0;
+        penalty = reputationPenaltyForDeath;
+    }
+
+    uint factionRepIndex = GetLvar(questingPlayer, LVAR_q_brahmin_run_faction);
+
+    array<Critter@> group(1);
+    @group[0] = questingPlayer;
+    questingPlayer.GetFollowGroup(FIND_ONLY_PLAYERS, group);
+
+    for(uint i = 0; i < group.length(); i++)
+    {
+        SubReputation(group[i], factionRepIndex, penalty, cap);
+    }
+}
+
+// Deletion of brahmin and herdsman after player leaves to WM (if they're not in combat)
+bool deleteBrahminAndHerdsmanFromEncounter(Critter@ questingPlayer, Critter@ herdsman)
+{
+    if(herdsman.Param[TO_BATTLE] > 0)
+        return false;
+    Map@ map = herdsman.GetMap();
+    if(valid(map))
+    {
+        uint            ownerId = herdsman.Param[FV_MASTER];
+
+        array<Critter@> brahmin;
+        uint            brahminCount = map.GetCritters(brahminPid, FIND_LIFE_AND_KO, brahmin);
+        array<bool> belongToPlayer(brahminCount);
+        for(uint i = 0; i < brahminCount; i++)
+        {
+            ownerId = brahmin[i].Param[FV_MASTER];
+            if(ownerId != questingPlayer.Id)
+            {
+                belongToPlayer[i] = false;
+                continue;
+            }
+            else
+                belongToPlayer[i] = true;
+            if(brahmin[i].Param[TO_BATTLE] > 0)
+                return false;
+        }
+        for(uint i = 0; i < brahmin.length(); i++)
+        {
+            if(belongToPlayer[i])
+            {
+                DeleteNpc(brahmin[i]);
+            }
+        }
+        DeleteNpc(herdsman);
+    }
+    return true;
+}
+
+// finishes quest
+void finishQuest(Critter& player, int questValue, uint message)
+{
+    player.SetEventExt(CRITTER_EVENT_EXT_MAP_IN, "");
+
+    SetLvar(player, LVAR_q_brahmin_run, questValue);
+    uint cooldownVal = __FullSecond + REAL_MINUTE(cooldownInMinutes);
+    SetLvar(player, LVAR_q_brahmin_run_cooldown, cooldownVal);
+
+    scrapTargetLocation(player.Id);
+}
+
+// scraps target quest location
+void scrapTargetLocation(uint playerId)
+{
+    Location@ loc = GetLocation(GetLvar(playerId, LVAR_q_brahmin_run_loc_id));
+    if(valid(loc))
+    {
+        loc.AutoGarbage = true;
+    }
+}
+
+// checking if player travels with group in car
+bool playerTravelsWithCar(Critter@ player)
+{
+    if(!valid(player))
+        return false;
+
+    array<Critter@> globalGroup = player.GetGlobalGroup();
+    for(uint i = 0, j = globalGroup.length(); i < j; i++)
+    {
+        if(globalGroup[i].GetItemsByType(ITEM_TYPE_CAR, null) > 0)
+            return true;
+    }
+    return false;
+}
+
+// Escape of brahmin and herdsman after player leaves to WM (possible to use later)
+/*void fleeBrahminAndHerdsmanFromEncounter(Critter@ questingPlayer, Critter@ herdsman)
+   {
+        Map@ map = herdsman.GetMap();
+        if(valid(map))
+        {
+                uint ownerId=herdsman.Param[FV_MASTER];
+
+                Flee(herdsman);
+
+                Critter@[] brahmin;
+                uint brahminCount=map.GetCritters(brahminPid, FIND_LIFE_AND_KO, brahmin);
+                for(uint i=0;i<brahminCount;i++)
+                {
+                        ownerId=brahmin[i].Param[FV_MASTER];
+                        if(ownerId==questingPlayer.Id)
+                        {
+                                Flee(brahmin[i]);
+                        }
+                }
+        }
+   }*/

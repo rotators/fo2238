@@ -1,0 +1,112 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// bank_vault.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "npc_common_h.fos"
+#include "messages_h.fos"
+#include "mapdata_h.fos"
+
+#define MSG_SECURITY_HACKED    (2)
+
+void OnInCritter(Map& map, Critter& player)
+{
+    // We are only interested in players
+    if(!player.IsPlayer())
+        return;
+
+    player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_Entered(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!player.IsPlayer())
+        return;
+    player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+bool s_SecurityTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != SK_SCIENCE || valid(item))
+        return false;
+    {
+        uint value = player.Skill[SK_SCIENCE] - Random(-50, 50);
+        if(value > 60)
+        {
+            player.Say(SAY_NETMSG, "You hacked the security system.");
+            Map@ map = player.GetMap();
+            player.SendMessage(MSG_SECURITY_HACKED, 0, MESSAGE_TO_ALL_ON_MAP);
+            return true;
+        }
+        player.Say(SAY_NETMSG, "You've failed to hack the security system.");
+        return false;
+    }
+}
+
+bool s_VaultTerminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != SK_SCIENCE || valid(item))
+        return false;
+
+    uint value = player.Skill[SK_SCIENCE] - Random(-50, 130);
+
+    if(value > 150)
+    {
+        player.Say(SAY_NETMSG, "You hacked the security system.");
+        Map@  map = player.GetMap();
+        Item@ vaultdoor = map.GetItem(3902);
+        _LockerIsOpen(vaultdoor);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You have failed to hack the security system.");
+    return false;
+}
+
+void t_Safe(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!player.IsPlayer())
+        return;
+
+    Map@         map = player.GetMap();
+
+    uint         bankid = map.GetData(MAP_DATA_BANK);
+    uint         money = BankGetTotalMoney(bankid);
+
+    array<Item@> lockers;
+    uint         numlockers = map.GetItems(PID_WALL_LOCKER_CLEAN_LEFT, lockers);
+
+    uint         moneyleft = 0;
+
+    for(uint i = 0; i < numlockers; i++)
+    {
+        array<Item@> items;
+        uint         num = lockers[i].GetItems(0, items);
+
+        if(entered)
+        {
+            for(uint i = 0; i < num; i++)
+            {
+                if(items[i].GetProtoId() == PID_BOTTLE_CAPS)
+                    DeleteItem(items[i]);
+            }
+
+            lockers[i].AddItem(PID_BOTTLE_CAPS, uint(money / numlockers), 0);
+        }
+        else
+        {
+            {
+                for(uint i = 0; i < num; i++)
+                {
+                    if(items[i].GetProtoId() == PID_BOTTLE_CAPS)
+                        moneyleft += items[i].GetCount();
+                }
+            }
+
+        }
+    }
+    BankSetMoney(bankid, moneyleft);
+}

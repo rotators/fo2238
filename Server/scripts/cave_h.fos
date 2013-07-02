@@ -1,0 +1,62 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave_h.fos
+//
+
+#ifndef __CAVE__
+#define __CAVE__
+
+#include "_entires.fos"
+
+// Maximum amounts of object that can possibly spawn
+#define CAVE_CRITTER_MAX                (10)
+#define CAVE_ITEM_MAX                   (5)
+
+// Difficulty of critter
+#define CAVE_CRITTER_EASY               (1)
+#define CAVE_CRITTER_NORMAL             (2)
+#define CAVE_CRITTER_HARD               (3)
+
+#define CAVE_ITEM_GROUP_JUNK            (1)
+#define CAVE_ITEM_GROUP_MELEE           (2)
+#define CAVE_ITEM_GROUP_PISTOLS         (3)
+#define CAVE_ITEM_GROUP_RIFLES          (4)
+#define CAVE_ITEM_GROUP_SHOTGUNS        (5)
+#define CAVE_ITEM_GROUP_ARMOR           (6)
+#define CAVE_ITEM_GROUP_DRUGS           (7)
+#define CAVE_ITEM_GROUP_FUN             (8)
+
+///////////////////////////////////////////
+// Critters                              //
+///////////////////////////////////////////
+
+#define CAVE_CRITTER_DEATHCLAW          (1)
+#define CAVE_CRITTER_DEATHCLAW_CHILD    (2)
+#define CAVE_CRITTER_RAT                (3)
+#define CAVE_CRITTER_CENTIPEDE          (4)
+
+#define CAVE_CRITTER_MANTI              (5)
+#define CAVE_CRITTER_DOG                (6)
+#define CAVE_CRITTER_RADSCORPION        (7)
+
+#define CAVE_CRITTER_CANNIBAL           (10)
+
+#define CAVE_CRITTER_SLAVER             (11)
+#define CAVE_CRITTER_SLAVER_2           (12)
+
+#define CAVE_CRITTER_SLAVE_CUTE         (13)
+#define CAVE_CRITTER_SLAVE_HANDSOME     (14)
+#define CAVE_CRITTER_SLAVE_STRONG       (15)
+
+#define CAVE_CRITTER_BOOTLEGGER         (16)
+#define CAVE_CRITTER_BOOTLEGGER_2       (17)
+
+#define CAVE_CRITTER_MERCENARY          (18)
+#define CAVE_CRITTER_MERCENARY_2        (19)
+
+#define CAVE_CRITTER_RAIDER_MELEE       (20)
+#define CAVE_CRITTER_RAIDER_GUN         (21)
+#define CAVE_CRITTER_RAIDER_GUN_2       (22)
+#endif

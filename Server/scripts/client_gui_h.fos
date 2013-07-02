@@ -1,0 +1,99 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gui_h.fos
+//
+
+// Client GUI header
+
+#ifndef __CLIENT_GUI__
+#define __CLIENT_GUI__
+
+#include "client_gui_ex.fos"
+
+//
+// API
+//
+#ifndef CLIENT_GUI
+
+import void  GUI_Init() from "client_gui";
+import void  GUI_GetActiveScreens(array<int>& result) from "client_gui";
+import int   GUI_GetActiveScreen() from "client_gui";
+import int   GUI_GetActiveMainScreen() from "client_gui";
+import int   GUI_GetMainScreen() from "client_gui";
+import void  GUI_ShowScreen(int screenIndex, int p0, int p1, int p2) from "client_gui";
+import void  GUI_HideScreen(int screenIndex, int p0, int p1, int p2) from "client_gui";
+import void  GUI_Render() from "client_gui";
+import void  GUI_Update() from "client_gui";
+import bool  GUI_MouseDown(int x, int y, int click) from "client_gui";
+import bool  GUI_MouseUp(int x, int y, int click) from "client_gui";
+import void  GUI_MouseMove(int fromX, int fromY, int toX, int toY) from "client_gui";
+import bool  GUI_KeyDown(uint8 key) from "client_gui";
+import bool  GUI_KeyUp(uint8 key) from "client_gui";
+import void  GUI_InputLost() from "client_gui";
+import bool  GUI_IsKeyPressed(uint8 key) from "client_gui";
+import uint8 GUI_GetCharacter(uint8 key) from "client_gui";
+import uint8 GUI_GetCharacterShift(uint8 key, bool shiftDown) from "client_gui";
+import void  GUI_GetIniCoords(string& ini, int& left, int& top, int& right, int& bottom) from "client_gui";
+
+// Create new screen
+import IGUIScreenOpt@ GUI_CreateScreen(int screenIndex, string@ sprName) from "client_gui";
+// Retrieves interface for screen with given index
+import IGUIScreenOpt@ GUI_GetScreen(int screenIndex) from "client_gui";
+
+// Delete old screen, hardcoded screens included
+import void GUI_DeleteScreen(int screenIndex) from "client_gui";
+
+// Get options for last created screen, valid only on IGUIScreenCallbackShow::OnShow callback
+import IGUIScreenOpt@ GUI_GetScreenOptions() from "client_gui";
+#endif
+
+//
+// Screen
+//
+
+shared interface IGUIScreenCallbackShow
+{
+    void OnShow(int p0, int p1, int p2);
+};
+shared interface IGUIScreenCallbackHide
+{
+    void OnHide(int p0, int p1, int p2);
+};
+shared interface IGUIScreenCallbackMove
+{
+    void OnMove(int posX, int posY);
+};
+shared interface IGUIScreenCallbackFocus
+{
+    void OnLostFocus();
+};
+
+shared interface IGUIScreenOpt
+{
+    IGUIScreenOpt@ SetCallbackShow(IGUIScreenCallbackShow@ callback);        // delault null
+    IGUIScreenOpt@ SetCallbackHide(IGUIScreenCallbackHide@ callback);        // delault null
+    IGUIScreenOpt@ SetCallbackMove(IGUIScreenCallbackMove@ callback);        // delault null
+    IGUIScreenOpt@ SetCallbackFocus(IGUIScreenCallbackFocus@ callback);      // default null
+
+    IControl@      Control();
+    IGUIScreenOpt@ Control(IControl@ control);                               // needs to be attached to handle extended functionality
+    IGUIScreenOpt@ Position(int x, int y);                                   // delault center of screen
+    IGUIScreenOpt@ Size(int w, int h);                                       // default from surface
+    IGUIScreenOpt@ CanMove(bool enabled);                                    // delault true
+    IGUIScreenOpt@ Modal(bool enabled);                                      // delault true
+    IGUIScreenOpt@ Multiinstance(bool enabled);                              // delault false
+    IGUIScreenOpt@ IgnoreBorders(bool enabled);                              // default false
+    IGUIScreenOpt@ CloseOnMiss(bool enabled);                                // default false
+    IGUIScreenOpt@ AutoCursor(bool enabled, int cursorType);                 // default false
+    IGUIScreenOpt@ Hardcoded(bool enabled);                                  // default false
+
+    // Info
+    int GetPosX();
+    int GetPosY();
+    int GetWidth();
+    int GetHeight();
+    int GetIndex();
+};
+#endif // __CLIENT_GUI__

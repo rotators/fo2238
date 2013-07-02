@@ -1,0 +1,1928 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_schedule.fos
+//
+
+#ifndef __NPC_SCHEDULE__
+#define __NPC_SCHEDULE__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_time.fos"
+#include "_vars.fos"
+
+#include "buffer_h.fos"
+#include "debug_h.fos"
+#include "utils_h.fos"
+#include "world_common_h.fos"
+
+#define _WLog               # (text, type)WLog("npc_schedule", text, type)
+
+#include "npc_schedule_instance.fos"
+#include "npc_schedule_action.fos"
+#include "npc_schedule_h.fos"
+
+#include "npc_schedules.fos"
+
+import bool GodOfTheRealm(uint id) from "cheats";
+import bool WrathOfTheGod(Critter& di) from "cheats";
+
+#define SCHEDULE_ANYDATA    "NpcSchedule"
+
+uint  lastSchedulePID = 1;
+uint  lastScheduleID = 1;
+
+class CNpcSchedule : INpcSchedule
+{
+    uint             pid;
+    string           name;
+    bool             hardcoded;
+
+    array<CNpcTask@> tasks;
+
+    CNpcSchedule(string & name)      // new
+    {
+        this.Init();
+
+        this.pid = lastSchedulePID++;
+        this.name = name;
+    }
+
+    CNpcSchedule()     // loading
+    {
+        this.Init();
+    }
+
+    void Init()
+    {
+        this.pid = 0;
+        this.name = "";
+        this.hardcoded = false;
+        this.tasks.resize(0);
+    }
+
+    #ifndef _MSC_VER
+    uint get_PID()
+    {
+        return(this.pid);
+    }
+
+    string get_Name()
+    {
+        return(this.name);
+    }
+
+    string get_FullName()
+    {
+        return(this.Name + "[" + this.PID + "]");
+    }
+    #endif
+
+    CNpcSchedule Clone()
+    {
+        CNpcSchedule clone = this;
+
+        return(clone);
+    }
+
+    CNpcTask@ AddTask(NpcTaskType type, string& name)
+    {
+        CNpcTask@ task = CNpcTask(name, this);
+
+        task.type = type;
+
+        tasks.insertLast(task);
+
+        return(task);
+    }
+
+    INpcTask@ AddTask_OnFirstCall(string& name)
+    {
+        return(AddTask(TASK_FIRST_CALL, name));
+    }
+
+    INpcTask@ AddTask_OnIdle(string& name)
+    {
+        return(AddTask(TASK_IDLE, name));
+    }
+
+    INpcTask@ AddTask_OnTime(string& name, uint8 hour, uint8 minute)
+    {
+        if(hour > 23 || minute > 59)
+        {
+            _WLog("Invalid arguments for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        uint8[] checked_h = { hour };
+        uint8[] checked_m = { minute };
+
+        return(AddTask_OnTimes(name, checked_h, checked_m));
+    }
+
+    INpcTask@ AddTask_OnTimes(string& name, array<uint8>& hours, array<uint8>& minutes)
+    {
+        if(hours.length() != minutes.length())
+        {
+            _WLog("Invalid arguments length for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        array<uint8> checked_h, checked_m;
+
+        for(uint h = 0, hLen = hours.length(); h < hLen; h++)
+        {
+            if(hours[h] > 23 || minutes[h] > 59)
+            {
+                _WLog("Invalid arguments for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+                continue;
+            }
+
+            checked_h.insertLast(hours[h]);
+            checked_m.insertLast(minutes[h]);
+        }
+
+        if(checked_h.length() == 0 || checked_h.length() != checked_m.length())
+        {
+            _WLog("No times set, task not created : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        CNpcTask@ task = AddTask(TASK_TIME, name);
+
+        task.hours = checked_h;
+        task.minutes = checked_m;
+
+        return(task);
+    }
+
+    INpcTask@ AddTask_OnHour(string& name, uint8 hour)
+    {
+        if(hour > 23)
+        {
+            _WLog("Invalid arguments for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        uint8[] checked = { hour };
+
+        return(AddTask_OnHours(name, checked));
+    }
+
+    INpcTask@ AddTask_OnHours(string& name, array<uint8>& hours)
+    {
+        array<uint8> checked;
+
+        for(uint h = 0, hLen = hours.length(); h < hLen; h++)
+        {
+            if(hours[h] > 23)
+            {
+                _WLog("Invalid hour argument for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+                continue;
+            }
+
+            if(checked.find(hours[h]) < 0)
+                checked.insertLast(hours[h]);
+        }
+
+        if(checked.length() == 0)
+        {
+            _WLog("No hours set, task not created : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        CNpcTask@ task = AddTask(TASK_HOUR, name);
+
+        task.hours = checked;
+
+        return(task);
+    }
+
+    INpcTask@ AddTask_OnMinute(string& name, uint8 minute)
+    {
+        if(minute > 59)
+        {
+            _WLog("Invalid minute argument for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        uint8[] checked = { minute };
+
+        return(AddTask_OnMinutes(name, checked));
+    }
+
+    INpcTask@ AddTask_OnMinutes(string& name, array<uint8>& minutes)
+    {
+        array<uint8> checked;
+
+        for(uint m = 0, mLen = minutes.length(); m < mLen; m++)
+        {
+            if(minutes[m] > 59)
+            {
+                _WLog("Invalid minute arguments for new task<" + name + ">, ignoring : " + this.FullName, DEBUG_ERROR);
+                return(null);
+            }
+
+            if(checked.find(minutes[m]) < 0)
+                checked.insertLast(minutes[m]);
+        }
+
+        if(checked.length() == 0)
+        {
+            _WLog("No minutes set, task not created : " + this.FullName, DEBUG_ERROR);
+            return(null);
+        }
+
+        CNpcTask@ task = AddTask(TASK_MINUTE, name);
+
+        task.minutes = checked;
+
+        return(task);
+    }
+
+    INpcTask@ AddTask_OnNight(string& name)
+    {
+        return(AddTask(TASK_NIGHT, name));
+    }
+
+    INpcTask@ AddTask_OnDay(string& name)
+    {
+        return(AddTask(TASK_DAY, name));
+    }
+
+    INpcTask@ AddTask_OnMorning(string& name)
+    {
+        return(AddTask(TASK_MORNING, name));
+    }
+
+    INpcTask@ AddTask_OnAfternoon(string& name)
+    {
+        return(AddTask(TASK_AFTERNOON, name));
+    }
+
+    INpcTask@ AddTask_OnEvening(string& name)
+    {
+        return(AddTask(TASK_EVENING, name));
+    }
+
+    INpcTask@ AddTask_EveryNight(string& name)
+    {
+        return(this.AddTask_OnTime(name, 22, 0));
+    }
+
+    INpcTask@ AddTask_EveryDay(string& name)
+    {
+        return(this.AddTask_EveryMorning(name));
+    }
+
+    INpcTask@ AddTask_EveryMorning(string& name)
+    {
+        return(this.AddTask_OnTime(name, 7, 0));
+    }
+
+    INpcTask@ AddTask_EveryAfternoon(string& name)
+    {
+        return(this.AddTask_OnTime(name, 12, 0));
+    }
+    INpcTask@ AddTask_EveryEvening(string& name)
+    {
+        return(this.AddTask_OnTime(name, 18, 0));
+    }
+
+    INpcTask@ AddTask_EveryFullHour(string& name)
+    {
+        return(this.AddTask_OnMinute(name, 0));
+    }
+
+
+    uint GetTasks(array<INpcTask@>& tasksList)
+    {
+        uint count = 0;
+        for(uint t = 0, tLen = this.tasks.length(); t < tLen; t++)
+        {
+            tasksList.insertLast(this.tasks[t]);
+            count++;
+        }
+
+        return(count);
+    }
+
+    void Save(Buffer& buffer)
+    {
+        buffer << this.pid << this.name << this.tasks.length();
+
+        for(uint t = 0, tLen = this.tasks.length(); t < tLen; t++)
+        {
+            this.tasks[t].Save(buffer);
+        }
+    }
+
+    void Load(Buffer& buffer)
+    {
+        this.Init();
+
+        uint tasksCount = 0;
+
+        buffer >> this.pid >> this.name >> tasksCount;
+
+        _WLog("Loading schedule, " + tasksCount + " task" + (tasksCount != 1 ? "s" : "") + " : " + this.FullName, DEBUG_MESSAGE);
+        for(uint a = 0; a < tasksCount; a++)
+        {
+            CNpcTask@ task = CNpcTask(this);
+            task.Load(buffer);
+            this.tasks.insertLast(task);
+        }
+    }
+};
+
+class CNpcTask : INpcTask
+{
+    string                 name;
+
+    INpcSchedule@          parentSchedule;
+
+    array<CNpcTaskAction@> actions;
+    array<CNpcTaskAction@> actionsQueue;
+
+    NpcTaskType            type;
+
+    array<uint8>           hours;
+    array<uint8>           minutes;
+    uint                   roll;
+
+    CNpcTask(INpcSchedule & parentSchedule)      // loading (?)
+    {
+        this.Init();
+
+        @this.parentSchedule = parentSchedule;
+    }
+
+    CNpcTask(string & name, INpcSchedule & parentSchedule)
+    {
+        this.Init();
+
+        this.name = name;
+        @this.parentSchedule = parentSchedule;
+    }
+
+    void Init(bool keepParent = false)
+    {
+        this.name = "";
+
+        if(!keepParent)
+            @this.parentSchedule = null;
+
+        this.actions.resize(0);
+
+        this.type = TASK_NONE;
+
+        this.hours.resize(0);
+        this.minutes.resize(0);
+        this.roll = uint(-1);
+    }
+
+    #ifndef _MSC_VER
+    NpcTaskType get_Type()
+    {
+        return(this.type);
+    }
+
+    string get_Name()
+    {
+        return(this.name);
+    }
+
+    string get_FullName()
+    {
+        return(this.parentSchedule.FullName + "->" + this.Name);
+    }
+
+    array<uint8> get_Hours()
+    {
+
+        return(this.hours);
+    }
+
+    array<uint8> get_Minutes()
+    {
+        return(this.minutes);
+    }
+    #endif
+
+    INpcSchedule@ ParentSchedule()
+    {
+        return(this.parentSchedule);
+    }
+
+    uint GetActions(array<INpcTaskAction@>& actionsList)
+    {
+        uint count = 0;
+        for(uint a = 0, aLen = this.actions.length(); a < aLen; a++)
+        {
+            actionsList.insertLast(this.actions[a]);
+            count++;
+        }
+
+        return(count);
+    }
+
+    void Save(Buffer& buffer)
+    {
+        buffer << this.name << uint(this.actions.length());
+        buffer << int(this.type) << this.hours << this.minutes << this.roll;
+
+        for(uint a = 0, aLen = this.actions.length(); a < aLen; a++)
+        {
+            this.actions[a].Save(buffer);
+        }
+    }
+
+    void Load(Buffer& buffer)
+    {
+        this.Init(true);
+
+        uint dataCount = 0, actionCount = 0;
+
+        buffer >> this.name >> actionCount;
+
+        _WLog("Loading task, " + actionCount + " action" + (actionCount != 1 ? "s" : "") + " : " + this.FullName, DEBUG_MESSAGE);
+
+        int typeTemp = TASK_NONE;
+
+        buffer >> typeTemp >> this.hours >> this.minutes >> this.roll;
+
+        this.type = NpcTaskType(typeTemp);
+
+        for(uint a = 0; a < actionCount; a++)
+        {
+            CNpcTaskAction@ action = CNpcTaskAction(this);
+
+            action.Load(buffer);
+
+            FTaskAction@ function = null;
+            switch(action.type)
+            {
+            /*** MULTI-ACTIONS ***/
+
+            case ACTION_CONTAINER:
+                @function = Action_Container;
+                break;
+            case ACTION_EDITITEM:
+                @function = Action_EditItem;
+                break;
+            case ACTION_HOME:
+                @function = Action_Home;
+                break;
+            case ACTION_IF:
+                @function = Action_If;
+                break;
+            case ACTION_ENDIF:
+                @function = Action_EndIf;
+                break;
+            case ACTION_INVENTORY:
+                @function = Action_Inventory;
+                break;
+            case ACTION_MAP:
+                @function = Action_Map;
+                break;
+            case ACTION_SAY:
+                @function = Action_Say;
+                break;
+            case ACTION_TASKVAR:
+                @function = Action_TaskVar;
+                break;
+            case ACTION_WAIT:
+                @function = Action_Wait;
+                break;
+
+            /*** SINGLE-ACTIONS ***/
+
+            case ACTION_VERBOSE:
+                @function = Action_Verbose;
+                break;
+            case ACTION_DEMANDANSWER:
+                @function = Action_DemandAnswer;
+                break;
+            case ACTION_ANIMATE:
+                @function = Action_Animate;
+                break;
+            case ACTION_SLEEP:
+                @function = Action_Sleep;
+                break;
+            case ACTION_WAKEUP:
+                @function = Action_WakeUp;
+                break;
+            case ACTION_FIXFORCEFIELD:
+                @function = Action_FixForcefield;
+                break;
+
+            case ACTION_CUSTOM:
+                @function = Action_Custom;
+                break;
+            }
+
+            if(valid(function))
+            {
+                _WLog("Loading action #" + a + ", type<" + action.type + "> : " + this.FullName, DEBUG_MESSAGE);
+                this.AddAction(action.type, function, action.data, action.requireMap);
+            }
+            else
+                _WLog("Unknown action type<" + action.type + "> : " + this.FullName, DEBUG_ERROR);
+        }
+    }
+
+    // helpers
+
+    void AddAction(NpcTaskActionType type, FTaskAction& function, bool requireMap) final
+    {
+        array<uint8> dummy;
+        dummy.resize(0);
+
+        this.AddAction(type, function, dummy, requireMap);
+    }
+
+    void AddAction(NpcTaskActionType type, FTaskAction& function, array<uint8> data, bool requireMap) final
+    {
+        CNpcTaskAction@ action = CNpcTaskAction(this);
+
+        action.type = type;
+        action.Function(function, data);
+        action.requireMap = requireMap;
+
+        this.actions.insertLast(action);
+    }
+
+    #define ADD_HELPER                                                                                                                            \
+        # (_name, _type, _func, _enum)                                                                                                            \
+        INpcTask@ Add_ ## _name(array<uint8> data, bool map) { AddAction(_type, _func, data, map); return (this); }                               \
+        INpcTask@ Add_ ## _name(_enum type, bool map) { Buffer@ buffer = Buffer_ ## _name(type); return (Add_ ## _name(buffer.AsUint8(), map)); } \
+        Buffer@   Buffer_ ## _name(_enum type) { Buffer@ buffer = NewBuffer(); buffer << int(type); return (buffer); }
+
+    // careful here
+
+    ADD_HELPER(EditItem, ACTION_EDITITEM, Action_EditItem, NpcActionEditItem)
+    ADD_HELPER(Container, ACTION_CONTAINER, Action_Container, NpcActionContainer)
+    ADD_HELPER(Home, ACTION_HOME, Action_Home, NpcActionHome)
+    ADD_HELPER(If, ACTION_IF, Action_If, NpcActionIf)
+    ADD_HELPER(Inventory, ACTION_INVENTORY, Action_Inventory, NpcActionInventory)
+    ADD_HELPER(Map, ACTION_MAP, Action_Map, NpcActionMap)
+    ADD_HELPER(Say, ACTION_SAY, Action_Say, NpcActionSay)
+    ADD_HELPER(TaskVar, ACTION_TASKVAR, Action_TaskVar, NpcActionTaskVar)
+    ADD_HELPER(Wait, ACTION_WAIT, Action_Wait, NpcActionWait)
+
+
+    // API
+
+    INpcTask@ Roll(uint max)
+    {
+        this.roll = max;
+
+        return(this);
+    }
+
+    /*** MULTI-ACTIONS ***/
+
+    // Container //
+
+    INpcTask@ Container_Open(uint16 pid, uint16 hexX, uint16 hexY, uint anim2)
+    {
+        Buffer@ buffer = Buffer_Container(CONTAINER_OPEN);
+        buffer << pid << hexX << hexY << anim2;
+
+        return(Add_Container(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Container_Close(uint16 pid, uint16 hexX, uint16 hexY, uint anim2)
+    {
+        Buffer@ buffer = Buffer_Container(CONTAINER_CLOSE);
+        buffer << pid << hexX << hexY << anim2;
+
+        return(Add_Container(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Container_OpenNear(uint anim2)
+    {
+        Buffer@ buffer = Buffer_Container(CONTAINER_OPEN_NEAR);
+        buffer << anim2;
+
+        return(Add_Container(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Container_CloseNear(uint anim2)
+    {
+        Buffer@ buffer = Buffer_Container(CONTAINER_CLOSE_NEAR);
+        buffer << anim2;
+
+        return(Add_Container(buffer.AsUint8(), true));
+    }
+
+    // EditItem //
+
+    INpcTask@ EditItem_Update()
+    {
+        return(Add_EditItem(EDITITEM_UPDATE, false));
+    }
+
+    INpcTask@ EditItem_SetFlag(uint flag)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_SETFLAG);
+        buffer << flag;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_UnsetFlag(uint flag)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_UNSETFLAG);
+        buffer << flag;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_Flags(uint flags)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_FLAGS);
+        buffer << flags;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_PicMap(string& picmap)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_PICMAP);
+        buffer << picmap;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_SetScript(string& script)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_SETSCRIPT);
+        buffer << script;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_SetEvent(int event, string& function)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_SETEVENT);
+        buffer << event << function;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EditItem_PicInv(string& picinv)
+    {
+        Buffer@ buffer = Buffer_EditItem(EDITITEM_PICINV);
+        buffer << picinv;
+
+        return(Add_EditItem(buffer.AsUint8(), false));
+    }
+
+    // Home //
+
+    INpcTask@ Home_Set(uint16 hexX, uint16 hexY, uint8 dir)
+    {
+        Buffer@ buffer = Buffer_Home(HOME_SET);
+        buffer << hexX << hexY << dir;
+
+        // ResetHome();
+        return(this.Add_Home(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Home_SetRandom(array<array<uint16> > positions)
+    {
+        array<array<uint16> > checked;
+
+        for(uint p = 0, pLen = positions.length(); p < pLen; p++)
+        {
+            if(positions[p].length() >= 3)
+            {
+                uint16[] needed = { positions[p][0], positions[p][1], CLAMP(positions[p][2], 0, 5) };
+                checked.insertLast(needed);
+            }
+        }
+
+        if(checked.length() == 0)
+        {
+            _WLog("Invalid positions list, action not added : " + this.FullName, DEBUG_WARNING);
+            PrintCallstack();
+        }
+        Buffer@ buffer = Buffer_Home(HOME_SETRANDOM);
+        buffer << positions;
+
+        // ResetHome();
+        return(this.Add_Home(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Home_Save()
+    {
+        return(this.Add_Home(HOME_SAVE, true));
+    }
+
+    INpcTask@ Home_Load()
+    {
+        return(this.Add_Home(HOME_LOAD, true));
+    }
+
+    INpcTask@ Home_Reset()
+    {
+        return(this.Add_Home(HOME_RESET, true));
+    }
+
+    // If //
+
+    INpcTask@ If_Never()
+    {
+        return(Add_If(IF_NEVER, false));
+    }
+
+    INpcTask@ If_Always()
+    {
+        return(Add_If(IF_ALWAYS, false));
+    }
+
+    INpcTask@ If_TaskVarLower(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_LOWER);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_TaskVarLowerEqual(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_LOWEREQUAL);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_TaskVarEqual(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_EQUAL);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_TaskVarNotEqual(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_NOTEQUAL);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_TaskVarGreater(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_GREATER);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_TaskVarGreaterEqual(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_If(IF_TASKVAR_GREATEREQUAL);
+        buffer << name << value;
+
+        return(this.Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Percent(uint8 percent)
+    {
+        percent = CLAMP(percent, 1, 100);
+
+        Buffer@ buffer = Buffer_If(IF_PERCENT);
+        buffer << percent;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Night()
+    {
+        return(Add_If(IF_NIGHT, false));
+    }
+
+    INpcTask@ If_Day()
+    {
+        return(Add_If(IF_DAY, false));
+    }
+
+    INpcTask@ If_Morning()
+    {
+        return(Add_If(IF_MORNING, false));
+    }
+
+    INpcTask@ If_Afternoon()
+    {
+        return(Add_If(IF_AFTERNOON, false));
+    }
+
+    INpcTask@ If_Evening()
+    {
+        return(Add_If(IF_EVENING, false));
+    }
+    INpcTask@ If_Year(uint8 year)
+    {
+        Buffer@ buffer = Buffer_If(IF_YEAR);
+        buffer << year;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Month(uint8 month)
+    {
+        if(month == 0 || month > 12)
+        {
+            _WLog("Invalid month, ignoring", DEBUG_ERROR);
+            return(this);
+        }
+
+        Buffer@ buffer = Buffer_If(IF_MONTH);
+        buffer << month;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_DayOfMonth(uint8 day)
+    {
+        Buffer@ buffer = Buffer_If(IF_DAYOFMONTH);
+        buffer << day;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Hour(uint8 hour)
+    {
+        if(hour > 23)
+        {
+            _WLog("Invalid hour, ignoring", DEBUG_ERROR);
+            return(this);
+        }
+
+        Buffer@ buffer = Buffer_If(IF_HOUR);
+        buffer << hour;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Minute(uint8 minute)
+    {
+        if(minute > 59)
+        {
+            _WLog("Invalid minute, ignoring", DEBUG_ERROR);
+            return(this);
+        }
+
+        Buffer@ buffer = Buffer_If(IF_MINUTE);
+        buffer << minute;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_Worldmap()
+    {
+        return(Add_If(IF_WORLDMAP, false));
+    }
+
+    INpcTask@ If_NotWorldmap()
+    {
+        return(Add_If(IF_NOT_WORLDMAP, false));
+    }
+
+    INpcTask@ If_MapPid(uint16 pid)
+    {
+        Buffer@ buffer = Buffer_If(IF_MAP_PID);
+        buffer << pid;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_MapPids(array<uint16> pids)
+    {
+        Buffer@ buffer = Buffer_If(IF_MAP_PIDS);
+        buffer << pids;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_NotMapPid(uint16 pid)
+    {
+        Buffer@ buffer = Buffer_If(IF_NOT_MAP_PID);
+        buffer << pid;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_NotMapPids(array<uint16> pids)
+    {
+        Buffer@ buffer = Buffer_If(IF_NOT_MAP_PIDS);
+        buffer << pids;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ContainerOpened(uint16 hexX, uint16 hexY, uint16 pid)
+    {
+        Buffer@ buffer = Buffer_If(IF_CONTAINER_OPENED);
+        buffer << hexX << hexY << pid;
+
+        return(Add_If(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ If_ContainerClosed(uint16 hexX, uint16 hexY, uint16 pid)
+    {
+        Buffer@ buffer = Buffer_If(IF_CONTAINER_CLOSED);
+        buffer << hexX << hexY << pid;
+
+        return(Add_If(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ If_ParamBaseLower(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_LOWER);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamBaseLowerEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_LOWEREQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamBaseEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_EQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamBaseNotEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_NOTEQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamBaseGreater(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_GREATER);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamBaseGreaterEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAMBASE_GREATEREQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamLower(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_LOWER);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamLowerEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_LOWEREQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_EQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamNotEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_NOTEQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamGreater(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_GREATER);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ If_ParamGreaterEqual(uint16 param, int value)
+    {
+        param = CLAMP(param, 0, 999);
+
+        Buffer@ buffer = Buffer_If(IF_PARAM_GREATEREQUAL);
+        buffer << param << value;
+
+        return(Add_If(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ EndIf()
+    {
+        this.AddAction(ACTION_ENDIF, Action_EndIf, false);
+
+        return(this);
+    }
+
+    // Inventory //
+
+    INpcTask@ Inventory_AddItem(uint16 pid)
+    {
+        return(this.Inventory_AddItem(pid, 1));
+    }
+
+    INpcTask@ Inventory_AddItem(uint16 pid, uint count)
+    {
+        Buffer@ buffer = Buffer_Inventory(INV_ADDITEM);
+        buffer << pid << count;
+
+        return(this.Add_Inventory(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Inventory_SubItem(uint16 pid)
+    {
+        return(this.Inventory_SubItem(pid, uint(-1)));
+    }
+
+    INpcTask@ Inventory_SubItem(uint16 pid, uint count)
+    {
+        Buffer@ buffer = Buffer_Inventory(INV_SUBITEM);
+        buffer << pid << count;
+
+        return(this.Add_Inventory(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Inventory_SetFavouriteItem(uint8 slot, uint16 pid)
+    {
+        if(slot > SLOT_ARMOR)             // engine limitations
+        {
+            _WLog("Invalid slot<" + slot + ">, ignoring", DEBUG_ERROR);
+            return(this);
+        }
+
+        Buffer@ buffer = Buffer_Inventory(INV_FAVITEM);
+        buffer << slot << pid;
+
+        return(this.Add_Inventory(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Inventory_UseFavouriteItem(uint8 slot, uint16 pid)
+    {
+        this.Inventory_SetFavouriteItem(slot, pid);
+        this.Wait_FavouriteItem(slot);
+
+        return(this);
+    }
+
+    // Map //
+
+    INpcTask@ Map_CreateItem(uint16 pid, uint16 hexX, uint16 hexY, uint count)
+    {
+        Buffer@ buffer = Buffer_Map(MAP_CREATEITEM);
+        buffer << pid << hexX << hexY << count;
+
+        return(this.Add_Map(buffer.AsUint8(), true));
+    }
+
+    INpcTask@ Map_DeleteItem(uint16 pid, uint16 hexX, uint16 hexY)
+    {
+        Buffer@ buffer = Buffer_Map(MAP_DELETEITEM);
+        buffer << pid << hexX << hexY;
+
+        return(this.Add_Map(buffer.AsUint8(), true));
+    }
+
+    // Say //
+
+    INpcTask@ Say(uint8 sayType, string& text)
+    {
+        Buffer@ buffer = Buffer_Say(SAY_SINGLE);
+        buffer << sayType << text;
+
+        return(this.Add_Say(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Say_Wait(uint8 sayType, string& text)
+    {
+        this.Say(sayType, text);
+        this.Wait(REAL_SECOND(1) + REAL_SECOND(text.length() % 10));
+
+        return(this);
+    }
+
+    INpcTask@ Say_TaskVar(string& name)
+    {
+        #ifdef __DEBUG__
+        Buffer@ buffer = Buffer_Say(SAY_TASKVAR);
+        buffer << name;
+
+        this.Add_Say(buffer.AsUint8(), false);
+        #endif
+
+        return(this);
+    }
+
+    INpcTask@ Say_Random(uint8 sayType, array<string>& text)
+    {
+        if(text.length() == 0)
+            return(this);
+
+        Buffer@ buffer = Buffer_Say(SAY_RANDOM);
+        buffer << sayType << text;
+
+        return(this.Add_Say(buffer.AsUint8(), false));
+    }
+
+    // TaskVar //
+
+    INpcTask@ TaskVar_Delete(string& name)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_DELETE);
+        buffer << name;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_Set(string& name, int value)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_SET);
+        buffer << name << value;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_Add(string& name)
+    {
+        return(this.TaskVar_Add(name, 1));
+    }
+
+    INpcTask@ TaskVar_Sub(string& name)
+    {
+        return(this.TaskVar_Sub(name, 1));
+    }
+
+    INpcTask@ TaskVar_Add(string& name, int value_add)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_ADD);
+        buffer << name << value_add;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_Sub(string& name, int value_sub)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_SUB);
+        buffer << name << value_sub;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_SetRandom(string& name, int from, int to)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_SETRANDOM);
+        buffer << name << from << to;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_AddRandom(string& name, int from, int to)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_ADDRANDOM);
+        buffer << name << from << to;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ TaskVar_SubRandom(string& name, int from, int to)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_SUBRANDOM);
+        buffer << name << from << to;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ CopyToGameVar(string& name, uint8 varType, uint16 varId, bool map)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_COPYTO);
+        buffer << name << varType << varId;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), map));
+    }
+
+    INpcTask@ CopyFromGameVar(string& name, uint8 varType, uint16 varId, bool map)
+    {
+        Buffer@ buffer = Buffer_TaskVar(TASKVAR_COPYFROM);
+        buffer << name << varType << varId;
+
+        return(this.Add_TaskVar(buffer.AsUint8(), map));
+    }
+
+    INpcTask@ TaskVar_CopyToGlobalVar(string& name, uint16 GVAR)
+    {
+        return(CopyToGameVar(name, VAR_GLOBAL, GVAR, false));
+    }
+
+    INpcTask@ TaskVar_CopyFromGlobalVar(string& name, uint16 GVAR)
+    {
+        return(CopyFromGameVar(name, VAR_GLOBAL, GVAR, false));
+    }
+
+    INpcTask@ TaskVar_CopyToLocationVar(string& name, uint16 LLVAR)
+    {
+        return(CopyToGameVar(name, VAR_LOCAL_LOCATION, LLVAR, true));
+    }
+
+    INpcTask@ TaskVar_CopyFromLocationVar(string& name, uint16 LLVAR)
+    {
+        return(CopyFromGameVar(name, VAR_LOCAL_LOCATION, LLVAR, true));
+    }
+
+    INpcTask@ TaskVar_CopyToMapVar(string& name, uint16 LMVAR)
+    {
+        return(CopyToGameVar(name, VAR_LOCAL_MAP, LMVAR, true));
+    }
+
+    INpcTask@ TaskVar_CopyFromMapVar(string& name, uint16 LMVAR)
+    {
+        return(CopyFromGameVar(name, VAR_LOCAL_MAP, LMVAR, true));
+    }
+
+    INpcTask@ TaskVar_CopyToCritterVar(string& name, uint16 LVAR)
+    {
+        return(CopyToGameVar(name, VAR_LOCAL, LVAR, false));
+    }
+
+    INpcTask@ TaskVar_CopyFromCritterVar(string& name, uint16 LVAR)
+    {
+        return(CopyFromGameVar(name, VAR_LOCAL, LVAR, false));
+    }
+
+    // Wait //
+
+    INpcTask@ Wait(uint time)
+    {
+        Buffer@ buffer = Buffer_Wait(WAIT_TIME);
+        buffer << time;
+
+        return(this.Add_Wait(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Wait_Random(uint min, uint max)
+    {
+        if(max <= min)
+        {
+            _WLog("Maximum <= Minimum; using Wait(minimum) instead : " + this.FullName, DEBUG_WARNING);
+            return(this.Wait(min));
+        }
+        Buffer@ buffer = Buffer_Wait(WAIT_RANDOM);
+        buffer << min << max;
+
+        return(Add_Wait(buffer.AsUint8(), false));
+    }
+
+    INpcTask@ Wait_Home()
+    {
+        return(this.Add_Wait(WAIT_HOME, true));
+    }
+
+    INpcTask@ Wait_FavouriteItem(uint8 slot)
+    {
+        if(slot >= SLOT_HEAD)
+        {
+            _WLog("Invalid slot, ignoring", DEBUG_MESSAGE);
+            return(this);
+        }
+
+        Buffer@ buffer = Buffer_Wait(WAIT_FAVITEM);
+        buffer << slot;
+
+        return(this.Add_Wait(buffer.AsUint8(), false));
+    }
+
+    /*** SINGLE-ACTIONS ***/
+
+    INpcTask@ VerboseAction(string& text)
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << text;
+
+        this.AddAction(ACTION_VERBOSE, Action_Verbose, buffer.AsUint8(), false);
+
+        return(this);
+    }
+
+    INpcTask@ DemandAnswer(uint8 sayType, string& text)
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << sayType << text;
+
+        this.AddAction(ACTION_DEMANDANSWER, Action_DemandAnswer, buffer.AsUint8(), true);
+
+        return(this);
+    }
+
+    // animation
+
+    INpcTask@ Animate(uint anim2, bool clearSequence, bool delayPlay)
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << anim2 << clearSequence << delayPlay;
+
+        this.AddAction(ACTION_ANIMATE, Action_Animate, buffer.AsUint8(), true);
+
+        return(this);
+    }
+
+    // actions
+
+    INpcTask@ Sleep()
+    {
+        this.AddAction(ACTION_SLEEP, Action_Sleep, true);
+
+        WakeUp();
+
+        return(this);
+    }
+
+    INpcTask@ WakeUp()
+    {
+        this.AddAction(ACTION_WAKEUP, Action_WakeUp, false /*JIC*/);
+
+        return(this);
+    }
+
+    INpcTask@ FixForcefield(uint16 hexX, uint16 hexY, uint anim2)
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << hexX << hexY << anim2;
+
+        this.AddAction(ACTION_FIXFORCEFIELD, Action_FixForcefield, buffer.AsUint8(), true);
+
+        return(this);
+    }
+
+    // moving
+
+    INpcTask@ Walk_Home(uint16 hexX, uint16 hexY, uint8 dir)
+    {
+        Home_Set(hexX, hexY, dir);
+        Wait_Home();
+
+        return(this);
+    }
+
+    INpcTask@ Walk_Home(array<uint16>& position)
+    {
+        if(position.length() < 3)
+            return(this);
+
+        return(Walk_Home(position[0], position[1], position[2]));
+    }
+
+    INpcTask@ Walk_RandomHome(array<array<uint16> > positions)
+    {
+        this.Home_SetRandom(positions);
+        this.Wait_Home();
+
+        return(this);
+    }
+
+    INpcTask@ Walk_Patrol(array<array<uint16> >& patrol, bool saveHome)
+    {
+        if(patrol.length() < 1)
+            return(this);
+
+        array<array<uint16> > checked;
+
+        for(uint p = 0, pLen = patrol.length(); p < pLen; p++)
+        {
+            if(patrol[p].length() != 3 || patrol[p][2] > 5)
+            {
+                _WLog("Invalid position, ignoring : " + this.FullName, DEBUG_WARNING);
+                continue;
+            }
+            checked.insertLast(patrol[p]);
+        }
+
+        if(checked.length() == 0)
+        {
+            _WLog("Invalid positions list, action not added : " + this.FullName, DEBUG_WARNING);
+            PrintCallstack();
+        }
+
+        if(saveHome)
+            this.Home_Save();
+
+        for(uint c = 0, cLen = checked.length(); c < cLen; c++)
+        {
+            this.Walk_Home(checked[c]);
+        }
+
+        if(saveHome)
+        {
+            this.Home_Load();
+            this.Wait_Home();
+        }
+
+        return(this);
+    }
+
+    INpcTask@ CustomAction(string& functionName, bool requireMap)
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << functionName;
+
+        this.AddAction(ACTION_CUSTOM, Action_Custom, buffer.AsUint8(), requireMap);
+
+        return(this);
+    }
+};
+
+class CNpcTaskAction : INpcTaskAction
+{
+    INpcTask@         parentTask;
+
+    NpcTaskActionType type;
+    array<uint8>      data;
+    FTaskAction@      function;
+
+    bool              requireMap;
+
+    CNpcTaskAction(INpcTask & parentTask)
+    {
+        this.Init();
+
+        @this.parentTask = parentTask;
+    }
+
+    #ifndef _MSC_VER
+    uint8 get_Type()
+    {
+        return(this.type);
+    }
+
+    array<uint8> get_Data()
+    {
+        return(this.data);
+    }
+    #endif
+
+    void Init(bool keepParent = false)
+    {
+        this.type = ACTION_NONE;
+        this.data.resize(0);
+        @this.function = null;
+
+        this.requireMap = true;
+
+        if(!keepParent)
+            @this.parentTask = null;
+    }
+
+    INpcTask@ ParentTask()
+    {
+        return(this.parentTask);
+    }
+
+    bool Function(FTaskAction& function)
+    {
+        if(!valid(function))
+            return(false);
+
+        @this.function = function;
+        this.data.resize(0);
+
+        return(true);
+    }
+
+    bool Function(FTaskAction& function, array<uint8> data)
+    {
+        if(this.Function(function))
+        {
+            this.data = data;
+            return(true);
+        }
+
+        return(false);
+    }
+
+    void Save(Buffer& buffer)
+    {
+        buffer << int(this.type);
+        buffer << this.data;
+        buffer << this.requireMap;
+    }
+
+    void Load(Buffer& buffer)
+    {
+        this.Init(true);
+
+        int typeTemp = 0;
+
+        buffer >> typeTemp >> this.data;
+        buffer >> this.requireMap;
+
+        this.type = NpcTaskActionType(typeTemp);
+    }
+};
+
+array<CNpcSchedule@>         prototypes;
+array<CNpcScheduleInstance@> instances;
+
+void InitNpcSchedules()
+{
+    // "soft wipe", for poor dev changing saved anydata format :)
+    // EraseAnyData(SCHEDULE_ANYDATA);_WLog("REMOVED ALL NPC SCHEDULES",DEBUG_CRITICAL);
+
+    if(IsAnyData(SCHEDULE_ANYDATA))
+    {
+        array<uint8> scheduleData;
+
+        if(!GetAnyData(SCHEDULE_ANYDATA, scheduleData))
+        {
+            Log("Error loading npc schedules data");
+            return;
+        }
+
+        Buffer@ data = NewBuffer(scheduleData);
+
+        uint    countPrototypes = 0, countInstances = 0;
+        data >> lastSchedulePID >> lastScheduleID >> countPrototypes >> countInstances;
+
+        _WLog("Loading schedules prototypes (" + countPrototypes + ")", DEBUG_MESSAGE);
+        for(uint s = 0; s < countPrototypes; s++)
+        {
+            CNpcSchedule@ schedule = CNpcSchedule();
+            schedule.Load(data);
+            prototypes.insertLast(schedule);
+        }
+
+        _WLog("Loading schedules instances (" + countInstances + ")", DEBUG_MESSAGE);
+        for(uint s = 0; s < countInstances; s++)
+        {
+            _WLog("Loading schedule instance " + (s + 1) + "/" + countInstances, DEBUG_MESSAGE);
+            CNpcScheduleInstance@ instance = CNpcScheduleInstance();
+            if(instance.Load(data))
+                instances.insertLast(instance);
+        }
+
+        _WLog("Initializing hardcoded schedules", DEBUG_MESSAGE);
+        InitHardcodedSchedules();
+    }
+    else
+    {
+        _WLog("Initializing hardcoded schedules", DEBUG_MESSAGE);
+        InitHardcodedSchedules();
+    }
+
+    Log("Initialized npc schedules (" + prototypes.length() + " prototype" + (prototypes.length() != 1 ? "s" : "") + ", " + instances.length() + " instance" + (instances.length() != 1 ? "s" : "") + ")");
+}
+
+void SaveNpcSchedules()
+{
+    Buffer@ data = NewBuffer();
+
+    uint    countPrototypes = prototypes.length(), countInstances = instances.length();
+
+    data << lastSchedulePID << lastScheduleID << countPrototypes << countInstances;
+
+    for(uint p = 0; p < countPrototypes; p++)
+    {
+        prototypes[p].Save(data);
+    }
+
+    for(uint i = 0; i < countInstances; i++)
+    {
+        instances[i].Save(data);
+    }
+
+    EraseAnyData(SCHEDULE_ANYDATA);
+    SetAnyData(SCHEDULE_ANYDATA, data.AsUint8());
+}
+
+INpcSchedule@ CreateNpcSchedule(string& name)
+{
+    CNpcSchedule@ schedule = CNpcSchedule(name);
+
+    _WLog("Created schedule : " + schedule.FullName, DEBUG_MESSAGE);
+
+    return(schedule);
+}
+
+bool AddNpcSchedule(INpcSchedule@ schedule)
+{
+    if(!valid(schedule))
+    {
+        _WLog("Schedule not valid", DEBUG_ERROR);
+        return(false);
+    }
+
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].PID == schedule.PID)
+        {
+            _WLog("Schedule with PID<" + schedule.PID + "> already exists", DEBUG_WARNING);
+            return(false);
+        }
+        if(prototypes[p].Name == schedule.Name)
+        {
+            _WLog("Schedule with name<" + schedule.Name + "> already exists", DEBUG_WARNING);
+            return(false);
+        }
+    }
+
+    prototypes.insertLast(cast<CNpcSchedule>(schedule));
+    _WLog("Added schedule with PID<" + prototypes.last().PID + "> name<" + prototypes.last().Name + ">", DEBUG_MESSAGE);
+
+    return(true);
+}
+
+INpcSchedule@ GetScheduleByPid(uint pid)
+{
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].pid == pid)
+            return(prototypes[p]);
+    }
+
+    return(null);
+}
+
+CNpcSchedule@ GetSchedulePrototype(uint pid)
+{
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].pid == pid)
+            return(prototypes[p]);
+    }
+
+    return(null);
+}
+
+INpcSchedule@ GetScheduleByName(string& name)
+{
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].name == name)
+            return(prototypes[p]);
+    }
+
+    return(null);
+}
+
+INpcScheduleInstance@ GetScheduleByOwner(uint id)
+{
+    for(uint i = 0, iLen = instances.length(); i < iLen; i++)
+    {
+        // _WLog( "GetScheduleById : "+schedulesRunning[s].ID, DEBUG_MESSAGE );
+        if(instances[i].Owner == id)
+            return(instances[i]);
+    }
+
+    return(null);
+}
+
+bool SetSchedule(string& name, Critter& npc)
+{
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].Name == name)
+        {
+            return(SetSchedule(prototypes[p].pid, npc));
+        }
+    }
+
+    return(false);
+}
+
+bool SetSchedule(uint pid, Critter& npc)
+{
+    RemoveNpcSchedule(npc);
+
+    CNpcSchedule@ proto = GetSchedulePrototype(pid);
+
+    if(!valid(proto))
+    {
+        _WLog("Can't set schedule PID<" + pid + "> for " + npc.Name + "<" + npc.Id + "> : UNUSUABLE", DEBUG_ERROR);
+        return(false);
+    }
+
+    CNpcScheduleInstance@ instance = CNpcScheduleInstance(proto, npc);
+
+    instances.insertLast(instance);
+    _WLog("Added schedule for " + npc.Name + " : " + instance.FullName, DEBUG_MESSAGE);
+
+    npc.AddTimeEvent("cte_NpcSchedule", REAL_SECOND(1), CTE_SCHEDULE);
+
+    return(true);
+}
+
+void RemoveNpcSchedule(Critter& npc)
+{
+    npc.EraseTimeEvents(int(CTE_SCHEDULE));
+    for(uint i = 0, iLen = instances.length(); i < iLen; i++)
+    {
+        if(instances[i].Owner == npc.Id)
+        {
+            _WLog("Removing schedule instance : " + instances[i].FullName, DEBUG_MESSAGE);
+            instances.removeAt(i);
+            return;
+        }
+    }
+
+    // _WLog( "Couldn't remove schedule instance : owner<"+npc.Id+">", DEBUG_MESSAGE );
+}
+
+uint cte_NpcSchedule(Critter& npc, int identifier, uint&)
+{
+    if(identifier != CTE_SCHEDULE)
+        return(0);
+
+    if(npc.IsDead())
+        return(GAME_SECOND(5));
+
+    INpcScheduleInstance@ instance = GetScheduleByOwner(npc.Id);
+    if(!valid(instance))
+    {
+        _WLog("Schedule instance does not exist, removing critter event: " + npc.Name, DEBUG_MESSAGE);
+        return(0);
+    }
+
+    uint delay = instance.Run(npc);
+
+    if(delay > 0)
+        return(delay);
+
+    return(GAME_SECOND(10));
+}
+
+void purge(Critter& cr, int, int, int)
+{
+    #ifndef __DEBUG__
+    if(!GodOfTheRealm(cr.Id))
+    {
+        cr.Say(SAY_NETMSG, "No.");
+        return;
+    }
+    #endif
+
+    removeall(cr, 0, 0, 0);
+    InitNpcSchedules();
+}
+
+void removeall(Critter& cr, int, int, int)
+{
+    #ifndef __DEBUG__
+    if(!GodOfTheRealm(cr.Id))
+    {
+        cr.Say(SAY_NETMSG, "No.");
+        return;
+    }
+    #endif
+
+    EraseAnyData(SCHEDULE_ANYDATA);
+    prototypes.resize(0);
+    instances.resize(0);
+    lastSchedulePID = 1000;
+}
+
+void setLast(Critter& cr, int schedulePid, int, int, string@, array<int>@)     // for macros, temporary
+{
+    set(cr, schedulePid, 0, cr.LastSpawnedCritter);
+}
+
+void set(Critter& cr, int schedulePid, int x, int crId)
+{
+    Critter@ npc = GetCritter(crId);
+    if(!valid(npc))
+    {
+        cr.Say(SAY_NETMSG, "Critter<" + crId + "> not valid.");
+        return;
+    }
+
+    #ifndef __DEBUG__
+    if(!npc.IsNpc())
+    {
+        if(WrathOfTheGod(cr) && x == 42)
+            cr.Say(SAY_NETMSG, "WARNING: Schedule target is a player");
+        else
+        {
+            cr.Say(SAY_NETMSG, "Critter<" + crId + "> must be NPC.");
+            return;
+        }
+    }
+    #endif
+
+    if(schedulePid != 0 && !valid(GetScheduleByPid(schedulePid)))
+    {
+        cr.Say(SAY_NETMSG, "Schedule<" + schedulePid + "> not valid.");
+        return;
+    }
+
+    #ifndef __DEBUG__
+    if(public_schedules.find(schedulePid) < 0)
+    {
+        cr.Say(SAY_NETMSG, "Schedule<" + schedulePid + "> not on public.");
+        return;
+    }
+    #endif
+
+    if(SetSchedule(schedulePid, npc))
+    {
+        cr.Say(SAY_NETMSG, "Schedule<" + schedulePid + "> set.");
+        #ifdef __DEBUG__
+        string show = "" + schedulePid;
+        if(EnumContains("HardcodedSchedules", schedulePid))
+        {
+            array<string@> names;
+            array<int>     values;
+            uint           count = GetEnum("HardcodedSchedules", names, values);
+            for(uint e = 0; e < count; e++)
+            {
+                if(values[e] == schedulePid)
+                {
+                    show = names[e] + " (" + schedulePid + ")";
+                    break;
+                }
+            }
+        }
+        npc.Say(SAY_NORM, "NpcSchedule: " + show);
+        #endif
+    }
+    else
+        cr.Say(SAY_NETMSG, "Schedule<" + schedulePid + "> NOT set.");
+}
+
+void unset(Critter& cr, int, int x, int crId)
+{
+    Critter@ npc = GetCritter(crId);
+    if(!valid(npc))
+    {
+        cr.Say(SAY_NETMSG, "Critter<" + crId + "> not valid.");
+        return;
+    }
+
+    #ifndef __DEBUG__
+    if(!npc.IsNpc())
+    {
+        if(WrathOfTheGod(cr) && x == 42)
+            cr.Say(SAY_NETMSG, "WARNING: Schedule target is a player");
+        else
+        {
+            cr.Say(SAY_NETMSG, "Critter<" + crId + "> must be NPC.");
+            return;
+        }
+    }
+    #endif
+
+    RemoveNpcSchedule(npc);
+    #ifdef __DEBUG__
+    npc.Say(SAY_NORM, "NpcSchedule:removed");
+    #endif
+}
+#endif // __NPC_SCHEDULE__ //

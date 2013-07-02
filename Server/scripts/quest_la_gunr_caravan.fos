@@ -1,0 +1,211 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_la_gunr_caravan.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "guard_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+#define DIALOG_ID                     (10277)
+
+// npc roles (defines distance mob will attack from))
+#define ROLE_DEFAULT                  (0)
+#define ROLE_AGRESSIVE                (1)
+#define ROLE_PASSIVE                  (2)
+
+// useful variables
+#define ALERTED                       # (cr)           (cr.StatBase[ST_VAR1]) // idle time is shorter if in that mode // note that it uses StatBase for read and write
+
+// idle time in milseconds (normal is slower for performance issues)
+#define IDLE_NORMAL                   (5000)
+#define IDLE_ALERTED                  (1000)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+#define STR_MUTANT_ENTRANCE_ATTACK    (1)
+
+void r_SpawnLocation(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_MutantsHideout, 1708, 2338, crits);
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_la_gunrunners_caravan_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    map.SetData(MAP_DATA_GUNRUNNER_CARAVAN_OWNER, player.Id);
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_la_gunrunners_caravan, 16);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteLocation(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_la_gunrunners_caravan_locid, player.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_GUNRUNNER_CARAVAN_OWNER));
+}
+
+// =============================================
+// Map trigger
+// =============================================
+
+void t_EntranceAttack(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!cr.IsPlayer() || !entered)
+        return;
+
+    cr.SendMessage(MSG_ENTRANCE_MUTANT_ATTACK, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// =============================================
+// Super Mutants / Critter
+// =============================================
+
+void _Mutant(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    // cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.ModeBase[MODE_NO_LOOT] = 1;
+    cr.ModeBase[MODE_NO_DROP] = 1;
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+    // cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobShowCritter");
+    cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_MobHideCritter");
+    _CritSetExtMode(cr, MODE_EXT_MOB);
+
+    // GuardInit(cr);
+
+    if(firstTime)
+    {
+        NpcSetLevel(cr, 15);
+        GuardPerks(cr);
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, fromCr);
+
+    if(message == MSG_ENTRANCE_MUTANT_ATTACK)
+    {
+        AttackCritter(cr, fromCr);
+        cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_MUTANT_ENTRANCE_ATTACK));
+    }
+}
+
+// =============================================
+// Mob script parts
+// =============================================
+
+//
+// Checks if critter is within attack distance
+//
+void _MobIdle(Critter& cr)
+{
+    // check critters in sight
+    array<Critter@> crits;
+    // get visible players
+    uint            num = cr.GetCritters(false, FIND_ONLY_PLAYERS | FIND_LIFE, crits);
+    // mob.Say(SAY_NORM_ON_HEAD, ""+num);
+    // check distance
+    uint dist = GetDistance(cr);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(cr, crits[i]) > dist)
+            continue;
+        else
+        {
+            // attack
+            cr.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+    if(ALERTED(cr) > 0)
+    {
+        // MoveMob(mob, false);
+        cr.Wait(IDLE_ALERTED);
+    }
+    else
+    {
+        // MoveMob(mob, false);
+        // mob.Say(SAY_NORM_ON_HEAD, "Don't care");
+        cr.Wait(IDLE_NORMAL);
+    }
+}
+
+void MoveMob(Critter& cr, bool run)
+{
+    int dist = Random(0, (cr.Stat[ST_NPC_ROLE] % 100 / 10));
+    if(dist == 0)
+    {
+        cr.MoveRandom();
+    }
+    else
+    {
+        // bool AddWalkPlane(Critter& npc, uint priory, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint8 cut)
+        uint16 hexX = cr.HexX;
+        uint16 hexY = cr.HexY;
+        cr.GetMap().MoveHexByDir(hexX, hexY, Random(0, 5), dist);
+        AddWalkPlane(cr, 0, hexX, hexY, 0xff, run, 0);
+    }
+}
+
+//
+// Gets distance after which critter becomes agressive
+//
+uint GetDistance(Critter& cr)
+{
+    // TODO: damaged eye??
+    uint base = __LookNormal + 3 * cr.Stat[ST_PERCEPTION];
+
+    // switch works only for ints??
+    int role = int(cr.Stat[ST_NPC_ROLE]);
+    switch(role)
+    {
+    case ROLE_DEFAULT:
+        // mob.Say(SAY_NORM, "" + base + "/" + 3 + "=" + base/3);
+        return base / 3;
+    case ROLE_AGRESSIVE:
+        return base / 2;
+    case ROLE_PASSIVE:
+        return base / 4;
+    }
+    return base / 3;
+}
+//
+// Alerts that oponent is near
+//
+void _MobShowCritter(Critter& cr, Critter& showCrit)
+{
+    if(showCrit.IsPlayer())
+        ALERTED(cr) += 1;
+}
+
+void _MobHideCritter(Critter& cr, Critter& hideCrit)
+{
+    if(hideCrit.IsPlayer())
+        ALERTED(cr) -= 1;
+}

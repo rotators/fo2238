@@ -1,0 +1,35 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+10 1010 D _script dialog@d_CheckNight 0  #
+20 1020 D _var p factions_player_faction = 6 D _var p acquaintance = 0 R _var p acquaintance + 1 #
+21 1030 D _var p acquaintance = 1 D _var p factions_player_faction = 6 R _var p acquaintance + 1 #
+40 1040 D _var p acquaintance = 2 #
+30 1050 @
+10 2000 None 0 @
+20 3000 None 0 @
+21 4000 None 0 @
+30 5000 None 0 @
+40 6000 None 0 &
+
+[engl]
+{100}{}{Citizen}
+{200}{}{You see a citizen from the Vault City.}
+{210}{}{You see a Citizen in a bright blue jumpsuit, but there is no number on the back.}
+{1000}{}{Predialogue installations}
+{1010}{}{night}
+{1020}{}{citizen not acquainted 1}
+{1030}{}{citizen not acquainted 2}
+{1040}{}{citizen acquainted}
+{1050}{}{non-citizen}
+{2000}{}{*Yawn*... hrmnnn? Yes? What is it?@@It's a little late for visitors.@@MOST Citizens would be asleep at this hour.@@Sleeping? No, not anymore.@@Please... come back in the morning. I have a long day of making lists tomorrow.}
+{3000}{}{Good day, Citizen.}
+{4000}{}{Vault City prevails, Citizen.}
+{5000}{}{Please wipe your feet before entering the house.@@I'm sorry, did we invite you in?@@You Outsiders could stand to learn some manners.@@Typical of an Outsider, barging in here...@@Yes?@@Pardon me, can I help you?@@It's polite to ask before entering someone's house.@@You're an Outsider? How quaint.@@Yes, I can smell...er, see, that you're an Outsider.}
+{6000}{}{Oh! You're the new Citizen. Welcome to Vault City.@@Do you need a place to stay while you're in town?@@As a Citizen, it is part of our civic duty to make and maintain lists.@@Please stay for dinner, Citizen. Our Servant is making a delicious goulash.@@I spent most of the day making that list for the Proconsul, then checking it. I love making lists.@@I work in the List Office. Most of us do. We here at Vault City *love* making lists.@@I spent most of the day today updating that list for the List Office. It was good, honest, productive work.@@I heard you actually traveled the outside world. How did you survive among those filthy Outsiders?@@The Council has our interests at heart.@@We must take care to keep our beautiful city clean.@@Each family gets a room in the communal house.@@The city provides us with everything we need.@@The Servants? Oh, we use them for menial tasks.@@Hmmmm. I need to get a Servant to hose out the store room...@@A Servant should be over later to weed the garden...@@That Council meeting yesterday was very productive. We made *lots* of lists. We here at Vault City love to make lists.}
+

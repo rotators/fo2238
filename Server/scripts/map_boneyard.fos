@@ -1,0 +1,119 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_boneyard.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "economy_h.fos"
+#include "reinforcements_h.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime && (map.GetProtoId() == MAP_Adytum ||
+                     map.GetProtoId() == MAP_Blade ||
+                     map.GetProtoId() == MAP_Gunrunner ||
+                     map.GetProtoId() == MAP_Library))
+    {
+        uint[] maxes = { 15, 10 };
+        SetAlertMap(map, maxes);
+    }
+}
+
+bool s_WaterPump(Critter& player, Scenery& table, int skill, Item@ item)
+{
+    if(!valid(item))
+    {
+        if(skill == SK_REPAIR)
+        {
+            player.Say(SAY_NETMSG, "You don't think it can be done without some tools");
+            return true;
+        }
+        return false;
+    }
+
+    int bonus = 0;
+    if(item.GetProtoId() == PID_MULTI_TOOL)
+        bonus = 25;
+    else if(item.GetProtoId() == PID_SUPER_TOOL_KIT)
+        bonus = 50;
+    else
+        return false;
+
+    GameVar@ var = GetLocalVar(LVAR_q_la_waterpump, player.Id);
+    if(!valid(var))
+        return false;
+
+    if(var.GetValue() != 1)
+        return false;
+
+    int chance = CLAMP(player.Skill[SK_REPAIR] + bonus, 5, 95);
+    if(chance > Random(0, 99))
+    {
+        var = 2;
+        // player.SendQuestVar(var);
+        player.Say(SAY_NETMSG, "A faint noise can be heard out of the machine. You've managed it to fix the water pump.");
+        // player.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+    }
+    else
+    {
+        var = 3;
+        // player.SendQuestVar(var);
+        player.Say(SAY_NETMSG, "A loud noise can be heard from the inside. It seems like you've failed to repair the water pump.");
+        // player.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+    }
+    return true;
+}
+
+// Player trying to repair the well instead of the water pump will be informed
+// by Montag that he is doing something wrong.
+//
+bool s_Well(Critter& player, Scenery& table, int skill, Item@ item)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_la_waterpump, player.Id);
+    if(!valid(var))
+        return false;
+
+    // Player didn't start the quest or finished it already
+    //
+    if(var != 1)
+        return false;
+
+    // Player used something different than tools or repair skill on the well
+    //
+    if(valid(item))
+    {
+        uint16 tool = item.GetProtoId();
+        if(tool != PID_MULTI_TOOL && tool != PID_SUPER_TOOL_KIT)
+            return false;
+    }
+    else
+    {
+        if(skill != SK_REPAIR)
+            return false;
+    }
+
+    // Find the Montag among the NPCs (by dialog ID)
+    //
+    array<Critter@> npcs;
+
+    if(player.GetMap().GetCritters(0, FIND_ONLY_NPC | FIND_LIFE, npcs) == 0)
+    {
+        return false;
+    }
+
+    for(uint i = 0, j = npcs.length(); i < j; i++)
+    {
+        if(npcs[i].Param[ST_DIALOG_ID] == 9448)
+        {
+            if(player.IsSeenBy(npcs[i]))
+            {
+                npcs[i].SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(9448, 1));
+                return true;
+            }
+        }
+    }
+    return false;
+}

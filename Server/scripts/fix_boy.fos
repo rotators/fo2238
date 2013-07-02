@@ -1,0 +1,633 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// fix_boy.fos
+//
+
+#include "_macros.fos"
+#include "backend_h.fos"
+#include "MsgStr.h"
+#include "utils_h.fos"
+#include "_vals.fos"
+
+import bool ConsumedBlueprintForPid(Critter& player, uint pid) from "blueprints";
+import void CloneWear(Item& to, Item& from) from "repair";
+import int  GetWearProcent(Item& item) from "repair";
+
+/*
+   #define FIXBOY_ALLOW_CRAFT         (0x0001)
+   #define FIXBOY_CHECK_TIMEOUT       (0x0002)
+   #define FIXBOY_SET_TIMEOUT         (0x0004)
+   #define FIXBOY_CHECK_PARAMS        (0x0008)
+   #define FIXBOY_CHECK_MATERIALS     (0x0010)
+   #define FIXBOY_CHECK_TOOLS         (0x0020)
+   #define FIXBOY_SUB_MATERIALS       (0x0040)
+   #define FIXBOY_ADD_CRAFT_ITEMS     (0x0080)
+   #define FIXBOY_ADD_EXPERIENCE      (0x0100)
+   #define FIXBOY_SEND_SUCC_MESSAGE   (0x0200)
+   #define FIXBOY_SEND_FAIL_MESSAGE   (0x0400)
+   #define FIXBOY_DEFAULT             (0xFFFF)
+ */
+
+#define FIX_SUCCESS            (FIXBOY_DEFAULT)
+#define FIX_TIMEOUT            (FIXBOY_DEFAULT ^ FIXBOY_SET_TIMEOUT)
+#define FIX_FAIL               (FIXBOY_DEFAULT ^ FIXBOY_ALLOW_CRAFT)
+#define FIX_FAIL_NO_MESSAGE    (FIXBOY_DEFAULT ^ FIXBOY_ALLOW_CRAFT ^ FIXBOY_SEND_FAIL_MESSAGE)
+#define FIX_TIMEOUT_NO_ITEM    (FIXBOY_DEFAULT ^ FIXBOY_SET_TIMEOUT ^ FIXBOY_ADD_CRAFT_ITEMS)
+
+// Timeout modifiers
+#define SHORT_TO               (300)
+#define MEDIUM_TO              (900)
+#define LONG_TO                (2700)
+#define ETERNITY_TO            (7100)
+
+// Luck modifier. Shit happens, even when crafting.
+#define LUCK_TO                (Random(6, 60) / (5 + player.Stat[ST_LUCK]))
+
+#define CUMULATIVE_TIMEOUT     int(REAL_MINUTE(360))
+
+//
+// Crafting recipes
+//
+
+//
+// Checks if player has given profession at a desired level
+//
+int GetProfessionLevel(Critter& player, uint lvar)
+{
+    GameVar@ prof = GetLocalVar(lvar, player.Id);
+    if(!valid(prof))
+        return 0;
+    return prof.GetValue();
+}
+
+//
+// Checks if the player is on the map with given proto id
+//
+bool MapCheck(Critter& player, uint mapPid)
+{
+    return player.GetMap().GetProtoId() == mapPid;
+}
+
+//
+// Check if player is near workbench
+//
+bool FixboyCheck(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_workbench, player.Id);
+    return var < 100;
+}
+
+bool WorkbenchCheck(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_workbench, player.Id);
+    return var == 1;
+}
+
+// in Mariposa, near crafting system
+bool MfcCheck(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_workbench, player.Id);
+    return var == 2;
+}
+
+bool MedCheck(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_workbench, player.Id);
+    return var == 3;
+}
+
+bool AmmoCheck(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_workbench, player.Id);
+    return var == 4;
+}
+
+/**
+ * Checks if item is a resource, i.e. item created only to be part of craft recipe.
+ * Items that are part of recipe to be upgraded (i.e. CA -> CA2) are not resources.
+ */
+bool IsResource(Item& item)
+{
+    switch(item.GetProtoId())
+    {
+    case PID_XANDER_ROOT:
+    case PID_BROC_FLOWER:
+    case PID_FLINT:
+    case PID_FIREWOOD:
+    case PID_METAL_ORE:
+    case PID_MINERAL:
+    case PID_FIBER:
+    case PID_MUTATED_FRUIT:
+    case PID_MEAT:
+    case PID_PUMP_PARTS:
+    case PID_URANIUM_ORE:
+    case PID_REFINED_ORE:
+    case PID_HYPODERMIC_NEEDLE:
+    case PID_ELECTRONIC_PARTS:
+
+    case PID_GECKO_PELT:
+    case PID_GOLDEN_GECKO_PELT:
+    case PID_FIREGECKO_PELT:
+    case PID_BRAHMIN_HIDE:
+
+    case PID_ORE2:
+    case PID_MINERALS2:
+    case PID_FIBRE2:
+    case PID_CHEMICALS:
+    case PID_CHEMICALS2:
+
+    case PID_BRAHMINSHIT:
+    case PID_BIO_GEL:
+    case PID_TOBACCO:
+        return true;
+    }
+    return false;
+}
+/**
+ * Checks if resource is high quality.
+ */
+bool IsHighQualityResource(Item& item)
+{
+    switch(item.GetProtoId())
+    {
+    case PID_ORE2:
+    case PID_MINERALS2:
+    case PID_FIBRE2:
+    case PID_CHEMICALS2:
+    case PID_FIREGECKO_PELT:
+    case PID_BIO_GEL:
+    case PID_URANIUM_ORE:
+    case PID_ELECTRONIC_PARTS2:
+        return true;
+    }
+    return false;
+}
+/**
+ * Checks if item is resource that is crafted, not gathered.
+ */
+bool IsWorkedResource(Item& item)
+{
+    switch(item.GetProtoId())
+    {
+    case PID_ROT_GUT:
+    case PID_MEAT_JERKY:
+    case PID_ROPE:
+
+    case PID_METAL_PARTS:
+    case PID_ALLOYS:
+    case PID_GUNPOWDER:
+
+    case PID_METAL_PARTS2:
+    case PID_ALLOYS2:
+    case PID_GUNPOWDER2:
+        return true;
+    }
+    return false;
+}
+
+//
+// Timeouts
+//
+// assumes: upgrade items give only one result item
+void ApplyTimeout(array<Item@>& items, array<uint>& itemsCount, array<Item@>& resources, Critter& crafter)
+{
+    uint16 pid = items[0].GetProtoId();
+    // no timeout for these
+    switch(pid)
+    {
+    case PID_ALLOYS:
+    case PID_GUNPOWDER:
+    case PID_METAL_PARTS:
+    case PID_ROT_GUT:
+    case PID_ALLOYS2:
+    case PID_GUNPOWDER2:
+    case PID_METAL_PARTS2:
+        return;
+    }
+
+    // calculate value
+    int   value = 0;
+    Item@ upg;
+    for(uint i = 0, j = resources.length(); i < j; i++)
+    {
+        if(IsResource(resources[i]))
+            value += BaseItemValue(resources[i]) * (IsHighQualityResource(resources[i]) ? 3 : 2);
+        else if(IsWorkedResource(resources[i]))
+            value += BaseItemValue(resources[i]);
+
+        // try to find 'upgrade' item, note - this assumes upgrade item gives only one result
+        if(!valid(upg) && items.length() == 1 &&
+           resources[i].GetType() == items[0].GetType() &&
+           (resources[i].GetType() == ITEM_TYPE_WEAPON || resources[i].GetType() == ITEM_TYPE_ARMOR))
+            @upg = resources[i];
+    }
+
+    #ifdef __DEBUG__
+    if(valid(upg))
+        crafter.Say(SAY_NETMSG, "Upgraded item: " + upg.GetProtoId());
+    #endif
+    if(valid(upg))
+        CloneWear(items[0], upg);
+    #ifdef __DEBUG__
+    crafter.Say(SAY_NETMSG, "Applied timeout for: " + items.length() + " items with total value: " + value);
+    #endif
+    int levelmod = items[0].Proto.CraftLevel > 1 ? 5000 : 4000;
+    int to = 60 * value / levelmod;
+    // to = MAX(to, 5);
+    // _SetTimeout(crafter,TO_FIXBOY,crafter.Timeout[TO_FIXBOY]+REAL_MINUTE(to));
+}
+
+// called for FIXBOY_CRAFT stage to check cumulative timeout
+int TimeoutCheck(Critter& player)
+{
+    if(player.Timeout[TO_FIXBOY] > CUMULATIVE_TIMEOUT)
+    {
+        player.SayMsg(SAY_FIX_RESULT, TEXTMSG_GAME, STR_FIX_TIMEOUT);
+        return FIXBOY_DEFAULT ^ FIXBOY_ALLOW_CRAFT ^ FIXBOY_SEND_FAIL_MESSAGE;
+    }
+    else
+        return FIX_TIMEOUT;         // no timeout, cause it's applied after items are spawned
+}
+// no timeout for mid-resources, no timeout check too
+int fix_Resource(Critter& player, int stage, CraftItem&)
+{
+    if(stage == FIXBOY_CRAFT)
+        return FIX_TIMEOUT;
+    return FIXBOY_DEFAULT;
+}
+
+int fix_Generic(Critter& player, int stage, CraftItem&)
+{
+    if(stage == FIXBOY_CRAFT)
+    {
+        return TimeoutCheck(player);
+    }
+    return FIXBOY_DEFAULT;
+}
+// checks if player has consumed blueprint, to determine whether to list item
+int fix_Blueprint(Critter& player, int stage, CraftItem& craft)
+{
+    if(stage == FIXBOY_LIST || stage == FIXBOY_BUTTON)
+    {
+        array<uint16> pids;
+        for(uint i = 0, j = craft.GetOutItems(pids, null); i < j; i++)           // usually, only one item
+        {
+            if(!ConsumedBlueprintForPid(player, pids[i]))
+                return FIX_FAIL;
+        }
+        return FIX_SUCCESS;
+    }
+    else if(stage == FIXBOY_CRAFT)
+        return TimeoutCheck(player);
+    return FIXBOY_DEFAULT;
+}
+
+int fix_Lock(Critter& player, int stage, CraftItem&)
+{
+    if(WorkbenchCheck(player))
+    {
+        if(stage == FIXBOY_LIST)
+            return FIX_SUCCESS;
+        if(stage == FIXBOY_BUTTON)
+            return FIX_SUCCESS;
+        if(stage == FIXBOY_CRAFT)
+        {
+            Item@ lock = player.AddItem(PID_LOCK, 1);
+
+            // complexity based on crafter's lockpick skill
+            uint complexity = player.Skill[SK_LOCKPICK];
+            player.Say(SAY_NETMSG, "Complexity: " + complexity);
+            lock.LockerComplexity = complexity;
+            // adjust description
+            if(complexity < 100)
+            {
+                lock.Info = 2;
+                lock.Cost = 500;
+            }
+            else if(complexity < 150)
+            {
+                lock.Info = 4;
+                lock.Cost = 1000;
+            }
+            else if(complexity < 200)
+            {
+                lock.Info = 6;
+                lock.Cost = 1500;
+            }
+            else
+            {
+                lock.Info = 8;
+                lock.Cost = 2000;
+            }
+            lock.Update();
+            _SetTimeout(player, TO_SK_LOCKPICK, REAL_SECOND(LONG_TO / player.Skill[SK_LOCKPICK] + LUCK_TO) * 3);
+            // don't add item from recipe
+            return FIX_TIMEOUT_NO_ITEM;
+        }
+    }
+    return FIX_FAIL;
+}
+
+/////////////////////////////
+// Disassembly
+/////////////////////////////
+#define WS_UNARMED     (1)
+#define WS_MELEE       (2)
+#define WS_THROWING    (3)
+#define WS_GUN         (4)
+
+// helper
+bool Add(Critter& cr, array<int>& pids, int value, int sk)
+{
+    bool added = false;
+    uint min = uint(-1);
+    uint mini = 0;
+    for(uint i = 0, j = pids.length(); i < j; i++)
+    {
+        uint cost = GetProtoItem(pids[i]).Cost;
+        #ifdef __DEBUG__
+        cr.Say(SAY_NETMSG, "Pid, cost: " + pids[i] + ", " + cost);
+        #endif
+        if(min > cost)
+        {
+            min = cost;
+            mini = i;
+        }
+    }
+    while(value > 0)
+    {
+        #ifdef __DEBUG__
+        cr.Say(SAY_NETMSG, "Value, min: " + value + ", " + min);
+        #endif
+        if(value < int(min))
+            return added;
+        uint i = Random(0, pids.length() - 1);
+        if(sk >= Random(1, 100))
+        {
+            added = true;
+            cr.AddItem(pids[i], 1);
+        }
+        value -= GetProtoItem(pids[i]).Cost;
+        #ifdef __DEBUG__
+        cr.Say(SAY_NETMSG, "Salvaged: " + pids[i] + ", " + GetProtoItem(pids[i]).Cost);
+        #endif
+    }
+    return added;
+}
+
+array<uint> PidRecipe;            // PidRecipe[PID_BFG] is a recipe id for PID_BFG
+
+bool ReversableItem(Item& item)   // export
+{
+    return (item.GetType() == ITEM_TYPE_WEAPON ||
+            item.GetType() == ITEM_TYPE_ARMOR  ||
+            item.GetProtoId() == PID_RADIO ||
+            item.GetProtoId() == PID_HOWITZER_SHELL) && item.Val8 != SPECIAL_ITEM_ARENA;
+}
+
+void InitReverseItem() // export
+{
+    array<uint16> outs;
+    array<uint>   counts;
+    for(uint i = 1; i < 300; i++)     // ugly
+    {
+        outs.resize(0);
+        counts.resize(0);
+        CraftItem@ craft = GetCraftItem(i);
+        if(!valid(craft))
+            continue;
+        craft.GetOutItems(outs, counts);
+        uint16 output = outs[0];
+        if(output >= PidRecipe.length())
+        {
+            uint oldsize = PidRecipe.length();
+            PidRecipe.resize(output + 1);
+            for(uint j = oldsize; j <= output; j++)
+                PidRecipe[j] = 0;
+        }
+        PidRecipe[output] = i;
+    }
+}
+
+#define SALV_FACTOR    # (_cr)  (_cr.Perk[PE_DISMANTLER] > 0 ? 0.2 : 0.1)
+
+bool ReverseItem(Critter& cr, Item& item)   // export
+{
+    if(ReverseItemCustom(cr, item))
+        return true;
+    if(item.GetType() != ITEM_TYPE_WEAPON && item.GetType() != ITEM_TYPE_ARMOR && item.GetType() != ITEM_TYPE_CONTAINER && item.GetProtoId() != PID_RADIO)
+        return false;
+    if(item.Proto.Stackable)
+        return false;
+    if(ReverseItemCrafted(cr, item))
+        return true;
+    return ReverseItemGeneric(cr, item);
+}
+
+bool ReverseItemCrafted(Critter& cr, Item& item)
+{
+    uint16 pid = item.GetProtoId();
+    if(pid >= PidRecipe.length())
+        return false;
+    CraftItem@ craft = GetCraftItem(PidRecipe[pid]);
+    if(!valid(craft))
+        return false;
+    array<uint16> items;
+    array<uint>   counts;
+    array<bool>   ors;
+    bool          added = false;
+
+    if(item.GetType() == ITEM_TYPE_WEAPON && item.AmmoPid != 0 && item.AmmoCount != 0)
+    {
+        cr.AddItem(item.AmmoPid, item.AmmoCount);
+        item.AmmoCount = 0;
+    }
+
+    bool deteriorate = item.IsDeteriorable();
+    int  factor = int(SALV_FACTOR(cr) * 1000.0f);
+
+    for(uint i = 0, j = craft.GetNeedItems(items, counts, ors); i < j; i++)
+    {
+        ProtoItem@ proto = GetProtoItem(items[i]);
+        bool       force = proto.Type == ITEM_TYPE_WEAPON || proto.Type == ITEM_TYPE_ARMOR;
+        for(uint j = 0; j < counts[i]; j++)
+        {
+            if(force || Random(1, 1000) < factor)
+            {
+                Item@ addedItem = cr.AddItem(items[i], 1);
+                if(deteriorate && addedItem.IsDeteriorable())
+                {
+                    CloneWear(addedItem, item);
+                    if(proto.Type == ITEM_TYPE_WEAPON && addedItem.AmmoPid != 0)
+                        addedItem.AmmoCount = 0;
+                    addedItem.Update();
+                }
+                added = true;
+            }
+        }
+
+        if(i + 1 == j || ors[i])
+            break;
+    }
+
+    string type = item.GetType() == ITEM_TYPE_WEAPON ? "weapon" : "armor";
+    if(item.GetProtoId() == PID_RADIO)
+        type = "Radio";
+    DeleteItem(item);
+
+    if(added)
+        cr.Say(SAY_NETMSG, "You've disassembled the " + type + ".");
+    else
+        cr.Say(SAY_NETMSG, "You've disassembled the " + type + ", but were unable to obtain anything.");
+    cr.StatBase[ST_EXPERIENCE] += 20;
+    LogExperience(cr, 20, SK_SCIENCE, "Dismantling", pid);
+    cr.PlaySound("CARREPAR.ACM", true);
+    return true;
+}
+
+bool ReverseItemGeneric(Critter& cr, Item& item)
+{
+    array<int> pids;
+    bool       twoHanded = false;
+    int        skillNum = item.Proto.Weapon_Skill_0;
+    uint8      weaponSubtype =
+        (skillNum == SK_SMALL_GUNS || skillNum == SK_BIG_GUNS || skillNum == SK_ENERGY_WEAPONS) ? WS_GUN : ((skillNum == SK_THROWING) ? WS_THROWING : (skillNum == SK_MELEE_WEAPONS) ? WS_MELEE : WS_UNARMED);
+
+    // analogue to repair chance
+    int    sk = cr.Skill[SK_SCIENCE];
+    uint8  mode = 0;
+    uint16 activePid = cr.GetSlotProto(SLOT_HAND1, mode).ProtoId;
+    if(activePid == PID_MULTI_TOOL)
+    {
+        sk += 25;
+        if(Random(0, 30) == 0)
+            cr.DeleteItem(PID_MULTI_TOOL, 1);
+    }
+    else if(activePid == PID_SUPER_TOOL_KIT)
+    {
+        sk += 50;
+        if(Random(0, 30) == 0)
+            cr.DeleteItem(PID_SUPER_TOOL_KIT, 1);
+    }
+    sk -= GetWearProcent(item);
+    sk = CLAMP(sk, 1, 95);
+    uint pid = item.GetProtoId();
+    uint value = BaseItemValue(pid, false) * SALV_FACTOR(cr);
+    DPlayerLog(cr, "BaseProtoValue * salvage factor: " + value);
+    bool added = false;
+    switch(item.GetType())
+    {
+    case ITEM_TYPE_WEAPON:
+        if(item.AmmoPid != 0 && item.AmmoCount != 0)
+        {
+            cr.AddItem(item.AmmoPid, item.AmmoCount);
+            item.AmmoCount = 0;
+        }
+        switch(weaponSubtype)
+        {
+        case WS_GUN:
+            // unload it
+            // recalc value
+            // value = BaseItemValue(pid, false) * SALV_FACTOR;
+
+            // disassembly it
+            pids.insertLast(PID_PUMP_PARTS);
+            pids.insertLast(PID_METAL_PARTS);
+            if(skillNum == SK_BIG_GUNS)
+                pids.insertLast(PID_ALLOYS);
+            if(skillNum == SK_ENERGY_WEAPONS)
+                pids.insertLast(PID_ELECTRONIC_PARTS);
+            if(Add(cr, pids, value, sk))
+                cr.Say(SAY_NETMSG, "You've disassembled the weapon.");
+            else
+                cr.Say(SAY_NETMSG, "You've disassembled the weapon, but were unable to obtain anything.");
+            cr.StatBase[ST_EXPERIENCE] += 20;
+            LogExperience(cr, 20, SK_SCIENCE, "Dismantling", pid);
+            cr.PlaySound("CARREPAR.ACM", true);
+            DeleteItem(item);
+            return true;
+        case WS_MELEE:
+        case WS_UNARMED:
+        case WS_THROWING:
+            return false;
+        }
+    case ITEM_TYPE_ARMOR:
+        switch(pid)
+        {
+        case PID_LEATHER_JACKET:
+        case PID_LEATHER_ARMOR:
+        case PID_LEATHER_ARMOR_MK_II:
+        case PID_CURED_LEATHER_ARMOR:
+            pids.insertLast(PID_BRAHMIN_HIDE);
+            pids.insertLast(PID_FIBER);
+            added = Add(cr, pids, value, sk);
+            break;
+        case PID_METAL_ARMOR:
+        case PID_METAL_ARMOR_MK_II:
+        case PID_TESLA_ARMOR:
+            pids.insertLast(PID_PUMP_PARTS);
+            pids.insertLast(PID_METAL_PARTS);
+            added = Add(cr, pids, value, sk);
+            break;
+        // below options doesn't really make sense
+        case PID_COMBAT_ARMOR:
+        case PID_COMBAT_ARMOR_MK_II:
+        case PID_BROTHERHOOD_COMBAT_ARMOR:
+            pids.insertLast(PID_PUMP_PARTS);
+            pids.insertLast(PID_ALLOYS);
+            pids.insertLast(PID_FIBER);
+            added = Add(cr, pids, value, sk);
+            break;
+        case PID_POWERED_ARMOR:
+        case PID_HARDENED_POWER_ARMOR:
+        case PID_ADVANCED_POWER_ARMOR:
+        case PID_ADVANCED_POWER_ARMOR_MK2:
+            pids.insertLast(PID_PUMP_PARTS);
+            pids.insertLast(PID_METAL_PARTS);
+            pids.insertLast(PID_ALLOYS);
+            pids.insertLast(PID_MOTIVATOR);                               // !
+            added = Add(cr, pids, value, sk);
+            break;
+        }
+        DeleteItem(item);
+        if(added)
+            cr.Say(SAY_NETMSG, "You've disassembled the armor.");
+        else
+            cr.Say(SAY_NETMSG, "You've disassembled the armor, but were unable to obtain anything.");
+        cr.StatBase[ST_EXPERIENCE] += 20;
+        LogExperience(cr, 20, SK_SCIENCE, "Dismantling", pid);
+        cr.PlaySound("CARREPAR.ACM", true);
+        return true;
+    case ITEM_TYPE_CONTAINER:
+        DeleteItem(item);
+        cr.Say(SAY_NETMSG, "You've disassembled the container, but were unable to obtain anything.");
+        cr.StatBase[ST_EXPERIENCE] += 20;
+        LogExperience(cr, 20, SK_SCIENCE, "Dismantling", pid);
+        cr.PlaySound("CARREPAR.ACM", true);
+        return true;
+
+    }
+    return false;
+}
+
+// special cases
+bool ReverseItemCustom(Critter& cr, Item& item)
+{
+    switch(item.GetProtoId())
+    {
+    case PID_HOWITZER_SHELL:
+    {
+        if(item.GetCount() > 1)
+            item.SetCount(item.GetCount() - 1);
+        else
+            DeleteItem(item);
+
+        cr.AddItem(PID_GUNPOWDER, Random(10, 14));
+        cr.Say(SAY_NETMSG, "You've managed to salvage a fair quantity of gunpowder from this shell.");
+        return true;
+    }
+    }
+    return false;
+}

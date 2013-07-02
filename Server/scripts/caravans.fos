@@ -1,0 +1,700 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// caravans.fos
+//
+
+#include "_macros.fos"
+#define __MODULE__
+#include "caravans_h.fos"
+#include "groups_h.fos"
+#include "worldmap_h.fos"
+#include "debug_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_common_h.fos"
+#include "reputations_h.fos"
+
+#define CARAVAN_CFG    "config\\Caravans.cfg"
+
+
+//
+// Main module for caravans
+//
+
+CaravanManager mgr;
+bool           caravansInitialized = false;
+// bool CreatingCaravans=false;
+// array<CCaravan> Caravans(100);
+
+/**
+ * Initializes caravans and their routes. Should be made safe to be called anytime!
+ */
+void InitCaravans()
+{
+    caravansInitialized = true;
+    mgr.Load(CARAVAN_CFG);
+}
+
+/**
+ * Initializes caravans runtime, should be safe to be called anytime.
+ */
+void init(Critter& cr, int p0, int p1, int p2)
+{
+    InitCaravans();
+}
+
+
+void _CaravanTownNpc(Critter& cr, bool firstTime)   // aka wagon
+{
+    if(!caravansInitialized)
+        DeleteNpc(cr);
+    // cr.ModeBase[MODE_INVULNERABLE] = 1;
+    // cr.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+
+/**
+ * Adds new caravan to global list, returns pointer to its interface.
+ */
+/*ICaravan@ AddCaravan()
+   {
+        for(uint i = 0, j = Caravans.length(); i < j; i++)
+        {
+                if(not valid(Caravans[i]))
+                {
+                        @Caravans[i] = @CCaravan(i);
+                        return @Caravans[i];
+                }
+        }
+        Log("ERR: Couldn't add caravan to global list. List full.");
+        return null;
+   }*/
+
+/**
+ * Gets caravan, that given critter is assigned to.
+ */
+ICaravan@ GetCaravan(Critter& cr)
+{
+    return mgr.GetCaravan(GetLvar(cr.Id, LVAR_caravan_id));
+}
+/**
+ * Gets caravan with given id number.
+ */
+ICaravan@ GetCaravan(uint id)
+{
+    return mgr.GetCaravan(id);
+}
+
+void r_Start(Critter& player, Critter@ npc)
+{
+    CaravanStart(npc);
+}
+
+bool d_CheckReputationTooLow(Critter& player, Critter@ npc, int reputationNeeded)
+{
+    uint factionReputationIndex = npc.Param[ST_TEAM_ID];
+    return(player.Reputation[factionReputationIndex] < reputationNeeded);
+}
+
+void _CaravanGuard(Critter& cr, bool firstTime)
+{
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_GuardAttacked");
+    cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "_GuardSmthAttacked");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_OnIdleEncounter");
+    cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM, "_OnSmthMoveItemEncounter");
+}
+
+bool _GuardAttacked(Critter& cr, Critter& attacker)
+{
+    ICaravan@ caravan = GetCaravan(cr);
+    Critter@  leader = GetCritter(cr.Param[ST_VAR1]);
+    if(valid(leader) && valid(caravan) && (attacker.IsPlayer() || !caravan.IsCaravanMember(attacker)))
+    {
+        if(caravan.IsCaravanMember(attacker))
+        {
+            SubReputation(attacker, leader.Param[ST_TEAM_ID], REP_KILL_PENALTY * MAX(1, _GroupRank(cr)));
+            // SetLvar(attacker.Id, LVAR_caravan_id, 0);
+            caravan.Leave(attacker);
+        }
+        else
+            SubReputation(attacker, leader.Param[ST_TEAM_ID], REP_ATK_PENALTY * MAX(1, _GroupRank(cr)));
+        leader.AddEnemyInStack(attacker.Id);
+        if(leader.Param[ST_VAR0] != 0 && leader.IsLife())
+            EraseTimeEvent(leader.Param[ST_VAR0]);
+        leader.ParamBase[ST_VAR0] = 0;
+    }
+    return false;
+}
+
+void _GuardSmthAttacked(Critter& cr, Critter& fromCr, Critter& attacker)
+{
+    ICaravan@ caravan = GetCaravan(cr);
+    Critter@  leader = GetCritter(cr.Param[ST_VAR1]);
+
+    if(valid(leader) && leader.CheckEnemyInStack(attacker.Id))
+        return;
+    if(valid(caravan) && caravan.IsCaravanMember(fromCr))
+    {
+        if(valid(leader) && (attacker.IsPlayer() || !caravan.IsCaravanMember(attacker)))
+        {
+            if(caravan.IsCaravanMember(attacker))
+            {
+                // SetLvar(attacker.Id, LVAR_caravan_id, 0);
+                caravan.Leave(attacker);
+            }
+
+            if(!fromCr.IsPlayer() || attacker.IsPlayer())
+            {
+                cr.EventAttacked(attacker);
+
+                leader.AddEnemyInStack(attacker.Id);
+                if(leader.Param[ST_VAR0] != 0 && leader.IsLife())
+                    EraseTimeEvent(leader.Param[ST_VAR0]);
+                leader.ParamBase[ST_VAR0] = 0;
+            }
+        }
+    }
+}
+
+
+bool _DriverAttacked(Critter& leader, Critter& attacker)
+{
+    ICaravan@ caravan = GetCaravan(leader);
+    if(valid(caravan) && (attacker.IsPlayer() || !caravan.IsCaravanMember(attacker)))
+    {
+        if(caravan.IsCaravanMember(attacker))
+        {
+            SubReputation(attacker, leader.Param[ST_TEAM_ID], REP_KILL_PENALTY * MAX(1, _GroupRank(leader)));
+            // SetLvar(attacker.Id, LVAR_caravan_id, 0);
+            caravan.Leave(attacker);
+        }
+        else
+            SubReputation(attacker, leader.Param[ST_TEAM_ID], REP_ATK_PENALTY * MAX(1, _GroupRank(leader)));
+        leader.AddEnemyInStack(attacker.Id);
+        if(leader.Param[ST_VAR0] != 0 && leader.IsLife())
+            EraseTimeEvent(leader.Param[ST_VAR0]);
+        leader.ParamBase[ST_VAR0] = 0;
+    }
+    return false;
+}
+
+void _DriverSmthAttacked(Critter& leader, Critter& fromCr, Critter& attacker)
+{
+    ICaravan@ caravan = GetCaravan(leader);
+    if(leader.CheckEnemyInStack(attacker.Id))
+        return;
+    if(valid(caravan) && caravan.IsCaravanMember(fromCr))
+    {
+        if((attacker.IsPlayer() || !caravan.IsCaravanMember(attacker)))
+        {
+            if(caravan.IsCaravanMember(attacker))
+            {
+                // SetLvar(attacker.Id, LVAR_caravan_id, 0);
+                caravan.Leave(attacker);
+
+            }
+
+            if(!fromCr.IsPlayer() || attacker.IsPlayer())
+            {
+                leader.EventAttacked(attacker);
+                leader.AddEnemyInStack(attacker.Id);
+                if(leader.Param[ST_VAR0] != 0 && leader.IsLife())
+                    EraseTimeEvent(leader.Param[ST_VAR0]);
+                leader.ParamBase[ST_VAR0] = 0;
+            }
+        }
+    }
+}
+
+void _OnIdleEncounter(Critter& cr)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    array<Critter@> crits;
+    uint            num = cr.GetCritters(false, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(_ValidReputationIndex(_GroupIndex(cr)) && crits[i].Reputation[_GroupIndex(cr)] >= __ReputationAntipathy)
+            continue;
+
+        Item@ item = _CritGetItemHand(crits[i]);
+        if(!valid(item))
+            continue;
+        if(IsHumanoid(cr) && (item.GetType() == ITEM_TYPE_WEAPON) && (Random(0, 1) == 0))
+        {
+            cr.Say(SAY_SHOUT_ON_HEAD, "Put down your weapon, NOW!");
+            int[] data = { crits[i].Id, cr.Id };
+            CreateTimeEvent(AFTER(REAL_SECOND(Random(8, 12))), "e_CheckWeapon", data, false);
+        }
+    }
+}
+
+uint e_CheckWeapon(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+        return 0;
+
+    Item@ item = _CritGetItemHand(player);
+    if(!valid(item))
+        return 0;
+    if(item.GetType() == ITEM_TYPE_WEAPON && (player.Stat[ST_CURRENT_HP] > 0))
+    {
+        ICaravan@ caravan = GetCaravan(guard);
+        if(valid(caravan))
+        {
+            Critter@ leader = GetCritter(caravan.GetWMLeaderId());
+            if(valid(leader))
+            {
+                leader.AddEnemyInStack(player.Id);
+                if(leader.Param[ST_VAR0] != 0)
+                {
+                    EraseTimeEvent(leader.Param[ST_VAR0]);
+                    leader.ParamBase[ST_VAR0] = 0;
+
+                }
+            }
+        }
+        AddAttackPlane(guard, 0, player);
+    }
+    return 0;
+}
+
+void _OnSmthMoveItemEncounter(Critter& crit, Critter& fromCrit, Item& item, uint8 fromSlot)
+{
+    int critGroup = _GroupIndex(crit);
+    if(critGroup == _GroupIndex(fromCrit))
+        return;
+    if(item.Accessory != ACCESSORY_CRITTER)
+        return;
+    if(item.GetType() != ITEM_TYPE_WEAPON)
+        return;
+    if(_ValidReputationIndex(critGroup) && fromCrit.Reputation[_GroupIndex(crit)] > -1000)
+        return;
+    if(item.CritSlot == SLOT_HAND1)
+    {
+        ICaravan@ caravan = GetCaravan(crit);
+        if(valid(caravan))
+        {
+            Critter@ leader = GetCritter(caravan.GetWMLeaderId());
+            if(valid(leader))
+            {
+                leader.AddEnemyInStack(fromCrit.Id);
+                if(leader.Param[ST_VAR0] != 0)
+                {
+                    EraseTimeEvent(leader.Param[ST_VAR0]);
+                    leader.ParamBase[ST_VAR0] = 0;
+
+                }
+            }
+        }
+        AddAttackPlane(crit, 0, fromCrit);
+    }
+}
+
+void _CaravanDriver(Critter& cr, bool firstTime)
+{
+    if(!caravansInitialized)
+        DeleteNpc(cr);
+    cr.ParamBase[ST_CHARISMA] = 10;
+    cr.ParamBase[ST_MAX_LIFE] += 100;
+    cr.ParamBase[ST_CURRENT_HP] += 100;
+    _CritSetMode(cr, MODE_GECK);
+    cr.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "_GlobalProcessDriver");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_DriverIdle");
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_DriverDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_DriverAttacked");
+    cr.SetEvent(CRITTER_EVENT_SMTH_ATTACKED, "_DriverSmthAttacked");
+    cr.SetEvent(CRITTER_EVENT_SMTH_MOVE_ITEM, "_OnSmthMoveItemEncounter");
+    /*
+       cr.ParamBase[SK_SMALL_GUNS]=300;
+       cr.ParamBase[SK_BIG_GUNS]=300;
+       cr.ParamBase[SK_ENERGY_WEAPONS]=300;*/
+    cr.SetEventExt(CRITTER_EVENT_EXT_MAP_IN, "_DriverMapEnter");
+    cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_DriverPlaneStart");
+}
+
+int _DriverPlaneStart(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(reason == REASON_GO_HOME)
+    {
+        _DriverIdle(npc);
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+void _DriverDead(Critter& cr, Critter@ killer)
+{
+    if(cr.Param[ST_VAR0] != 0)
+        EraseTimeEvent(cr.Param[ST_VAR0]);
+    cr.ParamBase[ST_VAR0] = 0;
+    CreateTimeEvent(AFTER(REAL_SECOND(180)), "e_Clean", cr.Id, false);
+}
+
+uint e_Clean(array<uint>@ values)
+{
+    Critter@ leader = GetCritter(values[0]);
+    if(valid(leader))
+    {
+        Map@      map = leader.GetMap();
+        ICaravan@ caravan = GetCaravan(leader);
+        if(valid(caravan))
+            caravan.PrepareRespawn();
+        if(valid(map))
+        {
+            if(IsEncounterMap(map) && map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, null) < 1)
+            {
+                DeleteLocation(map.GetLocation().Id);
+            }
+        }
+    }
+    return 0;
+}
+
+uint e_RespawnCaravan(array<uint>@ values)
+{
+    ICaravan@ caravan = GetCaravan(values[0]);
+    if(valid(caravan))
+    {
+        caravan.Respawn();
+    }
+    return 0;
+}
+
+void _DriverIdle(Critter& cr)
+{
+    _OnIdleEncounter(cr);
+    Map@ map = cr.GetMap();
+
+    if(valid(map) && cr.ParamBase[ST_VAR0] == 0)
+    {
+        array<Critter @> critters;
+        uint             critterCount = map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+        for(uint i = 0; i < critterCount; i++)
+        {
+            if(cr.CheckEnemyInStack(critters[i].Id))
+            {
+                // Log("dafuq "+critters[i].Id);
+                return;
+            }
+        }
+        cr.Say(SAY_NORM, "Ok, people. Get ready, we're leaving in one minute.");
+        array<uint> values = { cr.Id, map.Id };
+        cr.ParamBase[ST_VAR0] = CreateTimeEvent(AFTER(REAL_SECOND(60)), "e_Leave", values, false);
+    }
+}
+
+uint e_Leave(array<uint>@ values)
+{
+    Critter@ leader = GetCritter(values[0]);
+    Map@     map = GetMap(values[1]);
+    if(valid(map) && valid(leader))
+    {
+        ICaravan@ caravan = GetCaravan(leader);
+        if(valid(caravan))
+        {
+            leader.TransitToGlobal(false);
+            leader.ParamBase[ST_VAR0] = 0;
+            array<Critter @> critters;
+            uint             critterCount = map.GetCritters(0, FIND_LIFE, critters);
+            for(uint i = 0; i < critterCount; i++)
+            {
+                if(caravan.IsCaravanMember(critters[i]))
+                {
+                    if(critters[i].Timeout[TO_BATTLE] <= 0)
+                        critters[i].TransitToGlobalGroup(leader.Id);
+                }
+            }
+            Item@ caravanCart = GetItem(leader.ParamBase[ST_VAR2]);
+            if(valid(caravanCart))
+                DeleteItem(caravanCart);
+        }
+    }
+    return 0;
+}
+
+bool _DriverMapEnter(Critter& driver, Map& map)
+{
+    if(!IsEncounterMap(map))
+        return false;
+
+    array<uint> values = { driver.Id, map.Id };
+    CreateTimeEvent(0, "e_LateEnterFunc", values, false);
+    return false;
+}
+
+import void MovePositionPoint(Map& map, uint16& pointX, uint16& pointY, array<uint>& positionDirs, uint pathIndex, uint count, uint spacing) from "worldmap";
+import void RotatePosition(uint toDir, array<uint>& positionsDirs) from "worldmap";
+
+
+uint e_LateEnterFunc(array<uint>@ values)
+{
+    Critter@         leader = GetCritter(values[0]);
+    Map@             map = GetMap(values[1]);
+    array<Critter @> critters;
+    uint             critterCount = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+    ICaravan@        caravan = GetCaravan(leader);
+
+    int              spacing = 6;
+    int              position = POSITION_HUDDLE;
+
+    uint16           startX = leader.HexX;
+    uint16           startY = leader.HexY;
+
+    uint16[] pointX = { startX, startX };
+    uint16[] pointY = { startY, startY };
+
+    array<uint> positionDirs = PositionDirs[position];
+    int         steps = positionDirs[0];
+    uint        dirsCount = 0;
+
+    uint        freeDir = (leader.Dir + 3) % 6;
+    ;
+    if(freeDir != 0)
+        RotatePosition(freeDir, positionDirs);
+    uint reversDir = freeDir + 3;
+    if(reversDir > 5)
+        reversDir -= 6;
+
+    uint16 hx = pointX[0], hy = pointY[0];
+
+    MovePositionPoint(map, pointX[1], pointY[1], positionDirs, 1, 0, spacing);
+    uint16 startX2 = pointX[1];
+    uint16 startY2 = pointY[1];
+    // map.MoveHexByDir(pointX[0],pointY[0],freeDir,spacing);
+    // map.GetHexCoord(hx,hy,pointX[0],pointY[0],0.0f,0); // Check for barrier
+    // pointX[1]=pointX[0];
+    // pointY[1]=pointY[0];
+    // MovePositionPoint(map,pointX[1],pointY[1],positionDirs,1,0,spacing);
+
+    for(uint ik = 0; ik < 2; ik++)
+    {
+        pointX[0] = startX;
+        pointY[0] = startY;
+        pointX[1] = startX2;
+        pointY[1] = startY2;
+        dirsCount = 0;
+
+        uint16 oldPosX = startX, oldPosY = startY;
+        for(uint i = 0; i < critterCount; i++)
+        {
+            // if(critters[i].Id==leader.Id) continue;
+
+            // int position
+
+
+            if(caravan.IsCaravanMember(critters[i]))
+            {
+                // critters[i].ToDead(0, null);
+                uint16 posX, posY;
+
+
+                uint pathIndex = dirsCount % 2;
+                posX = pointX[pathIndex] + (position == 1 ? Random(-3, 0) : 0);
+                posY = pointY[pathIndex] + (position == 1 ? Random(-3, 0) : 0);
+                MovePositionPoint(map, pointX[pathIndex], pointY[pathIndex], positionDirs, pathIndex, dirsCount / 2 + pathIndex, spacing);
+                dirsCount++;
+
+                map.GetHexCoord(oldPosX, oldPosY, posX, posY, 0.0f, 0);    // Check for barrier
+                oldPosX = posX;
+                oldPosY = posY;
+                critters[i].TransitToHex(posX, posY, leader.Dir);
+                critters[i].SetHomePos(critters[i].HexX, critters[i].HexY, critters[i].Dir);
+                critters[i].Wait(2000);
+
+                for(uint j = 0; j < critterCount; j++)
+                {
+                    if(critters[j].CheckEnemyInStack(critters[i].Id))
+                    {
+                        if(critters[i].CheckEnemyInStack(critters[j].Id))
+                        {
+                            // Log(""+critters[i].Id+" already has "+critters[j].Id);
+                            continue;
+                        }
+                        // Log(""+critters[i].Id+" is adding "+critters[j].Id);
+                        if(caravan.IsCaravanMember(critters[i]))
+                        {
+                            AddAttackPlane(critters[i], Random(50, 70), critters[j]);
+                            critters[i].AddEnemyInStack(critters[j].Id);
+                        }
+
+                    }
+                    else if(critters[i].CheckEnemyInStack(critters[j].Id))
+                    {
+                        // Log(""+critters[i].Id+" already has "+critters[j].Id+" but the other doesn't");
+                    }
+                }
+            }
+
+            // Log("critters: " +critters[i].Id);
+        }
+    }
+    uint16 caravanX = leader.HexX;
+    uint16 caravanY = leader.HexY;
+    map.MoveHexByDir(caravanX, caravanY, freeDir, 10);
+    Item@  caravanCart;
+    if(map.CheckPlaceForItem(caravanX + (caravanX % 2), caravanY, 559))
+    {
+        @caravanCart = map.AddItem(caravanX + (caravanX % 2), caravanY, 559, 1);
+    }
+    else
+    {
+        for(uint i = 0; i < 6; i++)
+        {
+            uint16 origX = caravanX;
+            uint16 origY = caravanY;
+            map.MoveHexByDir(caravanX, caravanY, i, 5);
+            if(map.CheckPlaceForItem(caravanX + (caravanX % 2), caravanY, 559))
+            {
+                @caravanCart = map.AddItem(caravanX + (caravanX % 2), caravanY, 559, 1);
+                break;
+            }
+            caravanX = origX;
+            caravanY = origY;
+        }
+    }
+    if(valid(caravanCart))
+    {
+        caravanCart.Flags = 0x00003000;
+        Item@ bag = caravanCart.GetChild(0);
+        if(valid(bag))
+        {
+            DeleteItem(bag);
+            // bag.Flags=0x00003000;
+            // bag.Update();
+        }
+        caravanCart.Update();
+        leader.ParamBase[ST_VAR2] = caravanCart.Id;
+    }
+
+    return 0;
+}
+
+uint e_PrepareCaravan(array<uint>@ values)
+{
+    ICaravan@ caravan = mgr.GetCaravan(values[0]);
+    caravan.PrepareDeparture(values[1]);
+    return 0;
+}
+
+uint e_DepartCaravan(array<uint>@ values)
+{
+    ICaravan@ caravan = mgr.GetCaravan(values[0]);
+    caravan.Start();
+    return 0;
+}
+
+bool d_IsPreparing(Critter& player, Critter@ npc)
+{
+    ICaravan@ caravan = GetCaravan(npc);
+    return(caravan.GetState() == STATE_PREPARE);
+}
+
+bool d_IsNotPreparing(Critter& player, Critter@ npc)
+{
+    ICaravan@ caravan = GetCaravan(npc);
+    return !(caravan.GetState() == STATE_PREPARE);
+}
+
+void r_JoinCaravan(Critter& player, Critter@ npc)
+{
+    ICaravan@ caravan = GetCaravan(npc);
+    if(caravan.GetState() == STATE_PREPARE)
+    {
+        player.TransitToGlobalGroup(caravan.GetWMLeaderId());
+    }
+}
+
+void dlg_CaravanName(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    ICaravan@ caravan = GetCaravan(npc);
+    if(!valid(caravan))
+        return;
+    text += "$caravan" + caravan.GetName();
+}
+
+void dlg_CaravanTime(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    ICaravan@ caravan = GetCaravan(npc);
+    if(!valid(caravan))
+        return;
+    text += "$destination" + caravan.GetNextDestinationName();
+    uint   departTime = caravan.GetDepartTime();
+    uint16 year = 0;
+    uint16 month = 0;
+    uint16 dayOfWeek = 0;
+    uint16 day = 0;
+    uint16 hour = 0;
+    uint16 minute = 0;
+    uint16 second = 0;
+
+    GetGameTime(departTime, year, month, dayOfWeek, day, hour, minute, second);
+    text += "$time" + ("" + (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute);
+}
+
+void dlg_CaravanPayment(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    ICaravan@ caravan = GetCaravan(npc);
+    if(!valid(caravan))
+        return;
+    text += "$money" + ("" + caravan.GetActPay());
+}
+
+bool _LeaderMapEnter(Critter& leader, Map& map)
+{
+    return false;
+}
+
+import void MoveGlobalGroup(Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed) from "globalmap_group";
+bool        _GlobalProcessDriver(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{
+    if(type == GLOBAL_PROCESS_MOVE)       // have to duplicate it, it's both good and bad in some respects
+    {
+        // MoveGlobalGroup(cr,car,x,y,toX,toY,speed);
+        // return true;
+        return false;
+    }
+
+    if(type != GLOBAL_PROCESS_NPC_IDLE)
+        return true;
+
+    ICaravan@ caravan = GetCaravan(cr);
+
+    if(valid(caravan) && caravan.GetState() == STATE_RUNNING)
+    {
+        speed = 5.0f;
+        // Log(""+x+" "+toX+" / "+y+" "+toY);
+        caravan.GetCurrentCoords(toX, toY);
+
+        if(x == toX && y == toY)
+        {
+            // Log("are you fucking kidding");
+            if(caravan.EndOfTrack())
+            {
+                caravan.Arrive();
+                // ChangeTrainState(cr,STATE_WAITING);
+                // Log("arrived");
+                // CTrain@ train=Mgr.GetTrain(TrainId(cr));
+                // UnloadPassangers(cr);
+                // train.CheckArrival();
+            }
+            else
+            {
+                caravan.IncRoutePosition();
+                caravan.GetCurrentCoords(toX, toY);
+            }
+        }
+    }
+    return true;
+}

@@ -1,0 +1,100 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_se_truck.fos
+//
+
+// Truck (for now all truck/firetruck/police car/motorbike) Special Encounter
+
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+
+// Pid of car to spawn
+array<uint> carPids = { PID_TRUCK, PID_FIRETRUCK, PID_POLICE_CAR, PID_MOTORCYCLE };
+
+void warehouseInit(Map& map, bool firstTime)
+{
+    Map@ surface = map.GetLocation().GetMapByIndex(0);
+    surface.SetEvent(MAP_EVENT_OUT_CRITTER, "_OnOutCritter");
+    map.GetLocation().GetMapByIndex(1).SetEvent(MAP_EVENT_OUT_CRITTER, "_OnOutCritter");
+    map.GetLocation().GetMapByIndex(2).SetEvent(MAP_EVENT_OUT_CRITTER, "_OnOutCritter");
+
+    if(firstTime)
+    {
+        uint16 carX = 0, carY = 0;
+        surface.GetEntireCoords(100, 0, carX, carY);
+
+        Item@ car = surface.AddItem(carX, carY, carPids[Random(0, (carPids.length - 1))], 1);
+        car.Charge = Random(_CarGetFuelTank(car) / 4, _CarGetFuelTank(car) / 4 * 3);
+        car.Deterioration = Random(_CarGetMaxDeterioration(car) / 4, _CarGetMaxDeterioration(car) / 4 * 3);
+
+        int keyId = Random(10000, 50000);
+        car.LockerId = keyId;
+        car.Update();
+
+        Item@ trunk = car.GetChild(0);
+        if(valid(trunk))
+        {
+            trunk.LockerId = keyId;
+            trunk.LockerComplexity = Random(60, 120);
+            trunk.Update();
+        }
+
+        uint16 keyX = 0, keyY = 0;
+        map.GetEntireCoords(100, 0, keyX, keyY);
+        Item@  key = map.AddItem(keyX, keyY, PID_KEY, 1);
+        key.LockerId = keyId;
+        key.Update();
+    }
+}
+
+
+
+
+// Because location won't be deleted while a car is inside, when a player
+// leaves the location check if there is no other players left and if the only
+// car that is left in the location is the original truck, delete location.
+//
+void _OnOutCritter(Map& seMap, Critter& player)
+{
+    Location@ seLoc = seMap.GetLocation();
+
+    // To get rid of error if critter was kicked by someone deleting the location
+    //
+    if(seLoc.IsNotValid)
+        return;
+
+    Map@ map0 = seLoc.GetMapByIndex(0);
+    Map@ map1 = seLoc.GetMapByIndex(1);
+    Map@ map2 = seLoc.GetMapByIndex(2);
+
+    Map@ playerMap = player.GetMap();
+    if(valid(playerMap))
+    {
+        if(playerMap.GetLocation().Id == seLoc.Id)
+            return; // Player still is in the same location, abort
+    }
+
+    array<Critter@> players;
+    array<Item@>    cars;
+
+    uint            numPlayers =
+        map0.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, players) +
+        map1.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, players) +
+        map2.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, players);
+
+    if(numPlayers == 0 && map0.GetItemsByType(ITEM_TYPE_CAR, cars) == 1)
+    {
+        uint16 carX = 0, carY = 0;
+        map0.GetEntireCoords(100, 0, carX, carY);
+
+        if(cars[0].HexX == carX && cars[0].HexY == carY)
+        {
+            DeleteLocation(seLoc.Id);
+        }
+    }
+}

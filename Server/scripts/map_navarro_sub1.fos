@@ -1,0 +1,246 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_navarro_sub1.fos
+//
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "_maps.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+
+import bool LockerOpen(Item& item) from "lockers";
+import bool LockerClose(Item& item) from "lockers";
+
+#define DIALOG_ID                (1505) // we use 'nav_soldier' dialog here, it's default guard dialog/text
+
+#define DIALOG_LOCKED            (2)
+#define DIALOG_NOT_AUTHORIZED    (3)
+
+#define DOOR_CMD_X               (64)
+#define DOOR_CMD_Y               (86)
+
+#define DOOR_LAB_X               (92)
+#define DOOR_LAB_Y               (102)
+
+#define DOOR_LIFT_X              (58)
+#define DOOR_LIFT_Y              (95)
+
+#define LOCKER_X                 (55)
+#define LOCKER_Y                 (86)
+
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_ENCLAVE);
+    }
+
+    // better be sure to close the doors to war room
+    Item@ door1 = map.GetDoor(DOOR_CMD_X, DOOR_CMD_Y);
+    Item@ door2 = map.GetDoor(DOOR_LAB_X, DOOR_LAB_Y);
+    Item@ door3 = map.GetDoor(DOOR_LIFT_X, DOOR_LIFT_Y);
+    if(!valid(door1) || !valid(door2) || !valid(door3))
+    {
+        Log("Couldn't get the doors to cloose");
+        return;
+    }
+    // close the doors if needed
+    if(_LockerIsOpen(door1))
+        LockerClose(door1);
+    if(_LockerIsOpen(door2))
+        LockerClose(door2);
+    if(_LockerIsOpen(door3))
+        LockerClose(door3);
+}
+
+
+//
+// Using doors for important members
+//
+void item_init(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+
+// Opening doors
+bool _UseSkill(Item& item, Critter& crit, int skill)
+{
+    if(item.GetProtoId() == 188)
+        return false;                                   // locker can be opened and examined
+    // opening / closing
+    if((skill == -1) && crit.IsPlayer())
+    {
+        if(_LockerIsClose(item))
+        {
+            /*
+               if(can_open)	// open
+               {
+                    LockerOpen(item);
+                    return true;
+               }
+               else
+             */
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_ID, DIALOG_LOCKED));
+            return true;                // dors can be opened via retinal scanner only
+        }
+        else if(_LockerIsOpen(item))
+        {
+            // i guess everyone should be able to close them
+            LockerClose(item);
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+
+//
+// Functions for retina scanner in Navarro
+//
+// This one opens Commander's room doors
+bool s_RetinaScannerCmd(Critter& cr, Scenery& scanner, int skill, Item@ item)
+{
+
+    if(!cr.IsPlayer())
+        return false;
+
+    // check the player's faction and rank(only rank4 allowed)
+    if(GetGroupIndex(cr) != FACTION_ENCLAVE ||
+       GetPlayerRank(cr.Id) < RANK_IMPORTANT)
+    {
+        // not authorized
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_ID, DIALOG_NOT_AUTHORIZED));
+        return false;
+    }
+
+    // open the door
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    // Get the doors
+    Item@ door1 = map.GetDoor(DOOR_CMD_X, DOOR_CMD_Y);
+    if(!valid(door1))
+    {
+        Log("Couldn't get the doors to open");
+        return false;
+    }
+
+    // open the doors if needed
+    if(_LockerIsClose(door1))
+        LockerOpen(door1);
+
+    // add event that will close them after some time
+    CreateTimeEvent(AFTER(REAL_SECOND(10)), "lockers@e_CloseDoor", door1.Id, false);
+    return true;
+}
+
+// This one is for the Research Lab doors
+bool s_RetinaScannerLab(Critter& cr, Scenery& scanner, int skill, Item@ item)
+{
+    if(!cr.IsPlayer())
+        return false;
+
+    if(GetGroupIndex(cr) != FACTION_ENCLAVE ||
+       GetPlayerRank(cr.Id) < RANK_IMPORTANT)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_ID, DIALOG_NOT_AUTHORIZED));
+        return false;
+    }
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    Item@ door2 = map.GetDoor(DOOR_LAB_X, DOOR_LAB_Y);
+    if(!valid(door2))
+    {
+        Log("Couldn't get the doors to open");
+        return false;
+    }
+
+    if(_LockerIsClose(door2))
+        LockerOpen(door2);
+
+    CreateTimeEvent(AFTER(REAL_SECOND(10)), "lockers@e_CloseDoor", door2.Id, false);
+    return true;
+}
+
+// This one is for the Lift doors
+bool s_RetinaScannerLift(Critter& cr, Scenery& scanner, int skill, Item@ item)
+{
+    if(!cr.IsPlayer())
+        return false;
+
+    if(GetGroupIndex(cr) != FACTION_ENCLAVE ||
+       GetPlayerRank(cr.Id) < RANK_IMPORTANT)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(DIALOG_ID, DIALOG_NOT_AUTHORIZED));
+        return false;
+    }
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    Item@ door3 = map.GetDoor(DOOR_LIFT_X, DOOR_LIFT_Y);
+    if(!valid(door3))
+    {
+        Log("Couldn't get the doors to open");
+        return false;
+    }
+
+    if(_LockerIsClose(door3))
+        LockerOpen(door3);
+
+    CreateTimeEvent(AFTER(REAL_SECOND(10)), "lockers@e_CloseDoor", door3.Id, false);
+    return true;
+}
+
+
+//
+//              Triggers
+//
+// Area not allowed for low ranks ( < 4 )
+void t_NotAllowed(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(GetGroupIndex(critter) == FACTION_ENCLAVE && GetPlayerRank(critter.Id) > RANK_TRUSTED)           // important member
+        return;
+    else
+        critter.SendMessage(MSG_NAV_AREA_NOT_ALLOWED, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+//
+// Locker - it gets filled with SEC/MFC from the new members, located in the Commander's Room
+//
+void r_LockerMfc(Critter& player, Critter@ npc, int value)
+{
+    // Map@ map = player.GetMap();
+    Location@ loc = GetLocation(LOCATION_Navarro);
+    Map@      map = loc.GetMapByIndex(1);       // Navarro sublevel
+    Item@     locker = map.GetItem(LOCKER_X, LOCKER_Y, PID_LOCKER_CLEAN_RIGHT);
+
+    locker.AddItem(PID_MICRO_FUSION_CELL, 60, 0);
+}
+
+void r_LockerSec(Critter& player, Critter@ npc, int value)
+{
+    // Map@ map = player.GetMap();
+    Location@ loc = GetLocation(LOCATION_Navarro);
+    Map@      map = loc.GetMapByIndex(1);       // Navarro sublevel
+    Item@     locker = map.GetItem(LOCKER_X, LOCKER_Y, PID_LOCKER_CLEAN_RIGHT);
+
+    locker.AddItem(PID_SMALL_ENERGY_CELL, 50, 0);
+}

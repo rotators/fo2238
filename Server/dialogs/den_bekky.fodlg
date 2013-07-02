@@ -1,0 +1,144 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+19 1010 D _param p KARMA_SLAVER > 0 #
+20 1020 D _param p ST_CHARISMA > 99 #
+2 1030 D _var n name_mem_npc_player = 0 R _var p q_den_becky_table = 0 R _var n name_mem_npc_player = 1 #
+3 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+5 2010 #
+9 2020 D _var p q_den_becky_table = 0 #
+0 2030 @
+3 3000 None 0 #
+5 3010 #
+9 3020 D _var p q_den_becky_table = 0 #
+13 3030 D _var p q_den_becky_table = 2 R _param p ST_EXPERIENCE + 300 R _var p q_den_becky_table = 5 R _script dialog@r_AddMoney 1 200 #
+14 3040 D _var p q_den_becky_table = 3 R _var p q_den_becky_table = 4 #
+15 3050 D _var p q_den_becky_table = 3 D _var p q_den_becky_clubs = 0 #
+17 3060 D _var p q_den_becky_clubs = 2 R _param p ST_EXPERIENCE + 300 R _var p q_den_becky_clubs = 4 R _script dialog@r_AddMoney 1 50 #
+18 3070 D _var p q_den_becky_clubs = 3 R _var p q_den_becky_clubs = 4 R _param p ST_EXPERIENCE + 150 #
+0 3080 @
+5 4000 None 0 #
+8 4010 D _item p PID_BOTTLE_CAPS > 4 R _item p PID_BOOZE + 1 R _script dialog@r_RemoveMoney 1 5 #
+7 4020 #
+6 4030 #
+10 4040 D _item p PID_BOTTLE_CAPS < 5 #
+0 4050 @
+6 5000 None 0 #
+5 5010 #
+11 5020 #
+0 5030 @
+7 6000 None 0 #
+5 6010 D _item p PID_BOTTLE_CAPS > 4 #
+11 6020 #
+0 6030 @
+8 7000 None 0 #
+11 7010 #
+0 7020 @
+9 8000 None 0 #
+11 8010 #
+12 8020 R _var p q_den_becky_table = 1 #
+0 8030 @
+10 9000 None 0 #
+11 9010 #
+0 9020 @
+12 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+7 11010 #
+5 11020 #
+0 11030 @
+13 12000 None 0 #
+11 12010 #
+0 12020 @
+14 13000 None 0 #
+11 13010 #
+0 13020 @
+15 14000 None 0 #
+0 14010 R _var p q_den_becky_clubs = 1 #
+11 14020 #
+0 14030 @
+17 15000 None 0 #
+0 15010 @
+18 16000 None 0 #
+11 16010 #
+0 16020 @
+19 17000 None 0 @
+20 18000 None 0 &
+
+[engl]
+{100}{}{Becky}
+{200}{}{You see a very attractive young lady.}
+{210}{}{You see Rebecca.}
+{1000}{}{Predialogue installations}
+{1010}{}{Slaver}
+{1020}{}{Ugly}
+{1030}{}{ia ciaeii}
+{1040}{}{ciaeii}
+{2000}{}{Hi there, I'm Rebecca. Can I get you something to drink? I'm sure you're thirsty after your trip through the wastes.}
+{2010}{}{I need a drink.}
+{2020}{}{Do you have any work?}
+{2030}{}{Nothing. Bye.}
+{3000}{}{Hi! Glad you came back. Any questions or are you here for some fine whiskey?@@Really glad to see you. What's up? Need something?@@Hope everything's going well for my favorite customer! What can we do for you today?@@Hello!@@Always nice to see you again.@@Hi! You care for a drink? Finest whiskey in the land!@@Hi there!@@It's you! I thought so. How about a drink, my honey?@@You back for some of Rebecca's great entertainment or the world famous whiskey?@@Welcome back to Rebecca's Bar and Casino. How can I help you?@@Hello. How can we help you?@@Something for you today? How about a drink?@@Would you care for a drink today, or perhaps something else?@@How can I be of service?@@Greetings. What can we get you?@@Need something?@@Nice to see you again. How can I help you today?}
+{3010}{}{I need a drink.}
+{3020}{}{Do you have any work?}
+{3030}{}{I took a look at your table, it seems to be working okay now.}
+{3040}{}{Sorry, took a look at your table. Couldn't quite, uh... fix it properly. You might want to get someone else to take a look it.}
+{3050}{}{Got any more work for me?}
+{3060}{}{I spoke to Tubby, he'll give you the clubs for $30 each.}
+{3070}{}{I spoke to Tubby, he'll give you the clubs for $50 each.}
+{3080}{}{Nothing, bye.}
+{4000}{}{Whiskey is my specialty. It's almost a tradition in the Dyer family. I charge the low, low price of only $5.@@Drinks are still $5, and the Dyer family makes the best darn drinks in the whole world.}
+{4010}{}{I'll take a drink.}
+{4020}{}{Why are your drinks so cheap?}
+{4030}{}{Dyer?}
+{4040}{}{I'm a little short on cash. How about one on the house?}
+{4050}{}{Bye.}
+{5000}{}{Oh, that's the family name. The name Dyer has been in the bar business for a long time - prewar times, of course.@@As I said, it's my family name. There used to be Dyer pubs, saloons or something, all over the world.}
+{5010}{}{I'll take a drink.}
+{5020}{}{Can I ask another question?}
+{5030}{}{Bye.}
+{6000}{}{Sorry, it's a trade secret. Plus, I don't really know you that well. I wouldn't want Frankie finding out. He's enough trouble as it is.  Did you still want one? They really hit the spot.}
+{6010}{}{Sure. I'll have one.}
+{6020}{}{Can I ask another question?}
+{6030}{}{Okay, thanks.}
+{7000}{}{There you are. Thank you very much.}
+{7010}{}{Thanks. Can I ask you a question?}
+{7020}{}{Okay, thanks.}
+{8000}{}{You are any good with your hands? One of my roulette tables ain't sitting right, the ball just don't stop moving. Folks are getting pretty riled and there's only so much free drinks calm them down.}
+{8010}{}{Maybe later. I need something else though.}
+{8020}{}{Mind if I take a look at it?}
+{8030}{}{I'll pass, goodbye.}
+{9000}{}{Sorry, I can't run a bar like that.}
+{9010}{}{Worth a try. Could I ask you a question?}
+{9020}{}{Too bad. Bye.}
+{10000}{}{Not at all, give it your best shot.}
+{10010}{}{Thanks, bye.}
+{11000}{}{I'll help if I can.@@Of course, don't be silly.@@Anything. Now what was it?@@I'll do my best to help you out. What did you need to know?@@Ask away.}
+{11010}{}{Why are your drinks so cheap?}
+{11020}{}{I need a drink.}
+{11030}{}{Bye.}
+{12000}{}{Thanks, looks like you did a good job. Here's $200, drop by anytime.}
+{12010}{}{You're welcome. Could I ask you something, though?}
+{12020}{}{All in a day's work. See you later.}
+{13000}{}{You idiot, you made it worse! I.. sorry, it's just costing me a lot of money. I'll get someone else to take a look at it.}
+{13010}{}{Good luck. Could I ask you something?}
+{13020}{}{Well, good luck. Bye.}
+{14000}{}{Well, my guards need a couple new clubs. Things have been getting rougher and I want to make sure they can handle it. Go see if you can haggle with Tubby for them. I reckon five ought to do it. Don't buy anything, just ask what he's gonna charge me.}
+{14010}{}{No problem, I'll go ask him right now.}
+{14020}{}{Maybe later. I need something else right now.}
+{14030}{}{Sorry, I don't have the time. Bye.}
+{15000}{}{Good work, I'll pick them up later. Here is $50 for your trouble.}
+{15010}{}{Thanks. }
+{16000}{}{Damn it! I send business his way all the time, and that's the best he can do? Alright, thanks anyway. You did your best.}
+{16010}{}{Sorry about that, could I maybe ask you something?}
+{16020}{}{I did what I could, sorry. Bye.}
+{17000}{}{I think you're in the wrong bar.@@Try the Hole.@@You know the 'arrangement'.@@Back to East Side!@@No drinks today.}
+{18000}{}{I think you're in the wrong bar.@@Try the Hole.@@No drinks today.@@Sorry, not interested.}
+

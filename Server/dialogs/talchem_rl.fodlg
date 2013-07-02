@@ -1,0 +1,54 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p talchem_rl = 0 #
+3 1020 D _var p talchem_rl = 1 @
+2 2000 None 0 #
+0 2010 D _var p talchem_rl = 0 R _script talchem@r_HackDoorOpen 1 21 #
+0 2020 @
+3 3000 None 0 #
+5 3010 #
+0 3020 @
+5 4000 None 0 #
+0 4010 #
+7 4020 D _param p SK_SCIENCE } 200 #
+9 4030 D _param p SK_SCIENCE < 200 @
+7 5000 None 0 #
+2 5010 R _var p talchem_rl = 0 @
+9 6000 None 0 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{ }
+{1020}{}{ }
+{2000}{}{Talchem Rad-labs access terminal
+!!!warning radiation leak detected!!!
+!!!warning biological alert!!!
+!!!warning entire area  quarantine lockdown!!!
+}
+{2010}{}{open Rad-labs access door}
+{2020}{}{exit}
+{3000}{}{Talchem Rad-labs access terminal
+!!!warning radiation leak detected!!!
+!!!warning biological alert!!!
+!!!warning entire area  quarantine lockdown!!!
+!!!warning local  quarantine lockdown!!!}
+{3010}{}{open Rad-labs access door}
+{3020}{}{exit}
+{4000}{}{Cannot execute
+Rad-labs local quarantine lockdown in effect}
+{4010}{}{exit}
+{4020}{}{Attempt to hack intoRad-labs security control}
+{4030}{}{Attempt to hack intoRad-labs security control}
+{5000}{}{Rad-labs security control
+status: Rad-labs under local quarantine lockdown.}
+{5010}{}{shut down Rad-labs quarantine}
+{6000}{}{Unauthorized access.}
+

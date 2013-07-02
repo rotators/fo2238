@@ -1,0 +1,50 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+10 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var p name_mem_npc_player = 0 D _param p ST_INTELLECT > 3 R _var p name_mem_npc_player + 1 #
+4 1030 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 D _var p q_la_library_book = 2 R _var p q_la_library_book = 3 R _item p PID_DEANS_ELECTRONICS - 1 R _param p ST_EXPERIENCE + 50 R _param p REPUTATION_FOLLOWERS + 5 #
+500 2020 D _script perks@d_PerkCheck 1 319 R _param p PE_EDUCATED = 1 #
+0 2030 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+3 4010 D _var p q_la_library_book = 2 R _var p q_la_library_book = 3 R _param p ST_EXPERIENCE + 50 R _param p REPUTATION_FOLLOWERS + 5 R _item p PID_DEANS_ELECTRONICS - 1 #
+500 4020 D _script perks@d_PerkCheck 1 319 R _param p PE_EDUCATED = 1 #
+0 4030 @
+10 5000 None 0 @
+500 6000 None 0 #
+501 6010 @
+501 7000 None 0 &
+
+[engl]
+{100}{}{Therese}
+{200}{}{A Follower of the Apocalypse.}
+{210}{}{You see Therese, a studious Follower of the Apocalypse.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{normal}
+{1030}{}{talked to}
+{2000}{}{Hello, I am Therese! What can I do for you?}
+{2010}{}{Veronica gave me this book for you.}
+{2020}{}{Could you show me around the library a bit? I'm interested in all that knowledge sitting on the shelves right next to me. [Educated]}
+{2030}{}{Nothing. Goodbye.}
+{3000}{}{Thank you. I have been waiting for it already since some time. [She takes the book.]}
+{3010}{}{No problem, bye.}
+{4000}{}{Hello, again! What can I do for you?}
+{4010}{}{Veronica gave me this book for you.}
+{4020}{}{Could you show me around the library a bit? I'm interested in all that knowledge sitting on the shelves right next to me. [Educated]}
+{4030}{}{Nothing. Goodbye.}
+{5000}{}{Oh, poor dumb bastard. Too bad I can't help you. May you find your peace someplace else.}
+{6000}{}{Why not? But you have to promise me to return them to their proper sections and *undamaged*. Now, let's take a tour... [The tour takes a while. After that, you decide to read some of the finest written works ever. In the end, you come back to Therese.]}
+{6010}{}{I just wanted to thank you for the opportunity to use the books in this library. Bye, Therese!}
+{7000}{}{You're welcome. Have a nice day, wanderer.}
+

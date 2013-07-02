@@ -1,0 +1,666 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_player.fos
+//
+
+#ifndef __FACTIONS_PLAYER__
+#define __FACTIONS_PLAYER__
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "economy_h.fos"
+#include "factions_h.fos"
+#include "factions_player_h.fos"
+#include "mapdata_h.fos"
+#include "factions_bases_h.fos"
+#include "follower_h.fos"
+#include "follower_common_h.fos"
+#include "debug_h.fos"
+
+import void MoveCars(Map&, Map&) from "car";
+
+#define LOCATION_PID                      # (cr)              (cr.StatBase[ST_VAR1])
+#define COST                              # (cr)                                              (cr.StatBase[ST_VAR2])
+
+#define FORCE_DIALOG_BASE                 (4)
+#define FORCE_DIALOG_INVALID_NAME         (5)
+#define FORCE_DIALOG_DONE                 (8)
+#define FORCE_DIALOG_ALREADY_EXISTS       (9)
+#define FORCE_DIALOG_MAXLIMIT             (10)
+#define FORCE_DIALOG_EXCEPTION            (11)
+#define FORCE_DIALOG_NOMONEY              (12)
+#define FORCE_DIALOG_WRONG_MAP            (8)
+#define FORCE_DIALOG_BUILDER_EXCEPTION    (7)
+
+// buffer to keep the names given player chosen, entry erased when faction is created
+// just before first-base creation
+dictionary EnteredNames;
+
+uint ChooseLocation(Critter& player, Critter@ npc, int value)
+{
+    LOCATION_PID(player) = value;
+
+    // if player already in faction, go to final node
+    if(player.Stat[ST_TEAM_ID] != FACTION_NONE && player.Stat[ST_TEAM_ID] != FACTION_UNKNOWN)
+        return FORCE_DIALOG_BASE;
+    else     // otherwise, we still need to ask for faction name
+        return 0;
+}
+uint r_ChooseCave(Critter& player, Critter@ npc)
+{
+    COST(player) = CAVE_COST;
+    return ChooseLocation(player, npc, LOCATION_CAVE);
+}
+uint r_ChooseCave2(Critter& player, Critter@ npc)
+{
+    COST(player) = CAVE2_COST;
+    return ChooseLocation(player, npc, LOCATION_CAVE2);
+}
+
+uint r_ChooseCamp(Critter& player, Critter@ npc)
+{
+    COST(player) = CAMP_COST;
+    return ChooseLocation(player, npc, LOCATION_CAMP);
+}
+uint r_ChooseTents(Critter& player, Critter@ npc)
+{
+    COST(player) = TENTS_COST;
+    return ChooseLocation(player, npc, LOCATION_TENTS);
+}
+uint r_ChooseDepot(Critter& player, Critter@ npc)
+{
+    COST(player) = DEPOT_COST;
+    return ChooseLocation(player, npc, LOCATION_DEPOT);
+}
+uint r_ChooseScrapheap(Critter& player, Critter@ npc)
+{
+    COST(player) = SCRAPHEAP_COST;
+    return ChooseLocation(player, npc, LOCATION_SCRAPHEAP);
+}
+uint r_ChooseGasStation(Critter& player, Critter@ npc)
+{
+    COST(player) = GASSTATION_COST;
+    return ChooseLocation(player, npc, LOCATION_GASSTATION);
+}
+uint r_ChooseBunker(Critter& player, Critter@ npc)
+{
+    COST(player) = BUNKER_COST;
+    return ChooseLocation(player, npc, LOCATION_BUNKER);
+}
+
+bool d_HasMoneyForCave(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= CAVE_COST;
+}
+bool d_HasMoneyForCave2(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= CAVE2_COST;
+}
+bool d_HasMoneyForTents(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= TENTS_COST;
+}
+bool d_HasMoneyForCamp(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= CAMP_COST;
+}
+bool d_HasMoneyForDepot(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= DEPOT_COST;
+}
+bool d_HasMoneyForGasStation(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= GASSTATION_COST;
+}
+bool d_HasMoneyForScrapheap(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= SCRAPHEAP_COST;
+}
+bool d_HasMoneyForBunker(Critter& player, Critter@)
+{
+    return player.CountItem(PID_BOTTLE_CAPS) >= BUNKER_COST;
+}
+
+uint r_Blades(Critter& player, Critter@ npc, int value)
+{
+    // LOCATION_PID = LOCATION_BLADES;
+    return FORCE_DIALOG_EXCEPTION;
+}
+
+void RemoveMoneyForBase(Critter& player)
+{
+    BanksTransferFromCritter(player, COST(player), TRANSACTION_BASE, false);
+}
+
+void addmember(Critter& cr, int id, int, int)
+{
+    AddMember(id, cr.Id);
+}
+
+void registerfaction(Critter& cr, int num, int, int)
+{
+    string name = "";
+    if(num == 0)
+        name = "The Critical Failure Gang";
+    else if(num == 1)
+        name = "The Vipers";
+    else
+        name = "The Rippers";
+
+    uint id;
+    if(RegisterFaction(name, true, id) == REGRESULT_SUCCESS)
+    {
+        AddMember(id, cr.Id);
+        cr.Say(SAY_NETMSG, "Faction created and joined.");
+    }
+    else
+        cr.Say(SAY_NETMSG, "Error.");
+}
+
+/**
+ * We need to cleanup entered names when player ends talking with baseseller
+ * and have not finished faction creation process
+ */
+bool _Talk(Critter& cr, Critter& talkCr, bool attach, uint talkCount)
+{
+    Log("Talk");
+    if(!attach)
+    {
+        if(EnteredNames.exists(talkCr.Name))
+        {
+            EnteredNames.delete(talkCr.Name);
+        }
+    }
+    return true;
+}
+void _BaseSeller(Critter& cr, bool)
+{
+    cr.SetEvent(CRITTER_EVENT_TALK, "_Talk");
+}
+uint dlg_EnterNameOfFaction(Critter& player, Critter@ npc, string@ say)
+{
+    if(!IS_DIALOG_SAY_MODE(say))
+        return 0;
+
+    if(GetGroupIndex(player) > FACTION_NONE)
+        return FORCE_DIALOG_EXCEPTION;
+    // check availability
+    if(!IsFactionNameValid(say))
+        return FORCE_DIALOG_INVALID_NAME;
+    // TODO: we could use dictionary::values here...
+    array<string@> keys;
+    for(uint i = 0, j = EnteredNames.keys(keys); i < j; i++)
+    {
+        string name;
+        if(EnteredNames.get(keys[i], name))
+            if(name == say)
+                return FORCE_DIALOG_ALREADY_EXISTS;
+    }
+    if(!IsFactionNameFree(say))
+        return FORCE_DIALOG_ALREADY_EXISTS;
+
+    EnteredNames.set(player.Name, say);
+
+    return FORCE_DIALOG_BASE;
+}
+
+uint CreateFaction(Critter& player)
+{
+    string name;
+    if(!EnteredNames.get(player.Name, name))
+        return FORCE_DIALOG_EXCEPTION;
+    else
+        EnteredNames.delete(player.Name);
+
+    uint factionid = 0;
+    uint result = RegisterFaction(name, true, factionid);
+
+    if(result == REGRESULT_ALREADY_TAKEN)
+    {
+        Log("Faction already taken");
+        return FORCE_DIALOG_ALREADY_EXISTS;
+    }
+    if(result == REGRESULT_WRONG_NAME)
+    {
+        Log("Wrong faction name entered");
+        return FORCE_DIALOG_INVALID_NAME;
+    }
+    if(result == REGRESULT_MAXLIMIT)
+    {
+        Log("Maximum number of factions already registered");
+        return FORCE_DIALOG_MAXLIMIT;
+    }
+    if(result == REGRESULT_EXCEPTION)
+    {
+        Log("Unknown exception occured when registering faction");
+        return FORCE_DIALOG_EXCEPTION;
+    }
+
+    DLog("Adding leader");
+    AddMember(factionid, player.Id);
+    ChangeRank(factionid, player.Id, RANK_LEADER);
+    // add news
+    AddFactionNews(factionid, player.Id, 0, NEWS_LEADER);
+
+    array<Critter@> followers;
+    uint            number = player.GetFollowGroup(FIND_ALL, followers);
+    array<Critter@> members;
+    members.insertLast(player);
+
+    for(uint i = 0; i < followers.length(); i++)
+    {
+        if(GetGroupIndex(followers[i]) == FACTION_NONE)
+        {
+            members.insertLast(followers[i]);
+            DLog("Adding member");
+            AddMember(factionid, followers[i].Id);
+            // add news
+            AddFactionNews(factionid, followers[i].Id, 0, NEWS_JOINED);
+        }
+        else
+        {
+            Log("Player with id " + followers[i].Id + " is already a member of another faction. He will not be able to join this one.");
+        }
+    }
+
+    Log("Faction with id " + factionid + " created successfully.");
+    return 0;
+}
+uint dlg_CreateFactionBase(Critter& player, Critter@ npc, string@ say)
+{
+    if(!IS_DIALOG_SAY_MODE(say))
+        return 0;
+    uint fid = player.Stat[ST_TEAM_ID];
+    if(player.CountItem(PID_BOTTLE_CAPS) < uint(COST(player)))
+        return FORCE_DIALOG_NOMONEY;
+    // first, check if we need to create faction as well
+    if(fid == FACTION_NONE)
+    {
+        uint res = CreateFaction(player);
+        if(res != 0)
+            return res;                  // bypass dialog flow
+    }
+    if(valid(GetFactionBase(fid, say)))
+    {
+        player.Say(SAY_DIALOG, "Hideout with given name exists, give new one");
+        return 0;
+    }
+    uint x = 0;
+    uint y = 0;
+    uint currentlocation = player.GetMap().GetProtoId();
+
+    if(currentlocation == MAP_KlamathDowntown)
+    {
+        x = Random(163, 676);
+        y = Random(9, 604);
+    }
+    else if(currentlocation == MAP_Redding)
+    {
+        x = Random(690, 1563);
+        y = Random(284, 797);
+    }
+    else if(currentlocation == MAP_Junktown)
+    {
+        x = Random(1323, 1968);
+        y = Random(1179, 1940);
+    }
+    else if(currentlocation == MAP_NecropolisPump)
+    {
+        x = Random(1878, 1738);
+        y = Random(2078, 2498);
+    }
+    array<Critter@> players;
+    players.insertLast(player);
+
+    uint locId = CreateLocation(LOCATION_PID(player), x, y, players);
+
+    if(locId != 0)
+        Log("Player location created with the id " + locId);
+
+    Location@ loc = GetLocation(locId);
+
+    FLog(LOG_WMLOCATIONS, "BASE " + loc.Id + " " + loc.GetProtoId() + " " + loc.WorldX + " " + loc.WorldY);
+
+    loc.Color = 0x307CFF22; // Blue
+    loc.Update();
+
+    array<Map@> maps;
+    loc.GetMaps(maps);
+    for(uint i = 0; i < maps.length(); i++)
+    {
+        maps[i].SetData(MAP_DATA_FACTION, fid);
+        if(!maps[i].SetScript("map_playerfaction_hq@map_init"))
+        {
+            Log("ERR: Couldn't assign map script for player faction hq map");
+            return FORCE_DIALOG_EXCEPTION;
+        }
+    }
+
+    if(!AddFactionBase(CreateFactionBase(player.Stat[ST_TEAM_ID], say, locId)))
+        return FORCE_DIALOG_EXCEPTION;
+    RemoveMoneyForBase(player);
+    return FORCE_DIALOG_DONE;
+}
+
+bool d_HasRequiredFollowers(Critter& player, Critter@ npc, int num)
+{
+    #ifdef __DEBUG__
+    return true;
+    #endif
+    #ifndef __DEBUG__
+    int             nearmembers = 0;
+
+    array<Critter@> crits;
+    uint            number = player.GetFollowGroup(FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+    for(uint i = 0; i < number; i++)
+    {
+        if(GetCrittersDistantion(player, crits[i]) < 8 && crits[i].Stat[ST_TEAM_ID] == FACTION_NONE)
+            nearmembers++;
+    }
+
+    return(nearmembers >= num);
+    #endif
+}
+bool d_HasNotRequiredFollowers(Critter& player, Critter@ npc, int num)
+{
+    return !d_HasRequiredFollowers(player, npc, num);
+}
+////////////////////
+// OUTDOORSMAN
+///////////////////
+
+//
+// Checks if player is in faction base area, and produces encounter when requirements are met
+//
+bool FindBaseEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& encounterDescriptor, bool& waitForAnswer)
+{
+    encounterDescriptor = 0;
+    waitForAnswer = false;
+
+    if(!valid(group) || group.length() == 0)
+    {
+        Log("Invalid critters argument.");
+        return false;
+    }
+
+    uint faction = CheckFactionBaseCoords(x, y);
+
+    if(faction != 0)
+        return false;
+
+    Critter@ leader = group[0];
+
+    leader.Say(SAY_NETMSG, "In faction base area");
+
+    // Check chance
+    uint chance = 100;
+
+    if(uint(Random(1, 100)) > chance)
+        return false;
+
+    // CFoundedEncounter@ fe=CreateFoundedEncounter(x,y,enc,zone.Table.LocationPids,leader.Id,group.length()>1);
+    // if(not valid(fe)) return;
+
+    // leader.SayMsg(SAY_ENCOUNTER_QUESTION,TEXTMSG_GM,feAlready.OwnerGroup?STR_QUESTION_ONLY_PLAYERS:STR_QUESTION_ONLY_PLAYER,
+    //	"$player"+GetSafePlayerName(feAlready.OwnerId));
+
+    // leader.Say(SAY_ENCOUNTER_QUESTION, "Do you wish to encounter gang hideout?");
+    waitForAnswer = true;
+
+    for(uint i = 0, j = group.length(); i < j; i++)
+        group[i].Say(SAY_FLASH_WINDOW, "");
+    encounterDescriptor = 2500;
+    return true;
+}
+
+////////////////////////
+// Base building
+////////////////////////
+
+const array<int> Requirements =
+{
+    LOCATION_DEPOT, PID_FIREWOOD, 1000, PID_PUMP_PARTS, 500, PID_METAL_PARTS, 15, PID_ELECTRONIC_PARTS, 10, -1,
+    LOCATION_TENTS, PID_BRAHMIN_HIDE, 50, PID_FIREWOOD, 30, PID_METAL_PARTS, 15, PID_ELECTRONIC_PARTS, 10, -1,
+    LOCATION_SCRAPHEAP, PID_PUMP_PARTS, 2000, PID_METAL_PARTS, 100, PID_ELECTRONIC_PARTS, 10, -1,
+    LOCATION_CAMP, PID_FIREWOOD, 500, PID_PUMP_PARTS, 1750, PID_METAL_PARTS, 15, PID_ELECTRONIC_PARTS, 10, -1,
+};
+
+/**
+ * Shows the info with amounts of resources that are gathered on the map
+ * and the required amounts
+ */
+bool s_ProgressInfo(Critter& player, Scenery&, int skill, Item@)
+{
+    if(skill != -1)
+        return false;
+    array<int> info;
+    CalcRequirements(player.GetMap(), info);
+    player.RunClientScript("_ShowBaseConstructionProgress", 0, 0, 0, null, info);
+    return true;
+}
+bool CalcRequirements(Map& map, array<int>& info)
+{
+    int basetype = GetRootMapData(map, MAP_DATA_SITE_BASETYPE);
+
+    int idx = -1;
+    for(int i = 0, j = Requirements.length(); i < j; i++)
+    {
+        if(i > 0 && Requirements[i - 1] != -1)
+            continue;
+        if(Requirements[i] == basetype)
+        {
+            idx = i;
+            break;
+        }
+    }
+    if(idx == -1)
+    {
+        Log("Wrong base type: " + basetype);
+        return false;
+    }
+    bool ret = true;
+    for(int i = idx + 1, j = Requirements.length(); i < j; i += 2)
+    {
+        if(Requirements[i] == -1)
+            break;
+        info.insertLast(Requirements[i]);
+        array<Item@> resources;
+        uint         count = 0;
+        for(uint r = 0; r < map.GetItems(uint16(Requirements[i]), resources); r++)
+            count += resources[r].GetCount();
+        if(int(count) < Requirements[i + 1])
+            ret = false;
+        info.insertLast(count);
+        info.insertLast(Requirements[i + 1]);
+    }
+    return ret;
+}
+
+void CreateBuilder(Critter& player, int base)
+{
+    Map@     map = player.GetMap();
+    Critter@ builder = AddNpc(map, 449, player.HexX, player.HexY, Random(0, 5), 0, "", 0, 0, 0, false, 10);
+    MakeFollower(builder, FOLLOWER_TYPE_MERC_HUMAN_UNARMED, "", DIALOG_all_base_builder, player, false);
+    builder.FollowerVarBase[FV_ATTACK_POLICY] = ATTACKPOLICY_FLEE;
+    builder.FollowerVarBase[FV_MODE] = FOLLOWMODE_FOLLOW;
+    GameVar@ var = GetLocalVar(LVAR_base_buildsite, builder.Id);
+    var = base;
+}
+
+uint r_SiteDepot(Critter& player, Critter@, int cost)
+{
+    if(player.CountItem(PID_BOTTLE_CAPS) < uint(cost))
+        return FORCE_DIALOG_NOMONEY;
+    if(player.Stat[ST_TEAM_ID] == FACTION_NONE)
+    {
+        uint res = CreateFaction(player);
+        if(res != 0)
+            return res;
+    }
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    CreateBuilder(player, LOCATION_DEPOT);
+    return 0;
+}
+uint r_SiteScrapheap(Critter& player, Critter@, int cost)
+{
+    if(player.CountItem(PID_BOTTLE_CAPS) < uint(cost))
+        return FORCE_DIALOG_NOMONEY;
+    if(player.Stat[ST_TEAM_ID] == FACTION_NONE)
+    {
+        uint res = CreateFaction(player);
+        if(res != 0)
+            return res;
+    }
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    CreateBuilder(player, LOCATION_SCRAPHEAP);
+    return 0;
+}
+uint r_SiteCamp(Critter& player, Critter@, int cost)
+{
+    if(player.CountItem(PID_BOTTLE_CAPS) < uint(cost))
+        return FORCE_DIALOG_NOMONEY;
+    if(player.Stat[ST_TEAM_ID] == FACTION_NONE)
+    {
+        uint res = CreateFaction(player);
+        if(res != 0)
+            return res;
+    }
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    CreateBuilder(player, LOCATION_TENTS);
+    return 0;
+}
+uint r_SiteOutpost(Critter& player, Critter@, int cost)
+{
+    if(player.CountItem(PID_BOTTLE_CAPS) < uint(cost))
+        return FORCE_DIALOG_NOMONEY;
+    if(player.Stat[ST_TEAM_ID] == FACTION_NONE)
+    {
+        uint res = CreateFaction(player);
+        if(res != 0)
+            return res;
+    }
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    CreateBuilder(player, LOCATION_CAMP);
+    return 0;
+}
+uint r_CreateSite(Critter& player, Critter@ builder)
+{
+    if(!IsEncounterMap(player.GetMap()))
+    {
+        return FORCE_DIALOG_WRONG_MAP;
+    }
+    DisbandFollower(player, builder, true);
+    DeleteNpc(builder);
+    array<Critter@> group;
+    uint            locId = CreateLocationForGroup(player, LOCATION_BuildingSite, player.WorldX, player.WorldY, group);
+    if(locId == 0)
+        return FORCE_DIALOG_BUILDER_EXCEPTION;
+
+    Location@ loc = GetLocation(locId);
+
+    FLog(LOG_WMLOCATIONS, "BASE2 " + loc.Id + " " + loc.GetProtoId() + " " + loc.WorldX + " " + loc.WorldY);
+
+    loc.Color = 0x307CFF22; // Blue
+    loc.Update();
+
+    array<Map@> maps;
+    loc.GetMaps(maps);
+    for(uint i = 0; i < maps.length(); i++)
+    {
+        maps[i].SetData(MAP_DATA_FACTION, player.Stat[ST_TEAM_ID]);
+        GameVar@ var = GetLocalVar(LVAR_base_buildsite, builder.Id);
+        maps[i].SetData(MAP_DATA_SITE_BASETYPE, var.GetValue());
+        if(!maps[i].SetScript("map_playerfaction_hq@map_init"))
+        {
+            Log("ERR: Couldn't assign map script for player faction hq map");
+            return FORCE_DIALOG_EXCEPTION;
+        }
+    }
+    MoveCars(player.GetMap(), maps[0]);
+    for(uint i = 0; i < group.length(); i++)
+        group[i].TransitToMap(maps[0].Id, 0);
+
+    int i = 1;
+    while(!AddFactionBase(CreateFactionBase(player.Stat[ST_TEAM_ID], "Construction site" + (i > 1 ? (" " + i) : ""), locId)))
+    {
+        i++;
+    }
+
+    return 0;
+}
+bool d_OnSite(Critter& player, Critter@)
+{
+    Map@ map = player.GetMap();
+    return valid(map) && map.GetProtoId() == MAP_HQ_BuildingSite;
+}
+bool d_CanTalkWithBuilder(Critter& player, Critter@)
+{
+    Map@ map = player.GetMap();
+    bool faction = player.Stat[ST_TEAM_ID] == GetRootMapData(map, MAP_DATA_FACTION);
+    bool rank = player.Stat[ST_FACTION_RANK] == RANK_LEADER;
+    return faction && rank;
+}
+bool d_ConstructionReady(Critter& player, Critter@)
+{
+    Map@       map = player.GetMap();
+    array<int> info;
+    return CalcRequirements(map, info);
+}
+uint dlg_FinishConstruction(Critter& player, Critter@ builder, string@ say)
+{
+
+    if(!d_ConstructionReady(player, builder))
+    {
+        player.Say(SAY_DIALOG, "It looks like someone stole parts of the base while we were talking.");
+        return 0;
+    }
+
+    if(!IS_DIALOG_SAY_MODE(say))
+        return 0;
+    uint fid = player.Stat[ST_TEAM_ID];
+    if(valid(GetFactionBase(fid, say)))
+    {
+        player.Say(SAY_DIALOG, "Hideout with given name exists, give new one");
+        return 0;
+    }
+    Map@            site = player.GetMap();
+    int             basetype = GetRootMapData(site, MAP_DATA_SITE_BASETYPE);
+    array<Critter@> group;
+    uint            locId = CreateLocationForGroup(player, basetype, player.WorldX, player.WorldY, group);
+    if(locId == 0)
+    {
+        Log("Unable to spawn location: " + basetype);
+        return 0;
+    }
+    Location@ loc = GetLocation(locId);
+    Map@      entrance = loc.GetMapByIndex(0);
+    MoveCars(site, entrance);
+    for(uint i = 0, j = group.length(); i < j; i++)
+        group[i].TransitToMap(entrance.Id, 0);
+    // RemoveFactionBase(GetFactionBase(site.GetLocation().Id));
+    DeleteLocation(site.GetLocation().Id);
+
+    array<Map@> maps;
+    loc.GetMaps(maps);
+    for(uint i = 0; i < maps.length(); i++)
+    {
+        maps[i].SetData(MAP_DATA_FACTION, fid);
+        if(!maps[i].SetScript("map_playerfaction_hq@map_init"))
+        {
+            Log("ERR: Couldn't assign map script for player faction hq map");
+            return FORCE_DIALOG_EXCEPTION;
+        }
+    }
+
+    if(!AddFactionBase(CreateFactionBase(fid, say, locId)))
+        return FORCE_DIALOG_EXCEPTION;
+
+    return 0;
+}
+void foreworker_dialog(Critter& player, int, int, int)
+{
+    RunDialog(player, DIALOG_all_base_foreworker, player.HexX, player.HexY, true);
+}
+#endif

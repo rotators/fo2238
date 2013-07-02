@@ -1,0 +1,31 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p cath_job_flowers > 0 D _var p cath_job_flowers < 13 D _var n name_mem_npc_player = 0 #
+2 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 R _var n name_mem_npc_player + 1 R _item p PID_FLOWER - 1 R _var p cath_job_flowers + 1 R _param p REPUTATION_CATHEDRAL + 5 @
+4 4000 None 0 &
+
+[engl]
+{100}{}{Lost Soul}
+{200}{}{You see a lost soul.}
+{200}{}{You see a lost soul.}
+{200}{}{You see a lost soul.}
+{210}{}{He looks lost.}
+{210}{}{He must have been traveled a long way.}
+{210}{}{A ruin dweller.}
+{1000}{}{Initial preferences}
+{1010}{}{flower job}
+{1020}{}{---}
+{2000}{}{Are you lost?@@We are lost.@@Everyone is lost!}
+{3000}{}{Are you lost?@@We are lost.@@Everyone is lost!}
+{3010}{}{Hello. Here, take this flower!@@Hello, take the flower!@@Do you want a flower? Here, take it!@@I have a flower for you. [You give him the flower.]@@A flower for you. [You give him the flower.]@@This flower is for you!@@Please take the flower. [You hand over the flower.]}
+{4000}{}{Oh!@@Thank you!@@I am not lost as much anymore as ever before!@@*grml*@@Please, we need food!@@Don't you have food?@@Ohh!@@Is this for me?@@We traveled such a long way!@@How lovely!@@Thank you a lot!@@Thank you friend!}
+

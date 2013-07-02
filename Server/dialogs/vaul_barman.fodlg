@@ -1,0 +1,218 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+40 1010 D _script dialog@d_CheckNight 0  #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 @
+2 2000 None 0 #
+3 2010 #
+14 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+13 3020 #
+12 3030 #
+14 3040 #
+0 3050 @
+4 4000 None 0 #
+5 4010 #
+10 4020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+13 4030 #
+12 4040 #
+14 4050 #
+0 4060 D _item p PID_BOTTLE_CAPS < 20 #
+0 4070 D _item p PID_BOTTLE_CAPS > 19 @
+5 5000 None 0 #
+6 5010 #
+13 5020 #
+12 5030 #
+10 5040 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+14 5050 #
+0 5060 @
+6 6000 None 0 #
+7 6010 #
+8 6020 #
+14 6030 #
+0 6040 @
+7 7000 None 0 #
+8 7010 #
+14 7020 #
+0 7030 @
+8 8000 None 0 #
+9 8010 #
+14 8020 #
+0 8030 @
+9 9000 None 0 #
+14 9010 D _param p SK_SPEECH > 79 #
+0 9020 D _param p SK_SPEECH < 80 @
+10 10000 None 0 #
+12 10010 #
+11 10020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+5 10030 #
+14 10040 #
+0 10050 @
+11 11000 None 0 #
+10 11010 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+14 11020 #
+0 11030 @
+12 12000 None 0 #
+10 12010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 #
+10 12020 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 #
+10 12030 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 #
+4 12040 #
+14 12050 #
+0 12060 D _item p PID_BOTTLE_CAPS < 5 #
+0 12070 D _item p PID_BOTTLE_CAPS > 4 @
+13 13000 None 0 #
+12 13010 #
+4 13020 #
+14 13030 #
+0 13040 D _param p ST_KARMA > -1 #
+0 13050 D _param p ST_KARMA < 0 @
+14 14000 None 0 #
+3 14010 #
+15 14020 D _param p ST_CHARISMA > 5 D _param p SK_SPEECH > 59 #
+0 14030 @
+15 15000 None 0 #
+16 15010 #
+18 15020 D _script dialog@d_IsNotMember 0  #
+3 15030 #
+0 15040 @
+16 16000 None 0 #
+17 16010 #
+18 16020 D _script dialog@d_IsNotMember 0  #
+3 16030 #
+0 16040 @
+17 17000 None 0 #
+15 17010 D _script dialog@d_IsNotMember 0  #
+3 17020 #
+0 17030 @
+18 18000 None 0 #
+19 18010 #
+19 18020 #
+3 18030 #
+0 18040 @
+19 19000 None 0 #
+3 19010 #
+0 19020 D _var n acquaintance = 0 R _param p ST_EXPERIENCE + 600 R _var n acquaintance = 1 @
+40 20000 None 0 @
+50 21000 None 0 #
+51 21010 #
+0 21020 @
+51 22000 None 0 #
+0 22010 #
+0 22020 &
+
+[engl]
+{100}{}{Bartender}
+{200}{}{You see a bartender.}
+{210}{}{You see a tall man in an elegant suit. He is staring straight ahead and paying no attention to the patrons around him.}
+{1000}{}{Predialogue installations}
+{1010}{}{night}
+{1020}{}{dumb}
+{1030}{}{default}
+{2000}{}{Yes? Can I help you?}
+{2010}{}{What's on tap?}
+{2020}{}{I was looking for some information.}
+{2030}{}{Nothing today, thanks.}
+{3000}{}{"On tap?" How... quaint. We have mineral water, distilled water, and sparkling water. We also have several synthesized alcohols.}
+{3010}{}{Um... what synthesized alcohols do you have?}
+{3020}{}{Uh, do you have any real drinks?}
+{3030}{}{Some water would be great.}
+{3040}{}{Never mind. I was looking for some information.}
+{3050}{}{Nothing today, thanks.}
+{4000}{}{We have synthetic derivatives H and T, and we recently brewed an extremely popular mixture, "Alcohol-Z," which has a rich pseudo micro-brewery flavor. Each is modestly priced at twenty dollars a glass.}
+{4010}{}{How do you manufacture these synthesized alcohols?}
+{4020}{}{Hmmm. I'll try some of that delicious alcohol-Z.}
+{4030}{}{Uh, do you have any real drinks?}
+{4040}{}{I'll just have some water, I think.}
+{4050}{}{Nevermind. I was looking for some information.}
+{4060}{}{That's a little steep. I'll come back when I have more money.}
+{4070}{}{Nothing today, thanks.}
+{5000}{}{The Auto-Docs within Vault City can brew synthetic substitutes for otherwise-addictive substances. As I understand it, these synthetics were used as placebos for chem addicts before the war.}
+{5010}{}{You seem to know a great deal about these synthetics.}
+{5020}{}{Uh, do you have any real drinks?}
+{5030}{}{Oh. Well, I'd just like some water then.}
+{5040}{}{Hmmm. I'll try some of that alcohol-Z.}
+{5050}{}{I was looking for some other information...}
+{5060}{}{I see. Thanks for the information. Good-bye.}
+{6000}{}{I was a servant to Dr. Troy for a few months before being re-assigned here. He required that I be fluent with the Vault City medical database.}
+{6010}{}{"Fluent?" Can he legally ask you to do that to a computer?}
+{6020}{}{Medical database?}
+{6030}{}{Interesting. Say, I was looking for some information...}
+{6040}{}{I see. Thanks for the information. Good-bye.}
+{7000}{}{Uh..."fluent" means proficient, skilled, well-learned.}
+{7010}{}{Huh. Well, if that makes you feel better to put it that way, fine. What was this about a medical database?}
+{7020}{}{I was looking for some other information...}
+{7030}{}{If denial makes you feel better, I understand. I'll talk to you later.}
+{8000}{}{Yes, several of the computers on the first floor of the Vault contain a vast array of medical information. It's all quite fascinating, though the jargon can be confusing if you don't have medical training.}
+{8010}{}{Jargon? Is he the one in charge of the computers?}
+{8020}{}{Interesting. Say, I was looking for some information...}
+{8030}{}{Hmmmm. Maybe I'll go check them out, then.}
+{9000}{}{Uh, no. "Jargon" refers to lingo, terminology, usually related to a particular profession.}
+{9010}{}{Uh, sure it does, sure it does. Just testing you. Say, I was looking for some information...}
+{9020}{}{If you say so. Just let this Jargon guy know that I'll be speaking to him, all right? Goodbye.}
+{10000}{}{Here you go... Would you care for anything else?}
+{10010}{}{I'll just have some water, I think.}
+{10020}{}{I'll have some more delicious alcohol-Z.}
+{10030}{}{How do you manufacture these synthesized alcohols?}
+{10040}{}{I was looking for some other information...}
+{10050}{}{Thanks for the information. Goodbye.}
+{11000}{}{Are you okay, sir? Drinking all that "alcohol-Z" looks like it has no effect on you. Are you sure you want more?}
+{11010}{}{Yes, just keep it full.}
+{11020}{}{Actually, I was looking for some other information...}
+{11030}{}{No, I better stop wasting my money on that crap... Goodbye.}
+{12000}{}{Which would you like? Mineral? Distilled? Or Sparkling? Each is modestly priced at five dollars a glass.}
+{12010}{}{Mineral, please.}
+{12020}{}{I'll try some of that distilled water.}
+{12030}{}{Set me up with some of that sparkling water.}
+{12040}{}{What synthesized alcohols do you have?}
+{12050}{}{Never mind. I was looking for some information.}
+{12060}{}{That's a little steep for me. I'll come back when I have more money.}
+{12070}{}{I think I'll pass, thanks.}
+{13000}{}{If you mean what passes for alcohol in the wastes, then no. We have never felt the need to poison our systems with those bacterial-ridden mixtures. The bar in the Courtyard might be less... discriminating.}
+{13010}{}{I'll just have some water, then.}
+{13020}{}{Wait a minute. What 'synthesized drinks' do you have?}
+{13030}{}{I was looking for some information.}
+{13040}{}{I'll go check it out then, thanks.}
+{13050}{}{Maybe I'll go somewhere else, then.}
+{14000}{}{Then perhaps you should be at our information center instead of this establishment. It is located downtown. Now move along... I have other customers.}
+{14010}{}{Hold on, I wanted a drink. What have you got on tap?}
+{14020}{}{No, I think you'll tell me what I want to know first. And you'll leave that attitude out of your voice too, if you know what's good for you.}
+{14030}{}{All right then. Good day.}
+{15000}{}{Of course. What did you need to know, @sex@|sir||ma'am|?}
+{15010}{}{Can you tell me who Vault City's leader is?}
+{15020}{}{Can you tell me a little about the slavery here in Vault City?}
+{15030}{}{Never mind. I wanted a drink. What have you got on tap?}
+{15040}{}{Nothing today, thanks.}
+{16000}{}{Why, the First Citizen, of course. However, even the First Citizen is still answerable to the council, but bears the responsibility for most of the core legislation for Vault City.}
+{16010}{}{Council?}
+{16020}{}{Can you tell me a little about the slavery here in Vault City?}
+{16030}{}{Never mind. I wanted a drink. What have you got on tap?}
+{16040}{}{Interesting. Thanks for the information. Goodbye.}
+{17000}{}{Oh, yes. Recently, some Citizens have petitioned the council to override some of the First Citizen's decisions. It created quite a stir, let me tell you.}
+{17010}{}{Hmmm. I was curious about something else...}
+{17020}{}{I see. Well, I could use a drink. What have you got on tap?}
+{17030}{}{Interesting. Thanks for the information. Goodbye.}
+{18000}{}{Oh, no, no...it's not slavery. Those people you seeing working in the city are servants... myself included. We are treated very well here, taught to read and write, and given medical care, homes and food.}
+{18010}{}{Everything except your freedom, huh?}
+{18020}{}{If you've no complaints, then it's no problem. Forget I asked.}
+{18030}{}{Never mind. I wanted a drink. What have you got on tap?}
+{18040}{}{I see. Well, thanks for talking with me. Goodbye.}
+{19000}{}{If you are not going to order a drink, perhaps you had best leave, @sex@|sir||ma'am|.}
+{19010}{}{I'll take a drink, then. What have you got on tap?}
+{19020}{}{Maybe I better. Good day.}
+{20000}{}{I'm sorry, but the bar is closed for the evening.@@The bar is closed. I'll be returning home once I finish this inventory list.@@Don't you have homes to go to?}
+{21000}{}{Yes? Can I help you?}
+{21010}{}{Awnt-awnt}
+{21020}{}{[Shamble off]}
+{22000}{}{Yes, "awnt-awnt" to you, too. Hold on a moment while I summon the guards to "awnt-awnt" you to the front gate.}
+{22010}{}{Urnt? Urnt-urnt.}
+{22020}{}{[Shamble off]}
+

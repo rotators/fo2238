@@ -1,0 +1,77 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+60 1010 D _var p factions_player_faction = 6 D _var p factions_player_rank > 2 D _script dialog@d_CheckNight 0  #
+61 1020 D _script dialog@d_CheckNight 0  R _script dialog@r_Alert 0  #
+2 1030 D _var p factions_player_faction = 6 D _var p factions_player_rank > 2 #
+61 1040 R _script dialog@r_Alert 0  @
+2 2000 None 0 #
+4 2010 D _var n name_mem_npc_player = 0 #
+6 2020 #
+0 2030 @
+4 3000 None 0 #
+5 3010 #
+6 3020 R _var n name_mem_npc_player = 1 #
+0 3030 @
+5 4000 None 0 #
+62 4010 R _script dialog@r_Alert 0  #
+6 4020 R _var n name_mem_npc_player = 1 #
+0 4030 @
+6 5000 None 0 #
+7 5010 #
+8 5020 #
+0 5030 @
+7 6000 None 0 #
+8 6010 #
+6 6020 #
+0 6030 @
+8 7000 None 0 #
+7 7010 #
+6 7020 #
+0 7030 @
+60 8000 None 0 @
+61 9000 None 0 @
+62 10000 None 0 &
+
+[engl]
+{100}{}{McClure}
+{200}{}{You see Senior Council Member McClure.}
+{210}{}{You see an elderly Vault City official. His hair is graying around the edges.}
+{1000}{}{Predialogue installations}
+{1010}{}{important citizen night}
+{1020}{}{all others night}
+{1030}{}{important citizen day}
+{1040}{}{all others day}
+{2000}{}{Good day, Citizen. Can I help you?}
+{2010}{}{Who are you?}
+{2020}{}{Can I ask you some questions?}
+{2030}{}{Just looking around, thanks. Good day.}
+{3000}{}{I am Senior Councilor McClure. And you are...?}
+{3010}{}{None of your business.}
+{3020}{}{@pname@. Pleased to meet you. I had some questions...}
+{3030}{}{I really have to run. Maybe we can do introductions some other time.}
+{4000}{}{I expect that kind of rudeness from an Outworlder, not a Citizen. I am a member of the Vault City Council, and you will show me the proper respect, or I will have your Citizenship revoked. Do you understand me?}
+{4010}{}{Screw you, old man.}
+{4020}{}{Sorry, didn't mean to offend you. My name is @pname@. I'd like to ask you something.}
+{4030}{}{Whatever. I'm done talking to you anyway.}
+{5000}{}{What is it you would like to know?}
+{5010}{}{What's your job here?}
+{5020}{}{What can you tell me about the First Citizen?}
+{5030}{}{Nothing today. I was just taking a tour of the council building.}
+{6000}{}{I am the Senior Council Member. I oversee the council meetings.}
+{6010}{}{Then what does the First Citizen do?}
+{6020}{}{Can I ask you another question?}
+{6030}{}{Thank you for you time. Goodbye.}
+{7000}{}{The First Citizen is the leader of the people. The Citizens of Vault City look to the First Citizen for the guidance, but they, through the Council, still have final say on matters. In these trying times, the First Citizen is a pillar of our society.}
+{7010}{}{What is it you do?}
+{7020}{}{Can I ask you another question?}
+{7030}{}{Thank you for you time. Goodbye.}
+{8000}{}{I have to tabulate these lists before I leave. Return in the morning, and I will speak to you then.}
+{9000}{}{Guards! Guards!}
+{10000}{}{That's it! Citizen or not, you're out of here. And I'm revoking your Citizenship. Guards!}
+

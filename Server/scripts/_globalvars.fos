@@ -1,0 +1,173 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _globalvars.fos
+//
+
+#ifndef __GLOBALVARS__
+#define __GLOBALVARS__
+
+// Possible types:
+// int8, int16, int32, int64, int,
+// uint8, uint16, uint32, uint64, uint,
+// bool, float, double, string.
+// Default value is zero.
+// To set start value use '=' after var name.
+// This vars works like engine global vars.
+// Also recommended use "__" prefix in var name.
+
+
+// #pragma globalvar "int __MyGlobalVar = 100"
+
+#ifdef __SERVER
+
+// how long after map spawn player may send radio distress calls
+# pragma globalvar "int __DistressCallTime =	6000"      // 5 * 60 * __TimeMultiplier (ingame seconds, taken absolute)
+# pragma globalvar "uint __TentGarbagerTime = 48384000"    // 4 * 7 * 24 * 60 * 60 * __TimeMultiplier (ingame seconds, taken absolute)
+# pragma globalvar "uint __FactionGarbagerTime = 48384000" // 4 * 7 * 24 * 60 * 60 * __TimeMultiplier (ingame seconds, taken absolute)
+# pragma globalvar "uint __QuestGarbagerTime = 10080"      // 60*24*7 (real minutes, converted in code)
+# pragma globalvar "uint __AlertLevelReact = 8"
+
+# pragma globalvar "int __EncountersFreeFollowers = 2"
+
+
+// facility regeneration interval (real minutes)
+# pragma globalvar "int __FacilitiesRegenTimeMin = 10"
+# pragma globalvar "int __FacilitiesRegenTimeMax = 30"
+// interval for which global counters are cleared
+# pragma globalvar "int __ClearRegenCountersTime = 60"
+
+// facility timeouts / batches (timeouts are obsolete) / regeneration rates (global per __FacilityRegenTime)
+# pragma globalvar "int __IronOreTimeout	= 144"
+# pragma globalvar "int __IronOreBatch		= 2"
+# pragma globalvar "int __IronOreRegen		= 500"
+# pragma globalvar "int __IronOreCapacity	= 20"
+
+# pragma globalvar "int __MineralsTimeout	= 144"
+# pragma globalvar "int __MineralsBatch		= 2"
+# pragma globalvar "int __MineralsRegen		= 500"
+# pragma globalvar "int __MineralsCapacity	= 20"
+
+# pragma globalvar "int __JunkTimeout		= 120"
+# pragma globalvar "int __JunkBatch			= 1"
+
+# pragma globalvar "int __ElectronicPartsTimeout = 96"
+# pragma globalvar "int __ElectronicPartsBatch	 = 1"
+# pragma globalvar "int __ElectronicPartsRegen   = 100"
+# pragma globalvar "int __ElectronicPartsCap = 5"
+
+# pragma globalvar "int __ElectronicParts2Timeout = 96"
+# pragma globalvar "int __ElectronicParts2Batch	 = 1"
+# pragma globalvar "int __ElectronicParts2Regen   = 50"
+# pragma globalvar "int __ElectronicParts2Cap = 5"
+
+# pragma globalvar "int __FlintTimeout		= 24"
+# pragma globalvar "int __FlintBatch		= 1"
+
+# pragma globalvar "int __FibreTimeout		= 120"
+# pragma globalvar "int __FibreBatch		= 2"
+# pragma globalvar "int __FibreRegen        = 1000"
+# pragma globalvar "int __FibreCapacity		= 20"
+
+# pragma globalvar "int __FruitTimeout		= 120"
+# pragma globalvar "int __FruitBatch		= 2"
+# pragma globalvar "int __FruitRegen        = 1000"
+# pragma globalvar "int __FruitCapacity		= 50"
+
+# pragma globalvar "int __WoodTimeout		= 120"
+# pragma globalvar "int __WoodBatch			= 5"
+# pragma globalvar "int __WoodRegen         = 1000"
+# pragma globalvar "int __WoodCapacity      = 50"
+
+# pragma globalvar "int __BrocTimeout		= 144"
+# pragma globalvar "int __BrocBatch			= 3"
+
+# pragma globalvar "int __XanderTimeout		= 144"
+# pragma globalvar "int __XanderBatch		= 3"
+
+# pragma globalvar "int __MeatTimeout		= 60"
+# pragma globalvar "int __MeatBatch			= 5"
+# pragma globalvar "int __MeatRegen         = 500"
+# pragma globalvar "int __MeatCapacity		= 10"
+
+# pragma globalvar "int __BrahminCrapTimeout = 48"
+# pragma globalvar "int __BrahminCrapBatch	= 1"
+
+# pragma globalvar "int __TobaccoTimeout	= 60"
+# pragma globalvar "int __TobaccoBatch		= 1"
+# pragma globalvar "int __TobaccoRegen      = 200"
+# pragma globalvar "int __TobaccoCapacity   = 1"
+
+# pragma globalvar "int __BarleyTimeout	= 60"
+# pragma globalvar "int __BarleyBatch	= 1"
+# pragma globalvar "int __BarleyRegen	= 200"
+# pragma globalvar "int __BarleyCapacity	= 1"
+
+# pragma globalvar "int __Ore2Timeout		= 408"
+# pragma globalvar "int __Ore2Batch			= 1"
+# pragma globalvar "int __Ore2Regen         = 100"
+# pragma globalvar "int __Ore2Capacity      = 10"
+
+# pragma globalvar "int __Minerals2Timeout	= 204"
+# pragma globalvar "int __Minerals2Batch	= 1"
+# pragma globalvar "int __Minerals2Regen    = 100"
+# pragma globalvar "int __Minerals2Capacity = 10"
+
+# pragma globalvar "int __UraniumTimeout	= 300"
+# pragma globalvar "int __UraniumBatch		= 1"
+# pragma globalvar "int __UraniumRegen      = 100"
+# pragma globalvar "int __UraniumCapacity	= 20"
+
+# pragma globalvar "int __ValveTubeTimeout	= 240"
+# pragma globalvar "int __ValveTubeBatch	= 1"
+
+# pragma globalvar "int __ChemicalsTimeout	= 180"
+# pragma globalvar "int __ChemicalsBatch	= 1"
+# pragma globalvar "int __ChemicalsRegen    = 100"
+# pragma globalvar "int __ChemicalsCapacity = 10"
+
+# pragma globalvar "int __Chemicals2Timeout	= 180"
+# pragma globalvar "int __Chemicals2Batch	= 1"
+# pragma globalvar "int __Chemicals2Regen    = 50"
+# pragma globalvar "int __Chemicals2Capacity = 5"
+
+# pragma globalvar "int __Fibre2Timeout		= 360"
+# pragma globalvar "int __Fibre2Batch		= 1"
+
+# pragma globalvar "int __BioGelTimeout		= 120"
+# pragma globalvar "int __BioGelBatch		= 1"
+
+# pragma globalvar "int __NukaColaTimeout	= 30"
+# pragma globalvar "int __NukaColaBatch		= 1"
+#endif // __SERVER
+
+#ifdef __CLIENT
+
+// colors defaults should be set in client_main@InitConfig
+
+# pragma globalvar "bool  __ConfigAwareness		     = true"
+# pragma globalvar "uint8 __ConfigDisplayAchievements = 2"
+# pragma globalvar "bool  __ConfigDisplayTC		     = true"
+# pragma globalvar "uint8 __ConfigDisplayTCZones	     = 0"
+# pragma globalvar "bool  __ConfigFog                 = false"
+# pragma globalvar "uint  __ConfigFogColor           = 0" // default set in InitConfig()
+# pragma globalvar "bool  __ConfigIgnoreLangChange    = false"
+
+# pragma globalvar "uint __ConfigDamageHitColor    = 0"   // default set in InitConfig()
+# pragma globalvar "int8 __ConfigDamageHitOffXfrom = -15"
+# pragma globalvar "int8 __ConfigDamageHitOffXto   =  15"
+# pragma globalvar "int8 __ConfigDamageHitOffYfrom = -20"
+# pragma globalvar "int8 __ConfigDamageHitOffYto   = -20"
+
+# pragma globalvar "bool __ConfigVerboseActionHead     = true"
+# pragma globalvar "bool __ConfigVerboseActionBox      = false"
+# pragma globalvar "uint __ConfigVerboseActionColor    = 0" // default set in InitConfig()
+# pragma globalvar "int8 __ConfigVerboseActionOffXfrom = -15"
+# pragma globalvar "int8 __ConfigVerboseActionOffXto   =  15"
+# pragma globalvar "int8 __ConfigVerboseActionOffYfrom = -20"
+# pragma globalvar "int8 __ConfigVerboseActionOffYto   = -20"
+
+# pragma globalvar "bool __ConfigFollowerExperience = false"
+#endif // __CLIENT
+#endif // __GLOBALVARS__

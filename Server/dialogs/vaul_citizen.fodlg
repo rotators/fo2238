@@ -1,0 +1,94 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 6 D _param p ST_INTELLECT > 3 #
+20 1020 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+6 3020 #
+10 3030 D _var n factions_q_vc_questionnaire_u = 0 D _item p PID_QUESTIONNAIRE > 0 D _script dialog@d_LillyCheckQuest 1 4203 D _param n ST_GENDER = 0 R _var p factions_q_vc_questionnaire + 10 R _item p PID_QUESTIONNAIRE - 1 R _var n factions_q_vc_questionnaire_u = 1 #
+11 3040 D _var n factions_q_vc_questionnaire_u = 0 D _item p PID_QUESTIONNAIRE > 0 D _script dialog@d_LillyCheckQuest 1 4203 D _param n ST_GENDER = 1 R _var p factions_q_vc_questionnaire + 10 R _item p PID_QUESTIONNAIRE - 1 R _var n factions_q_vc_questionnaire_u = 1 #
+0 3050 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+3 5010 @
+6 6000 None 0 #
+7 6010 #
+8 6020 #
+9 6030 #
+3 6040 @
+7 7000 None 0 #
+8 7010 #
+9 7020 #
+3 7030 @
+8 8000 None 0 #
+7 8010 #
+9 8020 #
+3 8030 @
+9 9000 None 0 #
+7 9010 #
+8 9020 #
+3 9030 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 @
+20 12000 None 0 &
+
+[engl]
+{100}{}{Citizen}
+{200}{}{You see a citizen.}
+{210}{}{You see a citizen from the Vault City.}
+{210}{}{You see a citizen in a blue jumpsuit. His clothes look like those the vault dwellers wear, but without a number on his back.}
+{240}{}{You see a dead citizen.}
+{250}{}{You see a dead citizen from the Vault City.}
+{260}{}{You see a slain citizen.}
+{270}{}{You see a slain citizen from the Vault City.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{2000}{}{Hello, Citizen. How may I help?@@Good day, Citizen. How does this day find you?}
+{2010}{}{Hello! May I ask you something?}
+{2020}{}{Excuse me, Citizen.}
+{3000}{}{Yes, how can I help you?@@What exactly do you wish to know?}
+{3010}{}{Can you tell me what's been happening in the Vault City recently?}
+{3020}{}{Say, could you spend a minute and tell me something more about this place?}
+{3030}{}{Would you be so kind and fill out this questionnaire?}
+{3040}{}{Would you be so kind and fill out this questionnaire?}
+{3050}{}{That'd be it, I guess. Farewell, Citizen.}
+{4000}{}{Well, nothing much. If it wasn't for the lists, I think I'd die of boredom.}
+{4010}{}{The lists? What do you mean?}
+{5000}{}{Well, you see... there was that council meeting yesterday, and it was very productive. We made lists. *Lots* of lists. I think it's nice that things are kept in their proper place, don't you?}
+{5010}{}{Uh, yeah. Sure. The lists. Let me ask you something else then.}
+{6000}{}{Well, this is bound to be the most technologically advanced place you've ever seen. Our ancestors survived the Great War thanks to the Vault, and after they left, they founded this great metropolis.}
+{6010}{}{Why does everyone here call each other Citizen?}
+{6020}{}{And who are the servants?}
+{6030}{}{I've heard about your technological advancements, I have to say, I'm impressed. What are the main areas of Vault City's expertise?}
+{6040}{}{I had also some other questions right now...}
+{7000}{}{Well, it's simple. Either you're a Citizen or you're not. Citizens can enjoy the fruits of our prosperity, while non-citizens can eke out their miserable existence however they see fit, but not in our fair city. We like it clean.}
+{7010}{}{And who are the servants?}
+{7020}{}{I've heard about your technological advancements, I have to say, I'm impressed. What are the main areas of Vault City's expertise?}
+{7030}{}{I had also some other questions right now...}
+{8000}{}{Oh, them... they're the luckiest bunch of people in the whole wasteland. They can enjoy almost all of the city's amenities, as long as they work hard and cause no problems. I even like one of them!}
+{8010}{}{Why does everyone here call each other Citizen?}
+{8020}{}{I've heard about your technological advancements, I have to say, I'm impressed. What are the main areas of Vault City's expertise?}
+{8030}{}{What a lucky guy. I've got some other questions right now...}
+{9000}{}{Well, we mostly produce medical supplies and trade them for other products or services. The energy comes from Gecko, the food from Modoc and the guns mostly from New Reno or NCR. The trading caravans bring the stuff all over the wasteland.}
+{9010}{}{Why does everyone here call each other Citizen?}
+{9020}{}{And who moves all that cargo around the city? The servants?}
+{9030}{}{I've got a couple other questions right now.}
+{10000}{}{Oh, absolutely. Wait, I believe that's a 1040-EZ opinion poll! Give me that, I can't get enough of these. I'm gonna get it right this time. [He starts with it right away]}
+{10010}{}{Thanks. Uh... enjoy?}
+{11000}{}{Oh, absolutely. Wait, I believe that's a 1040-EZ opinion poll! Give me that, I can't get enough of these. I'm gonna get it right this time. [She starts with it right away]}
+{11010}{}{Thanks. Uh... enjoy?}
+{12000}{}{You are in my way. Move.@@Why don't you go back outside with the others?@@Keep your distance, Outworlder.@@Get out of my sight.@@Looks like they're issuing Day Passes to any trash these days.@@Get out of here.@@Be careful or I’ll call the guards.@@I’m watching you.@@What's that smell? Oh.}
+

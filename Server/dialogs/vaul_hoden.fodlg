@@ -1,0 +1,73 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+40 1010 D _script dialog@d_CheckNight 0  #
+50 1020 D _param p ST_INTELLECT < 4 #
+20 1030 D _var p factions_player_faction = 6 #
+2 1040 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+4 2020 D _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+65506 4010 #
+0 4020 #
+0 4030 @
+20 5000 None 0 #
+21 5010 R _var n name_mem_npc_player = 1 #
+65506 5020 D _var n name_mem_npc_player = 1 #
+0 5030 @
+21 6000 None 0 #
+65506 6010 #
+0 6020 @
+40 7000 None 0 @
+50 8000 None 0 #
+51 8010 #
+0 8020 @
+51 9000 None 0 #
+65507 9010 #
+0 9020 &
+
+[engl]
+{100}{}{Holden}
+{200}{}{You see a citizen in blue jumpsuit without any number on the back.}
+{210}{}{You see Sub-Amenities Officer Holden.}
+{1000}{}{Predialogue installations}
+{1010}{}{night}
+{1020}{}{dumb}
+{1030}{}{citizen}
+{1040}{}{non-citizen}
+{2000}{}{Yes, what is it?}
+{2010}{}{What is this place?}
+{2020}{}{Can I see what you have in stock?}
+{2030}{}{Nothing today, thanks.}
+{3000}{}{This is the Sub-Amenities Office B... we handle the distribution of pharmaceutical supplies in Vault City. Maybe you were looking for some place else?}
+{3010}{}{No, this is the place I was looking for. Can I see what you have in stock?}
+{3020}{}{Nothing today, thanks.}
+{4000}{}{Next time, you should try the store in the Courtyard outside the city. They should carry everything you... Outsiders need.}
+{4010}{}{Uh, thanks. Let's trade now.}
+{4020}{}{I'll shop where I want to, got it?}
+{4030}{}{Thanks for the information. Goodbye.}
+{5000}{}{Can I help you, Citizen?}
+{5010}{}{What is this place?}
+{5020}{}{Can I see what you have in stock?}
+{5030}{}{Nothing today, thanks.}
+{6000}{}{This? Why this is Sub-Amenities Office B, in charge of pharmaceutical storage and distribution in Vault City. I am Sub-Amenities Officer Holden. How may I help you today, Citizen?}
+{6010}{}{Can I see what you have in stock?}
+{6020}{}{That's all for today, thank you.}
+{7000}{}{I'm sorry, the Sub-Amenities Office is closed for the evening.@@Please come back in the morning. Thank you.@@Right now I'm taking inventory. We will open in the morning.@@Still need to make that inventory list for Officer Randal.}
+{8000}{}{Yes, what is it?}
+{8010}{}{Ken I Helf uuuuuuuu}
+{8020}{}{[Shamble off]}
+{9000}{}{Great, another Outsider... guards! We have an Outsider that needs to be escorted to the gate! Guards!}
+{9010}{}{NO LIKE GRDS. U DED}
+{9020}{}{*Sigh* Ok-ee Me GO}
+

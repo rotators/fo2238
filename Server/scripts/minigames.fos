@@ -1,0 +1,427 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// minigames.fos
+//
+
+/*
+ ********************************************************************************
+
+   MINIGAMES
+
+   Module meant to handle minigames. All minigames should be mutually exclusive,
+   player must finish one before starting another.
+
+   Param ST_MINIGAME_DATA is used to store basic minigame data.
+   First byte of the param is reserved for minigameTeam and minigameId.
+
+   4 bits  - minigameTeam  - Team 0 are spectators of the minigame with the same
+                          minigameId. The actual teams are in range 1-15.
+
+   4 bits  - minigameId    - It can be used if there is more than one minigame
+                          running in the same map at the same time (but not
+                          necesserily if the minigames are sandboxed). It can
+                          be a number in a range 0-15 (0 acts slightly
+                          differently, see below).
+
+   4 bits  - minigameFlags - Standard options
+                          MINIGAME_PERSISTENT         (0x1)
+
+   20 bits - minigameData  - Any custom data visible for all players.
+                          Macros should be prepared to get and set them.
+
+   Param should be cleared when minigame ends.
+   Value of ST_MINIGAME_DATA is set to 0 when critter leaves game, unless
+   MINIGAME_PERSISTENT flag is set. In this case a script/GM must take care of
+   removing it.
+
+   Players colorize others according to minigameTeam and minigameId values.
+   Minigames with id = 0 have no teams (ignore team colorizing, respawns etc).
+
+ ********************************************************************************
+ */
+#ifndef __MINIGAMES__
+#define __MINIGAMES__
+
+#include "_colors.fos"
+#include "_defines.fos"
+#include "_macros.fos"
+
+#include "minigames_h.fos"
+
+array<uint> MinigameTeamColor =
+{
+    COLOR_RGB(70,  70,  70),   // Spectator team
+    COLOR_RGB(255, 170,   0),
+    COLOR_RGB(0, 100, 240),
+    COLOR_RGB(255, 115, 220),
+    COLOR_RGB(200, 245, 145),
+    COLOR_RGB(250, 130, 130),
+    COLOR_RGB(65, 210, 255),
+    COLOR_RGB(50, 250,   0),
+    COLOR_RGB(250,   0,   0),
+    COLOR_RGB(200, 250,   0),
+    COLOR_RGB(185,   0, 250),
+    COLOR_RGB(0, 160,  65),
+    COLOR_RGB(120,  80,   0),
+    COLOR_RGB(100, 255, 225),
+    COLOR_RGB(220, 190, 145),
+    COLOR_RGB(250, 250,  10),
+};
+
+
+import void RefreshColorizing(Critter@ chosen) from "name_colorizing";
+
+
+// Basic operations on ST_MINIGAME_DATA param...
+void SetMinigame(Critter& cr, int team, int id, int flags, int data)
+{
+    _setMinigameTeam(cr, team);
+    _setMinigameId(cr, id);
+    _setMinigameFlags(cr, flags);
+    _setMinigameData(cr, data);
+    RefreshColorizing(cr);
+}
+
+
+void UnsetMinigame(Critter& cr, bool refreshColors)
+{
+    cr.ParamBase[ST_MINIGAME_DATA] = 0;
+    if(refreshColors)
+        RefreshColorizing(cr);
+}
+
+void UnsetMinigame(Critter& cr)
+{
+    UnsetMinigame(cr, true);
+}
+
+
+void ChangeMinigameTeam(Critter& cr, int team)
+{
+    _setMinigameTeam(cr, team);
+    RefreshColorizing(cr);
+}
+
+
+
+
+
+/******************************************************************************
+*  Dynamic Spawnpoints                                                       *
+******************************************************************************/
+
+
+// Find a random dynamic spawnpoint with specific minigameTeam amd minigameId
+// Pick the last spawnpoint in the chain if the spawnpoint is linked with other
+//
+Item@ GetDSpawn(Map@ map, int minigameData)
+{
+    if(!valid(map))
+        return null;
+
+    array<Item@> dSpawns;
+    if(map.GetItems(PID_RESPAWN_POINT, dSpawns) > 0)
+    {
+        int minigameTeamAndId = _getMinigameTeamAndId(minigameData);
+
+        // Collect all the spawnpoints matching minigameTeam and minigameId
+        //
+        array<Item@> dSpawnsMatching;
+        for(int i = 0, j = dSpawns.length(); i < j; i += 1)
+            if(dSpawns[i].Val0 == minigameTeamAndId)
+                dSpawnsMatching.insertLast(dSpawns[i]);
+
+        if(dSpawnsMatching.length() > 0)
+        {
+            Item@ dSpawn = random_from_array(dSpawnsMatching);
+            // Note: a random matching dSpawn is picked, then the function calls
+            // GetNextDSpawn recursively to get the last dSpawn in the chain with
+            // with the same minigameTeamAndId.
+            if(ODD(_getMinigameTeam(minigameData)))
+                @dSpawn = GetNextDSpawn(dSpawn, minigameTeamAndId, false);
+            else
+                @dSpawn = GetNextDSpawn(dSpawn, minigameTeamAndId, true);
+
+            // We have the last dSpawn in the chain, check if it has transport to map...
+            if(_getDSpawnTransportToMap(dSpawn) > 0)
+            {
+                Map@ previousMap = GetMap(_getDSpawnTransportToMap(dSpawn));
+                if(valid(previousMap))
+                    return GetDSpawn(previousMap, minigameData);
+                else
+                    return dSpawn;
+            }
+            else
+                return dSpawn;
+        }
+    }
+    return null;
+}
+
+// Gets the last team spawnpoint in the chain
+//
+Item@ GetNextDSpawn(Item@ dSpawn, int minigameTeamAndId, bool reverse)
+{
+    if(!valid(dSpawn))
+        return null;
+
+    uint nextDSpawnId = _getNextDSpawnId(dSpawn, _getMinigameTeam(minigameTeamAndId));
+
+    if(nextDSpawnId == 0)
+        return dSpawn;
+
+    Map@ dSpawnMap = GetMap(dSpawn.MapId);
+    if(!valid(dSpawnMap))
+        return null;
+    else
+    {
+        Item@ nextDSpawn = GetItem(nextDSpawnId);
+        if(!valid(nextDSpawn))
+            return dSpawn;
+        if(nextDSpawn.Val0 == minigameTeamAndId)
+            return GetNextDSpawn(nextDSpawn, minigameTeamAndId, reverse);
+        else
+            return dSpawn;
+    }
+}
+
+// DSpawn initialization & events
+//
+void _DSpawn(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_WALK, "_DSpawnWalk");
+    item.SetEvent(ITEM_EVENT_SKILL, "_DSpawnSkill");
+}
+
+void _DSpawnWalk(Item& item, Critter& crit, bool entered, uint8 dir)
+{
+    if(entered)
+        TryCaptureDSpawn(item, crit);
+}
+
+bool _DSpawnSkill(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+        return TryCaptureDSpawn(item, crit);
+    return false;
+}
+
+// DSpawn Capturing
+//
+bool TryCaptureDSpawn(Item@ dSpawn, Critter@ crit)
+{
+    uint critMinigameId = _getMinigameId(crit.Param[ST_MINIGAME_DATA]);
+    uint dSpawnMinigameId = _getMinigameId(dSpawn.Val0);
+
+    // Can't capture: spawnpoint has a different minigameId than the player
+    //
+    if(critMinigameId != dSpawnMinigameId)
+        return false;
+
+    uint critMinigameTeam = _getMinigameTeam(crit.Param[ST_MINIGAME_DATA]);
+
+    // Spawnpoint is not capturable by this team
+    //
+    if(!(FLAG(dSpawn.Val1, (1 << critMinigameTeam))))
+    {
+        crit.Say(SAY_NETMSG, "Your team can't capture this place.");
+        return false;
+    }
+
+    int critMinigameTeamAndId = _getMinigameTeamAndId(crit.Param[ST_MINIGAME_DATA]);
+
+    // Spawnpoint belongs to the team already.
+    if(critMinigameTeamAndId == dSpawn.Val0)
+        return false;
+
+    // Previous spawnpoint doesn't belong to the team
+    //
+    uint prevDSpawnId = _getPrevDSpawnId(dSpawn, critMinigameTeam);
+    if(prevDSpawnId > 0)
+    {
+        Item@ prevDSpawn = GetItem(prevDSpawnId);
+        if(valid(prevDSpawn) && (critMinigameTeamAndId != prevDSpawn.Val0))
+        {
+            crit.Say(SAY_NETMSG, "Your team must capture previous place first.");
+            return false;
+        }
+    }
+
+    uint       eventTime = 0;
+    array<int> eventValues =
+    {
+        DSPAWN_CAPTURE_TIME(dSpawn),
+        critMinigameTeamAndId,
+        dSpawn.Id
+    };
+
+    // Spawnpoint is in the process of capturing by someone
+    //
+    if(GetTimeEvent(dSpawn.Val2, eventTime, eventValues))
+    {
+        // Same team (maybe even same person)
+        //
+        if(critMinigameTeamAndId == eventValues[1])
+            crit.Say(SAY_NETMSG, "Your team is capturing this place already.");
+        else
+            crit.Say(SAY_NETMSG, "Another team is trying to capture this place.");
+    }
+
+    // Start capturing
+    else
+    {
+        if(eventValues[0] == 0)
+        {
+            CaptureDSpawn(dSpawn, crit, critMinigameTeamAndId);
+            return true;
+        }
+        else
+        {
+            crit.Say(SAY_NETMSG, "You have started capturing this place.");
+            dSpawn.Val2 = CreateTimeEvent(AFTER(REAL_SECOND(1)), "CaptureDSpawnTick", eventValues, true);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void CaptureDSpawn(Item@ dSpawn, Critter@ crit, uint minigameTeamAndId)
+{
+    if(valid(crit))
+        crit.Say(SAY_NETMSG, "You have captured this place.");
+
+    dSpawn.Val0 = minigameTeamAndId;
+    dSpawn.Val2 = 0;
+
+    uint minigameTeam = _getMinigameTeam(minigameTeamAndId);
+    dSpawn.AnimStayBegin = minigameTeam;
+    dSpawn.AnimStayEnd   = minigameTeam;
+    dSpawn.AnimShowBegin = minigameTeam;
+    dSpawn.AnimShowEnd   = minigameTeam;
+    dSpawn.AnimHideBegin = minigameTeam;
+    dSpawn.AnimHideEnd   = minigameTeam;
+    dSpawn.Update();
+}
+
+
+uint CaptureDSpawnTick(array<int>@ eventValues)
+{
+    Item@ dSpawn = GetItem(eventValues[2]);
+    if(!valid(dSpawn))
+        return 0;
+
+    Map@ map = GetMap(dSpawn.MapId);
+    if(!valid(map))
+        return 0;
+
+    array<Critter@> players;
+    uint            num = map.GetCrittersHex(dSpawn.HexX, dSpawn.HexY, 1, FIND_ONLY_PLAYERS | FIND_LIFE, players);
+    bool            captureTickSuccess = false;
+    for(uint i = 0; i < num; i += 1)
+    {
+        if(_getMinigameTeamAndId(players[i].Param[ST_MINIGAME_DATA]) == uint(eventValues[1]))
+        {
+            if(eventValues[0] > 0)
+                eventValues[0] -= 1;
+
+            if(players[i].Mode[MODE_HIDE] != 0 && players[i].GetAccess() < ACCESS_TESTER)     // Capturing desneaks
+            {
+                players[i].ModeBase[MODE_HIDE] = 0;
+            }
+
+            if(eventValues[0] == 0)
+            {
+                CaptureDSpawn(dSpawn, players[i], eventValues[1]);
+                dSpawn.Val0 = eventValues[1];
+                dSpawn.Val2 = 0;
+                return 0;
+            }
+            else
+            {
+                players[i].Say(SAY_NETMSG, "" + eventValues[0] + " seconds left to capture this place.");
+                captureTickSuccess = true;
+            }
+        }
+    }
+    if(captureTickSuccess)
+        return REAL_SECOND(1);
+    else
+        return 0;
+}
+
+
+
+
+
+
+
+
+// I needed this, then I changed my mind.
+// Still, it could be useful for something.
+int GetMinigameTeamColor(int minigameTeam)
+{
+    if(minigameTeam < 0 || minigameTeam > 15)
+        return 0;
+    return MinigameTeamColor[minigameTeam];
+}
+
+
+// For dialogs
+uint r_SetMinigame(Critter& player, Critter@ npc, int team, int id, int flags, int data, uint returnValue)
+{
+    SetMinigame(player, team, id, flags, data);
+    return returnValue;
+}
+
+void r_SetMinigame(Critter& player, Critter@ npc, int team, int id, int flags, int data)
+{
+    SetMinigame(player, team, id, flags, data);
+}
+
+
+
+// ~run
+
+// Forces refreshing colorization, might be needed if you change param ST_MINIGAME_DATA manually.
+void refresh(Critter& caller, int, int, int critterId)
+{
+    Critter@ cr = GetCritter(critterId);
+    if(!valid(cr))
+    {
+        caller.Say(SAY_NETMSG, "Critter " + critterId + " not valid.");
+        return;
+    }
+    RefreshColorizing(cr);
+}
+
+// Basic info about data stored in ST_MINIGAME_DATA.
+void info(Critter& caller, int, int, int critterId)
+{
+    Critter@ cr = GetCritter(critterId);
+    if(!valid(cr))
+    {
+        caller.Say(SAY_NETMSG, "Critter " + critterId + " not valid.");
+        return;
+    }
+    int minigameData = cr.Param[ST_MINIGAME_DATA];
+    caller.Say(SAY_NETMSG, "ST_MINIGAME_DATA of Critter " + cr.Id);
+    caller.Say(SAY_NETMSG, "Minigame Team: " + _getMinigameTeam(minigameData));
+    caller.Say(SAY_NETMSG, "Minigame Id: " + _getMinigameId(minigameData));
+    caller.Say(SAY_NETMSG, "Minigame Custom Data: " + _getMinigameData(minigameData));
+}
+
+// Sets a minigame team for a critter.
+void team(Critter& caller, int minigameTeam, int minigameId, int critterId)
+{
+    Critter@ cr = GetCritter(critterId);
+    if(!valid(cr))
+    {
+        caller.Say(SAY_NETMSG, "Critter " + critterId + " not valid.");
+        return;
+    }
+    SetMinigame(cr, minigameTeam, minigameId, 0, 0);
+}
+#endif // __MINIGAMES__

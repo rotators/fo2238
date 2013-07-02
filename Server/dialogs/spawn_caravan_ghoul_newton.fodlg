@@ -1,0 +1,109 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+20 1020 @
+2 2000 None 0 #
+12 2010 D _param p ST_CHARISMA > 3 #
+13 2020 D _param p ST_CHARISMA < 4 #
+3 2030 @
+20 3000 None 0 #
+5 3010 @
+3 4000 None 0 #
+0 4010 #
+10 4020 @
+10 5000 None 0 #
+5 5010 #
+0 5020 @
+5 6000 None 0 #
+6 6010 #
+8 6020 #
+15 6030 #
+0 6040 @
+6 7000 None 0 #
+11 7010 #
+5 7020 #
+0 7030 @
+8 8000 None 0 #
+17 8010 #
+5 8020 @
+11 9000 None 0 #
+15 9010 #
+5 9020 #
+0 9030 @
+12 10000 None 0 #
+0 10010 #
+10 10020 @
+13 11000 None 0 #
+14 11010 #
+3 11020 @
+14 12000 None 0 #
+10 12010 #
+0 12020 @
+15 13000 None 0 #
+16 13010 #
+16 13020 D _param p SK_SCIENCE > 50 D _param p ST_INTELLECT > 5 D _var p q_gecko_spawn_xp = 0 R _param p ST_EXPERIENCE + 50 R _var p q_gecko_spawn_xp + 1 #
+0 13030 @
+16 14000 None 0 #
+5 14010 @
+17 15000 None 0 #
+5 15010 &
+
+[engl]
+{100}{}{Newton}
+{200}{}{You see the caravan driver.}
+{210}{}{He looks like a ghoul. Oh... he IS a ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{bereits gesprochen}
+{2000}{}{Heh, is this a smoothskin around here?}
+{2010}{}{Yes, it is.}
+{2020}{}{Yes, it is.}
+{2030}{}{Who are you?}
+{3000}{}{You again?}
+{3010}{}{Yes, there is one more thing I wanted to ask...}
+{4000}{}{My name is Newton. What are you doing out here..?}
+{4010}{}{Nothing that's your business. [You wander away]}
+{4020}{}{I was taking cover in this old building behind me. If I hadn't stumbled across it, I'd probably be dead by now.}
+{5000}{}{Because of the sandstorm last night, eh? True, if you can't find good cover fast, the sand will eat you up. We are heading towards Gecko now, got some horrible days, too.}
+{5010}{}{Can I ask you some questions?}
+{5020}{}{Yeah, but now I have to go. Bye.}
+{6000}{}{If it doesn't take too long. What do you want to know?@@What do you want to know?@@Tell me what you want to know.@@If it doesn't take so long...}
+{6010}{}{Do you know about any towns around here?}
+{6020}{}{Should I beware of anything around here?}
+{6030}{}{Does your caravan often take this route?}
+{6040}{}{Thanks for the talk, but I have to go now. See you.}
+{7000}{}{Well, we are heading towards Gecko now. It's very close around here and we should be there in maybe a day. To the South-west is Vault City, a city of snobs. It's pretty safe though, I guess... though not so much for mutants.  If you go much further South, you'll find the Broken Hills town. We're from there, actually.}
+{7010}{}{Anything else?}
+{7020}{}{I have some other questions.}
+{7030}{}{Thanks for the information. Have to go now. Bye.}
+{8000}{}{Smoothskin, you should always take care. There is nothing more worse than a bunch of raiders mugging you.}
+{8010}{}{What about traveling?}
+{8020}{}{Makes sense. There is something else...}
+{9000}{}{Nope, that's it for this area, as far as I know.}
+{9010}{}{Does your caravan often take this route?}
+{9020}{}{Then I have some other questions.}
+{9030}{}{Ok, bye then. I have to go.}
+{10000}{}{I guess so. What are you doing here?}
+{10010}{}{Nothing that's your business. [You wander away]}
+{10020}{}{I was taking cover in this old building behind me. If I hadn't stumbled across it, I'd probably be dead by now.}
+{11000}{}{Really? You look like Leeroy over there. [He points to the stinky ghoul at the rear of the caravans group.]}
+{11010}{}{That hurt my feelings...}
+{11020}{}{And who are you?}
+{12000}{}{@sex@|I am SO sorry, boy. My name is Newton. [Suddenly, one of his eyes looks into the air.] What are you doing out here?||I am SO sorry, girl. My name is Newton. [Suddenly, one of his eyes looks into the air.] What are you doing out here?|}
+{12010}{}{I was taking cover in this old building behind me. If I hadn't stumbled across it, I'd probably be dead by now.}
+{12020}{}{Nothing that's your business. [You wander away]}
+{13000}{}{Heh, I been traveling this here path since... I don't know, too many years I guess. See that tree up there? [He points to somewhere to the West.] It's mine. Few years ago, it was just a small seedling, but now it has grown strong and great. Well, you can say that, compared to other trees...}
+{13010}{}{What do you mean?}
+{13020}{}{I don't find many plants at all. Especially in the desert.}
+{13030}{}{Yeah, cool. Have to go now. Bye.}
+{14000}{}{The desert isn't the best place for growing plants. Sometimes it happens, most of the time it doesn't. }
+{14010}{}{I've got some other question, if you don't mind.}
+{15000}{}{Well, not much to say here. Always keep a fresh head and don't do stupid things. Also you are faster if you travel through flat terrain instead of mountains. Mountains are never the best route anyway.}
+{15010}{}{Sounds reasonable. There is something else I want to know...}
+

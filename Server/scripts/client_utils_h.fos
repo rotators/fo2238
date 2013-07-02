@@ -1,0 +1,30 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_utils_h.fos
+//
+
+#ifndef __CLIENT_UTILS_H__
+#define __CLIENT_UTILS_H__
+
+import uint COLOR_RGB_STRING(string& r, string& g, string& b) from "client_utils";
+import uint COLOR_RGBA_STRING(string& r, string& g, string& b, string& a) from "client_utils";
+import void COLOR_RGB_UNPACK(uint color, uint8& r, uint8& g, uint8& b) from "client_utils";
+import void COLOR_RGB_UNPACK(uint color, uint8& r, uint8& g, uint8& b, uint8& a) from "client_utils";
+
+import string RandomString(uint8 length) from "client_utils";
+
+import bool string2bool(string@ text) from "client_utils";
+import uint string2uint(string@ text) from "client_utils";
+import uint rgb_string2uint(string& text) from "client_utils";
+import uint rgba_string2uint(string& text) from "client_utils";
+
+import int  string2int(string& text) from "client_utils";
+import uint font_string2uint(string& text) from "client_utils";
+import uint range_string2int(string& text, int& from, int& to) from "client_utils";
+import uint range_string2uint(string& text, uint& from, uint& to) from "client_utils";
+import void vis_string2bool(string& text, bool& head, bool& msgbox) from "client_utils";
+
+#include "strtoint_h.fos"
+#endif // __CLIENT_UTILS_H__

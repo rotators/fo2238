@@ -1,0 +1,122 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+15 1010 D _var p q_cath_basement = 5 #
+14 1020 D _var p q_cath_basement = 4 #
+13 1030 D _var p q_cath_basement } 1 #
+2 1040 @
+2 2000 None 1 #
+3 2010 #
+11 2020 D _var p name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 D _param p ST_LEVEL < 5 #
+7 4020 D _param p ST_LEVEL } 5 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+8 7010 R _var p name_mem_npc_player = 1 #
+0 7020 R _var p name_mem_npc_player = 1 @
+8 8000 None 0 #
+9 8010 #
+10 8020 @
+9 9000 None 0 #
+10 9010 #
+12 9020 @
+10 10000 None 0 #
+9 10010 #
+12 10020 @
+11 11000 None 0 #
+9 11010 #
+10 11020 #
+0 11030 @
+12 12000 None 0 #
+0 12010 R _script quest_cath_basement@r_SpawnMap 0  R _var p q_cath_basement = 1 @
+13 13000 None 0 #
+18 13010 D _var p q_cath_basement = 3 #
+16 13020 R _script quest_cath_basement@r_TeleportToBasement 0  #
+17 13030 @
+14 14000 None 1 @
+15 15000 None 1 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 @
+18 18000 None 0 #
+19 18010 R _item p PID_LEATHER_ARMOR_MK_II + 1 R _item p PID_ROPE + 1 R _param p REPUTATION_CATHEDRAL + 500 R _var p q_cath_basement = 4 R _script quest_cath_basement@r_DeleteMap 0  R _param p ST_EXPERIENCE + 150 #
+19 18020 R _item p PID_STIMPAK + 5 R _item p PID_DOCTORS_BAG + 1 R _param p REPUTATION_CATHEDRAL + 500 R _var p q_cath_basement = 4 R _script quest_cath_basement@r_DeleteMap 0  R _param p ST_EXPERIENCE + 150 #
+19 18030 R _item p PID_SCOPED_HUNTING_RIFLE + 1 R _item p PID_223_FMJ + 50 R _param p REPUTATION_CATHEDRAL + 500 R _var p q_cath_basement = 4 R _script quest_cath_basement@r_DeleteMap 0  R _param p ST_EXPERIENCE + 150 #
+20 18040 R _var p q_cath_basement = 4 R _param p REPUTATION_CATHEDRAL + 1000 R _item p PID_LASER_PISTOL + 1 R _script quest_cath_basement@r_DeleteMap 0  R _param p ST_EXPERIENCE + 150 @
+19 19000 None 0 #
+0 19010 @
+20 20000 None 0 #
+0 20010 &
+
+[engl]
+{100}{}{Patrick}
+{200}{}{You see a Patrick.}
+{210}{}{He seems to be nervous.}
+{210}{}{A hobo with a shotgun.}
+{1000}{}{Initial preferences}
+{1010}{}{quest failed}
+{1020}{}{quest done}
+{1030}{}{quest running}
+{1040}{}{---}
+{2000}{}{I am busy, get out of my room!@@Didn't I told you to get out of here?}
+{2010}{}{What are you doing here?}
+{2020}{}{Tell me about the rats again.}
+{2030}{}{[You remove yourself out of his room.]}
+{3000}{}{I am on guard duty.}
+{3010}{}{What are you guarding?}
+{4000}{}{Nothing of your interest.}
+{4010}{}{Maybe I can help you.@@I can help you if you want.}
+{4020}{}{Maybe I can help you.@@I can help you if you want.}
+{5000}{}{Nah, you aren't strong enough to deal with what I have to deal.}
+{5010}{}{You are sure?}
+{6000}{}{Pretty much, yes.}
+{6010}{}{I will get stronger and come back!}
+{7000}{}{You could? Mhm... You know, we have a really ugly problem with rats down in our basement cellar. }
+{7010}{}{Rats? Doesn't sound like it's *that* hard to deal with...}
+{7020}{}{Hah, making fun of me, right? See you later, pal...}
+{8000}{}{Yeah, yeah.... It's not only *normal* rats... [He moves nervous to the left and back to the right.] ... These rats are somewhat stronger. I mean, some of them... their head is kind of shining, like a lamp. Like a... pulsating lamp. [He quivers while talking about the it.]}
+{8010}{}{Never heard of something like that.}
+{8020}{}{You know where they come from?}
+{9000}{}{You aren't alone with that... Never seen them before either. Never, anywhere. }
+{9010}{}{You know where they come from?}
+{9020}{}{Where is the basement? I am going to check it out and take care of that.}
+{10000}{}{They showed up some time around two months ago. First it was just one, then two, then three... and they seem to get stronger over time.}
+{10010}{}{Never heard of something like that.}
+{10020}{}{Where is the basement? I am going to check it out and take care of that.}
+{11000}{}{The rats... the rats... What do you want to know about them?}
+{11010}{}{Never heard of something like that.}
+{11020}{}{You know where they come from?}
+{11030}{}{Nevermind, see you around.}
+{12000}{}{If you think you can do that! Here is a hidden trap door... Follow me. [He opens an old wodden trap-door on the floor...]}
+{12010}{}{[Continue]}
+{13000}{}{And? What's the status?}
+{13010}{}{There have been some big mutated plants which poisoned the ground water. I killed them, now we have to wait and see. }
+{13020}{}{I forgot something... Let me back into the basement.}
+{13030}{}{Don't have much time right now. Will come back to you later.}
+{14000}{}{Thanks for your help!@@Glad you helped us.@@'Rats population should go back soon.}
+{15000}{}{The rats have taken over the whole cathedral basement!@@We can't go down to the basement anymore now.@@I had to bolt and lock the entrance to the cathedral basement.}
+{16000}{}{[He opens the old wodden trap-door again.]}
+{16010}{}{[Continue]}
+{17000}{}{Yeah, it's not like we have time forever.}
+{18000}{}{Wow! Didn't thought you can pull that off! ... About your reward. We don't have a lot and most of us are poor, but I've managed it to horde some stuff a while back. [He digs around in a big wooden box for a while.] I'll let you chose: A reinforced leather armor, some medical supplies - stimpaks and doctors bag - or this scoped hunting rifle.}
+{18010}{}{I'll take the better leather armor.}
+{18020}{}{Give me the medical supplies.}
+{18030}{}{Guess the scoped hunting rifle suits me well.}
+{18040}{}{It's enough for me to know you guys are fine.}
+{19000}{}{Hope this stuff will keep you going! [He hands you over your reward.] }
+{19010}{}{[End]}
+{20000}{}{Then... thanks, wanderer. But ... I can't let you go with nothing but our respect. Here, take this. We have no use for it and maybe you can find a use for it. [He gives you a small pre-war weapon.] Thank you again, you've done something good to us!}
+{20010}{}{[End]}
+

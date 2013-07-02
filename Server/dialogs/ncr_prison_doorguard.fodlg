@@ -1,0 +1,29 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+0 2010 D _param p ST_INTELLECT > 3 #
+3 2020 D _param p ST_INTELLECT > 3 #
+0 2030 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+0 3010 D _param p ST_INTELLECT > 3 &
+
+[engl]
+{100}{}{NCRCF Guard}
+{200}{}{You see a NCRCF guard.}
+{210}{}{He wears NCRCF combat gear.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{[The guard is mustering you up and down.] ... This is an restricted area, unauthorized person are not allowed. Please leave this place.}
+{2010}{}{Uh... sure thing.}
+{2020}{}{Actually, what is this place?@@What is this place?}
+{2030}{}{Uhkay.}
+{3000}{}{This is a correctional facility of the New California Republic and if you don't have any important business to do, you have to leave this place now.}
+{3010}{}{Okay. Bye.@@I should go then.@@Okay.}
+

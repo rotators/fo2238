@@ -1,0 +1,123 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// entire.fos
+//
+
+#ifndef _ENTIRES_
+#define _ENTIRES_
+
+#include "_defines.fos"
+#include "_entires.fos"
+
+shared class Entire
+{
+    int    Number;
+    uint16 HexX;
+    uint16 HexY;
+    uint8  Direction;
+};
+
+uint ParseEntires(Map& map, array<Entire>& entires, int number)
+{
+    uint oldCount = entires.length();
+    uint count = map.CountEntire(number);
+    entires.resize(oldCount + count);
+
+    for(uint i = 0; i < count; i++)
+    {
+        Entire@ ent = entires[oldCount + i];
+        if(map.GetEntireCoords(number, i, ent.HexX, ent.HexY, ent.Direction) == false)
+            return 0;
+        ent.Number = number;
+    }
+
+    return count;
+}
+
+bool IsEntireFree(uint mappid, int number)
+{
+    Map@ map = GetMapByPid(mappid, 0);
+    return IsEntireFree(map, number);
+}
+
+bool IsEntireFree(Map& map, int number)
+{
+    uint16 x, y;
+    x = 0;
+    y = 0;
+    return GetEntireFreeHex(map, number, x, y);
+}
+
+bool GetEntireFreeHex(Map& map, int number, uint16& hx, uint16& hy, uint skip = 0)
+{
+    uint count = map.CountEntire(number);
+
+    // Fisrt check direct coords
+    for(uint i = skip; i < count; i++)
+    {
+        if(map.GetEntireCoords(number, i, hx, hy) && map.IsHexPassed(hx, hy))
+            return true;
+    }
+
+    if(hx == 0 || hy == 0 || hx >= map.GetWidth() - 1 || hy >= map.GetHeight() - 1)
+        return false;                                                                     // Check borders
+
+    // Second check coords with offsets
+    for(uint i = 0; i < count; i++)
+    {
+        if(map.GetEntireCoords(number, i, hx, hy))
+        {
+            for(int x = -1; x <= 1; x++)
+            {
+                for(int y = -1; y <= 1; y++)
+                {
+                    if(x == 0 && y == 0)
+                        continue;                                  // Skip direct position
+                    if(__MapHexagonal)
+                    {
+                        if((hx % 2) == 1 && ((x == -1 && y == 1) || (x == 1 && y == 1)))
+                            continue;
+                        if((hx % 2) == 0 && ((x == -1 && y == -1) || (x == 1 && y == -1)))
+                            continue;
+                    }
+
+                    if(map.IsHexPassed(hx + x, hy + y))
+                    {
+                        hx += x;
+                        hy += y;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool GetNearEntire(Map& map, int number, uint16& hx, uint16& hy)
+{
+    uint16        hxBase = hx;
+    uint16        hyBase = hy;
+
+    array<Entire> entires;
+    uint          count = ParseEntires(map, entires, number);
+    if(count == 0)
+        return false;
+
+    hx = entires[0].HexX;
+    hy = entires[0].HexY;
+    for(uint i = 1; i < count; i++)
+    {
+        Entire@ ent = entires[i];
+        if(GetDistantion(hxBase, hyBase, ent.HexX, ent.HexY) < GetDistantion(hxBase, hyBase, hx, hy))
+        {
+            hx = ent.HexX;
+            hy = ent.HexY;
+        }
+    }
+
+    return true;
+}
+#endif

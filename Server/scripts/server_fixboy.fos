@@ -1,0 +1,141 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// server_fixboy.fos
+//
+
+#ifndef __SERVER_FIXBOY__
+#define __SERVER_FIXBOY__
+
+#include "_defines.fos"
+#include "itempid.h"
+
+#include "buffer_h.fos"
+
+#ifdef __ASCOMPILER
+# include "fixboy.fos"
+#endif
+#ifndef __ASCOMPILER
+# include "fixboy_h.fos"
+#endif
+
+array<ICraftingItem@> AllCraftingItems;
+
+#ifdef __DEBUG__
+
+void init(Critter&, int, int, int)
+{
+    InitCraftingTable();
+}
+void unload(Critter&, int, int, int)
+{
+    UnloadCraftingTable();
+}
+void load(Critter&, int, int, int)
+{
+    LoadCraftingTable();
+}
+void update(Critter&, int, int, int)
+{
+    UpdateCraftingTable();
+}
+#endif
+
+void InitCraftingTable()
+{
+    Log("Initializing crafting table");
+    LoadCraftingTable();
+    Log("Initialized crafting table");
+}
+
+bool loaded = false;
+
+void UnloadCraftingTable()
+{
+    if(!loaded)
+        return;
+
+    Log("Unloading crafting table");
+    array<Critter@> players;
+    uint            count = GetAllPlayers(players);
+    for(uint p = 0; p < count; p++)
+    {
+        players[p].RunClientScript("client_fixboy@clear", 0, 0, 0, null, null);
+    }
+
+    AllCraftingItems.resize(0);
+
+    loaded = false;
+}
+
+void LoadCraftingTable()
+{
+    if(loaded)
+        UnloadCraftingTable();
+
+    Log("Loading crafting table");
+
+    ICraftingItem@ CRAFT_10MM_PISTOL = NewCraftingItem();
+    CRAFT_10MM_PISTOL.AddRequireTool(PID_WORKBENCH, CHECK_GREATER_EQUAL, 1);
+    CRAFT_10MM_PISTOL.AddRequireMaterial(PID_FIREWOOD, 1);
+    CRAFT_10MM_PISTOL.AddRequireMaterial(PID_METAL_PARTS, 5);
+    CRAFT_10MM_PISTOL.AddRequireMaterial(PID_ALLOYS, 1);
+    CRAFT_10MM_PISTOL.AddResult(PID_10MM_PISTOL);
+
+    AllCraftingItems.insertLast(CRAFT_10MM_PISTOL);
+
+    for(uint i = 0, iLen = AllCraftingItems.length(); i < iLen; i++)
+    {
+        AllCraftingItems[i].ID = i + 1;
+        AllCraftingItems[i].Pack();
+    }
+
+    loaded = true;
+}
+
+void UpdateCraftingTable()
+{
+    if(!loaded)
+        return;
+
+    // be careful here
+
+    Log("Updating crafting table");
+
+    // collect packed items
+    array<array<uint16> > allItems;
+    for(uint i = 0, iLen = AllCraftingItems.length(); i < iLen; i++)
+    {
+        array<uint16> item = AllCraftingItems[i].Packed;
+        allItems.insertLast(item);
+    }
+
+    if(allItems.length() == 0)
+    {
+        Log("Aborting, no items to send");
+        return;
+    }
+    Log("Updating items: " + allItems.length());
+
+    // create buffer for client, save collected items
+    Buffer@ buff = NewBuffer();
+    buff << allItems;
+
+    // clear collected items
+    allItems.resize(0);
+
+    // prepare data for RunClientScript
+    array<int32> allItemsPacked = buff.AsInt32();
+
+    // clear buffer
+    ~buff;
+
+    array<Critter@> players;
+    uint            count = GetAllPlayers(players);
+    for(uint p = 0; p < count; p++)
+    {
+        players[p].RunClientScript("client_fixboy@update", 0, 0, 0, null, allItemsPacked);
+    }
+}
+#endif // __SERVER_FIXBOY__ //

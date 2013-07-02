@@ -1,0 +1,858 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// unsafe_client.fos
+//
+
+#include "_basetypes.fos"
+#include "_colors.fos"
+#include "_macros.fos"
+#include "backend_h.fos"
+#include "broadcast_h.fos"
+#include "config_file_h.fos"
+#include "factions_h.fos"
+#include "follower_common_h.fos"
+#include "groups_h.fos"
+#include "logging_h.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+#include "town_h.fos"
+#include "worldmap_h.fos"
+#include "caravans_h.fos"
+#include "map_tent_h.fos"
+
+#define GETACCESS_FILE    "config\\GetAccess.cfg"
+
+import uint8  access_level(string& access) from "main";
+import string access_level(uint8& access) from "main";
+import bool   player_getaccess(Critter& player, int access, string& password) from "main";
+
+import string AuthedInfo(uint id) from "cheats";
+import bool   GodOfTheRealm(uint id) from "cheats";
+import bool   WrathOfTheGod(Critter& di) from "cheats";
+import void   SetAuthed(uint id, string name) from "cheats";
+import void   RemoveAuthed(uint id) from "cheats";
+
+import void PlayMusic(Critter& cr, string& musicName, uint pos, uint repeat) from "media";
+
+import void SetSpectator(Critter& cr, bool on) from "utils";
+
+void unsafe_GetTimer(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)     // anti-bot
+{
+    p0 ^= 0x56F32A4D;
+    p1 ^= 0x5F4A9B5C;
+    Critter@ cr = GetCritter(p0);
+    if(!valid(cr))
+    {
+        Log("failed to respond to: " + GetSafePlayerName(p0));
+        return;
+    }
+    if(cr.GetAccess() < ACCESS_TESTER)
+    {
+        Log("failed to respond to: " + GetSafePlayerName(p0) + ": client access");
+        return;
+    }
+    cr.Say(SAY_NETMSG, "Processed response from player " + GetSafePlayerName(player.Id) + ": " + (int(ELAPSED_TIME) - p1));
+}
+
+void unsafe_ExecCommandEntered(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)
+{
+    LogCommandUsage(player, commandString);
+}
+
+void unsafe_Spectate(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+    if(_MapHasMode(map, MAP_MODE_SPECTATE_FREELY))
+    {
+        if(player.StatBase[ST_BASE_CRTYPE] == CRTYPE_EGG)
+            SetSpectator(player, false);
+        else
+            SetSpectator(player, true);
+    }
+    else
+        DLog("Map does not allow spectating.");
+}
+
+// Detect FOCD
+void unsafe_PingServer(Critter& player, int globalEnable, int duallog, int p2, string@ commandString, array<int>@ param4)
+{
+    if(!valid(player))
+        return;
+    if(globalEnable == 2)
+        FLog(LOG_FOCD, GetCritterInfo(player) + " is using FOCD. Config was not found.");
+    else
+        FLog(LOG_FOCD, GetCritterInfo(player) + " is using FOCD. Enabled: " + (globalEnable == 1 ? "yes." : "no.") + " Yanus: " + (duallog == 1 ? "yes." : "no."));
+}
+
+void unsafe_ExecShowFactionInfluence(Critter& player, int, int, int, string@, array<int>@)
+{
+    ITown@ town = RetrieveTown(player);
+    if(!valid(town))
+    {
+        player.Say(SAY_NETMSG, "You're not in a TC town.");
+        return;
+    }
+    if(GetGroupIndex(player) < FACTION_PLAYER_START)
+    {
+        player.Say(SAY_NETMSG, "You're not a member of a player faction.");
+        return;
+    }
+    string s;
+    s.ParseFloat(town.GetInfluence(GetGroupIndex(player)), 6);
+    if(s.length() > 0)
+        player.Say(SAY_NETMSG, "Your faction's influence in " + town.GetTownName() + " is " + s);
+    else
+        player.Say(SAY_NETMSG, "Error.");
+}
+
+void unsafe_ExecDisbandParty(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)
+{
+    array<string@>@ command = split(commandString, " ");
+    int num = 0;
+
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(player.Followers[i] != 0)
+        {
+            Critter@ cr = GetCritter(player.Followers[i]);
+            if((command.length() > 1) && (command[1] == "away_team") && valid(cr) && (cr.GetMapId() == player.GetMapId()))
+                continue;
+
+            player.FollowersBase[i] = 0;
+            if(valid(cr))
+            {
+                // If deletion fails, it's still not a normal follower
+                cr.StatBase[ST_FREE_BARTER_PLAYER] = 0;
+                cr.StatBase[ST_DIALOG_ID] = DIALOG_all_traveller;
+                SetGroupInfo(cr, FACTION_UNKNOWN, 0, FACTION_MODE_PASSIVE);
+                cr.FollowerVarBase[FV_MASTER] = 0;
+                ClearEvents(cr);
+                _CritUnsetExtMode(cr, MODE_EXT_FOLLOWER);
+                cr.SetScript("");
+                DeleteNpc(cr);
+                num++;
+            }
+        }
+    }
+
+    player.RunClientScript("_DisbandDone", num, 0, 0, "", null);
+}
+
+void unsafe_ExecACReport(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)
+{
+    string time = GetCurrentDateTimeString();
+
+    file   f;
+    f.open("logs/cheating.log", "a");
+    f.writeString(time + "> " + GetCritterInfo(player) + ":" + " has been suspected for cheating." + "\n");
+    f.close();
+
+    Critter@ gm = GetOnlineGM();
+    if(valid(gm))
+    {
+        gm.Say(SAY_NETMSG, "|4294901760 " + "Suspected cheater: " + GetCritterInfo(player));
+        return;
+    }
+}
+
+void unsafe_ExecGMHelpCommand(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4)
+{
+    array<string@>@ command = split(commandString, " ");
+
+    if(command[0] != "+requesthelp")
+        return;
+
+    if(player.IsPlayer())
+    {
+
+        if(player.Stat[ST_LEVEL] < 2)
+        {
+            player.Say(SAY_NETMSG, "You need to be at least level 2 to request help.");
+            return;
+        }
+
+        if(player.GetAccess() > ACCESS_CLIENT)
+        {
+            player.Say(SAY_NETMSG, "Oh please, I'm sure you need help... :P");
+            return;
+        }
+
+        if(command.length() < 2)
+        {
+            player.Say(SAY_NETMSG, "To request help from a GM, you need to type +requesthelp <message>, in the message you should specify as much information about the issue, as shortly as you can. If there is any GM online, he/she will take a look at the message and try to help you.");
+            return;
+        }
+    }
+
+    if(!CanRequestHelp(player))
+    {
+        player.Say(SAY_NETMSG, "You need to wait a little bit until you can request help again.");
+        return;
+    }
+
+    string message = "";
+
+    for(uint i = 1, j = command.length(); i < j; i++)
+    {
+        message = message + command[i] + ((i + 1 == j) ? "" : " ");
+    }
+
+    string time = GetCurrentDateTimeString();
+
+    // file f;
+    // f.open("logs/gm_help.log", "a");
+    // f.writeString(time + "> " + player.Name + "("+player.Id+")" + "(" + player.GetMapId() + "):" + message + "\n");
+    // f.close();
+    // FLog(LOG_GM_HELP, player.Name + GetCritterInfo(player) +": "+ message);
+
+    uint gmId = Broadcast_RequestHelp(player, message);
+
+    // keep it with *own* format, not depend on any function
+    FLog(LOG_GM_HELP, "[" + player.Name + "," + player.Id + "," + player.GetMapId() + "] " + message);
+
+    string gmInfo = "No Game Master online";
+    if(gmId > 0)
+        gmInfo = "Sent to " + AuthedInfo(gmId);
+    gmInfo = " [" + gmInfo + "]";
+
+    ILog("requesthelp", player.Name + " (id:" + player.Id + ",map:" + player.GetMapId() + ") " + message + gmInfo);
+
+    dbLog("log_gm_help", player.Id + "|" + message);
+
+    /*
+       Critter@ gm = GetOnlineGM();
+
+       if (!valid(gm))
+       {
+       player.Say(SAY_NETMSG, "Sorry, there is no GM online at the moment, try again later.");
+       return;
+       }
+       else
+       {
+       //f.open("logs/gm_help.log", "a");
+       //f.writeString(time + "> Asking the GM/Admin " + gm.Name + " to assist.\n");
+       FLog(LOG_GM_HELP, "["+player.Name + "] asking the GM/Admin [" + gm.Name + "] to assist.");
+       player.Say(SAY_NETMSG, "Sending request. Please wait.");
+       SetRequestedHelp(player);
+       gm.Say(SAY_NETMSG, "|4294901760 "+"GM help requested: " + " the character " + GetCritterInfo(player) + " has requested help. Message:");
+       gm.Say(SAY_NETMSG, "|4294901760 "+ message);
+       gm.RunClientScript("_BroadcastMessage", 10, 0, 0, "GM help requested: the character " + GetCritterInfo(player) + " has requested help. Message:\n"+message, null);
+       //f.close();
+       PlayMusic(player, "requesthelp.ogg", 0, 0);
+       }
+     */
+}
+
+/**
+ * Sends radio call.
+ */
+void unsafe_RadioDistressCall(Critter& player, int p0, int p1, int p2, string@ message, array<int>@ param4)
+{
+    if(!valid(player))
+        return;
+
+    Item@ radio = GetRadio(player);
+    if(!valid(radio))
+    {
+        Log("Possible radio distress hacker: " + player.Name);
+        return;
+    }
+
+    // check if player is in encounter
+    Map@ map = player.GetMap();
+    if(!valid(map) || !IsEncounterMap(map))
+    {
+        player.Say(SAY_NETMSG, "You can't send distress signals from that location.");
+        return;
+    }
+
+    if(map.GetLocation().Visible)        // || map.GetLocation().GeckCount > 0
+    {
+        player.Say(SAY_NETMSG, "Your location is already visible.");
+        return;
+    }
+
+    if(ELAPSED_TIME - GetRootMapData(map, MAP_DATA_CREATED_ON) > __DistressCallTime)
+    {
+        player.Say(SAY_NETMSG, "Too late to call for help.");
+        return;
+    }
+
+    // Caravan distress blocking for current caravan members only
+    //
+    // ICaravan@ caravan = GetCaravan(player);
+    // if(valid(caravan))
+    // {
+    //	Critter@ wmLeader=GetCritter(caravan.GetWMLeaderId());
+    //	if(valid(wmLeader) && map.Id==wmLeader.GetMapId() && caravan.IsCaravanMember(player))
+    //	{
+    //		player.Say(SAY_NETMSG, "Something seems to be blocking the distress signal.");
+    //		return;
+    //	}
+    // }
+
+
+    // Caravan distress blocking
+    array<Critter@> critters;
+    uint            critCount = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+    for(uint i = 0; i < critCount; i++)
+    {
+        ICaravan@ caravan = GetCaravan(critters[i]);
+        if(valid(caravan))
+        {
+            player.Say(SAY_NETMSG, "Something seems to be blocking the distress signal.");
+            return;
+        }
+    }
+
+    uint16 channel = radio.RadioChannel;
+    DPlayerLog(player, "Distress channel: " + channel);
+    if(valid(message))
+    {
+        RadioMessage(channel, message);
+        player.Say(SAY_WHISP, message);
+    }
+    // mark the location for listeners
+    array<Critter@> players;
+    uint            num = GetAllOnlinePlayers(players);
+    uint            locid = map.GetLocation().Id;
+    map.GetLocation().Color = COLOR_RGB(0xFF, 0x00, 0x00);
+    DPlayerLog(player, "Number of online: " + num);
+    for(uint i = 0; i < num; i++)
+    {
+        DPlayerLog(player, "Hmm");
+        @radio = GetRadio(players[i]);
+        if(valid(radio) && radio.RadioChannel == channel)
+        {
+            DPlayerLog(players[i], "Receiving distress signal");
+            if(player.Id != players[i].Id)
+                players[i].SetKnownLoc(true, locid);
+        }
+    }
+}
+
+/**
+ * Suicidal tendencies.
+ */
+void unsafe_Suicide(Critter& player, int, int, int, string@, array<int>@)     // ~cuttheveins
+{
+    if(player.Stat[ST_CURRENT_HP] < 1)
+    {
+        if(player.IsDead())
+            player.Say(SAY_NETMSG, "You are dead already.");
+        else
+        {
+            Log("Suicide (mode 1): " + player.Name + "(" + player.Id + ")");
+            player.ToDead((player.IsKnockout() && player.Anim2Knockout == ANIM2_KNOCK_FRONT) ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK, null);
+        }
+    }
+    else
+        // player.ToDead(Random(0,1)==0 ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK, null);
+        player.Say(SAY_NETMSG, "Don't give up!");
+}
+
+void unsafe_Suicide2(Critter& player, int, int, int, string@, array<int>@)     // ~itisagooddaytodie
+{
+    uint[] islands =
+    {
+        // south of waterworks
+        18, 45,
+        19, 45,
+        20, 45,
+        21, 45,
+        22, 45,
+        23, 45,
+        19, 46,
+        20, 46,
+        // south-west of library
+        22, 49,
+        23, 49,
+        23, 50,
+        // south of library
+        27, 48,
+        28, 48,
+        29, 48,
+        28, 49,
+        29, 49,
+        // jail
+        27, 51,
+        28, 51,
+        28, 52,
+        29, 52
+    };
+    #ifdef __DEBUG__
+    player.Say(SAY_NETMSG, "Suicide attempt, zone " + ZONE_X(player.WorldX) + ":" + ZONE_Y(player.WorldY));
+    #endif
+
+    if(player.GetMapId() == 0)
+    {
+        player.Say(SAY_NETMSG, "Not on worldmap.");
+        return;
+    }
+
+    for(uint idx = 0; idx < islands.length(); idx += 2)
+    {
+        if(!player.IsDead() &&
+           ZONE_X(player.WorldX) == islands[idx] && ZONE_Y(player.WorldY) == islands[idx + 1])
+        {
+            if(player.GetMap().GetProtoId() == MAP_Jail)
+            {
+                player.Say(SAY_NETMSG, "Don't give up! You will be free some day!");
+            }
+            else
+            {
+                Log("Suicide (mode 2): " + player.Name + "(" + player.Id + ")");
+                player.ToDead(Random(ANIM2_DEAD_FRONT, ANIM2_DEAD_BURN_RUN), null);
+            }
+            return;
+        }
+        ;
+    }
+    ;
+
+    player.Say(SAY_NETMSG, "Don't give up!");
+}
+
+void unsafe_PartyPoints(Critter& player, int, int, int, string@, array<int>@)     // ~followerpoints
+{
+    player.Say(SAY_NETMSG, GetPartyPointsUsed(player) + "/" + GetPartyPointsMax(player) + " party points used.");
+}
+
+void unsafe_WeaponMode(Critter& player, int mode, int, int, string@, array<int>@)
+{
+    player.ModeBase[MODE_LAST_WPN_MODE] = mode;
+}
+bool PushCritter(Map& map, Critter@ cr, uint8 leadDir, uint8 depth)
+{
+    if(!valid(cr))
+        return true;
+    // cr.Say(SAY_NORM_ON_HEAD, "they are pushing me!");
+    if(depth == 0)
+        return false;
+
+    uint16 hx = cr.HexX;
+    uint16 hy = cr.HexY;
+    map.MoveHexByDir(hx, hy, leadDir, 1);
+    if(map.IsHexPassed(hx, hy) || valid(map.GetCritter(hx, hy)))
+        if(PushCritter(map, map.GetCritter(hx, hy), leadDir, depth - 1))
+        {
+            cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(!(cr.Dir == leadDir || cr.Dir == ((leadDir + 1) % 6) || cr.Dir == ((leadDir - 1) % 6))), 0, hx, hy);
+            return true;
+        }
+
+    hx = cr.HexX;
+    hy = cr.HexY;
+    map.MoveHexByDir(hx, hy, (leadDir + 1) % 6, 1);
+    if(map.IsHexPassed(hx, hy) || valid(map.GetCritter(hx, hy)))
+        if(PushCritter(map, map.GetCritter(hx, hy), leadDir, depth - 1))
+        {
+            cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(!(cr.Dir == leadDir || cr.Dir == ((leadDir + 1) % 6) || cr.Dir == ((leadDir - 1) % 6))), 0, hx, hy);
+            return true;
+        }
+
+    hx = cr.HexX;
+    hy = cr.HexY;
+    map.MoveHexByDir(hx, hy, (leadDir - 1) % 6, 1);
+    if(map.IsHexPassed(hx, hy) || valid(map.GetCritter(hx, hy)))
+        if(PushCritter(map, map.GetCritter(hx, hy), leadDir, depth - 1))
+        {
+            cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(!(cr.Dir == leadDir || cr.Dir == ((leadDir + 1) % 6) || cr.Dir == ((leadDir - 1) % 6))), 0, hx, hy);
+            return true;
+        }
+    return false;
+}
+
+void unsafe_PushCritter(Critter& player, int p0, int p1, int p2, string@ message, array<int>@ param4)
+{
+    Critter@ cr = GetCritter(p0);
+    if(!valid(cr))
+        return;
+    if(!cr.IsPlayer())
+        return;
+    if(!IsFlaggedAsIllegal(cr))
+        return;
+    if(GetCritterIllegalFlag(cr) & ILLEGAL_FLAG_BLOCKING == 0)
+    {
+        player.Say(SAY_NETMSG, "This one isn't blocking anything yet.");
+        return;
+    }
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return;
+    if(GetCrittersDistantion(player, cr) != 1)
+        return;
+    if(PushCritter(map, cr, GetDirection(player.HexX, player.HexY, cr.HexX, cr.HexY), 5))
+    {
+        cr.Say(SAY_NETMSG, "You were pushed away by " + GetSafePlayerName(player.Id) + ".");
+        // player.Say(SAY_NETMSG, GetSafePlayerName(p0)+" was successfully pushed away.");
+    }
+    else
+        player.Say(SAY_NETMSG, "It's too crowded here.");
+}
+
+void unsafe_OOC(Critter& player, int, int, int, string@ message, array<int>@)
+{
+    if(!valid(message) || message.length() == 0)
+        return;
+
+    bool skip = true;
+    for(uint m = 0, mlen = message.length(); m < mlen; m++)
+    {
+        if(message[m] != ' ')
+        {
+            skip = false;
+            break;
+        }
+    }
+    if(skip)
+        return;
+
+    uint color  = COLOR_RGB(130, 115, 77);
+    uint sayType = SAY_NORM;
+    if(player.IsKnockout() || player.IsDead())
+        sayType = SAY_NORM_ON_HEAD;
+
+    player.Say(sayType, "|" + color + " " + message);
+}
+
+import void unsafe_ExecCommand(Critter& player, int p0, int p1, int p2, string@ commandString, array<int>@ param4) from "cheats";
+void        unsafe_gameinfo(Critter& player, int, int, int, string@ message, array<int>@)
+{
+    player.Say(SAY_NETMSG, "Command: " + message + ".");
+    if(player.GetAccess() < ACCESS_TESTER)
+    {
+        player.Say(SAY_NETMSG, "Access denied.");
+    }
+    else
+    {
+        unsafe_ExecCommand(player, 0, 0, 0, message, null);
+    }
+}
+
+string@ AuthPasswordOwner(string& password)
+{
+    IConfigFile@ getaccess = GetConfigFile(GETACCESS_FILE);
+    if(!valid(getaccess))
+    {
+        Log("AccessFile invalid.");
+        return(null);
+    }
+
+    array<string> sections;
+    getaccess.GetSections(sections);
+    for(uint s = 0; s < sections.length(); s++)
+    {
+        string@ pass = GetConfigValue(getaccess.GetName(), sections[s], "Password");
+        if(valid(pass) && password == pass)
+            return(sections[s]);
+    }
+    return(null);
+}
+
+bool accessfile_loaded = false;
+void accessfile_load(string& filename)
+{
+    if(LoadConfig(filename))
+    {
+        accessfile_loaded = true;
+        return;
+    }
+    else
+    {
+        if(valid(GetConfigFile(filename)))
+        {
+            accessfile_loaded = true;
+            return;
+        }
+    }
+
+    Log("!!! ACCESS FILE NOT LOADED !!! Panic.");
+}
+
+void unsafe_getaccess(Critter& player, int, int, int, string@ message, array<int>@)
+{
+    if(!accessfile_loaded)
+        accessfile_load(GETACCESS_FILE);
+
+    if(!valid(message))
+        return;
+
+    if(message.length() == 0)
+        return;
+
+    string denied = "Access denied.";
+    array<string@>@ words = splitEx(message, "|");       // access string, password
+    if(words.length() != 2)
+    {
+        player.Say(SAY_NETMSG, denied);
+        return;
+    }
+
+    uint8 access = access_level(words[0]);
+    uint8 oldaccess = player.GetAccess();
+
+    if(access == ACCESS_CLIENT)
+    {
+        if(words[1] == "pass")             // have no fear, hardcoded is here
+        {
+            RemoveAuthed(player.Id);
+            player.Say(SAY_NETMSG, "Access changed.");
+            player.SetAccess(access);
+        }
+        else
+            player.Say(SAY_NETMSG, denied);
+        return;
+    }
+    else
+    {
+        string@ owner = AuthPasswordOwner(words[1]);
+        if(valid(owner))
+        {
+            int     maxaccess = ACCESS_CLIENT;
+            string@ sMaxaccess = GetConfigValue(GETACCESS_FILE, owner, "Access");
+            if(valid(sMaxaccess))
+            {
+                maxaccess = access_level(sMaxaccess);
+                if(int(access) > maxaccess)
+                {
+                    player.Say(SAY_NETMSG, denied);
+                    return;
+                }
+                else
+                {
+                    SetAuthed(player.Id, owner);
+                    player.Say(SAY_NETMSG, "Access changed." + (oldaccess == ACCESS_CLIENT ? " Welcome back, " + owner + "." : ""));
+                    player.SetAccess(access);
+                    GMLog(player, "Authenticated: " + owner + " (" + access_level(oldaccess) + "->" + access_level(access) + ")");
+
+                    string@ crs = GetConfigValue(GETACCESS_FILE, owner, "Critters");
+                    if(valid(crs))
+                    {
+                        bool found = false;
+                        array<string@>@ critters = splitEx(crs, ",");
+                        for(uint c = 0; c < critters.length(); c++)
+                        {
+                            if(critters[c] == ("" + player.Id))
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found)
+                        {
+                            critters.insertLast("" + player.Id);
+                            // critters.sortAsc(); // Script exception: Type 'string' does not have opCmp
+                            SetConfigValue(GETACCESS_FILE, owner, "Critters", join(critters, ","));
+                            SaveConfig(GETACCESS_FILE);
+                        }
+                    }
+                    else
+                    {
+                        SetConfigValue(GETACCESS_FILE, owner, "Critters", player.Id);
+                        SaveConfig(GETACCESS_FILE);
+                    }
+
+                    player_getaccess(player, access, words[1]);
+                }
+            }
+            else
+                player.Say(SAY_NETMSG, denied);
+        }
+        else
+            player.Say(SAY_NETMSG, denied);
+    }
+}
+
+void unsafe_disconnect(Critter& player, int, int, int, string@ message, array<int>@)
+{
+    player.Disconnect();
+}
+
+/**
+ * Sends list of unoccupied faction names, as array of numbers
+ */
+import uint GetUnassignedFactionNames(array<int>& res) from "factions";
+void        unsafe_FreeFactionNames(Critter& player, int, int, int, string@, array<int>@)
+{
+    array<int> list;
+    uint       num = GetUnassignedFactionNames(list);
+    player.RunClientScript("_FreeFactionNames", 0, 0, 0, "", list);
+}
+
+void unsafe_MyInfo(Critter& player, int, int, int, string@, array<int>@)
+{
+    string   red    = "|" + COLOR_RGB(255, 0, 0) + " ";
+    string   green  = "|" + COLOR_RGB(0, 255, 0) + " ";
+
+    GameVar@ var;
+
+    // (almost) original ~myinfo
+    player.Say(SAY_NETMSG,
+               "Name: " + red + player.Name +
+               green + ", Id: " + red + player.Id +
+               (player.GetAccess() > ACCESS_CLIENT ? (green + ", Access: " + red + GetAuthString(player.GetAccess())) : "")
+               );
+
+    player.Say(SAY_NETMSG, "You were born " + red +
+               GetLvar(player, LVAR_birth_day) + "." +
+               GetLvar(player, LVAR_birth_month) + "." +
+               GetLvar(player, LVAR_birth_year));
+
+    myinfo_tent(player);
+
+    if(GodOfTheRealm(player.Id))
+        player.Say(SAY_NETMSG, red + "You are " + (WrathOfTheGod(player) ? "" : "forgotten ") + "god of this realm.");
+}
+
+void unsafe_FactionInfo(Critter& player, int, int, int, string@, array<int>@)
+{
+    string red    = "|" + COLOR_RGB(255, 0, 0) + " ";
+    // string green  = "|"+COLOR_RGB( 0, 255, 0 )+" ";
+
+    GameVar@ var;
+
+    // faction
+    bool isMember = false;
+    @var = GetLocalVar(LVAR_factions_player_faction, player.Id);
+    if(valid(var))
+    {
+        int fid = var.GetValue();
+        if(fid > 1 && FactionExists(fid) && FACTION_VALID(fid))
+        {
+            IFaction@ faction = GetFaction(fid);
+            if(valid(faction))
+            {
+                player.Say(SAY_NETMSG, "Faction: " + red + faction.get_Name());
+                isMember = true;
+            }
+            else
+            {
+                string err = "Cannot get faction <" + fid + "> for player <" + player.Id + ">";
+                Log(err);
+                player.Say(SAY_NETMSG, err + ", please report.");
+            }
+        }
+
+        /* not sure if needed
+
+           int rank = 0;
+           @var = GetLocalVar( LVAR_factions_player_rank, player.Id );
+           if( valid(var) )
+                rank = var.GetValue();
+           if( RANK_VALID(rank) && rank >= 0 )
+           {
+                string[] ranks_player =  { "Unknown", "Rookie",   "Accepted",   "Trusted",    "Important", "Leader" };
+                string[] ranks_bos =     { "Unknown", "Initiate", "Apprentice", "Senior",     "Elder",     "Leader" };
+                string[] ranks_enclave = { "Unknown", "Boot",     "Trooper",    "Sergeant",   "Officer",   "Leader" };
+                string[] ranks_unity =   { "Unknown", "Initiate", "Child",      "Priest",     "Elder",     "Leader" };
+                string[] ranks_ncr =     { "Unknown", "Democrat", "Citizen",    "Magistrate", "Marshal",   "Leader" };
+                string[] ranks_vc =      { "Unknown", "Admitted", "Citizen",    "Regulator",  "Proconsul", "Leader" };
+                array<string> ranks = ranks_player;
+                switch( fid )
+                {
+                        case FACTION_BOS:
+                                ranks = ranks_bos;
+                                break;
+                        case FACTION_ENCLAVE:
+                                ranks = ranks_enclave;
+                                break;
+                        case FACTION_UNITY:
+                                ranks = ranks_unity;
+                                break;
+                        case FACTION_NCR:
+                                ranks = ranks_ncr;
+                                break;
+                        case FACTION_VAULT_CITY:
+                                ranks = ranks_vc;
+                                break;
+                }
+                player.Say( SAY_NETMSG,
+                        green+"Rank: "+red+ranks[rank]+green+"." );
+           }*/
+    }
+
+    // friendly faction(s)
+    // invitations
+    bool isFriend = false;
+    bool isInvited = false;
+    {
+        array<string> ffactions;
+        array<string> ifactions;
+        for(uint f = 0, fc = GetFactionsCount() - 1; f < fc; f++)
+        {
+            IFaction@ faction = GetFactionByIdx(f);
+            if(valid(faction))
+            {
+                switch(faction.GetStatus(player.Id))
+                {
+                case STATUS_FRIEND:
+                {
+                    ffactions.insertLast(faction.get_Name());
+                    isFriend = true;
+                }
+                case STATUS_INVITED:
+                {
+                    ifactions.insertLast(faction.get_Name());
+                    isInvited = true;
+                }
+                }
+            }
+        }
+        if(ffactions.length() > 0)
+        {
+            ffactions.sortAsc();
+            player.Say(SAY_NETMSG, "Friendly factions:");
+            for(uint f = 0, fc = ffactions.length(); f < fc; f++)
+            {
+                player.Say(SAY_NETMSG, red + " " + ffactions[f]);
+            }
+        }
+        if(ifactions.length() > 0)
+        {
+            ifactions.sortAsc();
+            player.Say(SAY_NETMSG, "Factions invitations:");
+            for(uint f = 0, fc = ifactions.length(); f < fc; f++)
+            {
+                player.Say(SAY_NETMSG, red + " " + ifactions[f]);
+            }
+        }
+    }
+
+    // loners
+    if(!isMember && !isFriend && !isInvited)
+    {
+        string[] messages =
+        {
+            "Nobody wants You. Nobody needs You. No one cares.",
+            "Not a single faction has you in its ranks.",
+            "You are alone in these badlands.",
+            "You are not in any faction.",
+            "You don't belong to any faction.",
+            "You don't belong to any faction. Tried looking for friends?",
+            "You don't need a faction to be SOMEONE... right?",
+            "You're on Your own in the harsh wasteland."
+        };
+
+        player.Say(SAY_NETMSG, messages[Random(0, messages.length() - 1)]);
+    }
+}
+
+void unsafe_CombatMode(Critter& player, int mode, int, int, string@, array<int>@)
+{
+    if(mode < COMBAT_MODE_ANY || mode > COMBAT_MODE_TURN_BASED)
+    {
+        Log("Player " + player.Name + "<" + player.Id + "> sent invalid combat mode<" + mode + ">");
+        return;
+    }
+
+    if(player.Param[MODE_DEFAULT_COMBAT] == mode)
+        return;
+
+    // DLog( "Combat mode change for "+player.Name+"<"+player.Id+"> : "+player.Param[MODE_DEFAULT_COMBAT]+" -> "+mode );
+    player.ParamBase[MODE_DEFAULT_COMBAT] = mode;
+}

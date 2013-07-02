@@ -1,0 +1,99 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _script follower@d_IsOwner 1 1 D _script dialog@d_NPCHpVeryLow 0  R _script follower@r_SetFaction 0  #
+10 1020 D _script follower@d_IsOwner 1 1 D _script dialog@d_NPCHpLow 0  R _script follower@r_SetFaction 0  #
+2 1030 D _script follower@d_IsOwner 1 1 R _script follower@r_SetFaction 0  #
+12 1040 @
+2 2000 None 0 #
+6 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_CanStay 0  R _script follower@r_FollowMode 1 2 #
+5 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_CanLeadMoreFollowers 0  D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+12 2030 R _script npc_common@r_MoveRandom 1 0 #
+3 2040 #
+4 2050 #
+0 2060 @
+3 3000 None 0 #
+2 3010 R _script follower@r_Distance 1 0 #
+2 3020 R _script follower@r_Distance 1 1 #
+2 3030 R _script follower@r_Distance 1 2 @
+4 4000 None 0 #
+2 4010 R _script follower@r_AttackPolicy 1 0 #
+2 4020 R _script follower@r_AttackPolicy 1 7 #
+2 4030 R _script follower@r_AttackPolicy 1 6 #
+2 4040 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 1 #
+2 4050 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 2 #
+2 4060 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 3 #
+2 4070 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 4 #
+2 4080 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 5 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+10 7000 None 0 #
+6 7010 D _script follower@d_IsFollowing 1 1 R _script follower@r_FollowMode 1 1 #
+5 7020 D _script follower@d_IsGuarding 1 1 R _script follower@r_FollowMode 1 0 #
+3 7030 #
+4 7040 #
+0 7050 @
+11 8000 None 0 #
+6 8010 D _script follower@d_IsFollowing 1 1 R _script follower@r_FollowMode 1 1 #
+5 8020 D _script follower@d_IsGuarding 1 1 R _script follower@r_FollowMode 1 0 #
+3 8030 #
+4 8040 #
+0 8050 @
+12 9000 None 0 &
+
+[engl]
+{100}{}{Dog}
+{200}{}{You see a dog.}
+{210}{}{ }
+{1000}{}{Predialogue installations}
+{1010}{}{heavy wounded}
+{1020}{}{wounded}
+{1030}{}{ }
+{1040}{}{Not owner, floats}
+{2000}{}{Wuff! Wuff!@@Grr . . . uff! Wuff! Wuff!@@[Sniff. Sniff] Woof!}
+{2010}{}{Stay here and wait for me!}
+{2020}{}{Ok, let's get going. Come here, boy.}
+{2030}{}{I need you move, you're blocking my way.}
+{2040}{}{Good boy, let us change the distance a bit!}
+{2050}{}{Hey dog, if we meet somebody...}
+{2060}{}{Nevermind.}
+{3000}{}{Grr . . . Ruff! Ruff!@@Grr . . . uf! Ruff! Ruff!}
+{3010}{}{Stay close to me.}
+{3020}{}{Stick at medium range.}
+{3030}{}{Keep your distance and watch my back.}
+{4000}{}{Arf! Arf Arf! Arf! Grr . . .@@Grr . . . Ruff! Ruff!@@Woof! Woof!@@[Sniff. Sniff] Woof!}
+{4010}{}{Protect me. Attack anyone who attacks us, unless it's our friend.}
+{4020}{}{Protect me and my land. We don't take kindly to strangers lurking 'bout.}
+{4030}{}{Stay out of combat. Flee if hostile contacts are spotted.}
+{4040}{}{Attack every wastelander, they are all worth nothing! (disabled)}
+{4050}{}{Attack any NPC you see. (disabled)}
+{4060}{}{Attack everyone, but don't touch me or my friends. (disabled)}
+{4070}{}{Attack only enemies of our faction! (disabled)}
+{4080}{}{Attack anyone who isn't a member of our faction, yes boy? (disabled)}
+{5000}{}{Arf! Arf Arf! Arf! Grr . . .@@Grr . . . Ruff! Ruff!@@Woof! Woof!}
+{5010}{}{Alright.}
+{6000}{}{[Sniff. Sniff] Woof!@@[Sniff. Sniff.] Grrrr! Snarl!@@Grr . . . Ruff! Ruff!@@Grrrrrr. Woof! Woof! Grrrrrr . . . }
+{6010}{}{Good boy.}
+{7000}{}{Ouuuouuu... [He is in pain and looks wounded.]@@Grr-- wuff-- grr-- ouuu! [He is in pain and looks wounded.]@@Woof, woof, ouu! [He is in pain and looks wounded.]}
+{7010}{}{Stay here and wait for me!}
+{7020}{}{Ok, let's get going. Come here, boy.}
+{7030}{}{Good boy, let us change the distance a bit!}
+{7040}{}{Hey dog, if we meet somebody...}
+{7050}{}{Nevermind.}
+{8000}{}{Ouuuouuu... [He is in pain and looks heavily wounded.]@@Grr-- wuff-- grr-- ouuu! [He is in pain and looks heavily wounded.]@@Woof, woof, ouu! [He is in pain and looks heavily wounded.]}
+{8010}{}{Stay here and wait for me!}
+{8020}{}{Ok, let's get going. Come here, boy.}
+{8030}{}{Good boy, let us change the distance a bit!}
+{8040}{}{Hey dog, if we meet somebody...}
+{8050}{}{Nevermind.}
+{9000}{}{Wuff! Wuff!@@Grr . . . uff! Wuff! Wuff!@@[Sniff. Sniff] Woof!}
+{100000001}{}{Wuff! Wuff!@@Wuff!@@::patt patt::}
+

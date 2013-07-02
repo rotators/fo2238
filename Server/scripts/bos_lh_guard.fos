@@ -1,0 +1,157 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// bos_lh_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "factions_h.fos"
+#include "follower_common_h.fos"
+#include "guard_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_roles_h.fos"
+#include "patrolling.fos"
+
+#define DIALOG_ID              (1800)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+
+#define STR_HQ_WELCOME         (1)
+#define STR_HQ_NOT_ALLOWED     (2)
+#define STR_HQ_LAST_WARNING    (3)
+#define STR_COMBAT_TAUNT       (4)
+#define STR_NEAR_STORAGE       (5)
+#define STR_NEAR_COMPUTER      (6)
+#define STR_COMPUTER_ENTER     (7)
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 26);
+        GuardPerks(guard);
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+
+    // get the critter status from db (if specified)
+    /*uint status = STATUS_UNKNOWN;
+       GetStatus(FACTION_BOS, player.Id, status);*/
+
+
+    // Please refactor this switch. Hard to read.
+    switch(num)
+    {
+    // =========================================
+    case MSG_BOS_PLAYER_NEAR_HQ:
+        if(GetGroupIndex(player) == FACTION_ENCLAVE && !HasFactionUniform(player, FACTION_BOS, UNIFORM_BODY_ONLY))
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+        else if((GetGroupIndex(player) == FACTION_BOS || HasFactionUniform(player, FACTION_BOS, UNIFORM_BODY_ONLY)) && npc.Stat[ST_NPC_ROLE] == ROLE_BOS_ENTRANCE_GUARD)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_WELCOME));
+        else if(npc.Stat[ST_NPC_ROLE] == ROLE_BOS_ENTRANCE_GUARD)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_NOT_ALLOWED));
+        break;
+
+    case MSG_BOS_PLAYER_LAST_WARNING:
+        if(GetGroupIndex(player) != FACTION_BOS && !HasFactionUniform(player, FACTION_BOS, UNIFORM_BODY_ONLY) && npc.Stat[ST_NPC_ROLE] == ROLE_BOS_ENTRANCE_GUARD)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_LAST_WARNING));
+        break;
+
+    case MSG_BOS_PLAYER_AT_HQ:
+        if(GetGroupIndex(player) != FACTION_BOS && !HasFactionUniform(player, FACTION_BOS, UNIFORM_BODY_ONLY) && npc.Stat[ST_NPC_ROLE] == ROLE_BOS_ENTRANCE_GUARD)
+        {
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        else if(GetGroupIndex(player) != FACTION_BOS && !HasFactionUniform(player, FACTION_BOS, UNIFORM_BODY_ONLY))
+        {
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+        }
+
+    // =========================================
+    case MSG_BOS_PLAYER_NEAR_STORAGE:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_BOS_STORAGE_GUARD && (GetPlayerRank(player.Id) < RANK_BOS_SENIOR || GetGroupIndex(player) != FACTION_BOS))
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_NEAR_STORAGE));
+        break;
+
+    case MSG_BOS_PLAYER_STORAGE_ENTER:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_BOS_STORAGE_GUARD && (GetPlayerRank(player.Id) < RANK_BOS_SENIOR || GetGroupIndex(player) != FACTION_BOS))
+        {
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+
+    // =========================================
+    case MSG_BOS_PLAYER_NEAR_COMPUTER:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_BOS_COMPUTER_GUARD && (GetPlayerRank(player.Id) < RANK_BOS_SENIOR || GetGroupIndex(player) != FACTION_BOS))
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_NEAR_COMPUTER));
+        break;
+
+    case MSG_BOS_PLAYER_COMPUTER_ENTER:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_BOS_COMPUTER_GUARD && (GetPlayerRank(player.Id) < RANK_BOS_SENIOR || GetGroupIndex(player) != FACTION_BOS))
+        {
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMPUTER_ENTER));
+        }
+    }
+}
+
+bool IsAllowedToEnter(Critter& critter)
+{
+    Critter@ master = GetFollowersOwner(critter);
+    if(!valid(master))
+        return(IsBoSMember(critter));
+    else
+        return(IsOwnersFollower(master, critter));
+}
+
+bool IsLostHillsInside(Map@ map)
+{
+    if(!valid(map))
+    {
+        Log("Error, map object is invalid");
+        return false;
+    }
+
+    uint mapPid = map.GetProtoId();
+
+    if(map.GetData(MAP_DATA_FACTION) != FACTION_BOS)
+        // not initialized yet
+        return false;
+
+    return(mapPid == MAP_LostHills_Level1 || mapPid == MAP_LostHills_Level2 || mapPid == MAP_LostHills_Level3 || mapPid == MAP_LostHills_Level4);
+}
+
+bool IsBoSMember(Critter& critter)
+{
+    return(GetGroupIndex(critter) == FACTION_BOS || HasFactionUniform(critter, FACTION_BOS, UNIFORM_BODY_ONLY));
+}
+
+void _OnShowCritter(Critter& guard, Critter& showCrit)
+{
+    if(!IsAllowedToEnter(showCrit) && IsLostHillsInside(showCrit.GetMap()))
+    {
+        showCrit.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+    GuardOnShowCritter(guard, showCrit);
+}
+
+void _OnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    GuardOnSomeoneSteal(guard, target, thief, success, item, count);
+}

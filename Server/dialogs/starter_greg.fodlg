@@ -1,0 +1,152 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+15 1020 D _var p starter_greg_quests = 1 #
+19 1030 D _var p starter_greg_quests = 3 #
+24 1040 D _param p ST_CHARISMA < 4 #
+25 1050 D _var p starter_casequest = 5 @
+2 2000 None 0 #
+3 2010 D _var p starter_greg_training = 1 #
+14 2020 D _var p starter_greg_quests = 0 #
+18 2030 D _var p starter_greg_quests = 2 #
+21 2040 D _var p starter_greg_training = 2 #
+0 2050 @
+3 3000 None 0 #
+4 3010 R _var p starter_greg_training = 2 #
+5 3020 R _var p starter_greg_training = 2 #
+0 3030 @
+4 4000 None 0 #
+6 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 #
+9 7020 @
+8 8000 None 0 #
+10 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+12 11010 #
+12 11020 @
+12 12000 None 0 #
+13 12010 R _param p SK_THROWING + 55 R _param p SK_MELEE_WEAPONS + 40 R _param p SK_UNARMED + 30 R _item p PID_BRASS_KNUCKLES + 1 R _item p PID_KNIFE + 1 R _item p PID_ROCK + 3 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+0 14010 R _var p starter_greg_quests = 1 R _script dialog@r_AddMoney 1 20 #
+22 14020 R _var p starter_greg_quests = 3 #
+0 14030 @
+15 15000 None 0 #
+16 15010 R _param p ST_EXPERIENCE + 125 #
+17 15020 R _param p ST_EXPERIENCE + 125 R _var p starter_greg_quests = 5 #
+17 15030 R _param p ST_EXPERIENCE + 125 R _var p starter_greg_quests = 5 #
+0 15040 @
+16 16000 None 0 #
+18 16010 R _var p starter_greg_quests = 2 #
+0 16020 R _var p starter_greg_quests = 2 @
+17 17000 None 0 #
+0 17010 @
+18 18000 None 0 #
+0 18010 R _var p starter_greg_quests = 3 #
+0 18020 @
+19 19000 None 0 #
+20 19010 D _item p PID_LIGHTER = 1 D _var p starter_greg_quests = 4 #
+0 19020 @
+20 20000 None 0 #
+0 20010 R _param p ST_EXPERIENCE + 125 R _script dialog@r_AddMoney 1 30 @
+21 21000 None 0 #
+14 21010 D _var p starter_greg_quests = 0 #
+18 21020 D _var p starter_greg_quests = 2 #
+0 21030 @
+22 22000 None 0 #
+0 22010 @
+23 23000 None 0 @
+24 24000 None 0 @
+25 25000 None 0 &
+
+[engl]
+{100}{}{McMurray}
+{200}{}{You see McMurray.}
+{210}{}{You see McMurray, the town gate guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Greg quest 1}
+{1030}{}{Greg quest 2}
+{1040}{}{Answer text}
+{1050}{}{Blackmailed Seb}
+{2000}{}{Oh, hey @pname@. How you doing? Still wearing those blue jammies, huh?}
+{2010}{}{I was wondering if you could teach me how to fight.}
+{2020}{}{Got any errands I could run?}
+{2030}{}{Got any errands I could run?}
+{2040}{}{I was wondering if you could teach me how to fight.}
+{2050}{}{Gotta run, see you later.}
+{3000}{}{You're looking to fight? Interesting. Mind if I ask why?}
+{3010}{}{I'm going out into the wasteland.}
+{3020}{}{None of your business.}
+{3030}{}{Forget it, nevermind. See you later, Greg.}
+{4000}{}{Yowch, for real? Well then, we got no time to lose. Let's get started.}
+{4010}{}{[Several sweaty hours later]}
+{5000}{}{You cagey bastard. Fine, suit yourself. Let's get started.}
+{5010}{}{[Several sweaty hours later]}
+{6000}{}{And THAT, my friend, is how you punch like a man. Uh, keep the brass knuckles. I don't want stuff I've bled on. Think you got it?}
+{6010}{}{Sure Greg, thanks for helping me out. And, uh, sorry about your nose. I better get going.}
+{7000}{}{I'm sorry, did I give you the impression we were done?}
+{7010}{}{Well, I, uh...}
+{7020}{}{This is because I broke your nose, isn't it?}
+{8000}{}{That was just unarmed combat. You think there's only one way to kill a man? Sheesh. Take this knife. You know how to hold a knife, right?}
+{8010}{}{[Several additional sweaty hours later]}
+{9000}{}{It very well might be. But that was just unarmed combat. You think there's only one way to kill a man? Sheesh. Take this knife. You know how to hold a knife, don't you?}
+{9010}{}{[Several additional sweaty hours later]}
+{10000}{}{Hey, you're a better student than I thought. I think you're finally getting the hang of it, you little psychopath.}
+{10010}{}{Thanks Greg, I always knew I had it in me. Is that everything?}
+{11000}{}{We still haven't addressed the fact you throw like a girl. The way you're going, you probably couldn't hit a guy with a rock if he was standing right in front of you.}
+{11010}{}{Hey, I could! Uh, maybe.}
+{11020}{}{You're probably right.}
+{12000}{}{Well, I don't got any molotovs or anything. The best we got are rocks. But, hey, they'll do.}
+{12010}{}{[One final sweaty hour later]}
+{13000}{}{Okay, you've got it. Well enough, at least. You're at least gonna be able to hit a couple things if you try.}
+{13010}{}{Thanks, Greg. Say, you got anything you need doing?}
+{14000}{}{Actually, yeah. I heard Loarria down at the general store found herself a couple packs of smokes. Want to be a pal and go get me one? Here's the cash. [He hands you 20 caps]}
+{14010}{}{Sure thing, back in a second.}
+{14020}{}{Get them yourself, you lazy bastard.}
+{14030}{}{Sorry, I'm a little busy right now. Bye.}
+{15000}{}{Hey, you're back. Didja get my smokes? She didn't rip you off, did she?}
+{15010}{}{Not at all. They were free.}
+{15020}{}{Yeah, 10 caps. Rough deal, huh? [Lie]}
+{15030}{}{Total ripoff. 20 caps. [Lie]}
+{15040}{}{Naw, not yet. I'll be back when I do.}
+{16000}{}{Oh, were they now? Poor gal's probably interested in you. Can't say much for her taste, though. Hey, keep the change. Maybe use it to take her out.}
+{16010}{}{Sure, whatever. You got any more work?}
+{16020}{}{Hilarious. See you later.}
+{17000}{}{Aw, that's too bad man. Keep the change, anyway. You're a pal.}
+{17010}{}{Sure thing. See ya.}
+{18000}{}{Sebastian's got my good lighter. I left it over at his place back when we... well, uh, just get it back for me, huh? There's 30 caps in it for ya.}
+{18010}{}{Will do. Be right back.}
+{18020}{}{Forget it, do it yourself.}
+{19000}{}{You're back? He didn't break it, did he?}
+{19010}{}{I got it, here it is.}
+{19020}{}{Didn't get around to it, sorry.}
+{20000}{}{Let me see that. Aw, hell, it's all caked up with gunk. Son of a bitch... Oh, here's your 30 caps. Go buy yourself a couple beers.}
+{20010}{}{Thanks, see you later.}
+{21000}{}{Sorry bud, I've taught you everything I know.}
+{21010}{}{Too bad. Got any work for me?}
+{21020}{}{Too bad. Got any work for me?}
+{21030}{}{Shame. Alright, see you later.}
+{22000}{}{Hell, that was just plain rude. I can't help but figure I'm done talkin' to you, pal.}
+{22010}{}{Well fuck you, then.}
+{23000}{}{Get out of here. I don't want to talk to you.@@Get lost.@@Come back when you've learned some manners.}
+{24000}{}{Get lost, ugly.@@Seriously, buddy, I'm not looking to be your friend.@@I ain't looking for trouble.@@Look, just get out of here, alright?}
+{25000}{}{I heard what you did to Seb, you prick.@@You heartless fuck.@@::spits::@@Piss off.}
+

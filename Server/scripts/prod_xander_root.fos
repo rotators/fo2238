@@ -1,0 +1,88 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_xander_root.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+import bool ShuffleItem(Item& item) from "shuffling_spawner";
+
+#define PLANT_XANDER_BATCH       (1)
+#define PLANT_XANDER_CAPACITY    (4)
+
+void item_init(Item& item, bool firstTime)
+{
+    if(firstTime)
+        item.Val0 = PLANT_XANDER_CAPACITY;
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillPlantXander");
+}
+
+bool _SkillPlantXander(Item& item, Critter& cr, int skill)
+{
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    if(map.GetProtoId() == MAP_KlamathDowntown)
+    {
+        _Desneak(cr);
+
+        item.Val0 -= 1;
+        if(item.Val0 <= 0)
+        {
+            ShuffleItem(item);
+        }
+
+        cr.Say(SAY_NETMSG, "You have collected some Xander roots.");
+        cr.AddItem(PID_XANDER_ROOT, PLANT_XANDER_BATCH);
+    }
+    else
+    {
+        DeleteItem(item);
+        cr.Say(SAY_NETMSG, "You have collected some Xander roots.");
+        cr.AddItem(PID_XANDER_ROOT, 1);
+    }
+
+
+    return true;
+}
+
+
+
+/*
+   #define STR_GATHERED	(3040)
+
+   void item_init(Item& item, bool firstTime)
+   {
+        item.SetEvent(ITEM_EVENT_SKILL, "_Gather");
+        AMOUNT(item) = __XanderBatch;
+   }
+   class GatherCallback : IGatherCallback
+   {
+        void Callback(Item& item, Critter& cr, Item@ used_item)
+        {
+                DeleteItem(item);
+        }
+   };
+   GatherCallback Callback;
+
+   bool _Gather(Item& item, Critter& crit, int skill)
+   {
+        return Gather(item, crit, null, PID_XANDER_ROOT, __XanderBatch, STR_GATHERED, 0, Callback);
+   }
+
+   void test()
+   {
+        Map@ map = GetMap(1);
+        uint16 hx = 0;
+        uint16 hy = 0;
+        map.GetEntireCoords(0, 0, hx, hy);
+        Item@ it = map.AddItem(hx, hy, PID_PROD_XANDER, 1);
+        it.SetScript("prod_xander_root@item_init");
+        Critter@ cr = GetCritter(5000002);
+        it.EventSkill(cr, -1);
+   }*/

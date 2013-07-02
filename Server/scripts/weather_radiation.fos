@@ -1,0 +1,63 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// weather_radiation.fos
+//
+
+// Weather, radiation module
+// inlined in weather.fos
+
+#include "_macros.fos"
+#include "_maps.fos"
+
+#include "weather_h.fos"
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+
+int[] radiation_ignoremaps =
+{
+    #ifdef FO2238
+    MAP_Glow_Entrance, MAP_Glow_Floor1, MAP_Glow_Floor2, MAP_Glow_Floor3, MAP_Glow_Floor4, MAP_Glow_Floor5, MAP_Glow_Floor6, MAP_Crater
+    #endif
+};
+
+void InitWeather_Radiation()
+{}
+
+// local update
+
+void WeatherUpdate_Radiation(Critter@ critter, int level)   // Export
+{
+    if(!valid(critter))
+    {
+        Log("Invalid critter");
+        return;
+    }
+
+    #ifdef __DEBUG__
+    if(critter.IsPlayer())
+        critter.Say(SAY_NETMSG, "WeatherZone radiation (min:" + level / 2 + ",max:" + level + ")");
+    #endif
+    AffectRadiation(critter, Random(level / 2, level));
+}
+
+void WeatherUpdate_Radiation(Map@ map, int level)
+{
+    if(valid(map))
+    {
+        if(level <= 0)
+            return;
+
+        if(radiation_ignoremaps.length() > 0 && Present(int(map.GetProtoId()), radiation_ignoremaps))
+            return;
+
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_LIFE_AND_KO, crits);
+        for(uint c = 0; c < crits.length(); c++)
+        {
+            if(valid(crits[c]))
+                WeatherUpdate_Radiation(crits[c], level);
+        }
+    }
+}

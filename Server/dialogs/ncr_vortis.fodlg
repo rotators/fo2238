@@ -1,0 +1,190 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p KARMA_SLAVER > 0 #
+24 1020 @
+2 2000 None 0 #
+3 2010 #
+22 2020 #
+20 2030 #
+21 2040 #
+23 2050 #
+13 2060 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 2070 @
+3 3000 None 0 #
+2 3010 D _param p KARMA_SLAVER > 0 #
+24 3020 D _param p KARMA_SLAVER = 0 #
+0 3030 #
+65507 3040 @
+5 4000 None 0 #
+0 4010 @
+6 5000 None 0 #
+0 5010 @
+7 6000 None 0 #
+0 6010 @
+8 7000 None 0 #
+0 7010 @
+9 8000 None 0 #
+0 8010 @
+14 9000 merc_dialog@dlg_ShowMaleSlavesPrices 0 #
+5 9010 D _item p PID_BOTTLE_CAPS > 699 R _script merc_dialog@r_HireMerc 1 12 #
+5 9020 D _item p PID_BOTTLE_CAPS > 999 R _script merc_dialog@r_HireMerc 1 13 #
+0 9030 @
+15 10000 merc_dialog@dlg_ShowFemaleSlavesPrices 0 #
+5 10010 D _script merc_dialog@d_CanAffordMerc 1 15 R _script merc_dialog@r_HireMerc 1 15 #
+5 10020 D _script merc_dialog@d_CanAffordMerc 1 16 R _script merc_dialog@r_HireMerc 1 16 #
+0 10030 @
+13 11000 None 0 #
+25 11010 #
+26 11020 #
+27 11030 #
+0 11040 @
+20 12000 None 0 #
+2 12010 D _param p KARMA_SLAVER > 0 #
+24 12020 D _param p KARMA_SLAVER = 0 #
+0 12030 @
+21 13000 None 0 #
+2 13010 D _param p KARMA_SLAVER > 0 #
+24 13020 D _param p KARMA_SLAVER = 0 #
+0 13030 @
+22 14000 None 0 #
+2 14010 D _param p KARMA_SLAVER > 0 #
+24 14020 D _param p KARMA_SLAVER = 0 #
+0 14030 @
+23 15000 None 0 #
+14 15010 #
+15 15020 #
+0 15030 @
+24 16000 None 0 #
+3 16010 #
+22 16020 #
+20 16030 #
+21 16040 #
+30 16050 #
+30 16060 #
+0 16070 @
+25 17000 None 0 #
+28 17010 D _script merc_dialog@d_IsSlavePresent 1 14 R _script merc_dialog@r_SetMerc 1 14 #
+28 17020 D _script merc_dialog@d_IsSlavePresent 1 13 R _script merc_dialog@r_SetMerc 1 13 #
+28 17030 D _script merc_dialog@d_IsSlavePresent 1 12 R _script merc_dialog@r_SetMerc 1 12 #
+28 17040 D _script merc_dialog@d_IsSlavePresent 1 21 R _script merc_dialog@r_SetMerc 1 21 #
+65505 17050 @
+26 18000 None 0 #
+28 18010 D _script merc_dialog@d_IsSlavePresent 1 17 R _script merc_dialog@r_SetMerc 1 17 #
+28 18020 D _script merc_dialog@d_IsSlavePresent 1 16 R _script merc_dialog@r_SetMerc 1 16 #
+28 18030 D _script merc_dialog@d_IsSlavePresent 1 15 R _script merc_dialog@r_SetMerc 1 15 #
+28 18040 D _script merc_dialog@d_IsSlavePresent 1 22 R _script merc_dialog@r_SetMerc 1 22 #
+65505 18050 @
+27 19000 None 0 #
+28 19010 D _script merc_dialog@d_IsSlavePresent 1 20 R _script merc_dialog@r_SetMerc 1 20 #
+65505 19020 @
+28 20000 merc_dialog@dlg_ShowMercSellPrice 0 #
+11 20010 R _script merc_dialog@r_SellCurrentMerc 1 0 #
+0 20020 @
+11 21000 None 0 #
+13 21010 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 21020 @
+30 22000 None 0 #
+0 22010 @
+10 23000 None 0 #
+0 23010 &
+
+[engl]
+{100}{}{Vortis}
+{200}{}{You see a scrawny old guy with a pen stuck behind his ear and spectacles balanced on the end of his nose.}
+{210}{}{It's Vortis, the owner of this slave pen. He's got the tattoo, but it's faded.}
+{210}{}{He's got about three teeth. His fingers and shirt are stained with blue ink. There's a really faded slaver's tattoo on his forehead.}
+{1000}{}{Predialogue installations}
+{1010}{}{Slaver}
+{1020}{}{Not a slaver}
+{2000}{}{So what do you want, slaver?}
+{2010}{}{What is this place?}
+{2020}{}{I'm looking for work.}
+{2030}{}{What can you tell me about this town?}
+{2040}{}{Mind if I have a look around?}
+{2050}{}{I want to buy a slave.}
+{2060}{}{I want to sell a slave.}
+{2070}{}{Nothing. Wrong door.}
+{3000}{}{This place is my place and I, Vortis, run an honest and legitimate busines no matter what anybody in NCR tells you. Since NCR doesn't allow slaves inside the gates, I mind them for folks who've got business inside.}
+{3010}{}{One more question.}
+{3020}{}{One more question.}
+{3030}{}{Sounds like a sweet deal. Bye.}
+{3040}{}{How fucking magnanimous of you. You're like the fucking Gandhi of massive assholes.Taste my steel, demon!}
+{4000}{}{Good. Here is your slave. Take care of the slave... or don't. I don't care. }
+{4010}{}{Thanks. Good trade.}
+{5000}{}{Some error occured. Report this to admins.}
+{5010}{}{Yes, of course. I'll do it right away.}
+{6000}{}{Error, merc not found. Report this to admins.}
+{6010}{}{Yes, of course. I'll do it right away.}
+{7000}{}{That's too expensive for you.}
+{7010}{}{You're right...}
+{8000}{}{Get out you tard, you're clearly not in the right shape to handle these slaves.}
+{8010}{}{Whatever.}
+{9000}{}{Males, very well. I have some good slaves. The dumbest cost you @lex price0@ caps and the normals costs @lex price1@ caps What do you want? }
+{9010}{}{I am searching for the dumbest you have. [You pay him @lex price0@ caps.]}
+{9020}{}{"Normals"? You're a fucking charmer, Vortis. Well, guess I don't want a stupid one. I'll take a, uh 'Normal'. [You pay him @lex price1@ caps.]}
+{9030}{}{Nah, I have no money at the moment. Bye.}
+{10000}{}{Females, very well. I have some good slaves. Shit ones are @lex price0@ caps, @lex price1@ caps for the marginally better ones. What do you want? }
+{10010}{}{Guess I'll take a shit one.. [You pay him @lex price0@ caps.]}
+{10020}{}{One of the normal ones, please. [You pay him @lex price1@ caps.]}
+{10030}{}{Nah, I have no money at the moment. Bye.}
+{11000}{}{Okay, show me what you've got.}
+{11010}{}{Got some men to spare.}
+{11020}{}{Got a few ladies for you, Vortis.}
+{11030}{}{Got some kids I really need to shift.}
+{11040}{}{Hm, my mistake, I don't have any.}
+{12000}{}{New California Republic - nothing but temperance types and merchants. Got a bug about slavers and slavery, but what the hell, it makes my business.}
+{12010}{}{Another question...}
+{12020}{}{Another question...}
+{12030}{}{Thanks, got to go.}
+{13000}{}{No, you may not go nosing around, shit-for-brains! This ain't a museum!}
+{13010}{}{Fine, fine. One more question.}
+{13020}{}{Fine, fine. One more question.}
+{13030}{}{Well if you're gonna get angry, I'm leaving.}
+{14000}{}{Work? Not a chance. We got our hands full up here.}
+{14010}{}{Too bad. Something else I was wondering.}
+{14020}{}{Too bad. Something else I was wondering.}
+{14030}{}{Alright, bye.}
+{15000}{}{Thought you'd never ask. Right, here it basically works like the toilets in a bar. You pick 'boys' or 'girls'.}
+{15010}{}{I'm looking for males.}
+{15020}{}{I want females.}
+{15030}{}{Nevermind, I have to go.}
+{16000}{}{What?}
+{16010}{}{What is this place?}
+{16020}{}{I'm looking for work.}
+{16030}{}{What can you tell me about this town?}
+{16040}{}{Mind if I have a look around?}
+{16050}{}{I want to buy some slaves.}
+{16060}{}{I want to sell some slaves.}
+{16070}{}{Nothing. Wrong door.}
+{17000}{}{Alright, what men are you offering?}
+{17010}{}{Got a real nice one.}
+{17020}{}{How about this one? He's okay.}
+{17030}{}{This one's not too smart, but I'm sure he could like, hold a door open for you or something.}
+{17040}{}{I can't lie, this is some freak I picked up in the wastes. Might be worth a little bit, though?}
+{17050}{}{Actually, I don't have one.}
+{18000}{}{Alright, what women are you offering?}
+{18010}{}{Get a load of this one, Vortis. Real piece of work.}
+{18020}{}{What do you think of this one? Not bad, yeah?}
+{18030}{}{Got this one. Nothing special, but she doesn't drool much.}
+{18040}{}{Got this one. Er, she's a bit of a freak, sorry.}
+{18050}{}{Actually, I don't have one.}
+{19000}{}{You and your kids, damn. Aint running an orphanage here god damn it. Ah fuck it, show me anyway.}
+{19010}{}{Here's some kid I acquired.}
+{19020}{}{Actually, I don't have one.}
+{20000}{}{[Vortis looks your slave over.] Right. @lex price@ for this one. Do we have a deal?}
+{20010}{}{Alright, deal.}
+{20020}{}{Nah, I'll keep a hold of this one for now. Thanks anyway,}
+{21000}{}{Any more business to be done?}
+{21010}{}{Yeah I've got some more.}
+{21020}{}{Nah I'm done for the day.}
+{22000}{}{I only deal with proper Slavers, kid. See the tattoos? You get one of those, we can do some business. Go talk to Metzger.}
+{22010}{}{Okay.}
+{23000}{}{Some error occured. Report this to admins.}
+{23010}{}{Okay.}
+

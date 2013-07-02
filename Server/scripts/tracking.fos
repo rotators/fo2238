@@ -1,0 +1,416 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// tracking.fos
+//
+
+// inlined in globalmap_groups.fos
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "worldmap_h.fos"
+
+//
+// Functions that are meant to be used in global_process method
+// enabling players to track themselves on the worldmap
+//
+
+// if group is in that range, it is available to be tracked
+#define MAX_AVAILABLE_DIST    (24)
+
+import uint WorldmapGetPlayers(uint zx, uint zy, array<Critter@>& players) from "worldmap_players";
+import int  WorldmapGetPlayerTime(Critter& player) from "worldmap_players";
+
+//
+// Stores info about tracked group
+//
+class CTrackedGroup
+{
+    uint  LeaderId;
+    uint  TrackerId;
+    float X;
+    float Y;
+    // some sort of 'reference counter'
+    uint  Trackers;
+
+    CTrackedGroup(uint trackerId, uint leaderId, float x, float y)
+    {
+        LeaderId = leaderId;
+        TrackerId = trackerId;
+        X = x;
+        Y = y;
+        Trackers = 1;
+    }
+};
+// list of groups that are tracked
+array<CTrackedGroup> TrackedList;
+
+// list of groups leaders that are waiting to track someone
+array<uint> Trackers;
+
+// TODO: penalty for tracked group size?
+void Roll(array<Critter@>@ group, Critter@ tracked, int& out trackerRoll, int& out trackedRoll)
+{
+    Critter@        tracker = group[0];
+    // tracker's roll
+    int             roll = Random(0, 99);
+    Critter@        trackerGuide = GetMostSkilled(group, SK_OUTDOORSMAN);
+
+    array<Critter@> trackedGroup;
+    // TODO: this is bugged for now (don't return group if on worldmap)
+    tracked.GetFollowGroup(FIND_ALL, trackedGroup);
+    tracker.Say(SAY_NETMSG, "trackedgroup len: " + trackedGroup.length());
+
+    Critter@ trackedGuide = @tracked;    // GetMostSkilled(trackedGroup, SK_OUTDOORSMAN);
+
+    trackerRoll = CLAMP(roll + trackerGuide.Skill[SK_OUTDOORSMAN] - trackedGuide.Skill[SK_OUTDOORSMAN], 0, 99);
+    // tracked' roll
+    roll = Random(0, 99);
+    trackedRoll = CLAMP(roll + trackedGuide.Skill[SK_OUTDOORSMAN] - trackerGuide.Skill[SK_OUTDOORSMAN], 0, 99);
+    #ifdef __DEBUG__
+    tracker.Say(SAY_NETMSG, "Tracker roll, " +
+                trackerGuide.Skill[SK_OUTDOORSMAN] + " vs " + trackedGuide.Skill[SK_OUTDOORSMAN] + ": " + trackerRoll);
+    tracked.Say(SAY_NETMSG, "Tracked roll, " +
+                trackedGuide.Skill[SK_OUTDOORSMAN] + " vs " + trackerGuide.Skill[SK_OUTDOORSMAN] + ": " + trackedRoll);
+    #endif
+
+    // TODO: perks? professions?
+}
+//
+// It's called in GLOBAL_PROCESS_MOVE and GLOBAL_PROCESS_STOP - it updates coords of tracking/tracked groups
+//
+void SetTrackingCoords(array<Critter@>@ group, float x, float y, float& toX, float& toY)
+{
+    Critter@ leader = group[0];
+
+    GameVar@ var = GetLocalVar(LVAR_tracking_id, leader.Id);
+    for(uint i = 0; i < TrackedList.length(); i++)
+    {
+        // if group is tracking
+        // we are tracking that group
+        if(uint(var.GetValue()) == TrackedList[i].LeaderId)
+        {
+            // chance to loose the track
+            Critter@ tracked = GetCritter(var.GetValue());
+
+            int      trackerRoll = 0;
+            int      trackedRoll = 0;
+            Roll(group, tracked, trackerRoll, trackedRoll);
+
+            // comparing rolls - we always help tracker a little bit, because all in all
+            // it's easier to track than to spot that you're tracked
+
+            // tracked detects tail
+            if(trackerRoll < trackedRoll + 25)
+                tracked.Say(SAY_NETMSG, "You are followed.");
+            // loosing track
+            if(trackerRoll + 25 < trackedRoll)
+            {
+                LooseTrack(leader, false);
+                return;
+            }
+            // set coords
+            toX = TrackedList[i].X;
+            toY = TrackedList[i].Y;
+        }
+        // if group is tracked
+        if(group[0].Id == TrackedList[i].LeaderId)
+        {
+            TrackedList[i].X = x;
+            TrackedList[i].Y = y;
+        }
+    }
+}
+// another overload to be used in global_invite
+void SetTrackingCoords(array<Critter@>@ group, float x, float y)
+{
+    // dummies
+    float d1, d2;
+    SetTrackingCoords(group, x, y, d1, d2);
+}
+
+//
+// When tracked player enters location, it can be discovered by tracker
+// so update their coords (it is invoked in global map in handler)
+//
+void TrackLocation(Critter& player)
+{
+    for(uint i = 0; i < TrackedList.length(); i++)
+    {
+        if(player.Id == TrackedList[i].LeaderId)
+        {
+            TrackedList[i].X = player.WorldX;
+            TrackedList[i].Y = player.WorldY;
+        }
+    }
+}
+
+//
+// If group stopped, and the tracked player is in location beneath
+// mark it as known location
+//
+bool TrackLocation(array<Critter@>@ group, float x, float y)
+{
+    Critter@ tracker = group[0];
+
+    GameVar@ var = GetLocalVar(LVAR_tracking_id, tracker.Id);
+    for(uint i = 0; i < TrackedList.length(); i++)
+    {
+        // we are tracking that group
+        if(uint(var.GetValue()) == TrackedList[i].LeaderId)
+        {
+            Critter@ tracked = GetCritter(var.GetValue());
+            if(!valid(tracked))
+            {
+                LooseTrack(tracker, false);
+                return false;
+            }
+            Map@ map = tracked.GetMap();
+            if(!valid(map))
+                return false;
+
+
+            int trackerRoll = 0;
+            int trackedRoll = 0;
+            Roll(group, tracked, trackerRoll, trackedRoll);
+
+
+            if(trackerRoll > trackedRoll)
+            {
+                // ask whether to enter it
+                tracker.ShowScreen(SCREEN_DIALOGBOX, 1, "answer_Enter");
+                tracker.Say(SAY_DIALOGBOX_TEXT, "Do you want to enter this location?");
+                tracker.Say(SAY_DIALOGBOX_BUTTON(0), "Yes");
+
+                // so that group will be stopped on worldmap
+                return true;
+            }
+            // otherwise just drag trackers in
+            {
+                tracker.TransitToMap(map.Id, 0);
+                for(uint i = 0, num = group.length(); i < num; i++)
+                    group[i].TransitToMap(map.Id, 0);
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+void repro(Critter& cr, int p0, int p1, int p2)
+{
+    Critter@ pl = GetCritter(p0);
+    Track(cr, pl);
+
+    array<Critter@> group;
+    group.insertLast(cr);
+
+    pl.ToDead(0, null);
+
+    TrackLocation(group, cr.WorldX, cr.WorldY);
+}
+
+void track(Critter& cr, int p0, int p1, int p2)
+{
+    Critter@ pl = GetCritter(p0);
+    Track(cr, pl);
+}
+
+void answer_Enter(Critter& tracker, uint i, string& s)
+{
+    // TODO: timer?
+    GameVar@ var = GetLocalVar(LVAR_tracking_id, tracker.Id);
+    Critter@ tracked = GetCritter(var.GetValue());
+    if(!valid(tracked) || !valid(tracked.GetMap()))
+    {
+        tracker.Say(SAY_NETMSG, "You weren't able to enter this location.");
+    }
+    else
+    {
+        Map@            map = tracked.GetMap();
+        array<Critter@> group;
+        uint            num = tracker.GetFollowGroup(FIND_ALL, group);
+        tracker.TransitToMap(map.Id, 0);
+        for(uint i = 0; i < num; i++)
+            group[i].TransitToMap(map.Id, 0);
+    }
+}
+
+//
+// Asks leader of the group, which of the available groups to track
+//
+
+// maximum length of array of available players
+#define MAX_AVAILABLE_LEN     (10)
+// maximum time player is available to be tracked (ingame minutes)
+#define MAX_AVAILABLE_TIME    (REAL_MINUTE(1))                  // 1 realworld minute
+
+void AskAboutAvailable(Critter@ askedLeader)
+{
+    array<Critter@> available;
+    // gather plaeyrs from nearby zones
+    uint            zx = ZONE_X(askedLeader.WorldX);
+    uint            zy = ZONE_Y(askedLeader.WorldY);
+
+    WorldmapGetPlayers(zx - 1, zy - 1, available);
+    WorldmapGetPlayers(zx,   zy - 1, available);
+    WorldmapGetPlayers(zx + 1, zy - 1, available);
+
+    WorldmapGetPlayers(zx - 1, zy, available);
+    WorldmapGetPlayers(zx,   zy, available);
+    WorldmapGetPlayers(zx + 1, zy, available);
+
+    WorldmapGetPlayers(zx - 1, zy + 1, available);
+    WorldmapGetPlayers(zx,   zy + 1, available);
+    WorldmapGetPlayers(zx + 1, zy + 1, available);
+
+    // Critter@ askedLeader = group[0];
+
+    // prepare a list of groups' leaders in zone (from the end, so we will take the latest first)
+    array<uint> list;
+    if(available.length() == 0)
+        return;
+
+    DLog("Available len: " + available.length());
+
+    // TODO: needs to filter out players from the same group, and should display only leaders
+    for(int i = available.length() - 1; i >= 0; i--)
+    {
+        Critter@ cr = GetCritter(available[i].Id);
+        // no longer available
+        if(!valid(cr) || cr.GetMapId() != 0)
+            continue;
+        // timeouted
+        if(WorldmapGetPlayerTime(cr) > int(MAX_AVAILABLE_TIME))
+            continue;
+
+        if(askedLeader.Id == cr.Id)
+            continue;
+        // only group leaders
+        Critter@ leader = GetCritter(cr.Stat[ST_FOLLOW_CRIT]);
+        // it means critter cr has leader and it is in the same worldmap group
+        if(valid(leader) && leader.WorldX == cr.WorldX && leader.WorldY == cr.WorldY)
+            continue;
+
+        // check distance
+        if(DIST(cr.WorldX, cr.WorldY,
+                askedLeader.WorldX, askedLeader.WorldY) <= MAX_AVAILABLE_DIST)
+        {
+            DLog("++");
+            list.insertLast(cr.Id);
+            if(list.length() == MAX_AVAILABLE_LEN)
+                break;
+        }
+
+    }
+    // if list not empty, ask
+    if(list.length() > 0)
+    {
+        DLog("asking");
+        askedLeader.ShowScreen(SCREEN_DIALOGBOX, list.length(), "answer_ChooseTracked");
+        askedLeader.Say(SAY_DIALOGBOX_TEXT, "Choose group you want to track:");
+        for(uint i = 0; i < list.length(); i++)
+            askedLeader.Say(SAY_DIALOGBOX_BUTTON(i), GetSafePlayerName(list[i]));
+        // remember stored list
+        SetAnyData("TrackingAvailable_" + askedLeader.Id, list);
+    }
+}
+
+//
+// Callback that will set the tracked group
+//
+void answer_ChooseTracked(Critter& player, uint answerI, string& answerS)
+{
+    // read stored list of ids
+    array<uint> list;
+    if(!IsAnyData("TrackingAvailable_" + player.Id))
+        return;
+    GetAnyData("TrackingAvailable_" + player.Id, list);
+    if(answerI > list.length())
+    {
+        Log("ERR: Improper answer");
+        return;
+    }
+
+    GameVar@ var = GetLocalVar(LVAR_tracking_id, player.Id);
+    var = list[answerI];
+    Critter@ tracked = GetCritter(list[answerI]);
+    // erase anydata array
+    EraseAnyData("TrackingAvailable_" + player.Id);
+    // TODO: this means leader can escape by logging off, but he doesn't immediately become null after it...hmm
+    if(!valid(tracked))
+        return;
+    Track(player, tracked);
+    player.Say(SAY_NETMSG, "Tracking " + tracked.Name + ", wait.");
+}
+
+//
+// Track the given leader - it creates new TrackedGroup object / increases the 'refcount'
+//
+void Track(Critter@ tracker, Critter@ tracked)
+{
+    for(uint i = 0; i < TrackedList.length(); i++)
+    {
+        if(TrackedList[i].LeaderId == tracked.Id)
+        {
+            TrackedList[i].Trackers++;
+            return;
+        }
+    }
+    TrackedList.insertLast(CTrackedGroup(tracker.Id, tracked.Id, tracked.WorldX, tracked.WorldY));
+}
+
+//
+// Tracker loose track
+//
+// if canceled is true, it means player canceled it
+// otherwise player lost track due to other circumstances
+void LooseTrack(Critter@ tracker, bool canceled)
+{
+    GameVar@ var = GetLocalVar(LVAR_tracking_id, tracker.Id);
+
+    if(var.GetValue() == 0)
+        return;
+
+    tracker.ShowScreen(SCREEN_DIALOGBOX, 0, "");
+    if(canceled)
+        tracker.Say(SAY_DIALOGBOX_TEXT, "You are no longer tracking " + GetSafePlayerName(var.GetValue()));
+    else
+        tracker.Say(SAY_DIALOGBOX_TEXT, "You've lost the track.");
+    // tracker.Say(SAY_DIALOGBOX_BUTTON(0),"OK");
+
+    // decrease trackers counter
+    for(uint i = 0; i < TrackedList.length(); i++)
+    {
+        if(TrackedList[i].LeaderId == uint(var.GetValue()))
+        {
+            TrackedList[i].Trackers--;
+            break;
+        }
+    }
+    var = 0;
+    // remove it if necesary
+    uint j = 0;
+    if(TrackedList.length() > 1)
+    {
+        for(uint i = 0; i < TrackedList.length() - 1; i++)
+        {
+            if(TrackedList[i].Trackers == 0)
+            {
+                TrackedList[i] = TrackedList[i + 1];
+                // this will cause it to be overwritten in next iteration
+                TrackedList[i + 1].Trackers = 0;
+                j++;
+            }
+        }
+    }
+    else
+    {
+        TrackedList.resize(0);
+        DLog("Removed tracked object");
+        return;
+    }
+    TrackedList.resize(TrackedList.length() - j);
+    DLog("Removed tracked object");
+}

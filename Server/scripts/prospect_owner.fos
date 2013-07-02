@@ -1,0 +1,48 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prospect_owner.fos
+//
+
+// Prospector (owner of prospect)
+
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "_entires.fos"
+#include "npc_planes_h.fos"
+#include "production_h.fos"
+#include "npc_planes_h.fos"
+#include "entire.fos"
+
+import Item@ GetContainer(Critter& cr) from "prospects";
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    _CritSetMode(npc, MODE_NO_STEAL);
+    _CritUnsetMode(npc, MODE_NO_BARTER);
+
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+void _Idle(Critter& npc)
+{
+    // share with player-owner
+    // transfer half of the minerals and ore to the container
+    Item@ cont = GetContainer(npc);
+
+    uint  count = npc.CountItem(PID_MINERAL) / 2;
+    if(count > 0)
+    {
+        npc.DeleteItem(PID_MINERAL, count);
+        cont.AddItem(PID_MINERAL, count, 0);
+    }
+    count = npc.CountItem(PID_METAL_ORE) / 2;
+    if(count > 0)
+    {
+        npc.DeleteItem(PID_METAL_ORE, count);
+        cont.AddItem(PID_METAL_ORE, count, 0);
+    }
+    // each ingame hour
+    npc.Wait(1000 * 360 / REAL_MINUTE(1));
+}

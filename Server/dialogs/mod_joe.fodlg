@@ -1,0 +1,177 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+9 1010 D _param p KARMA_SLAVER > 0 #
+3 1020 D _param p ST_CHARISMA > 99 #
+3 1030 D _param p ST_INTELLECT < 4 #
+2 1040 @
+2 2000 dialog@dlg_ShowFaction 0 #
+65506 2010 #
+8 2020 #
+4 2030 #
+120 2040 D _script town@d_IsControllingTown 1 1 #
+50 2050 D _script town@d_CanRecruitMilitia 0  #
+75 2060 D _script town@d_IsControllingTown 1 1 #
+0 2070 #
+310 2080 D _script town@d_IsNotControllingTown 1 1 D _script dialog@d_IsGangMember 0  D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+500 2090 D _script town@d_CanChangeLaws 0  @
+3 3000 None 0 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+8 5010 #
+2 5020 @
+6 6000 None 0 #
+8 6010 #
+2 6020 @
+7 7000 None 0 #
+8 7010 #
+2 7020 @
+8 8000 None 0 #
+5 8010 #
+6 8020 #
+7 8030 #
+2 8040 @
+50 9000 town@dlg_ShowMilitiaCost 0 #
+50 9010 R _script town@r_RecruitMilitia 0  #
+2 9020 @
+75 10000 None 0 #
+76 10010 #
+77 10020 R _script town@r_SetFriendlyFactionsMode 1 1 #
+77 10030 R _script town@r_SetFriendlyFactionsMode 1 0 @
+76 11000 town@dlg_ShowFriendlyFactions 0 #
+76 11010 R _script town@r_FriendlyFactionsBrowse 1 1 #
+76 11020 R _script town@r_FriendlyFactionsBrowse 1 -1 #
+2 11030 @
+77 12000 town@dlg_ManipulateFriendlyFactions 0 #
+2 12010 @
+301 13000 None 0 #
+0 13010 #
+130 13020 D _script town@d_PresentAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+302 14000 dialog@dlg_ShowFaction 0 #
+0 14010 #
+65507 14020 #
+130 14030 D _script town@d_MembersAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+310 15000 None 0 #
+0 15010 D _script town@d_GainControl 1 1 @
+320 16000 None 0 #
+0 16010 D _script town@d_GainControl 1 1 @
+330 17000 None 0 @
+120 18000 None 0 #
+2 18010 @
+130 19000 None 0 #
+0 19010 #
+65507 19020 @
+9 20000 None 0 @
+500 21000 town@dlg_ShowPolicies 0 #
+500 21010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 21020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 21030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 21040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 21050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 21060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+2 21070 @
+410 22000 None 0 #
+0 22010 @
+420 23000 None 0 #
+0 23010 @
+430 24000 None 0 #
+0 24010 @
+440 25000 None 0 @
+450 26000 None 0 #
+0 26010 &
+
+[engl]
+{100}{}{Jo}
+{200}{}{Trader Jo.}
+{210}{}{An average person, of average height, of average complexion. Nothing out of the ordinary.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{ugly}
+{1030}{}{Retard}
+{1040}{}{Normal}
+{2000}{}{What can I do for you?}
+{2010}{}{What do you have to trade?}
+{2020}{}{What can you tell me about this town?}
+{2030}{}{What do you do here?}
+{2040}{}{What about our supplies ?}
+{2050}{}{We need some volunteers to secure the town.}
+{2060}{}{I want to talk about our allies.}
+{2070}{}{See you.}
+{2080}{}{Bow down! @lex faction@ is going to run this town now, so start handing over the goods before my trigger finger gets too itchy. @lex faction@ is now your police, your army, your king and your daddy.}
+{2090}{}{I want to change the laws.}
+{3000}{}{My name’s Jo. Can you say Jo? No matter; you see that rectangular thing over there? That’s a door. Be careful not to let it hit you on the way out. Freak.}
+{4000}{}{My name’s Jo and I run the trading post for Modoc. I organize trade between Modoc and other cities in need of food and leather goods. But with this drought, that could all come to an end real soon. We're getting desperate.}
+{4010}{}{Can I ask you a few more questions?}
+{5000}{}{The slaughterhouse is run by Grisham and his son Davin. It’s just east of here. He makes the best damn jerky this side of the Rockies.}
+{5010}{}{Can I ask about somewhere else?}
+{5020}{}{Would you mind if I asked some more questions?}
+{6000}{}{Rose’s Bed and Breakfast is on the north side of town. Travelers from all over come just to sample her world-famous omelets. Some say her omelets can cure people of what ails them. Frankly, I think that’s just a bunch of nonsense.}
+{6010}{}{Thanks, what about the other places?}
+{6020}{}{Can I ask you a few more questions?}
+{7000}{}{Just follow your nose and you’ll find it. Can you smell that foul stench in the air? That's the  tanning vats just north of here. If you overlook the smell, you’ll not find a better place to get leather goods. Balthus can work miracles with leather.}
+{7010}{}{What else is there in Modoc?}
+{7020}{}{That's enough about that.}
+{8000}{}{We don’t have much; just a few farms, a slaughterhouse, Rose’s Bed and Breakfast, and a tannery. Just enough to produce goods to trade. Although that could all change with this drought.}
+{8010}{}{What can you tell me about the slaughterhouse?}
+{8020}{}{Rose’s Bed and Breakfast?}
+{8030}{}{Where’s the tannery?}
+{8040}{}{Hey, I want to know about something else.}
+{9000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{9010}{}{Sounds good, here's @lex cost@ caps.}
+{9020}{}{Nah, I think we're doing fine as it is now.}
+{10000}{}{So, what about friendly factions? Do you want me to make sure the militia looks after a certain faction?}
+{10010}{}{Show me the friendly factions.}
+{10020}{}{I want to remove a faction from the list.}
+{10030}{}{I want to add a new faction to the list.}
+{11000}{}{@lex faction@}
+{11010}{}{Next}
+{11020}{}{Previous}
+{11030}{}{Ok, looks good.}
+{12000}{}{And what might their name be?}
+{12010}{}{Ok, that's all.}
+{13000}{}{You want to run this town and you're only going to post a couple of your toughs here? What's to stop the next gang running all over us? We need more of your people for protection before we hand anything over.}
+{13010}{}{I'll round up some more of our troops, then}
+{13020}{}{A couple of our boys is all you'll ever need. Hell I could kill all of you single-handedly, so you better watch what you say to me.}
+{14000}{}{[Jo scrunches his eyebrows together.] @lex faction@? Never heard of you boys. We might not be much, but we can protect ourselves from some small-time outfit like you. Get out of here, Modoc doesn't need little 2-cap hoodlums.}
+{14010}{}{We'll be back, wiseass.}
+{14020}{}{Fuck you, man! @lex faction@ is the shit. Prepare to die! [attack]}
+{14030}{}{Who do you think you're talking to? Of course you ain't heard of us, cause Modoc's some little backwater. If you ever left this tiny piece-of-crap town, you'd know @lex faction@. We're a righteous outfit. [speech check, to okay takeover]}
+{15000}{}{[Takes a deep breath.] Alright. You keep us safe, keep us alive and keep us making money, we'll share our profits with you as payment. Deal?}
+{15010}{}{Right. Quit your yapping and get back to working for me!}
+{16000}{}{[Takes a deep breath.] Alright. You keep us safe, keep us alive and keep us making money, we'll share our profits with you as payment. Deal?}
+{16010}{}{Right. Quit your yapping and get back to working for me!}
+{17000}{}{Guards, get those retards!}
+{18000}{}{Head over to the maintenance center, there should be a footlocker in the center of room, where supply is gathered. If you keep us safe , we promise to pay you as much as we can.}
+{18010}{}{Alright, then.}
+{19000}{}{[Spits some horrible Modoc tobacco out the corner of his mouth.] Hmm...nahh. I ain't buying what you selling, wastelander. Numbers impress me. And hardware.}
+{19010}{}{Right. Bye.}
+{19020}{}{Here's a number then. 5. It's the amount of seconds until I kill you. It's 3 now, by the way.}
+{20000}{}{You people aren't welcome here.@@I know who you are, and I don't like it.@@We don't agree with what you people do.}
+{21000}{}{Here's the current laws in Modoc:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{21010}{}{I want it to be legal to carry weapons openly.}
+{21020}{}{I want it to be illegal to carry weapons openly.}
+{21030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{21040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{21050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{21060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{21070}{}{Ok, looks good.}
+{22000}{}{Alright, there you go.}
+{22010}{}{Right.}
+{23000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{23010}{}{Ok.}
+{24000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{24010}{}{Yeah, yeah...}
+{25000}{}{Error. Report this.}
+{26000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{26010}{}{Uh, sure!}
+

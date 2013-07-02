@@ -1,0 +1,359 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// merc_dialog.fos
+//
+
+#include "_macros.fos"
+#include "mercs_h.fos"
+
+#include "utils_h.fos"
+#include "follower_h.fos"
+#include "economy_h.fos"
+#include "follower_common_h.fos"
+
+import IMerc@ GetMerc(uint id) from "mercs";
+
+#define FORCE_DIALOG_SUCCESS          (5)
+#define FORCE_DIALOG_ERROR            (6)
+#define FORCE_DIALOG_NOT_FOUND        (7)
+#define FORCE_DIALOG_TOO_EXPENSIVE    (8)
+#define FORCE_DIALOG_PARTY_FULL       (9)
+
+// Selling
+#define FORCE_DIALOG_NO_FOLLOWER      (9)
+#define FORCE_DIALOG_NO_SELL_PRICE    (10)
+#define FORCE_DIALOG_SUCCESS_SOLD     (11)
+
+#define CURRENT_MERC_ID               (player.StatBase[ST_VAR1])
+#define SLAVES_PRESENT                (player.StatBase[ST_VAR2])
+
+// Check if player has follower of specified basetype
+bool d_HasFollowerOfType(Critter& player, Critter@ npc, int val)
+{
+    IMerc@ merc = GetMerc(uint(val));
+    return(valid(LocateFollowerByType(merc, player)));
+}
+
+uint r_SellMerc(Critter& player, Critter@ npc, int val)
+{
+    IMerc@ merc = GetMerc(uint(val));
+    if(!valid(merc))
+    {
+        return FORCE_DIALOG_NOT_FOUND;
+    }
+
+    if(merc.GetSellPrice() == 0)
+    {
+        return FORCE_DIALOG_NO_SELL_PRICE;
+    }
+
+    Critter@ follower = LocateFollowerByID(val, player);
+    if(!valid(follower))
+    {
+        return FORCE_DIALOG_NO_FOLLOWER;
+    }
+
+    DeleteNpc(follower);
+    BanksTransferToCritter(player, merc.GetSellPrice(), TRANSACTION_MERCSELL, false);
+    return FORCE_DIALOG_SUCCESS_SOLD;
+}
+
+uint r_SellCurrentMerc(Critter& player, Critter@ npc, int val)
+{
+    IMerc@ merc = GetMerc(CURRENT_MERC_ID);
+    if(!valid(merc))
+    {
+        return FORCE_DIALOG_NOT_FOUND;
+    }
+
+    if(merc.GetSellPrice() == 0)
+    {
+        return FORCE_DIALOG_NO_SELL_PRICE;
+    }
+
+    Critter@ follower = LocateFollowerByID(CURRENT_MERC_ID, player);
+    if(!valid(follower))
+    {
+        return FORCE_DIALOG_NO_FOLLOWER;
+    }
+
+    DeleteNpc(follower);
+    BanksTransferToCritter(player, merc.GetSellPrice(), TRANSACTION_MERCSELL, false);
+    return FORCE_DIALOG_SUCCESS_SOLD;
+}
+
+uint r_HireMerc(Critter& player, Critter@ npc, int MercId)
+{
+    IMerc@ merc = GetMerc(uint(MercId));
+    if(!valid(merc))
+    {
+        return FORCE_DIALOG_NOT_FOUND;
+    }
+
+    if(uint(merc.GetCost()) > _CritCountItem(player, PID_BOTTLE_CAPS))
+    {
+        return FORCE_DIALOG_TOO_EXPENSIVE;
+    }
+
+    if(!CanHaveMoreFollowers(player, merc.GetType()))
+    {
+        return FORCE_DIALOG_PARTY_FULL;
+    }
+
+    if(!BanksTransferFromCritter(player, merc.GetCost(), TRANSACTION_MERCBUY, false))
+    {
+        Log("Couldn't remove money");
+        return FORCE_DIALOG_ERROR;
+    }
+
+    if(!merc.Spawn(player))
+    {
+        Log("Error creating merc");
+        return FORCE_DIALOG_ERROR;
+    }
+
+    merc.Cost(merc.GetCost() + Random(10, 30));
+    return FORCE_DIALOG_SUCCESS;
+}
+
+void r_SetMerc(Critter& player, Critter@ npc, int val)
+{
+    CURRENT_MERC_ID = val;
+}
+
+void r_GetSlaveTypes(Critter& player, Critter@ npc, int val)
+{
+    SLAVES_PRESENT = GetSlaveTypes(player);
+}
+
+// do NOT use this before using r_GetSlaveTypes(Critter& player, Critter@ npc, int val) first.
+bool d_IsSlavePresent(Critter& player, Critter@ npc, int val)
+{
+    switch(val)
+    {
+    case 12:
+        return FLAG(SLAVES_PRESENT, SLAVE_MALE0);
+    case 13:
+        return FLAG(SLAVES_PRESENT, SLAVE_MALE1);
+    case 14:
+        return FLAG(SLAVES_PRESENT, SLAVE_MALE2);
+    case 15:
+        return FLAG(SLAVES_PRESENT, SLAVE_FEMALE0);
+    case 16:
+        return FLAG(SLAVES_PRESENT, SLAVE_FEMALE1);
+    case 17:
+        return FLAG(SLAVES_PRESENT, SLAVE_FEMALE2);
+    case 20:
+        return FLAG(SLAVES_PRESENT, SLAVE_CHILD);
+    case 21:
+        return FLAG(SLAVES_PRESENT, SLAVE_GENERIC_MALE);
+    case 22:
+        return FLAG(SLAVES_PRESENT, SLAVE_GENERIC_FEMALE);
+    default:
+        ;
+    }
+    return false;
+}
+
+bool d_CanAffordMerc(Critter& player, Critter@ npc, int val)
+{
+    IMerc@ merc = GetMerc(uint(val));
+    if(!valid(merc))
+        return false;
+    return(uint(merc.GetCost()) <= _CritCountItem(player, PID_BOTTLE_CAPS));
+}
+
+void dlg_ShowGhoulCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ ghoul1 = GetMerc(38);
+    IMerc@ ghoul2 = GetMerc(39);
+
+    text += "$ghoul1" + ghoul1.GetCost();
+    text += "$ghoul2" + ghoul2.GetCost();
+}
+
+void dlg_ShowMutantCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ mutant1 = GetMerc(35);
+    IMerc@ mutant2 = GetMerc(36);
+    IMerc@ mutant3 = GetMerc(37);
+
+    text += "$mutant1" + mutant1.GetCost();
+    text += "$mutant2" + mutant2.GetCost();
+    text += "$mutant3" + mutant3.GetCost();
+}
+
+void dlg_ShowMeleeCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ melee1 = GetMerc(1);
+    IMerc@ melee2 = GetMerc(2);
+    IMerc@ melee3 = GetMerc(3);
+    IMerc@ melee4 = GetMerc(4);
+
+    text += "$melee1" + melee1.GetCost();
+    text += "$melee2" + melee2.GetCost();
+    text += "$melee3" + melee3.GetCost();
+    text += "$melee4" + melee4.GetCost();
+}
+
+void dlg_ShowSmallGunsCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ sg1 = GetMerc(5);
+    IMerc@ sg2 = GetMerc(6);
+    IMerc@ sg3 = GetMerc(7);
+
+    text += "$sg1" + sg1.GetCost();
+    text += "$sg2" + sg2.GetCost();
+    text += "$sg3" + sg3.GetCost();
+}
+
+void dlg_ShowBigGunsCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ bg1 = GetMerc(30);
+    IMerc@ bg2 = GetMerc(31);
+    IMerc@ bg3 = GetMerc(32);
+
+    text += "$bg1" + bg1.GetCost();
+    text += "$bg2" + bg2.GetCost();
+    text += "$bg3" + bg3.GetCost();
+}
+
+void dlg_ShowDogCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ dog = GetMerc(8);
+    text += "$price" + dog.GetCost();
+}
+
+void dlg_ShowDog2Cost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ dog = GetMerc(19);
+    text += "$price" + dog.GetCost();
+}
+
+void dlg_ShowDog3Cost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ dog = GetMerc(40);
+    text += "$price" + dog.GetCost();
+}
+
+void dlg_ShowEnergyWeaponCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ ew1 = GetMerc(33);
+    IMerc@ ew2 = GetMerc(34);
+
+    text += "$ew1" + ew1.GetCost();
+    text += "$ew2" + ew2.GetCost();
+}
+
+void dlg_ShowMercSellPrice(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ merc = GetMerc(CURRENT_MERC_ID);
+    if(!valid(merc))
+    {
+        text += "$price" + "invalid_merc";
+        return;
+    }
+
+    if(uint(merc.GetSellPrice()) == 0)
+    {
+        text += "$price" + "invalid_sellprice";
+        return;
+    }
+    text += "$price" + merc.GetSellPrice();
+}
+
+void dlg_ShowMercCost(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IMerc@ merc = GetMerc(CURRENT_MERC_ID);
+    if(!valid(merc))
+    {
+        text += "$price" + "invalid_merc";
+        return;
+    }
+
+    if(uint(merc.GetSellPrice()) == 0)
+    {
+        text += "$price" + "invalid_sellprice";
+        return;
+    }
+    text += "$price" + merc.GetSellPrice();
+}
+
+void dlg_ShowMaleSlavesPrices(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    for(uint i = 0; i < 3; i++)
+    {
+        IMerc@ slave = GetMerc(12 + i);
+        if(!valid(slave))
+        {
+            text += ("$price" + i) + "invalid_slave";
+            continue;
+        }
+        if(slave.GetCost() == 0)
+        {
+            text += ("$price" + i) + "invalid_cost";
+            continue;
+        }
+        text += ("$price" + i) + slave.GetCost();
+    }
+}
+
+void dlg_ShowFemaleSlavesPrices(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    for(uint i = 0; i < 3; i++)
+    {
+        IMerc@ slave = GetMerc(15 + i);
+        if(!valid(slave))
+        {
+            text += ("$price" + i) + "invalid_slave";
+            continue;
+        }
+        if(slave.GetCost() == 0)
+        {
+            text += ("$price" + i) + "invalid_cost";
+            continue;
+        }
+        text += ("$price" + i) + slave.GetCost();
+    }
+}

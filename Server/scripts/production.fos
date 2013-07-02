@@ -1,0 +1,236 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// production.fos
+//
+
+#define __PRODUCTION_MODULE__
+#include "production_h.fos"
+#include "utils_h.fos"
+#include "backend_h.fos"
+
+import void InitMachines() from "prod_machine";
+
+// cumulative timeout
+#define TIMEOUT_CUMULATIVE    (int(REAL_MINUTE(20)))
+// gathering timeout
+#define SET_TIMEOUT           # (cr, to)     { cr.TimeoutBase[TO_GATHERING] = __FullSecond + cr.Timeout[TO_GATHERING] + REAL_SECOND(to); }
+
+// every resource that's subject to regeneration increases this global counter
+// so that we can later determine weight when regenerating particular facility
+dictionary RegenCounters;
+
+void InitProduction()
+{
+    InitMachines();
+    RegenCounters.set("" + PID_MINERAL, 0);
+    RegenCounters.set("" + PID_MINERALS2, 0);
+    RegenCounters.set("" + PID_METAL_ORE, 0);
+    RegenCounters.set("" + PID_ORE2, 0);
+    RegenCounters.set("" + PID_FIBER, 0);
+    RegenCounters.set("" + PID_MUTATED_FRUIT, 0);
+    RegenCounters.set("" + PID_MEAT, 0);
+    RegenCounters.set("" + PID_FIREWOOD, 0);
+    RegenCounters.set("" + PID_CHEMICALS, 0);
+    RegenCounters.set("" + PID_ELECTRONIC_PARTS, 0);
+    RegenCounters.set("" + PID_TOBACCO, 0);
+    RegenCounters.set("" + PID_URANIUM_ORE, 0);
+    RegenCounters.set("" + PID_CHEMICALS2, 0);
+    RegenCounters.set("" + PID_ELECTRONIC_PARTS2, 0);
+    RegenCounters.set("" + PID_BARLEY, 0);
+}
+
+/**
+ * Retrieves the amount of resources that should be injected into given facility.
+ */
+uint GetRegenerationAmount(uint16 pid, int counter, uint pool, uint facility_count)
+{
+    uint total_counters;
+    if(RegenCounters.get("" + pid, total_counters))
+    {
+        float avg_weight = 1 / float(facility_count);
+        float weight = total_counters == 0 ? avg_weight : float(counter) / float(total_counters);
+        float diff = avg_weight - weight;
+        float amount = pool / float(facility_count);
+        return amount + amount * diff;
+    }
+    else
+    {
+        Log("Given pid is not in regengroups: " + pid);
+        return 0;
+    }
+}
+void Regenerate(Item& item, uint16 pid, int capacity, uint pool, int total_count)
+{
+    AMOUNT(item) = MIN(capacity, AMOUNT(item) + GetRegenerationAmount(pid, COUNTER(item), pool, total_count));
+    int total_counters;
+    if(RegenCounters.get("" + pid, total_counters))
+    {
+        RegenCounters.set("" + pid, MAX(0, total_counters - COUNTER(item)));
+        COUNTER(item) = 0;
+    }
+}
+void ReduceCounter(uint16 pid, int value)
+{
+    int total_counters;
+    if(RegenCounters.get("" + pid, total_counters))
+    {
+        RegenCounters.set("" + pid, MAX(0, total_counters - value));
+    }
+}
+/**
+ * Checks if critter carries too much.
+ */
+bool IsOverweighted(Critter& cr)
+{
+    return cr.ItemsWeight() >= uint(cr.Stat[ST_CARRY_WEIGHT]);
+}
+
+void CheckPrimitiveTool(Critter& crit, Item& item)
+{
+    if(item.GetProtoId() == PID_PRIMITIVE_TOOL && (Random(1, 100) > 10 + 5 * crit.Stat[ST_LUCK]))
+    {
+        _SubItem(item, 1);
+        if(Random(0, 1) == 0)
+            crit.AddItem(PID_FLINT, 1);
+        crit.Say(SAY_NETMSG, "You have broken your primitive tool.");
+    }
+}
+
+uint get_RegenerationInterval()
+{
+    return REAL_MINUTE(Random(__FacilitiesRegenTimeMin, __FacilitiesRegenTimeMax));
+}
+// 'respawns' item
+uint e_Unhide(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    DLog("unhide");
+    Item@ item = GetItem(values[0]);
+    // item has been removed
+    if(!valid(item))
+        return 0;
+    UNSETFLAG(item.Flags, ITEM_HIDDEN);
+    item.Update();
+    _TIMEEND;
+    return 0;
+}
+
+bool Gather(Item& item, Critter& cr, Item@ used_item, uint16 pid, uint batch,
+            uint text, uint text_empty, IGatherCallback@ callback)
+{
+    // let's increase counter everytime
+    COUNTER(item)++;
+    // and global counters
+    uint counter;
+    if(RegenCounters.get("" + pid, counter))
+    {
+        RegenCounters.set("" + pid, ++counter);
+        DPlayerLog(cr, "Counter: " + COUNTER(item) + " vs " + counter);
+    }
+    if(IsOverweighted(cr))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+        return true;
+    }
+
+    bool is_container = item.GetType() == ITEM_TYPE_CONTAINER;
+    batch = MIN(batch, uint(AMOUNT(item)));
+    if(batch > 0)
+    {
+        if(is_container)
+            item.AddItem(pid, batch, 0);
+        else
+            cr.AddItem(pid, batch);
+        AMOUNT(item) -= batch;
+        DPlayerLog(cr, "" + AMOUNT(item));
+        LogGathering(cr, pid, batch);
+        if(valid(used_item))
+            CheckPrimitiveTool(cr, used_item);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, text);
+        // invoke callback
+        if(valid(callback))
+            callback.Callback(item, cr, used_item);
+    }
+    else
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, text_empty);
+    }
+    return !is_container;     // in case of container we return false, that allows engine to open it
+}
+
+
+/**
+ * Initializes the facilities(iron and minerals) that are on map to have the mine with given total value.
+ */
+
+void SetAmountOfResources(array<Item@>& spots, int total_value)
+{
+    dictionary costs;
+
+    if(spots.length() > 0)
+    {
+        int value = total_value;
+        int cost = spots[0].Proto.Cost;
+
+        for(uint i = 0, len = spots.length(); i < len && value > 0; i++)
+        {
+            int v;
+            if(i + 1 == len)
+                v = value;                 // remainder
+            else
+                v = Random(total_value * 0.5, total_value * 1.5) / len;
+
+            AMOUNT(spots[i]) = ceil(v / cost);
+            value -= AMOUNT(spots[i]) * cost;
+            DLog("" + AMOUNT(spots[i]) + "*" + cost + "->" + value);
+        }
+    }
+    else
+        Log("Warning: no resources found");
+}
+
+uint GetFacilities(const Map& map, string@ script_name, array<Item@>& spots)
+{
+    array<Item@> items;
+    uint         num = map.GetItems(0, items);
+    uint         c = 0;
+    uint         script_id;
+    if(valid(script_name))
+    {
+        script_id = GetScriptId(script_name, "void %s(Item&,bool)");
+        if(script_id == 0)
+            return 0;
+    }
+    else
+        script_id = 0;
+    for(uint i = 0; i < num; i++)
+    {
+        if(script_id == 0 || script_id == items[i].GetScriptId())
+        {
+            spots.insertLast(items[i]);
+            c++;
+        }
+    }
+    return c;
+}
+
+/**
+ * Checks iron and minerals facilities and their amounts.
+ */
+bool IsMineDepleted(Map& map)
+{
+    array<Item@> spots;
+    uint         num = GetFacilities(map, "prod_rocks_minerals@_NormalDepletable", spots);
+    num += GetFacilities(map, "prod_rocks_minerals@_AdvancedDepletable", spots);
+    num += GetFacilities(map, "prod_rocks_ore@_NormalDepletable", spots);
+    num += GetFacilities(map, "prod_rocks_ore@_AdvancedDepletable", spots);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(AMOUNT(spots[i]) > 0)
+            return false;
+    }
+    return true;
+}

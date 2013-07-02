@@ -1,0 +1,153 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _var p factions_player_faction = 3 #
+200 1020 D _script dialog@d_IsDisguised 0  #
+16 1030 D _var n acquaintance > 0 #
+19 1040 D _var n acquaintance = 0 D _var n name_mem_player_npc = 1 #
+10 1050 D _var n acquaintance = 0 R _var n name_mem_player_npc = 1 @
+10 2000 None 0 #
+11 2010 #
+20 2020 #
+100 2030 D _var p q_bos_initiatequest_start = 12 D _var p q_bos_initiatequest_start_key = 0 @
+11 3000 None 0 #
+12 3010 D _script dialog@d_NotMemberOfAnyFaction 0  #
+21 3020 D _script dialog@d_IsMemberOfSomeFaction 0  #
+0 3030 @
+12 4000 None 0 #
+13 4010 #
+65507 4020 @
+13 5000 None 0 #
+14 5010 D _param p ST_CHARISMA < 6 #
+15 5020 D _param p ST_CHARISMA > 5 #
+0 5030 @
+14 6000 None 0 #
+0 6010 R _var n acquaintance = 1 #
+0 6020 @
+15 7000 None 0 #
+0 7010 R _var n acquaintance = 2 #
+0 7020 @
+16 8000 None 0 #
+17 8010 D _var n acquaintance = 1 D _item p PID_MICRO_FUSION_CELL > 59 R _item p PID_MICRO_FUSION_CELL - 60 R _script map_navarro_sub1@r_LockerMfc 1 0 #
+17 8020 D _var n acquaintance = 2 D _item p PID_SMALL_ENERGY_CELL > 49 R _item p PID_SMALL_ENERGY_CELL - 50 R _script map_navarro_sub1@r_LockerSec 1 0 #
+0 8030 @
+17 9000 None 0 #
+18 9010 D _script dialog@d_NotMemberOfAnyFaction 0  R _script dialog@r_AddMember 0  R _var n acquaintance = 3 #
+0 9020 R _var n acquaintance = 0 @
+18 10000 None 0 #
+0 10010 @
+19 11000 None 0 #
+11 11010 #
+20 11020 #
+100 11030 D _var p q_bos_initiatequest_start = 12 @
+20 12000 None 0 #
+65507 12010 #
+0 12020 @
+21 13000 None 0 #
+65507 13010 #
+0 13020 @
+50 14000 None 0 @
+100 15000 None 0 #
+101 15010 D _param p ST_STRENGTH } 7 R _script quest_bos_initiate@r_GiveKey 0  #
+102 15020 #
+103 15030 D _param p SK_SPEECH } 95 R _script quest_bos_initiate@r_GiveKey 0  @
+101 16000 None 0 #
+0 16010 @
+102 17000 None 0 #
+104 17010 D _item p PID_BOTTLE_CAPS } 500 R _item p PID_BOTTLE_CAPS - 500 R _script quest_bos_initiate@r_GiveKey 0  #
+105 17020 D _param p SK_BARTER } 50 D _item p PID_BOTTLE_CAPS } 300 R _item p PID_BOTTLE_CAPS - 300 R _script quest_bos_initiate@r_GiveKey 0  #
+0 17030 @
+103 18000 None 0 #
+0 18010 @
+104 19000 None 0 #
+0 19010 @
+105 20000 None 0 #
+0 20010 @
+200 21000 None 0 #
+201 21010 D _var p q_bos_initiatequest_start = 12 D _var p q_bos_initiatequest_start_key = 0 @
+201 22000 None 0 #
+202 22010 @
+202 23000 None 0 #
+0 23010 R _script quest_bos_initiate@r_GiveKey 0  &
+
+[engl]
+{100}{}{Chris}
+{200}{}{You see an old man.}
+{210}{}{You see Chris, the gas station attendant.}
+{210}{}{You see the sloppy old man in purple clothes.}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{disguised}
+{1030}{}{non-member, quest}
+{1040}{}{non-member, no quest, known}
+{1050}{}{non-member, no quest, unknown}
+{2000}{}{Howdy, stranger. Ain't seen you around these parts before. What can old Chris do for you?}
+{2010}{}{What is this place?}
+{2020}{}{I'm just looking around.}
+{2030}{}{I need to get into that fenced-in area over there.}
+{3000}{}{This here's my place, Chris's. It's a service station - ain't you ever seen one of those, in old magazines and such? That's what I got here - a service station.}
+{3010}{}{I'm looking for Navarro. Is this it?}
+{3020}{}{I'm looking for Navarro. Is this it?}
+{3030}{}{Sorry, got to go.}
+{4000}{}{Navarro? I'm an old timer, tend to forget names and places. Quite sure I heard of it once, but can't get it now... Beats me. It can take a while for the memories to refresh, you know? Say, maybe you could do something for the old man Chris in the meantime. Whaddya say, @sex@|boy||girl|?}
+{4010}{}{Sure what do you need?}
+{4020}{}{Your memories will bleach... And so will your bones. Die!}
+{5000}{}{Ya see, no matter how hard I try to save energy cells, there's somehow always a shortage of them. And my business, repairing cars and stuff, it can't rumble without those, ya know what I mean?}
+{5010}{}{You need energy cells?}
+{5020}{}{You need energy cells?}
+{5030}{}{None of my business. I'm outta here.}
+{6000}{}{Hell, I surely do! You go find 60 Micro Fusion Cells and bring it to old Chris and I'll ask around about that Narrator you seek... Deal?}
+{6010}{}{Navarro, it's called Navarro! I'll be back with the energy cells, don't worry.}
+{6020}{}{Forget it, I'm outta here.}
+{7000}{}{Hell, I surely do! You go find 50 Small Energy Cells and bring it to old Chris and I'll ask around about that Narrator you seek... Deal?}
+{7010}{}{Navarro, it's called Navarro! I'll be back with the energy cells, don't worry.}
+{7020}{}{Forget it, I'm outta here.}
+{8000}{}{Look, it's you again. Any luck finding those energy cells for me?}
+{8010}{}{I guess this is your lucky day -- 60 Micro Fusion Cells for you to waste. Here.}
+{8020}{}{I guess this is your lucky day -- 50 Small Energy Cells for you to waste. Here.}
+{8030}{}{No, not yet. I'll keep looking, though.}
+{9000}{}{You saved my business, @sex@|son||beauty|. Now, time to keep my part of the bargain...}
+{9010}{}{You better do, old man.}
+{9020}{}{I think I'm not interested in Navarro anymore... Glad I could help you and all, but now I have to keep going. Bye!}
+{10000}{}{Sorry for the hassles, I'm supposed to clear a bunch of newbies coming through here but I got to weed out the trash. Anyway, just go up to the gate, through the woods there, and I'll add your data to the terminal over there. They'll know you're coming, don't worry.}
+{10010}{}{Thanks! See you around, Chris.}
+{11000}{}{Well, I be damned -- it's you again. What do you want this time, stranger?}
+{11010}{}{What is this place?}
+{11020}{}{I'm just looking around.}
+{11030}{}{I need to get into that fenced-in area over there.}
+{12000}{}{Well, I don't mean to be rude or nothing, but this here's private property. If you're going to be poking around somewhere, don't be doing it here.}
+{12010}{}{Hey, don't you be preaching that shit to me old man!}
+{12020}{}{Yeah, right.}
+{13000}{}{Well, I don't mean to be rude or nothing, but this here's private property. If you're going to be looking for some Narrator, don't be doing it here.}
+{13010}{}{Hey, don't you be preaching that shit to me old man!}
+{13020}{}{Yeah, right.}
+{14000}{}{Hello there.@@Glad to see you again.@@What, superiors being too hard with you?@@You should check out the terminal.}
+{15000}{}{Well that's all well and good, but you can't be poking around here. Now get out before I have you shot.}
+{15010}{}{How about you give me that key or I cause some serious bleeding on your end? That pea-shooter you have isn't going to stop me and nobody else is around to save you.}
+{15020}{}{Come on, man. There's no reason to cause a ruckus. How about I make it worth your while?}
+{15030}{}{Enclave inspector. [You quickly flash him a photo of Richard Nixon taped to a Holodisk.] I have been ordered to search the area due to reports of recent trespassers.}
+{16000}{}{Whoa, now. No need to get violent. But I promise there's absolutely nothing there. Take the damn key.}
+{16010}{}{Your internal organs thank you, Chris.}
+{17000}{}{I can do it for 500 caps, and only because I'm running low on supplies here.}
+{17010}{}{Here, take the caps.}
+{17020}{}{I can't give you 500. But look at this place. You could use the money to fix it up. 300 is as high as I'll go.}
+{17030}{}{I don't have that much money on me. I'll be back.}
+{18000}{}{I had no idea, sir. Please, take this key and forgive me for my incompetence.}
+{18010}{}{Nothing wrong with being cautious. Carry on.}
+{19000}{}{Pleasure doing business with you. }
+{19010}{}{Yeah, shove it up your ass.}
+{20000}{}{Fine. Just take the key and leave me the hell alone.}
+{20010}{}{I'll do just that.}
+{21000}{}{Hello there.@@New here, aren't you?@@What, superiors being too hard with you?}
+{21010}{}{I need to get into that fenced-in area over there.}
+{22000}{}{Why? There's nothing there except for some old junk.}
+{22010}{}{Then there's no reason not to let me in, right?}
+{23000}{}{Fine, here's the key.}
+{23010}{}{Thanks.}
+

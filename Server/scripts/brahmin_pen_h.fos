@@ -1,0 +1,235 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_pen_h.fos
+//
+
+#ifndef __BRAHMIN_PEN_H__
+#define __BRAHMIN_PEN_H__
+
+#include "_macros.fos"
+#include "_scripts.fos"
+#include "utils_h.fos"
+#include "entire.fos"
+#include "debug_h.fos"
+
+#include "serializator.fos"
+#include "reputations_h.fos"
+
+#ifndef __BRAHMIN_PEN_MODULE__
+import IBrahminPen@ GetBrahminPen(uint id) from "brahmin_pens";
+#endif
+
+shared interface IBrahminPen
+{
+    IBrahminPen@ MaxAmount(uint max);
+    IBrahminPen@ AddBrahmins(uint amount);
+    IBrahminPen@ SetOwner(Critter& owner);
+    IBrahminPen@ SetID(uint id);
+    IBrahminPen@ TeamID(uint teamid);
+
+    void     CalculateBrahmins();
+    uint     GetBrahminCount();
+    Critter@ GetOwner();
+    uint     GetID();
+    bool     RemoveBrahmin();
+    bool     AddBrahmin();
+
+    bool IsFull();
+    bool IsEmpty();
+
+    bool SaveData();
+};
+
+class CBrahminPen : IBrahminPen
+{
+    Map@          map;
+    Serializator  serializer;
+    array<Entire> entires;
+    uint          id;
+    uint          amount;
+    uint          max;
+    uint          teamid;
+    bool          initialized;
+    string        name;
+
+    Critter@      owner;
+
+    CBrahminPen(uint mapid, uint entire)
+    {
+        this.amount = 0;
+        this.max = 0;
+
+        @map = GetMapByPid(mapid, 0);
+
+        if(!valid(map))
+        {
+            Log("Error: Invalid map");
+            return;
+        }
+
+        ParseEntires(map, entires, entire);
+
+        if(!valid(entires) || entires.length() == 0)
+        {
+            Log("Error: Invalid entire");
+            return;
+        }
+
+        name = "brahminpen_" + mapid + "_" + entire;
+        initialized = LoadData();
+        if(!initialized)
+            SaveData();
+    }
+
+    bool LoadData()
+    {
+        serializer.Clear();
+        if(!serializer.Load(name))
+            return false;
+        serializer.Get(amount).Get(max);
+        return true;
+    }
+
+    bool SaveData()
+    {
+        serializer.Clear();
+        return serializer.Set(amount).Set(max).Save(name);
+    }
+
+    bool RemoveBrahmin()
+    {
+        Critter@ brahmin = FindBrahmin();
+
+        if(!valid(brahmin))
+        {
+            WLog("brahmin", "No brahmin left");
+            return false;
+        }
+
+        DeleteNpc(brahmin);
+        amount--;
+        return true;
+    }
+
+    bool AddBrahmin()
+    {
+        if((amount + 1) > max)
+        {
+            WLog("brahmin", "Too many brahmin already");
+            return false;
+        }
+
+        Entire@  ent = random_from_array(entires);
+        Critter@ SpawnedBrahmin = AddNpc(map, 10, ent.HexX, ent.HexY, Random(0, 5), DIALOG_all_brahmin, SCRIPT_pen_brahmin, 1, 1,
+                                         /*team id*/ ReputationIndex(map.GetLocation().GetProtoId()), false, 5);
+
+        if(valid(SpawnedBrahmin))
+        {
+            amount++;
+            SpawnedBrahmin.StatBase[ST_NPC_ROLE] = id;
+            SetGroupIndex(SpawnedBrahmin, teamid);
+            WLog("brahmin", "Added brahmin with NpcRole " + id + " and teamid " + teamid);
+            return true;
+        }
+        return false;
+    }
+
+    bool IsFull()
+    {
+        return(amount == max);
+    }
+
+    bool IsEmpty()
+    {
+        return(amount == 0);
+    }
+
+    bool BelongsToPen(Critter& critter)
+    {
+        return(_CritHasExtMode(critter, MODE_EXT_PEN_BRAHMIN) && uint(critter.Stat[ST_NPC_ROLE]) == id);
+    }
+
+    void CalculateBrahmins()
+    {
+        amount = 0;
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(BelongsToPen(crits[i]))
+                amount++;
+        }
+    }
+
+    uint GetBrahminCount()
+    {
+        return amount;
+    }
+
+    uint GetID()
+    {
+        return id;
+    }
+
+    Critter@ GetOwner()
+    {
+        return owner;
+    }
+
+    Critter@ FindBrahmin()
+    {
+        array<Critter@> crits;
+        uint            num = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(BelongsToPen(crits[i]))
+                return crits[i];
+        }
+        return null;
+    }
+
+    IBrahminPen@ SetID(uint id)
+    {
+        this.id = id;
+        return this;
+    }
+
+    IBrahminPen@ TeamID(uint teamid)
+    {
+        this.teamid = teamid;
+        return this;
+    }
+
+    IBrahminPen@ SetOwner(Critter& owner)
+    {
+        if(!valid(owner))
+        {
+            Log("Owner of pen #" + id + " is null");
+        }
+
+        @this.owner = owner;
+        return this;
+    }
+
+    IBrahminPen@ MaxAmount(uint amount)
+    {
+        this.max = amount;
+        return this;
+    }
+
+    IBrahminPen@ AddBrahmins(uint amount)
+    {
+        if(initialized)
+            return this;
+
+        WLog("brahmin", "Adding " + amount + " brahmin to pen");
+
+        for(uint i = 0; i < amount; i++)
+            AddBrahmin();
+        return this;
+    }
+
+};
+#endif

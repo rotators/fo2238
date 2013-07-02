@@ -1,0 +1,60 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_klam_tox.fos
+//
+
+#include "_maps.fos"
+#include "_macros.fos"
+#include "elevators_h.fos"
+
+import void AffectPoison(Critter& cr, int value) from "poison";
+
+CElevator Elevator(ELEVATOR_BOS_01);
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    if(!ElevatorsAdded)
+    {
+        ElevatorsAdded = true;
+        AddElevator(Elevator);
+    }
+
+    uint16 x = 0, y = 0;
+
+    switch(map.GetProtoId())
+    {
+    case MAP_KlamathToxicCaves2:
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator.AddFloor(map.Id, 1);
+    case MAP_KlamathToxicCaves1:
+        map.SetEvent(MAP_EVENT_LOOP_0, "_Poison");
+        map.SetLoopTime(0, 10000);
+        break;
+    case MAP_KlamathToxicCaves3:
+        if(map.GetEntireCoords(0, 0, x, y))
+            Elevator.AddFloor(map.Id, 0);
+        break;
+    }
+}
+
+void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator, critter, entered);
+}
+
+//
+// Irradiate all critters on map
+//
+void _Poison(Map& map)
+{
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_ALL, crits);
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        if(crits[i].Param[ST_BODY_TYPE] != BT_GECKO)
+            AffectPoison(crits[i], Random(1, 10));
+    }
+}

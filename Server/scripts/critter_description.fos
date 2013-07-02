@@ -1,0 +1,333 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// critter_description.fos
+//
+
+// Randomized (long) critter description, basing on SPECIAL (without revealing values)
+// Packing/unpacking routines
+
+/*
+        Params format:
+        ST_DESCRIPTION1	[S1][S2][S3][R3][R2][R1]	[%d][%d][%d][%02d][%02d][%02d]
+        ST_DESCRIPTION2	[C][I3][I2][I1]				[%d][%02d][%02d][%02d]
+        C - SPECIAL count
+        S - SPECIAL idx + 1
+        R - range idx + 1
+        I - index
+
+        Limits:
+        3 SPECIAL
+        99 ranges per one SPECIAL
+        99 variations per one range
+ */
+
+#ifndef __CRITTER_DESCRIPTION__
+#define __CRITTER_DESCRIPTION__
+
+#define CRD_MINSPECIAL    (0)
+#define CRD_MAXSPECIAL    (3)
+#define CRD_MAXRANGE      (99)
+#define CRD_MAXINDEX      (99)
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+#ifdef __CLIENT
+# include "MsgStr.h"
+#endif
+
+#ifdef __SERVER
+# include "utils_h.fos"
+#endif // __SERVER
+
+string[][][] CritterDescription =
+{
+    {           // STRENGTH
+        { "1",          "very weak", "feeble" },
+        { "1-2",        "weak", "sluggish" },
+        { "3-4",        "quite scrawny" },
+        { "4-6",        "average build" },
+        { "7-8",        "reasonably strong", "strong" },
+        { "9",          "burly", "very strong" },
+        { "10",         "pumped up on steroids", "big as mountain", "like he has muscles of a titan" }
+    }, {        // PERCEPTION
+        { "7-10",       "paranoid" },
+    }, {        // ENDURANCE
+        { "1",          "wasting away", "thin as a stick" },
+        { "1-3",        "delicately built", "anemic" },
+        { "4-6",        "@sex@|robust||resilient|", "healthy" },
+        { "7-8",        "hyperactive" },
+        { "9-10",       "built like a brick shithouse", "healthy like a bull" }
+    }, {        // CHARISMA
+        { "1",          "deformed", "ghoulish" },
+        { "1-2",        "ugly" },
+        { "3",          "surly", "untalkative", "gloomy" },
+        { "3-4",        "shy", "timid" },
+        { "5-7",        "sociable", "talkative" },
+        { "7-8",        "@sex@|dapper||charming|" },
+        { "8-9",        "@sex@|suave||beautiful|" },
+        { "9-10",       "born to lead", "smooth" }
+    }, {        // INTELLIGENCE
+        { "1",          "braindead" },
+        { "2",          "moronic" },
+        { "3",          "pretty dim" },
+        { "6-8",        "not a total idiot" },
+        { "8",          "kind of smart" },
+        { "9",          "intellectual" },
+        { "10",         "something of a genius" }
+    }, {        // AGILITY
+        { "1",          "clumsy" },
+        { "2-3",        "@sex@|slightly |||inept" },
+        { "6-7",        "nimble" },
+        { "7-8",        "quick on the draw" },
+        { "8-10",       "fast" },
+        { "9-10",       "very fast" },
+        { "10",         "able to dodge bullets", "agile as cat" }
+    }, {        // LUCK
+        { "1",          "depressed" },
+        { "2",          "miserable" },
+        { "2-3",        "irritated" },
+        { "7-8",        "content" },
+        { "9",          "cheerful" },
+        { "10",         "ecstatic" }
+    }
+};
+
+uint numDigits(int number)   // helper
+{
+    int i = 0;
+
+    do
+    {
+        number /= 10;
+        i++;
+    }
+    while(number > 0);
+
+    return(i);
+}
+
+uint extractDigit(int number, int pos)   // helper
+{
+    for(int i = 0; i < pos; ++i)
+        number /= 10;
+    return(number % 10);
+}
+
+#ifdef __SERVER
+array<uint> BestSpecial(Critter& player, uint count)
+{
+    return(BestWorstSpecial(player, count, true));
+}
+
+array<uint> WorstSpecial(Critter& player, uint count)
+{
+    return(BestWorstSpecial(player, count, false));
+}
+
+array<uint> BestWorstSpecial(Critter& player, int count, bool best)
+{
+    array<uint> found;
+    int         num = 0;
+    count = CLAMP(count, 1, (ST_LUCK - ST_STRENGTH) + 1);
+    for(uint val = (best ? 10 : 1); num < count; (best ? val-- : val++))
+    {
+        if(val == uint(best ? 0 : 11))       // cheated chars
+            break;
+
+        uint oldlen = found.length();
+        for(uint special = ST_STRENGTH; special <= ST_LUCK; special++)
+        {
+            if(player.Param[special] == int(val))
+                found.insertLast(special);
+        }
+        if(oldlen != found.length())
+            num++;
+    }
+    return(found);
+}
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+void       info(Critter& player, int, int, int)
+{
+    player.Say(SAY_NETMSG, "CritterDescription: " + CritterDescription.length());
+    for(uint s = 0; s < CritterDescription.length(); s++)
+    {
+        player.Say(SAY_NETMSG, "SP " + s + ": " + CritterDescription[s].length());
+        for(uint r = 0; r < CritterDescription[s].length(); r++)
+        {
+            player.Say(SAY_NETMSG, "\tRNG " + (r + 1) + " (" + CritterDescription[s][r][0] + "):");
+            for(uint i = 1; i < CritterDescription[s][r].length(); i++)
+            {
+                string line = CritterDescription[s][r][i];
+                stringReplaceText(line, "|", "l");
+                player.Say(SAY_NETMSG, "\t\tIDX " + i + ": " + line);
+            }
+        }
+    }
+}
+#endif // __SERVER
+
+bool CritterDescription_CheckTable()
+{
+    if(CritterDescription.length() != (ST_LUCK - ST_STRENGTH) + 1)
+        return(false);
+
+    // more to come
+
+    return(true);
+}
+
+string@ CritterDescription_Get(uint description1, uint description2)
+{
+    if(description1 == 0 || description2 == 0)
+        return(null);
+
+    uint specials = CLAMP(extractDigit(description2, numDigits(description2) - 1), CRD_MINSPECIAL, CRD_MAXSPECIAL);
+
+    if(specials == 0)
+        return(null);
+
+    string@ result = "";
+    for(uint s = 1; s <= specials; s++)
+    {
+        uint special = extractDigit(description1, numDigits(description1) - s);
+        if(CritterDescription.length() < special)
+            continue;
+        else
+            special--;
+
+        uint range = (extractDigit(description1, (s * 2) - 1) * 10) +
+                     extractDigit(description1, (s * 2) - 2);
+        if(range < 1 || CritterDescription[special].length() < range)
+            continue;
+        else
+            range--;
+
+        uint index = (extractDigit(description2, (s * 2) - 1) * 10) +
+                     extractDigit(description2, (s * 2) - 2);
+        if(index < 1 || CritterDescription[special][range].length() < (index + 1))
+            continue;
+
+        if(s == 1)
+        {}
+        else if(s == specials)
+        {
+            #ifdef __SERVER
+            result += " and ";
+            #endif
+
+            #ifdef __CLIENT
+            result += GetMsgStr(TEXTMSG_GAME, STR_AND);
+            #endif
+        }
+        else if(specials > 2 && (s > 1))
+        {
+            result += ", ";
+        }
+        result += CritterDescription[special][range][index];
+    }
+
+    return(result);
+}
+
+#ifdef __SERVER
+void CritterDescription_Set(Critter& player, int& description1, int& description2)
+{
+    array<uint> s1 = BestSpecial(player, 2);
+    array<uint> s2 = WorstSpecial(player, 2);
+    append_array(s1, s2);
+    remove_duplicates_from_array(s1, array<uint>);
+    s2.resize(0);
+    int    c = Random(CRD_MINSPECIAL, CRD_MAXSPECIAL);
+    string sS = "";
+    string sR = "";
+    string sI = "";
+    if(c > 0)
+    {
+        for(int r = 0; r < c; r++)
+        {
+            if(s1.length() == 0)
+                break;
+            int i = Random(0, s1.length() - 1);
+            s2.insertLast(s1[i]);
+            s1.removeAt(i);
+            shuffle_array(s1, uint);
+        }
+        for(uint w = 0; w < s2.length(); w++)
+        {
+            array<uint> rng;
+            for(uint ri = 0; ri < CritterDescription[s2[w]].length(); ri++)
+            {
+                if(CritterDescription[s2[w]][ri].length() < 2)
+                    continue;
+                array<string@>@ rn = splitEx(CritterDescription[s2[w]][ri][0], "-");
+                uint min = 0;
+                uint max = 0;
+                if(rn.length() < 1)
+                    continue;
+                StrToInt(rn[0], min);
+                if(rn.length() > 1)
+                    StrToInt(rn[1], max);
+                else
+                    max = min;
+                if(min == 0 || max == 0 || max < min)
+                    continue;
+                if(player.Param[s2[w]] >= int(min) && player.Param[s2[w]] <= int(max))
+                {
+                    rng.insertLast(ri);
+                }
+            }
+            uint r = 0;
+            if(rng.length() > 0)
+                r = (rng[CLAMP(Random(0, rng.length() - 1), 0, CRD_MAXRANGE)]) + 1;
+            uint i = 0;
+            if(r > 0)
+                i = CLAMP(Random(1, (CritterDescription[s2[w]][(r - 1)].length()) - 1), 0, CRD_MAXINDEX);
+            if(r > 0 && i > 0)
+            {
+                sS += "" + (s2[w] + 1);
+                sR = ("" + (r < 10 ? "0" : "") + r) + sR;
+                sI = ("" + (i < 10 ? "0" : "") + i) + sI;
+            }
+            else
+                c--;
+        }
+    }
+    description1 = 0;
+    description2 = 0;
+    if(c > 0)
+    {
+        StrToInt(sS + sR, description1);
+        StrToInt(c + sI,  description2);
+    }
+}
+
+void say_description(Critter& player, int d1, int d2)
+{
+    string@ unpacked = CritterDescription_Get(d1, d2);
+    if(valid(unpacked))
+    {
+        player.Say(SAY_NETMSG, unpacked);
+    }
+}
+
+void set_test(Critter& player, int, int, int)
+{
+    int d1 = 0;
+    int d2 = 0;
+    CritterDescription_Set(player, d1, d2);
+
+    player.Say(SAY_NETMSG, "ST_DESCRIPTION1 " + d1);
+    player.Say(SAY_NETMSG, "ST_DESCRIPTION2 " + d2);
+    say_description(player, d1, d2);
+}
+
+void get(Critter& player, int d1, int d2, int)
+{
+    say_description(player, d1, d2);
+}
+#endif // __SERVER
+#endif // __CRITTER_DESCRIPTION__ //

@@ -1,0 +1,346 @@
+/** \~russian Прототип предметов.
+ *
+ * Все возможности класса доступны как при скриптинге сервера, так и при скриптинге
+ * клиента.
+ *
+ * @note Все поля доступны только для чтения.
+ *
+ ** \~english Represents item prototype.
+ *
+ * @note All fields are read-only.
+ *
+ ** \~
+ * @ingroup Server
+ * @ingroup Client
+ */
+class ProtoItem
+{
+public:
+    /**
+     * \~russian @name Общие поля
+     * \~english @name General fields
+     * \~ @weight 300
+     */
+    //@{
+
+    /** \~russian Флаги прототипа.
+     *
+     * См. @link ItemFlags Item flags@endlink.
+     */
+    const uint Flags;
+	
+	uint HolodiskNum;
+	
+	uint16 RadioChannel;
+	
+	/** \~russian Флаги рации (См. @link RadioFlags Radio flags@endlink) */
+	uint16 RadioFlags;
+	
+	uint8 RadioBroadcastSend;
+	
+	uint8 RadioBroadcastRecv;
+
+    /** (?) */
+    const uint8 DistanceLight;
+
+    /** (?) */
+    const uint IntensityLight;
+
+    /** (?) */
+    const uint Weight;
+	
+	/** \~russian Стартовое значение параметра заряда */
+	uint8 IndicatorStart;
+	
+	/** \~russian Максимальное значение индикатора заряда */
+	uint8 IndicatorMax;
+
+    /** \~russian Изображение на карте (хэш пути) */
+    const uint PicMap;
+
+    /** \~russian Изображение в инвентаре (хэш пути) */
+    const uint PicInv;
+
+    /** (?) */
+    const uint8 Sound;
+
+    /** (?) */
+    const uint Cost;
+
+    /** (?) */
+    const uint8 Material;
+
+    /** \~russian Слот, которому принадлежит предмет.
+     *
+     * См. @ref Slots.
+     *
+     */
+    uint8 Slot;
+
+    //@}
+
+    /**
+     * \~russian @name Броня
+     * \~english @name Armor
+     * \~ @weight 290
+     */
+    //@{
+
+    /** (?) */
+    const uint8 Armor_CrTypeMale;
+
+    /** (?) */
+    const uint8 Armor_CrTypeFemale;
+
+    //@}
+
+    /**
+     * \~russian @name Контейнер
+     * \~english @name Container
+     * \~ @weight 280
+     */
+    //@{
+
+    /** \~russian Находится ли доступ к контейнеру визуально на уровне земли. */
+    bool Container_IsGroundLevel();
+
+    //@}
+
+    /**
+     * \~russian @name Наркотик
+     * \~english @name Drugs
+     * \~ @weight 270
+     */
+    //@{
+    //@}
+
+    /**
+     * \~russian @name Оружие
+     * \~english @name Weapons
+     * \~ @weight 260
+     */
+    //@{
+
+    /** \~russian Безоружная атака. */
+    const bool Weapon_IsUnarmed;
+
+    /** \~russian Бонус к критическому шансу (актуально при #Weapon_IsUnarmed == @c true). */
+    const uint8 Weapon_UnarmedCriticalBonus;
+
+    /** \~russian Проникающий удар (актуально при #Weapon_IsUnarmed == @c true). */
+    const bool Weapon_UnarmedArmorPiercing;
+
+    /** \~russian Минимальная сила для использования без штрафов. */
+    const uint8 Weapon_MinStrength;
+
+    /** \~russian Перк на оружии. */
+    const uint8 Weapon_Perk;
+
+    /** \~russian Первичный индекс анимации. */
+    const uint8 Weapon_Anim1;
+
+    /** \~russian Емкость обоймы. */
+    const uint16 Weapon_VolumeHolder;
+
+    /** \~russian Калибр зарядов. */
+    const uint Weapon_Caliber;
+
+    /** \~russian Критическая неудача. */
+    const uint8 Weapon_CriticalFailture;
+
+    /** \~russian PID амуниции по-умолчанию. */
+    const uint16 Weapon_DefAmmo;
+
+    /** \~russian Навык, влияющий на использование. */
+    const uint8 Weapon_Skill_F;
+
+    /** \~russian Навык, влияющий на использование. */
+    const uint8 Weapon_Skill_S;
+
+    /** \~russian Навык, влияющий на использование. */
+    const uint8 Weapon_Skill_T;
+
+    /** \~russian Тип повреждений. */
+    const uint8 Weapon_DmgType_F;
+
+    /** \~russian Тип повреждений. */
+    const uint8 Weapon_DmgType_S;
+
+    /** \~russian Тип повреждений. */
+    const uint8 Weapon_DmgType_T;
+
+    /** \~russian Вторичный индекс анимации. */
+    const uint8 Weapon_Anim2_F;
+
+    /** \~russian Вторичный индекс анимации. */
+    const uint8 Weapon_Anim2_S;
+
+    /** \~russian Вторичный индекс анимации. */
+    const uint8 Weapon_Anim2_T;
+
+    /** \~russian Минимальное повреждение. */
+    const uint16 Weapon_DmgMin_F;
+
+    /** \~russian Минимальное повреждение. */
+    const uint16 Weapon_DmgMin_S;
+
+    /** \~russian Минимальное повреждение. */
+    const uint16 Weapon_DmgMin_T;
+
+    /** \~russian Максимальное повреждение. */
+    const uint16 Weapon_DmgMax_F;
+
+    /** \~russian Максимальное повреждение. */
+    const uint16 Weapon_DmgMax_S;
+
+    /** \~russian Максимальное повреждение. */
+    const uint16 Weapon_DmgMax_T;
+
+    /** \~russian Максимальная дистанция. */
+    const uint16 Weapon_MaxDist_F;
+
+    /** \~russian Максимальная дистанция. */
+    const uint16 Weapon_MaxDist_S;
+
+    /** \~russian Максимальная дистанция. */
+    const uint16 Weapon_MaxDist_T;
+
+    /** \~russian Летящий эффект от выстрела. */
+    const uint16 Weapon_Effect_F;
+
+    /** \~russian Летящий эффект от выстрела. */
+    const uint16 Weapon_Effect_S;
+
+    /** \~russian Летящий эффект от выстрела. */
+    const uint16 Weapon_Effect_T;
+
+    /** \~russian Расход обоймы за выстрел. */
+    const uint16 Weapon_Round_F;
+
+    /** \~russian Расход обоймы за выстрел. */
+    const uint16 Weapon_Round_S;
+
+    /** \~russian Расход обоймы за выстрел. */
+    const uint16 Weapon_Round_T;
+
+    /** \~russian Базовая стоимость очков действий. */
+    const uint8 Weapon_ApCost_F;
+
+    /** \~russian Базовая стоимость очков действий. */
+    const uint8 Weapon_ApCost_S;
+
+    /** \~russian Базовая стоимость очков действий. */
+    const uint8 Weapon_ApCost_T;
+
+    /** \~russian Индекс звука на оружии. */
+    const uint8 Weapon_SoundId_F;
+
+    /** \~russian Индекс звука на оружии. */
+    const uint8 Weapon_SoundId_S;
+
+    /** \~russian Индекс звука на оружии. */
+    const uint8 Weapon_SoundId_T;
+
+    /** \~russian Удаляется ли оружие после использования (например, метательное). */
+    const bool Weapon_Remove_F;
+
+    /** \~russian Удаляется ли оружие после использования (например, метательное). */
+    const bool Weapon_Remove_S;
+
+    /** \~russian Удаляется ли оружие после использования (например, метательное). */
+    const bool Weapon_Remove_T;
+
+    /** \~russin Есть ли возможность прицельной стрельбы. */
+    const bool Weapon_Aim_F;
+
+    /** \~russin Есть ли возможность прицельной стрельбы. */
+    const bool Weapon_Aim_S;
+
+    /** \~russin Есть ли возможность прицельной стрельбы. */
+    const bool Weapon_Aim_T;
+	
+	uint8 Weapon_CurrentUse
+
+   /** \~russian Позволяет установить текущее значение типа использования оружия.
+     *
+     * @param  use  Устанавливаемый тип использования. Может принимать следующие значения:
+     *              - Primary use – 0;
+     *              - Secondary use – 1;
+     *              - Third use – 2.
+     */
+    void Weapon_SetUse(uint8 use);
+
+    //@}
+
+    /**
+     * \~russian @name Боеприпасы
+     * \~english @name Ammunition
+     * \~ @weight 250
+     */
+    //@{
+
+    /** \~russian Cтартовое количество при создании предмета. */
+    const uint Ammo_StartCount;
+
+    /** \~russian Калибр амуниции. */
+    const uint Ammo_Caliber;
+
+    /** \~russian Модификатор Armor Class. */
+    const int Ammo_AcMod;
+
+    /** \~russian Модификатор Damage Resistance. */
+    const int Ammo_DrMod;
+
+    /** \~russian Модификатор Damage Multiplier. */
+    const uint Ammo_DmgMult;
+
+    /** \~russian Модификатор Damage Divider. */
+    const uint Ammo_DmgDiv;
+
+    //@}
+
+    /** @name Misc2 */
+    //@{
+
+
+    /** \~russian Начальное значение поля Item::Val1 для предмета, получаемого из прототипа. */
+    const uint Misc2_StartVal1;
+
+    /** \~russian Начальное значение поля Item::Val2 для предмета, получаемого из прототипа. */
+    const uint Misc2_StartVal2;
+
+    /** \~russian Начальное значение поля Item::Val3 для предмета, получаемого из прототипа. */
+    const uint Misc2_StartVal3;
+
+    //@}
+
+    /** \~russian Возвращает тип предмета.
+     *
+     * См. @link ItemsTypes Items types@endlink.
+     *
+     * @return Тип предмета. В случае провала – 0.
+     */
+    uint8 GetType();
+
+    /** \~russian Возвращает ID прототипа предмета.
+     *
+     * См. файл @b ITEMPID.H.
+     *
+     * @return ID прототипа предмета. В случае провала – 0.
+     */
+    uint16 GetProtoId();
+
+    /** \~russian Группируются ли предметы.
+     *
+     * @see Item::IsGrouped()
+     *
+     */
+    bool IsGrouped();
+
+    /** \~russian Изнашиваются ли предметы.
+     *
+     * @see Item::IsWeared()
+     *
+     */
+    bool IsWeared();
+}

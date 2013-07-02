@@ -1,0 +1,72 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_raiders.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+
+bool d_WrongPlayer(Critter& player, Critter@ npc)
+{
+    GameVar@ locidv = GetLocalVar(LVAR_q_raiders_induction_locid, player.Id);
+    return(locidv.GetValue() != int(player.GetMap().GetLocation().Id));
+}
+
+void r_SpawnFarmhome(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_Farmhome, Random(1800, 2050), Random(1400, 1500), crits);
+    if(loc == 0)
+        return;
+    GameVar@ acq = GetUnicumVar(UVAR_acquaintance, player.Id, npc.Id);
+    acq = 1;
+    GameVar@ locidv = GetLocalVar(LVAR_q_raiders_induction_locid, player.Id);
+    locidv = loc;
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(GetLocation(loc));
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_raiders_induction, 5);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_MapDataFree(Critter& player, Critter@ npc)
+{
+    player.GetMap().SetData(MAP_DATA_FREE, 1);
+}
+
+// farmhome guy
+void critter_init(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_GuyDead");
+    cr.GetMap().SetData(MAP_DATA_GUY, cr.Id);
+    cr.GetMap().SetData(MAP_DATA_GUYTALKED, 0);
+}
+
+// son, woman
+void _Other(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+}
+
+void _GuyDead(Critter& crit, Critter@ killer)
+{
+    crit.GetMap().SetData(MAP_DATA_KILL, 1);
+}
+
+void t_ForceDialog(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered)
+        return;
+    Map@ map = player.GetMap();
+    if(map.GetData(MAP_DATA_GUYTALKED) != 0)
+        return;
+    if(d_WrongPlayer(player, player))
+        return;                              // yes, ugly
+    map.SetData(MAP_DATA_GUYTALKED, 1);
+    RunDialog(player, GetCritter(map.GetData(MAP_DATA_GUY)), false);
+}

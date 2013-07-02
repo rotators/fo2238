@@ -1,0 +1,380 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_machine.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+#include "prod_ingredients_h.fos"
+
+// generic script for machines that take input and produce output:)
+
+#define INTERVAL              (10)   // for 'brewing in progress event', real seconds
+
+#define MACHINE_ROTGUT        (0)
+#define MACHINE_BEER          (1)
+#define MACHINE_NUKACOLA      (2)
+#define MACHINE_CIGARETTES    (3)
+#define MACHINE_FIBER2        (4)
+
+array<Machine@> Machines(5);
+
+#define MACHINE_IDX           # (item)     (item.Val5)
+#define WORKING               # (item) (item.Val6)
+
+void InitMachines()
+{
+    Machine@ machine;
+
+    @machine = Machine(PID_ROT_GUT, 1, 10, 120, 10504, 10505, 10506);
+/*
+   #ifndef __DEBUG__ // scyp'
+        machine.Require(PID_MUTATED_FRUIT, 5, 10500, 10501);
+        machine.Require(PID_FIREWOOD, 1, 10502, 10503);
+   #endif
+ */
+    machine.Require(INGREDIENT_RADIATED_FOOD, 5, 10500, 10501);
+    machine.Require(INGREDIENT_WOOD, 1, 10502, 10503);
+    machine.Animation(24, 43);
+    @Machines[MACHINE_ROTGUT] = @machine;
+
+    @machine = Machine(PID_BEER, 1, 10, 120, 10604, 10605, 10606);
+/*
+   #ifndef __DEBUG__ // scyp'
+        machine.Require(PID_BARLEY, 1, 10600, 10601);
+        machine.Require(PID_WATERBAG, 1, 10602, 10603);
+   #endif
+ */
+    machine.Require(INGREDIENT_BARLEY, 1, 10600, 10601);
+    machine.Require(INGREDIENT_WATER, 1, 10602, 10603);
+    machine.Animation(4, 23);
+    @Machines[MACHINE_BEER] = @machine;
+
+    @machine = Machine(PID_NUKA_COLA, 1, 10, 120, 10704, 10705, 10706);
+/*
+   #ifndef __DEBUG__ // scyp'
+        machine.Require(PID_MUTATED_FRUIT, 8, 10700, 10701);
+        machine.Require(PID_WATERBAG, 1, 10702, 10703);
+   #endif
+ */
+    machine.Require(INGREDIENT_RADIATED_FOOD, 8, 10700, 10701);
+    machine.Require(INGREDIENT_WATER, 1, 10702, 10703);
+    @Machines[MACHINE_NUKACOLA] = @machine;
+
+    @machine = Machine(PID_CIGARETTES, 1, 10, 0, 10804, 10805, 10806);
+/*
+   #ifndef __DEBUG__ // scyp'
+        machine.Require(PID_TOBACCO, 2, 10800, 10801);
+   #endif
+ */
+    machine.Require(INGREDIENT_TOBACCO, 2, 10800, 10801);
+    @Machines[MACHINE_CIGARETTES] = @machine;
+
+    @machine = Machine(PID_FIBRE2, 1, 10, 120, 10900, 10901, 10902);
+/*
+   #ifndef __DEBUG__ // scyp'
+        machine.Require(PID_FIBER, 1, 10910, 10911);
+   #endif
+ */
+    machine.Require(INGREDIENT_FIBRE, 1, 10910, 10911);
+    @Machines[MACHINE_FIBER2] = @machine;
+}
+
+void _Rotgut(Item& item, bool firstTime)
+{
+    MACHINE_IDX(item) = MACHINE_ROTGUT;
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+void _Beer(Item& item, bool firstTime)
+{
+    MACHINE_IDX(item) = MACHINE_BEER;
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+
+}
+void _NukaCola(Item& item, bool firstTime)
+{
+    MACHINE_IDX(item) = MACHINE_NUKACOLA;
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+void _Cigarettes(Item& item, bool firstTime)
+{
+    MACHINE_IDX(item) = MACHINE_CIGARETTES;
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+void _Fiber2(Item& item, bool firstTime)
+{
+    MACHINE_IDX(item) = MACHINE_FIBER2;
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+}
+bool _UseSkill(Item& item, Critter& cr, int skill)
+{
+    Machine@ machine = Machines[MACHINE_IDX(item)];
+    if(!valid(machine))
+    {
+        Log("Unable to fetch item' Machine");
+        return false;
+    }
+    return machine.UseSkill(item, cr, skill);
+}
+
+class Machine
+{
+    uint16     resource;
+    int        batch;
+    int        cap;
+    // text displayed after obtaining rsource
+    uint       text;
+    // text if busy
+    uint       textWorking;
+    // sounds
+    uint       textSound;
+    // use animation frames
+    uint8      fromFrame;
+    uint8      toFrame;
+    // required ingredients (pid, required amount, text_required, text_inserted)
+    array<int> ingredients;
+    // working time, seconds
+    int        time;
+
+    Machine(uint16 resource, int batch, int cap, int time, uint text, uint textWorking, uint textSound)
+    {
+        this.resource = resource;
+        this.batch = batch;
+        this.cap = cap;
+        this.time = time;
+        this.text = text;
+        this.textWorking = textWorking;
+        this.textSound = textSound;
+        this.fromFrame = 0;
+        this.toFrame = 0;
+    }
+/*
+   #ifndef __DEBUG__ // scyp'
+        void Require(uint16 pid, int count, int text_required, int text_inserted)
+        {
+                ingredients.insertLast(pid);
+   #endif
+ */
+    void Require(uint8 ingredient, int count, int text_required, int text_inserted)
+    {
+        ingredients.insertLast(ingredient);
+        ingredients.insertLast(count);
+        ingredients.insertLast(text_required);
+        ingredients.insertLast(text_inserted);
+    }
+    void Animation(uint8 fromFrame, uint8 toFrame)
+    {
+        this.fromFrame = fromFrame;
+        this.toFrame = toFrame;
+    }
+    void Animate(Item& item)
+    {
+        if(fromFrame != 0)
+            item.Animate(fromFrame, toFrame);
+    }
+
+    bool UseSkill(Item& item, Critter& cr, int skill)
+    {
+        if(skill == -1)
+        {
+            if(WORKING(item) != 0)
+            {
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, textWorking);
+                return true;
+            }
+        }
+        if(skill == SK_SCIENCE)
+        {
+            if(WORKING(item) != 0)
+            {
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, textWorking);
+                return true;
+            }
+            // check ingredients
+            uint ntimes = cap;
+            for(int i = 0, j = ingredients.length(); i < j; i += 4)
+            {
+/*
+   #ifndef __DEBUG__ // scyp'
+                                uint16 pid = ingredients[i];
+                                uint count = ingredients[i+1];
+                                int text_required = ingredients[i+2];
+                                //int text_inserted = ingredients[i+3];
+                                Item@ ins = item.GetItem(pid, 0);
+                                if(!valid(ins) || ins.GetCount() < count)
+                                {
+                                        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, text_required);
+                                        return true; // we could continue further, though it may just look good if one message is displayed
+                                }
+                                else
+                                        ntimes = MIN(ins.GetCount() / count, ntimes);
+   #endif
+ */
+                uint8        pid = ingredients[i];
+                uint         count = ingredients[i + 1];
+                int          text_required = ingredients[i + 2];
+                // int text_inserted = ingredients[i+3];
+                array<Item@> allItems;
+                uint         itemsCount = item.GetItems(uint(-1), allItems);
+                uint         have = 0;
+                for(uint i = 0; i < itemsCount; i++)
+                {
+                    if(HaveIngredient(allItems[i], pid))
+                        have += allItems[i].GetCount();
+                }
+                if(have < count)
+                {
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, text_required);
+                    return(true);                       // we could continue further, though it may just look good if one message is displayed
+                }
+                else
+                    ntimes = MIN(have / count, ntimes);
+            }
+            // all ingredients ready
+            array<uint> params = { item.Id, MACHINE_IDX(item), this.time - INTERVAL, ntimes };
+            CreateTimeEvent(AFTER(REAL_SECOND(INTERVAL)), "e_Brew", params, true);
+            WORKING(item) = 1;
+            // say about it!
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, text);
+            return true;
+        }
+        else if(skill == SK_REPAIR)
+        {
+            if(cr.GetAccess() >= ACCESS_MODER)
+            {
+                cr.Say(SAY_NETMSG, "Disabled working state.");
+                WORKING(item) = 0;
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    void SpawnResources(Item& item, int ntimes)
+    {
+        for(uint i = 0, j = ingredients.length(); i < j; i += 4)
+        {
+/*
+   #ifndef __DEBUG__ // scyp'
+                        uint16 pid = ingredients[i];
+                        uint count = ingredients[i+1] * ntimes;
+                        Item@ res = item.GetItem(pid, 0);
+                        if(!valid(res) || res.GetCount() < count) return;
+            if(res.GetProtoId() == PID_WATERBAG)
+                item.AddItem(PID_WATERBAG_EMPTY, count, 0);
+                        if(res.GetCount() == count)
+                                DeleteItem(res);
+                        else
+                                res.SetCount(res.GetCount() - count);
+   #endif
+ */
+            uint8        pid = ingredients[i];
+            uint         count = ingredients[i + 1] * ntimes;
+            array<Item@> allItems;
+            uint         itemsCount = item.GetItems(uint(-1), allItems);
+            uint         have = 0;
+            for(uint i = 0; i < itemsCount; i++)
+            {
+                if(HaveIngredient(allItems[i], pid))
+                    have += allItems[i].GetCount();
+            }
+            if(have < count)
+                return;
+            have = count;
+
+            for(int i = 0; i < int(itemsCount); i++)
+            {
+                if(HaveIngredient(allItems[i], pid))
+                {
+                    uint16 ret = GetIngredientReturnItem(allItems[i], pid);
+                    uint   take = CLAMP(have, 1, allItems[i].GetCount());
+
+                    if(ret > 0)
+                        item.AddItem(ret, take, 0);
+                    _SubItem(allItems[i], take);
+                    have -= take;
+                }
+
+                if(have == 0)
+                    break;
+            }
+        }
+        item.AddItem(resource, batch * ntimes, 0);
+        WORKING(item) = 0;
+    }
+    void SaySound(Item& item)
+    {
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        Map@   map = item.GetMapPosition(hexX, hexY);
+        map.SetTextMsg(hexX, hexY, 0, TEXTMSG_TEXT, textSound);
+    }
+};
+
+uint e_Brew(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+    {
+        Log("Unable to fetch Machine' item");
+        return 0;
+    }
+    #ifdef __DEBUG__
+    uint16 hexX = 0;
+    uint16 hexY = 0;
+    Map@   map = item.GetMapPosition(hexX, hexY);
+    map.SetText(hexX, hexY, 0, "|0xFF00FF " + values[1]);
+    #endif
+    Machine@ machine = Machines[values[1]];
+    if(!valid(machine))
+    {
+        Log("Unable to fetch MachineFacility");
+        return 0;
+    }
+
+    int time_left = values[2];
+    if(time_left > 0)       // just animate
+    {
+        machine.Animate(item);
+        values[2] = values[2] > INTERVAL ? time_left - INTERVAL : 0;
+        #ifdef __DEBUG__
+        machine.SaySound(item);
+        return REAL_MS(100);
+        #endif
+        #ifndef __DEBUG__
+        machine.SaySound(item);
+        return REAL_SECOND(10);
+        #endif
+    }
+    else
+    {
+        // finish
+        int ntimes = values[3];
+        #ifdef __DEBUG__
+        map.SetText(hexX, hexY, 0, "ntimes: " + ntimes);
+        #endif
+        machine.SpawnResources(item, ntimes);
+        return 0;
+    }
+}
+
+
+void test(Critter& player, int type, int, int)
+{
+    Item@ machine = player.GetMap().AddItem(player.HexX, player.HexY, PID_STILL_B, 1);
+    switch(type)
+    {
+    case MACHINE_CIGARETTES:
+        machine.SetScript("_Cigarettes");
+        break;
+    case MACHINE_FIBER2:
+        machine.SetScript("_Fiber2");
+        break;
+    default:
+        player.Say(SAY_NETMSG, "Wrong param.");
+    }
+};
+;

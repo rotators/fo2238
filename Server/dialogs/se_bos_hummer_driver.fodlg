@@ -1,0 +1,64 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+11 1010 D _script dialog@d_IsNotLocationOwner 0  #
+10 1020 D _var p q_bos_hummer = 4 #
+6 1030 D _var p name_mem_npc_player = 1 D _var p q_bos_hummer = 1 D or D _var p q_bos_hummer = 2 #
+2 1040 D _var p name_mem_npc_player = 0 D _var p q_bos_initiatequest_start = 21 D _script dialog@d_IsLocationOwner 0  @
+2 2000 None 0 #
+3 2010 R _var p name_mem_npc_player = 1 #
+9 2020 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+4 3010 D _param p SK_SCIENCE > 85 D _param p SK_REPAIR < 75 D or D _param p ST_INTELLECT > 6 D _param p SK_REPAIR < 75 #
+4 3020 D _param p SK_REPAIR } 75 #
+0 3030 R _var p q_bos_hummer = 1 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+0 5010 R _var p q_bos_initiatequest_start = 23 R _param p ST_EXPERIENCE + 350 R _script quest_bos_initiate@r_RetireMap 0  R _var p q_bos_hummer = 4 @
+6 6000 None 0 #
+7 6010 D _var p q_bos_hummer = 2 D _item p PID_CAR_REPLACEMENT_PARTS = 1 R _item p PID_CAR_REPLACEMENT_PARTS - 1 #
+0 6020 @
+7 7000 None 0 #
+0 7010 R _var p q_bos_initiatequest_start = 22 R _param p ST_EXPERIENCE + 250 R _script quest_bos_initiate@r_RetireMap 0  R _var p q_bos_hummer = 4 @
+9 8000 None 0 #
+3 8010 @
+10 9000 None 0 @
+11 10000 None 0 &
+
+[engl]
+{100}{}{Paladin Driver}
+{200}{}{You see Paladin Driver.}
+{210}{}{You see a man wearing what appears to be a pre-war pilot suit under his brotherhood armor. His name tag reads: Driver.}
+{1000}{}{Predialogue installations}
+{1010}{}{Not involved}
+{1020}{}{Finished}
+{1030}{}{Back with parts}
+{1040}{}{Default}
+{2000}{}{Halt. Who sent you?}
+{2010}{}{The Brotherhood. I'm here to help you fix the hummer.}
+{2020}{}{The Brotherhood. But please tell me 'Paladin Driver' is your title, and not your name.}
+{3000}{}{Excellent. The hummer is in dire need of repairs, but we cannot make it to Gordon's without temporary parts. Go see him, and return with the parts. }
+{3010}{}{Your oxygen pack hoses would actually fit that broken hose. They are both designed to carry about the same amount of pressure, and seem to be constructed similarly.}
+{3020}{}{What if you used the hoses from one of your oxygen packs? They're about the same size and seem to be of similar quality.}
+{3030}{}{I will.}
+{4000}{}{I did not think of that. [He detaches a hose, and connects it from the radiator to the engine.] }
+{4010}{}{...}
+{5000}{}{[After a few minutes of moving things around in the engine, he turns back to you with a satisfied look on his face.] Thank you. We can now finish our trip. You've done well.}
+{5010}{}{Godspeed, brothers.}
+{6000}{}{Have you brought back the parts?}
+{6010}{}{Yes, they're right here.}
+{6020}{}{No, I'm on my way to Gordon's now.}
+{7000}{}{Well done. We will do the necessary replacements, and should be on the move soon. You can return now.}
+{7010}{}{Godspeed, brothers.}
+{8000}{}{Here we go again. That was some 'hilarious' joke up at the base. 'Oh we'll send Paladin Driver to drive the hummer. It'll be the funniest thing in the entire fucking world.' What a bunch of assholes. [His face returns to a more serious look.] You, however, are under direct order not to repeat any of this.}
+{8010}{}{Absolutely, sir. I am here to help you repair the hummer.}
+{9000}{}{Thanks again, you've really helped us out.}
+{10000}{}{I don't mind you being here, just stay out of our way.}
+

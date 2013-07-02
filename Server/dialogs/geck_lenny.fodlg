@@ -1,0 +1,97 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_player_npc = 0 R _var n name_mem_player_npc = 1 #
+3 1020 D _var n name_mem_player_npc = 1 #
+4 1030 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+5 2010 #
+6 2020 D _script dialog@d_IsToHeal 0  #
+0 2030 @
+3 3000 None 0 #
+5 3010 #
+6 3020 D _script dialog@d_IsToHeal 0  #
+0 3030 @
+4 4000 None 0 @
+5 5000 None 0 #
+5 5010 #
+7 5020 #
+6 5030 D _script dialog@d_IsToHeal 0  #
+0 5040 @
+6 6000 dialog@dlg_ShowHealingPrice 0 #
+13 6010 D _script dialog@d_HealingMoney 0  #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 #
+0 11020 @
+12 12000 None 0 #
+3 12010 #
+0 12020 @
+13 13000 None 0 #
+0 13010 R _script dialog@r_DocHeal 0  &
+
+[engl]
+{100}{}{Lenny}
+{200}{}{You see an especially short, older ghoul.}
+{210}{}{You see Lenny, Harold’s assistant.}
+{210}{}{You see a short, older ghoul. He appears to be preoccupied.}
+{1000}{}{Predialogue installations}
+{1010}{}{Unknown}
+{1020}{}{Known}
+{1030}{}{Idiot}
+{2000}{}{Hello there, my name’s Lenny. H’how can I h’help you?}
+{2010}{}{What do you do here?}
+{2020}{}{I’m wounded. Can you help me?}
+{2030}{}{I’m just looking around. Goodbye.}
+{3000}{}{How c’can I help you?}
+{3010}{}{What do you do here?}
+{3020}{}{I’m wounded. Can you help me?}
+{3030}{}{I’m just looking around. Goodbye.}
+{4000}{}{Y’you sh’should go home.@@I c’can’t take time for you.@@Sh’shoo. Go away!}
+{5000}{}{W’well, I h’help H’harold mostly. Wh’when people get hurt, I h’help them out.}
+{5010}{}{Help Harold do what?}
+{5020}{}{You can heal people?}
+{5030}{}{I’m wounded. Can you help me?}
+{5040}{}{I’ll have to keep that in mind, if I get hurt. Thanks. Goodbye.}
+{6000}{}{L’let me t’take a look at that. I th’think I c’can help you. I c'can h'help you. B'but it'll c'cost you $@lex price@. F'for supplies.}
+{6010}{}{Well... all right. That sounds fair.}
+{6020}{}{I don't think I need your help right now. Goodbye.}
+{7000}{}{Well, b’before the W’war I w’was a doctor.}
+{7010}{}{Before the war? But that must have been almost 160 years ago.}
+{7020}{}{Oh; well, that explains it. Thanks. Goodbye.}
+{8000}{}{That's t’true. B’but the radiation seems to have g’given us g’ghouls a longer life-span. ‘Course, it took almost eveything else away.}
+{8010}{}{Took things away?}
+{8020}{}{Everything seems to have good and bad mixed together. Goodbye.}
+{9000}{}{W’well, y’yes. We look l’like f’friggin’ f’freaks. We d’don’t have any skin, for Chrisakes.}
+{9010}{}{Well, I guess you have seen better days.}
+{9020}{}{As a group, you’re not the most attractive bunch on the planet. Goodbye.}
+{10000}{}{Y’you c’could say that. I’d trade in all those years to b’be a ’normal person again.}
+{10010}{}{Well, not much hope of that, I suppose.}
+{10020}{}{I bet you would. Goodbye.}
+{11000}{}{If those f’fools in Vault City w’would share their medical technology, I’m sure we could c’cleanse the excess r’radiation and heal ourselves.}
+{11010}{}{They won’t help you?}
+{11020}{}{I think I’ve heard enough. Goodbye.}
+{12000}{}{Y’you’ve been to Vault City? Then you t’tell me wh’what you think the chances of g'getting h’help from those bigots is. M’might as well watch a p’paper dog chase an asbestos c’cat through hell.}
+{12010}{}{I’m sorry to hear that, but I think you’re right. Let me ask you about something else.}
+{12020}{}{I’m sorry to hear that. Goodbye.}
+{13000}{}{I c’can fix you up. H'hold still.}
+{13010}{}{Thanks Lenny. Goodbye.}
+

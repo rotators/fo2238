@@ -1,0 +1,95 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+3 1020 @
+2 2000 None 0 #
+11 2010 #
+5 2020 #
+0 2030 @
+3 3000 None 0 #
+10 3010 #
+4 3020 D _var n acquaintance = 0 R _var n acquaintance = 1 #
+500 3030 D _var n acquaintance = 1 D _script perks@d_PerkCheck 1 459 #
+0 3040 D _var n acquaintance = 2 D _item p PID_BOTTLE_CAPS > 49 R _script dialog@r_RemoveMoney 1 50 #
+0 3050 D _var n acquaintance = 3 #
+0 3060 D _var n name_mem_npc_player < 3 @
+4 4000 None 0 #
+6 4010 #
+0 4020 @
+5 5000 None 0 #
+7 5010 #
+0 5020 @
+6 6000 None 0 #
+8 6010 #
+0 6020 @
+7 7000 None 0 #
+9 7010 @
+8 8000 None 0 #
+500 8010 D _script perks@d_PerkCheck 1 459 #
+0 8020 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 @
+500 12000 None 0 #
+501 12010 R _var n acquaintance = 2 R _param p PE_TREASURE_HUNTER = 1 #
+501 12020 R _var n acquaintance = 3 R _param p PE_TREASURE_HUNTER = 1 #
+0 12030 @
+501 13000 None 0 #
+0 13010 &
+
+[engl]
+{100}{}{Mickey}
+{200}{}{You see a short, spry gentleman.}
+{210}{}{You see Micky, the treasure hunter.}
+{210}{}{This very short man looks friendly and brave. His gaze darts around as if looking for shiny objects.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{normal}
+{2000}{}{Hey there, friend! Haven't seen any jewels or precious metals lying around anywhere, have ya'?}
+{2010}{}{No trezhuur tooday.}
+{2020}{}{Who U?}
+{2030}{}{Baii.}
+{3000}{}{Hey there, friend! Haven't seen any jewels or precious metals lying around anywhere, have ya'?}
+{3010}{}{No, not today. If I run across any, I'll let you know, though.}
+{3020}{}{What's your name?}
+{3030}{}{No, but how about you tell me how do you find these *treasures* yourself? [Treasure Hunter]}
+{3040}{}{Actually, I happened to stumble upon some of those the other day. Selling them for a fair price brought me a small fortune, so I felt I owe you your share. There you go, partner! [Give $50]}
+{3050}{}{Hey Mickey, how's your *treasure hunt* going? Hahahaha! [You walk away laughing]}
+{3060}{}{Never mind.}
+{4000}{}{Me? I'm Micky, suave and debonaire Treasure Hunter of Broken Hills.}
+{4010}{}{Treasure Hunter?}
+{4020}{}{How nice. Good day.}
+{5000}{}{Me? I'm Micky, suave and debonaire Treasure Hunter of Broken Hills.}
+{5010}{}{Hunnterr?}
+{5020}{}{Bye-bye.}
+{6000}{}{Don't tell me you haven't heard of me! You've never been told of the tales of the Fast Micky? Of his running gun battles, two-fisted action, and pernicious plunderings?}
+{6010}{}{I'm afraid I've never had the pleasure.}
+{6020}{}{Sorry pal, bye.}
+{7000}{}{Don't tell me you haven't heard of me! You've never been told of the tales of the Fast Micky? Of his running gun battles, two-fisted action, and pernicious plunderings?}
+{7010}{}{Nup.}
+{8000}{}{Well, you're missing out, friend. One of these days I'll have to fill you in on the gory details.}
+{8010}{}{How about you tell me how you find these *treasures* instead? [Treasure Hunter]}
+{8020}{}{I'll be waiting with bated breath.}
+{9000}{}{Well, you're missing out, friend. One of these days I'll have to fill you in on the gory details.}
+{9010}{}{Goodeee.}
+{10000}{}{Oh well. I guess I shouldn't be surprised. The market for Treasure Hunters has really dropped in recent years. The whole death and famine and fight-for-survival thing really hurts people's sense of adventure. Keep me in mind, though, if anything comes up.}
+{10010}{}{You'll be the first on my list.}
+{11000}{}{Oh well. I guess I shouldn't be surprised. The market for Treasure Hunters has really dropped in recent years. The whole death and famine and fight-for-survival thing really hurts people's sense of adventure. Keep me in mind, though, if anything comes up.}
+{11010}{}{Okee-dokee.}
+{12000}{}{Only if you promise to tell me about any treasures you may find on your journeys, and give me a small share of those. Deal, partner?}
+{12010}{}{Deal! [Truth]}
+{12020}{}{It's a deal, partner! [Lie]}
+{12030}{}{Deals with you are as shady as it gets, forget it! Have a nice day, *treasure hunter*.}
+{13000}{}{Okay, here's how I do it... [You listen and watch carefully]}
+{13010}{}{That was some presentation, I tell ya! Now, let me start looking for treasures right away, I'm eager to put your words to work.}
+

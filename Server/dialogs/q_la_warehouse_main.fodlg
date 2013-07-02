@@ -1,0 +1,188 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+13 1010 D _var p q_la_warehouse_dialog_status = 1 #
+20 1020 D _var p q_la_warehouse_dialog_status = 2 #
+30 1030 D _var p q_la_warehouse_dialog_status = 3 #
+40 1040 D _var p q_la_warehouse_dialog_status = 4 #
+50 1050 D _var p q_la_warehouse_dialog_status = 5 #
+60 1060 D _var p q_la_warehouse_dialog_status = 6 #
+61 1070 D _var p q_la_warehouse_dialog_status = 7 #
+9 1080 @
+9 2000 None 0 #
+10 2010 D _param p ST_CHARISMA > 3 #
+11 2020 D _param p ST_CHARISMA < 4 D _param p ST_GENDER = 1 #
+12 2030 D _param p ST_CHARISMA < 4 D _param p ST_GENDER = 0 @
+10 3000 None 0 #
+13 3010 D _item p PID_Q_LA_WAREHOUSE_LETTER > 0 D _script dialog@d_WeaponInHand 0  R _item p PID_Q_LA_WAREHOUSE_LETTER - 1 #
+13 3020 D _script dialog@d_WeaponInHand 0  #
+15 3030 D _item p PID_Q_LA_WAREHOUSE_LETTER > 0 D _script dialog@d_NoWeaponInHand 0  R _item p PID_Q_LA_WAREHOUSE_LETTER - 1 #
+15 3040 D _script dialog@d_NoWeaponInHand 0  #
+14 3050 @
+11 4000 None 0 #
+13 4010 D _item p PID_Q_LA_WAREHOUSE_LETTER > 0 D _script dialog@d_WeaponInHand 0  R _item p PID_Q_LA_WAREHOUSE_LETTER - 1 #
+13 4020 D _script dialog@d_WeaponInHand 0  #
+15 4030 D _item p PID_Q_LA_WAREHOUSE_LETTER > 0 D _script dialog@d_NoWeaponInHand 0  R _item p PID_Q_LA_WAREHOUSE_LETTER - 1 #
+15 4040 D _script dialog@d_NoWeaponInHand 0  #
+14 4050 @
+12 5000 None 0 #
+80 5010 @
+13 6000 None 0 #
+20 6010 R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 2 @
+14 7000 None 0 #
+13 7010 #
+13 7020 @
+15 8000 None 0 #
+20 8010 R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 2 @
+20 9000 None 0 #
+21 9010 R _var p q_la_warehouse_rape_points + 5 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+22 9020 R _var p q_la_warehouse_rape_points + 10 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+30 9030 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 3 @
+21 10000 None 0 #
+30 10010 R _var p q_la_warehouse_dialog_status = 3 @
+22 11000 None 0 #
+30 11010 R _var p q_la_warehouse_dialog_status = 3 @
+30 12000 None 0 #
+31 12010 R _script dialog@r_RemoveArmor 0  R _var p q_la_warehouse_rape_points + 2 R _script dialog@r_RemoveWeapon 0  #
+32 12020 R _var p q_la_warehouse_rape_points + 5 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+33 12030 R _var p q_la_warehouse_rape_points + 2 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+34 12040 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  @
+31 13000 None 0 #
+40 13010 R _script dialog@r_RemoveArmor 0  R _var p q_la_warehouse_dialog_status = 4 @
+32 14000 None 0 #
+40 14010 R _script dialog@r_RemoveArmor 0  R _var p q_la_warehouse_dialog_status = 4 @
+33 15000 None 0 #
+40 15010 R _script dialog@r_RemoveArmor 0  R _var p q_la_warehouse_dialog_status = 4 @
+34 16000 None 0 #
+40 16010 R _script dialog@r_RemoveArmor 0  R _var p q_la_warehouse_dialog_status = 4 @
+40 17000 None 0 #
+41 17010 R _var p q_la_warehouse_rape_points + 10 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+42 17020 R _var p q_la_warehouse_rape_points + 5 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+50 17030 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 5 @
+41 18000 None 0 #
+50 18010 R _var p q_la_warehouse_dialog_status = 5 @
+42 19000 None 0 #
+50 19010 R _var p q_la_warehouse_dialog_status = 5 @
+50 20000 None 0 #
+60 20010 R _var p q_la_warehouse_rape_points + 5 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 6 #
+60 20020 R _var p q_la_warehouse_rape_points + 2 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 6 #
+61 20030 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse_dialog_status = 7 @
+60 21000 None 0 #
+70 21010 D _var p q_la_warehouse_rape_points } 30 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+71 21020 D _var p q_la_warehouse_rape_points > 15 D _var p q_la_warehouse_rape_points < 30 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+72 21030 D _var p q_la_warehouse_rape_points < 15 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  @
+61 22000 None 0 #
+70 22010 D _var p q_la_warehouse_rape_points } 30 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+71 22020 D _var p q_la_warehouse_rape_points > 15 D _var p q_la_warehouse_rape_points < 30 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  #
+72 22030 D _var p q_la_warehouse_rape_points < 15 R _script quest_la_warehouse@r_FlushScreen 0  R _param p ST_EXPERIENCE + 250 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  @
+70 23000 None 0 #
+65507 23010 R _script dialog@r_RemoveArmor 0  R _script dialog@r_RemoveWeapon 0  R _var p q_la_warehouse = 4 R _var p player_is_raped = 1 @
+71 24000 None 0 #
+0 24010 R _var p q_la_warehouse = 4 R _script quest_la_warehouse@r_RemovePunks 0  R _var p player_is_raped = 1 @
+72 25000 None 0 #
+0 25010 R _var p q_la_warehouse = 4 R _script quest_la_warehouse@r_RemovePunks 0  R _var p player_is_raped = 1 @
+80 26000 None 0 #
+81 26010 #
+81 26020 #
+81 26030 @
+81 27000 None 0 #
+0 27010 R _var p q_la_warehouse = 6 R _script quest_la_warehouse@r_RemovePunks 0  &
+
+[engl]
+{100}{}{Punk}
+{200}{}{You see a punk.}
+{210}{}{Some stereotypical street scum.}
+{1000}{}{Predialogue installations}
+{1010}{}{Step #1}
+{1020}{}{Step #2}
+{1030}{}{Step #3}
+{1040}{}{Step #4}
+{1050}{}{Step #5}
+{1060}{}{Step #6a}
+{1070}{}{Step #6b}
+{1080}{}{start}
+{2000}{}{[While you are looking around in the rotten warehouse, a bunch of punks shows up. A big old, surprisingly muscular man with a rough balding head, a slim man in a shabby leather jacket with a scar straight over his face and a skinny punk girl with green hair. In the background you can see a rather small looking man giving them cover.] }
+{2010}{}{[Continue]}
+{2020}{}{[Continue]}
+{2030}{}{[Continue]}
+{3000}{}{@sex@|Goddam! That's one sweet looking ass you're carrying boy. Seems like you found yourself into our lovely home, didn't ya? Well... This is getting interesting. Hey guys, why don't we throw a party to celebrate this joyful occasion? [The group moves closer to you with a grinning smirk on their faces]||Hey, look who we've got here! Isn't it the finest ass in the whole wasteland? Fuck! Even being in the same room with an ass like that makes me feel religious, praise the lord! Oh, little miss, there's no need to be worried about anything... No one gets hurt if you do as we say [The man's face turns into a broad, most vulgar looking smile you've ever seen]|}
+{3010}{}{I am here to deliver a letter.}
+{3020}{}{Guess I am at the wrong party. See ya later, Mr. Alley Gator.}
+{3030}{}{I am here to deliver a letter.}
+{3040}{}{Guess I am at the wrong party. See ya later, Mr. Alley Gator.}
+{3050}{}{I don't like your kind.}
+{4000}{}{Hey, look-what-we-have-here! Some ugly little girl's ass! You really aren't a pretty one, but found yourself into our lovely home to have some fun, didn't you? You want to have some fun? Yes? You want to, right? [They move up closer to you and set up grining faces.]}
+{4010}{}{I am here to deliver a letter.}
+{4020}{}{Guess I am at the wrong party. See ya later, Mr. Alley Gator.}
+{4030}{}{I am here to deliver a letter.}
+{4040}{}{Guess I am at the wrong party. See ya later, Mr. Alley Gator.}
+{4050}{}{I don't like your kind.}
+{5000}{}{Damn boy! You're the one of the ugliest looking sonofabitch I've seen in a long time. Hell! [The man spits on the ground.] ... I've seen ghouls with more sex appeal than you do. [The man looks discomfortable and tries to avoid direct eye contact with you.]}
+{5010}{}{I, uhh...What?}
+{6000}{}{[The group is now standing in a circle around you and before you can even react, one of the punks grabs your weapon and it falls to the ground.]}
+{6010}{}{[Continue]}
+{7000}{}{Look at that! He doesn't like our kind! But aren't we so lovely? [The girl nods back to the others.]}
+{7010}{}{I am here to deliver a letter.}
+{7020}{}{Guess I am at the wrong party. See ya later, Mr. Alley Gator.}
+{8000}{}{[The group is now standing in a circle around you and before you can even react, one of the punks grabs you.]}
+{8010}{}{[Continue]}
+{9000}{}{You don't need this here, sweetheart! Why don't you sit down and relax a bit? [The girl in the group nods.] Yeah, come all down! We are having some great fun here, don't we? [They keep coming closer, while walking in a slow circle around you.]}
+{9010}{}{[Try to run away.]}
+{9020}{}{[Go into combat position.]}
+{9030}{}{[Watch the scene.]}
+{10000}{}{[You take a step to the side and try to break out, but right in the same moment, the big, old man is making a step in front of you, blocking your way.]}
+{10010}{}{[Continue]}
+{11000}{}{[You clench your fists and take a step back into a combat position. While this, the big, old man is making a step in front of you, blocking your path.]}
+{11010}{}{[Continue]}
+{12000}{}{[The skinny girl with green hair grabs you from behind, her arms keep you close to her body and she whispers in your ear.] ... You want it too, don't you want it too? I know it, I know you want it too, honey... [The man with the scar over the face grabs your side and opens up the straps on your armor.]}
+{12010}{}{[Try to free yourself.]}
+{12020}{}{[Attack the girl.]}
+{12030}{}{[See if you can run away.]}
+{12040}{}{[Let them do.]}
+{13000}{}{[You try to get out of the girls grasp, but the other punks are starting to fix your body on the ground. For a short moment, you can get one of your arms free, but it's too late and your bodyarmor gets pulled off from your torso.]}
+{13010}{}{[Continue]}
+{14000}{}{[You try to attack the girl, but she keeps you in her grasp. The other punks are starting to fix your body on the ground. For a short moment, you can get one of your arms free, but it's too late and your bodyarmor gets pulled off from your torso.]}
+{14010}{}{[Continue]}
+{15000}{}{[You try to get out of the girls grasp to run away, but the act fails and the other punks are starting to fix your body on the ground. For a short moment, you can get one of your arms free, but it's too late and your bodyarmor gets pulled off from your torso.]}
+{15010}{}{[Continue]}
+{16000}{}{[Your bodyarmor gets pulled off from your torso.]}
+{16010}{}{[Continue]}
+{17000}{}{[With your armor on the ground, the group has an easy game with getting off the rest of your clothes. The man with the scar over the face grabs your pants and tries to get them down.]}
+{17010}{}{[Try to kick him in the face.]}
+{17020}{}{[Try to free you from the grip and get up.]}
+{17030}{}{[Let him do it.]}
+{18000}{}{[You hit him right on the nose and he falls back and shifts into protective stance.]}
+{18010}{}{[Continue]}
+{19000}{}{[With all your remaining energy, you try to free youself.]}
+{19010}{}{[Continue]}
+{20000}{}{[The skinny girl starts to laugh like a crazy and continues to keep you down, while the old man continues to remove your pants and spreads your legs in a hasty moment.]}
+{20010}{}{[Try to punch him off of you.]}
+{20020}{}{[Scream into his face.]}
+{20030}{}{[Let him do it.]}
+{21000}{}{[He doesn't seem to be very impressed by your actions and there is nothing else you seem to be able to do now.....]}
+{21010}{}{[Continue]}
+{21020}{}{[Continue]}
+{21030}{}{[Continue]}
+{22000}{}{[There is nothing else you seem to be able to do now.....]}
+{22010}{}{[Continue]}
+{22020}{}{[Continue]}
+{22030}{}{[Continue]}
+{23000}{}{[You can't be sure how much time has passed since you were forced on the floor-- The group seems to be 'done' with you, adding a final kick into your stomach while you still being on the ground, covering in pain.] ... Take it hard, bitch! [The crazy punk girl adds, while laughing...] Yeah, take that you piece of street scum! ... [The group lines up around you and it seems like they want to finish what they have started.] ...}
+{23010}{}{[Combat]}
+{24000}{}{[You can't be sure how much time has passed since you were forced on the floor-- The group seems to be 'done' with you, adding a final kick into your stomach while you still being on the ground, covering in pain.] ... Take it hard, bitch! [The crazy punk girl adds, while laughing...] What a god damn wimp! ... [The group spreads out and leaves the warehouse, laughing, with the girl showing a last obscene gesture towards you.]}
+{24010}{}{[End]}
+{25000}{}{[You can't be sure how much time has passed since you were forced on the floor-- The group seems to be 'done' with you, letting you on the ground, covering in pain.] ... What a god damn wimp! ... [The group spreads out and leaves the warehouse, laughing, with the girl showing a last obscene gesture towards you.]}
+{25010}{}{[End]}
+{26000}{}{What the fuck happened to your face? It looks like someone tried to cool down a stove with it!}
+{26010}{}{You guys look so strong and muscular, I sure hope that nothing funny hapens to me while I'm here...}
+{26020}{}{I sure hope you don't get any wired ideas!}
+{26030}{}{What?}
+{27000}{}{[The old man takes a step back.] Oh man... I... I... I can't do this... Not this time. [The group changes it's direction and wanders out of the warehouse, disappearing.]}
+{27010}{}{[End]}
+

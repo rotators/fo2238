@@ -1,0 +1,168 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+8 1010 D _param p ST_CHARISMA > 99 #
+8 1020 D _param p ST_INTELLECT < 4 #
+8 1030 D _param p REPUTATION_NEW_RENO < -200 #
+8 1040 D _var p acquaintance = 2 #
+2 1050 @
+2 2000 None 0 #
+3 2010 D _var p acquaintance = 0 R _var p acquaintance = 1 #
+4 2020 D _item p PID_BOTTLE_CAPS > 19 D _item n PID_MARKED_DECK_OF_CARDS = 0 D _var p acquaintance = 1 R _script dialog@r_RemoveMoney 1 20 R _script dialog@r_StatRoll 2 Perception 9 #
+11 2030 D _item n PID_MARKED_DECK_OF_CARDS > 0 D _var p acquaintance = 1 R _item n PID_MARKED_DECK_OF_CARDS = 0 #
+0 2040 D _param p SK_GAMBLING > 74 R _var p acquaintance = 2 #
+0 2050 #
+16 2060 D _var n acquaintance = 0 D _var p q_mordinos_joining_quest = 1 R _var n acquaintance = 1 @
+3 3000 None 0 #
+4 3010 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 R _script dialog@r_StatRoll 2 Perception 9 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+5 4020 #
+5 4030 @
+5 5000 None 0 #
+6 5010 #
+4 5020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 R _script dialog@r_StatRoll 2 Perception 9 #
+0 5030 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+65507 7010 R _var p acquaintance = 2 #
+4 7020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 R _script dialog@r_StatRoll 2 Perception 9 #
+0 7030 @
+8 8000 None 0 @
+9 9000 None 0 #
+6 9010 #
+6 9020 #
+10 9030 #
+10 9040 #
+10 9050 @
+10 10000 None 0 #
+6 10010 #
+4 10020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 R _script dialog@r_StatRoll 2 Perception 9 #
+0 10030 @
+11 11000 None 0 #
+12 11010 R _script dialog@r_AddMoney 1 60 #
+12 11020 R _script dialog@r_AddMoney 1 60 #
+12 11030 R _script dialog@r_AddMoney 1 60 @
+12 12000 None 0 #
+13 12010 R _param p REPUTATION_NEW_RENO - 25 #
+0 12020 R _param p ST_EXPERIENCE + 250 R _param p REPUTATION_NEW_RENO - 25 @
+13 13000 None 0 #
+14 13010 R _script dialog@r_AddMoney 1 60 #
+14 13020 R _script dialog@r_AddMoney 1 60 #
+14 13030 R _script dialog@r_AddMoney 1 60 @
+14 14000 None 0 #
+0 14010 R _param p ST_EXPERIENCE + 250 R _param p REPUTATION_NEW_RENO - 25 R _var p acquaintance = 2 @
+16 15000 None 0 #
+17 15010 #
+0 15020 @
+17 16000 None 0 #
+19 16010 #
+18 16020 #
+18 16030 #
+18 16040 @
+18 17000 None 0 #
+21 17010 #
+20 17020 #
+0 17030 @
+19 18000 None 0 #
+21 18010 #
+0 18020 @
+20 19000 None 0 #
+65507 19010 #
+0 19020 @
+21 20000 None 0 #
+0 20010 R _var p q_mordinos_induction_doctor + 100 &
+
+[engl]
+{100}{}{Monte}
+{200}{}{You see Three Card Monte.}
+{210}{}{You see a spindly-looking old man with a sunburned face. He's so thin he looks like he's made out of twigs.}
+{210}{}{You see Three-Card Monte. He scopes out the street, spots you, and nods.}
+{210}{}{You see Three Card Monte. He examines and nods at you.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Idiot}
+{1030}{}{Hated}
+{1040}{}{cheater revealed or pissed off or finished successfully}
+{1050}{}{normal}
+{2000}{}{(The old man smiles, and the skin around his eyes crinkles.) Looking to play, friend? Three-Card Monte's the name, and the game's the same as the name. Slap down 20 chips, and we'll get down to it. Triple your money.}
+{2010}{}{Uh, get down to what?}
+{2020}{}{I'm familiar with the game. Here's 20 chips. Let's play.}
+{2030}{}{I'm familiar with the game. Here's 20 chips. Let's play.}
+{2040}{}{Three-Card Monte, huh? You put three cards face down, shuffle them around, and I pick a card. If it's the right card - which it won't be, since you palmed it while shuffling - then I win. No thanks, pal.}
+{2050}{}{Not today, thanks.}
+{2060}{}{I'm not here to play Monte, but to supply.}
+{3000}{}{Get down to what? The game, of course! See… (shows you three cards) …one of these is a queen. I lay them face down, shuffle them, then you pick which one the queen is. If you're right, you win.}
+{3010}{}{Sounds simple enough. Let's play. Here's 20 chips.}
+{3020}{}{Not today, thanks.}
+{4000}{}{(You hand over the cash. Monte nods, shows you the cards, then slaps them down on the ground and shuffles them for a few seconds.) (You think it's the one on the left.)@@(You hand over the cash. Monte nods, shows you the cards, then slaps them down on the ground and shuffles them for a few seconds.) (You think it's the one in the middle.)@@(You hand over the cash. Monte nods, shows you the cards, then slaps them down on the ground and shuffles them for a few seconds.) (You think it's the one on the right.)@@(You hand over the cash. Monte nods, shows you the cards, then slaps them down on the ground and shuffles them for a few seconds.) (You don't know. The cards moved too fast.)}
+{4010}{}{The one on the left.}
+{4020}{}{The one on the right.}
+{4030}{}{The one in the middle.}
+{5000}{}{(Monte turns over the card. It is the two of spades.) Sorry, pal, not this time, but you were CLOSE. You sure do got the eye for it, though. Wanna try again?
+}
+{5010}{}{I'm not playing with a cheater like you.}
+{5020}{}{Sure. Here's 20 chips.}
+{5030}{}{No thanks.}
+{6000}{}{WHAT did you say, pal? You accusing me of cheating?
+}
+{6010}{}{Yes.}
+{6020}{}{Screw this. Keep the money, I'm outta here.}
+{7000}{}{Look, I ain't got time for sore losers. You pay your money, you take your chances. If you wanna PLAY, fine, but if you're just gonna bitch when you lose, then get lost!}
+{7010}{}{That's it. You're dead.}
+{7020}{}{All right, all right. I'm sorry. Here's 20 chips. Let's play again.}
+{7030}{}{Screw you. Keep the money, I'm outta here.}
+{8000}{}{(Monte frowns as he sees you.) Look, I ain't running no games today, all right? Blow.}
+{9000}{}{(You hand over the cash. Monte nods, shows you the cards, then lays them on the ground. As he does, he palms a card, so quickly you almost miss it. He then proceeds to shuffle for a few seconds.) So...which one's the queen, pal?}
+{9010}{}{You goddamn CHEATER. I saw you palm that card. Give me back my cash before I kill you here in the street.}
+{9020}{}{The one in your sleeve.}
+{9030}{}{The one on the left.}
+{9040}{}{The one on the right.}
+{9050}{}{The one in the middle.}
+{10000}{}{(Monte turns over the card. It is the two of spades.) Sorry, pal, not this time, but you were CLOSE. You sure do got the eye for it, though. Wanna try again?}
+{10010}{}{I'm not playing with a cheater like you.}
+{10020}{}{Sure. Here's 20 chips.}
+{10030}{}{No thanks.}
+{11000}{}{(You hand over the cash. Monte nods, shows you the cards, then slaps them down on the ground and shuffles them for a few seconds.) Uh…all right… (Monte puts the cards on the ground and shuffles them.) So...which one's the queen, pal? (Monte's using the marked deck. Any pick is the right one.)}
+{11010}{}{Oh, I don't know…the one on the left.}
+{11020}{}{Hmmmm…maybe the one on the right?}
+{11030}{}{Gee, I'm not sure…I think it's the one in the middle.}
+{12000}{}{(Monte turns over the card. It is the queen of hearts. He seems paralyzed with shock.) Uh…? Heh. Eh...guess you win, pal. (He hands over the cash reluctantly.)}
+{12010}{}{So we gonna play again or what? C'mon, Monte. I'm just getting started.}
+{12020}{}{Well, thanks, Monte. See you later.}
+{13000}{}{(You hand over the cash. Monte looks uncomfortable.) Uh…all right… (Monte puts the cards on the ground and shuffles them.) So...which one's the queen, pal? (Monte's using the marked deck. Any pick is the right one.)}
+{13010}{}{Oh, I don't know…the one on the left.}
+{13020}{}{Gee, I'm not sure…I think it's the one in the middle.}
+{13030}{}{Hmmmm…maybe the one on the right?}
+{14000}{}{(Monte turns over the card. It is the queen of hearts. He looks shocked.) Uh…? Heh...uh...guess you win, pal. That cleans me out, though... (Looks at you weakly) Anything else I could do for you?}
+{14010}{}{Forget it, Monte. We'll call it even for today.}
+{15000}{}{Supply? Man you got me confused with someone else...}
+{15010}{}{You're a guy who likes to make money. This shit is wholesale, straight from the Desperado. I'm shifting it in lots.}
+{15020}{}{I've changed my mind. I gotta go.}
+{16000}{}{Go on.}
+{16010}{}{How about 50 doses?}
+{16020}{}{100 doses?}
+{16030}{}{150 doses?}
+{16040}{}{200 doses?}
+{17000}{}{No no no. Looks like you don't get it. I ain't no dope pusher, you see. I'll take a minimal amount. Say... 50?}
+{17010}{}{Sounds good.}
+{17020}{}{No. YOU don't get it. How about...}
+{17030}{}{I've changed my mind. I gotta go.}
+{18000}{}{Pal, you got yourself a deal.}
+{18010}{}{Sounds good.}
+{18020}{}{I've changed my mind. I gotta go.}
+{19000}{}{You know what? I ain't taking any. Now beat it.}
+{19010}{}{Nobody talks to me like that and lives!}
+{19020}{}{You'll regret this!}
+{20000}{}{[You come to an agreement, the briefcase is opened, and jet and caps are exchanged.]}
+{20010}{}{[END]}
+

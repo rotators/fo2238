@@ -1,0 +1,223 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mob.fos
+//
+
+// Generic mob ai
+#include "_macros.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+
+// npc roles (defines distance mob will attack from))
+#define ROLE_DEFAULT      (0)
+#define ROLE_AGRESSIVE    (1)
+#define ROLE_PASSIVE      (2)
+
+// useful variables
+#define ALERTED           # (cr)           (cr.StatBase[ST_VAR1]) // idle time is shorter if in that mode // note that it uses StatBase for read and write
+
+// idle time in milseconds (normal is slower for performance issues)
+#define IDLE_NORMAL       (5000)
+#define IDLE_ALERTED      (1000)
+
+void critter_init(Critter& mob, bool firstTime)
+{
+    mob.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+    mob.SetEvent(CRITTER_EVENT_DEAD, "_MobDead");
+    // mob.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobShowCritter");
+    // mob.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_MobHideCritter");
+    // mob.SetEvent(CRITTER_EVENT_ATTACK, "MobAttacked");
+    _CritSetExtMode(mob, MODE_EXT_MOB);
+}
+
+void _DontMove(Critter& mob, bool firstTime)
+{
+    mob.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle2");
+    mob.SetEvent(CRITTER_EVENT_DEAD, "_MobDead");
+    // mob.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobShowCritter");
+    // mob.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_MobHideCritter");
+    // mob.SetEvent(CRITTER_EVENT_ATTACK, "MobAttacked");
+    _CritSetExtMode(mob, MODE_EXT_MOB);
+}
+
+void _MineMob(Critter& mob, bool firstTime)
+{
+    mob.SetEvent(CRITTER_EVENT_IDLE, "_MineMobIdle");
+    mob.SetEvent(CRITTER_EVENT_DEAD, "_MobDead");
+    _CritSetExtMode(mob, MODE_EXT_MOB);
+}
+
+
+//
+// Checks if critter is within attack distance
+//
+
+void _MineMobIdle(Critter& mob)
+{
+    // the great optimizer
+    if(!mob.IsLife())
+    {
+        mob.Wait(IDLE_NORMAL);
+        return;
+    }
+
+    // check critters in sight
+    array<Critter@> crits;
+    uint            num = mob.GetCritters(false, FIND_ALL | FIND_LIFE, crits);
+    uint            dist = GetDistance(mob);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if((GetCrittersDistantion(mob, crits[i]) > dist) || (crits[i].Param[ST_NPC_ROLE] == ROLE_MOB_MINE))
+            continue;
+        else
+        {
+            mob.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+
+    MoveMob(mob, false);
+    mob.Wait(IDLE_NORMAL);
+}
+
+void _MobIdle(Critter& mob)
+{
+    // the great optimizer
+    if(!mob.IsLife())
+    {
+        mob.Wait(IDLE_NORMAL);
+        return;
+    }
+
+    // check critters in sight
+    array<Critter@> crits;
+    // get visible players
+    uint            num = mob.GetCritters(false, FIND_ONLY_PLAYERS | FIND_LIFE, crits);
+
+    // mob.Say(SAY_NORM_ON_HEAD, ""+num);
+    // check distance
+    uint dist = GetDistance(mob);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(mob, crits[i]) > dist)
+            continue;
+        else
+        {
+            // attack
+            mob.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+    if(crits.length() > 0)
+    {
+        // MoveMob(mob, false);
+        mob.Wait(IDLE_ALERTED);
+    }
+    else
+    {
+        MoveMob(mob, false);
+        // mob.Say(SAY_NORM_ON_HEAD, "Don't care");
+        mob.Wait(IDLE_NORMAL);
+    }
+}
+
+// Critter stays on his spot, does not move randomly around.
+void _MobIdle2(Critter& mob)
+{
+    // check critters in sight
+    array<Critter@> crits;
+    // get visible players
+    uint            num = mob.GetCritters(false, FIND_ONLY_PLAYERS | FIND_LIFE, crits);
+    // mob.Say(SAY_NORM_ON_HEAD, ""+num);
+    // check distance
+    uint dist = GetDistance(mob);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(mob, crits[i]) > dist)
+            continue;
+        else
+        {
+            // attack
+            mob.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+    if(ALERTED(mob) > 0)
+    {
+        // MoveMob(mob, false);
+        mob.Wait(IDLE_ALERTED);
+    }
+    else
+    {
+        // MoveMob(mob, false);
+        // mob.Say(SAY_NORM_ON_HEAD, "Don't care");
+        mob.Wait(IDLE_NORMAL);
+    }
+}
+
+void _MobDead(Critter& mob, Critter@ killer)
+{
+    mob.ClearEnemyStack();
+}
+
+void MoveMob(Critter& mob, bool run)
+{
+    int dist = Random(0, (mob.Stat[ST_NPC_ROLE] % 100 / 10));
+    if(dist == 0)
+    {
+        mob.MoveRandom();
+    }
+    else
+    {
+        // bool AddWalkPlane(Critter& npc, uint priory, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint8 cut)
+        uint16 hexX = mob.HexX;
+        uint16 hexY = mob.HexY;
+        mob.GetMap().MoveHexByDir(hexX, hexY, Random(0, 5), dist);
+        AddWalkPlane(mob, 0, hexX, hexY, 0xff, run, 0);
+    }
+}
+
+//
+// Gets distance after which critter becomes agressive
+//
+uint GetDistance(Critter& mob)
+{
+    // TODO: damaged eye??
+    uint base = __LookNormal + 3 * mob.Stat[ST_PERCEPTION];
+
+    // switch works only for ints??
+    int role = int(mob.Stat[ST_NPC_ROLE]);
+    switch(role)
+    {
+    case ROLE_DEFAULT:
+        // mob.Say(SAY_NORM, "" + base + "/" + 3 + "=" + base/3);
+        return base / 3;
+    case ROLE_AGRESSIVE:
+    case ROLE_MOB_WAVE:
+    case ROLE_MOB_MINE:
+        return base / 2;
+    case ROLE_PASSIVE:
+        return base / 4;
+    }
+    return base / 3;
+}
+//
+// Alerts that oponent is near
+//
+void _MobShowCritter(Critter& mob, Critter& showCrit)
+{
+    if(showCrit.IsPlayer())
+        ALERTED(mob) += 1;
+}
+
+void _MobHideCritter(Critter& mob, Critter& hideCrit)
+{
+    if(hideCrit.IsPlayer())
+        ALERTED(mob) -= 1;
+}
+
+void _MobDead(Critter& mob)
+{}

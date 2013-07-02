@@ -1,0 +1,77 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_tent.fos
+//
+
+#ifndef __ITEM_TENT__
+#define __ITEM_TENT__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "MsgStr.h"
+
+#include "map_tent_h.fos"
+#include "world_common_h.fos"
+
+void _InitTent(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_TentSkill");
+    item.SetEvent(ITEM_EVENT_USE,   "_TentUse");
+}
+
+bool _TentUse(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+        return(true);
+    }
+
+    DSay(cr, "use");
+
+    Map@ map = cr.GetMap();
+
+    if(!valid(map))
+    {
+        cr.Say(SAY_NETMSG, "Invalid map.");
+        return(false);
+    }
+
+    if(IsTent(map))
+    {
+        DSay(cr, "IsTent");
+
+        // TODO
+    }
+    else if(CanCreateTent(map))
+    {
+        DSay(cr, "CanCreateTent");
+
+        TryCreateTent(cr);
+    }
+    else
+    {
+        cr.Say(SAY_NETMSG, "You need to be on a valid map to build a camp.");
+    }
+
+    return(true);
+}
+
+bool _TentSkill(Item& item, Critter& cr, int skill)
+{
+    DSay(cr, "skill: " + skill);
+
+    if(item.Accessory == ACCESSORY_HEX && skill == SKILL_PICK_ON_GROUND)
+    {
+        int freeWeight = cr.Stat[ST_CARRY_WEIGHT] - cr.ItemsWeight();
+        if(freeWeight >= int(item.Proto.Weight) || cr.ItemsWeight() == 0)
+            MoveItem(item, 1, cr);
+        else
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+    }
+
+    return(true);
+}
+#endif // __ITEM_TENT__ //

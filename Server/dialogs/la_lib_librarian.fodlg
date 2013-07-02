@@ -1,0 +1,178 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 #
+17 2020 D _script dialog@d_QuestTimeoutReady 0  #
+20 2030 D _script dialog@d_QuestTimeoutNotReady 0  #
+21 2040 D _var p q_la_library_book = 0 R _var p q_la_library_book = 1 #
+0 2050 D _var p q_la_library_book ! 0 @
+3 3000 None 0 #
+4 3010 #
+17 3020 D _script dialog@d_QuestTimeoutReady 0  #
+20 3030 D _script dialog@d_QuestTimeoutNotReady 0  #
+21 3040 D _var p q_la_library_book = 0 R _var p q_la_library_book = 1 #
+0 3050 D _var p q_la_library_book ! 0 @
+4 4000 None 0 #
+9 4010 #
+10 4020 #
+11 4030 #
+12 4040 #
+13 4050 #
+14 4060 #
+0 4070 @
+5 5000 None 0 #
+0 5010 @
+7 6000 None 0 #
+8 6010 @
+8 7000 None 0 #
+4 7010 #
+0 7020 @
+9 8000 None 0 #
+15 8010 D _item p PID_BOTTLE_CAPS > 709 R _item p PID_BIG_BOOK_OF_SCIENCE + 1 R _script dialog@r_RemoveMoney 1 710 #
+16 8020 D _item p PID_BOTTLE_CAPS < 710 #
+4 8030 @
+10 9000 None 0 #
+15 9010 D _item p PID_BOTTLE_CAPS > 299 R _item p PID_DEANS_ELECTRONICS + 1 R _script dialog@r_RemoveMoney 1 300 #
+16 9020 D _item p PID_BOTTLE_CAPS < 300 #
+4 9030 @
+11 10000 None 0 #
+15 10010 D _item p PID_BOTTLE_CAPS > 379 R _item p PID_FIRST_AID_BOOK + 1 R _script dialog@r_RemoveMoney 1 380 #
+16 10020 D _item p PID_BOTTLE_CAPS < 380 #
+4 10030 @
+12 11000 None 0 #
+15 11010 D _item p PID_BOTTLE_CAPS > 839 R _item p PID_GUNS_AND_BULLETS + 1 R _script dialog@r_RemoveMoney 1 840 #
+16 11020 D _item p PID_BOTTLE_CAPS < 840 #
+4 11030 @
+13 12000 None 0 #
+15 12010 D _item p PID_BOTTLE_CAPS > 439 R _item p PID_SCOUT_HANDBOOK + 1 R _script dialog@r_RemoveMoney 1 440 #
+16 12020 D _item p PID_BOTTLE_CAPS < 440 #
+4 12030 @
+14 13000 None 0 #
+15 13010 D _item p PID_BOTTLE_CAPS > 889 R _item p PID_CHEMISTRY_MANUAL + 1 R _script dialog@r_RemoveMoney 1 890 #
+16 13020 D _item p PID_BOTTLE_CAPS < 890 #
+4 13030 @
+15 14000 None 0 #
+4 14010 #
+16 14020 #
+0 14030 @
+16 15000 None 0 #
+0 15010 @
+17 16000 None 0 #
+19 16010 D _item p PID_BOTTLE_CAPS > 499 R _script dialog@r_RemoveMoney 1 500 R _item p PID_HOLODISK + 1 R _script dialog@r_QuestTimeout 1 20 #
+18 16020 @
+18 17000 None 0 #
+4 17010 #
+0 17020 @
+19 18000 None 0 #
+4 18010 #
+0 18020 @
+20 19000 None 0 #
+0 19010 #
+4 19020 @
+21 20000 None 0 #
+22 20010 #
+0 20020 @
+22 21000 None 0 #
+23 21010 #
+0 21020 @
+23 22000 None 0 #
+0 22010 R _item p PID_DEANS_ELECTRONICS + 1 R _var p q_la_library_book = 2 &
+
+[engl]
+{100}{}{Veronica}
+{200}{}{You see Veronica.}
+{210}{}{You see a good looking woman in middle age.}
+{240}{}{You see a dead police officer.}
+{260}{}{You see a slain Ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{I'm with stupid}
+{1020}{}{i dont know you}
+{1030}{}{I know you.}
+{2000}{}{Hello! Welcome to the Followers of the Apocalypse. I've never seen you in our library yet. Are you new?}
+{2010}{}{Yes, I am new and I wonder, what kind of books you have.}
+{2020}{}{Hello. Tell me, do you have some old Holodisks to sell?}
+{2030}{}{Hello. Tell me, do you have some old Holodisks to sell?}
+{2040}{}{Nothing, but thanks.}
+{2050}{}{Nothing, but thanks.}
+{3000}{}{Hello and welcome back!}
+{3010}{}{I would like to purchase one or two books from you.}
+{3020}{}{Do you have some old Holodisks to sell?@@I would like to buy a Holodisk. To you have some?}
+{3030}{}{Hello. Tell me, do you have some old Holodisks to sell?}
+{3040}{}{Nothing, but thanks.}
+{3050}{}{Nothing, but thanks.}
+{4000}{}{We have many books in our library. You might just tell me what you are searching for. Then I can tell you more details.}
+{4010}{}{I am searching some science books.@@Do you have books about science?@@Books about science is what I am searching for.}
+{4020}{}{I am searching some electronic books.@@Do you have books about electronics?@@Books about electronic is what I am searching for.}
+{4030}{}{I am searching some first aid books.@@Do you have books about first aid?@@Books about first aid is what I am searching for.}
+{4040}{}{I am searching some guns and bullets books.@@Do you have books about guns and bullets?@@Books about guns and bullets is what I am searching for.}
+{4050}{}{I am searching some scout books.@@Do you have books about scouting?@@Books about scouting is what I am searching for.}
+{4060}{}{I am searching some chemistry books.@@Do you have books about chemistry?@@Books about chemistry is what I am searching for.}
+{4070}{}{Ok. It seems like there is nothing I would need now. Thanks anyway.}
+{5000}{}{I'm sorry, but I don't understand you. Somewhere I have a Holodisk on learning the English language, if you're interested.}
+{5010}{}{Wha?@@Wah!}
+{6000}{}{@sex@|Maybe later, young boy.||Maybe later, young lady.|}
+{6010}{}{I'll have some other question.}
+{7000}{}{Yes?}
+{7010}{}{What do you have in the way of books?}
+{7020}{}{Nothing, but thanks.}
+{8000}{}{Yes, I think I have what you are searching for. What about this exemplar of the big book of science? It costs 710 caps.}
+{8010}{}{I'll take it. [You give her 710 caps.]}
+{8020}{}{It seems like I don't have enough money...}
+{8030}{}{This is not what I am searching for. Do you have something else?}
+{9000}{}{Yes, I think I have what you are searching for. What about this exemplar of Deans Electronics? It costs 300 caps.}
+{9010}{}{I'll take it. [You give her 300 caps.]}
+{9020}{}{It seems like I don't have enough money...}
+{9030}{}{This is not what I am searching for. Do you have something else?}
+{10000}{}{Yes, I think I have what you are searching for. What about this first aid book here? It costs 380 caps.}
+{10010}{}{I'll take it. [You give her 380 caps.]}
+{10020}{}{It seems like I don't have enough money...}
+{10030}{}{This is not what I am searching for. Do you have something else?}
+{11000}{}{Yes, I think I have what you are searching for. Here, Guns and Bullets, the book isn't in that good state anymore. It costs 840 caps.}
+{11010}{}{I'll take it. [You give her 840 caps.]}
+{11020}{}{It seems like I don't have enough money...}
+{11030}{}{This is not what I am searching for. Do you have something else?}
+{12000}{}{Yes, I think I have what you are searching for. What about this scouting handbook? It costs 440 caps.}
+{12010}{}{I'll take it. [You give her 440 caps.]}
+{12020}{}{It seems like I don't have enough money...}
+{12030}{}{This is not what I am searching for. Do you have something else?}
+{13000}{}{Yes, I think I have what you are searching for. What about this chemistry handbooks? It costs 890 caps.}
+{13010}{}{I'll take it. [You give her 890 caps.]}
+{13020}{}{It seems like I don't have enough money...}
+{13030}{}{This is not what I am searching for. Do you have something else?}
+{14000}{}{Okay, here you have it. Do you need something else?}
+{14010}{}{Yes, I am searching for some other books...}
+{14020}{}{It seems like I don't have enough money...}
+{14030}{}{Not yet, thanks.}
+{15000}{}{I am really sorry, but then I can't give you the books. Maybe you want to come back, if you got some money.}
+{15010}{}{Maybe, but thanks anyway. See you.}
+{16000}{}{Yes, we got some dusted Holodisks from the salvagers in our last trade with them. Maybe you want to buy one? I can give you one for 500 caps.}
+{16010}{}{Sounds good. Give me the Holodisk. [You give her 500 caps.]}
+{16020}{}{A shame, it looks like I don't have enough money.}
+{17000}{}{What a shame. However, if you come back later, I might still have some.}
+{17010}{}{I would like to buy some books then instead.}
+{17020}{}{Maybe. See you later.}
+{18000}{}{Thanks. Here is your Holodisk. [She takes the caps and hands you the dusted piece of technic.] }
+{18010}{}{Now I also would like to buy some books...}
+{18020}{}{That's all I wanted. See you later.}
+{19000}{}{Sorry, but we don't have any Holodisks in the moment.}
+{19010}{}{Oh well. Then maybe later. See you.}
+{19020}{}{What about books?}
+{20000}{}{Wait a second!}
+{20010}{}{What is it?}
+{20020}{}{No, bye.}
+{21000}{}{Can you bring this book to Therese? You can find here in the library basement. [She shows you an old worn out book.]}
+{21010}{}{Sure, I'll do it.}
+{21020}{}{Don't have time for this, bye.}
+{22000}{}{Nice! Thank's in advance. Tell her, Veronica sends you.}
+{22010}{}{[You take the book and go.]}
+

@@ -1,0 +1,576 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gui_regwindow_ex.fos
+//
+
+// Extension for registration and character window - Van Burren style
+// Compile with -client switch
+
+
+#define __CLIENT
+
+#include "_client_defines.fos"
+#include "client_gui_h.fos"
+#include "sprite.fos"
+#include "MsgStr.h"
+#include "_colors.fos"
+#include "_animation.fos"
+
+
+#define TAG_COUNT         (6)
+#define CUST_BODY         (0)
+#define CUST_SKIN         (1)
+#define CUST_HAIR         (2)
+#define CUST_PONYTAIL     (3)
+#define CUST_MUSTACHE     (4)
+#define CUST_BEARD        (5)
+#define CUST_HAIRCOLOR    (6)
+
+// Global window control
+RegWindowEx RegEx;
+ChaWindowEx ChaEx;
+
+string      RgArrowUp;
+string      RgArrowDn;
+string      RgTagDn;
+
+// These values are modified
+int Gender    = GENDER_MALE;
+
+// Demo animations for character
+const uint[] ChaAnim2 = { ANIM2_IDLE, ANIM2_PUNCH_COMBO, ANIM2_IDLE_COMBAT, ANIM2_KICK_COMBO };
+
+// Regex, yeah
+void InitRegWindowEx() // Export
+{
+    // Just attach screen control
+    GUI_GetScreen(CLIENT_MAIN_SCREEN_REGISTRATION)
+    .Control(RegEx);
+    GUI_GetScreen(CLIENT_SCREEN_CHARACTER)
+    .Control(ChaEx);
+}
+
+// Gender callback
+void SetRegGender(int gender)   // Export
+{
+    if(Gender != gender)
+    {
+        Gender = gender;
+        for(uint i = 0, j = RegEx.chaCust.length(); i < j; i++)
+            RegEx.chaCust[i].UpdateGender();
+    }
+}
+
+// Filling parameters, called when registration data sending
+void FillRegistrationParameters(array<int>& params)     // Export
+{
+    int bodyType  = RegEx.chaCust[CUST_BODY].GetLayerIndex();
+    int skinColor = RegEx.chaCust[CUST_SKIN].GetLayerIndex();
+    int hairStyle = RegEx.chaCust[CUST_HAIR].GetLayerIndex();
+    int ponyTail  = RegEx.chaCust[CUST_PONYTAIL].GetLayerIndex();
+    int beard     = RegEx.chaCust[CUST_BEARD].GetLayerIndex();
+    int mustache  = RegEx.chaCust[CUST_MUSTACHE].GetLayerIndex();
+    int hairColor = RegEx.chaCust[CUST_HAIRCOLOR].GetLayerIndex();
+
+    params[ST_BASE_CRTYPE] = CRTYPE_3D_MALE_NORMAL + (Gender == GENDER_MALE ? 0 : 5) + bodyType;
+    params[ST_ANIM3D_LAYERS + ANIM3D_LAYER_SKIN] = skinColor;
+    params[ST_ANIM3D_LAYERS + ANIM3D_LAYER_HAIR] = hairStyle + hairColor;
+    params[ST_ANIM3D_LAYERS + ANIM3D_LAYER_MUSTACHE] = (mustache != 0 ? mustache + (mustache != ATTRIBUTE_Mustache_MadMax ? hairColor : 0) : 0);
+    params[ST_ANIM3D_LAYERS + ANIM3D_LAYER_PONYTAIL] = (ponyTail != 0 ? ponyTail + hairColor : 0);
+    params[ST_ANIM3D_LAYERS + ANIM3D_LAYER_BEARD] = (beard != 0 ? beard + hairColor : 0);
+}
+
+/**
+ * Overlay with few additional controls
+ */
+class RegWindowEx : Window
+{
+    array<RegCust@> chaCust;
+
+    void Init()
+    {
+        RgArrowUp = ::GetIfaceIniStr("RegCustBArrUpPicUp");
+        RgArrowDn = ::GetIfaceIniStr("RegCustBArrUpPicDn");
+        RgTagDn   = ::GetIfaceIniStr("RegCustBTagPic");
+
+        chaCust.resize(7);
+        @chaCust[CUST_BODY] = CustBodyType();
+        AddControl(@chaCust[CUST_BODY]);
+        @chaCust[CUST_SKIN] = CustSkinColor();
+        AddControl(@chaCust[CUST_SKIN]);
+        @chaCust[CUST_HAIR] = CustHairStyle();
+        AddControl(@chaCust[CUST_HAIR]);
+        @chaCust[CUST_PONYTAIL] = CustPonyTail();
+        AddControl(@chaCust[CUST_PONYTAIL]);
+        @chaCust[CUST_MUSTACHE] = CustMustache();
+        AddControl(@chaCust[CUST_MUSTACHE]);
+        @chaCust[CUST_BEARD] = CustBeard();
+        AddControl(@chaCust[CUST_BEARD]);
+        @chaCust[CUST_HAIRCOLOR] = CustHairColor();
+        AddControl(@chaCust[CUST_HAIRCOLOR]);
+
+        AddControl(@RegChaRegion());
+
+        Window::Init();
+    }
+};
+
+class ChaWindowEx : Window
+{
+    void Init()
+    {
+        AddControl(@RegChaRegion());
+        Window::Init();
+    }
+};
+
+class RegChaRegion : Control
+{
+    array<int>   chaRegion;
+    array<float> chaPosition;
+    array<float> chaPositionCur;
+    array<int>   chaLayers;
+    uint         rotateTick;
+    uint         animChangeTick;
+    uint         animIndex;
+
+    RegChaRegion()
+    {
+        chaRegion.resize(4);
+        GUI_GetIniCoords("ChaView", chaRegion[0], chaRegion[1], chaRegion[2], chaRegion[3]);
+        chaPosition.resize(14);
+        chaPosition[0] = chaRegion[0] + (chaRegion[2] - chaRegion[0]) / 2; // Position
+        chaPosition[1] = chaRegion[3] - 10;
+        chaPosition[2] = 0.0f;                                             // Rotation
+        chaPosition[3] = 150.0f;
+        chaPosition[4] = 0.0f;
+        chaPosition[5] = 2.5f;                                             // Scale
+        chaPosition[6] = 2.5f;
+        chaPosition[7] = 2.5f;
+        chaPosition[8] = 1.0f;                                             // Speed
+        chaPosition[9] = 0.0f;                                             // Reserved
+        chaPosition[10] = chaRegion[0];                                    // Stencil rectangle
+        chaPosition[11] = chaRegion[1];
+        chaPosition[12] = chaRegion[2];
+        chaPosition[13] = chaRegion[3];
+        chaLayers.resize(ANIM3D_LAYERS_COUNT);
+        rotateTick = 0;
+        animChangeTick = 0;
+        animIndex = ANIM2_IDLE;
+    }
+
+    void Draw()
+    {
+        uint tick = ::GetTick();
+        if(tick >= rotateTick)         // Rotate every 50 ms
+        {
+            chaPosition[3] += 2.0f;
+            rotateTick = tick + 50;
+        }
+        if(tick >= animChangeTick)         // Change index every 5-10 seconds
+        {
+            animIndex = ChaAnim2[Random(0, ChaAnim2.length() - 1)];
+            animChangeTick = tick + Random(5000, 10000);
+        }
+
+        if(::GUI_GetMainScreen() == CLIENT_MAIN_SCREEN_REGISTRATION)
+        {
+            int x = 0, y = 0;
+            ::GetHardcodedScreenPos(CLIENT_MAIN_SCREEN_REGISTRATION, x, y);
+
+            int  bodyType  = RegEx.chaCust[CUST_BODY].GetLayerIndex();
+            int  skinColor = RegEx.chaCust[CUST_SKIN].GetLayerIndex();
+            int  hairStyle = RegEx.chaCust[CUST_HAIR].GetLayerIndex();
+            int  ponyTail  = RegEx.chaCust[CUST_PONYTAIL].GetLayerIndex();
+            int  beard     = RegEx.chaCust[CUST_BEARD].GetLayerIndex();
+            int  mustache  = RegEx.chaCust[CUST_MUSTACHE].GetLayerIndex();
+            int  hairColor = RegEx.chaCust[CUST_HAIRCOLOR].GetLayerIndex();
+            uint body = CRTYPE_3D_MALE_NORMAL + (Gender == GENDER_MALE ? 0 : 5) + bodyType;
+            chaLayers[ANIM3D_LAYER_SKIN] = skinColor;
+            chaLayers[ANIM3D_LAYER_HAIR] = hairStyle + hairColor;
+            chaLayers[ANIM3D_LAYER_MUSTACHE] = (mustache != 0 ? mustache + (mustache != ATTRIBUTE_Mustache_MadMax ? hairColor : 0) : 0);
+            chaLayers[ANIM3D_LAYER_PONYTAIL] = (ponyTail != 0 ? ponyTail + hairColor : 0);
+            chaLayers[ANIM3D_LAYER_BEARD] = (beard != 0 ? beard + hairColor : 0);
+
+            chaPositionCur = chaPosition;
+            chaPositionCur[0] += x;
+            chaPositionCur[1] += y;
+            chaPositionCur[10] += x;
+            chaPositionCur[11] += y;
+            chaPositionCur[12] += x;
+            chaPositionCur[13] += y;
+            ::DrawCritter3d(0, body, ANIM1_UNARMED, animIndex, chaLayers, chaPositionCur, 0);
+        }
+        else         // CLIENT_MAIN_SCREEN_GAME
+        {
+            int x = 0, y = 0;
+            ::GetHardcodedScreenPos(CLIENT_SCREEN_CHARACTER, x, y);
+
+            CritterCl@ chosen = ::GetChosen();
+            if(valid(chosen))
+            {
+                if(chosen.IsAnim3d())
+                {
+                    chaPositionCur = chaPosition;
+                    chaPositionCur[0] += x;
+                    chaPositionCur[1] += y;
+                    chaPositionCur[10] += x;
+                    chaPositionCur[11] += y;
+                    chaPositionCur[12] += x;
+                    chaPositionCur[13] += y;
+                    ::DrawCritter3d(1, chosen.CrType, chosen.GetAnim1(), ANIM2_IDLE, chosen.Anim3dLayer, chaPositionCur, 0);
+                }
+                else
+                {
+                    ::DrawCritter2d(chosen.CrType, chosen.GetAnim1(), ANIM2_IDLE, int(chaPosition[3]) % 360 / 60, chaRegion[0] + x, chaRegion[1] + y, chaRegion[2] + x, chaRegion[3] + y, false, true, 0);
+                }
+            }
+        }
+    }
+};
+
+class Tag : CButton
+{
+    RegCust@ cust;     // Assigned group
+    uint     index;
+
+    Tag(uint index, int left, int top, int right, int bottom, RegCust@ cust)
+    {
+        this.index = index;
+        @this.cust = cust;
+        super(left, top, right - left, bottom - top, RgTagDn);
+    }
+
+    void set_Index(int v)
+    {
+        index = v;
+    }
+
+    void Click()
+    {
+        cust.Selected = index;
+    }
+};
+
+class ArrowUp : CButton
+{
+    RegCust@ cust;
+
+    ArrowUp(int left, int top, int right, int bottom, RegCust@ cust)
+    {
+        @this.cust = cust;
+        super(left, top, right - left, bottom - top, RgArrowUp);
+    }
+
+    void Click()
+    {
+        cust.ScrollUp();
+    }
+};
+
+class ArrowDn : CButton
+{
+    RegCust@ cust;
+
+    ArrowDn(int left, int top, int right, int bottom, RegCust@ cust)
+    {
+        @this.cust = cust;
+        super(left, top, right - left, bottom - top, RgArrowDn);
+    }
+
+    void Click()
+    {
+        cust.ScrollDown();
+    }
+};
+
+/**
+ * Listbox that allow to chose custom parameters.
+ */
+class RegCust : Control
+{
+    CLabel@         title;
+    string          caption;
+    array<CButton@> tagButton;
+    array<CLabel@>  tagNames;
+    array<string>@ list;
+    array<string>   listMale;
+    array<string>   listFemale;
+    uint            baseIdx;   // Base index for list
+    CButton@        arrUp;
+    CButton@        arrDn;
+    Control@        area;      // For scrolling detection
+    uint            selected;
+
+    RegCust()
+    {
+        super(0, 0, 0, 0);         // This is mere a container
+        tagButton.resize(TAG_COUNT);
+        tagNames.resize(TAG_COUNT);
+        baseIdx = 0;
+        selected = 0;
+        @list = listMale;
+    }
+
+    void Init(int index)
+    {
+        index++;
+        int l = 0, t = 0, r = 0, b = 0;
+        GetCoords("RegCust%iTitle", index, l, t, r, b);
+        @title = CLabel(l, t, r - l, b - t, caption);
+        AddControl(@title);
+        GetCoords("RegCust%iBArrUp", index, l, t, r, b);
+        @arrUp = ArrowUp(l, t, r, b, this);
+        AddControl(@arrUp);
+        GetCoords("RegCust%iBArrDn", index, l, t, r, b);
+        @arrDn = ArrowDn(l, t, r, b, this);
+        AddControl(@arrDn);
+
+        int lt = 0, rt = 0;
+        GetCoords("RegCust%iTab", index, lt, t, rt, b);
+        // Let's use this area for that control position/size
+        @area = Control(lt, t, rt - lt, b - t);
+        AddControl(@area);
+
+        int nx = 0;
+        int ny = 0;
+        StrToInt(GetIfaceIniStr("RegCust" + index + "NextX"), nx);
+        StrToInt(GetIfaceIniStr("RegCust" + index + "NextY"), ny);
+        GetCoords("RegCust%iBTag", index, l, t, r, b);
+
+        for(uint i = 0; i < TAG_COUNT; i++)
+        {
+            @tagButton[i] = Tag(i, l, t, r, b, this);
+            @tagNames[i] = CLabel(lt, t, rt - lt, b - t, "");
+            AddControl(@tagButton[i]);
+            AddControl(@tagNames[i]);
+
+            if(nx > 0)
+            {
+                l += tagButton[i].Width() + nx;
+                r += tagButton[i].Width() + nx;
+                area.Width(area.Width() + tagButton[i].Width() + nx);
+            }
+            if(ny > 0)
+            {
+                t += tagButton[i].Height() + ny;
+                b += tagButton[i].Height() + ny;
+                area.Height(area.Height() + tagButton[i].Height() + ny);
+            }
+        }
+        Fill();
+        Control::Init();
+    }
+
+    void Draw()
+    {
+        // Mark selected as gray
+        for(uint i = 0; i < TAG_COUNT; i++)
+        {
+            if(i + baseIdx == selected)
+                tagNames[i].Color = COLOR_LGRAY;
+            else
+                tagNames[i].Color = 0;
+        }
+        Control::Draw();
+    }
+
+    bool MouseDown(int x, int y, int click)
+    {
+        if(area.IsInside(x, y))
+        {
+            if(click == MOUSE_CLICK_WHEEL_UP)
+            {
+                ScrollUp();
+                return true;
+            }
+            else if(click == MOUSE_CLICK_WHEEL_DOWN)
+            {
+                ScrollDown();
+                return true;
+            }
+        }
+        return Control::MouseDown(x, y, click);
+    }
+
+    void Fill()
+    {
+        for(uint i = 0; i < TAG_COUNT; i++)
+        {
+            if(i < list.length())
+            {
+                tagButton[i].Enable();
+                tagNames[i].Caption = list[baseIdx + i];
+            }
+            else
+            {
+                tagButton[i].Disable();
+                tagNames[i].Caption = "";
+            }
+        }
+    }
+
+    void UpdateGender()
+    {
+        baseIdx = 0;
+        selected = 0;
+        @list = (Gender == GENDER_MALE ? listMale : listFemale);
+        Fill();
+    }
+
+    void set_Selected(uint index)     // Property
+    {
+        selected = index + baseIdx;
+    }
+
+    void ScrollDown()
+    {
+        if(baseIdx + TAG_COUNT < list.length())
+            baseIdx++;
+        Fill();
+    }
+
+    void ScrollUp()
+    {
+        if(baseIdx > 0)
+            baseIdx--;
+        Fill();
+    }
+
+    CLabel@ get_Title()
+    {
+        return @title;
+    }
+
+    int GetLayerIndex()
+    {
+        return selected;
+    }
+
+    // Helper
+    bool GetCoords(string& ini, int index, int& out left, int& out top, int& out right, int& out bottom)
+    {
+        ini = ReplaceText(ini, "%i", index);
+        GUI_GetIniCoords(ini, left, top, right, bottom);
+        return true;
+    }
+};
+
+class CustBodyType : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_BASE_CRTYPE));
+        for(uint i = 0; i < 4; i++)
+        {
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_BODY_TYPE(CRTYPE_3D_MALE_NORMAL + i)));
+            listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_BODY_TYPE(CRTYPE_3D_MALE_NORMAL + i)));
+        }
+        RegCust::Init(CUST_BODY);
+    }
+};
+
+class CustSkinColor : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_ANIM3D_LAYERS + ANIM3D_LAYER_SKIN));
+        for(uint i = 0; i <= 17; i++)
+        {
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_SKIN_COLOR(i)));
+            listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_SKIN_COLOR(i)));
+        }
+        RegCust::Init(CUST_SKIN);
+    }
+};
+
+class CustHairStyle : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_ANIM3D_LAYERS + ANIM3D_LAYER_HAIR));
+        for(uint i = 1; i <= 12; i++)
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_HAIR_MALE(i)));
+        for(uint i = 1; i <= 14; i++)
+            listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_HAIR_FEMALE(i)));
+        RegCust::Init(CUST_HAIR);
+    }
+
+    int GetLayerIndex()
+    {
+        return selected * 10 + (Gender == GENDER_MALE ? ATTRIBUTE_Hair_Male_Afro : ATTRIBUTE_Hair_Female_Afro);
+    }
+};
+
+class CustPonyTail : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_ANIM3D_LAYERS + ANIM3D_LAYER_PONYTAIL));
+        for(uint i = 0; i <= 2; i++)
+        {
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_PONYTAIL(i)));
+            listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_PONYTAIL(i)));
+        }
+        RegCust::Init(CUST_PONYTAIL);
+    }
+
+    int GetLayerIndex()
+    {
+        return selected * 10;
+    }
+};
+
+class CustMustache : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_ANIM3D_LAYERS + ANIM3D_LAYER_MUSTACHE));
+        for(uint i = 0; i <= 9; i++)
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_MUSTACHE(i)));
+        listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_MUSTACHE(20)));
+        listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_MUSTACHE(0)));
+        listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_MUSTACHE(20)));
+        RegCust::Init(CUST_MUSTACHE);
+    }
+
+    int GetLayerIndex()
+    {
+        if(selected == list.length() - 1)
+            return ATTRIBUTE_Mustache_MadMax;
+        return selected * 10;
+    }
+};
+
+class CustBeard : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_PARAM_NAME(ST_ANIM3D_LAYERS + ANIM3D_LAYER_BEARD));
+        for(uint i = 0; i <= 7; i++)
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_BEARD(i)));
+        listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_BEARD(0)));
+        RegCust::Init(CUST_BEARD);
+    }
+
+    int GetLayerIndex()
+    {
+        return selected * 10;
+    }
+};
+
+class CustHairColor : RegCust
+{
+    void Init()
+    {
+        caption = GetMsgStr(TEXTMSG_GAME, STR_HAIR_COLOR(-1));
+        for(uint i = 0; i <= 9; i++)
+        {
+            listMale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_HAIR_COLOR(i)));
+            listFemale.insertLast(GetMsgStr(TEXTMSG_GAME, STR_HAIR_COLOR(i)));
+        }
+        RegCust::Init(CUST_HAIRCOLOR);
+    }
+};

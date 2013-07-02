@@ -1,0 +1,520 @@
+[comment]
+Common dialog for each faction's mainframe used to manage players' database.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+4 1010 D _script factions_terminal@d_Terminal_IsMember 1 0 R _script factions_terminal@r_UpdateLastUsed 0  #
+60 1020 D _script factions_terminal@d_IsInvited 1 0 D _script dialog@d_NotMemberOfAnyFaction 0  #
+70 1030 D _script dialog@d_IsMemberOfSomeFaction 0  D _script factions_terminal@d_IsInvited 1 0 #
+100 1040 D _script factions_terminal@d_Terminal_NotMember 1 0 @
+2 2000 None 0 #
+4 2010 @
+4 3000 factions_terminal@dlg_FactionName 0 #
+118 3010 R _script factions_terminal@r_GoToNews 1 0 #
+9 3020 #
+5 3030 #
+6 3040 #
+200 3050 D _script dialog@d_IsLeader 0  R _script factions_terminal@r_SelectBase 1 0 #
+0 3060 @
+5 4000 None 0 #
+10 4010 D _var p factions_player_rank > 2 D _script factions_terminal@d_InvitationsAllowed 1 0 #
+40 4020 D _var p factions_player_rank > 2 #
+41 4030 D _var p factions_player_rank > 3 #
+42 4040 D _var p factions_player_rank > 4 #
+44 4050 R _script factions_terminal@r_SelectMember 1 0 #
+4 4060 #
+0 4070 @
+6 5000 None 0 #
+81 5010 D _script factions_terminal@d_CanConfirmLeadership 1 0 R _script factions_terminal@r_ConfirmLeadership 1 0 #
+31 5020 D _var p factions_player_rank < 4 #
+32 5030 D _var p factions_player_rank > 3 #
+80 5040 D _script factions_terminal@d_CanClaimLeadership 1 0 R _script factions_terminal@r_ClaimLeadership 1 0 #
+82 5050 D _script factions_terminal@d_ClaimedLeadership 1 0 #
+50 5060 #
+4 5070 #
+0 5080 @
+9 6000 None 0 #
+16 6010 #
+17 6020 #
+18 6030 R _script factions_terminal@r_SelectRecord 1 0 #
+300 6040 R _script factions_terminal@r_SelectFaction 1 0 #
+4 6050 #
+0 6060 @
+10 7000 factions_terminal@dlg_Invite 0 #
+65505 7010 #
+0 7020 @
+15 8000 None 0 #
+18 8010 @
+16 9000 factions_terminal@dlg_AddPlayer 0 #
+65505 9010 #
+0 9020 @
+17 10000 factions_terminal@dlg_ChoosePlayer 0 #
+65505 10010 #
+0 10020 @
+18 11000 factions_terminal@dlg_ShowRecord 0 #
+18 11010 R _script factions_terminal@r_SelectRecord 1 1 #
+18 11020 R _script factions_terminal@r_SelectRecord 1 -1 #
+19 11030 D _var p factions_player_rank > 3 #
+20 11040 #
+21 11050 #
+35 11060 #
+9 11070 #
+4 11080 #
+0 11090 @
+19 12000 None 0 #
+22 12010 R _script factions_terminal@r_ModifyStatus 1 1 #
+22 12020 R _script factions_terminal@r_ModifyStatus 1 2 #
+22 12030 R _script factions_terminal@r_ModifyStatus 1 3 #
+65505 12040 #
+0 12050 @
+20 13000 None 0 #
+22 13010 R _script factions_terminal@r_ModifyRank 1 1 #
+22 13020 R _script factions_terminal@r_ModifyRank 1 2 #
+22 13030 R _script factions_terminal@r_ModifyRank 1 3 #
+22 13040 R _script factions_terminal@r_ModifyRank 1 4 #
+22 13050 R _script factions_terminal@r_ModifyRank 1 5 #
+65505 13060 #
+0 13070 @
+21 14000 None 0 #
+22 14010 R _script factions_terminal@r_ModifyFaction 1 2 #
+22 14020 R _script factions_terminal@r_ModifyFaction 1 3 #
+22 14030 R _script factions_terminal@r_ModifyFaction 1 4 #
+22 14040 R _script factions_terminal@r_ModifyFaction 1 5 #
+22 14050 R _script factions_terminal@r_ModifyFaction 1 6 #
+23 14060 #
+65505 14070 #
+0 14080 @
+23 15000 factions_terminal@dlg_ModifyFactionByName 0 #
+65505 15010 #
+0 15020 @
+22 16000 None 0 #
+18 16010 #
+0 16020 @
+29 17000 None 0 #
+65505 17010 #
+0 17020 @
+30 18000 None 0 #
+18 18010 #
+0 18020 @
+31 19000 factions_terminal@dlg_RadioChannel 0 #
+65505 19010 #
+0 19020 @
+32 20000 factions_terminal@dlg_RadioChannel 0 #
+65505 20010 #
+0 20020 @
+35 21000 None 0 #
+18 21010 R _script factions_terminal@r_ModifyReputation 1 1 #
+18 21020 R _script factions_terminal@r_ModifyReputation 1 0 #
+18 21030 R _script factions_terminal@r_ModifyReputation 1 -1 #
+18 21040 #
+0 21050 @
+40 22000 factions_terminal@dlg_PromoteMember 0 #
+65505 22010 #
+0 22020 @
+41 23000 factions_terminal@dlg_DemoteMember 0 #
+65505 23010 #
+0 23020 @
+42 24000 factions_terminal@dlg_ExpelMember 0 #
+65505 24010 #
+0 24020 @
+43 25000 None 0 #
+5 25010 #
+0 25020 @
+44 26000 factions_terminal@dlg_ShowRecord 0 #
+44 26010 R _script factions_terminal@r_SelectMember 1 1 #
+44 26020 R _script factions_terminal@r_SelectMember 1 -1 #
+46 26030 #
+44 26040 D _var p factions_player_rank > 2 R _script factions_terminal@r_PromoteMember 1 0 #
+44 26050 D _var p factions_player_rank > 3 R _script factions_terminal@r_DemoteMember 1 0 #
+43 26060 D _var p factions_player_rank > 4 R _script factions_terminal@r_ExpelMember 1 0 #
+4 26070 #
+0 26080 @
+45 27000 None 0 #
+44 27010 #
+0 27020 @
+46 28000 None 0 #
+44 28010 R _script factions_terminal@r_ModifyReputation 1 1 #
+44 28020 R _script factions_terminal@r_ModifyReputation 1 0 #
+44 28030 R _script factions_terminal@r_ModifyReputation 1 -1 #
+44 28040 #
+0 28050 @
+50 29000 None 0 #
+51 29010 #
+6 29020 @
+51 30000 None 0 #
+0 30010 R _script factions_terminal@r_Resign 1 0 #
+0 30020 @
+59 31000 None 0 #
+60 31010 @
+60 32000 factions_terminal@dlg_FactionName 0 #
+4 32010 R _script factions_terminal@r_ConfirmInvitation 1 0 #
+0 32020 @
+69 33000 None 0 #
+70 33010 @
+70 34000 factions_terminal@dlg_FactionName 0 #
+0 34010 @
+80 35000 None 0 #
+0 35010 @
+81 36000 None 0 #
+0 36010 @
+82 37000 None 0 #
+6 37010 R _script factions_terminal@r_CancelClaim 1 0 #
+6 37020 #
+0 37030 @
+100 38000 None 0 #
+0 38010 @
+110 39000 factions_terminal@dlg_ShowNews 0 #
+117 39010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 39020 R _script factions_terminal@r_NextNews 1 0 #
+4 39030 #
+0 39040 @
+111 40000 factions_terminal@dlg_ShowNews 0 #
+117 40010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 40020 R _script factions_terminal@r_NextNews 1 0 #
+4 40030 #
+0 40040 @
+112 41000 factions_terminal@dlg_ShowNews 0 #
+117 41010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 41020 R _script factions_terminal@r_NextNews 1 0 #
+4 41030 #
+0 41040 @
+113 42000 factions_terminal@dlg_ShowNews 0 #
+117 42010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 42020 R _script factions_terminal@r_NextNews 1 0 #
+4 42030 #
+0 42040 @
+114 43000 factions_terminal@dlg_ShowNews 0 #
+117 43010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 43020 R _script factions_terminal@r_NextNews 1 0 #
+4 43030 #
+0 43040 @
+115 44000 factions_terminal@dlg_ShowNews 0 #
+117 44010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 44020 R _script factions_terminal@r_NextNews 1 0 #
+4 44030 #
+0 44040 @
+116 45000 factions_terminal@dlg_ShowNews 0 #
+117 45010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 45020 R _script factions_terminal@r_NextNews 1 0 #
+4 45030 #
+0 45040 @
+117 46000 factions_terminal@dlg_ShowNews 0 #
+117 46010 R _script factions_terminal@r_PreviousNews 1 0 #
+117 46020 R _script factions_terminal@r_NextNews 1 0 #
+4 46030 #
+0 46040 @
+118 47000 None 0 #
+4 47010 #
+0 47020 @
+200 48000 factions_terminal@dlg_ShowBase 0 #
+200 48010 R _script factions_terminal@r_SelectBase 1 1 #
+200 48020 R _script factions_terminal@r_SelectBase 1 -1 #
+200 48030 D _script factions_terminal@d_BaseRankAllowed 2 1 0 R _script factions_terminal@r_BaseRankAllow 2 1 1 #
+200 48040 D _script factions_terminal@d_BaseRankAllowed 2 1 1 R _script factions_terminal@r_BaseRankAllow 2 1 0 #
+200 48050 D _script factions_terminal@d_BaseRankAllowed 2 2 0 R _script factions_terminal@r_BaseRankAllow 2 2 1 #
+200 48060 D _script factions_terminal@d_BaseRankAllowed 2 2 1 R _script factions_terminal@r_BaseRankAllow 2 2 0 #
+200 48070 D _script factions_terminal@d_BaseRankAllowed 2 3 0 R _script factions_terminal@r_BaseRankAllow 2 3 1 #
+200 48080 D _script factions_terminal@d_BaseRankAllowed 2 3 1 R _script factions_terminal@r_BaseRankAllow 2 3 0 #
+200 48090 D _script factions_terminal@d_BaseRankAllowed 2 4 0 R _script factions_terminal@r_BaseRankAllow 2 4 1 #
+200 48100 D _script factions_terminal@d_BaseRankAllowed 2 4 1 R _script factions_terminal@r_BaseRankAllow 2 4 0 #
+200 48110 D _script factions_terminal@d_BaseStatusAllowed 2 4 1 R _script factions_terminal@r_BaseStatusAllow 2 4 0 #
+200 48120 D _script factions_terminal@d_BaseStatusAllowed 2 4 0 R _script factions_terminal@r_BaseStatusAllow 2 4 1 #
+200 48130 D _script factions_terminal@d_BaseStatusAllowed 2 1 1 R _script factions_terminal@r_BaseStatusAllow 2 1 0 #
+200 48140 D _script factions_terminal@d_BaseStatusAllowed 2 1 0 R _script factions_terminal@r_BaseStatusAllow 2 1 1 #
+4 48150 @
+300 49000 factions_terminal@dlg_ShowKnownFaction 0 #
+300 49010 R _script factions_terminal@r_SelectFaction 1 1 #
+300 49020 R _script factions_terminal@r_SelectFaction 1 -1 #
+301 49030 #
+300 49040 D _script dialog@d_IsHigherRankThan 1 3 R _script factions_terminal@r_ChangeFactionStatus 1 1 #
+300 49050 D _script dialog@d_IsHigherRankThan 1 3 R _script factions_terminal@r_ChangeFactionStatus 1 2 #
+300 49060 D _script dialog@d_IsHigherRankThan 1 3 R _script factions_terminal@r_ChangeFactionStatus 1 3 #
+4 49070 @
+301 50000 factions_terminal@dlg_AddKnownFaction 0 #
+4 50010 #
+300 50020 R _script factions_terminal@r_SelectFaction 1 0 &
+
+[engl]
+{100}{}{error}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{invited and free}
+{1030}{}{invited but member of other}
+{1040}{}{non-member}
+{2000}{}{Dummy node, this will be fixed.}
+{2010}{}{Okay}
+{3000}{}{*BEEP* Welcome to @lex faction@ members database.}
+{3010}{}{News}
+{3020}{}{Browse the database.}
+{3030}{}{Manage members.}
+{3040}{}{Miscellaneous.}
+{3050}{}{Manage hideouts clearance}
+{3060}{}{Log off the terminal.}
+{4000}{}{Choose the action you want to perform:}
+{4010}{}{Invite new member.}
+{4020}{}{Promote member.}
+{4030}{}{Demote member.}
+{4040}{}{Expel member.}
+{4050}{}{Browse members list.}
+{4060}{}{Main menu}
+{4070}{}{Log off the terminal.}
+{5000}{}{Choose the action you want to perform:}
+{5010}{}{Confirm leadership.}
+{5020}{}{Check radio channel.}
+{5030}{}{Check/modify radio channel.}
+{5040}{}{Claim leadership.}
+{5050}{}{Cancel claim.}
+{5060}{}{Resign.}
+{5070}{}{Main menu}
+{5080}{}{Log off the terminal.}
+{6000}{}{Choose the action you want to perform:}
+{6010}{}{Create new record for non-member.}
+{6020}{}{View/modify the record.}
+{6030}{}{Browse records}
+{6040}{}{Browse factions}
+{6050}{}{Main menu}
+{6060}{}{Log off the terminal}
+{7000}{}{Please, enter the name of the person you wish to invite:}
+{7010}{}{[Back]}
+{7020}{}{Log off the terminal}
+{8000}{}{Operation completed successfully.}
+{8010}{}{[continue]}
+{9000}{}{Enter the name under which the new data will be stored:}
+{9010}{}{Back}
+{9020}{}{Log off the terminal}
+{10000}{}{Enter the name of the person, whose records you want to view/modify:}
+{10010}{}{Back}
+{10020}{}{Log off the terminal.}
+{11000}{}{Name: @lex name@.
+Faction: @lex faction@.
+Rank: @lex rank@.
+Status: @lex status@.
+Reputation: @lex reputation@.}
+{11010}{}{Next record}
+{11020}{}{Previous record.}
+{11030}{}{Change status.}
+{11040}{}{Change the rank.}
+{11050}{}{Change the faction.}
+{11060}{}{Modify reputation.}
+{11070}{}{Back}
+{11080}{}{Main menu.}
+{11090}{}{Log off the terminal.}
+{12000}{}{Please, choose the status:}
+{12010}{}{Friend}
+{12020}{}{Neutral}
+{12030}{}{Enemy}
+{12040}{}{Back}
+{12050}{}{Log off the terminal.}
+{13000}{}{Please, choose the value that best describe the level of importance the given person has in his/her faction:}
+{13010}{}{Let's choose the lowest value.}
+{13020}{}{Let's choose 'Accepted'.}
+{13030}{}{Let's choose 'Trusted'.}
+{13040}{}{Let's choose 'Important'.}
+{13050}{}{Let's choose 'Leader'}
+{13060}{}{[Back]}
+{13070}{}{Log off the terminal.}
+{14000}{}{Please, select the faction currently selected record's owner belong to:}
+{14010}{}{Brotherhood of Steel}
+{14020}{}{The Enclave.}
+{14030}{}{The Unity.}
+{14040}{}{New California Republic.}
+{14050}{}{Vault City.}
+{14060}{}{Other...}
+{14070}{}{[back]}
+{14080}{}{Log off the terminal.}
+{15000}{}{Please, enter the name of the faction:}
+{15010}{}{[Back]}
+{15020}{}{Log off the terminal}
+{16000}{}{Record updated successfully.}
+{16010}{}{[continue]}
+{16020}{}{Log off the terminal.}
+{17000}{}{Exception caught! [Thought that the programmers are catching such exceptions makes you feel comfortable...]}
+{17010}{}{[Retry]}
+{17020}{}{Log off that damned machine before it blows up.}
+{18000}{}{Sorry, these records are read-only.}
+{18010}{}{[continue]}
+{18020}{}{Log off the terminal.}
+{19000}{}{Current radio channel: @lex channel@.}
+{19010}{}{[back]}
+{19020}{}{Log off the terminal.}
+{20000}{}{Current radio channel: @lex channel@. Enter new channel if you want to change it.}
+{20010}{}{[back]}
+{20020}{}{Log off the terminal.}
+{21000}{}{Describe reputation of that person:}
+{21010}{}{Positive.}
+{21020}{}{Neutral.}
+{21030}{}{Negative.}
+{21040}{}{[Back]}
+{21050}{}{Log off the terminal.}
+{22000}{}{Enter the name of member you wish to promote:}
+{22010}{}{[Back]}
+{22020}{}{Log off the terminal.}
+{23000}{}{Enter the name of member you wish to demote:}
+{23010}{}{[Back]}
+{23020}{}{Log off terminal}
+{24000}{}{Enter the name of member you wish to expel:}
+{24010}{}{[back]}
+{24020}{}{Log off the terminal.}
+{25000}{}{Operation completed successfully.}
+{25010}{}{[continue]}
+{25020}{}{Log off the terminal.}
+{26000}{}{Name: @lex name@.
+Rank: @lex rank@.
+Reputation: @lex reputation@.}
+{26010}{}{Next}
+{26020}{}{Previous}
+{26030}{}{Modify reputation.}
+{26040}{}{Promote.}
+{26050}{}{Demote}
+{26060}{}{Expel.}
+{26070}{}{Main menu.}
+{26080}{}{Log off the terminal.}
+{27000}{}{You cannot perform that operation.}
+{27010}{}{[Continue]}
+{27020}{}{Log off the terminal.}
+{28000}{}{Describe reputation of that member:}
+{28010}{}{Positive.}
+{28020}{}{Neutral.}
+{28030}{}{Negative.}
+{28040}{}{Back}
+{28050}{}{Log off the terminal.}
+{29000}{}{Are you sure?}
+{29010}{}{Yes.}
+{29020}{}{No.}
+{30000}{}{Are you really, really sure?}
+{30010}{}{Yes, I am sure.}
+{30020}{}{No, just log off.}
+{31000}{}{Dummy node, this will be fixed.}
+{31010}{}{Okay}
+{32000}{}{You've been invited to @lex faction@ faction. Do you accept the invitation?}
+{32010}{}{Yes.}
+{32020}{}{No.}
+{33000}{}{Dummy node, this will be fixed.}
+{33010}{}{Okay}
+{34000}{}{You've been invited to @lex faction@, but you are already a member of other group.}
+{34010}{}{Ah yes, you're right...}
+{35000}{}{You've claimed leadership. Settle issues with current leader, and come back later to confirm it.}
+{35010}{}{Log off the terminal.}
+{36000}{}{You are now the leader.}
+{36010}{}{Log off the terminal.}
+{37000}{}{Are you sure?}
+{37010}{}{Yes.}
+{37020}{}{No.}
+{37030}{}{Log off the terminal.}
+{38000}{}{We are sorry, you are not authorized to use that terminal.}
+{38010}{}{Damn.}
+{39000}{}{@lex datetime@:
+@lex master@ joined the faction.}
+{39010}{}{Previous}
+{39020}{}{Next}
+{39030}{}{Main menu.}
+{39040}{}{Log off the terminal.}
+{40000}{}{@lex datetime@:
+@lex master@ resigned from being a member.}
+{40010}{}{Previous}
+{40020}{}{Next}
+{40030}{}{Main menu.}
+{40040}{}{Log off the terminal.}
+{41000}{}{@lex datetime@:
+@lex slave@ was expelled by @lex master@.}
+{41010}{}{Previous}
+{41020}{}{Next}
+{41030}{}{Main menu.}
+{41040}{}{Log off the terminal.}
+{42000}{}{@lex datetime@:
+@lex slave@ was promoted by @lex master@.}
+{42010}{}{Previous}
+{42020}{}{Next}
+{42030}{}{Main menu.}
+{42040}{}{Log off the terminal.}
+{43000}{}{@lex datetime@:
+@lex slave@ was demoted by @lex master@.}
+{43010}{}{Previous}
+{43020}{}{Next}
+{43030}{}{Main menu.}
+{43040}{}{Log off the terminal.}
+{44000}{}{@lex datetime@:
+@lex master@ claimed leadership.}
+{44010}{}{Previous}
+{44020}{}{Next}
+{44030}{}{Main menu.}
+{44040}{}{Log off the terminal.}
+{45000}{}{@lex datetime@:
+@lex master@ became new leader.}
+{45010}{}{Previous}
+{45020}{}{Next}
+{45030}{}{Main menu.}
+{45040}{}{Log off the terminal.}
+{46000}{}{@lex datetime@:
+@lex master@ was overthrown.}
+{46010}{}{Previous}
+{46020}{}{Next}
+{46030}{}{Main menu.}
+{46040}{}{Log off the terminal.}
+{47000}{}{There are no news stored.}
+{47010}{}{Main menu.}
+{47020}{}{Log off the terminal}
+{48000}{}{Hideout: @lex name@, coords(@lex x@, @lex y@)
+Recruits: @lex recruits_allowed@
+Accepted members: @lex accepted_allowed@
+Trusted members: @lex trusted_allowed@
+Important members: @lex important_allowed@
+Invited: @lex invited_allowed@
+Friends: @lex friends_allowed@
+}
+{48010}{}{Next}
+{48020}{}{Previous}
+{48030}{}{Allow recruits}
+{48040}{}{Disallow recruits}
+{48050}{}{Allow accepted members}
+{48060}{}{Disallow accepted members}
+{48070}{}{Allow trusted members}
+{48080}{}{Disallow trusted members}
+{48090}{}{Allow important members}
+{48100}{}{Disallow important members}
+{48110}{}{Disallow invited}
+{48120}{}{Allow invited}
+{48130}{}{Disallow friends}
+{48140}{}{Allow friends}
+{48150}{}{Main menu}
+{49000}{}{Faction: @lex name@}
+{49010}{}{Next}
+{49020}{}{Previous}
+{49030}{}{Add...}
+{49040}{}{Mark as friends}
+{49050}{}{Mark as neutral}
+{49060}{}{Mark as enemies}
+{49070}{}{Main menu}
+{50000}{}{Please, enter the name of faction you wish to add:}
+{50010}{}{Main menu}
+{50020}{}{Back}
+{100000000}{}{Unknown}
+{100000001}{}{None}
+{100000002}{}{Brotherhood of Steel}
+{100000003}{}{Enclave}
+{100000004}{}{The Unity}
+{100000005}{}{New California Republic}
+{100000006}{}{Vault City}
+{100000010}{}{Unknown}
+{100000011}{}{Friend}
+{100000012}{}{Neutral}
+{100000013}{}{Enemy}
+{100000014}{}{Invited}
+{100000015}{}{Claimed leadership.}
+{100000020}{}{Unknown}
+{100000021}{}{New member}
+{100000022}{}{Accepted member}
+{100000023}{}{Trusted member}
+{100000024}{}{Important member}
+{100000025}{}{Leader}
+{100000030}{}{You've entered wrong faction name.}
+{100000031}{}{Channel changed.}
+{100000032}{}{Wrong channel.}
+{100000040}{}{ has claimed leadership.}
+{100000041}{}{You have claimed leadership - time left: }
+{100000042}{}{Choose the action you want to perform:}
+

@@ -1,0 +1,1069 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_schedule_action.fos
+//
+
+#ifndef __NPC_SCHEDULE_ACTION__
+#define __NPC_SCHEDULE_ACTION__
+
+import bool LockerClose(Item& item) from "lockers";
+import bool LockerOpen(Item& item) from "lockers";
+
+import Item@ GetEmitterOnHex(Map& map, uint16 hexX, uint16 hexY)  from "special_map_objects";
+import void  SetForceFieldOn(Map@ map, int id) from "special_map_objects";
+import void  SetForceFieldFullIntegrity(Map@ map, int id) from "special_map_objects";
+
+#define ACTION_PREPARE    # (_var, _enum, _buffer) _enum _var = _enum(-1); int _var ## _temp = 0; Buffer@ _buffer = NewBuffer(self.Data); _buffer >> _var ## _temp; _var = _enum(_var ## _temp)
+
+void ActionNotImplemented(string& actionName, string& enumName, int value)
+{
+    string valueName = "" + value;
+
+    if(EnumContains(enumName, value))
+    {
+        array<string@> names;
+        array<int>     values;
+        uint           count = GetEnum(enumName, names, values);
+        for(uint e = 0; e < count; e++)
+        {
+            if(values[e] == value)
+            {
+                valueName = names[e];
+                break;
+            }
+        }
+    }
+
+    _WLog("Not implemented " + actionName + "<" + valueName + ">", DEBUG_WARNING);
+}
+
+/*** MULTI-ACTIONS ***/
+
+bool Action_Container(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    Map@ map = npc.GetMap();
+
+    ACTION_PREPARE(container, NpcActionContainer, buffer);
+
+    if(container == CONTAINER_OPEN)
+    {
+        uint16 pid = 0, hexX = 0, hexY = 0;
+        uint   anim2 = 0;
+
+        buffer >> pid >> hexX >> hexY >> anim2;
+
+        Item@ item = npc.GetMap().GetItem(hexX, hexY, pid);
+        if(valid(item))
+        {
+            _WLog("Container(Open): " + hexX + "," + hexY + "," + pid + "," + anim2, DEBUG_MESSAGE);
+            npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), true, true);
+            LockerOpen(item);
+        }
+        else
+            _WLog("Container(Open): " + hexX + "," + hexY + "," + pid + "," + anim2, DEBUG_MESSAGE);
+    }
+    else if(container == CONTAINER_CLOSE)
+    {
+        uint16 pid = 0, hexX = 0, hexY = 0;
+        uint   anim2 = 0;
+
+        buffer >> pid >> hexX >> hexY >> anim2;
+
+        Item@ container = npc.GetMap().GetItem(hexX, hexY, pid);
+        if(valid(container))
+        {
+            _WLog("Container(Close): " + hexX + "," + hexY + "," + pid + "," + anim2, DEBUG_MESSAGE);
+            npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), true, true);
+            LockerClose(container);
+        }
+        else
+            _WLog("Container(Close): " + hexX + "," + hexY + "," + pid + "," + anim2, DEBUG_MESSAGE);
+    }
+    else if(container == CONTAINER_OPEN_NEAR)
+    {
+        uint anim2 = 0;
+
+        buffer >> anim2;
+
+        uint16 hexX = npc.HexX;
+        uint16 hexY = npc.HexY;
+
+        map.MoveHexByDir(hexX, hexY, npc.Dir, 1);
+
+        Item@ container = map.GetItem(hexX, hexY, 0);
+        if(valid(container) && container.GetType() == ITEM_TYPE_CONTAINER)
+        {
+            _WLog("Container(OpenNear): (" + hexX + "," + hexY + ")," + anim2, DEBUG_MESSAGE);
+            npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), true, true);
+            LockerOpen(container);
+        }
+        else
+            _WLog("Invalid Container(OpenNear): (" + hexX + "," + hexY + ")", DEBUG_MESSAGE);
+    }
+    else if(container == CONTAINER_CLOSE_NEAR)
+    {
+        uint anim2 = 0;
+
+        buffer >> anim2;
+
+        uint16 hexX = npc.HexX;
+        uint16 hexY = npc.HexY;
+
+        map.MoveHexByDir(hexX, hexY, npc.Dir, 1);
+        Item@ container = map.GetItem(hexX, hexY, 0);
+        if(valid(container) && container.GetType() == ITEM_TYPE_CONTAINER)
+        {
+            _WLog("Container(CloseNear): (" + hexX + "," + hexY + ")," + anim2, DEBUG_MESSAGE);
+            npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), true, true);
+            LockerClose(container);
+        }
+        else
+            _WLog("Invalid Container(CloseNear): (" + hexX + "," + hexY + ")", DEBUG_MESSAGE);
+    }
+    else
+        ActionNotImplemented("CONTAINER", "NpcActionContainer", container);
+
+    return(true);
+}
+
+bool Action_EditItem(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    if(npc.LastSpawnedItem == 0)
+        return(true);
+
+    Item@ item = GetItem(npc.LastSpawnedItem);
+    if(!valid(item) || item.IsNotValid)
+        return(true);
+
+    ACTION_PREPARE(edit, NpcActionEditItem, buffer);
+
+    if(edit == EDITITEM_UPDATE)
+    {
+        item.Update();
+    }
+
+    else if(edit == EDITITEM_SETFLAG)
+    {
+        uint flag = 0;
+        buffer >> flag;
+
+        _WLog("EditItem (set flag): " + flag, DEBUG_MESSAGE);
+        SETFLAG(item.Flags, flag);
+    }
+    else if(edit == EDITITEM_UNSETFLAG)
+    {
+        uint flag = 0;
+        buffer >> flag;
+
+        _WLog("EditItem (unset flag): " + flag, DEBUG_MESSAGE);
+        UNSETFLAG(item.Flags, flag);
+    }
+    else if(edit == EDITITEM_FLAGS)
+    {
+        uint flags = 0;
+        buffer >> flags;
+
+        _WLog("EditItem (flags): " + flags, DEBUG_MESSAGE);
+        item.Flags = flags;
+    }
+
+    else if(edit == EDITITEM_SETSCRIPT)
+    {
+        string script = "";
+        buffer >> script;
+
+        item.SetScript(script);
+    }
+    else if(edit == EDITITEM_SETEVENT)
+    {
+        int    event = 0;
+        string function = "";
+        buffer >> function;
+
+        item.SetEvent(event, function);
+    }
+
+    else if(edit == EDITITEM_PICMAP)
+    {
+        string pic = "";
+        buffer >> pic;
+
+        if(pic.length() > 0)
+            item.PicMap = GetStrHash(pic);
+    }
+    else if(edit == EDITITEM_PICINV)
+    {
+        string pic = "";
+        buffer >> pic;
+
+        if(pic.length() > 0)
+            item.PicInv = GetStrHash(pic);
+    }
+
+    else
+        ActionNotImplemented("EDITITEM", "NpcActionEditItem", edit);
+
+    return(true);
+}
+
+bool Action_Home(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(home, NpcActionHome, buffer);
+
+    if(home == HOME_SET)
+    {
+        uint16 hexX = 0, hexY = 0;
+        uint8  dir = 0;
+
+        buffer >> hexX >> hexY >> dir;
+
+        _WLog("Home: " + hexX + "," + hexY + "," + dir, DEBUG_MESSAGE);
+        npc.SetHomePos(hexX, hexY, dir);
+    }
+    else if(home == HOME_SETRANDOM)
+    {
+        array<array<uint16> > positions;
+
+        buffer >> positions;
+
+        if(positions.length() == 0)
+            return(true);
+
+        int tries = 50;
+        while(tries > 0)
+        {
+            uint idx = Random(0, positions.length() - 1);
+            if(positions[idx].length < 3)
+            {
+                tries--;
+                continue;
+            }
+
+            if(npc.GetMap().IsHexPassed(positions[idx][0], positions[idx][1]))
+            {
+                _WLog("RandomHome: " + positions[idx][0] + "," + positions[idx][1] + "," + positions[idx][2], DEBUG_MESSAGE);
+                npc.SetHomePos(positions[idx][0], positions[idx][1], positions[idx][2]);
+                break;
+            }
+
+            tries--;
+        }
+    }
+    else if(home == HOME_SAVE)
+    {
+        uint   mapId = 0;
+        uint16 hexX = 0, hexY = 0;
+        uint8  dir = 0;
+
+        npc.GetHomePos(mapId, hexX, hexY, dir);
+        _WLog("SaveHome: " + hexX + "," + hexY + "," + dir, DEBUG_MESSAGE);
+
+        Buffer@ data = NewBuffer();
+        data << hexX << hexY << dir;
+
+        task.SetData("home", data.AsUint8());
+    }
+    else if(home == HOME_LOAD)
+    {
+        array<uint8> data;
+        if(task.GetData("home", data))
+        {
+            uint16  hexX = 0, hexY = 0;
+            uint8   dir = 0;
+
+            Buffer@ buffer = NewBuffer(data);
+            buffer >> hexX >> hexY >> dir;
+
+            _WLog("HomeLoad: " + hexX + "," + hexY + "," + dir, DEBUG_MESSAGE);
+            npc.SetHomePos(hexX, hexY, dir);
+        }
+        else
+            _WLog("HomeLoad: missing data", DEBUG_MESSAGE);
+    }
+    else if(home == HOME_RESET)
+    {
+        _WLog("HomeReset: " + npc.HexX + "," + npc.HexY + "," + npc.Dir, DEBUG_MESSAGE);
+        npc.SetHomePos(npc.HexX, npc.HexY, npc.Dir);
+    }
+
+    else
+        ActionNotImplemented("HOME", "NpcActionHome", home);
+
+
+    return(true);
+}
+
+bool Action_If(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)   // SPECIAL HANDLING
+{
+    ACTION_PREPARE(requirement, NpcActionIf, buffer);
+
+    if(requirement == IF_NEVER)
+    {
+        _WLog("IF_NEVER", DEBUG_MESSAGE);
+        return(false);
+    }
+    else if(requirement == IF_ALWAYS)
+    {
+        _WLog("IF_ALWAYS", DEBUG_MESSAGE);
+        return(true);
+    }
+
+    else if(requirement == IF_TASKVAR_LOWER ||
+            requirement == IF_TASKVAR_LOWEREQUAL ||
+            requirement == IF_TASKVAR_EQUAL ||
+            requirement == IF_TASKVAR_NOTEQUAL ||
+            requirement == IF_TASKVAR_GREATER ||
+            requirement == IF_TASKVAR_GREATEREQUAL)
+    {
+        string name = "";
+        int    var = 0, value = 0;
+
+        buffer >> name >> value;
+        name = "var:" + strlwr(name);
+
+        array<uint8> data;
+        if(task.GetData(name, data))
+        {
+            Buffer@ dataBuffer = NewBuffer(data);
+            dataBuffer >> var;
+        }
+
+        if(requirement == IF_TASKVAR_LOWER)
+            return(var < value);
+        else if(requirement == IF_TASKVAR_LOWEREQUAL)
+            return(var <= value);
+        else if(requirement == IF_TASKVAR_EQUAL)
+            return(var == value);
+        else if(requirement == IF_TASKVAR_NOTEQUAL)
+            return(var != value);
+        else if(requirement == IF_TASKVAR_GREATER)
+            return(var > value);
+        else if(requirement == IF_TASKVAR_GREATEREQUAL)
+            return(var >= value);
+        else
+            ActionNotImplemented("IF(TASKVAR)", "NpcActionIf", requirement);
+
+        return(false);
+    }
+
+
+    else if(requirement == IF_PERCENT)
+    {
+        uint8 percent = 0;
+        buffer >> percent;
+        percent = CLAMP(percent, 1, 100);
+        return(int(percent) <= Random(1, 100));
+    }
+
+    else if(requirement == IF_NIGHT)
+        return(IsNight());
+    else if(requirement == IF_DAY)
+        return(IsDay());
+    else if(requirement == IF_MORNING)
+        return(IsMorning());
+    else if(requirement == IF_AFTERNOON)
+        return(IsAfternoon());
+    else if(requirement == IF_EVENING)
+        return(IsEvening());
+    else if(requirement == IF_YEAR)
+    {
+        uint8 year = 0;
+        buffer >> year;
+
+        return(year == __Year);
+    }
+    else if(requirement == IF_MONTH)
+    {
+        uint8 month = 0;
+        buffer >> month;
+
+        return(month == __Month);
+    }
+    else if(requirement == IF_DAYOFMONTH)
+    {
+        uint8 day = 0;
+        buffer >> day;
+
+        return(day == __Day);
+    }
+    else if(requirement == IF_HOUR)
+    {
+        uint8 hour = 0;
+        buffer >> hour;
+
+        return(hour == __Hour);
+    }
+    else if(requirement == IF_MINUTE)
+    {
+        uint8 minute = 0;
+        buffer >> minute;
+
+        return(minute == __Minute);
+    }
+
+    else if(requirement == IF_WORLDMAP)
+    {
+        return(npc.GetMapProtoId() == 0);
+    }
+    else if(requirement == IF_NOT_WORLDMAP)
+    {
+        return(npc.GetMapProtoId() != 0);
+    }
+
+    else if(requirement == IF_MAP_PID)
+    {
+        uint16 mapPid = uint16(-1);
+        buffer >> mapPid;
+
+        return(npc.GetMapProtoId() == mapPid);
+    }
+    else if(requirement == IF_MAP_PIDS)
+    {
+        array<uint16> mapPids;
+        buffer >> mapPids;
+
+        for(uint m = 0, mLen = mapPids.length(); m < mLen; m++)
+        {
+            if(npc.GetMapProtoId() == mapPids[m])
+                return(true);
+        }
+
+        return(false);
+    }
+    else if(requirement == IF_NOT_MAP_PID)
+    {
+        uint16 mapPid = uint16(-1);
+        buffer >> mapPid;
+
+        return(npc.GetMapProtoId() != mapPid);
+    }
+    else if(requirement == IF_NOT_MAP_PIDS)
+    {
+        array<uint16> mapPids;
+        buffer >> mapPids;
+
+        bool result = true;
+        for(uint m = 0, mLen = mapPids.length(); m < mLen; m++)
+        {
+            if(npc.GetMapProtoId() == mapPids[m])
+            {
+                result = false;
+                break;
+            }
+        }
+
+        return(result);
+    }
+
+    else if(requirement == IF_CONTAINER_OPENED ||
+            requirement == IF_CONTAINER_CLOSED)
+    {
+        uint16 pid = 0, hexX = 0, hexY = 0;
+        buffer >> pid >> hexX >> hexY;
+        Item@  container = npc.GetMap().GetItem(hexX, hexY, pid);
+        if(valid(container))
+        {
+            if(requirement == IF_CONTAINER_OPENED)
+                return(FLAG(container.LockerCondition, LOCKER_ISOPEN));
+
+            if(requirement == IF_CONTAINER_CLOSED)
+                return(!FLAG(container.LockerCondition, LOCKER_ISOPEN));
+        }
+
+        return(false);
+    }
+
+    else if(requirement == IF_PARAMBASE_LOWER ||
+            requirement == IF_PARAMBASE_LOWEREQUAL ||
+            requirement == IF_PARAMBASE_EQUAL ||
+            requirement == IF_PARAMBASE_NOTEQUAL ||
+            requirement == IF_PARAMBASE_GREATER ||
+            requirement == IF_PARAMBASE_GREATEREQUAL ||
+
+            requirement == IF_PARAM_LOWER ||
+            requirement == IF_PARAM_LOWEREQUAL ||
+            requirement == IF_PARAM_EQUAL ||
+            requirement == IF_PARAM_NOTEQUAL ||
+            requirement == IF_PARAM_GREATER ||
+            requirement == IF_PARAM_GREATEREQUAL)
+    {
+        uint16 param = 0;
+        int    value = 0;
+        buffer >> param >> value;
+        param = CLAMP(param, 0, PARAMS_COUNT - 1);
+
+        int var = 0;
+
+        if(requirement == IF_PARAMBASE_LOWER ||
+           requirement == IF_PARAMBASE_LOWEREQUAL ||
+           requirement == IF_PARAMBASE_EQUAL ||
+           requirement == IF_PARAMBASE_NOTEQUAL ||
+           requirement == IF_PARAMBASE_GREATER ||
+           requirement == IF_PARAMBASE_GREATEREQUAL)
+        {
+            var = npc.ParamBase[param];
+        }
+
+        else if(requirement == IF_PARAM_LOWER ||
+                requirement == IF_PARAM_LOWEREQUAL ||
+                requirement == IF_PARAM_EQUAL ||
+                requirement == IF_PARAM_NOTEQUAL ||
+                requirement == IF_PARAM_GREATER ||
+                requirement == IF_PARAM_GREATEREQUAL)
+        {
+            var = npc.Param[param];
+        }
+
+        else
+        {
+            ActionNotImplemented("IF(PARAMBASE/PARAM)", "NpcActionIf", requirement);
+            return(false);
+        }
+
+        if(requirement == IF_PARAMBASE_LOWER || requirement == IF_PARAM_LOWER)
+            return(var < value);
+        else if(requirement == IF_PARAMBASE_LOWEREQUAL || requirement == IF_PARAM_LOWEREQUAL)
+            return(var <= value);
+        else if(requirement == IF_PARAMBASE_EQUAL || requirement == IF_PARAM_EQUAL)
+            return(var == value);
+        else if(requirement == IF_PARAMBASE_NOTEQUAL || requirement == IF_PARAM_NOTEQUAL)
+            return(var != value);
+        else if(requirement == IF_PARAMBASE_GREATER || requirement == IF_PARAM_GREATER)
+            return(var > value);
+        else if(requirement == IF_PARAMBASE_GREATEREQUAL || requirement == IF_PARAM_GREATEREQUAL)
+            return(var >= value);
+        else
+            ActionNotImplemented("IF(PARAMBASE/PARAM)", "NpcActionIf", requirement);
+
+        return(false);
+    }
+
+    else
+        ActionNotImplemented("IF", "NpcActionIf", requirement);
+
+    return(false);
+}
+
+bool Action_EndIf(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)   // SPECIAL HANDLING
+{
+    _WLog("EndIf", DEBUG_MESSAGE);
+
+    return(true);
+}
+
+bool Action_Inventory(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(inv, NpcActionInventory, buffer);
+
+    if(inv == INV_ADDITEM)
+    {
+        uint16 pid = 0;
+        uint   count = 0;
+        buffer >> pid >> count;
+        if(count > 0)
+        {
+            Item@ item = npc.AddItem(pid, count);
+            if(valid(item))
+            {
+                _WLog("AddItem OK: " + pid + "," + count, DEBUG_MESSAGE);
+
+                // yeah
+                item.Val9 = npc.Id;
+                npc.LastSpawnedItem = item.Id;
+            }
+            else
+                _WLog("AddItem FAIL: " + pid + "," + count, DEBUG_MESSAGE);
+        }
+    }
+    else if(inv == INV_SUBITEM)
+    {
+        uint16 pid = 0;
+        uint   count = 0;
+        buffer >> pid >> count;
+        if(count > 0)
+        {
+            Item@ item = npc.GetItem(pid, -1);
+            if(valid(item))
+            {
+                if(count == uint(-1))
+                {
+                    _WLog("SubItem OK: " + pid + ",all", DEBUG_MESSAGE);
+                    DeleteItem(item);
+                }
+                else
+                {
+                    _WLog("SubItem OK: " + pid + "," + count, DEBUG_MESSAGE);
+                    _SubItem(item, count);
+                }
+            }
+            else
+                _WLog("SubItem FAIL: " + pid + "," + (count == uint(-1) ? "all" : "" + count), DEBUG_MESSAGE);
+        }
+    }
+
+    else if(inv == INV_FAVITEM)
+    {
+        uint8  slot = 0;
+        uint16 pid = 0;
+
+        buffer >> slot >> pid;
+
+        _WLog("FavouriteItem: " + slot + "," + pid, DEBUG_MESSAGE);
+        npc.SetFavoriteItem(slot, pid);
+    }
+
+    else
+        ActionNotImplemented("INV", "NpcActionInventory", inv);
+
+    return(true);
+}
+
+bool Action_Map(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(map, NpcActionMap, buffer);
+
+    Map@ npcMap = npc.GetMap();
+
+    if(map == MAP_CREATEITEM)
+    {
+        uint16 pid = 0, hexX = 0, hexY = 0;
+        uint   count = 0;
+
+        buffer >> pid >> hexX >> hexY >> count;
+
+        Item@ item = npcMap.AddItem(hexX, hexY, pid, count);
+        if(valid(item))
+        {
+            // yeah
+            item.Val9 = npc.Id;
+            npc.LastSpawnedItem = item.Id;
+        }
+    }
+    else if(map == MAP_DELETEITEM)
+    {
+        uint16 pid = 0, hexX = 0, hexY = 0;
+
+        buffer >> pid >> hexX >> hexY;
+
+        array<Item@> items;
+        array<Item@> delete;
+        uint         count = npcMap.GetItems(hexX,  hexY, items);
+        for(uint i = 0; i < count; i++)
+        {
+            if(items[i].Proto.ProtoId == pid)
+                delete.insertLast(items[i]);
+        }
+        if(delete.length() > 0)
+        {
+            _WLog("DeleteItem: removing " + delete.length() + "/" + items.length(), DEBUG_MESSAGE);
+            DeleteItems(delete);
+        }
+    }
+
+    else
+        ActionNotImplemented("MAP", "NpcActionMap", map);
+
+    return(true);
+}
+
+bool Action_Say(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(say, NpcActionSay, buffer);
+
+    if(say == SAY_SINGLE)
+    {
+        uint8   sayType = 0;
+        string  text = "";
+
+        Buffer@ buffer = NewBuffer(self.Data);
+        buffer >> sayType >> text;
+
+        if(sayType == 0 || text.length() == 0)
+            return(true);
+
+        // #ifdef __DEBUG__
+        //	text ="["+self.ParentTask().ParentSchedule().PID+","+self.ParentTask().ParentSchedule().ID+"] "+text;
+        // #endif
+        npc.Say(sayType, text);
+    }
+    else if(say == SAY_RANDOM)
+    {
+        uint8         sayType = 0;
+        array<string> text;
+
+        buffer >> sayType >> text;
+
+        if(sayType == 0 || text.length() == 0)
+            return(true);
+
+        // #ifdef __DEBUG__
+        //	text ="["+self.ParentTask().ParentSchedule().PID+","+self.ParentTask().ParentSchedule().ID+"] "+text;
+        // #endif
+        npc.Say(sayType, text[Random(0, text.length() - 1)]);
+    }
+    else if(say == SAY_TASKVAR)
+    {
+        #ifdef __DEBUG__
+        string varName = "";
+
+        buffer >> varName;
+
+        array<uint8> data;
+        if(task.GetData("var:" + strlwr(varName), data))
+        {
+            int     var = 0;
+            Buffer@ varBuffer = NewBuffer(data);
+            varBuffer >> var;
+
+            npc.Say(SAY_SOCIAL, "TaskVar \"" + strlwr(varName) + "\" = " + var);
+        }
+        else
+            npc.Say(SAY_SOCIAL, "TaskVar \"" + strlwr(varName) + "\" = 0 (not set)");
+        #endif
+    }
+
+    else
+        ActionNotImplemented("SAY", "NpcActionSay", say);
+
+    return(true);
+}
+
+bool Action_TaskVar(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(taskvar, NpcActionTaskVar, buffer);
+
+    if(taskvar == TASKVAR_DELETE)
+    {
+        string name = "";
+        buffer >> name;
+        task.ClearData("var:" + strlwr(name));
+    }
+    else if(taskvar == TASKVAR_SET ||
+            taskvar == TASKVAR_ADD ||
+            taskvar == TASKVAR_SUB)
+    {
+        string name = "";
+        int    value = 0;
+
+        buffer >> name >> value;
+        name = "var:" + strlwr(name);
+
+        int          var = 0;
+        array<uint8> data;
+        if(task.GetData(name, data))
+        {
+            Buffer@ oldData = NewBuffer(data);
+            oldData >> var;
+        }
+
+        if(taskvar == TASKVAR_SET)
+            var = value;
+        else if(taskvar == TASKVAR_ADD)
+            var += value;
+        else if(taskvar == TASKVAR_SUB)
+            var -= value;
+        else
+        {
+            ActionNotImplemented("TASKVAR(SET/ADD/SUB)", "NpcActionTaskVar", taskvar);
+            return(true);
+        }
+
+        Buffer@ newData = NewBuffer();
+        newData << var;
+        task.SetData(name, newData.AsUint8());
+    }
+    else if(taskvar == TASKVAR_SETRANDOM ||
+            taskvar == TASKVAR_ADDRANDOM ||
+            taskvar == TASKVAR_SUBRANDOM)
+    {
+        string name = "";
+        int    value_from = 0, value_to = 0;
+
+        buffer >> name >> value_from >> value_to;
+        name = "var:" + strlwr(name);
+
+        int          var = 0;
+        array<uint8> data;
+        if(task.GetData(name, data))
+        {
+            Buffer@ oldData = NewBuffer(data);
+            oldData >> var;
+        }
+
+        if(taskvar == TASKVAR_SETRANDOM)
+            var = Random(value_from, value_to);
+        else if(taskvar == TASKVAR_ADDRANDOM)
+            var += Random(value_from, value_to);
+        else if(taskvar == TASKVAR_SUBRANDOM)
+            var -= Random(value_from, value_to);
+        else
+            ActionNotImplemented("TASKVAR(*RANDOM)", "NpcActionTaskVar", taskvar);
+
+        Buffer@ newData = NewBuffer();
+        newData << var;
+
+        task.SetData(name, newData.AsUint8());
+    }
+
+    else if(taskvar == TASKVAR_COPYTO || taskvar == TASKVAR_COPYFROM)
+    {
+        string name = "";
+        uint8  varType = 0;
+        uint16 varId = 0;
+
+        buffer >> name >> varType >> varId;
+        name = "var:" + strlwr(name);
+
+        int          var = 0;
+        array<uint8> data;
+        if(task.GetData(name, data))
+        {
+            Buffer@ oldData = NewBuffer(data);
+            oldData >> var;
+        }
+
+        GameVar@ gameVar = null;
+        if(varType == VAR_GLOBAL)
+        {
+            @gameVar = GetGlobalVar(varId);
+        }
+        else if(varType == VAR_LOCAL_LOCATION)
+        {
+            @gameVar = GetLocalVar(varId, npc.GetMap().GetLocation().Id);
+        }
+        else if(varType == VAR_LOCAL_MAP)
+        {
+            @gameVar = GetLocalVar(varId, npc.GetMap().Id);
+        }
+        else if(varType == VAR_LOCAL)
+        {
+            @gameVar = GetLocalVar(varId, npc.Id);
+        }
+        else
+        {
+            _WLog("Invalid var_type<" + varType + ">", DEBUG_ERROR);
+            return(true);
+        }
+
+        if(valid(gameVar))
+        {
+            if(taskvar == TASKVAR_COPYTO)
+                gameVar = var;
+            else if(taskvar == TASKVAR_COPYFROM)
+            {
+                var = gameVar.GetValue();
+                Buffer@ varBuffer = NewBuffer();
+                varBuffer << var;
+                task.SetData(name, varBuffer.AsUint8());
+            }
+            else
+                ActionNotImplemented("TASKVAR(COPY)", "NpcActionTaskVar", taskvar);
+        }
+        else
+            _WLog("Invalid gamevar type<" + varType + "> id<" + varId + ">", DEBUG_ERROR);
+
+    }
+
+    else
+        ActionNotImplemented("TASKVAR", "NpcActionTaskVar", taskvar);
+
+    return(true);
+}
+
+bool Action_Wait(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    ACTION_PREPARE(wait, NpcActionWait, buffer);
+
+    if(wait == WAIT_TIME)
+    {
+        uint time = 0;
+
+        buffer >> time;
+
+        task.WaitTime = time;
+
+        return(true);
+    }
+    else if(wait == WAIT_RANDOM)
+    {
+        uint min = 0, max = 0;
+
+        buffer >> min >> max;
+
+        uint time = Random(min, max);
+
+        task.WaitTime = time;
+
+        return(true);
+    }
+    else if(wait == WAIT_HOME)
+    {
+        uint   mapId = 0;
+        uint16 hexX = 0, hexY = 0;
+        uint8  dir = 0;
+
+        npc.GetHomePos(mapId, hexX, hexY, dir);
+        if(npc.GetMapId() == mapId && npc.HexX == hexX && npc.HexY == hexY && npc.Dir == dir)
+        {
+            _WLog("WAIT_HOME: OK", DEBUG_MESSAGE);
+            return(true);
+        }
+
+        return(false);
+    }
+    else if(wait == WAIT_FAVITEM)
+    {
+        uint8 slot = 0;
+
+        buffer >> slot;
+
+        Item@ item = npc.GetItem(0, slot);
+        if(valid(item) && item.Proto.ProtoId == npc.GetFavoriteItem(slot))
+        {
+            _WLog("WaitFavoriteItem: OK", DEBUG_MESSAGE);
+            return(true);
+        }
+
+        return(false);
+    }
+
+    else
+        ActionNotImplemented("WAIT", "NpcActionWait", wait);
+
+    return(true);
+}
+
+/*** SINGLE-ACTIONS ***/
+
+bool Action_Verbose(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    string  text = "";
+    Buffer@ buffer = NewBuffer(self.Data);
+    buffer >> text;
+
+    VerboseAction(npc, text);
+
+    return(true);
+}
+
+bool Action_DemandAnswer(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    Map@    map = npc.GetMap();
+
+    uint8   sayType = 0;
+    string  text = "";
+
+    Buffer@ buffer = NewBuffer(self.Data);
+    buffer >> sayType >> text;
+
+    if(sayType == 0 || text.length() == 0)
+        return(true);
+
+    uint16 hexX = npc.HexX;
+    uint16 hexY = npc.HexY;
+
+    uint   moved = 0;
+    while(moved++ < 10)
+    {
+        map.MoveHexByDir(hexX, hexY, npc.Dir, 1);
+        Critter@ cr = map.GetCritter(hexX, hexY);
+        if(valid(cr))
+        {
+            if(cr.IsLife() && IsHumanoid(cr) && !cr.IsKnockout())
+            {
+                cr.Say(sayType, text);
+                return(true);
+            }
+        }
+    }
+
+    return(true);
+}
+
+bool Action_Animate(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    uint    anim2 = 0;
+    bool    clearSequence = false, delayPlay = true;
+
+    Buffer@ buffer = NewBuffer(self.Data);
+    buffer >> anim2 >> clearSequence >> delayPlay;
+
+    npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), clearSequence, delayPlay);
+
+    return(true);
+}
+
+// actions
+
+bool Action_Sleep(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    if(IsNight())
+    {
+        npc.ToKnockout(ANIM2_KNOCK_FRONT, ANIM2_IDLE_PRONE_FRONT, ANIM2_STANDUP_FRONT, 25, npc.HexX, npc.HexY);
+
+        return(false);
+    }
+
+    return(true);
+} //
+
+bool Action_WakeUp(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    if((npc.IsKnockout() || npc.Param[ST_CURRENT_AP] < 0))
+    {
+        if(!npc.IsDead())
+            npc.ToLife();
+
+        npc.ParamBase[ST_CURRENT_AP] = npc.Param[ST_ACTION_POINTS];
+    }
+
+    return(true);
+}
+
+bool Action_FixForcefield(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    Map@    map = npc.GetMap();
+
+    uint16  hexX = 0, hexY = 0;
+    uint    anim2 = 0;
+
+    Buffer@ buffer = NewBuffer(self.Data);
+    buffer >> hexX >> hexY >> anim2;
+
+    Item@ forcefield = GetEmitterOnHex(map, hexX, hexY);
+    if(valid(forcefield))
+    {
+        _WLog("Fixing forcefield: " + hexX + "," + hexY + "," + anim2, DEBUG_MESSAGE);
+        npc.Animate(0, anim2, npc.GetItem(0, SLOT_HAND1), true, true);
+        SetForceFieldOn(map, forcefield.Val0);
+        SetForceFieldFullIntegrity(map, forcefield.Val0);
+    }
+    else
+        _WLog("Invalid forcefield: " + hexX + "," + hexY + "," + anim2, DEBUG_MESSAGE);
+
+    return(true);
+}
+
+bool Action_Custom(INpcTaskAction& self, INpcTaskInstance& task, Critter& npc)
+{
+    string  functionName = "";
+
+    Buffer@ buffer = NewBuffer(self.Data);
+    buffer >> functionName;
+
+    NpcTaskCustomAction custom;
+
+    @custom.self = self;
+    @custom.task = task;
+    @custom.npc  = npc;
+
+    int result = CallGenericFunction(functionName, custom);
+
+    if(result <= 0)
+        return(false);
+    else
+        return(true);
+}
+#endif // __NPC_SCHEDULE_ACTION__ //

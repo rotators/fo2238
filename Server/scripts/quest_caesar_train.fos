@@ -1,0 +1,202 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_caesar_train.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_roles_h.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+#include "npc_planes_h.fos"
+
+#define FATHER_KILLED         (4)   // Very simple, father is dead.
+#define FATHER_INFO           (5)   // Player got the info OBSOLETE NOW
+#define FATHER_KILLED_INFO    (6)   // Father is dead + player got the information from him OBSOLETE NOW
+// #define ALL_FLEE			(7) // Father could flee
+#define CHILD_ATTACK          (8)   // The child attacks the player and will be killed, most probably.
+#define CHILD_KILLED          (9)   // The child is dead, father will not attack, but react on this.
+
+#define DIALOG_ID             (10263)
+#define STR_ATTACK_TAUNT      (1)
+
+#define SHOWCRITTER1_DIST     (2)
+
+void r_SpawnCamp(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_Hideout, 1643, 1431, crits);
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_la_train_camp_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    map.SetData(MAP_DATA_TRAIN_CAMP_OWNER, player.Id);
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_la_train_caesar, 16);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteCamp(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_la_train_camp_locid, player.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_TRAIN_CAMP_OWNER));
+}
+
+// The father, main person
+void _Father(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_FatherDead");
+}
+
+void _FatherDead(Critter& cr, Critter@ killer)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_la_train_caesar, cr.GetMap().GetData(MAP_DATA_TRAIN_CAMP_OWNER));
+    var = FATHER_KILLED;
+    Critter@ owner = GetOwner(cr.GetMap());
+    if(valid(owner))
+        owner.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+}
+
+// The child, second person
+void _Child(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_ChildDead");
+}
+
+void _ChildDead(Critter& cr, Critter@ killer)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_la_train_caesar, cr.GetMap().GetData(MAP_DATA_TRAIN_CAMP_OWNER));
+    if(var.GetValue() != FATHER_KILLED && var.GetValue() != FATHER_KILLED_INFO)
+    {
+        var = CHILD_KILLED;
+        Critter@ owner = GetOwner(cr.GetMap());
+        if(valid(owner))
+            owner.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+    }
+}
+
+// The gangers in the ambush location.
+// The leader of the gangers (ROLE_AMBUSH_LEADER) should start a dialogue with
+// the player on map load. This would be the best.
+void _Ambusher(Critter& ganger, bool firstTime)
+{
+    ganger.ShowCritterDist1 = SHOWCRITTER1_DIST;
+    ganger.SetEvent(CRITTER_EVENT_MESSAGE, "_AmbusherOnMessage");
+    ganger.SetEvent(CRITTER_EVENT_ATTACKED, "_AmbusherAttacked");
+}
+
+// This is important stuff for the later part of the quest.
+// Player tries to run away from ambush, has to cross the trigger.
+// But obacht, trigger is deactivated, if "LVAR_q_la_train_caesar_ambush == 3"
+void t_Ambush(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+    GameVar@ var = GetLocalVar(LVAR_q_la_train_caesar_ambush, critter.Id);
+    if(var == 3)
+        return;
+    critter.SendMessage(MSG_AMBUSH_ATTACK, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void _AmbusherOnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    if(num == MSG_AMBUSH_ATTACK)
+    {
+        AttackCritter(npc, player);
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_AMBUSH_LEADER)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_ATTACK_TAUNT));
+    }
+    else if(num == MSG_IM_ATTACKED)
+        AttackCritter(npc, GetCritter(val));
+}
+
+bool _AmbusherAttacked(Critter& cr, Critter& attacker)
+{
+    if(!_IsTrueNpc(attacker))
+        cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void _AmbusherOnShowCritter1(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    if(_IsTrueNpc(target))
+        return;
+    if(GetUnicumVar(UVAR_proximity_check, cr.Id, target.Id).GetValue() == 1)
+    {
+        AddAttackPlane(cr, 0, target);
+        return;
+    }
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    if(cr.Timeout[TO_BATTLE] == 0)
+    {
+        if(IsHumanoid(cr) && cr.Timeout[TO_BATTLE] == 0)
+            cr.Say(SAY_NORM_ON_HEAD, "If you come any closer, I will ripp you into shreds, punk!");
+
+        cr.SetDir(GetDirection(cr.HexX, cr.HexY, target.HexX, target.HexY));
+    }
+
+    // can occur even without a warning:
+    int[] data = { target.Id, cr.Id };
+    CreateTimeEvent(AFTER(REAL_SECOND(3)), "e_CheckDistance", data, false);
+}
+
+void _AmbusherOnHideCritter1(Critter& cr, Critter& target)
+{
+    if(cr.Cond == COND_DEAD)
+        return;
+
+    if(_IsTrueNpc(target))
+        return;
+    if(target.IsKnockout() || target.IsDead())
+        return;
+    if(IsHumanoid(cr) && cr.Timeout[TO_BATTLE] == 0)
+        cr.Say(SAY_NORM_ON_HEAD, "I will ripp you into shreds, if you come any closer!");
+
+    GameVar@ var = GetUnicumVar(UVAR_proximity_check, cr.Id, target.Id);
+    var = 1;
+
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_TRAIN_CAMP_OWNER)));
+}
+
+uint e_CheckDistance(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+        return 0;
+
+    if(GetCrittersDistantion(player, guard) > SHOWCRITTER1_DIST)
+        return 0;
+
+    if(player.Stat[ST_CURRENT_HP] > 0)
+        AddAttackPlane(guard, 0, player);
+
+    _TIMEEND;
+
+    return 0;
+}

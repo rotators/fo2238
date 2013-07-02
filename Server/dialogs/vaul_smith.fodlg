@@ -1,0 +1,33 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p acquaintance = 0 D _var p q_vc_collectrent = 1 #
+50 1020 @
+50 2000 None 0 @
+2 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+65507 4010 R _var p acquaintance = 1 R _script dialog@r_AddMoney 1 200 #
+0 4020 R _var p acquaintance = 1 R _script dialog@r_AddMoney 1 200 &
+
+[engl]
+{100}{}{Smith}
+{200}{}{You see Smith.}
+{210}{}{You see a ragged-looking farmer.}
+{1000}{}{Predialogue installations}
+{1010}{}{Collect rent quest.}
+{1020}{}{default}
+{2000}{}{My family and I work a farm here in the Courtyard. We get by. Don’t know for how long, though.@@Me and the family ain’t the kind of people they let in the city.@@They keep us safe from the outside, but it costs me and the wife quite a bit.}
+{3000}{}{Yes? How can I help you?}
+{3010}{}{I'm here to collect your rent.}
+{3020}{}{Nevermind. I gotta go.}
+{4000}{}{I have to work so hard for this, but at least I know I'm safe. Here it is.}
+{4010}{}{Thank you. Now you die. [Attack]}
+{4020}{}{Thank you. I'll get going now.}
+

@@ -1,0 +1,51 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// raiders_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "npc_roles_h.fos"
+#include "npc_common_h.fos"
+#include "messages_h.fos"
+#include "guard_h.fos"
+
+#define DIALOG_ID               (2700)
+
+#define STR_TRESPASSER          (0)
+#define STR_AREA_NOT_ALLOWED    (1)
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+
+    GuardInit(guard);
+}
+
+void _OnMessage(Critter& npc, Critter& critter, int num, int val)
+{
+    GuardOnMessage(npc, critter, num, val);
+
+    if(num == MSG_RAIDER_AREA_NOT_ALLOWED)
+    {
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_RAIDERS_CAVEGUARD || npc.Stat[ST_NPC_ROLE] == ROLE_RAIDERS_CAGEGUARD)          // 2700 and 2722 are dialog#, this is why we use it, it is nice unique number
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_AREA_NOT_ALLOWED));
+        AttackCritter(npc, critter);
+    }
+
+    if(num == MSG_RAIDER_TRESPASSER)
+    {
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_RAIDERS_CAVEGUARD)                     // Cave Entrance Guard warns you
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_TRESPASSER));
+    }
+}
+
+void _OnShowCritter(Critter& guard, Critter& critter)
+{
+    GuardOnShowCritter(guard, critter);
+}

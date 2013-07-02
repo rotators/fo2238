@@ -1,0 +1,43 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// patrolnodes_h.fos
+//
+
+// This is needed because AS can't store objects defined in AS in an object that inherits from an interface.
+#include "_macros.fos"
+
+shared interface INode
+{
+    uint GetX();
+    uint GetY();
+    uint GetDir();
+    uint GetWait();
+};
+
+class CNode : INode
+{
+    uint x;
+    uint y;
+    uint dir;
+    uint map;
+    uint wait;  // How long the critter should wait at node
+    uint waitmin;
+    uint waitmax;
+    bool minmax;
+    uint GetX()   { return x; }
+    uint GetY()   { return y; }
+    uint GetDir() { return dir; }
+    uint GetWait()
+    {
+        if(minmax)
+        {
+            uint time = Random(waitmin, waitmax);
+            DLog("Random time = " + time);
+            return time;
+        }
+
+        return wait;
+    }
+};

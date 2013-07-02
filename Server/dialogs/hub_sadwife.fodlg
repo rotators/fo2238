@@ -1,0 +1,98 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _var p name_mem_npc_player = 1 D _var p q_hub_sadwife < 3 #
+2 1020 D _var p name_mem_npc_player = 0 D _param p ST_INTELLECT > 3 #
+15 1030 @
+2 2000 None 0 #
+4 2010 #
+3 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 #
+14 6020 @
+7 7000 None 0 #
+8 7010 #
+14 7020 @
+8 8000 None 0 #
+0 8010 R _var p name_mem_npc_player = 1 R _var p q_hub_sadwife = 1 @
+9 9000 None 0 #
+0 9010 #
+10 9020 D _var p q_hub_sadwife = 2 @
+10 10000 None 0 #
+16 10010 #
+11 10020 @
+11 11000 None 0 #
+12 11010 R _param p ST_EXPERIENCE + 250 R _var p q_hub_sadwife = 3 R _param p REPUTATION_HUB + 10 #
+12 11020 R _param p REPUTATION_HUB - 10 R _param p ST_EXPERIENCE + 300 R _var p q_hub_sadwife = 4 @
+12 12000 None 0 #
+14 12010 R _var p q_hub_sadwife = 3 R _param p REPUTATION_HUB + 10 #
+13 12020 R _param p REPUTATION_HUB - 10 R _var p q_hub_sadwife = 4 @
+13 13000 None 0 @
+14 14000 None 0 @
+15 15000 None 0 @
+16 16000 None 0 #
+11 16010 #
+14 16020 &
+
+[engl]
+{100}{}{Sad Wife}
+{200}{}{You see a sad wife.}
+{210}{}{She doesn't look very happy.}
+{240}{}{Now she's dead. Huh.}
+{1000}{}{Predialogue installations}
+{1010}{}{Have you found him yet?}
+{1020}{}{Answer text}
+{1030}{}{floating}
+{2000}{}{[You see an obviously sad woman. She doesn't react to you, even as you move closer to her.]}
+{2010}{}{Hey, what's going on?}
+{2020}{}{Who are you?}
+{2030}{}{[You slowly move away from her.]}
+{3000}{}{Please go away. I don't want to talk with anybody.}
+{3010}{}{Please, tell me whats wrong. I am good at listening to people.}
+{3020}{}{Okay.}
+{4000}{}{Joseph? .... Oh, I am sorry. I just thought... No, nothing. Please go away.}
+{4010}{}{Who is Joseph?}
+{4020}{}{[You go away.]}
+{5000}{}{Joseph... oh Joseph. He is my husband. He left some time ago and hasn't come back yet.}
+{5010}{}{Where was he going?}
+{6000}{}{He wanted to try his luck scavenging in the Boneyard ruins. We will be rich, he said. We've heard the rumors.}
+{6010}{}{What rumors?}
+{6020}{}{Nah, I guess I'll just leave you alone. Bye.}
+{7000}{}{Stuff... rumors about becoming rich, finding valuable objects and such. But my Joseph hasn't come back yet. [She sobs.]}
+{7010}{}{I'll try to keep my eyes open for him.}
+{7020}{}{Ok, I thought it would be more interesting. Bye.}
+{8000}{}{Really? Would you do this? Thank you.}
+{8010}{}{Sure. I am coming around pretty much anyway. Bye.}
+{9000}{}{You again! [She sobs.] Have you found my Joseph?}
+{9010}{}{Not yet, sorry. I will keep looking.}
+{9020}{}{I've got news about your husband.}
+{10000}{}{Realy? What is it? Tell me! [She looks at you with big eyes.]}
+{10010}{}{Your husband is cheating on you. He has a new wife and even children. Looks like you have just been his wife on the side.}
+{10020}{}{He was caught in the Boneyard for stealing. They've hanged him on a lamp post and shot him.}
+{11000}{}{What? Oh... oh... oh god, no. Joseph, my Joseph... Nooooooooo. [She breaks down to the ground, crying.]}
+{11010}{}{I am sorry about this. I couldn't do anything, it was already too late.}
+{11020}{}{You shouldn't have seen him. Hanging at the lamp post and the bullet holes 'n shit. Man, it was great.}
+{12000}{}{[She can't stop crying and sobs, while crawling on the ground.]}
+{12010}{}{I should go now and leave you alone in your mourning.}
+{12020}{}{I tell you. SOO BIG holes in his chest. You could put your whole hands in it. Haha.}
+{13000}{}{You god damn bastard.}
+{14000}{}{*sobs*}
+{15000}{}{*sobs* Leave me alone.@@. . .@@Leave me alone. *sobs*}
+{16000}{}{My Joseph? I can't believe this. Go, leave me alone! *sobs*}
+{16010}{}{In fact, this was a lie. Your Joseph has been shot down in the Boneyard and hanged up on a lamp post.}
+{16020}{}{Ok, bye.}
+

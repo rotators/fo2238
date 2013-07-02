@@ -1,0 +1,68 @@
+[comment]
+Aaoe eiiiaioa?ee / Your comments.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+10 1010 D _script factions_player@d_OnSite 0  D _script factions_player@d_CanTalkWithBuilder 0  #
+2 1020 D _script follower@d_IsOwner 1 1 #
+3 1030 @
+2 2000 None 0 #
+4 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_CanStay 0  R _script follower@r_FollowMode 1 2 #
+6 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+5 2030 #
+4 2040 @
+3 3000 None 0 @
+4 4000 None 0 @
+6 5000 None 0 @
+5 6000 None 0 #
+4 6010 R _script factions_player@r_CreateSite 0  #
+4 6020 @
+7 7000 None 0 @
+8 8000 None 0 #
+0 8010 @
+10 9000 None 0 #
+12 9010 D _script factions_player@d_ConstructionReady 0  #
+11 9020 #
+0 9030 @
+11 10000 None 0 @
+12 11000 None 0 #
+13 11010 @
+13 12000 factions_player@dlg_FinishConstruction 0 #
+0 12010 &
+
+[engl]
+{100}{}{Construction Worker}
+{200}{}{You see a construction worker.}
+{210}{}{He wears worn out workwear and a yellow protective helmet.}
+{1000}{}{Predialogue installations}
+{1010}{}{We're on site, and you are the leader of the faction}
+{1020}{}{I belong to you}
+{1030}{}{you don't belong to me}
+{2000}{}{So, where are we going to build that fountain?@@So, where are we setting up the construction site?}
+{2010}{}{Wait here, I am back in a minute.}
+{2020}{}{Let's continue the travel.@@Let's hit the road.}
+{2030}{}{It's right here.}
+{2040}{}{It's not here. Follow me. *DEV Note: If NPC is waiting, make him follow again.*}
+{3000}{}{Got no time for chatting.}
+{4000}{}{Go on, go on...@@Is this going to take longer?@@Hope this will not take me a week again, like the last time...@@I'll be damned!}
+{5000}{}{Alright, let's get back to work.@@We better start working soon.}
+{6000}{}{You sure, that's the place? Ain't looking like what I would chose.}
+{6010}{}{Yes, this is the place. [Set up construction site]}
+{6020}{}{No, you are right. Follow me.}
+{7000}{}{Stack overflow! Run!!!}
+{8000}{}{I'm sorry, we can't prepare construction site here. Let's find more suitable place.}
+{8010}{}{If you say so...}
+{9000}{}{What do you want? Can't you see I'm working here?}
+{9010}{}{It's look like the construction is ready, don't you think?}
+{9020}{}{May I ask, when is it gonna be finished?}
+{9030}{}{Nevermind.}
+{10000}{}{Check the info on the billboard over there. I can't tell exact date.@@Soon.}
+{11000}{}{Yes, we're adding final touches at the moment, we will be leaving soon.}
+{11010}{}{Awesome! Can't wait to clean up this mess...}
+{12000}{}{Just a moment, need to do some paperwork, what's the name of that building?}
+{12010}{}{Nevermind.@@Let me think for a while...}
+

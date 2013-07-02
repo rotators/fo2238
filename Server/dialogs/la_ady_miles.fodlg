@@ -1,0 +1,82 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _var p q_la_waterpump = 0 #
+6 2020 D _var p q_la_waterpump > 0 D _var p q_la_waterpump < 4 #
+0 2030 @
+3 3000 None 0 #
+4 3010 D _param p SK_REPAIR < 50 #
+5 3020 D _param p SK_REPAIR > 49 R _var p q_la_waterpump = 1 #
+0 3030 @
+4 4000 None 0 #
+0 4010 #
+5 4020 R _var p q_la_waterpump = 1 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 D _var p q_la_waterpump = 2 R _var p q_la_waterpump = 5 R _item p PID_RAD_X + 1 R _item p PID_RADAWAY + 2 R _param p REPUTATION_LA + 100 R _param p ST_EXPERIENCE + 300 #
+11 6020 D _var p q_la_waterpump = 3 R _var p q_la_waterpump = 4 #
+0 6030 D _var p q_la_waterpump < 3 @
+7 7000 None 0 #
+8 7010 D _param p SK_BARTER > 99 #
+9 7020 D _param p SK_BARTER < 100 #
+0 7030 @
+8 8000 None 0 #
+0 8010 R _param p ST_EXPERIENCE + 50 R _param p REPUTATION_LA - 100 R _script dialog@r_AddMoney 1 50 #
+10 8020 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 &
+
+[engl]
+{100}{}{Montag}
+{200}{}{You see Montag, the chemist of Adytum}
+{210}{}{You see a thin man in a white smock. It's Montag, the chemist of Adytum}
+{1000}{}{Predialogue installations}
+{1010}{}{normal}
+{2000}{}{What can I do for you?@@Hmm?@@You needed something?}
+{2010}{}{That water pump behind your shack looks very rundown.}
+{2020}{}{About your water pump...}
+{2030}{}{See you.}
+{3000}{}{This old machine? It doesn't work already since years. My predecessor wanted a special water pump for the underground farm. It worked a long time but well. Over the time it stopped to work and that's where it is now.}
+{3010}{}{I could try to fix the machine.}
+{3020}{}{I am a bit skilled in repairing machines. This one doesn't look very hard, if you don't mind, I would take a look at it.}
+{3030}{}{That's bad. See you later.}
+{4000}{}{[He looks at you for a few seconds.] To me you don't look like this is something for you. }
+{4010}{}{Oh well. See you then.}
+{4020}{}{I could try it anyway. Would you mind?}
+{5000}{}{Sure, why not. It's broken since a long time, so... check it out, if you like.}
+{5010}{}{Thanks.}
+{6000}{}{Yes, what's the status?}
+{6010}{}{I fixed it.}
+{6020}{}{Sorry, I can't fix the water pump.}
+{6030}{}{I am still working on it.}
+{7000}{}{Really? That... that is great news! Thank you very much, it is helping us a lot. Here, take this as your reward. [He gives you some anti radiation medicine.]}
+{7010}{}{You know, it was really hard to work to fix the machine. I think it wouldn't hurt, if I could get a bit more for it.}
+{7020}{}{You know, it was really hard to work to fix the machine. I think it wouldn't hurt, if I could get a bit more for it.}
+{7030}{}{Thank you very much. See you later.}
+{8000}{}{What? You are a mean bastard, do you know this? But okay... Here, take my 50 caps and now go away.}
+{8010}{}{Thanks.}
+{8020}{}{Okay, leave it. I am fine with what I got.}
+{9000}{}{Forget it. That's all I can give you. }
+{9010}{}{Okay...}
+{10000}{}{Thank you. And... thank you again for fixing the machine.}
+{10010}{}{No problem.}
+{11000}{}{Oh well, that's what I thought. Thank you anyway.}
+{11010}{}{See you.}
+{100000001}{}{What the hell are you doing?}
+{100000001}{}{The well isn't broken. Please repair the water pump.}
+{100000001}{}{The water pump is right behind my shack, in case you forgot it.}
+{100000001}{}{Are you blind? It's not the water pump!}
+

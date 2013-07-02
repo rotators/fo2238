@@ -1,0 +1,461 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// sleepiness.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "_colors.fos"
+#include "MsgStr.h"
+
+#define WM_IDLE_LIMIT          (30)
+#define WM_IDLE_STEP           (2)
+#define WM_MOVE_RESET          (8)
+
+#define COMBAT_ZONE_TIMEOUT    (REAL_MINUTE(2))
+
+import void GlobalProcessMove(int processType, Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed,  uint& encounterDescriptor, bool& waitForAnswer) from "globalmap_group";
+import void global_invite(Critter& leader, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir) from "globalmap_group";
+
+import bool WrathOfTheGod(Critter& di) from "cheats";
+
+void MakeSleepy(Critter& player)
+{
+    if(_IsRealPlayer(player) && !WrathOfTheGod(player))
+    {
+        player.Say(SAY_NETMSG, "You feel sleepy.");
+        player.ModeBase[MODE_HIDE] = 0;
+        player.ModeBase[MODE_LAST_IP] = player.GetIp();
+        _SetTimeout(player, TO_SLEEPY, SLEEPY_TIMEOUT(player));
+        SetLvar(player, LVAR_wm_idle_chance, 0);
+
+
+        for(int i = FOLLOWER_BEGIN; i < FOLLOWER_END; i++)
+        {
+            Critter@ follower = GetCritter(player.Param[i]);
+            if(valid(follower))
+            {
+                _SetTimeout(follower, TO_SLEEPY, SLEEPY_TIMEOUT(player));
+            }
+        }
+        if(player.GetMapId() < 1)
+            DecumulateSleepiness(player);
+        TryEnterCombatZone(player);
+    }
+    // SET_SLEEPY_PENALTY(player,1,2,3,4);
+}
+
+void TryMakeSleepy(Critter& player)
+{
+    if(_IsRealPlayer(player) && !WrathOfTheGod(player))
+    {
+        array<Critter@> players;
+        uint            cnt = GetAllOnlinePlayers(players);
+        uint            ip = player.GetIp();
+        UpdateSleepiness(player);
+        if(player.GetMapId() < 1)
+            DecumulateSleepiness(player);
+        if(ip != uint(player.ModeBase[MODE_LAST_IP]))
+        {
+            MakeSleepy(player);
+            return;
+        }
+
+        for(uint i = 0; i < cnt; i++)
+        {
+            if(players[i].Id != player.Id && players[i].GetIp() == ip)
+            {
+                MakeSleepy(player);
+                return;
+            }
+        }
+    }
+}
+
+void WMIdle(Critter& cr)
+{
+    if(cr.IsPlayer())
+    {
+        SetLvar(cr, LVAR_wm_idle, 1);
+    }
+}
+
+void WMEnterIdle(Critter& cr)
+{
+    if(cr.IsPlayer())
+    {
+        SetLvar(cr, LVAR_wm_idle, 1);
+        SetLvar(cr, LVAR_wm_idle_chance, 0);
+    }
+}
+
+void WMNotIdle(Critter& cr)
+{
+    if(cr.IsPlayer())
+    {
+        SetLvar(cr, LVAR_wm_idle, 0);
+        if(GetLvar(cr, LVAR_wm_idle_chance) > WM_MOVE_RESET)
+            SetLvar(cr, LVAR_wm_idle_chance, WM_MOVE_RESET);
+    }
+}
+
+void WMIdleCall(Critter& cr)   // needs refactor
+{
+    if(_IsRealPlayer(cr) && !WrathOfTheGod(cr))
+    {
+        float  x = cr.WorldX;
+        float  y = cr.WorldY;
+        float  dx = cr.WorldX;
+        float  dy = cr.WorldY;
+        float  speed = 0.0f;
+        bool   duh;
+        uint   a = 0;
+        uint   m = 0;
+        uint16 xa = 0;
+        uint16 ya = 0;
+        uint8  dir = 0;
+
+        if(!valid(cr.GetMap()) && cr.Id == cr.GetGlobalGroup()[0].Id && GetLvar(cr, LVAR_wm_idle) == 1)
+        {
+            array<Critter@> group = cr.GetGlobalGroup();
+            bool            leaderOnline = group[0].GetSocket() != -1;
+            bool            otherOnline = false;
+            array<Item@>    items;
+            uint            carCount = 0;
+            bool            carOwnerOnline = false;
+            for(uint i = 0; i < group.length(); i++)
+            {
+                if(i != 0 && group[i].GetSocket() != -1)
+                    otherOnline = true;
+                if(carCount == 0)
+                {
+                    carCount += group[i].GetItemsByType(ITEM_TYPE_CAR, items);
+                    if(carCount > 0)
+                    {
+                        carOwnerOnline = group[i].GetSocket() != -1;
+                    }
+                }
+            }
+            if(!leaderOnline && !otherOnline)
+                return;
+
+
+            Item@ car = null;
+            if(carOwnerOnline && carCount > 0)
+                @car = items[0];
+            uint ticktime = GetLvar(cr, LVAR_wm_idle_chance);
+            for(uint i = 0; i < ticktime; i++)
+            {
+                a = 0;
+                GlobalProcessMove(GLOBAL_PROCESS_MOVE, cr, car,
+                                  x, y, dx, dy, speed,
+                                  a, duh);
+                if(a != 0)
+                {
+                    global_invite(cr, car, a, cr.Mode[MODE_DEFAULT_COMBAT], m, xa, ya, dir);
+                    if(m != 0)
+                    {
+                        if(leaderOnline)
+                        {
+                            for(uint j = 1; j < group.length(); j++)
+                            {
+                                if(group[j].IsNpc())
+                                {
+                                    Critter@ master = GetCritter(group[j].Param[FV_MASTER]);
+                                    if(!valid(master) || (valid(master) && master.GetSocket() == -1))
+                                    {
+                                        group[j].LeaveGlobalGroup();
+                                    }
+                                }
+                                else if(group[j].GetSocket() == -1)
+                                {
+                                    group[j].LeaveGlobalGroup();
+                                }
+                            }
+                            cr.TransitToMap(m, xa, ya, dir, true);
+                        }
+                        else
+                        {
+                            for(uint j = 1; j < group.length(); j++)
+                            {
+                                if(group[j].IsNpc())
+                                {
+                                    Critter@ master = GetCritter(group[j].Param[FV_MASTER]);
+                                    if(valid(master) && master.GetSocket() != -1)
+                                    {
+                                        group[j].TransitToMap(m, xa, ya, dir);
+                                    }
+                                }
+                                else if(group[j].GetSocket() != -1)
+                                {
+                                    group[j].TransitToMap(m, xa, ya, dir);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            if(ticktime < WM_IDLE_LIMIT)
+                SetLvar(cr, LVAR_wm_idle_chance, ticktime + WM_IDLE_STEP);
+        }
+    }
+}
+
+void UpdateSleepiness(Critter& cr)
+{
+    uint stopped = cr.Param[TO_SLEEPY_STOPPED];
+    uint cumulated = cr.Param[TO_SLEEPY_CUMULATE];
+    uint immunity = cr.Param[TO_IMMUNITY_TIME];
+    if(stopped != 0 && stopped != uint(-1))
+    {
+        cr.ParamBase[TO_SLEEPY] = cr.ParamBase[TO_SLEEPY] + (ELAPSED_TIME - stopped);
+        cr.ParamBase[TO_SLEEPY_STOPPED] = ELAPSED_TIME;
+    }
+    if(cumulated != 0)
+    {
+        if(ELAPSED_TIME > immunity)
+        {
+            cr.ParamBase[TO_SLEEPY] = cr.ParamBase[TO_SLEEPY] + (ELAPSED_TIME - MAX(cumulated, immunity));
+        }
+        cr.ParamBase[TO_SLEEPY_CUMULATE] = ELAPSED_TIME;
+    }
+    if(uint(cr.Param[TO_SLEEPY]) > SLEEPY_TIMEOUT(cr))
+        _SetTimeout(cr, TO_SLEEPY, SLEEPY_TIMEOUT(cr));
+}
+
+void DecumulateSleepiness(Critter& cr)
+{
+    if(uint(cr.Param[TO_SLEEPY]) > SLEEPY_TIMEOUT(cr))
+        _SetTimeout(cr, TO_SLEEPY, SLEEPY_TIMEOUT(cr));
+    if(cr.Param[TO_SLEEPY_STOPPED] != -1)
+        cr.ParamBase[TO_SLEEPY_STOPPED] = 0;
+    cr.ParamBase[TO_SLEEPY_CUMULATE] = 0;
+}
+
+void FreezeSleepiness(Critter& cr)
+{
+    if(_IsFollower(cr) || (_IsRealPlayer(cr) && !WrathOfTheGod(cr)))
+    {
+        if(uint(cr.Param[TO_SLEEPY]) > SLEEPY_TIMEOUT(cr))
+            _SetTimeout(cr, TO_SLEEPY, SLEEPY_TIMEOUT(cr));
+        cr.ParamBase[TO_SLEEPY_STOPPED] = ELAPSED_TIME;
+        cr.ParamBase[TO_SLEEPY_CUMULATE] = 0;
+    }
+}
+
+void CumulateSleepiness(Critter& cr)
+{
+    if(_IsFollower(cr) || (_IsRealPlayer(cr) && !WrathOfTheGod(cr)))
+    {
+        if(uint(cr.Param[TO_SLEEPY]) > SLEEPY_TIMEOUT(cr))
+            _SetTimeout(cr, TO_SLEEPY, SLEEPY_TIMEOUT(cr));
+        if(cr.Param[TO_SLEEPY] <= 0)
+            cr.ParamBase[TO_SLEEPY] = ELAPSED_TIME;
+        cr.ParamBase[TO_SLEEPY_STOPPED] = ELAPSED_TIME;
+        cr.ParamBase[TO_SLEEPY_CUMULATE] = ELAPSED_TIME;
+    }
+}
+
+void TrySetCombatZone(Map& map)
+{
+    Location@ loc = map.GetLocation();
+    if(valid(loc) && (loc.Visible || loc.IsPublic()) /*&& !loc.IsGuarded()*/)
+    {
+        uint timeEvent = GetLLvar(loc, LLVAR_combat_zone);
+        if(timeEvent != 0)
+        {
+            uint time = 0;
+            array<uint>@ values;
+
+            if(GetTimeEvent(timeEvent, time, values))
+            {
+                if(time > ELAPSED_TIME + COMBAT_ZONE_TIMEOUT)
+                {
+                    SetTimeEvent(timeEvent, time, values);
+                    return;
+                }
+            }
+            EraseTimeEvent(timeEvent);
+            timeEvent = CreateTimeEvent(ELAPSED_TIME + COMBAT_ZONE_TIMEOUT, "e_CombatZoneEnd", loc.Id, true);
+            SetLLvar(loc, LLVAR_combat_zone, timeEvent);
+        }
+        else
+        {
+            timeEvent = CreateTimeEvent(ELAPSED_TIME + COMBAT_ZONE_TIMEOUT, "e_CombatZoneEnd", loc.Id, true);
+            SetLLvar(loc, LLVAR_combat_zone, timeEvent);
+        }
+        SendCombatZoneToClients(loc, ELAPSED_TIME + COMBAT_ZONE_TIMEOUT);
+        // loc.Color=COLOR_CHANGE_ALPHA(COLOR_DRED,0xA0);
+        // loc.Update();
+    }
+}
+
+void SetCombatZone(Map& map, uint time)
+{
+    Location@ loc = map.GetLocation();
+    if(valid(loc) && (loc.Visible || loc.IsPublic()) /*&& !loc.IsGuarded()*/)
+    {
+        uint timeEvent = GetLLvar(loc, LLVAR_combat_zone);
+        if(timeEvent != 0)
+            EraseTimeEvent(timeEvent);
+        timeEvent = CreateTimeEvent(time + COMBAT_ZONE_TIMEOUT, "e_CombatZoneEnd", loc.Id, true);
+        SetLLvar(loc, LLVAR_combat_zone, timeEvent);
+        SendCombatZoneToClients(loc, time + COMBAT_ZONE_TIMEOUT);
+        // loc.Color=COLOR_CHANGE_ALPHA(COLOR_DRED,0xA0);
+        // loc.Update();
+    }
+}
+
+void SetCombatZone(Map& map)
+{
+    SetCombatZone(map, ELAPSED_TIME);
+}
+
+uint e_CombatZoneEnd(array<uint>@ id)
+{
+    Location@ loc = GetLocation(id[0]);
+    if(valid(loc))
+    {
+        SetLLvar(loc, LLVAR_combat_zone, 0);
+        UnsendCombatZoneToClients(loc);
+        // loc.Color=0;
+        // loc.Update();
+    }
+    return 0;
+}
+
+void TryEnterCombatZone(Critter& player)
+{
+    if(_IsFollower(player) || (_IsRealPlayer(player) && !WrathOfTheGod(player)))
+    {
+        Map@ map = player.GetMap();
+        if(!valid(map))
+            return;
+        Location@ loc = map.GetLocation();
+        if(valid(loc) && (loc.Visible || loc.IsPublic()) /*&& !loc.IsGuarded()*/)
+        {
+            if(GetLLvar(loc, LLVAR_combat_zone) != 0)
+            {
+                if(player.Timeout[TO_SLEEPY] > 0)
+                {
+                    player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_SLEEPY);
+                    player.ParamBase[TO_SLEEPY_STOPPED] = -1;
+                    player.ModeBase[MODE_HIDE] = 0;
+                }
+                for(int i = FOLLOWER_BEGIN; i < FOLLOWER_END; i++)
+                {
+                    Critter@ follower = GetCritter(player.Param[i]);
+                    if(valid(follower))
+                    {
+                        // follower.ParamBase[TO_SLEEPY_STOPPED]=-1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void MasterSleepiness(Critter& cr)
+{
+    Critter@ master = GetCritter(cr.Param[FV_MASTER]);
+    if(valid(master) && master.GetMapId() == cr.GetMapId())
+    {
+        cr.ParamBase[TO_SLEEPY_STOPPED] = master.ParamBase[TO_SLEEPY_STOPPED];
+        cr.ParamBase[TO_SLEEPY_CUMULATE] = master.ParamBase[TO_SLEEPY_CUMULATE];
+        cr.ParamBase[TO_SLEEPY] = master.ParamBase[TO_SLEEPY];
+    }
+}
+
+void TryExitCombatZone(Critter& player)
+{
+    if(player.Param[TO_SLEEPY_STOPPED] == -1)
+        player.ParamBase[TO_SLEEPY_STOPPED] = 0;
+}
+
+void SendCombatZones(Critter& cr)
+{
+    array<Location@> locations;
+    uint             locCount = GetVisibleLocations(cr.WorldX, cr.WorldY, __GlobalMapZoneLength * 2, cr, locations);
+    for(uint i = 0; i < locCount; i++)
+    {
+        SendCombatZone(cr, locations[i]);
+    }
+}
+
+void TrySendCombatZones(Critter& cr)
+{
+    CreateTimeEvent(ELAPSED_TIME + REAL_SECOND(1), "e_SendCombatZones", cr.Id, false);
+}
+
+uint e_SendCombatZones(array<uint>@ id)
+{
+    Critter@ player = GetCritter(id[0]);
+    if(valid(player))
+    {
+        player.RunClientScript("client_interface@unsetall_location_combatzone", 0, 0, 0, null, null);
+        SendCombatZones(player);
+    }
+    return 0;
+}
+
+void SendCombatZone(Critter& cr, Location@ loc)
+{
+    if(valid(loc))
+    {
+        if(loc.Visible || loc.IsPublic() /*&& !loc.IsGuarded()*/)
+        {
+            uint timeEvent = GetLLvar(loc, LLVAR_combat_zone);
+            if(timeEvent != 0)
+            {
+                uint time = 0;
+                array<uint>@ values;
+
+                if(GetTimeEvent(timeEvent, time, values))
+                {
+                    array<int> coords = { loc.WorldX, loc.WorldY, loc.Radius };
+                    cr.RunClientScript("client_interface@location_combatzone", loc.Id, 100, ELAPSED_TIME + time, null, coords);
+                    SetTimeEvent(timeEvent, time, values);
+                }
+            }
+        }
+    }
+}
+
+void UnsendCombatZoneToClients(Location@ loc)
+{
+    if(valid(loc))
+    {
+        array<Critter@> players;
+        uint            num = GetAllOnlinePlayers(players);
+        for(uint i = 0; i < num; i++)
+        {
+            players[i].RunClientScript("client_interface@location_combatzone", loc.Id, -1, 0, null, null);
+        }
+    }
+}
+
+void SendCombatZoneToClients(Location@ loc, uint time)
+{
+    if(valid(loc))
+    {
+        array<Critter@> players;
+        array<int>      coords = { loc.WorldX, loc.WorldY, loc.Radius };
+        uint            num = GetAllOnlinePlayers(players);
+        int             distX;
+        int             distY;
+        for(uint i = 0; i < num; i++)
+        {
+            distX = players[i].WorldX - loc.WorldX;
+            distY = players[i].WorldY - loc.WorldY;
+
+            if(uint(distX * distX + distY * distY) <= (__GlobalMapZoneLength * __GlobalMapZoneLength * 4))
+            {
+                if(players[i].IsKnownLoc(true, loc.Id))
+                    players[i].RunClientScript("client_interface@location_combatzone", loc.Id, 100, time, null, coords);
+            }
+        }
+    }
+}

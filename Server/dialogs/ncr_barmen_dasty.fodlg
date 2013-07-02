@@ -1,0 +1,55 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+65506 2010 #
+3 2020 #
+4 2030 #
+0 2040 #
+6 2050 D _var p q_ncr_mira_money = 1 @
+3 3000 None 0 #
+4 3010 #
+2 3020 @
+4 4000 None 0 #
+2 4010 #
+0 4020 @
+5 5000 None 0 #
+2 5010 #
+0 5020 @
+6 6000 None 0 #
+0 6010 D _item p PID_BOTTLE_CAPS > 99 R _var p q_ncr_mira_money = 2 R _script dialog@r_RemoveMoney 1 100 #
+0 6020 &
+
+[engl]
+{100}{}{Dusty}
+{200}{}{It's the bartender.}
+{210}{}{You see a dumpy-looking bald guy, polishing a glass.}
+{210}{}{He's a gruff-looking guy with a crooked nose and pinched up ears like he might have been a boxer years ago.}
+{1000}{}{error}
+{1010}{}{Normal}
+{2000}{}{What can I get you?}
+{2010}{}{Drink.}
+{2020}{}{Who's the big guy over there?}
+{2030}{}{What's to do in this town?}
+{2040}{}{Goodbye.}
+{2050}{}{Mira sent me to return a debt.}
+{3000}{}{That's Hoss, President Tandi's boy. Born trouble when he's drinking, so I'd stay clear of him if I were you.}
+{3010}{}{President Tandi?}
+{3020}{}{Tough guy, eh? I wanted something else.}
+{4000}{}{Not much. If you're looking for trouble, go drink someplace else, like the Rawhide. If you're looking for work, there's the Westin place west of town.}
+{4010}{}{Thanks. I wanted something else.}
+{4020}{}{Gotta go. Bye.}
+{5000}{}{Daughter of President Aradesh, the guy who founded NCR. She's been president for years. Does a good job too.}
+{5010}{}{Aha. Well, I wanted to know something else.}
+{5020}{}{Thanks for the info. Bye.}
+{6000}{}{Oh great, I lent her some money so that she could get by. You kno' business ain't always easy around here.}
+{6010}{}{[Hand him the money]}
+{6020}{}{Oh, sorry, I don't have the money on me, must have misplaced them somewhere...}
+

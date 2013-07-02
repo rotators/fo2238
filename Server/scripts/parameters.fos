@@ -1,0 +1,383 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// parameters.fos
+//
+
+#include "_macros.fos"
+#include "MsgStr.h"
+
+#include "lexems_h.fos"
+
+#ifdef __CLIENT
+# include "_client_defines.fos"
+
+import void   SetChosenTabLevelUp(bool enable)  from "chosen_tabs";
+import string critter_description(CritterCl& cr, int lookType) from "client_interface";
+import int    GUI_GetActiveScreen() from "client_gui";
+#endif
+
+#ifdef __SERVER
+# include "achievements_h.fos"
+# include "backend_h.fos"
+# include "logging_h.fos"
+import Critter@ GetMaster(Critter& follower) from "follower";
+import void     PerkUp(Critter& cr, uint perk, int from) from "perks";
+import void     PerkDown(Critter& cr, uint perk, int tolevel) from "perks";
+import bool     IsHumanoid(Critter@ cr) from "utils";
+import void     VerboseExperience(Critter& cr, int xpDiff, int levelDiff) from "utils";
+
+int getParamDialog_Reputation(Critter@ master, Critter@ slave, uint index)
+{
+    if(!valid(master))
+        return 0;
+    if(valid(slave) && master.Perk[PE_SEX_APPEAL] != 0 && master.Stat[ST_GENDER] != slave.Stat[ST_GENDER])
+        return MAX(master.Param[index], 250);
+    return master.Param[index];
+}
+
+void changedParam_Hp(Critter& cr, uint, int oldValue)   // server
+{
+    int curHp = cr.StatBase[ST_CURRENT_HP];
+    if(curHp <= 0 && cr.IsLife())
+        cr.StatBase[ST_CURRENT_HP] = 1;
+    if(cr.Perk[PE_DEAD_MAN_WALKING] != 0)
+    {
+        if(curHp < __DeadHitPoints && !cr.IsDead())
+            cr.StatBase[ST_CURRENT_HP] = __DeadHitPoints + 1;
+    }
+    else if(curHp < __DeadHitPoints && !cr.IsDead())
+        cr.StatBase[ST_CURRENT_HP] = __DeadHitPoints / 2 + 1;
+    int maxHp = cr.Stat[ST_MAX_LIFE];
+    if(curHp > maxHp)
+    {
+        cr.StatBase[ST_CURRENT_HP] = maxHp;
+        curHp = maxHp;
+    }
+    /* set health level */
+
+    if(cr.IsDead())
+        cr.StatBase[ST_HEALTH_LEVEL] = -1024;
+    else if(curHp == maxHp)
+        cr.StatBase[ST_HEALTH_LEVEL] = 4;
+    else
+        cr.StatBase[ST_HEALTH_LEVEL] = (3 * curHp) / maxHp + 1;
+
+}
+
+void changedParam_Experience(Critter& cr, uint, int oldValue)   // server
+{
+    int exp = cr.StatBase[ST_EXPERIENCE] - oldValue;
+    int levelDiff = 0;
+
+    if(exp > 0)
+    {
+        exp += exp * ((cr.Perk[PE_SWIFT_LEARNER] + cr.Trait[TRAIT_LONER]) * 10) / 100;   // SwiftLearner perk
+        LogExperience(cr, exp, -2);                                                      // special case to catch 'all experience'
+        uint level = cr.Stat[ST_LEVEL], oldLevel = level;
+        if(level >= __LevelCap && !__LevelCapAddExperience)
+            return;
+
+        cr.StatBase[ST_EXPERIENCE] = oldValue + exp;
+
+        if(level >= __LevelCap)
+        {
+            if(_IsFollower(cr))
+                VerboseExperience(cr, exp, 0);
+            return;
+        }
+
+        int perkUp = (cr.Trait[TRAIT_SKILLED] != 0 ? 4 : 3);
+        while(true)
+        {
+            if(cr.StatBase[ST_EXPERIENCE] >= NextLevelNeedExp(cr))
+            {
+                level++;
+                cr.StatBase[ST_LEVEL]++;
+
+                cr.StatBase[ST_UNSPENT_SKILL_POINTS] += 5 + cr.StatBase[ST_INTELLECT] * 2; // Skill points
+                if(cr.Trait[TRAIT_SKILLED] != 0)
+                    cr.StatBase[ST_UNSPENT_SKILL_POINTS] += 5;                             // Skilled trait
+                // if(cr.Trait[TRAIT_GIFTED]!=0) cr.StatBase[ST_UNSPENT_SKILL_POINTS]-=5; // Gifted trait
+                cr.StatBase[ST_UNSPENT_SKILL_POINTS] += cr.Perk[PE_EDUCATED] * 2;          // Educated perk
+                if(cr.StatBase[ST_UNSPENT_SKILL_POINTS] > 99)
+                    cr.StatBase[ST_UNSPENT_SKILL_POINTS] = 99;                             // Clamp skill points
+                cr.StatBase[ST_MAX_LIFE] += cr.StatBase[ST_ENDURANCE] / 2;                 // Add max hp
+
+                if((level % perkUp) == 0)
+                {
+                    cr.StatBase[ST_UNSPENT_PERKS] = 1;
+                }
+            }
+            else
+                break;
+        }
+        levelDiff = level - oldLevel;
+    }
+
+    if(_IsFollower(cr))
+        VerboseExperience(cr, exp, levelDiff);
+}
+
+void changedParam_Level(Critter& cr, uint a, int oldLevel)   // server
+{
+    if(cr.IsPlayer())
+    {
+        if(cr.Stat[ST_LEVEL] == int(__LevelCap) && cr.GetScore(SCORE_ZOMBY) == 0)
+            AddAchievement(cr, ACHIEVEMENT_MAN_OF_STEEL);
+        return;
+    }
+
+    if(!_IsFollower(cr))
+        return;
+    else
+    {
+        Critter@ master = GetMaster(cr);
+        if(valid(master) && IsLexem(cr, "$name"))
+            master.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_FOLLOWER_GAIN_LEVELUP, "$name" + GetLexem(cr, "$name"));
+    }
+
+    if(cr.Param[ST_DIALOG_ID] == 0)       // JIC
+        return;
+
+    cr.SayMsg(SAY_SOCIAL, TEXTMSG_DLG, DLGSTR(cr.Param[ST_DIALOG_ID], STR_FOLLOWER_LEVELUP));
+}
+
+void changedParam_Perks(Critter& cr, uint perk, int oldValue)   // server
+{
+    int curValue = cr.Param[perk];
+    if(curValue > oldValue)
+        for(int i = oldValue; i < curValue; i++)
+            PerkUp(cr, perk, i);
+    else if(curValue < oldValue)
+        for(int i = oldValue - 1; i >= curValue; i--)
+            PerkDown(cr, perk, i);
+
+    if(oldValue != curValue && cr.IsPlayer())
+        FLog(LOG_PERKS, cr.Name + "(" + cr.Id + ") changing perk " + perk + " value: " + oldValue + " -> " + curValue);
+}
+
+void changedParam_Hide(Critter& cr, uint, int oldValue)   // server
+{
+    cr.RefreshVisible();
+}
+
+void changedParam_FastShot(Critter& cr, uint, int oldValue)   // server
+{
+    cr.ModeBase[MODE_NO_AIM] = (cr.Trait[TRAIT_FAST_SHOT] != 0 ? 1 : 0);
+}
+
+int NextLevelNeedExp(Critter& cr)   // Export
+{
+    int level = cr.Stat[ST_LEVEL];
+    return NUMERICAL_NUMBER(level) * 1000;
+}
+#endif
+
+#ifdef __CLIENT
+void changedParam_Level(CritterCl& cr, uint, int oldValue)   // client
+{
+    if(cr.ParamBase[ST_LEVEL] > oldValue)
+    {
+        PlaySound("LEVELUP.ACM");
+        Message(TEXTMSG_GAME, STR_GAIN_LEVELUP, FOMB_GAME);
+        SetChosenTabLevelUp(true);
+    }
+}
+
+void changedParam_Experience(CritterCl& cr, uint, int oldValue)   // client
+{
+    int curValue = cr.ParamBase[ST_EXPERIENCE];
+    if(curValue > oldValue)
+        Message(ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_GAIN_EXPERIENCE), "VALUE", curValue - oldValue), FOMB_GAME);
+}
+
+void changedParam_UnspentPerks(CritterCl& cr, uint, int oldValue)   // client
+{
+    if(cr.ParamBase[ST_UNSPENT_PERKS] > 0 && GUI_GetActiveScreen() == CLIENT_SCREEN_CHARACTER)
+        ShowScreen(CLIENT_SCREEN_PERK, 0, 0, 0);
+}
+
+void changedParam_Hide(CritterCl& cr, uint, int oldValue)   // client
+{
+    critter_description(cr, CRITTER_ONLY_NAME);
+}
+#endif
+
+#ifndef __CLIENT
+int GetMaxLife(Critter& cr)
+{
+    int val = cr.StatBase[ST_MAX_LIFE] + cr.StatBase[ST_MAX_LIFE_EXT] + cr.StatBase[ST_STRENGTH] + cr.StatBase[ST_ENDURANCE] * 2;
+    return CLAMP(val, 1, 9999);
+}
+#endif
+
+// Parameters generation
+// For server and client
+// Both generation need be equal
+// Input for player: 7 special, 3 tag skills, 2 traits, age, gender
+// Imput for npc: data from prototype
+
+#ifndef __CLIENT
+# define _param_    cr.ParamBase
+void CritterGenerate(Critter& cr)   // Export to main@critter_init
+#endif
+#ifdef __CLIENT
+# define _param_    data
+void CritterGenerate(array<int>& data)     // Export to client_main@player_data_generate
+#endif
+{
+    if(_param_[ST_LEVEL] == 0)
+        _param_[ST_LEVEL] = 1;
+
+    if(_param_[TRAIT_SMALL_FRAME] != 0)
+        _param_[ST_AGILITY] += 1;
+    if(_param_[TRAIT_BRUISER] != 0)
+        _param_[ST_STRENGTH] += 4;
+    /*if(_param_[TRAIT_GOOD_NATURED]!=0)
+       {
+            _param_[SK_FIRST_AID]+=15;
+            _param_[SK_DOCTOR]+=15;
+            _param_[SK_SPEECH]+=15;
+            _param_[SK_BARTER]+=15;
+            _param_[SK_SMALL_GUNS]-=10;
+            _param_[SK_BIG_GUNS]-=10;
+            _param_[SK_ENERGY_WEAPONS]-=10;
+            _param_[SK_UNARMED]-=10;
+            _param_[SK_MELEE_WEAPONS]-=10;
+            _param_[SK_THROWING]-=10;
+       }*/
+    // if(_param_[TRAIT_GIFTED]!=0)
+    // {
+    //	for(uint i=ST_STRENGTH;i<=ST_LUCK;i++) _param_[i]++;
+    //	for(uint i=SKILL_BEGIN;i<=SKILL_END;i++) _param_[i]-=10;
+    // }
+
+    _param_[SK_SMALL_GUNS] += 5 + 4 * _param_[ST_AGILITY];
+    _param_[SK_BIG_GUNS] += 0 + 2 * _param_[ST_AGILITY];
+    _param_[SK_ENERGY_WEAPONS] += 0 + 2 * _param_[ST_AGILITY];
+    _param_[SK_UNARMED] += 30 + 2 * (_param_[ST_AGILITY] + _param_[ST_STRENGTH]);
+    _param_[SK_MELEE_WEAPONS] += 20 + 2 * (_param_[ST_AGILITY] + _param_[ST_STRENGTH]);
+    _param_[SK_THROWING] += 0 + 4 * _param_[ST_AGILITY];
+    _param_[SK_FIRST_AID] += 0 + 2 * (_param_[ST_PERCEPTION] + _param_[ST_INTELLECT]);
+    _param_[SK_DOCTOR] += 5 + _param_[ST_PERCEPTION] + _param_[ST_INTELLECT];
+    _param_[SK_SNEAK] += 5 + 3 * _param_[ST_AGILITY];
+    _param_[SK_LOCKPICK] += 10 + _param_[ST_PERCEPTION] + _param_[ST_AGILITY];
+    _param_[SK_STEAL] += 0 + 3 * _param_[ST_AGILITY];
+    _param_[SK_TRAPS] += 10 + _param_[ST_PERCEPTION] + _param_[ST_AGILITY];
+    _param_[SK_SCIENCE] += 0 + 4 * _param_[ST_INTELLECT];
+    _param_[SK_REPAIR] += 0 + 3 * _param_[ST_INTELLECT];
+    _param_[SK_SPEECH] += 0 + 5 * _param_[ST_CHARISMA];
+    _param_[SK_BARTER] += 0 + 4 * _param_[ST_CHARISMA];
+    _param_[SK_GAMBLING] += 0 + 5 * _param_[ST_LUCK];
+    _param_[SK_OUTDOORSMAN] += 0 + 2 * (_param_[ST_ENDURANCE] + _param_[ST_INTELLECT]);
+
+    if(_param_[TAG_SKILL1] != 0)
+        _param_[_param_[TAG_SKILL1]] += 20;
+    if(_param_[TAG_SKILL2] != 0)
+        _param_[_param_[TAG_SKILL2]] += 20;
+    if(_param_[TAG_SKILL3] != 0)
+        _param_[_param_[TAG_SKILL3]] += 20;
+
+    if(_param_[TRAIT_BRUISER] != 0)
+        _param_[ST_ACTION_POINTS] -= 2;
+    if(_param_[TRAIT_KAMIKAZE] != 0)
+    {
+        _param_[ST_ARMOR_CLASS] += 40;
+        for(uint i = ST_NORMAL_RESIST; i <= ST_EXPLODE_RESIST; i++)
+            _param_[i] -= 10;
+    }
+    if(_param_[TRAIT_FINESSE] != 0)
+        _param_[ST_CRITICAL_CHANCE] += 10;
+    if(_param_[TRAIT_FAST_SHOT] != 0)
+        _param_[MODE_NO_AIM] = 1;
+    if(_param_[TRAIT_BONEHEAD] != 0)
+        _param_[ST_INTELLECT] -= 1;
+
+    #ifdef __CLIENT
+    // Runtime calculations, only for client registration
+    _param_[ST_ARMOR_CLASS] += 3 * _param_[ST_AGILITY];
+    _param_[ST_MAX_LIFE] += _param_[ST_STRENGTH] + _param_[ST_ENDURANCE] * 2 + 40;
+    _param_[ST_ACTION_POINTS] += _param_[ST_AGILITY] / 2;
+    _param_[ST_CARRY_WEIGHT] += LBS_TO_GRAMM(25 + _param_[ST_STRENGTH] * (25 - _param_[TRAIT_SMALL_FRAME] * 10));
+    _param_[ST_MELEE_DAMAGE] += (_param_[ST_STRENGTH] > 6 ? (_param_[TRAIT_BRUISER] > 0 ? 2 * (_param_[ST_STRENGTH] - 5) : (_param_[ST_STRENGTH] - 5)) : 1);
+    _param_[ST_POISON_RESISTANCE] += _param_[ST_ENDURANCE] * 5;
+    _param_[ST_RADIATION_RESISTANCE] += _param_[ST_ENDURANCE] * 2;
+    _param_[ST_SEQUENCE] += _param_[ST_PERCEPTION] * 2;
+    _param_[ST_HEALING_RATE] += 7 + _param_[ST_ENDURANCE] / 2;
+    if(_param_[TRAIT_FAST_METABOLISM] != 0)
+        _param_[ST_HEALING_RATE] += (_param_[ST_ENDURANCE] + 1) / 2;
+    _param_[ST_CRITICAL_CHANCE] += _param_[ST_LUCK];
+    #endif
+
+    _param_[ST_MAX_LIFE] += 15;
+    _param_[ST_ACTION_POINTS] += 5;
+    _param_[ST_CURRENT_HP] = _param_[ST_MAX_LIFE];
+    _param_[ST_CURRENT_AP] = _param_[ST_ACTION_POINTS] * 100;
+
+    _param_[ST_HEALTH_LEVEL] = 4;
+    #ifdef __SERVER
+    if(IsHumanoid(cr))
+        cr.StatBase[ST_MAX_LIFE] += 40;
+    #endif
+}
+
+#ifdef __CLIENT
+# include "MsgStr.h"
+// Check valid of input data
+bool CritterGenerateCheck(array<int>& data)     // Export to client_main@player_data_check
+{
+    // Check special
+    int special = 0;
+    for(uint i = ST_STRENGTH; i <= ST_LUCK; i++)
+    {
+        if(data[i] < 1 || data[i] > 10)
+        {
+            Message(GetMsgStr(TEXTMSG_GAME, STR_NET_WRONG_SPECIAL));
+            return false;
+        }
+        special += data[i];
+    }
+    if(special != __StartSpecialPoints)
+    {
+        Message(GetMsgStr(TEXTMSG_GAME, STR_NET_WRONG_SPECIAL));
+        return false;
+    }
+    // Check choosed tag skills
+    if((data[TAG_SKILL1] < int(SKILL_BEGIN) || data[TAG_SKILL1] > int(SKILL_END)) ||
+       (data[TAG_SKILL2] < int(SKILL_BEGIN) || data[TAG_SKILL2] > int(SKILL_END)) ||
+       (data[TAG_SKILL3] < int(SKILL_BEGIN) || data[TAG_SKILL3] > int(SKILL_END)))
+    {
+        Message(GetMsgStr(TEXTMSG_GAME, STR_NET_WRONG_TAGSKILL));
+        return false;
+    }
+    return true;
+}
+#endif
+
+#ifndef __CLIENT
+void NpcProcessLevel(Critter& npc)   // Export
+{
+    int level = npc.Stat[ST_LEVEL];
+    if(level == 0)
+        return;
+    level--; // number of levelups is one less
+    npc.StatBase[ST_MAX_LIFE] += (GetMaxLife(npc) * level) / 20;
+    npc.StatBase[ST_CURRENT_HP] = npc.Stat[ST_MAX_LIFE];
+    for(uint i = SKILL_BEGIN; i <= SKILL_END; i++)
+        npc.SkillBase[i] += (npc.Skill[i] * level) / 20;
+}
+// backward compatibility
+void NpcSetLevel(Critter& npc, int level)   // export
+{
+    int oldlevel = npc.Stat[ST_LEVEL];
+    npc.StatBase[ST_LEVEL] = level;
+    level -= oldlevel;
+    npc.StatBase[ST_MAX_LIFE] += (2 + (npc.StatBase[ST_ENDURANCE] >> 1)) * level;
+    npc.StatBase[ST_CURRENT_HP] = npc.Stat[ST_MAX_LIFE];
+    for(uint i = SKILL_BEGIN; i <= SKILL_END; i++)
+        npc.SkillBase[i] += 5 * level;
+}
+#endif
+#endif

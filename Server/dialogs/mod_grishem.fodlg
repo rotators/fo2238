@@ -1,0 +1,96 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+6 1020 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+0 2030 @
+3 3000 None 0 #
+5 3010 D _item p PID_MEAT > 1 R _item p PID_MEAT_JERKY + 1 R _item p PID_MEAT - 2 #
+5 3020 D _item p PID_MEAT > 9 R _item p PID_MEAT_JERKY + 5 R _item p PID_MEAT - 10 #
+5 3030 D _item p PID_MEAT > 39 R _item p PID_MEAT_JERKY + 20 R _item p PID_MEAT - 40 #
+6 3040 @
+4 4000 None 0 #
+6 4010 @
+5 5000 None 0 #
+3 5010 #
+4 5020 #
+0 5030 @
+6 6000 None 0 #
+11 6010 D _var p q_modoc_balthas_fetcher = 1 #
+4 6020 #
+7 6030 D _var p mod_q_meat_jerky = 2 D _script dialog@d_QuestTimeoutReady 0  #
+8 6040 D _var p mod_q_meat_jerky = 0 #
+10 6050 D _var p mod_q_meat_jerky = 1 D _item p PID_MEAT_BAG < 1 D _script dialog@d_QuestTimeoutReady 0  R _script dialog@r_QuestTimeout 1 20 #
+3 6060 #
+0 6070 @
+7 7000 None 0 #
+0 7010 R _var p mod_q_meat_jerky = 1 R _script dialog@r_QuestTimeout 1 20 R _item p PID_MEAT_BAG + 1 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 R _var p mod_q_meat_jerky = 1 R _item p PID_MEAT_BAG + 1 R _script town@r_ModifyInfluenceBuffer 1 5 @
+10 10000 None 0 #
+0 10010 R _item p PID_MEAT_BAG + 1 #
+0 10020 R _var p mod_q_meat_jerky = 0 @
+11 11000 None 0 #
+0 11010 R _var p q_modoc_balthas_fetcher = 2 #
+12 11020 @
+12 12000 None 0 #
+0 12010 R _var p q_modoc_balthas_fetcher = 2 &
+
+[engl]
+{100}{}{Grisham}
+{200}{}{A very active old man.}
+{210}{}{You can’t quite place him, but he looks familiar.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{-}
+{2000}{}{The name’s Grisham. Welcome to my slaughterhouse. You dropping off or picking up?}
+{2010}{}{I would like you to make me some of your famous jerky.}
+{2020}{}{Can you tell me a little bit about the slaughterhouse?}
+{2030}{}{I have to go now.}
+{3000}{}{Ah! Of course, of course. Let’s see, for traveling, I recommend our world famous dried brahmin strips. Won’t spoil on the road and it’s tasty, too. All I need is two pieces of meat. You interested?}
+{3010}{}{Sure! Here's two pieces.}
+{3020}{}{Could you make five for me? Thanks.}
+{3030}{}{I can already feel my next trip will take some time... I'd need 20 jerky pieces, please.}
+{3040}{}{No, not right now. Maybe later.}
+{4000}{}{Not much to tell. I run the slaughterhouse in Modoc. You want something slaughtered, you bring it to me. I’ll kill it for ya and make it into some of the best jerky you’ve ever tasted.}
+{4010}{}{I see.}
+{5000}{}{Pleasure doing business. Now, what can I do for you?}
+{5010}{}{Maybe I could do with a little bit more jerky.}
+{5020}{}{Can you tell me a little bit about the slaughterhouse?}
+{5030}{}{I have to go now.}
+{6000}{}{So what can I do for you?}
+{6010}{}{Well, I've come to be a bit of a bother really. Balthas has been complaining about his lack of hides...}
+{6020}{}{Can you tell me a little bit about the slaughterhouse?}
+{6030}{}{Do you think I might be able to do another delivery?}
+{6040}{}{Do you have any work for me? I'd like to earn a few caps.}
+{6050}{}{I lost your meat jerkys on my way.}
+{6060}{}{I would like you to make me some of your famous jerky.}
+{6070}{}{I have to go now.}
+{7000}{}{Sure thing, you know the drill by now, deliver the meat to Mom's bar in Den, McRae's bar in Vault City or a little longer away from here, Iguana Pete in Hub or the lizard-on-a-stick vendor in NCR and you'll get your reward.}
+{7010}{}{Yeah, yeah. The time is ticking and time is money.}
+{8000}{}{You gotta deliver some jerky to one of my clients. Think you can handle that?}
+{8010}{}{Sounds good.}
+{8020}{}{Naw, I'm good. See you later.}
+{9000}{}{That's the spirit! Alright, where you go is up to you. You can head over to Mom's in the Den, McRae's in Vault City, or one of the iguana salesmen in the Hub or NCR. Think you can handle that?}
+{9010}{}{Sure thing. On my way.}
+{10000}{}{What do you mean you lost the bag? Ok, I'll give you a new one, but don't screw it up this time.}
+{10010}{}{Sure.}
+{10020}{}{No way! I'm not working for you anymore.}
+{11000}{}{Balthas  been moaning about that again? Well, I guess I can see why, but I don't like the blame falling on me. I give him all the hides I make, but the fact is we just don't have enough brahmin in Modoc. I can't afford the prices they charge at Vault City.}
+{11010}{}{Hmm, I'll see what I can do for you.}
+{11020}{}{Why don't you try getting them from somewhere else?}
+{12000}{}{Nowhere else except Vault City would even draw up a contract to keep us in brahmin; the run's too long and dangerous for other towns.}
+{12010}{}{Hm, I'll see what's up in Vault City.}
+

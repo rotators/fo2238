@@ -1,0 +1,74 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+11 1020 D _param p ST_CHARISMA < 4 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 D _var p starter_casequest = 5 #
+8 4020 D _var p starter_docblackmail = 1 #
+8 4030 D _var p starter_docblackmail = 5 #
+0 4040 @
+5 5000 None 0 #
+6 5010 D _item p PID_BRIEFCASE = 1 D _var p starter_casequest = 5 R _item p PID_BRIEFCASE - 1 R _param p ST_EXPERIENCE + 120 #
+11 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 R _item p PID_10MM_JHP + 20 @
+8 8000 None 0 #
+9 8010 #
+10 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+0 10010 R _var p starter_docblackmail = 3 R _param p ST_EXPERIENCE + 150 R _script dialog@r_AddMoney 1 50 @
+11 11000 None 0 &
+
+[engl]
+{100}{}{Hoskins}
+{200}{}{You see a tall, fierce looking man.}
+{210}{}{You see Hoskins, self appointed Captain of the guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Ugly}
+{2000}{}{Start talkin', chump.}
+{2010}{}{I've got some questions I'd like to ask you.}
+{2020}{}{There's something I'd like to report.}
+{2030}{}{Nothing, forget it.}
+{3000}{}{Take your goddamn questions elsewhere. Can't you see I'm on duty?}
+{3010}{}{I had something I wanted to report, actually.}
+{3020}{}{Forget it then, I'm leaving.}
+{4000}{}{A crime, huh? Well, git talkin'.}
+{4010}{}{Yeah, Sebastian's been smuggling supplies into the town.}
+{4020}{}{The Doctor's siphoning off medical supplies to make chems for himself.}
+{4030}{}{The Doctor's siphoning off medical supplies to make chems for himself.}
+{4040}{}{Forget it, it's nothing.}
+{5000}{}{Interestin'. And you got proof for this, uh, particular accusation, am I right?}
+{5010}{}{Sure, got a whole briefcase full of evidence, right here.}
+{5020}{}{Uh, well. I guess you could go talk to him.}
+{6000}{}{Well goddamn. That wily son of a bitch. I'll take it from here.}
+{6010}{}{Is there going to be some kind of reward...?}
+{7000}{}{Yeah, we got a couple clips of 10mm layin' around. Help yourself. Come back if you catch wind of anything else, y'hear?}
+{7010}{}{Thanks. Bye.}
+{8000}{}{Alright, I figure I could look into it. Never did trust that egghead sonovabitch.}
+{8010}{}{What's gonna happen to him?}
+{8020}{}{Well, my work here is done. Bye.}
+{9000}{}{We'll run that drug peddling bastard out of town. Let's see how long he lasts on the outside. (He chuckles)}
+{9010}{}{Too bad. I guess I'll be leaving.}
+{10000}{}{Wait a second, you did the right thing comin' to me. I sure as hell don't like to see a good deed go unpunished, so here ya go. (He hands you fifty caps)}
+{10010}{}{Thanks. I'll see you later.}
+{11000}{}{You're an ugly little fucker ain't ya?@@Piss off.@@Aw, shit, get out of here.@@I ain't looking for a friend, pal.}
+

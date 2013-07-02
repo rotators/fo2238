@@ -1,0 +1,74 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_broc_flower.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+import bool ShuffleItem(Item& item) from "shuffling_spawner";
+
+#define PLANT_BROC_BATCH       (1)
+#define PLANT_BROC_CAPACITY    (4)
+
+void item_init(Item& item, bool firstTime)
+{
+    if(firstTime)
+        item.Val0 = PLANT_BROC_CAPACITY;
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillPlantBroc");
+}
+
+bool _SkillPlantBroc(Item& item, Critter& cr, int skill)
+{
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    if(map.GetProtoId() == MAP_KlamathDowntown)
+    {
+        _Desneak(cr);
+
+        item.Val0 -= 1;
+        if(item.Val0 <= 0)
+        {
+            ShuffleItem(item);
+        }
+
+        cr.Say(SAY_NETMSG, "You have collected some Broc flowers.");
+        cr.AddItem(PID_BROC_FLOWER, PLANT_BROC_BATCH);
+    }
+    else
+    {
+        DeleteItem(item);
+        cr.Say(SAY_NETMSG, "You have collected some Broc flowers.");
+        cr.AddItem(PID_BROC_FLOWER, 1);
+    }
+
+    return true;
+}
+
+
+
+/*#define STR_GATHERED	(3044)
+
+   void item_init(Item& item, bool firstTime)
+   {
+        item.SetEvent(ITEM_EVENT_SKILL, "_Gather");
+        AMOUNT(item) = __BrocBatch;
+   }
+   class GatherCallback : IGatherCallback
+   {
+        void Callback(Item& item, Critter& cr, Item@)
+        {
+                DeleteItem(item);
+        }
+   };
+   GatherCallback Callback;
+
+   bool _Gather(Item& item, Critter& crit, int skill)
+   {
+        return Gather(item, crit, null, PID_BROC_FLOWER, __BrocBatch, STR_GATHERED, 0, @Callback);
+   }*/

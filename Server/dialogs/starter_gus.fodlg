@@ -1,0 +1,62 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p starter_gustools = 0 D _param p ST_CHARISMA > 3 #
+6 1020 D _param p ST_CHARISMA < 4 #
+5 1030 D _param p ST_INTELLECT < 4 #
+7 1040 D _var p starter_gustools = 1 #
+10 1050 D _var p starter_gustools = 2 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+0 4010 R _var p starter_gustools = 1 @
+5 5000 None 0 @
+6 6000 None 0 @
+7 7000 None 0 #
+7 7010 D _item p PID_SHOVEL = 1 D _item p PID_KNIFE = 1 R _var p starter_gustools = 2 #
+0 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 &
+
+[engl]
+{100}{}{Gus}
+{200}{}{You see a pale, scrawny young man.}
+{210}{}{You see Gus.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Ugly}
+{1030}{}{Idiot}
+{1040}{}{Quest assigned}
+{1050}{}{Quest complete}
+{2000}{}{Hey pal, goddamn, you came at the right time. I gots a favour to ask ya.}
+{2010}{}{Sure, what is it?}
+{2020}{}{Forget it, ask someone else.}
+{3000}{}{Someone's fuckin' with me, I just know it. I take one goddamn break and my tools are gone. I'm sure as hell they ain't been stolen, neither.}
+{3010}{}{I guess you want me to go find them, huh?}
+{3020}{}{Forget it, find your own damn tools.}
+{4000}{}{Heh, you betcha. All I'm missing is a knife and shovel. I'll be right here, I'mma see what I can get done without 'em.}
+{4010}{}{Alright, I guess I'll start looking.}
+{5000}{}{Friend, I think you'd best mosey on.@@Git lawst, chumley.@@@pname@ you know you ain't got no place here.}
+{6000}{}{Friend, I think you'd best mosey on.@@Git lawst, chumley.@@@pname@ you know I don't want you 'round here.@@Hoo-weee, someone ain't a looker.@@Dang, you just don't learn, do ya.}
+{7000}{}{Hey, you get my tools back yet?}
+{7010}{}{Sure, got 'em right here.}
+{7020}{}{No, not yet. I'll keep looking, though.}
+{8000}{}{Thanks, you're a pal. Look, I better get to work, but here's an old axe I found while you were gone.}
+{8010}{}{What the hell am I supposed to do with this?}
+{9000}{}{Well it ain't for hittin' people, that's for sure. You could cut a couple trees down, get yerself some wood. Use that to build all kinds o' things.}
+{9010}{}{Uh, thanks. I guess.}
+{10000}{}{Hey, sorry, I oughta get back to work.@@Mind letting me get on with this?@@Sorry fella, I gotta make up for lost time.}
+

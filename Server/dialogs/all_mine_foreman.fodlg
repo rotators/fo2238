@@ -1,0 +1,73 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 1020 @
+20 2000 None 0 #
+4 2010 #
+0 2020 @
+2 3000 None 0 #
+3 3010 #
+4 3020 #
+0 3030 @
+3 4000 None 0 #
+5 4010 #
+4 4020 @
+4 5000 None 0 #
+5 5010 #
+0 5020 @
+5 6000 None 0 #
+6 6010 R _script mine@r_CheckCanBuy 0  #
+0 6020 @
+6 7000 None 0 #
+8 7010 D _script mine@d_CanAfford 0  R _script mine@r_PurchaseMine 0  #
+7 7020 @
+7 8000 None 0 #
+0 8010 #
+4 8020 @
+8 9000 None 0 #
+0 9010 @
+9 10000 None 0 #
+2 10010 #
+0 10020 &
+
+[engl]
+{100}{}{Foreman}
+{200}{}{You see the mine foreman.}
+{1000}{}{Predialogue installations}
+{1010}{}{We are talking the first time.}
+{1020}{}{We talked already.}
+{2000}{}{So you decided to come back. What do you want?}
+{2010}{}{I want to know something.}
+{2020}{}{Nothing. Bye.}
+{3000}{}{Yes, what do you want?}
+{3010}{}{What are you doing here?}
+{3020}{}{I want to know something.}
+{3030}{}{Nothing. bye.}
+{4000}{}{I am the mine foreman. I am the one who makes everything run quite well here.}
+{4010}{}{As a mine foreman... Do you know about any untouched mines in the closer area?}
+{4020}{}{I see. I want to know something else.}
+{5000}{}{What do you want to know?}
+{5010}{}{As a mine foreman... Do you know about any untouched mines in the closer area?}
+{5020}{}{That's all. See you.}
+{6000}{}{Well, I might know some abandoned or unused places.}
+{6010}{}{I am very much interested in my own mine, you know.}
+{6020}{}{Cool. That's all I wanted to know. Bye.}
+{7000}{}{I happen to know about an abandoned high quality iron mine. You see, some nasty creatures made it their home and a few miners were, well... devoured. I have seen much in my life, but what we have found... that was quite gruesome view. Our folks didn't want to go inside after that. There wasn't much iron left there anyway, but for one person like you, if you manage to kill whatever killed the miners, there should be enough resources for about nine months (2 real weeks) of hard work. I'll guess I could sell you the location, if you have the caps. 70.000 and the deal is as good as sealed.}
+{7010}{}{Sounds fair. [You give him the caps.]}
+{7020}{}{That's a bit too much for me. Maybe I come back later...}
+{8000}{}{I will be here.}
+{8010}{}{See You.}
+{8020}{}{I have some question, before I leave.}
+{9000}{}{Very well. So, the mine we are talking about, is at this spot... [He shows you the location on your PipBoy.] Good luck.}
+{9010}{}{Thanks. See you.}
+{10000}{}{I don't know of any abandoned mines at this moment, come back later and perhaps there's something available.}
+{10010}{}{Can I ask you about something else?}
+{10020}{}{Alright then.}
+

@@ -1,0 +1,173 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mob_wave_data.fos
+//
+
+#ifndef __MOB_WAVE_DATA__
+#define __MOB_WAVE_DATA__
+
+const array<array<array<array<uint> > > > MobWaves =
+{
+    //  MOB_WAVE_TYPE_CUSTOM <-- TODO: make it editable by GMs
+    //
+    {},
+    //  MOB_WAVE_TYPE_ENCOUNTER
+    //
+    {
+        // Level 0 [1.5 - 3.5 min]
+        {
+            { 90, 210 },             // Time to the wave from the previous one (real seconds)
+            {
+                STR_MOB_WAVE_RATS,   // String used for wave warning (You hear...)
+                NPC_PID_Rat, 1, 0, 0 // PID, number of critters, bag, level scale (% of player level, 0 is 100%)
+            },
+            {                        // Alternative version(s) of the wave (other mobs)
+                STR_MOB_WAVE_ANTS,
+                NPC_PID_GiantAnt, 1, 0, 0
+            },
+            {
+                STR_MOB_WAVE_MANTIS,
+                NPC_PID_Mantis2, 1, 0, 0
+            }
+        },
+
+        // Level 1 [4 - 7 min]
+        {
+            { 150, 210 },             // Time to the wave from the previous one (real seconds)
+            {
+                STR_MOB_WAVE_RATS,    // String used for wave warning (You hear...)
+                NPC_PID_Rat, 2, 0, 0, // PID, number of critters, bag, level scale (% of player level, 0 is 100%)
+                NPC_PID_MutatedRat, 1, 0, 0
+            },
+            {                         // Alternative version(s) of the wave (other mobs)
+                STR_MOB_WAVE_ANTS,
+                NPC_PID_GiantAnt, 2, 0, 0,
+                NPC_PID_ToughGiantAnt, 1, 0, 0
+            },
+            {
+                STR_MOB_WAVE_DOGS,
+                NPC_PID_WildDog, 2, 0, 0
+            }
+        },
+        // Level 2 [6 - 10 min]
+        {
+            { 120, 180 },
+            {
+                STR_MOB_WAVE_RAD_TOADS,
+                NPC_PID_Radtoad, 3, 0, 0
+            },
+            {
+                STR_MOB_WAVE_MANTIS,
+                NPC_PID_Mantis2, 4, 0, 0
+            }
+        },
+        // Level 3 [8 - 12.5 min]
+        {
+            { 120, 150 },
+            {
+                STR_MOB_WAVE_DOGS,
+                NPC_PID_WildDog, 4, 0, 0
+            },
+            {
+                STR_MOB_WAVE_PIGRATS,
+                NPC_PID_PigRat, 2, 0, 0,
+                NPC_PID_ToughPigRat, 1, 0, 0
+            }
+        },
+        // Level 4 [10 - 15 min]
+        {
+            { 120, 150 },
+            {
+                STR_MOB_WAVE_MOLERATS,
+                NPC_PID_MutatedMoleRat, 2, 0, 0,
+                NPC_PID_MutatedMoleRat, 1, 0, 0
+            },
+            {
+                STR_MOB_WAVE_RADSCORPIONS,
+                NPC_PID_BlackRadscorpion, 1, 0, 0,
+                NPC_PID_BlackRadscorpion2, 2, 0, 0
+            },
+            {
+                STR_MOB_WAVE_ANTS,
+                NPC_PID_GiantAnt, 4, 0, 200
+            }
+        },
+        // Level 5 [12 - 17.5 min]
+        {
+            { 120, 150 },
+            {
+                STR_MOB_WAVE_DESERT_STALKERS,
+                NPC_PID_DesertStalker, 2, 0, 0
+            },
+            {
+                STR_MOB_WAVE_DEATHCLAWS,
+                NPC_PID_DeathclawSpawn, 1, 142, 0,
+                NPC_PID_Deathclaw3, 1, 142, 0
+            },
+            {
+                STR_MOB_WAVE_ANTS,
+                NPC_PID_GiantAnt, 5, 0, 250
+            }
+        },
+        // Level 6 [14 - 20 min]
+        {
+            { 120, 150 },
+            {
+                STR_MOB_WAVE_DESERT_STALKERS,
+                NPC_PID_DesertStalker, 3, 0, 0
+            },
+            {
+                STR_MOB_WAVE_DEATHCLAWS,
+                NPC_PID_SmToughDeathclaw, 2, 142, 0,
+                NPC_PID_ToughDeathclaw, 1, 143, 0
+            },
+            {
+                STR_MOB_WAVE_GECKOS,
+                NPC_PID_FireGecko, 2, 140, 0,
+                NPC_PID_ToughFireGecko, 1, 140, 0
+            },
+            {
+                STR_MOB_WAVE_RATS,
+                NPC_PID_VorpalRat, 1, 0, 0
+            },
+            {
+                STR_MOB_WAVE_ANTS,
+                NPC_PID_GiantAnt, 6, 0, 300
+            }
+        }
+    },
+
+    //  MOB_WAVE_TYPE_ZOMBIES
+    //
+    {
+        // Level 0
+        {
+            { 20, 30 },
+            {
+                STR_MOB_WAVE_GHOULS,
+                NPC_PID_Crazies, 1, 0, 0
+            },
+            {
+                STR_MOB_WAVE_GHOULS,
+                NPC_PID_GlowCrazies, 1, 0, 0
+            }
+        },
+        // Level 1
+        {
+            { 20, 30 },
+            {
+                0,
+                NPC_PID_Crazies, 2, 246, 0,
+                NPC_PID_GlowCrazies, 1, 400, 0
+            },
+            {
+                0,
+                NPC_PID_Crazies, 2, 247, 0,
+                NPC_PID_GlowCrazies, 2, 0, 0
+            }
+        }
+    }
+};
+#endif // __MOB_WAVE_DATA__ //

@@ -1,0 +1,514 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gmtools_menu.fos
+//
+
+// Game Master Tools menu
+// Compile with -client switch
+
+/* TODO:
+        button flags: ISPID, ?DISABLED?
+ */
+#ifndef __CLIENT_GMTOOLS_MENU__
+#define __CLIENT_GMTOOLS_MENU__
+
+#define __CLIENT
+#include "gmtools_h.fos"
+
+#ifndef GMTOOLS_CONFIG_ENABLED
+bool GMToolsLoadMenu() { return(true); };
+#endif /* GMTOOLS_CONFIG_ENABLED */
+
+#ifdef  GMTOOLS_CONFIG_ENABLED
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+
+# include "client_gui_h.fos"
+# include "client_gui_ex.fos"
+
+CContextMenu GMTmenu;
+
+// client_gmtools.fos
+import int GMToolsPossess() from "client_gmtools";
+
+// client_gmtools_macro.fos
+import bool GMToolsAddMacro(string& filename, uint critter, uint item, uint hexX, uint hexY, bool fixcritter) from "client_gmtools";
+import void SendCommand(string command, uint& critter, uint& item, uint& hexX, uint& hexY) from "client_gmtools";
+string GMTmenu_file = GMT_BUTTONS_FILE;
+
+bool GMToolsLoadMenu() // Export
+{
+    return(GMToolsLoadMenu(GMTmenu_file));
+}
+
+bool GMToolsLoadMenu(string filename)   // Export
+{
+    file f;
+    if(f.open(filename, "r") == 0)
+    {
+        // clear old menu
+        GMTmenu.buttons.resize(0);
+        GMTmenu.controls.resize(0);
+        GMTmenu.arranged = 0;
+
+        // save last loaded file name
+        GMTmenu_file = filename;
+
+        GUI_DeleteScreen(CLIENT_SCREEN_GMTOOLSMENU);
+        while(!f.isEndOfFile())
+        {
+            string line = "";
+            f.readLine(line);
+
+            // JIC
+            line = ReplaceText(line, "\n", "");
+            line = ReplaceText(line, "\r", "");
+
+            if(line == "")
+                continue;
+
+            // comment
+            if(substring(line, 0, 1) == ";")
+                continue;
+
+            int flags = 0;
+            array<string@>@ arg = split(line, ";");
+            if(arg.length() == 3 && arg[0].length() >= 4 && arg[1].length() > 0 && arg[2].length() > 0)
+            {
+                int  ispid = 0;
+                array<string@>@ sflags = split(arg[0], ",");
+                bool ignore = false;
+                for(uint f = 0; f < sflags.length(); f++)
+                {
+                    // GMTDebugMessage( "GMT: Checking flag: <"+sflags[f]+">" );
+
+                    if(sflags[f] == "TODO" || sflags[f] == "IGNORE")
+                    {
+                        ignore = true;
+                        break;
+                    }
+
+                    // primary flags
+                    else if(sflags[f] == "ONCHOSEN")
+                        SETFLAG(flags, GMT_BUTTON_ONCHOSEN);
+                    else if(sflags[f] == "ONPLAYER")
+                        SETFLAG(flags, GMT_BUTTON_ONPLAYER);
+                    else if(sflags[f] == "ONNPC")
+                        SETFLAG(flags, GMT_BUTTON_ONNPC);
+                    else if(sflags[f] == "ONITEM")
+                        SETFLAG(flags, GMT_BUTTON_ONITEM);
+                    else if(sflags[f] == "ONGROUND" || sflags[f] == "ONHEX")
+                        SETFLAG(flags, GMT_BUTTON_ONGROUND);
+
+                    // secondary flags - shared
+                    else if(sflags[f].length() >= 7 && substring(sflags[f], 0, 6) == "ISPID:")
+                    {
+                        GMTDebugMessage("GMT: ISPID: " + substring(sflags[f], 6, sflags[f].length() - 6));
+                        if(StrToInt(substring(sflags[f], 6, sflags[f].length() - 6), ispid))
+                            SETFLAG(flags, GMT_BUTTON_ISPID);
+                    }
+
+                    // secondary flags - critter
+                    else if(sflags[f] == "ISALIVE")
+                        SETFLAG(flags, GMT_BUTTON_ISALIVE);
+                    else if(sflags[f] == "ISKNOCK")
+                    {
+                        SETFLAG(flags, GMT_BUTTON_ISKNOCK);
+                        UNSETFLAG(flags, GMT_BUTTON_ISNTKNOCK);
+                    }
+                    else if(sflags[f] == "ISNTKNOCK")
+                    {
+                        SETFLAG(flags, GMT_BUTTON_ISNTKNOCK);
+                        UNSETFLAG(flags, GMT_BUTTON_ISKNOCK);
+                    }
+                    else if(sflags[f] == "ISDEAD")
+                        SETFLAG(flags, GMT_BUTTON_ISDEAD);
+                    else if(sflags[f] == "ISPOSSESS")
+                        SETFLAG(flags, GMT_BUTTON_ISPOSSESS);
+
+                    // secondary flags - item
+                    else if(sflags[f] == "ISCONTAINER")                       // TODO
+                        SETFLAG(flags, GMT_BUTTON_ISCONTAINER);
+
+                    // button flags
+                    else if(sflags[f] == "NOHIDE")
+                        SETFLAG(flags, GMT_BUTTON_NOHIDE);
+                    else if(sflags[f] == "SUBMENU")
+                        SETFLAG(flags, GMT_BUTTON_SUBMENU);
+                    // TODO?
+                    // else if( sflags[f] == "DISABLED" )
+                    //	SETFLAG( flags, GMT_BUTTON_DISABLED );
+                }
+                if(flags == 0 && !ignore)
+                {
+                    // GMTDebugMessage( "GMT: No flags for: "+arg[2] );
+                }
+                else if(!ignore)
+                {
+                    // GMTDebugMessage( "GMT: AddButton(): <"+arg[1]+", "+flags+", "+ispid+", "+arg[2]+">" );
+                    GMTmenu.AddButton(arg[1], flags, ispid, arg[2]);
+                    ispid = 0;                     // JIC
+                }
+            }
+            else
+            {
+                GMTDebugMessage("GMT: Invalid line:");
+                GMTDebugMessage("* " + line);
+            }
+        }
+        GUI_CreateScreen(CLIENT_SCREEN_GMTOOLSMENU, null)
+        .Control(GMTmenu)
+        .SetCallbackShow(GMTmenu)
+        .SetCallbackFocus(GMTmenu)
+        .CanMove(true)
+        .Modal(false)
+        .Multiinstance(false);
+        return(true);
+    }
+    else
+    {
+        GMTDebugMessage("GMTools: can't read menu file (" + filename + ")");
+        return(false);
+    }
+}
+
+class CButtonEx : CButton
+{
+    uint   ID;
+    string RawCommand;
+    int    ContextFlags;
+    int    ispid;
+    uint   critter;
+    uint   item;
+    uint   hexX;
+    uint   hexY;
+
+    CButtonEx(string caption, int context_flags, int ispid, string command)
+    {
+        super(0, 0, caption);
+
+        this.RawCommand = command;
+        this.ContextFlags = context_flags;
+        this.ispid = ispid;
+        this.critter = 0;
+        this.item = 0;
+        this.hexX = 0;
+        this.hexY = 0;
+    }
+
+    void SetCritterAsChosen()
+    {
+        // GMTDebugMessage( "SetCritterAsChosen("+this.caption+"): "+GetChosen().Id );
+        CritterCl@ chosen = GetChosen();
+        this.critter = chosen.Id;
+    }
+
+    void SetCritter(uint cr)
+    {
+        // GMTDebugMessage( "SetCritter("+this.caption+"): "+cr );
+        this.critter = cr;
+    }
+
+    void SetItem(uint it)
+    {
+        // GMTDebugMessage( "SetItem("+this.caption+"): "+it );
+        this.item = it;
+        // GMTDebugMessage( "SetItemRecheck("+this.caption+"): "+this.item );
+
+    }
+
+    void SetHex(uint hx, uint hy)
+    {
+        GMTDebugMessage("SetHex(" + this.caption + "): " + hx + "," + hy);
+        this.hexX = hx;
+        this.hexY = hy;
+    }
+
+    void Click()
+    {
+        GMTDebugMessage("Click(" + this.caption + ")");
+        int found = 0;
+
+        // check for NOHIDE children
+        if(FLAG(this.ContextFlags, GMT_BUTTON_SUBMENU) &&
+           FLAG(this.ContextFlags, GMT_BUTTON_NOHIDE))
+            found = 1;
+
+        if(found == 0)
+        {
+            // remove old submenu, resize screen
+            for(uint i = 0; i < GMTmenu.buttons.length(); i++)
+            {
+                if(FLAG(GMTmenu.buttons[i].ContextFlags, GMT_BUTTON_SUBMENU) && GMTmenu.buttons[i].IsVisible())
+                {
+                    GMTmenu.buttons[i].Hide();
+                    GMTmenu.buttons[i].Disable();
+                }
+                else if(GMTmenu.buttons[i].RawCommand == "internal menu" && GMTmenu.buttons[i].IsVisible())
+                    GMTmenu.buttons[i].Enable();
+            }
+            GMTmenu.screen.Size(GMTmenu.Width(), GMTmenu.arranged * 30);
+            GMTmenu.Update();
+        }
+        if(this.RawCommand == "internal menu" && (GMTmenu.buttons.length() > ID + 1))
+        {
+            // show submenu
+            if(FLAG(this.ContextFlags, GMT_BUTTON_SUBMENU))
+            {
+                Message("GM Tools: Menu: WARN: multi-submenus not implemented (yet?)");
+                return;
+            }
+
+            // GMTDebugMessage( "Click(): Searching for submenu" );
+            for(uint j = ID + 1; j < GMTmenu.buttons.length(); j++)
+            {
+                if(FLAG(GMTmenu.buttons[j].ContextFlags, GMT_BUTTON_SUBMENU))
+                {
+                    GMTmenu.buttons[j].Enable();
+                    GMTmenu.buttons[j].Show(this.Width(), this.top + (found * 30));
+                    GMTDebugMessage(" Show(" + GMTmenu.buttons[j].caption + "): " + this.Width() + "," + (this.top + (found * 30)));
+
+                    GMTmenu.buttons[j].critter      = this.critter;
+                    GMTmenu.buttons[j].item         = this.item;
+                    GMTmenu.buttons[j].hexX         = this.hexX;
+                    GMTmenu.buttons[j].hexY         = this.hexY;
+                    GMTmenu.buttons[j].Update();
+                    found += 1;
+                }
+                else
+                {
+                    GMTDebugMessage(" Invalid: " + GMTmenu.buttons[j].caption);
+                    break;
+                }
+            }
+            if(found > 0)
+            {
+                this.Disable();
+                GMTmenu.screen.Size(
+                    GMTmenu.title.Width() * 2,
+                    (
+                        (this.top + (found * 30) > (GMTmenu.arranged * 30))
+                        ? (this.top + (found * 30))
+                        : (GMTmenu.arranged * 30)
+                    )
+                    );
+                GMTmenu.Update();
+            }
+        }
+        else
+        {
+            /*
+               #ifdef __DEBUG__
+               if( this.critter > 0 )
+                    Message( "Click(critter): "+this.critter );
+               if( this.item > 0 )
+                    Message( "Click(item): "+this.item );
+               if( (this.hexX + this.hexY) >= 2 )
+                    Message( "Click(hex): "+this.hexX+","+this.hexY );
+
+               Message( "Click(rawCommand): "+this.RawCommand );
+               #endif
+             */
+
+            SendCommand(this.RawCommand, this.critter, this.item, this.hexX, this.hexY);
+        }
+
+        if(!FLAG(this.ContextFlags, GMT_BUTTON_NOHIDE) && (found == 0))
+            parent.HideWindow();
+    }
+};
+
+class CContextMenu : Window
+{
+    CButton@          title;
+    array<CButtonEx@> buttons;
+    int               arranged;
+
+    void Init()
+    {
+        visible = false;
+        int top = 0;
+        @title = CButton(0, top += 30, "<<Context>>");
+        title.Disable();
+        AddControl(@title);
+        for(uint i = 0; i < buttons.length(); i++)
+        {
+            AddControl(@buttons[i]);
+        }
+        arranged = 0;
+        Window::Init();
+    }
+
+    int Width() { return title.Width(); }
+
+    void OnShow()
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            controls[i].Hide();
+            controls[i].Disable();
+        }
+        arranged = 0;
+
+        uint       x = Left();
+        uint       y = Top();
+
+        CritterCl@ critter = GetMonitorCritter(x, y);
+        ItemCl@    item    = GetMonitorItem(x, y);
+        CritterCl@ chosen  = GetChosen();
+        uint16     hexX = 0;
+        uint16     hexY = 0;
+        GetMonitorHex(x, y, hexX, hexY);
+
+        title.Show();
+
+        for(uint i = 0; i < buttons.length(); i++)
+        {
+            buttons[i].Hide();
+            buttons[i].Disable();
+            buttons[i].critter = 0;
+            buttons[i].item = 0;
+            buttons[i].hexX = 0;
+            buttons[i].hexY = 0;
+
+            // critter context START
+            if(valid(critter))
+            {
+                if(critter.IsChosen())
+                    title.SetCaption("<<You: " + critter.Id + ">>");
+                else if(critter.IsPlayer())
+                    title.SetCaption("<<Player: " + critter.Id + ">>");
+                else
+                    title.SetCaption("<<" + (critter.Id - NPC_BASE_ID) + ">>");
+                // title.SetCaption("<<Critter>>");
+
+                // primary flags
+                if(critter.IsChosen() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ONCHOSEN))
+                {
+                    // GMTDebugMessage( "GMT:Menu: OnShow(): ONCHOSEN("+GMT_BUTTON_ONCHOSEN+"vs"+buttons[i].ContextFlags+"): "+buttons[i].caption );
+                    buttons[i].SetCritter(critter.Id);
+                    buttons[i].SetHex(hexX, hexY);
+                    buttons[i].Show();
+                }
+
+                if(critter.IsPlayer() && !critter.IsChosen() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ONPLAYER))
+                {
+                    buttons[i].SetCritter(critter.Id);
+                    buttons[i].SetHex(hexX, hexY);
+                    buttons[i].Show();
+                }
+
+                // secondary flags, shared
+                if(critter.IsNpc() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ONNPC))
+                {
+                    if((
+                           !(FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISPID))
+                           ||
+                           (FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISPID) &&
+                            buttons[i].ispid > 0 &&
+                            int(critter.Pid) == buttons[i].ispid)
+                           )
+                       // ) && (
+                       )
+                    {
+                        buttons[i].SetCritter(critter.Id);
+                        buttons[i].SetHex(hexX, hexY);
+                        buttons[i].Show();
+                    }
+                }
+
+                // secondary flags, critter
+                if(buttons[i].IsVisible())
+                {
+                    if(!critter.IsLife() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISALIVE))
+                        buttons[i].Hide();
+                    else if(!critter.IsKnockout() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISKNOCK))
+                        buttons[i].Hide();
+                    else if(critter.IsKnockout() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISNTKNOCK))
+                        buttons[i].Hide();
+                    else if(!critter.IsDead() && FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISDEAD))
+                        buttons[i].Hide();
+
+                }
+            }
+
+            // item context START
+            else if(valid(item) && item.GetType() != ITEM_TYPE_NONE && item.GetType() != ITEM_TYPE_GRID && item.GetType() != ITEM_TYPE_GENERIC)
+            {
+                title.SetCaption("<<Item>>");
+
+                if(FLAG(buttons[i].ContextFlags, GMT_BUTTON_ONITEM))
+                {
+                    if((
+                           (!FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISPID))
+                           ||
+                           (FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISPID) &&
+                            buttons[i].ispid > 0 &&
+                            int(item.GetProtoId()) == buttons[i].ispid)
+                           ) && (
+                           (!FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISCONTAINER))
+                           ||
+                           (FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISCONTAINER) &&
+                            item.GetType() == ITEM_TYPE_CONTAINER)
+                           )
+                       )
+                    {
+                        buttons[i].SetItem(item.Id);
+                        buttons[i].SetHex(hexX, hexY);
+                        buttons[i].Show();
+                    }
+                }
+            }
+
+            // ground context START
+            else
+            {
+                title.SetCaption("<<Hex>>");
+
+                if(FLAG(buttons[i].ContextFlags, GMT_BUTTON_ONGROUND))
+                {
+                    buttons[i].SetHex(hexX, hexY);
+                    buttons[i].Show();
+                }
+            }             // context END
+
+            // possess mode check
+            if(buttons[i].IsVisible() &&
+               FLAG(buttons[i].ContextFlags, GMT_BUTTON_ISPOSSESS) &&
+               GMToolsPossess() <= 0)
+                buttons[i].Hide();
+
+            buttons[i].Update();
+
+        }         // buttons loop END
+
+        int top = -30;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible())
+            {
+                controls[i].Enable();
+                controls[i].Show(0, top += 30);
+                arranged++;
+            }
+        }
+
+        title.Disable();
+        // GMTDebugMessage("Arranged: "+arranged+"/"+controls.length()+" controls" );
+        screen.Size(Width(), top + 30);
+    }
+
+    Window@ AddButton(string caption, int context_flags, int ispid, string command)
+    {
+        CButtonEx@ new = CButtonEx(caption, context_flags, ispid, command);
+        buttons.insertLast(@new);
+        buttons[buttons.length() - 1].ID = buttons.length() - 1;
+
+        return this;
+    }
+};
+#endif /* GMTOOLS_CONFIG_ENABLED */
+#endif /* __CLIENT_GMTOOLS_MENU__ */

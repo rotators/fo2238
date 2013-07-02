@@ -1,0 +1,2119 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_interface.fos
+//
+
+#ifndef __CLIENT_INTERFACE__
+#define __CLIENT_INTERFACE__
+
+#include "_client_defines.fos"
+#include "_client_maps.fos"
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "_basetypes.fos"
+
+#include "buffer_h.fos"
+#include "client_gui_h.fos"
+#include "groups_h.fos"
+#include "lexems_h.fos"
+#include "MsgStr.h"
+#include "polygon_h.fos"
+#include "polygon_towns.fos"
+#include "prod_ingredients_h.fos"
+
+#include "client_smart_cursor_h.fos"
+
+/*
+   GMT MARK : add
+   #include "client_gmtools_h.fos"
+   #include "client_screens_h.fos"
+ */
+#include "client_interface_h.fos"
+
+#include "combat_h.fos"
+
+#include "item_dogtags_h.fos"
+
+import void DrawAchievements() from "achievements";
+
+import void BroadcastDraw() from "client_broadcast";
+
+import void changedParam_Hide(CritterCl& cr, uint, int oldValue) from "parameters";
+import void CutsceneDraw() from "client_cutscene";
+
+import void DrawChosenTabs() from "chosen_tabs";
+
+import bool IsPossessMode() from "client_dev_menu";
+import bool IsAuthorized() from "client_dev_menu";
+
+// GMT MARK : remove
+import bool GMToolsAccess() from "client_gmtools";
+import void GMToolsDraw(uint layer, int mouseX, int mouseY) from "client_gmtools";
+import bool IsGMTEnabled() from "client_main";
+#define IsGM    IsGMTEnabled() && GMToolsAccess
+
+import uint8 GetCurrentAim() from "client_keybinds";
+
+import void TimeoutsDraw() from "client_timeouts";
+
+import void ColorizeCritter(CritterCl& cr) from "name_colorizing";
+
+import void SetRepairPid(uint16 pid) from "client_main";
+import void SetRepairItem(uint id) from "client_main";
+
+import string@ CritterDescription_Get(uint description1, uint description2) from "critter_description";
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+import void RenderThrowing() from "throwing";
+
+import void DrawFog() from "client_fov";
+
+#ifdef GUI_REWORK
+import void GUI_Draw() from "gui/main";
+#endif
+
+class CDialogImage
+{
+    int x;
+    int y;
+    int sprite;
+
+    CDialogImage()
+    {
+        DMessage("DialogImage::Constructor");
+        this.Unset();
+    }
+
+    void Set(int x, int y, string& image)
+    {
+        this.x = x;
+        this.y = y;
+        this.sprite = LoadSprite(image, int(PT_ART));
+        DMessage("DialogImage::Set: " + x + "," + y + "," + image + " = " + this.sprite);
+    }
+
+    void Unset()
+    {
+        this.x = -1;
+        this.y = -1;
+        this.sprite = -1;
+        DMessage("DialogImage::Unset");
+    }
+
+    bool Exists()
+    {
+        if(this.x < 0)
+            return(false);
+        if(this.y < 0)
+            return(false);
+        if(this.sprite <= 0)
+            return(false);
+
+        return(true);
+    }
+
+    void Draw()
+    {
+        int screen = GUI_GetActiveScreen();
+        if(screen != CLIENT_SCREEN_DIALOG)
+            return;
+
+        int dX = 0, dY = 0;
+        GetHardcodedScreenPos(screen, dX, dY);
+
+        #ifdef __DEBUG__
+        DrawText("DialogImage::Draw sprite=" + this.sprite + " x=" + this.x + " y=" + this.y + " screen=" + screen + " screenX=" + dX + " screenY=" + dY + " imageX=" + (dX + this.x) + " imageY=" + (dY + this.y),
+                 0, 0, __ScreenWidth, 10, COLOR_TEXT, FONT_FALLOUT, FT_CENTERXY);
+        DrawText("RightControl+arrows - change position, 'x' and 'y' is to use in dialog",
+                 0, 10, __ScreenWidth, 10, COLOR_TEXT, FONT_FALLOUT, FT_CENTERXY);
+        #endif
+
+        DrawSprite(this.sprite, 0, dX + this.x, dY + this.y, 0);
+    }
+};
+CDialogImage DialogImage;
+
+class        CWorldmapElement
+{
+    int    id;
+    uint   layer;
+    uint   x;
+    uint   y;
+    uint   width;
+    uint   height;
+    uint   color;
+
+    Sprite sprite;
+    bool   scratch;
+    bool   center;
+    bool   applyOffset;
+
+    string text;
+    int    font;
+    int    flags;
+
+    CWorldmapElement(int id, uint layer)
+    {
+        this.id = id;
+        this.layer = layer;
+        this.x = 0;
+        this.y = 0;
+        this.width = 0;
+        this.height = 0;
+        this.color = 0;
+    }
+
+    void SetSprite(Sprite& sprite, bool scratch, bool center, bool applyOffset)
+    {
+        this.text = "";
+
+        this.sprite = sprite;
+        this.scratch = scratch;
+        this.center = center;
+        this.applyOffset = applyOffset;
+    }
+
+    void SetText(string& text, int font, int flags)
+    {
+        Sprite nul;
+        this.sprite = nul;
+
+        this.text = text;
+        this.font = font;
+        this.flags = flags;
+    }
+
+    void Draw(uint layer)
+    {
+        if(this.layer == layer)
+        {
+            if(this.sprite.Id > 0)
+                DrawSprite(this.sprite.Id, -1, this.x / __GmapZoom + __GmapOffsetX, this.y / __GmapZoom + __GmapOffsetY, (this.width == 0 ? this.sprite.Width : this.width) / __GmapZoom, (this.height == 0 ? this.sprite.Height : this.height) / __GmapZoom, this.scratch, this.center, this.color, this.applyOffset);
+            if(this.text.length() > 0)
+                DrawText(this.text, this.x / __GmapZoom + __GmapOffsetX, this.y / __GmapZoom + __GmapOffsetY, this.width, this.height, this.color, this.font, this.flags);
+        }
+    }
+};
+array<CWorldmapElement@> WorldmapElements;
+
+class                    CTempWorldmapElement : CWorldmapElement
+{
+    uint expirationTime;
+    CTempWorldmapElement(int id, uint layer, uint expirationTime)
+    {
+        super(id, layer);
+        this.expirationTime = expirationTime;
+    }
+
+    bool IsExpired()
+    {
+        return ELAPSED_TIME >= expirationTime;
+    }
+};
+array<CTempWorldmapElement@> TempWorldmapElements;
+
+
+void unsetall_location_combatzone(int, int, int, string@, array<int>@)
+{
+    TempWorldmapElements.resize(0);
+}
+
+void location_combatzone(int id, int layer, int expiration, string@, array<int>@ coords)
+{
+    CTempWorldmapElement@ element;
+
+    bool                  found = false;
+    for(uint e = 0, elen = TempWorldmapElements.length(); e < elen; e++)
+    {
+        if(TempWorldmapElements[e].id == id)
+        {
+            if(layer < 0)
+            {
+                TempWorldmapElements.removeAt(e);
+                return;
+            }
+            @element = TempWorldmapElements[e];
+            found = true;
+            break;
+        }
+    }
+
+    if(layer < 0)
+        return;
+    if(!found)
+    {
+        @element = CTempWorldmapElement(id, layer, uint(expiration));
+        Sprite sprite;
+        sprite.Load("combat_zone.png", int(PT_ART_INTRFACE));
+        element.SetSprite(sprite, true, true, true);
+    }
+
+    if(!valid(coords) || coords.length() < 3)
+        return;
+
+    element.x = coords[0] - coords[2];
+    element.y = coords[1] - coords[2];
+    element.width = coords[2] * 2;
+    element.height = coords[2] * 2;
+
+
+    if(!found)
+        TempWorldmapElements.insertLast(element);
+}
+
+void worldmap_element(int id, int layer, int type, string@, array<int>@ data)
+{
+    CWorldmapElement@ element;
+
+    bool              found = false;
+    for(uint e = 0, elen = WorldmapElements.length(); e < elen; e++)
+    {
+        if(WorldmapElements[e].id == id)
+        {
+            if(layer < 0)
+            {
+                WorldmapElements.removeAt(e);
+                return;
+            }
+            @element = WorldmapElements[e];
+            found = true;
+            break;
+        }
+    }
+    if(layer < 0)
+        return;
+    if(!found)
+    {
+        @element = CWorldmapElement(id, layer);
+    }
+
+    if(!valid(data) || data.length() == 0)
+        return;
+
+    Buffer@ buff = NewBuffer(data);
+    buff >> element.x >> element.y >> element.width >> element.height >> element.color;
+
+    if(type == 1)         // sprite
+    {
+        Sprite sprite;
+
+        string spriteName = "";
+        int    spritePath = 0;
+        bool   scratch = false;
+        bool   center = false;
+        bool   applyOffset = false;
+
+        buff >> spriteName >> spritePath >> scratch >> center >> applyOffset;
+
+        if(spriteName.length() > 0 && sprite.Load(spriteName, spritePath))
+        {
+            element.SetSprite(sprite, scratch, center, applyOffset);
+        }
+        else
+            return;
+    }
+    else if(type == 2)         // text
+    {
+        string text = "";
+        int    font = 0;
+        int    flags = 0;
+
+        buff >> text >> font >> flags;
+
+        if(text.length() > 0)
+        {
+            element.SetText(text, font, flags);
+        }
+        else
+            return;
+    }
+    else
+        return;
+
+    if(!found)
+        WorldmapElements.insertLast(element);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Say to engine what screen is active.
+void get_active_screens(array<int>& result)
+{
+    GUI_GetActiveScreens(result);
+}
+
+bool recheckDialogImage = false;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Show/hide screen behaviour.
+void screen_change(bool show, int screen, int p0, int p1, int p2)
+{
+    if(DialogImage.Exists() && recheckDialogImage &&
+       show && screen != CLIENT_SCREEN_DIALOG &&
+       !(screen == CLIENT_SCREEN_BARTER || screen == CLIENT_SCREEN_SAY))
+    {
+        DialogImage.Unset();
+        recheckDialogImage = false;
+    }
+
+    if(!show && DialogImage.Exists() && screen == CLIENT_SCREEN_DIALOG)
+    {
+        recheckDialogImage = true;
+    }
+
+    if(show)
+        GUI_ShowScreen(screen, p0, p1, p2);
+    else
+        GUI_HideScreen(screen, p0, p1, p2);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Render interface function. You can use Draw* functions only there.
+// Layer specification:
+//    0
+// Game map, Global map, Login, Registration, Credits, Wait
+//    1
+// Game interface
+//    2
+// Console, Messbox
+//    3
+// Inventory, PickUp, MiniMap, Dialog/Barter, PipBoy, FixBoy, Options menu, Character, Aim
+// Split, Timer, DialogBox, Elevator, Say, Character name, Character age, Character sex, Global map town, InputBox, SkillBox, Use, Perk
+//    4
+// PopUp menu, Cursor
+//    5
+
+void render_iface(uint layer)
+{
+    uint sc = GUI_GetActiveScreen();
+
+    /* GMT MARK : add
+       if( IsGM() )
+       {
+            IGMT@ gmt = GMT();
+            if( valid(gmt) )
+                    gmt.Draw( layer );
+       }
+     */
+
+    if(layer == 1)
+    {
+        if(__ConfigDisplayTCZones > 0)
+            DrawArea(GetCurrentMapPid(), __ConfigDisplayTCZones);
+        DrawFog();
+    }
+
+    if(layer == 2 && !__GmapActive)
+    {
+        if(InterfaceShown)
+            DrawIndicators();
+        RenderThrowing();
+        TryDrawSmartCursor();
+    }
+
+    if(layer == 3)
+    {
+        if(IsPossessMode())
+            DrawText("Possess mode on", 0, 0, __ScreenWidth, 20, 0, FONT_FALLOUT, FT_CENTERX | FT_CENTERY | FT_BORDERED);
+
+        TimeoutsDraw();
+
+        // GMT MARK : remove
+        if(IsGMTEnabled() && GMToolsAccess())
+            GMToolsDraw(layer, __MouseX, __MouseY);
+
+        if(sc == CLIENT_MAIN_SCREEN_GAME && GetCurrentAim() != HIT_LOCATION_UNCALLED)
+            DrawText("Aimed: " + GetMsgStr(TEXTMSG_COMBAT, 1109 + GetCurrentAim()), 10, 40, __ScreenWidth, 20, COLOR_GREEN, FONT_FALLOUT, FT_CENTERY | FT_BORDERED);
+
+        #ifdef __DEBUG__
+        if(sc == CLIENT_MAIN_SCREEN_REGISTRATION)
+            DrawText("" + __MouseX + "," + __MouseY, __MouseX + 25, __MouseY + 25, 60, 10, 0, FONT_FALLOUT, 0);
+        #endif
+        if((sc == CLIENT_MAIN_SCREEN_GAME || sc == CLIENT_MAIN_SCREEN_GLOBAL_MAP || ((sc > 9) && (sc < 46))))
+        {
+            BroadcastDraw();
+            CutsceneDraw();
+        }
+
+        if(sc == CLIENT_MAIN_SCREEN_GAME && IsAuthorized())
+        {
+            uint16 hx = 0;
+            uint16 hy = 0;
+            if(GetMonitorHex(__MouseX, __MouseY, hx, hy))
+                DrawText("" + hx + ", " + hy, 0, 0, __ScreenWidth, 20, COLOR_TEXT, FONT_FALLOUT, FT_CENTERR);
+            CritterCl@ cr = GetMonitorCritter(__MouseX, __MouseY);
+            if(valid(cr))
+                DrawText("Critter> id: " + cr.Id + ", pid: " + cr.Pid, 0, 10, __ScreenWidth, 20, COLOR_TEXT, FONT_FALLOUT, FT_CENTERR);
+            ItemCl@ item = GetMonitorItem(__MouseX, __MouseY);
+            if(valid(item))
+                DrawText("Item> pid: " + item.GetProtoId() + "x,y: " + item.HexX + ", " + item.HexY, 0, 20, __ScreenWidth, 20, COLOR_TEXT, FONT_FALLOUT, FT_CENTERR);
+        }
+
+        if(__ConfigAwareness)
+        {
+            CritterCl@ chosen = GetChosen();
+            if(valid(chosen) && chosen.Perk[PE_AWARENESS] != 0)
+            {
+                CritterCl@ cr = GetMonitorCritter(__MouseX, __MouseY);
+                if(valid(cr))
+                {
+                    int dy = -8;
+                    if(cr.IsDead())
+                    {
+                        DrawText("Dead", __MouseX + 15, __MouseY + dy, __ScreenWidth, 20, COLOR_DARK, FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+                    }
+                    else
+                    {
+                        ItemCl@ item = cr.GetItem(0, SLOT_HAND1);
+                        string  _item = "Unarmed";
+                        if(valid(item))
+                        {
+                            if(IsLexem(item, "$-"))
+                                _item = GetLexem(item, "$-");
+                            else
+                                _item = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item));
+                        }
+                        DrawText(_item, __MouseX + 15, __MouseY + dy, __ScreenWidth, 20, (valid(item) && item.GetType() == ITEM_TYPE_WEAPON) ? COLOR_TEXT : COLOR_GRAY, FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+                        dy -= 10;
+
+                        ItemCl@ armor = cr.GetItem(0, SLOT_ARMOR);
+                        ItemCl@ helmet = cr.GetItem(0, SLOT_HEAD);
+                        if(cr.IsPlayer() || cr.Stat[ST_BODY_TYPE] == BT_MEN   || cr.Stat[ST_BODY_TYPE] == BT_WOMEN || cr.Stat[ST_BODY_TYPE] == BT_CHILDREN ||
+                           cr.Stat[ST_BODY_TYPE] == BT_GHOUL || cr.Stat[ST_BODY_TYPE] == BT_SUPER_MUTANT ||
+                           valid(armor) || valid(helmet))
+                        {
+                            string _armor = "No armor";
+                            if(valid(armor))
+                            {
+                                if(IsLexem(armor, "$-"))
+                                    _armor = GetLexem(armor, "$-");
+                                else
+                                    _armor = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(armor));
+                            }
+                            string _helmet = "No helmet";
+                            if(valid(helmet))
+                            {
+                                if(IsLexem(helmet, "$-"))
+                                    _helmet = GetLexem(helmet, "$-");
+                                else
+                                    _helmet = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(helmet));
+                            }
+                            DrawText(_armor, __MouseX + 15, __MouseY + dy, __ScreenWidth, 20, valid(armor) && armor.GetType() == ITEM_TYPE_ARMOR ? COLOR_TEXT : COLOR_GRAY, FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+                            dy -= 10;
+                            DrawText(_helmet, __MouseX + 15, __MouseY + dy, __ScreenWidth, 20, valid(helmet) && helmet.GetType() == ITEM_TYPE_ARMOR ? COLOR_TEXT : COLOR_GRAY, FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+                            dy -= 10;
+                        }
+                        int curHp = cr.Stat[ST_CURRENT_HP];
+                        int maxHp = cr.Stat[ST_MAX_LIFE];
+                        DrawText(curHp + "/" + maxHp + (_CritIsInjured(cr) ? ", injured" : ""), __MouseX + 15, __MouseY + dy, __ScreenWidth, 20, cr.IsDead() ? COLOR_BLACK : (curHp < 1 ? COLOR_GRAY : COLOR_RGB(0xff - (0xff * curHp) / maxHp, (0xff * curHp) / maxHp, 0)), FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+                    }
+                }
+            }
+
+        }
+
+        GUI_Render();
+
+        #ifdef GUI_REWORK
+        GUI_Draw();
+        #endif
+
+        if(sc == CLIENT_SCREEN_DIALOG && DialogImage.Exists())
+            DialogImage.Draw();
+
+        DrawChosenTabs();
+
+        DrawAchievements();         // should be last
+    }
+
+    if((layer == 100 || layer == 101) && __GmapActive)
+    {
+        // Here you can draw on global map
+
+        // bool  __GmapActive - активна ли глобальная карта и все ли следующие нижеприведенные переменные корректны;
+        // bool  __GmapWait   - включен режим ожидания ответа о подтверждении энкаунтера;
+        // float __GmapZoom   - текущий масштаб, не забывайте учитывать его при рисовании на карте;
+        // int   __GmapOffsetX/Y   - смещение карты от нулевой координаты (верхний-левый угол);
+        // int   __GmapGroupCurX/Y - координаты группы игрока;
+        // int   __GmapGroupToX/Y  - координаты точки назначения;
+        // float __GmapGroupSpeed  - текущая скорость передвижения.
+        //
+        // x = __GmapGroupCurX / __GmapZoom + __GmapOffsetX
+        // y = __GmapGroupCurY / __GmapZoom + __GmapOffsetY.
+
+        // from worldmap_h.fos
+        for(uint e = 0, elen = WorldmapElements.length(); e < elen; e++)
+        {
+            WorldmapElements[e].Draw(layer);
+        }
+        CritterCl@ chosen = GetChosen();
+        if(valid(chosen) && chosen.Timeout[TO_SLEEPY] > 0)
+        {
+            for(uint e = 0, elen = TempWorldmapElements.length(); e < elen; e++)
+            {
+                if(TempWorldmapElements[e].IsExpired())
+                {
+                    TempWorldmapElements.removeAt(e);
+                    e--;
+                    continue;
+                }
+                TempWorldmapElements[e].Draw(layer);
+            }
+        }
+    }
+}
+
+#define _DescHead    ((ELAPSED_TIME / REAL_SECOND(3)) % 2 == 1)
+
+bool render_iface_screen(uint screen)
+{
+    // placeholder
+    return(true);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Generic description. Descriptions type look in _client_defines.fos, Generic descriptions types.
+// int& offsX, int& offsY - offsets of text, by default is zero.
+string generic_description(int descType, int& offsX, int& offsY)
+{
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return "";
+    string result;
+
+    if(descType == DESC_INVENTORY_MAIN)
+    {
+        result += chosen.Name + "\n";
+        result += "---------------------\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_STRENGTH)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_PERCEPTION)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_ENDURANCE)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_CHARISMA)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_INTELLECT)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_AGILITY)) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_SHORT_SPECIAL(ST_LUCK)) + "\n";
+        result += "\n\n---------------------\n";
+
+        ItemCl@ weaponMain = chosen.GetItem(0, SLOT_HAND1);
+        if(valid(weaponMain))
+        {
+            int use = _WeaponModeUse(weaponMain.Mode);
+            if(use > 2)
+                use = 0;
+
+            string _name = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(weaponMain));
+            if(IsLexem(weaponMain, "$-"))
+                _name = GetLexem(weaponMain, "$-");
+            result += _name + "\n";
+
+            if(weaponMain.GetType() == ITEM_TYPE_WEAPON)
+            {
+                int nfix = 2;
+                result += GetMsgStr(TEXTMSG_GAME, STR_INV_DMG) + " ";
+                result += _WeaponDmgMin(weaponMain.Proto, use) + "-";
+                int wpnMaxDmg = _WeaponDmgMax(weaponMain.Proto, use);
+                if(_WeaponIsHtHAttack(weaponMain.Proto, use))
+                    wpnMaxDmg += chosen.Stat[ST_MELEE_DAMAGE];
+                result += wpnMaxDmg;
+
+                if(_WeaponMaxDist(weaponMain.Proto, use) > 1)
+                {
+                    result += " " + GetMsgStr(TEXTMSG_GAME, STR_INV_DIST) + " ";
+                    int wpnMaxDist = _WeaponMaxDist(weaponMain.Proto, use);
+                    if(_WeaponSkill(weaponMain.Proto, use) == SK_THROWING)
+                    {
+                        wpnMaxDist = MIN(wpnMaxDist, 3 * MIN(int(10), chosen.Stat[ST_STRENGTH]));
+                        wpnMaxDist += 3 * (chosen.Perk[PE_HEAVE_HO] + chosen.Perk[PE_HEAVE_HO_II]);
+                    }
+                    result += wpnMaxDist + "\n";
+                    nfix--;
+                }
+
+                if(weaponMain.Proto.Weapon_MaxAmmoCount > 0)
+                {
+                    result += GetMsgStr(TEXTMSG_GAME, STR_INV_AMMO) + " ";
+                    result += weaponMain.AmmoCount + "/";
+                    result += weaponMain.Proto.Weapon_MaxAmmoCount + " ";
+                    result += GetMsgStr(TEXTMSG_GAME, STR_CALIBER(weaponMain.Proto.Weapon_Caliber));
+                    result += "\n";
+                    nfix--;
+                }
+                else if(weaponMain.IsStackable() && weaponMain.GetCount() > 1 &&
+                        nfix >= 1)
+                {
+                    result += "Amount: " + weaponMain.GetCount() + "\n";
+                    nfix--;
+                }
+                for(int n = 0; n < nfix; n++)
+                    result += "\n";
+            }
+            else
+            {
+                if(weaponMain.IsStackable() && weaponMain.GetCount() > 1)
+                    result += "Amount: " + weaponMain.GetCount() + "\n";
+                else if(weaponMain.Proto.Misc_ChargeMax > 0)
+                    result += "Charges: " + weaponMain.Charge + "/" + weaponMain.Proto.Misc_ChargeMax + "\n";
+                else
+                    result += "\n";
+
+                result += "\n";
+            }
+        }
+        else
+        {
+            // Unarmed
+            uint8      mode = 0;
+            ProtoItem@ unarmed = chosen.GetSlotProto(SLOT_HAND1, mode);
+            result += GetMsgStr(TEXTMSG_GAME, STR_INV_NO_ITEM) + "\n";
+            result += GetMsgStr(TEXTMSG_GAME, STR_INV_UNARMED_DMG) + " ";
+            result += _WeaponDmgMin(unarmed, _WeaponModeUse(mode)) + "-";
+            result += (_WeaponDmgMax(unarmed, _WeaponModeUse(mode)) + chosen.Stat[ST_MELEE_DAMAGE]);
+            result += "\n\n";
+        }
+        result += "---------------------\n";
+
+        ItemCl@ weaponExt = chosen.GetItem(0, SLOT_HAND2);
+        if(valid(weaponExt))
+        {
+            int use = _WeaponModeUse(weaponExt.Mode);
+            if(use > 2)
+                use = 0;
+
+            string _name = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(weaponExt));
+            if(IsLexem(weaponExt, "$-"))
+                _name = GetLexem(weaponExt, "$-");
+            result += _name + "\n";
+
+            if(weaponExt.GetType() == ITEM_TYPE_WEAPON)
+            {
+                int nfix = 2;
+                result += GetMsgStr(TEXTMSG_GAME, STR_INV_DMG) + " ";
+                result += _WeaponDmgMin(weaponExt.Proto, use) + "-";
+                int wpnMaxDmg = _WeaponDmgMax(weaponExt.Proto, use);
+                if(_WeaponIsHtHAttack(weaponExt.Proto, use))
+                    wpnMaxDmg += chosen.Stat[ST_MELEE_DAMAGE];
+                result += wpnMaxDmg;
+                if(_WeaponMaxDist(weaponExt.Proto, use) > 1)
+                {
+                    result += " " + GetMsgStr(TEXTMSG_GAME, STR_INV_DIST) + " ";
+                    int wpnMaxDist = _WeaponMaxDist(weaponExt.Proto, use);
+                    if(_WeaponSkill(weaponExt.Proto, use) == SK_THROWING)
+                    {
+                        wpnMaxDist = MIN(wpnMaxDist, 3 * MIN(int(10), chosen.Stat[ST_STRENGTH]));
+                        wpnMaxDist += 3 * (chosen.Perk[PE_HEAVE_HO] + chosen.Perk[PE_HEAVE_HO_II]);
+                    }
+                    result += wpnMaxDist + "\n";
+                    nfix--;
+                }
+
+                if(weaponExt.Proto.Weapon_MaxAmmoCount > 0)
+                {
+                    result += GetMsgStr(TEXTMSG_GAME, STR_INV_AMMO) + " ";
+                    result += weaponExt.AmmoCount + "/";
+                    result += weaponExt.Proto.Weapon_MaxAmmoCount + " ";
+                    result += GetMsgStr(TEXTMSG_GAME, STR_CALIBER(weaponExt.Proto.Weapon_Caliber));
+                    result += "\n";
+                    nfix--;
+                }
+                else if(weaponExt.IsStackable() && weaponExt.GetCount() > 1 &&
+                        nfix >= 1)
+                {
+                    result += "Amount: " + weaponExt.GetCount() + "\n";
+                    nfix--;
+                }
+                for(int n = 0; n < nfix; n++)
+                    result += "\n";
+            }
+            else             // !ITEM_TYPE_WEAPON
+            {
+                if(weaponExt.IsStackable() && weaponExt.GetCount() > 1)
+                    result += "Amount: " + weaponExt.GetCount() + "\n";
+                else if(weaponExt.Proto.Misc_ChargeMax > 0)
+                    result += "Charges: " + weaponExt.Charge + "/" + weaponExt.Proto.Misc_ChargeMax + "\n";
+                else
+                    result += "\n";
+
+                result += "\n";
+            }
+        }
+        else
+        {
+            // Unarmed
+            uint8      mode = 0;
+            ProtoItem@ unarmed = chosen.GetSlotProto(SLOT_HAND2, mode);
+            result += GetMsgStr(TEXTMSG_GAME, STR_INV_NO_ITEM) + "\n";
+            result += GetMsgStr(TEXTMSG_GAME, STR_INV_UNARMED_DMG) + " ";
+            result += _WeaponDmgMin(unarmed, _WeaponModeUse(mode)) + "-";
+            result += (_WeaponDmgMax(unarmed, _WeaponModeUse(mode)) + chosen.Stat[ST_MELEE_DAMAGE]);
+            result += "\n\n";
+        }
+
+        result += "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_TOTAL_WEIGHT) + " ";
+        result += chosen.ItemsWeight() / 1000 + "/";
+        result += chosen.Stat[ST_CARRY_WEIGHT] / 1000 + ".";
+    }
+    else if(descType == DESC_INVENTORY_SPECIAL)
+    {
+        offsX = 23;
+        result += "\n\n";
+        result += chosen.Stat[ST_STRENGTH] + "\n";
+        result += chosen.Stat[ST_PERCEPTION] + "\n";
+        result += chosen.Stat[ST_ENDURANCE] + "\n";
+        result += chosen.Stat[ST_CHARISMA] + "\n";
+        result += chosen.Stat[ST_INTELLECT] + "\n";
+        result += chosen.Stat[ST_AGILITY] + "\n";
+        result += chosen.Stat[ST_LUCK];
+    }
+    else if(descType == DESC_INVENTORY_STATS)
+    {
+        offsX = 39;
+        result += "\n\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_HP) + " ";
+        result += chosen.Stat[ST_CURRENT_HP] + "/" + chosen.Stat[ST_MAX_LIFE] + "\n";
+        if(_DescHead)
+            result += "Headgear:\n";
+        else
+            result += "Body Armor:\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_AC) + " ";
+        result += chosen.GetAC(_DescHead) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_NORMAL) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_LASER) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_FIRE) + "\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_PLASMA) + "\n";
+        result += "  Electro\n";
+        result += GetMsgStr(TEXTMSG_GAME, STR_INV_EXPLODE);
+    }
+    else if(descType == DESC_INVENTORY_RESIST)
+    {
+        offsX = 103;
+        result += "\n\n\n\n\n";
+        result += chosen.GetDT(DAMAGE_NORMAL, _DescHead) + "/" + chosen.GetDR(DAMAGE_NORMAL, _DescHead) + "%\n";
+        result += chosen.GetDT(DAMAGE_LASER, _DescHead) + "/" + chosen.GetDR(DAMAGE_LASER, _DescHead) + "%\n";
+        result += chosen.GetDT(DAMAGE_FIRE, _DescHead) + "/" + chosen.GetDR(DAMAGE_FIRE, _DescHead) + "%\n";
+        result += chosen.GetDT(DAMAGE_PLASMA, _DescHead) + "/" + chosen.GetDR(DAMAGE_PLASMA, _DescHead) + "%\n";
+        result += chosen.GetDT(DAMAGE_ELECTR, _DescHead) + "/" + chosen.GetDR(DAMAGE_ELECTR, _DescHead) + "%\n";
+        result += chosen.GetDT(DAMAGE_EXPLODE, _DescHead) + "/" + chosen.GetDR(DAMAGE_EXPLODE, _DescHead) + "%";
+    }
+
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Item description. Look types look in _client_defines.fos, Item look types.
+string item_description(ItemCl& item, int lookType)
+{
+    CritterCl@ chosen = GetChosen();
+
+    // Default error text
+    if(!IsMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item) + (lookType != ITEM_LOOK_ONLY_NAME ? 1 : 0)))
+    {
+        if(!IsLexem(item, "$-"))
+            return(GetMsgStr(TEXTMSG_GAME, STR_ITEM_LOOK_NOTHING));
+    }
+
+    string result;
+
+    // Car on world map
+    if(lookType == ITEM_LOOK_WM_CAR)
+    {
+        string fuel = GetMsgStr(TEXTMSG_GAME, STR_INV_CAR_FUEL);
+        fuel = ReplaceText(fuel, "VALUE", item.Charge / 100);
+        fuel = ReplaceText(fuel, "MAX_VALUE", _CarGetFuelTank(item) / 100);
+        string wear = GetMsgStr(TEXTMSG_GAME, STR_INV_CAR_DETERIORATION);
+        wear = ReplaceText(wear, "VALUE", item.Deterioration * 100 / _CarGetMaxDeterioration(item));
+        result = fuel + "\n" + wear;
+    }
+    // Short info
+    else if(lookType == ITEM_LOOK_ONLY_NAME)
+    {
+        string _name = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item));
+        if(IsLexem(item, "$-"))
+            _name = GetLexem(item, "$-");
+        result += ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_ITEM_LOOK), "NAME", _name);
+        // Message("!"+GUI_GetActiveScreen());
+        if(GUI_GetActiveScreen() == CLIENT_SCREEN_USE)
+        {
+            uint8  brokenCount = item.BrokenCount;
+            uint16 wearCount = item.Deterioration;
+            result += " ";
+            result += ReplaceText(ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_PROCENT), "VALUE", 100 - wearCount * 100 / MAX_DETERIORATION), "MAXVALUE", 100 - brokenCount);
+        }
+    }
+    // Full info
+    else
+    {
+        if(lookType == ITEM_LOOK_INVENTORY)
+        {
+            string _name = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item));
+            if(IsLexem(item, "$-"))
+                _name = GetLexem(item, "$-");
+            result += _name + "\n";
+        }
+
+        if(item.GetProtoId() == PID_HOLODISK && item.HolodiskNumber != 0)
+            result += GetMsgStr(TEXTMSG_HOLO, STR_HOLO_INFO_NAME(item.HolodiskNumber));
+        else if(item.GetProtoId() == PID_DOGTAGS)
+        {
+            bool full = false;
+            if(lookType == ITEM_LOOK_INVENTORY &&
+               _DogTagType(item) != DT_TYPE_BLANK &&
+               IsLexem(item, "$owner") &&
+               IsLexem(item, "$info"))
+                full = true;
+            if(full)
+                result += GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item) + 1);
+            else
+                result += GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item) + 2);
+
+            stringReplaceText(result, "\\n", "\n");
+            string type = "blank";
+            switch(_DogTagType(item))
+            {
+            case DT_TYPE_MILITARY:
+                type = "military";
+                break;
+            case DT_TYPE_CUSTOM:
+                type = "custom-made";
+                break;
+            }
+            stringReplaceText(result, "TYPE", type);
+        }
+        else
+        {
+            string _description = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item) + 1);
+            if(IsLexem(item, "$~"))
+                _description = GetLexem(item, "$~");
+
+            result += _description;
+
+            if(IsLexem(item, "$+"))
+                result += "\n" + GetLexem(item, "$+");
+        }
+
+        if(lookType != ITEM_LOOK_MAP)
+        {
+            result += "\n";
+
+            if(item.GetType() == ITEM_TYPE_WEAPON)
+            {
+                // Ammo load
+                if(item.Proto.Weapon_MaxAmmoCount > 0)
+                {
+                    result += "\n";
+                    string str = GetMsgStr(TEXTMSG_GAME, STR_INV_HAS_SHOTS);
+                    str = ReplaceText(str, "VALUE", item.AmmoCount);
+                    str = ReplaceText(str, "MAX_VALUE", item.Proto.Weapon_MaxAmmoCount);
+                    str = ReplaceText(str, "AMMO", GetMsgStr(TEXTMSG_GAME, STR_CALIBER(item.Proto.Weapon_Caliber)));
+                    result += str;
+                }
+
+                if(item.Proto.Weapon_Perk != 0)
+                {
+                    string str = GetMsgStr(TEXTMSG_GAME, STR_WEAPON_PERK(item.Proto.Weapon_Perk));
+                    result += "\nPerk: " + str + ".";
+                }
+
+                if(item.Proto.Weapon_MinStrength > 1)
+                {
+                    result += "\nMinimum Strength: " + item.Proto.Weapon_MinStrength;
+                }
+            }
+
+            else if(item.GetType() == ITEM_TYPE_ARMOR)
+            {
+                result += "\nCrit chance mod: " + (item.Proto.Armor_CMCritChance);
+                result += "\nCrit power mod: " + (item.Proto.Armor_CMCritPower);
+            }
+
+
+            else if(item.GetType() == ITEM_TYPE_AMMO)
+            {
+                result += "\nDM mod: " + (item.Proto.Ammo_DmgMult) + "/" + (item.Proto.Ammo_DmgDiv);
+                result += "\nDR mod: " + (item.Proto.Ammo_DrMod) + "%";
+                result += "\nAC mod: " + (item.Proto.Ammo_AcMod);
+                if(COMBAT_AMMO_AP(item.Proto))
+                    result += "\nArmor Piercing";
+            }
+
+            else if(item.GetType() == ITEM_TYPE_MISC)
+            {
+                if(item.Proto.Misc_ToolSkillNum != 0)
+                {
+                    string str = GetMsgStr(TEXTMSG_GAME, STR_SKILL_NAME(item.Proto.Misc_ToolSkillNum));
+                    result += "\n" + str + " bonus: " + item.Proto.Misc_ToolSkillBonus + ".";
+                }
+            }
+
+            // Key id
+            else if(item.GetType() == ITEM_TYPE_KEY)
+                result += "\n" + ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_INV_KEY_NUMBER), "KEY_ID", item.LockerId);
+
+            // Wear
+            if(item.IsDeteriorable())
+            {
+                uint8  flags = item.BrokenFlags;
+                uint8  brokenCount = item.BrokenCount;
+                uint16 wearCount = item.Deterioration;
+
+                // Broken level, procent
+                result += "\n";
+                if(FLAG(flags, BI_NOTRESC))
+                    result += GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_NO_RESC);
+                else if(FLAG(flags, BI_LOWBROKEN))
+                    result += GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_BROKEN_LOW);
+                else if(FLAG(flags, BI_NORMBROKEN))
+                    result += GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_BROKEN_NORM);
+                else if(FLAG(flags, BI_HIGHBROKEN))
+                    result += GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_BROKEN_HIGH);
+                else
+                    result += ReplaceText(ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_PROCENT), "VALUE", 100 - wearCount * 100 / MAX_DETERIORATION), "MAXVALUE", 100 - brokenCount);
+
+                // Service
+                if(FLAG(flags, BI_SERVICE))
+                    result += "\n" + GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_SERVICE);
+
+                // Service ext
+                if(FLAG(flags, BI_SERVICE_EXT))
+                    result += "\n" + GetMsgStr(TEXTMSG_GAME, STR_DETERIORATION_SERVICE_EXT);
+
+                // Broken count
+                /*if(valid(chosen) && chosen.Perk[PE_MR_FIXIT]!=0) result+="\n"+ReplaceText(GetMsgStr(TEXTMSG_GAME,STR_INV_WEAR_BROKEN_COUNT),"VALUE",brokenCount);*/
+            }
+
+            // Ingredients
+            if(HaveAnyIngredient(item))
+            {
+                array<string> ingredients;
+                uint          count = IngredientsNames(item, ingredients);
+                for(uint i = 0; i < count; i++)
+                {
+                    if(ingredients[i].length() > 0)
+                        result += "\nIngredient: " + ingredients[i];
+                }
+            }
+
+            // Weight
+            string weightString = GetMsgStr(TEXTMSG_GAME, STR_ITEM_WEIGHT_GRAMM);
+            if(item.Proto.Weight * item.GetCount() == 1)
+                weightString = ReplaceText(weightString, "grams.", "gram.");
+            result += "\n" + ReplaceText(weightString, "VALUE", item.Proto.Weight * item.GetCount());
+        }
+    }
+
+    // Format tags
+    return(FormatTags(result, item.Lexems));
+}
+
+uint8[] Abbr = { 'F', 'H', 'L', 'M', 'N', 'R', 'S' };
+uint8[] AnStart = { 'A', 'a', 'E', 'e', 'I', 'i', 'O', 'o' };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Critter description. Look types look in _client_defines.fos, Critter look types.
+
+string critter_description(CritterCl& cr, int lookType)
+{
+    string result;
+    int    gender = cr.Stat[ST_GENDER];
+
+    // Player
+    if(lookType == CRITTER_ONLY_NAME)
+    {
+        uint   dialog = cr.Stat[ST_DIALOG_ID];
+        uint16 pid = cr.Pid;
+
+        // Only name
+        // if(lookType==CRITTER_ONLY_NAME)
+        {
+            string head = (cr.IsPlayer() ? cr.Name : " ");
+
+            if(IsLexem(cr, "$@"))
+            {
+                head = GetLexem(cr, "$@");
+                if(head.length() == 0)
+                    head = " ";
+
+                if(cr.IsPlayer() && head == " ")
+                    cr.ContourColor = 0xFF960000;
+                else if(cr.IsNpc() && head != " ")
+                    cr.ContourColor = 0xFF969600;
+
+                stringReplaceText(head, "|", "");
+                head = FormatTags(head, "");
+            }
+
+            if(IsGM())
+            {
+                array<string> gm;
+
+                string        id = "<" + cr.Id + ">";
+
+                if((cr.IsPlayer() && head != cr.Name) || (cr.IsNpc() && IsLexem(cr, "$@")))
+                {
+                    if(cr.IsPlayer())
+                        gm.insertLast("Player: " + cr.Name);
+                    else if(cr.IsNpc())
+                        gm.insertLast("NPC: " + GetMsgStr(TEXTMSG_DLG, STR_NPC_NAME(dialog, pid)));
+                }
+
+                if(__ShowCritId)
+                    gm.insertLast("ID: " + cr.Id);
+
+                if(cr.Param[MODE_HIDE] > 0)
+                    gm.insertLast("sneaked");
+
+                if(gm.length() > 0)
+                {
+                    head += "|" + COLOR_RGB(0xFF, 0xFF, 0xFF) + " ";
+                    for(uint g = 0, gLen = gm.length(); g < gLen; g++)
+                    {
+                        head += "\n(" + gm[g] + ")";
+                    }
+                }
+            }
+
+            cr.NameOnHead = head;
+
+            if(cr.IsPlayer())
+            {
+                if(GUI_GetActiveMainScreen() == CLIENT_MAIN_SCREEN_GLOBAL_MAP)
+                    result = (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name);
+                else
+                    result = cr.Name;
+            }
+            else
+                result = cr.Name;
+        }
+
+        return(result);
+    }
+
+    if(cr.IsPlayer())
+    {
+        if(lookType == CRITTER_ONLY_NAME)
+        {}         // already done
+
+        // Short info
+        if(lookType == CRITTER_LOOK_SHORT)
+        {
+            result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK1(gender));
+            result += (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name);
+            result += ".";
+        }
+        // Full info
+        else
+        {
+            result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK1(gender));
+
+            // Age
+            uint ageStr = GetMsgStrNumUpper(TEXTMSG_GAME, STR_CRIT_LOOK_AGE(gender, cr.Stat[ST_AGE]));
+            if(ageStr != 0)
+                result += GetMsgStr(TEXTMSG_GAME, ageStr);
+            else
+                result += (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name);
+
+            // the block below is very outdated and would require refactoring before restoring (should this ever happen)
+
+            /*
+               // Condition
+               if(IsMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_COND(gender,cr.Cond,0)))
+               {
+                    result+=", ";
+                    result+=GetMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_COND(gender,cr.Cond,0));
+               }
+               result+=".";
+             */
+
+            // Perks
+            /*
+               for(int i=0;i<=KARMA_SEPARATED;i++)
+               {
+                    if(cr.Perk[i]!=0 && IsMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_PERK(gender,i)))
+                    {
+                            result+=" ";
+                            result+=GetMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_PERK(gender,i));
+                    }
+               }
+             */
+            // if(result.length()>0 && result[result.length()-1]!='.') result+=".";
+        }
+    }
+    else     // !IsPlayer()
+    {
+        uint   dlgId = cr.Stat[ST_DIALOG_ID];
+        uint16 npcPid = cr.Pid;
+        bool   defaultText = false;
+
+        if(lookType == CRITTER_ONLY_NAME)
+        {
+            // already done result=GetMsgStr(TEXTMSG_DLG,STR_NPC_NAME(dlgId,npcPid));
+        }
+        // Short info
+        if(lookType == CRITTER_LOOK_SHORT)
+        {
+            if(cr.IsLife() && IsMsgStr(TEXTMSG_DLG, STR_NPC_INFO_LIFE(dlgId, npcPid)))
+                result += GetMsgStr(TEXTMSG_DLG, STR_NPC_INFO_LIFE(dlgId, npcPid));
+            else if(cr.IsKnockout() && IsMsgStr(TEXTMSG_DLG, STR_NPC_INFO_KO(dlgId, npcPid)))
+                result += GetMsgStr(TEXTMSG_DLG, STR_NPC_INFO_KO(dlgId, npcPid));
+            else if(cr.IsDead() && IsMsgStr(TEXTMSG_DLG, STR_NPC_INFO_DEAD(dlgId, npcPid)))
+                result += GetMsgStr(TEXTMSG_DLG, STR_NPC_INFO_DEAD(dlgId, npcPid));
+            else
+                defaultText = true;
+        }
+        // Full info
+        else
+        {
+            string rslt = "You see ";
+            if(IsLexem(cr, "$name"))
+                rslt += GetLexem(cr, "$name");
+
+            if(cr.IsLife() && IsMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_LIFE(dlgId, npcPid)))
+            {
+                if(rslt.length() > 8)
+                    result += rslt;
+                else
+                    result += GetMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_LIFE(dlgId, npcPid));
+            }
+            else if(cr.IsKnockout() && IsMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_KO(dlgId, npcPid)))
+            {
+                if(rslt.length() > 8)
+                    result += ReplaceText(rslt, "see", "see an unconscious");
+                else
+                    result += GetMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_KO(dlgId, npcPid));
+            }
+            else if(cr.IsDead() && IsMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_DEAD(dlgId, npcPid)))
+            {
+                if(rslt.length() > 8)
+                    result += ReplaceText(rslt, "see", "see a dead");
+                else
+                    result += GetMsgStr(TEXTMSG_DLG, STR_NPC_FULL_INFO_DEAD(dlgId, npcPid));
+            }
+            else
+                defaultText = true;
+        }
+
+        if(defaultText)
+        {
+            // Check standart text
+            if(IsMsgStr(TEXTMSG_DLG, STR_NPC_NAME(dlgId, npcPid)))
+            {
+                if(cr.IsLife())
+                    result += ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_LIFE), "NAME", GetMsgStr(TEXTMSG_DLG, STR_NPC_NAME(dlgId, npcPid)));
+                else if(cr.IsKnockout())
+                    result += ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_KO), "NAME", GetMsgStr(TEXTMSG_DLG, STR_NPC_NAME(dlgId, npcPid)));
+                else if(cr.IsDead())
+                    result += ReplaceText(GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_DEAD), "NAME", GetMsgStr(TEXTMSG_DLG, STR_NPC_NAME(dlgId, npcPid)));
+            }
+            // Set default text
+            else
+            {
+                result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_NOTHING);
+            }
+        }
+    }
+
+    CritterCl@ chosen = GetChosen();
+    string     extraSpecial = "";
+    string     extraDamage = "";
+
+    // Special
+    if(valid(chosen) && chosen.Perk[PE_AWARENESS] > 0 && cr.IsPlayer())
+    {
+        string@ special = CritterDescription_Get(cr.Param[ST_DESCRIPTION1],
+                                                 cr.Param[ST_DESCRIPTION2]);
+        if(valid(special))
+            extraSpecial = special;
+    }
+
+    // Damage
+    {
+        array<uint> damage;
+        for(uint i = 0; i < 7; i++)
+        {
+            if(cr.Damage[DAMAGE_POISONED + i] != 0 && IsMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_DMG(gender, i)))
+            {
+                uint len = damage.length();
+                damage.insertLast(i);
+            }
+        }
+
+        if(damage.length() > 0)
+        {
+            extraDamage += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK3(gender));
+
+            for(uint i = 0; i < damage.length(); i++)
+            {
+                uint dmg = damage[i];
+                extraDamage += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_DMG(gender, dmg));
+
+                if(i == damage.length() - 1)
+                    break;
+                else if(i == damage.length() - 2)
+                    extraDamage += GetMsgStr(TEXTMSG_GAME, STR_AND);
+                else
+                    extraDamage += ", ";
+            }
+            extraDamage += ".";
+        }
+    }
+
+    // Additional description
+    if(lookType == CRITTER_LOOK_FULL)
+    {
+        if(result.length() > 0 && result[result.length() - 1] != '.')
+            result += ".";
+
+        if(valid(chosen) && chosen.Perk[PE_AWARENESS] > 0)
+        {
+            if(extraSpecial.length() > 0)
+                result += " It looks " + (gender == GENDER_MALE ? "h" : "sh") + "e's " + extraSpecial + ".";
+        }
+
+        if(extraDamage.length() > 0)
+            result += " " + extraDamage;
+
+        if(valid(chosen) && chosen.Perk[PE_AWARENESS] > 0)
+        {
+            result += " ";
+            result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_HP(gender));
+            result = ReplaceText(result, "CUR", cr.Stat[ST_CURRENT_HP]);
+            result = ReplaceText(result, "MAX", cr.Stat[ST_MAX_LIFE]);
+
+            ItemCl@ item = cr.GetItem(0, SLOT_HAND1);
+            /*
+               if(_CritIsInjured(cr))
+               {
+                    if(valid(item)) result+=", ";
+                    else result+=GetMsgStr(TEXTMSG_GAME,STR_AND);
+                    result+=GetMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_LIMBS(gender,false));
+               }
+             */
+
+            if(valid(item))
+            {
+                string iName = GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item));
+                if(IsLexem(item, "$-"))
+                    iName = GetLexem(item, "$-");
+
+                bool isAn = ((iName.length() > 1 && ('A' <= iName[1] && iName[1] <= 'Z' || '0' <= iName[1] && iName[1] <= '9' || iName[1] == '&') && Abbr.find(iName[0]) >= 0) ||
+                             AnStart.find(iName[0]) >= 0);
+
+                if(item.GetType() == ITEM_TYPE_WEAPON)
+                {
+                    // if(item.Proto.Weapon_MaxAmmoCount==0)
+                    {
+                        string pWeap = GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_WEAP);
+                        if(isAn)
+                            pWeap = ReplaceText(pWeap, "a WEAPON", "an WEAPON");
+                        result += pWeap;
+                        result = ReplaceText(result, "WEAPON", iName);
+                    }
+                    /*
+                       else
+                       {
+                            result+=GetMsgStr(TEXTMSG_GAME,STR_CRIT_LOOK_WEAP_AMMO);
+                            result=ReplaceText(result,"WEAPON",GetMsgStr(TEXTMSG_ITEM,STR_ITEM_INFO(item)));
+                            result=ReplaceText(result,"CUR",item.AmmoCount);
+                            result=ReplaceText(result,"MAX",item.Proto.Weapon_MaxAmmoCount);
+                            result=ReplaceText(result,"AMMO",GetMsgStr(TEXTMSG_GAME,STR_CALIBER(item.Proto.Weapon_Caliber)));
+                       }
+                     */
+                }
+                else
+                {
+                    string pMisc = GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_MISC);
+                    if(isAn)
+                        pMisc = ReplaceText(pMisc, "a MISC", "an MISC");
+                    result += pMisc;
+                    result = ReplaceText(result, "MISC", iName);
+                }
+            }
+        }
+        else         // Simple
+        {
+            result += " ";
+            result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_WHO(gender));
+
+            int hp_proc = cr.Stat[ST_CURRENT_HP] * 100 / cr.Stat[ST_MAX_LIFE];
+            if(cr.IsDead())
+                result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_STATE(0));
+            else
+                result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_STATE(cr.Stat[ST_HEALTH_LEVEL] > 1 ? cr.Stat[ST_HEALTH_LEVEL] : 1));
+
+            if(_CritIsInjured(cr))
+            {
+                if(cr.Stat[ST_HEALTH_LEVEL] < 4)
+                    result += GetMsgStr(TEXTMSG_GAME, STR_AND);
+                result += GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK_LIMBS(gender, cr.Stat[ST_HEALTH_LEVEL] == 4));
+            }
+        }
+        result += ".";
+    }
+
+    // Tatoos
+
+    bool armVisible = false;
+    if(lookType == CRITTER_LOOK_FULL && IsLexem(cr, "$tatoo"))
+    {
+        switch(cr.CrType)
+        {
+        // smoothskins, player
+        case CRTYPE_FEMALE_LEATHER_ARMOR:
+        case CRTYPE_FEMALE_LEATHER_JACKET:
+        case CRTYPE_FEMALE_METAL_ARMOR:
+
+        case CRTYPE_MALE_LEATHER_ARMOR:
+        case CRTYPE_MALE_LEATHER_JACKET:
+        case CRTYPE_MALE_METAL_ARMOR:
+
+        case CRTYPE_LHD_LEATHER_ARMOR:
+        case CRTYPE_LHD_LEATHER_JACKET:
+        case CRTYPE_LHD_METAL_ARMOR:
+
+        case CRTYPE_BHD_LEATHER_ARMOR:
+        case CRTYPE_BHD_LEATHER_JACKET:
+        case CRTYPE_BHD_METAL_ARMOR:
+
+        // smoothskins, other
+        case CRTYPE_FEMALE_TRIBAL:
+        case CRTYPE_MALE_TRIBAL:
+        case CRTYPE_LHD_TRIBAL:
+        case CRTYPE_BHD_TRIBAL:
+
+        case CRTYPE_BLACKMALE_METAL_ARMOR:
+        case CRTYPE_WOMAN_1:
+        case CRTYPE_PUNK:
+        case CRTYPE_PUNK_LA:
+        case CRTYPE_METALARMOR_FEMALE_YP:
+        case CRTYPE_WOMAN_2:
+        case CRTYPE_KURWA:
+        case CRTYPE_POOR_BLACKMALE:
+        case CRTYPE_DWARF:
+        case CRTYPE_BEGGAR:
+        case CRTYPE_TYCHO:
+        case CRTYPE_RAIDER:
+        case CRTYPE_CLERK:
+        case 63:                 // missing define
+        case 64:                 // missing define
+        case CRTYPE_KITTY:
+        case CRTYPE_CHINESE_GUARD_RED:
+        case CRTYPE_CHINESE_GUARD_BLUE:
+        case CRTYPE_CYBORG:
+        case CRTYPE_BOXER:
+        case CRTYPE_SALVADORE:
+        case CRTYPE_METZGER:
+        case CRTYPE_KHAN_LONGHAIR:
+        case CRTYPE_OLD_IAN:
+
+        // ghouls/mutants
+        case CRTYPE_NIGHTKIN:
+        case CRTYPE_MUTANT:
+        case CRTYPE_LIEUTANANT:
+        case CRTYPE_GHOUL:
+        case CRTYPE_GLOWING_ONE:
+        case CRTYPE_GHOUL_GECKO:
+
+        // Frankie
+        case CRTYPE_FRANK:
+        case CRTYPE_FRANK_CORPSE:
+            armVisible = true;
+            break;
+        }
+
+        if(armVisible && cr.Param[ST_GENDER] == GENDER_IT)
+            armVisible = false;
+
+        string tatoo = GetLexem(cr, "$tatoo");
+        if(armVisible && tatoo.length() > 0)
+        {
+            array<string@>@ s = split(tatoo, " ");
+            result += " You can see a tatoo with the word" + (s.length() > 1 ? "s" : "") + " '" + tatoo + "' on h" + (gender == GENDER_MALE ? "is" : "er") + " arm";
+        }
+        else
+            armVisible = false;
+    }
+
+    bool    headVisible = true;
+    ItemCl@ helmet = cr.GetItem(0, SLOT_HEAD);
+    if(valid(helmet))
+        headVisible = false;
+
+    if(lookType == CRITTER_LOOK_FULL && cr.Param[KARMA_SLAVER] > 0)
+    {
+        if(armVisible)
+        {
+            if(headVisible)
+                result += ", and another one on forehead. " + (gender == GENDER_MALE ? "H" : "Sh") + "e's a slaver.";
+            else
+                result += ".";
+        }
+        else
+        {
+            if(headVisible)
+            {
+                array<string> rnd =
+                {
+                    (gender == GENDER_MALE ? "H" : "Sh") + "e has",
+                    "You can see"
+                };
+
+                // result += " "+(gender==GENDER_MALE?"H":"Sh")+"e has a slaver tattoo on h"+(gender==GENDER_MALE?"is":"er")+" forehead.";
+                result += " " + rnd[Random(0, rnd.length() - 1)] + " a slaver tattoo on h" + (gender == GENDER_MALE ? "is" : "er") + " forehead.";
+            }
+        }
+    }
+    else if(lookType == CRITTER_LOOK_FULL && armVisible && cr.Param[KARMA_SLAVER] <= 0)
+        result += ".";
+
+    if(cr.IsPlayer() && lookType == CRITTER_LOOK_FULL && IsLexem(cr, "$~"))
+    {
+        result = GetMsgStr(TEXTMSG_GAME, STR_CRIT_LOOK1(gender)) + (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name) + ".";
+        string descr = GetLexem(cr, "$~");
+        if(descr.length() > 0)
+            result = descr;
+    }
+    else if(cr.IsNpc() && IsLexem(cr, "$~"))
+    {
+        if(lookType == CRITTER_ONLY_NAME)
+        {
+            result = (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name);
+        }
+        else if(lookType == CRITTER_LOOK_SHORT)
+        {
+            result = "You see " + (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name) + ".";
+        }
+        else if(lookType == CRITTER_LOOK_FULL)
+        {
+            result = "You see " + (IsLexem(cr, "$name") ? GetLexem(cr, "$name") : cr.Name) + ". " + GetLexem(cr, "$~");
+        }
+    }
+
+    return(FormatTags(result, cr.Lexems));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on something critter in/out game.
+void critter_in(CritterCl& cr)
+{
+    critter_description(cr, CRITTER_ONLY_NAME);
+    ColorizeCritter(cr);
+}
+
+/**
+ * Sets color basing on groups status and reputation.
+ */
+void _SetColor(int crId, int status, int reputation, string@ param3, array<int>@ param4)
+{
+    CritterCl@ cr = GetCritter(crId);
+    if(!valid(cr))
+        return;
+
+    // for npcs contour should be determine in other way, because they don't have nicks
+    if(status == FACTION_ENEMY)
+        cr.ContourColor = COLOR_CONTOUR_RED;
+    else if(status == FACTION_ALLY)
+        cr.ContourColor = COLOR_CONTOUR_GREEN;
+    else
+        cr.ContourColor = COLOR_CONTOUR_YELLOW;
+
+    // nick color depends on reputation
+    if(reputation >= __ReputationLoved)
+        cr.NameColor = COLOR_LBLUE;
+    else if(reputation >= __ReputationLiked)
+        cr.NameColor = COLOR_BLUE;
+    else if(reputation >= __ReputationAccepted)
+        cr.NameColor = COLOR_GREEN;
+    else if(reputation >= __ReputationNeutral)
+        cr.NameColor = COLOR_CRITTER_NAME;
+    else if(reputation >= __ReputationAntipathy)
+        cr.NameColor = COLOR_SAND;
+    else if(reputation >= __ReputationHated)
+        cr.NameColor = COLOR_RED;
+    else
+        cr.NameColor = COLOR_DRED;
+}
+
+void _RepairSession(int param1, int param2, int param3, string@ param4, array<int>@ param5)
+{
+    SetRepairPid(param1);
+    SetRepairItem(param2);
+    RefreshItemsCollection(ITEMS_USE);
+}
+
+void _DialogImage(int x, int y, int imageId, string@, array<int>@)
+{
+    string image = "";
+    switch(imageId)
+    {
+    case 1:
+        image = "items/car_police01.png";
+        break;
+    }
+    if(image != "" && image.length() > 0)
+        DialogImage.Set(x, y, image);
+}
+
+#ifdef __DEBUG__
+void DialogImageKey(uint8 key)
+{
+    int x = 0;
+    int y = 0;
+
+    switch(key)
+    {
+    case DIK_LEFT:
+        x--;
+        break;
+    case DIK_RIGHT:
+        x++;
+        break;
+    case DIK_UP:
+        y--;
+        break;
+    case DIK_DOWN:
+        y++;
+        break;
+    default:
+        return;
+    }
+    DialogImage.x += x;
+    DialogImage.y += y;
+}
+#endif
+
+class BagCallbackHide : IGUIScreenCallbackHide
+{
+    void OnHide(int p0, int p1, int p2)
+    {
+        SetRepairPid(0);
+        RefreshItemsCollection(ITEMS_USE);
+    }
+};
+
+BagCallbackHide BagHide;
+
+void InitBagCallbacks()
+{
+    IGUIScreenOpt@ sc = GUI_GetScreen(CLIENT_SCREEN_USE);
+    sc.SetCallbackHide(BagHide);
+}
+
+void IndicatorMouse(bool down, int click)   // export
+{
+    if(!down)
+    {
+        InvItemClicked = false;
+        return;
+    }
+    if(down && click == MOUSE_CLICK_LEFT && GUI_GetActiveScreen() == CLIENT_MAIN_SCREEN_GAME)
+    {
+        if(ItemBar.IsInside(__MouseX, __MouseY))
+            InvItemClicked = true;
+    }
+    else
+        InvItemClicked = false;
+}
+
+bool ReadIniInt(string& key, int& ret)
+{
+    string@ s = GetIfaceIniStr(key);
+    return valid(s) && StrToInt(s, ret);
+}
+
+void InitIndicators() // export
+{
+    IndicatorDraw = __IndicatorType != 1;
+    CounterDraw = __IndicatorType != 0;
+    __IndicatorType = 3;   // none
+
+    Rect IntWMain("IntMain");
+    int IntX = -1;
+    ReadIniInt("IntX", IntX);
+    if(IntX == -1)
+        IntX = (__ScreenWidth - IntWMain.W()) / 2;
+    else if(IntX == -2)
+        IntX = __ScreenWidth - IntWMain.W();
+    else if(IntX == -3)
+        IntX = 0;
+    else
+    {
+        if(IntX < 0)
+            IntX = 0;
+        if(IntX + IntWMain.W() > __ScreenWidth)
+            IntX = 0;
+    }
+    int IntY = __ScreenHeight - IntWMain.Y2;
+    @ItemBar = @Rect("IntItem", IntX, IntY);
+    @AmmoIndicator = @Rect("IntAmmoCount", IntX, IntY);
+    @WearIndicator = @Rect("IntWearProcent", IntX, IntY);
+
+    string@ s = GetIfaceIniStr("IntAmmoCountText");
+    if(!valid(s) || s.length() < 4)
+        @AmmoCounter = @Rect(ItemBar, 7, 8);
+    else
+        @AmmoCounter = @Rect("IntAmmoCountText", IntX, IntY);
+
+    @s = GetIfaceIniStr("IntWearProcentText");
+    if(!valid(s) || s.length() < 4)
+        @WearCounter = @Rect(ItemBar, 7, 19);
+    else
+        @WearCounter = @Rect("IntWearProcentText", IntX, IntY);
+
+    int IntItemOffsX = 0;
+    int IntItemOffsY = -2;
+    ReadIniInt("IntItemOffsX", IntItemOffsX);
+    ReadIniInt("IntItemOffsY", IntItemOffsY);
+    @AmmoCounterClicked = @Rect(AmmoCounter, IntItemOffsX, IntItemOffsY);
+    @WearCounterClicked = @Rect(WearCounter, IntItemOffsX, IntItemOffsY);
+}
+
+void DrawIndicators()
+{
+    if(!InterfaceShown)
+        return;
+    // DrawRect(ItemBar,COLOR_WHITE);
+    /*DrawRect(AmmoCounter,COLOR_RED);
+       DrawRect(WearCounter,COLOR_GREEN);
+       DrawRect(ItemBar,COLOR_BLUE);
+       DrawRect(IntWMain,COLOR_WHITE);
+       DrawRect(SmallBox,COLOR_DGREEN);*/
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+    ItemCl@ item = chosen.GetItem(0, SLOT_HAND1);
+
+    int     wear_proc = (valid(item) && item.IsDeteriorable()) ? 100 - (item.Deterioration * 100) / MAX_DETERIORATION : 0;
+    int     max_ammo = (valid(item) && item.GetType() == ITEM_TYPE_WEAPON) ? item.Proto.Weapon_MaxAmmoCount : 0;
+    int     cur_ammo = (valid(item) && item.GetType() == ITEM_TYPE_WEAPON) ? (_WeaponSkill(item.Proto, _WeaponModeUse(item.Mode)) == SK_THROWING ? item.GetCount() : item.AmmoCount) : 0;
+
+    if(valid(item) && max_ammo == 0 && cur_ammo == 0 && item.Proto.Misc_ChargeMax > 0)
+    {
+        max_ammo = item.Proto.Misc_ChargeMax;
+        cur_ammo = item.Charge;
+    }
+
+    if(valid(item) && wear_proc == 0 && item.Proto.IndicatorMax > 0)
+    {
+        wear_proc = item.Indicator;
+    }
+
+    if(valid(item) && cur_ammo == 0 && item.IsStackable() && item.GetCount() > 1)
+    {
+        cur_ammo = item.GetCount();
+        if(cur_ammo > max_ammo)
+            cur_ammo = max_ammo;
+    }
+    int ammo_proc = max_ammo == 0 ? 0 : 100 * cur_ammo / max_ammo;
+    if(IndicatorDraw)
+    {
+        DrawIndicator(AmmoIndicator, AmmoIndicatorPoints, COLOR_GREEN, ammo_proc, AmmoIndicatorTick, true, false);
+        DrawIndicator(WearIndicator, WearIndicatorPoints, COLOR_LGREEN, wear_proc, WearIndicatorTick, true, false);
+    }
+    if(CounterDraw)
+    {
+        if(max_ammo > 0 || cur_ammo > 0)
+        {
+            if(cur_ammo != LastAmmoCount || AmmoString == "")
+            {
+                LastAmmoCount = cur_ammo;
+                if(cur_ammo > 99)
+                    AmmoString = cur_ammo + "";
+                else if(cur_ammo > 9)
+                    AmmoString = "0" + cur_ammo;
+                else
+                    AmmoString = "00" + cur_ammo;
+            }
+            DrawCounter(InvItemClicked ? AmmoCounterClicked : AmmoCounter, AmmoString, InvItemClicked ? COLOR_DGREEN : COLOR_GREEN, FONT_SPECIAL);
+        }
+        if(valid(item) && item.IsDeteriorable())
+            DrawCounter(InvItemClicked ? WearCounterClicked : WearCounter, wear_proc + "%", InvItemClicked ? COLOR_GREEN : COLOR_LGREEN, FONT_SPECIAL);
+    }
+}
+
+class Rect
+{
+    int X1;
+    int Y1;
+    int X2;
+    int Y2;
+    Rect(string & ini_str)
+    {
+        GUI_GetIniCoords(ini_str, X1, Y1, X2, Y2);
+    }
+    Rect(string & ini_str, int x_off, int y_off)
+    {
+        GUI_GetIniCoords(ini_str, X1, Y1, X2, Y2);
+        X1 += x_off;
+        Y1 += y_off;
+        X2 += x_off;
+        Y2 += y_off;
+    }
+    Rect(Rect@ rect, int x_off, int y_off)
+    {
+        this.X1 = rect.X1 + x_off;
+        this.Y1 = rect.Y1 + y_off;
+        this.X2 = rect.X2 + x_off;
+        this.Y2 = rect.Y2 + y_off;
+    }
+
+    Rect(int x1, int y1, int x2, int y2)
+    {
+        X1 = x1;
+        Y1 = y1;
+        X2 = x2;
+        Y2 = y2;
+    }
+    /*void UpdateRect(Rect@ rect, int x_off, int y_off)
+       {
+            this.X1=rect.X1+x_off;
+            this.Y1=rect.Y1+y_off;
+            this.X2=rect.X2+x_off;
+            this.Y2=rect.Y2+y_off;
+       }*/
+
+    bool IsInside(int x, int y)
+    {
+        return(X1 <= x && x <= X2 && Y1 <= y && y <= Y2);
+    }
+
+    int H() { return Y2 - Y1 + 1; }
+    int W() { return X2 - X1 + 1; }
+};
+
+/*void DrawRect(Rect@ rect, uint color)
+   {
+        array<int> arr(15);
+        arr[0]=rect.X1;
+        arr[1]=rect.Y1;
+        arr[2]=color;
+
+        arr[3]=rect.X1;
+        arr[4]=rect.Y2;
+        arr[5]=color;
+
+        arr[6]=rect.X2;
+        arr[7]=rect.Y2;
+        arr[8]=color;
+
+        arr[9]=rect.X2;
+        arr[10]=rect.Y1;
+        arr[11]=color;
+
+        arr[12]=rect.X1;
+        arr[13]=rect.Y1;
+        arr[14]=color;
+        DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP,arr);
+   }*/
+
+Rect@      ItemBar;
+
+string     AmmoString;
+int        LastAmmoCount = 0;
+bool       IndicatorDraw = false;
+bool       CounterDraw = false;
+bool       InvItemClicked = false;
+array<int> AmmoIndicatorPoints;
+uint       AmmoIndicatorTick = 0;
+Rect@      AmmoIndicator;
+Rect@      AmmoCounter;
+Rect@      AmmoCounterClicked;
+
+array<int> WearIndicatorPoints;
+uint       WearIndicatorTick = 0;
+Rect@      WearIndicator;
+Rect@      WearCounter;
+Rect@      WearCounterClicked;
+
+bool       InterfaceShown = true;
+// bool InterfaceExpanded=false;
+
+bool IsInterfaceShown()
+{
+    return(InterfaceShown);
+}
+
+void ToggleInterfaceShown()
+{
+    InterfaceShown = !InterfaceShown;
+}
+
+void SetInterfaceShown(bool setting)
+{
+    InterfaceShown = setting;
+}
+
+// yes, totally ripped from the engine
+void DrawIndicator(Rect@ rect, array<int>& points, uint color, int procent, uint& tick, bool is_vertical, bool from_top_or_left, uint changeTick = 35)
+{
+    // DrawText("proc: "+procent,x1+13,y1,100,100,COLOR_WHITE,FONT_FALLOUT,1);
+    if(GetTick() >= tick)
+    {
+        int points_count = (is_vertical ? rect.H() : rect.W()) / 2 * procent / 100;
+        if(points_count == 0 && procent > 0)
+            points_count = 1;
+        int points_length = points.length() / 3;
+        if(points_length != points_count)
+        {
+            if(points_count > points_length)
+            {
+                points_count = points_length + 1;
+                points.resize(points_count * 3);
+                points_length *= 3;
+                if(is_vertical)
+                {
+                    if(from_top_or_left)
+                    {
+                        points[points_length] = rect.X1;
+                        points[points_length + 1] = rect.Y1 + points_count * 2 - 2;
+                    }
+                    else
+                    {
+                        points[points_length] = rect.X1;
+                        points[points_length + 1] = rect.Y2 - points_count * 2 + 2;
+                    }
+                }
+                else
+                {
+                    if(from_top_or_left)
+                    {
+                        points[points_length] = rect.X1 + points_count * 2 - 2;
+                        points[points_length + 1] = rect.Y1;
+                    }
+                    else
+                    {
+                        points[points_length] = rect.X2 - points_count * 2 + 2;
+                        points[points_length + 1] = rect.Y1;
+                    }
+                }
+
+                points[points_length + 2] = color;
+            }
+            else
+            {
+                points.resize((points_length - 1) * 3);
+            }
+        }
+        tick = GetTick() + changeTick;
+    }
+    if(points.length() > 0)
+        DrawPrimitive(DRAW_PRIMITIVE_POINTLIST, points);
+}
+
+void DrawCounter(Rect@ rect, string& text, uint color, int font)
+{
+    DrawText(text, rect.X1, rect.Y1, rect.X2, rect.Y2, color, font, 0);
+}
+
+/// client_town ///
+#define COLOR_TOWN_AREA_BORDER      (0x770000FF)
+#define COLOR_TOWN_AREA_INTERIOR    (0x20000080)
+array<uint>   timers;
+array<string> factions;
+array<string> townnames;
+
+uint          lastsecond;
+uint          lasthour;
+
+array<uint16> modoc_area_t;
+array<uint16> bh_area_t;
+array<uint16> klamath_area_t;
+array<uint16> den_area_t;
+array<uint16> redding_area_t;
+array<uint16> gecko_area_t;
+
+IPolygon@     modoc_area;
+IPolygon@     bh_area;
+IPolygon@     klamath_area;
+IPolygon@     den_area;
+IPolygon@     redding_area;
+IPolygon@     gecko_area;
+
+bool          Initialized = false;
+
+void DrawArea(uint mappid, uint8 mode)
+{
+    if(mode == 0)
+        return;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))     // !?
+        return;
+    switch(mappid)
+    {
+    case MAP_modoc:
+        DrawHexArea(modoc_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(modoc_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    case MAP_broken:
+        DrawHexArea(bh_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(bh_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    case MAP_klamath:
+        DrawHexArea(klamath_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(klamath_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    case MAP_den:
+        DrawHexArea(den_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(den_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    case MAP_redding:
+        DrawHexArea(redding_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(redding_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    case MAP_gecko_settlement:
+        DrawHexArea(gecko_area_v, false, COLOR_TOWN_AREA_BORDER);
+        DrawInsideStatus(gecko_area.IsWithin(chosen.HexX, chosen.HexY));
+        break;
+    default:
+        return;
+    }
+
+    if(mode == 1)
+        return;
+
+    // triangles
+    switch(mappid)
+    {
+    case MAP_modoc:
+        DrawHexArea(modoc_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    case MAP_broken:
+        DrawHexArea(bh_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    case MAP_klamath:
+        DrawHexArea(klamath_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    case MAP_den:
+        DrawHexArea(den_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    case MAP_redding:
+        DrawHexArea(redding_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    case MAP_gecko_settlement:
+        DrawHexArea(gecko_area_t, true, COLOR_TOWN_AREA_INTERIOR);
+        break;
+    }
+}
+
+void DrawInsideStatus(bool inside)
+{
+    DrawText(inside ? "Inside the capture zone" : "Outside the capture zone", 10, 30, __ScreenWidth, 20, inside ? COLOR_GREEN : COLOR_RED, FONT_FALLOUT, FT_CENTERY | FT_BORDERED);
+}
+
+void InitTownDisplay()
+{
+    if(Initialized)
+        return;
+    timers.resize(TOWN_COUNT);
+    factions.resize(TOWN_COUNT);
+    townnames.resize(TOWN_COUNT);
+    InitAreas();
+
+    townnames[0] = "Modoc";
+    townnames[1] = "Klamath";
+    townnames[2] = "Gecko";
+    townnames[3] = "Broken Hills";
+    townnames[4] = "Den";
+    townnames[5] = "Redding";
+
+    for(uint i = 0; i < TOWN_COUNT; i++)
+        timers[i] = 0;
+    Initialized = true;
+}
+
+void InitAreas()
+{
+    @modoc_area = NewPolygon();
+    modoc_area.AddVertices(modoc_area_v).GetTriangulation(modoc_area_t);
+    @bh_area = NewPolygon();
+    bh_area.AddVertices(bh_area_v).GetTriangulation(bh_area_t);
+    @klamath_area = NewPolygon();
+    klamath_area.AddVertices(klamath_area_v).GetTriangulation(klamath_area_t);
+    @den_area = NewPolygon();
+    den_area.AddVertices(den_area_v).GetTriangulation(den_area_t);
+    @redding_area = NewPolygon();
+    redding_area.AddVertices(redding_area_v).GetTriangulation(redding_area_t);
+    @gecko_area = NewPolygon();
+    gecko_area.AddVertices(gecko_area_v).GetTriangulation(gecko_area_t);
+}
+
+void CountDownStop(int town)
+{
+    timers[town] = 0;
+}
+
+void CountDownStart(int town, uint time, string@ faction)
+{
+    timers[town] = time;
+    factions[town] = faction;
+}
+
+bool IsCounting(uint townid)
+{
+    return timers[townid] > ELAPSED_TIME;
+}
+
+string GetTownName(uint townid)
+{
+    return townnames[townid];
+}
+
+string GetFaction(uint townid)
+{
+    return factions[townid];
+}
+
+int GetSeconds(uint townid)
+{
+    if(ELAPSED_TIME > timers[townid])
+        return 0;
+    uint ret = timers[townid];
+    ret -= ELAPSED_TIME;
+    ret /= __TimeMultiplier;
+    return int(ret);
+}
+
+/*
+   uint RawSeconds(uint townid)
+   {
+        return timers[townid];
+   }
+ */
+
+/*** UNUSED STUFF ***/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Render map function. You can use DrawMap* functions only there. This drawing before 1 iface layer.
+void render_map()
+{}
+
+void critter_out(CritterCl& cr)
+{}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on something item in/changed/out map.
+void item_map_in(ItemCl& item)
+{}
+
+void item_map_changed(ItemCl& itemNow, ItemCl& itemBefore)
+{}
+
+void item_map_out(ItemCl& item)
+{}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on something critter in/out chosen inventory.
+void item_inv_in(ItemCl& item)
+{}
+
+void item_inv_out(ItemCl& item)
+{}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on player drag&drop some item.
+void item_drop(ItemCl& item)
+{}
+#endif // __CLIENT_INTERFACE__ //

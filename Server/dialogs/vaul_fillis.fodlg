@@ -1,0 +1,50 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _script dialog@d_IsNotMember 0  #
+2 1020 @
+2 2000 None 0 #
+4 2010 #
+5 2020 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+6 5010 D _item p PID_BOTTLE_CAPS > 24 R _item p PID_BIO_GEL + 1 R _script dialog@r_RemoveMoney 1 25 #
+6 5020 D _item p PID_BOTTLE_CAPS > 124 R _item p PID_BIO_GEL + 5 R _script dialog@r_RemoveMoney 1 125 #
+6 5030 D _item p PID_BOTTLE_CAPS > 499 R _item p PID_BIO_GEL + 20 R _script dialog@r_RemoveMoney 1 500 #
+0 5040 @
+6 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{Phyllis}
+{200}{}{You see the Resident Medical Assistant, Phyllis.}
+{210}{}{You see a thin young woman. She smells faintly of antiseptic.}
+{1000}{}{Predialogue installations}
+{1010}{}{not citizen}
+{1020}{}{citizen}
+{2000}{}{Hello there Citizen. I am Nurse Phyllis, how can I help you today?}
+{2010}{}{Have you seen Dr Troy? I need to speak with him.}
+{2020}{}{Can I have some of the Cities supply of Bio Med Gel?
+}
+{3000}{}{An intruder! Aieeeeee! Guards!}
+{4000}{}{Doctor Troy is next door in his office.}
+{4010}{}{Thanks for your help.
+}
+{5000}{}{Of course Citizen, but unfortunatly we can't hand this stuff out for free. Each dose will cost 25 caps.}
+{5010}{}{Ok, I have that with me, here you go. [Give her 25 caps]
+}
+{5020}{}{I think I'll take 5 of those right away.}
+{5030}{}{I need quite a bunch... 20 doses, actually.}
+{5040}{}{I can't afford that at the moment. I will be back later.
+}
+{6000}{}{Here is your Bio Med Gel. Good day Citizen.}
+{6010}{}{Good Bye, Nurse.
+}
+

@@ -1,0 +1,381 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// workbench.fos
+//
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_scripts.fos"
+#include "_vars.fos"
+#include "backend_h.fos"
+#include "factions_h.fos"
+
+#define TERMINAL_DIALOG               (1200) // Mariposa Terminal, level4
+#define TERMINAL_SAD_DIALOG           (800)  // Sierra Terminal connected to Mainframe, level3
+
+#define MSG_SAD_POWER_NOT_REPAIRED    (0)    // Sierra backup power not repaired
+#define MSG_SAD_POWER_REPAIRED        (1)    // Sierra backup power repaired
+#define MSG_SAD_POWER_OK              (2)    // Sierra backup power is OK
+#define MSG_SAD_POWER_NOT_OK          (3)    // Sierra backup power is not working
+
+void item_init(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkill");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _Campfire(Item& item, bool firstTime)   // WIPENIGHT: old campfire
+{
+    item.SetScript("map_tent@_RegenItem");
+}
+
+void _Primitive(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillPrimitive");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _Advanced(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillAdvanced");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _Tobacco(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillTobacco");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _Raiders(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillRaiders");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _SierraAmmo(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillSierraAmmo");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _SierraMed(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillSierraMed");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+void _VCMed(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillVCMed");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+}
+
+// removes item if dropped
+void _Drop(Item& item, Critter& cr)
+{
+    DeleteItem(item);
+}
+
+bool _UseSkillPrimitive(Item& item, Critter& player, int skill)
+{
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        // refresh fixboy list
+        player.DropTimers();
+        GiveWorkbench(player, PID_WORKBENCH_PRIMITIVE);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+
+    return false;
+}
+
+// Using Ammo Facility in Sierra Army Depot
+bool _UseSkillSierraAmmo(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        if(GetGlobalVar(GVAR_sierra_backup_power) == 3)
+        {
+            // refresh fixboy list
+            player.DropTimers();
+
+            // old Ammo Facility Workbench
+            // GiveWorkbench(player, PID_AMMO_FACILITY);
+
+            // Currently all Ammo and Arms Crafting is with Adv. Workbench
+            GiveWorkbench(player, PID_ADVANCED_BENCH);
+            player.ShowScreen(SCREEN_FIXBOY, 0, "");
+            return true;
+        }
+        else
+            player.Say(SAY_NETMSG, "This terminal controls the Ammo Repair Facility in the next room. You could use it to start some production, but the power input is low.");
+    }
+
+    return false;
+}
+
+// Using Med Facility in Sierra Army Depot
+bool _UseSkillSierraMed(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        if(GetGlobalVar(GVAR_sierra_backup_power) == 2)
+        {
+            // refresh fixboy list
+            player.DropTimers();
+
+            GiveWorkbench(player, PID_MED_MACHINE);
+            player.ShowScreen(SCREEN_FIXBOY, 0, "");
+            return true;
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "This is the main Medicine Lab terminal. It looks like you could start producing some advanced medicines and drugs using it, but the current power input is too low for that.");
+            return false;
+        }
+    }
+    return false;
+}
+
+// Using Med Facility in Vault City
+bool _UseSkillVCMed(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        player.Animate(ANIM1_UNARMED, ANIM2_USE, item, true, true);
+        // refresh fixboy list
+        player.DropTimers();
+
+        GiveWorkbench(player, PID_MED_MACHINE);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// Using workbench
+bool _UseSkill(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        // refresh fixboy list
+        player.DropTimers();
+
+        GiveWorkbench(player, PID_WORKBENCH);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// Using advanced bench
+bool _UseSkillAdvanced(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        player.Animate(ANIM1_UNARMED, ANIM2_USE, item, true, true);
+        // refresh fixboy list
+        player.DropTimers();
+
+        GiveWorkbench(player, PID_ADVANCED_BENCH);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// Using tobacco bench
+bool _UseSkillTobacco(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        // refresh fixboy list
+        player.DropTimers();
+
+        GiveWorkbench(player, PID_TOBACCO_BENCH);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// Using Raiders Workbench
+bool _UseSkillRaiders(Item& item, Critter& player, int skill)
+{
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        // refresh fixboy list
+        player.DropTimers();
+        GiveWorkbench(player, PID_WORKBENCH);
+
+        // old Raiders Workbench
+        // GiveWorkbench(player, PID_WORKBENCH_RAIDERS);
+
+        // Currently all Ammo and Arms Crafting is with Adv. Workbench
+        GiveWorkbench(player, PID_ADVANCED_BENCH);
+
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// gives invisible workbench to players inv, so that it serves as 'tool'
+void GiveWorkbench(Critter& player, uint pid)
+{
+    if(_CritCountItem(player, pid) > 0)
+        return;
+    Item@ workbench = player.AddItem(pid, 1);
+    // SETFLAG(workbench.Flags, ITEM_HIDDEN);
+    workbench.SetScript("item_init");
+    workbench.PicInv = uint16(-1);      // 'invisible'
+    workbench.Info = uint8(-1);         // ooohhh
+    workbench.SortValue = uint16(-1);   // aaahhh
+    workbench.Update();
+    // player.Say(SAY_NORM, "At Workbench");
+}
+// removes workbench from player inventory
+void RemoveWorkbench(Critter& player, uint pid)
+{
+    if(player.CountItem(pid) > 0)
+        player.DeleteItem(pid, player.CountItem(pid));
+}
+// remove all workbenches from inventory
+void RemoveWorkbenches(Critter& player)
+{
+    RemoveWorkbench(player, PID_WORKBENCH);
+    RemoveWorkbench(player, PID_WORKBENCH_PRIMITIVE);
+    RemoveWorkbench(player, PID_WORKBENCH_RAIDERS);
+    RemoveWorkbench(player, PID_MFC_MACHINE);
+    RemoveWorkbench(player, PID_MED_MACHINE);
+    RemoveWorkbench(player, PID_AMMO_FACILITY);
+    RemoveWorkbench(player, PID_CAMPFIRE);
+    RemoveWorkbench(player, PID_ADVANCED_BENCH);
+    RemoveWorkbench(player, PID_TOBACCO_BENCH);
+}
+
+void t_Workbench(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered)
+    {
+        RemoveWorkbenches(player);
+        player.DropTimers();
+    }
+}
+
+void t_WorkbenchRaiders(Critter& player, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered)
+    {
+        // player.Say(SAY_NORM, "Leaving Workbench");
+        RemoveWorkbench(player, PID_WORKBENCH);
+        RemoveWorkbench(player, PID_WORKBENCH_RAIDERS);
+        player.DropTimers();
+    }
+}
+
+// Mariposa Terminal
+bool s_Terminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+        RunDialog(player, TERMINAL_DIALOG, terminal.HexX, terminal.HexY, false);
+
+    return true;
+}
+
+// Sierra Terminal/Mainframe
+bool s_Terminal_SAD(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+        RunDialog(player, TERMINAL_SAD_DIALOG, terminal.HexX, terminal.HexY, false);
+
+    return true;
+}
+
+// Mariposa Machine for Micro Fusion Cells production
+bool s_Mfc_Machine(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        // refresh fixboy list
+        player.DropTimers();
+
+        // old Micro Fusion Cells Facility
+        // GiveWorkbench(player, PID_MFC_MACHINE);
+
+        // Currently all Ammo and Arms Crafting is with Adv. Workbench
+        GiveWorkbench(player, PID_ADVANCED_BENCH);
+        // We also give the possibility to craft meds in Mariposa (for now)
+        GiveWorkbench(player, PID_MED_MACHINE);
+        player.ShowScreen(SCREEN_FIXBOY, 0, "");
+        return true;
+    }
+    return false;
+}
+
+// Sierra Backup Power Supply
+bool s_Power_SAD(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    GameVar@ power = GetGlobalVar(GVAR_sierra_backup_power);
+    if(!valid(power))
+    {
+        Log("ERROR: not valid GameVar ¹" + GVAR_sierra_backup_power + " " + GetLastError());
+        return true;
+    }
+
+    // Checking out the status
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        if(power == 0)          // generator not working
+            player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(TERMINAL_SAD_DIALOG, MSG_SAD_POWER_NOT_OK));
+        if(power > 0)           // generator OK
+            player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(TERMINAL_SAD_DIALOG, MSG_SAD_POWER_OK));
+    }
+
+    if(player.IsPlayer() && skill == SK_REPAIR && !valid(item))
+    {
+        int check = Random(140, 200);           // check
+
+        if(power == 0)
+        {
+            if(((player.Skill[SK_REPAIR] + player.Stat[ST_LUCK] * 10) > check))
+            {
+                power = 1;
+                // DLog("Gvar == " + power);
+                player.StatBase[ST_EXPERIENCE] += 50;
+                LogExperience(player, 50, "sad terminal");
+                player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(TERMINAL_SAD_DIALOG, MSG_SAD_POWER_REPAIRED));
+            }
+            else
+                player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(TERMINAL_SAD_DIALOG, MSG_SAD_POWER_NOT_REPAIRED));
+        }
+        if(power > 1)
+            player.SayMsg(SAY_NETMSG, TEXTMSG_DLG, DLGSTR(TERMINAL_SAD_DIALOG, MSG_SAD_POWER_OK));
+    }
+    return true;
+}
+
+void place_campfire(Critter& cr, int, int, int)
+{
+    Item@ it = cr.GetMap().AddItem(cr.HexX, cr.HexY, PID_CAMPFIRE, 1);
+    it.SetScript("_Campfire");
+}

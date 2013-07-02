@@ -1,0 +1,191 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// logging_critter.fos
+//
+
+#include "_macros.fos"
+#include "logging_h.fos"
+#include "utils_h.fos"
+
+void LogAction(Critter& cr, string& s)
+{
+    FLog(LOG_CRITTER, s);
+    GMLog(cr, s);
+}
+
+void _ShowCritter(Critter& cr, Critter& showCrit)
+{
+    if(showCrit.IsPlayer())
+        LogAction(cr, GetCritterInfo(cr) + " sees " + GetCritterInfo(showCrit));
+}
+
+void _HideCritter(Critter& cr, Critter& hideCrit)
+{
+    if(hideCrit.IsPlayer())
+        LogAction(cr, GetCritterInfo(cr) + " lost sight of " + GetCritterInfo(hideCrit));
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    if(!attacker.IsPlayer())
+        return false;
+
+    LogAction(cr, GetCritterInfo(cr) + " was attacked by " + GetCritterInfo(attacker));
+    return false;
+}
+
+bool _Attack(Critter& cr, Critter& target)
+{
+    if(!target.IsPlayer())
+        return false;
+
+    LogAction(cr, GetCritterInfo(cr) + " attacked " + GetCritterInfo(target));
+    return false;
+}
+
+void _SomeoneStealing(Critter& cr, Critter& fromCr, Critter& thief, bool success, Item& item, uint count)
+{
+    if(fromCr.IsPlayer())
+        LogAction(cr, GetCritterInfo(cr) + " saw " + GetCritterInfo(thief) + " stealing PID " + item.GetProtoId() +
+                  (count > 1 ? (" (" + item.GetCount() + ")") : "") + " from " + GetCritterInfo(fromCr));
+}
+
+void _SomeoneDied(Critter& cr, Critter& killed, Critter@ killer)
+{
+    if(killed.IsPlayer())
+        if(valid(killer))
+            LogAction(cr, GetCritterInfo(cr) + " saw " + GetCritterInfo(killer) + " killing " + GetCritterInfo(killed));
+        else
+            LogAction(cr, GetCritterInfo(cr) + " saw " + GetCritterInfo(killed) + " get killed");
+}
+
+void _SomeoneAttack(Critter& cr, Critter& fromCr, Critter& target)
+{
+    if(fromCr.IsPlayer() && target.IsPlayer())
+    {
+        LogAction(cr, GetCritterInfo(cr) + " saw " + GetCritterInfo(fromCr) + " attacking " + GetCritterInfo(target));
+        if((GetLvar(cr, LVAR_gm_reportevent) == 1) && cr.Id != fromCr.Id)
+            cr.Say(SAY_NETMSG, "|4291317840 " + GetCritterInfo(fromCr) + " attacked " + GetCritterInfo(target));
+    }
+}
+
+string GetOnText(Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    string text = "on ";
+
+    if(valid(onItem))
+        text += "item " + onItem.GetProtoId();
+    else if(valid(onCritter))
+        text += onCritter.Name;
+    else if(valid(onScenery))
+        text += "scenery " + onScenery.ProtoId;
+    else
+        return("");
+
+    return(text);
+}
+
+string SayHow(int sayType, int possessedId)
+{
+    string str = "";
+    if(sayType == SAY_NORM)
+        str = "";
+    else if(sayType == SAY_RADIO)
+        str = "trough a radio";
+
+    if(possessedId > 0)
+    {
+        Critter@ cr = GetCritter(possessedId);
+        if(valid(cr))
+            str += " as a possessed critter, " + cr.Name + "(" + cr.Id + ")";
+    }
+    return str;
+}
+
+void unsafe_Say(Critter& cr, int sayType, int possessedId, int p2, string@ sayString, array<int>@ param4)
+{
+    // LogAction(cr, GetCritterInfo(cr) + " said \""+sayString+"\" "+SayHow(sayType,possessedId));
+}
+
+void unsafe_Ping(Critter& cr, int sayType, int possessedId, int p2, string@ sayString, array<int>@ param4)
+{
+    LogAction(cr, GetCritterInfo(cr) + " said \"" + sayString + "\" " + SayHow(sayType, possessedId));
+}
+
+void _SomeoneUseSkill(Critter& cr, Critter& fromCr, int skill, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(skill == -1 && valid(onItem))
+    {
+        LogAction(cr, GetCritterInfo(cr) + " picks up item " + onItem.GetProtoId() + (onItem.GetCount() > 1 ? (" (" + onItem.GetCount() + ")") : ""));
+    }
+    else
+    {
+        string skillname = skill;
+        switch(skill)
+        {
+        case SKILL_PICK_ON_GROUND:
+            skillname = "pick from ground";
+            break;
+        case SKILL_PUT_CONT:
+            skillname = "put in container";
+            break;
+        case SKILL_TAKE_CONT:
+            skillname = "take from container";
+            break;
+        case SKILL_TAKE_ALL_CONT:
+            skillname = "take all from container";
+            break;
+        case SKILL_LOOT_CRITTER:
+            skillname = "loot critter";
+            break;
+        case SKILL_PUSH_CRITTER:
+            skillname = "push critter";
+            break;
+        case SK_SNEAK:
+            skillname = "sneak";
+            break;
+        case SK_LOCKPICK:
+            skillname = "lockpick";
+            break;
+        case SK_STEAL:
+            skillname = "steal";
+            break;
+        case SK_TRAPS:
+            skillname = "traps";
+            break;
+        case SK_FIRST_AID:
+            skillname = "first aid";
+            break;
+        case SK_DOCTOR:
+            skillname = "doctor";
+            break;
+        case SK_SCIENCE:
+            skillname = "science";
+            break;
+        case SK_REPAIR:
+            skillname = "repair";
+            break;
+        }
+        LogAction(cr, GetCritterInfo(cr) + " saw " + GetCritterInfo(fromCr) + " use " + skillname + " " + GetOnText(onCritter, onItem, onScenery));
+    }
+}
+
+void _DropItem(Critter& cr, Item& item)
+{
+    LogAction(cr, GetCritterInfo(cr) + " dropped item" + " PID " + item.GetProtoId());
+}
+
+void SetCritterEvents(Critter& cr)
+{
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_ShowCritter");
+    cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_HideCritter");
+    cr.SetEvent(CRITTER_EVENT_ATTACK, "_Attack");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_SMTH_USE_SKILL, "_SomeoneUseSkill");
+    cr.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_SomeoneStealing");
+    cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_SomeoneAttack");
+    cr.SetEvent(CRITTER_EVENT_SMTH_DEAD, "_SomeoneDied");
+    cr.SetEvent(CRITTER_EVENT_DROP_ITEM, "_DropItem");
+}

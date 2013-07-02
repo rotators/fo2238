@@ -1,0 +1,73 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+80 4020 D _param p PE_PROFESSION_DOCTOR < 2 #
+0 4030 @
+5 5000 None 0 #
+0 5010 @
+50 6000 None 0 @
+80 7000 None 0 #
+81 7010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDoctor0 1 0 #
+81 7020 D _script dialog@d_CheckDoctor1 1 0 #
+0 7030 @
+81 8000 None 0 #
+82 8010 D _script dialog@d_CheckDoctor0 1 1 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_FIRST_AID_BOOK + 1 R _param p PE_PROFESSION_DOCTOR = 1 R _script dialog@r_RemoveMoney 1 1500 #
+83 8020 D _script dialog@d_CheckDoctor1 1 1 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_DOCTOR = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 8030 @
+82 9000 None 0 #
+0 9010 @
+83 10000 None 0 #
+0 10010 &
+
+[engl]
+{100}{}{Dr. Henry}
+{200}{}{You see a pudgy guy with a shiny bald head and thick-lensed glasses.}
+{210}{}{It's Dr. Henry.}
+{210}{}{This guy is so out of place it's painful. He's got that egghead, not living in the real world air about him, that's for sure.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{Good day, I'm Doctor Henry. How can I be of help?}
+{2010}{}{I had some questions for you, Dr. Henry.}
+{2020}{}{Nothing, sorry for disturbance.}
+{3000}{}{Oh, it is you again. The purpose of this visit is..?}
+{3010}{}{Questions, all kind of them.}
+{3020}{}{Nothing, sorry for disturbance.}
+{4000}{}{Good, but please be quick. I still have a lot to do today.}
+{4010}{}{Doc, could you patch me up?}
+{4020}{}{I am quite interested into medicine myself, and this is the reason I am visiting you today. My hopes are that you could share some of your knowledge and experience with me...}
+{4030}{}{I better go.}
+{5000}{}{I am very sorry, but my duties do not allow me to take care of additional patients right now. You still can try over there, at the Dr. Jubilee's clinic.}
+{5010}{}{Well, thanks for nothing.}
+{6000}{}{Excuse me, I'm very busy.@@Please, leave me to my work.@@Don't bother me.}
+{7000}{}{Oh, a colleague! It is not that I meet colleagues every day, you know... The reason more to say that I am very pleased to have you here. So, what did you want us to talk about then?}
+{7010}{}{I was hoping you can show me how to perform simple surgeries and... [You explain what you need]}
+{7020}{}{Well, I was interested in more complex methods of saving human lives, which would consider... [You explain him what you need]}
+{7030}{}{I, erhm... Not quite sure where to start from. Maybe I should drop a little bit later. [Leave]}
+{8000}{}{Sure, sure... We can already arrange something, I guess. But I would like to have something in return, a kind of compensation for my time and work. It's not that I'm trying to earn something out of this, but a help from a colleague like you would be quite appreciated. I'll keep it short then -- I would need $1500 for a short lesson or $3000 for one with more detail. Please, let me know when you have it.}
+{8010}{}{You don't have to worry, my appreciated colleague, I have $1500 right here! [You give him $1500]}
+{8020}{}{You don't have to worry, my appreciated colleague, I have $3000 right here! [You give him $3000]}
+{8030}{}{Well, I should start gathering some healing herbs then. See you later, doctor Henry!}
+{9000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Henry starts to show you his healing and surgery methods. After the session, you get a book from him.]}
+{9010}{}{Thank you very much, doctor Henry! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{10000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Henry starts to show you his healing and surgery methods]}
+{10010}{}{Thank you very much, doctor Henry! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+

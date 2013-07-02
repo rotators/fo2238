@@ -1,0 +1,72 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 #
+2 1020 D _script dialog@d_IsDisguised 0  @
+2 2000 None 0 #
+3 2010 #
+4 2020 D _var n name_mem_player_npc = 0 R _var n name_mem_player_npc = 1 #
+80 2030 D _var n name_mem_player_npc = 1 D _param p PE_PROFESSION_ENERGY_EXPERT < 3 #
+0 2040 @
+3 3000 None 0 #
+2 3010 #
+0 3020 @
+4 4000 None 0 #
+80 4010 D _script dialog@d_CheckProfession 1 0 #
+0 4020 @
+80 5000 None 0 #
+81 5010 D _script dialog@d_CheckEnergyExpert0 1 0 #
+82 5020 D _script dialog@d_CheckEnergyExpert1 1 0 #
+0 5030 @
+81 6000 None 0 #
+84 6010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_DEANS_ELECTRONICS + 1 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_ENERGY_EXPERT = 1 #
+0 6020 @
+82 7000 None 0 #
+84 7010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_ENERGY_EXPERT = 2 #
+0 7020 @
+83 8000 None 0 #
+84 8010 D _item p PID_BOTTLE_CAPS > 4499 R _script dialog@r_RemoveMoney 1 4500 R _param p PE_PROFESSION_ENERGY_EXPERT = 3 #
+0 8020 @
+84 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Jefferson}
+{200}{}{You see a technician.}
+{210}{}{You see a man in a military uniform. Judging by the tools he's using you think he is more of a technician than a soldier.}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{disguised}
+{2000}{}{Yes, what? Can't you see I'm busy?}
+{2010}{}{Oh, sorry. I'm *blind*, you know.}
+{2020}{}{Who are you?}
+{2030}{}{Say, since you look like the right person to ask... I'm interested in energy production and storage, maybe you could help me with it?}
+{2040}{}{Ah, nothing. Sorry.}
+{3000}{}{Go playing *blindman* somewhere else then, I gotta work to do.}
+{3010}{}{Sorry, I was just kidding... Actually, I had a few questions for you.}
+{3020}{}{Yeah, right.}
+{4000}{}{Jefferson's the name. I'm mostly repairing various technical junk and there's more of it each day... Armors, plasma rifles, energy cells, you name it. Now did you need something or what? [Looking at you impatiantly]}
+{4010}{}{Say, since you look like the right person to ask... I'm interested in energy production and storage, maybe you could help me with it?}
+{4020}{}{Nope, I think I'll leave you to your work then.}
+{5000}{}{Well, energy cells and weapons are just a part of my work, but I guess you'll hardly find someone else around with so much experience in this area. Anyway, what did you want to know exactly?}
+{5010}{}{I'm currently interested in energy cells and... [You explain everything to Jefferson]}
+{5020}{}{Is there any way to store electrical energy more efficiently? I was thinking... [You explain everything to Jefferson]}
+{5030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{6000}{}{I see... Well, if you want me to teach you something about it, you better bring me ... 1500 caps, that should do the trick. Hell, for that money I'll even give you one of these Deans Electronics manuals for free!}
+{6010}{}{I've got that here right now. [Give him the $1500]}
+{6020}{}{Okay, let me fetch it for you... Be right back.}
+{7000}{}{Well, there is a way to do something like that... I could show you a few more pointers, let's say, for three grand. }
+{7010}{}{Okay, I've got that. Here you go.. [Give him $3000]}
+{7020}{}{Okay, let me fetch it for you... Be right back.}
+{8000}{}{[OBSOLETE] That's a pretty complex issue you're talking about, @sex@|boy||girl|. Okay, I guess I could teach you the theory, but you'll have to find a place to produce them yourself. You know, a place with a strong energy source. Anyway, $4500 and we're set.}
+{8010}{}{Here you go. [Give him $4500]}
+{8020}{}{Okay, just let me get the money, be right back.}
+{9000}{}{Well, glad to see you got everything we need to start with, hehe... [Puts the money into one of his small pockets] Okay, let's start then. [Jefferson explains to you everything you wanted to know. It takes a while.]}
+{9010}{}{Thank you for sharing that knowledge with me, Jefferson. See you around!}
+

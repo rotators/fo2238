@@ -1,0 +1,83 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// production_h.fos
+//
+
+#ifndef __PRODUCTION_H__
+#define __PRODUCTION_H__
+
+#include "_macros.fos"
+#include "MsgStr.h"
+
+//
+// include file for produciton stuff
+//
+
+
+// the amount of resource left
+#define AMOUNT                # (item) (item.Val1)
+// number of times facility has been used/resource fetched (that's to be decided, or scrapped;) )
+#define COUNTER               # (item) (item.Val2)
+
+// cumulative timeout
+#define TIMEOUT_CUMULATIVE    (int(REAL_MINUTE(20)))
+// gathering timeout
+#define SET_TIMEOUT           # (cr, to)     { cr.TimeoutBase[TO_GATHERING] = __FullSecond + cr.Timeout[TO_GATHERING] + REAL_SECOND(to); }
+// ~
+
+// useful defines
+#define SAY_TIMEOUT           # (crit) { crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3000); }
+#define SAY_LACKING_SKILLS    # (crit) { crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3001); }
+#define SAY_TIMEOUT_SELF      # (cr)   { cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS); }
+
+shared interface IGatherCallback
+{
+    void Callback(Item& item, Critter& cr, Item@ usedItem);
+};
+
+#ifndef __PRODUCTION_MODULE__
+import bool IsOverweighted(Critter& cr) from "production";
+import void CheckPrimitiveTool(Critter& crit, Item& item) from "production";
+import bool Gather(Item& item, Critter& cr, Item@ used_item, uint16 pid, uint batch, uint text, uint text_empty, IGatherCallback@ callback) from "production";
+import uint get_RegenerationInterval() from "production";
+import void Regenerate(Item& item, uint16 pid, int capacity, uint pool, int total_count) from "production";
+import void ReduceCounter(uint16 pid, int value) from "production";
+import uint GetFacilities(const Map& map, string@ script_name, array<Item@>& spots) from "production";
+#endif
+
+// helper for altering facility-item images
+class PicHashes
+{
+    array<uint> hashes;
+
+    PicHashes(const array<string@>&picnames)
+    {
+        hashes.resize(picnames.length());
+        for(uint i = 0, iend = picnames.length(); i < iend; i++)
+            hashes[i] = GetStrHash(picnames[i]);
+    }
+    PicHashes& AddHash(string@ picname)
+    {
+        hashes.insertLast(GetStrHash(picname));
+        return this;
+    }
+    uint GetRandom() const
+    {
+        return hashes[Random(0, hashes.length() - 1)];
+    }
+};
+
+/**
+ * Spawns regeneration event, if needed.
+ * Because of the fact function is included in every module,
+ * it will use whatever e_ function there is.
+ */
+void StartRegeneration(Item& item, string& func_name)
+{
+    COUNTER(item) = 0;
+    uint time = Random(__FacilitiesRegenTimeMin, __FacilitiesRegenTimeMax);
+    CreateTimeEvent(AFTER(REAL_MINUTE(time)), func_name, item.Id, false);
+}
+#endif

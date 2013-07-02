@@ -1,0 +1,379 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prospects.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "worldmap_h.fos"
+#include "MsgStr.h"
+#include "_scripts.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+#include "groups_h.fos"
+
+#include "entire.fos"
+
+// prospects types
+#define PROSPECT_WOODS     (1)
+#define PROSPECT_ROCKS     (2)
+#define PROSPECT_ORE       (3)
+
+// timeout when looking for prospects
+#define SCIENCE_TIMEOUT    (REAL_MINUTE(5))
+
+#define REQ_SKILL          (80)      // science or outdoorsman
+
+// entires identifiers
+
+
+/**
+ * Checks if map lies in prospect location
+ */
+bool IsProspectLocation(Map@ map)
+{
+    return IsProspectLocation(map.GetLocation());
+}
+/**
+ * Checks if given location is prospect location.
+ */
+bool IsProspectLocation(Location@ location)
+{
+    uint pid = location.GetProtoId();
+
+    return pid == LOCATION_Woods;     /*||
+                                         pid == LOCATION_ProspectMineA || pid == LOCATION_ProspectMineB || pid == LOCATION_ProspectMineC*/
+}
+
+// helper
+bool IsProspectMap(Item@ map)
+{
+    return(valid(map) && map.GetProtoId() == PID_PROSPECT_MAP);
+}
+//
+// Give empty map to player
+//
+void r_GiveEmptyMap(Critter& player, Critter@ npc, int val)
+{
+    Item@ item = player.AddItem(PID_PROSPECT_MAP, 1);
+    if(!valid(item))
+    {
+        player.Say(SAY_DIALOG, "Error, while giving map.");
+        return;
+    }
+    item.Val5 = 0;     // just in case
+}
+//
+// Checks if player has prospect map with location marked in his hands
+//
+bool d_HaveProspectMap(Critter& player, Critter@ npc, int val)
+{
+    Item@ map = _CritGetItemHand(player);
+    return IsProspectMap(map) && map.Val5 != 0;
+}
+
+//
+// Sells prospect marked with a map that player have in hand
+//
+void r_SellProspect(Critter& player, Critter@ npc, int val)
+{
+    Item@ map = _CritGetItemHand(player);
+    if(!IsProspectMap(map))
+    {
+        player.Say(SAY_DIALOG, "ERR: No map in hand");
+        return;
+    }
+    // give money (TODO: determine prices)
+    // player.AddItem(PID_BOTTLE_CAPS, 10000);
+
+    // make expedition
+    Invade(map.Val5, player.Id);
+
+    DeleteItem(map);
+}
+
+/**
+ * Sends npcs expedition to prospect location.
+ */
+void Invade(uint locId, uint seller)
+{
+    // place npcs
+    Location@ loc = GetLocation(locId);
+    if(!valid(loc))
+    {
+        Log("Couldn't obtain location: " + locId);
+        return;
+    }
+    for(uint i = 0, j = loc.GetMapCount(); i < j; i++)
+    {
+        Map@ map = loc.GetMapByIndex(i);
+        if(!valid(map))
+        {
+            Log("Couldn't obtain the " + i + " map in location: " + locId);
+            continue;
+        }
+        array<Entire> entires;
+        ParseEntires(map, entires, ENTIRE_PROS_OWNER);
+        if(entires.length() > 0)
+        {
+            // Critter@ npc=map.AddNpc(obj.Pid,posX,posY,reversDir,obj.Dialog,obj.Script,aiPack,obj.Bag,teamId,false/*isMob*/,0/*NpcLevel*/);
+            Critter@ npc = AddNpc(map, 20, entires[0].HexX, entires[0].HexY, Random(0, 5), DIALOG_prospect_owner, SCRIPT_prospect_owner, 182, 335, TEAM_Neutral0, false, 20);
+            npc.StatBase[ST_REPLICATION_TIME] = REPLICATION_DEFAULT;
+            // assign owner
+            SetOwner(locId, npc.Id, seller);
+        }
+
+        entires.resize(0);
+        uint num = ParseEntires(map, entires, ENTIRE_PROS_GUARD);
+        if(entires.length() > 0)
+        {
+            for(uint i = 0; i < num; i++)
+            {
+                Critter@ npc = AddNpc(map, 24, entires[i].HexX, entires[i].HexY, Random(0, 5), DIALOG_prospect_guard, SCRIPT_prospect_guard, 181, 333, TEAM_Neutral0, false, 20);
+                npc.StatBase[ST_REPLICATION_TIME] = REPLICATION_DEFAULT;
+            }
+        }
+    }
+    // make location visible for everyone
+    loc.Visible = true;
+
+}
+void invade(Critter& cr, int p0, int p1, int p2)
+{
+    Invade(cr.GetMap().GetLocation().Id, cr.Id);
+}
+
+
+
+/**
+ * Discovers prospect or prepares map to it for an npc.
+ */
+bool UseProspectMap(Critter& cr, Item& map)
+{
+    if(cr.GetMapId() == 0)
+        return FindProspect(cr, map);
+    else
+        return CreateProspectMap(cr, map);
+}
+/**
+ * Creats map that can be used to sell the prospect
+ */
+bool CreateProspectMap(Critter& player, Item& item)
+{
+    DLog("Creating prospect map");
+    // check if in prospect location
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return false;
+
+    if(!IsProspectLocation(map))
+    {
+        DLog("Not on prospecting map");
+        return false;
+    }
+    uint locId = map.GetLocation().Id;
+
+    // skill check
+    if(player.Skill[SK_OUTDOORSMAN] >= REQ_SKILL || player.Skill[SK_SCIENCE] >= REQ_SKILL)
+    {
+        player.Say(SAY_NETMSG, "You've carefully prepared a map to this place.");
+        item.Info = 2;
+        item.Val5 = player.GetMap().GetLocation().Id;
+    }
+    else
+    {
+        player.Say(SAY_NETMSG, "You can't figure out how to mark the location on that map you've got.");
+    }
+    item.Update();
+
+    return true;
+}
+/**
+ * Discovers a prospect (or not).
+ */
+bool FindProspect(Critter& cr, Item& map)
+{
+    if(cr.Timeout[TO_SK_SCIENCE] > 0)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+        return true;
+    }
+
+    // look on worldmap
+    IZone@ zone = GetZone(cr.WorldX, cr.WorldY);
+
+    if(cr.GetAccess() == ACCESS_ADMIN)
+    {
+        cr.Say(SAY_NETMSG, "" + cr.WorldX + "," + cr.WorldY + ":Terrain type: " + zone.GetTerrain() + ", factor: " + zone.GetFactor());
+    }
+
+    // look for already created prospects
+    array<Location@> locations;
+
+    uint             num = GetLocations(cr.WorldX, cr.WorldY, 12, locations);
+    if(cr.GetAccess() == ACCESS_ADMIN && num > 0)
+        cr.Say(SAY_NETMSG, "Checking from " + num + " nearby locations.");
+
+    bool found = false;
+    uint i = 0;
+    for(i = 0; i < num; i++)
+    {
+        if(IsProspectLocation(locations[i]))
+        {
+            found = true;
+            break;
+        }
+    }
+    if(found)
+    {
+        cr.Say(SAY_NETMSG, "You've found an interesting location.");
+        cr.SetKnownLoc(true, locations[i].Id);
+    }
+    else     // a new one
+    {
+        // chance
+        int chance = (cr.Skill[SK_SCIENCE] + cr.Stat[ST_LUCK] * 10) / 10;
+        if(cr.GetAccess() == ACCESS_ADMIN)
+            chance = 100;             // mwahahaha
+        chance = CLAMP(chance * zone.GetFactor() / 100, 1, 100);
+        if(Random(1, 100) <= chance && CheckTerrain(zone.GetTerrain()))
+        {
+            cr.Say(SAY_NETMSG, "You've found an interesting location.");
+            CreateProspect(cr, zone.GetTerrain());
+        }
+        else
+            cr.Say(SAY_NETMSG, "You were unable to find anything.");
+    }
+    // apply science timeout
+    _SetTimeout(cr, TO_SK_SCIENCE, SCIENCE_TIMEOUT);
+    // decrease factor to force player moving around
+    zone.SetFactor(zone.GetFactor() - 1);
+    return true;
+}
+
+
+/**
+ * Checks if any prospect can be found on given type of terrain.
+ */
+bool CheckTerrain(uint terrain)
+{
+    return terrain == TERRAIN_Mountain;
+}
+
+/**
+ * Creates prospect location for given type of terrain.
+ */
+void CreateProspect(Critter& cr, uint terrain)
+{
+    array<uint16> pids;
+    uint16[] mines = { /*LOCATION_ProspectMineA, LOCATION_ProspectMineB, LOCATION_ProspectMineC*/ };
+    switch(terrain)
+    {
+    case TERRAIN_Mountain:
+        pids = mines;
+        break;
+    }
+
+    if(pids.length() == 0)
+    {
+        cr.Say(SAY_NETMSG, "Error: couldn't obtain prospect location pid.");
+        return;
+    }
+
+    uint16 pid = random_from_array(pids);
+
+    uint   id = CreateLocation(pid, cr.WorldX, cr.WorldY, null);
+    cr.SetKnownLoc(true, id);
+}
+
+void spawn_miner(Critter& cr, int p0, int p1, int p2)
+{
+    // Critter@ npc=map.AddNpc(obj.Pid,posX,posY,reversDir,obj.Dialog,obj.Script,aiPack,obj.Bag,teamId,false/*isMob*/,0/*NpcLevel*/);
+    AddNpc(cr.GetMap(), 63, cr.HexX, cr.HexY, Random(0, 6), 0, SCRIPT_prospect_miner, 0, 0, TEAM_Neutral0, false, 0);
+}
+
+///////////////////
+// Prospects data
+///////////////////
+
+/**
+ * Assigns owner for prospect location. It's stored in 1st map data[0].
+ */
+void SetOwner(uint locId, uint ownerId, uint sellerId)
+{
+    Location@ loc = GetLocation(locId);
+    if(!valid(loc))
+    {
+        Log("Couldn't obtain location: " + locId);
+        return;
+    }
+    Map@ map = loc.GetMapByIndex(0);
+    if(!valid(map))
+    {
+        Log("Couldn't obtain 1st map in location: " + locId);
+        return;
+    }
+    map.SetData(MAP_DATA_OWNER, ownerId);
+    map.SetData(MAP_DATA_SELLER, sellerId);
+}
+
+/**
+ * Retrieves the owner of the prospect
+ */
+uint GetOwner(uint locId)
+{
+    Location@ loc = GetLocation(locId);
+    if(!valid(loc))
+    {
+        Log("Couldn't obtain location: " + locId);
+        return 0;
+    }
+    Map@ map = loc.GetMapByIndex(0);
+    if(!valid(map))
+    {
+        Log("Couldn't obtain 1st map in location: " + locId);
+        return 0;
+    }
+    return map.GetData(MAP_DATA_OWNER);
+}
+/**
+ * Checks if player has signed contract with the new owner, so that he can take his share.
+ */
+bool IsSeller(Critter& cr)
+{
+    Location@ loc = cr.GetMap().GetLocation();
+    Map@      map = loc.GetMapByIndex(0);
+    return cr.Id == uint(map.GetData(MAP_DATA_SELLER));
+}
+/**
+ * Gets 'share' container for the map critter is actually in.
+ */
+Item@ GetContainer(Critter& cr)
+{
+    array<Entire> entires;
+    ParseEntires(cr.GetMap(), entires, ENTIRE_PROS_CONTAINER);
+    array<Item@>  items;
+    cr.GetMap().GetItems(entires[0].HexX, entires[0].HexY, items);
+    return @items[0];
+}
+
+/**
+ * Shows the container where share is stored.
+ */
+bool s_Container(Critter& crit, Scenery& scen, int skill, Item@ item)
+{
+    if(skill == SKILL_PICK_ON_GROUND && IsSeller(crit))
+    {
+        Item@ cont = GetContainer(crit);
+        if(!valid(cont))
+        {
+            crit.Say(SAY_NETMSG, "ERR: Couldn't obtain container.");
+            return false;
+        }
+        crit.ShowContainer(null, cont, TRANSFER_FAR_CONT);
+        return true;
+    }
+    return false;
+}

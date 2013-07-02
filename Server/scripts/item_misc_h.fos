@@ -1,0 +1,21 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_misc_h.fos
+//
+
+#ifndef __ITEM_MISC_H__
+#define __ITEM_MISC_H__
+
+#define ITEM_MAP_TARGET           # (_item) _item.Val5
+#define ITEM_MAP_FLAGS            # (_item)  _item.Val6
+
+#define ITEM_MAP_DELETE_ON_USE    0x01
+
+#ifndef __ITEM_MISC__
+
+import Item@ CreateMapTo(Critter& cr, Location& location, uint flags) from "item_misc";
+import Item@ CreateMapTo(Critter& cr, Location& location, uint flags, string& info) from "item_misc";
+#endif // __ITEM_MISC__
+#endif // __ITEM_MISC_H__ //

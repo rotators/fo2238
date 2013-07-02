@@ -1,0 +1,59 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _script slaverun_dialog@d_Var1isSet 1 1 #
+10 1020 D _script slaverun_dialog@d_Var1isSet 1 2 #
+2 1030 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 R _script slaverun_dialog@r_Var1Set 1 2 @
+8 8000 None 0 #
+0 8010 R _script slaverun_dialog@r_StartSlaverunCombat 1 0 #
+0 8020 @
+9 9000 None 0 @
+10 10000 None 0 #
+0 10010 R _script slaverun_dialog@r_StartSlaverunCombat 1 0 #
+0 10020 &
+
+[engl]
+{100}{}{Slaver}
+{200}{}{You see a slaver.}
+{210}{}{This slaver is leading your expedition.}
+{1000}{}{Predialogue installations}
+{1010}{}{all done}
+{1020}{}{talked}
+{1030}{}{2}
+{2000}{}{Alright, you ready?}
+{2010}{}{I only just got here!}
+{3000}{}{Yeah I know, but we're hitting a caravan today. We can't sit here chewing the fat, we gotta get on this right away.}
+{3010}{}{A caravan, huh?}
+{4000}{}{Yeah, you get real prime stock from these. People eat right and live right. Good money in this. }
+{4010}{}{But it's going to be well-defended, right?}
+{5000}{}{Yeah, it's gonna have a few guards. But a bunch of panicky civvies too. Guys'll be armed but it's not gonna be some organised defense or nothing. Just pick off the guards then the rest is ours.}
+{5010}{}{Ok. What about the brahmin?}
+{6000}{}{What about them?}
+{6010}{}{Do we kill them too?}
+{7000}{}{Man, I don't give a fuck.}
+{7010}{}{Uh ok.}
+{8000}{}{Right, let's go.}
+{8010}{}{Ok!}
+{8020}{}{Wait a second and let me check my gear again.}
+{9000}{}{I'll take it from here@@Go and report to Metzger@@We're done here@@Tell the boss we're done}
+{10000}{}{Ready?}
+{10010}{}{Sure, let's take them!}
+{10020}{}{Uh, I'll just reload my shotgun...}
+

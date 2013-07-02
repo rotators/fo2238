@@ -1,0 +1,301 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// vaul_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "factions_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "npc_common_h.fos"
+
+
+#include "questpool.fos"
+#include "guard_h.fos"
+#include "patrolling.fos"
+#include "world_common_h.fos"
+
+#define DIALOG_ID                  (402)
+
+#define STR_GATE_NOT_ALLOWED       (1)
+#define STR_GATE_WELCOME           (2)
+#define STR_COUNCIL_WELCOME        (3)
+#define STR_COUNCIL_NOT_ALLOWED    (4)
+#define STR_HQ_WELCOME             (5)
+#define STR_HQ_NOT_ALLOWED         (6)
+#define STR_VAULT_WELCOME          (7)
+#define STR_HQU_NOT_ALLOWED        (8)
+#define STR_GATE_VISITOR           (9)
+#define STR_COMBAT_TAUNT           (10)
+#define STR_GATE_VISITOR_NIGHT     (11)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+
+    GuardInit(guard);
+
+    // this one particular guard will give "become citizen" quests
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_GATE)
+    {
+        QuestPool@ pool = GetQuestPool(guard);
+        DLog("Init Gate Guard Pigizen");
+        if(!valid(pool))
+            Log("Invalid Pool");
+        pool.AddQuest(LVAR_factions_q_vc_parts, 100, 100, 110, 110).Finished(11);
+        pool.AddQuest(LVAR_factions_q_vc_exam, 200, 200, 210, 210).Finished(11);
+        pool.AddQuest(LVAR_factions_q_vc_skill, 300, 300, 300, 300).Finished(11);
+        DLog("Finished Pigizen Init");
+    }
+
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_VC_LILLY)
+    {
+        DLog("Initializing bitchizen");
+        QuestPool@ pool = GetQuestPool(guard);
+        // pool.AddQuest(LVAR_factions_q_vc_parts, 4);
+        pool.AddQuest(LVAR_factions_q_vc_scoutsf, 100, 50, 120, 50).Finished(3);
+        pool.AddQuest(LVAR_factions_q_vc_questionnaire, 200, 50, 220, 50).Finished(3);
+        pool.AddQuest(LVAR_factions_q_vc_kohl_books, 300, 50, 320, 50).Finished(3);
+    }
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 21);
+        GuardPerks(guard);
+    }
+}
+
+void _Turret(Critter& turret, bool firstTime)
+{
+    critter_init(turret, firstTime);
+}
+
+bool IsPatrolling(Critter& guard)
+{
+    return(guard.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_PATROL1 || guard.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_PATROL2);
+}
+
+void _Idle(Critter& guard)
+{
+    GuardOnIdle(guard);
+
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_PATROL1)
+    {
+        _GetNextNode(guard, 11)         // Route 11 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_PATROL2)
+    {
+        _GetNextNode(guard, 12)         // Route 12 as defined in patrolroutes.fos
+    }
+
+    if(IsPatrolling(guard))
+    {
+        AddWalkPlane(guard, 0, node.GetX(), node.GetY(), node.GetDir(), false, 0);
+        AddWaitPlan(guard, node.GetWait());
+    }
+}
+
+void _OnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    GuardOnSomeoneSteal(guard, target, thief, success, item, count);
+}
+
+void _OnMessage(Critter& npc, Critter& critter, int num, int val)
+{
+    GuardOnMessage(npc, critter, num, val);
+    // courtyard guards just case about the courtyard
+    if((npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_COURTYARD) || (npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_COURTYARD_PATHS))
+    {
+        if(num == MSG_IM_BLOCKING)
+        {
+            if(val == MSG_PARAM_WARN)
+            {
+                if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_COURTYARD_PATHS)
+                    npc.Say(SAY_SHOUT_ON_HEAD, "Stop blocking the path for others or I'll blow your head off!");
+            }
+            else if(val == MSG_PARAM_PUNISH)
+                AttackCritter(npc, critter, 0);
+        }
+    }
+
+    // This switch needs refactoring.
+    switch(num)
+    {
+    // player near gate
+    case MSG_VC_PLAYER_NEAR_GATE:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_GATE)
+        {
+            if(IsVCCitizen(critter))               // citizen
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GATE_WELCOME));
+            else if(!HasValidDayPass(critter))     // stranger
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GATE_NOT_ALLOWED));
+            else                                   // day pass
+            {
+                if(IsNight())                      // night
+                    npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GATE_VISITOR_NIGHT));
+                else                               // day
+                    npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_GATE_VISITOR));
+            }
+        }
+        break;
+
+    // player at the gate
+    case MSG_VC_PLAYER_AT_GATE:
+        // Attack the intruder if he's not a VC citizen and has no Day Pass OR has Day Pass and nighttime
+        if(!HasGateClearance(critter))
+        {
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        break;
+
+    // player near hq building
+    case MSG_VC_PLAYER_NEAR_HQ:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_HQ)
+        {
+            if(IsVCCitizen(critter))
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_WELCOME));
+            else
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_NOT_ALLOWED));
+        }
+        break;
+
+    // player at hq building entrance
+    case MSG_VC_PLAYER_AT_HQ:
+        // Attack the intruder if he's not a VC citizen.
+        if(!IsVCCitizen(critter))
+        {
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        break;
+
+    // player near hq underground entrance
+    case MSG_VC_PLAYER_NEAR_HQU:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_HQ_STAIRCASE)
+        {
+            // warn if not authorized
+            if(!HasHQUndergroundClearance(critter))
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQU_NOT_ALLOWED));
+            // else
+            ;        // npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQU_WELCOME));
+        }
+        break;
+
+    case MSG_VC_PLAYER_AT_HQU:
+        if(!HasHQUndergroundClearance(critter))
+        {
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        break;
+    // council
+    case MSG_VC_PLAYER_NEAR_COUNCIL:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_COUNCIL)
+        {
+            if(HasCouncilClearance(critter))
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COUNCIL_WELCOME));
+            else
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COUNCIL_NOT_ALLOWED));
+        }
+        break;
+
+    case MSG_VC_PLAYER_AT_COUNCIL:
+        if(!(HasCouncilClearance(critter)))
+        {
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        break;
+
+
+    case MSG_VC_PLAYER_NEAR_VAULT:
+        if(npc.Stat[ST_NPC_ROLE] == ROLE_VC_GUARD_VAULT)
+        {
+            if(IsVCCitizen(critter))
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_VAULT_WELCOME));
+            else
+                npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_HQ_NOT_ALLOWED));
+        }
+        break;
+
+    case MSG_VC_PLAYER_AT_VAULT:
+        // Attack the intruder if he's not a VC citizen.
+        if(!IsVCCitizen(critter))
+        {
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_COMBAT_TAUNT));
+        }
+        break;
+
+    case MSG_ATTACK_ME:
+        AttackCritter(npc, critter);
+        // Turrets don't scream combat taunts
+        if(npc.Stat[ST_NPC_ROLE] != ROLE_VC_HQ_TURRET)
+            npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, 10));
+        break;
+    }
+}
+
+bool IsVCCitizen(Critter& critter)
+{
+    return(GetGroupIndex(critter) == FACTION_VAULT_CITY);
+}
+
+bool HasCouncilClearance(Critter& critter)
+{
+    return(IsVCCitizen(critter) && GetPlayerRank(critter.Id) >= RANK_IMPORTANT);
+}
+
+bool HasHQUndergroundClearance(Critter& critter)
+{
+    return(IsVCCitizen(critter) && GetPlayerRank(critter.Id) >= RANK_TRUSTED);
+}
+
+// allowed to enter the inner city in the day
+bool HasGateDayClearance(Critter& critter)
+{
+    return(IsVCCitizen(critter) || HasValidDayPass(critter));
+}
+
+// allowed to enter the inner city in the night
+bool HasGateNightClearance(Critter& critter)
+{
+    return(IsVCCitizen(critter));
+}
+
+bool HasValidDayPass(Critter& critter)
+{
+    Item@ daypass = critter.GetItem(PID_DAY_PASS2, -1);
+    if(!valid(daypass))
+        return false;
+    return(uint(daypass.Val5) == critter.Id);
+}
+
+bool HasGateClearance(Critter& critter)
+{
+    if(IsNight())
+        return HasGateNightClearance(critter);
+    return HasGateDayClearance(critter);
+}
+
+void _OnShowCritter(Critter& guard, Critter& player)
+{
+    GuardOnShowCritter(guard, player);
+
+    if(player.IsPlayer() && !HasHQUndergroundClearance(player))
+    {
+        if(player.GetMapProtoId() == MAP_VaultCityHQ)
+            player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+}

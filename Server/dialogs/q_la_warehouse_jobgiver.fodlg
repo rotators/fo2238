@@ -1,0 +1,89 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_la_warehouse } 2 #
+15 1020 D _var p q_la_warehouse = 1 #
+8 1030 D _param p ST_CHARISMA < 4 D _param p ST_GENDER = 1 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+8 1040 D _param p ST_CHARISMA < 4 D _param p ST_GENDER = 0 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+2 1050 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+6 1060 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+11 2010 #
+12 2020 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 R _script quest_la_warehouse@r_SpawnMap 0  R _var p q_la_warehouse = 1 R _item p PID_Q_LA_WAREHOUSE_LETTER + 1 @
+6 5000 None 0 #
+11 5010 #
+12 5020 @
+8 6000 None 0 #
+10 6010 #
+9 6020 R _var p name_mem_npc_player = 0 @
+9 7000 None 0 #
+9 7010 R _var p q_la_warehouse_fuck_loop + 1 #
+0 7020 D _var p q_la_warehouse_fuck_loop > 2 #
+0 7030 D _var p q_la_warehouse_fuck_loop { 2 @
+10 8000 None 0 #
+11 8010 #
+12 8020 @
+11 9000 None 0 #
+4 9010 #
+13 9020 D _param p SK_BARTER < 55 #
+14 9030 D _param p SK_BARTER } 55 #
+12 9040 @
+12 10000 None 0 @
+13 11000 None 0 #
+4 11010 #
+12 11020 @
+14 12000 None 0 #
+4 12010 R _script dialog@r_AddMoney 1 25 @
+15 13000 None 0 &
+
+[engl]
+{100}{}{Punk}
+{200}{}{You see a punk.}
+{210}{}{Looks like she is searching for someone.}
+{1000}{}{Predialogue installations}
+{1010}{}{"Job" done, fuck off.}
+{1020}{}{Job taken.}
+{1030}{}{Female and ugly.}
+{1040}{}{Too ugly.}
+{1050}{}{Answer text}
+{1060}{}{Talked second time.}
+{2000}{}{Hey yeh, hot piece of ass. Want ta job?}
+{2010}{}{Maybe, what do you have?}
+{2020}{}{No, do your shit alone.}
+{3000}{}{Fuck off.}
+{4000}{}{Good, yeh job is easy. Deliver the message to te industrial park in te west of here. [She gives you a letter.] Yeh better go alone, it be better for ya.}
+{4010}{}{[End]}
+{5000}{}{Change' yer mind?}
+{5010}{}{Tell me what you have.}
+{5020}{}{No! ...}
+{6000}{}{@sex@|God, yeh ar som ugly man!||God, yeh ar som ugly bitch!|}
+{6010}{}{You aren't pretty either.}
+{6020}{}{Fuck off!}
+{7000}{}{Fuck yeh off!@@FUCK OFF!@@You fuck OFF!@@FUCK ... [She takes a long breath.] ... OFF!}
+{7010}{}{No, fuck you off!@@No, you fuck off!@@Fuck off yourself!}
+{7020}{}{This becomes tiresome. See you around... [You walk away.]}
+{7030}{}{Whatever. Bye...}
+{8000}{}{I ain't be that pretty, but I got yeh a job, if yeh want.}
+{8010}{}{Maybe, what job we are talking about?}
+{8020}{}{Not interested, bye...}
+{9000}{}{I need yeh to deliver a message to a friend of me in te industrial park. It is in te west of here. Yeh want to do it?}
+{9010}{}{Sure, give it to me and I'll do it.}
+{9020}{}{Give me some caps and I'll do it.}
+{9030}{}{Give me some caps and I'll do it.}
+{9040}{}{Doesn't looks like I will hit the road into that direction anytime soon. Maybe later. So long, see you.}
+{10000}{}{Ma'be later, yeh?}
+{11000}{}{Yeh get 100 caps if yeh have done te job. Not before.}
+{11010}{}{Okay, I'll do the job.}
+{11020}{}{Not going to do this then, bye.}
+{12000}{}{Yeh get 100 caps if yeh have done te job. But yeh seem to be trusty. Here, yeh get 25 caps now, later more.}
+{12010}{}{I am on my way.}
+{13000}{}{Do te job and yeh get yeh bottle caps.}
+

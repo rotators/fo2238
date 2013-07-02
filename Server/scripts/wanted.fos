@@ -1,0 +1,21 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// wanted.fos
+//
+
+#include "_macros.fos"
+#include "lexems_h.fos"
+
+bool WantedSignSet(Item& wantedSign, string& name, uint cost)   // Export
+{
+    if(wantedSign.Info != 2)
+    {
+        wantedSign.Info = 2;
+        wantedSign.Update();
+    }
+    SetLexem(wantedSign, "$name", name);
+    SetLexem(wantedSign, "$cost", "" + cost);
+    return true;
+}

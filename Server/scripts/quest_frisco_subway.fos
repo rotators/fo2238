@@ -1,0 +1,227 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_frisco_subway.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "messages_h.fos"
+#include "utils_h.fos"
+
+#define SCORPIONS_KILLED    (3)
+
+// npc roles (defines distance mob will attack from))
+#define ROLE_DEFAULT        (0)
+#define ROLE_AGRESSIVE      (1)
+#define ROLE_PASSIVE        (2)
+
+// useful variables
+#define ALERTED             # (cr)           (cr.StatBase[ST_VAR1]) // idle time is shorter if in that mode // note that it uses StatBase for read and write
+
+// idle time in milseconds (normal is slower for performance issues)
+#define IDLE_NORMAL         (5000)
+#define IDLE_ALERTED        (1000)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void r_SpawnLocation(Critter& player, Critter@ npc)
+{
+    int loc = CreateLocation(LOCATION_Q_SanFranSubway, 550, 1362, null);
+
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_frisco_subway_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    map.SetData(MAP_DATA_FRISCO_SUBWAY_OWNER, player.Id);
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_frisco_subway, 5);
+
+    // Transport player into the quest location
+    player.TransitToMap(map.Id, 0);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteLocation(Critter& critter, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_frisco_subway_locid, critter.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetLocation().GetMapByIndex(0).GetData(MAP_DATA_FRISCO_SUBWAY_OWNER));
+}
+uint GetOwnerId(Map& map)
+{
+    return map.GetLocation().GetMapByIndex(0).GetData(MAP_DATA_FRISCO_SUBWAY_OWNER);
+}
+
+void r_TeleportToBasement(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_frisco_subway_locid, player.Id);
+    if(!valid(var))
+        return;                 // panic
+    Location@ loc = GetLocation(var.GetValue());
+    if(valid(loc))
+        player.TransitToMap(loc.GetMapByIndex(0).Id, 0);
+}
+
+// =============================================
+// Critter stuff
+// =============================================
+
+void _Scorpion(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_ScorpionDead");
+    // cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobShowCritter");
+    cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_MobHideCritter");
+
+    if(firstTime)
+    {
+        NpcSetLevel(cr, 10);
+
+        Map @map = cr.GetMap();
+        map.SetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS, map.GetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS) + 1);
+    }
+}
+
+void _ScorpionDead(Critter& cr, Critter@ killer)
+{
+    Map @map = cr.GetMap();
+    map.SetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS, map.GetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS) - 1);
+    if(map.GetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS) == 0)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_frisco_subway, GetOwnerId(map));
+        var = SCORPIONS_KILLED;
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, fromCr);
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_FRISCO_SUBWAY_OWNER)));
+}
+void CheckPlants(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Plants dead: " + cr.GetMap().GetData(MAP_DATA_FRISCO_SUBWAY_SCORPIONS));
+}
+
+// =============================================
+// Mob script parts
+// =============================================
+
+//
+// Checks if critter is within attack distance
+//
+void _MobIdle(Critter& cr)
+{
+    // check critters in sight
+    array<Critter@> crits;
+    // get visible players
+    uint            num = cr.GetCritters(false, FIND_ONLY_PLAYERS | FIND_LIFE, crits);
+    // mob.Say(SAY_NORM_ON_HEAD, ""+num);
+    // check distance
+    uint dist = GetDistance(cr);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(cr, crits[i]) > dist)
+            continue;
+        else
+        {
+            // attack
+            cr.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+    if(ALERTED(cr) > 0)
+    {
+        // MoveMob(mob, false);
+        cr.Wait(IDLE_ALERTED);
+    }
+    else
+    {
+        MoveMob(cr, false);
+        // mob.Say(SAY_NORM_ON_HEAD, "Don't care");
+        cr.Wait(IDLE_NORMAL);
+    }
+}
+
+void MoveMob(Critter& cr, bool run)
+{
+    int dist = Random(0, (cr.Stat[ST_NPC_ROLE] % 100 / 10));
+    if(dist == 0)
+    {
+        cr.MoveRandom();
+    }
+    else
+    {
+        // bool AddWalkPlane(Critter& npc, uint priory, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint8 cut)
+        uint16 hexX = cr.HexX;
+        uint16 hexY = cr.HexY;
+        cr.GetMap().MoveHexByDir(hexX, hexY, Random(0, 5), dist);
+        AddWalkPlane(cr, 0, hexX, hexY, 0xff, run, 0);
+    }
+}
+
+//
+// Gets distance after which critter becomes agressive
+//
+uint GetDistance(Critter& cr)
+{
+    // TODO: damaged eye??
+    uint base = __LookNormal + 3 * cr.Stat[ST_PERCEPTION];
+
+    // switch works only for ints??
+    int role = int(cr.Stat[ST_NPC_ROLE]);
+    switch(role)
+    {
+    case ROLE_DEFAULT:
+        // mob.Say(SAY_NORM, "" + base + "/" + 3 + "=" + base/3);
+        return base / 3;
+    case ROLE_AGRESSIVE:
+        return base / 2;
+    case ROLE_PASSIVE:
+        return base / 4;
+    }
+    return base / 3;
+}
+//
+// Alerts that oponent is near
+//
+void _MobShowCritter(Critter& cr, Critter& showCrit)
+{
+    if(showCrit.IsPlayer())
+        ALERTED(cr) += 1;
+}
+
+void _MobHideCritter(Critter& cr, Critter& hideCrit)
+{
+    if(hideCrit.IsPlayer())
+        ALERTED(cr) -= 1;
+}

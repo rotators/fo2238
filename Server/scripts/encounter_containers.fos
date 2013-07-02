@@ -1,0 +1,258 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// encounter_containers.fos
+//
+
+// This script is responsible for spawning *only* encounter containers along with their traps.
+// The containers themselves use the generic item spawner script, spawner_container.fos
+// Adding itself is performed by AddEncounterContainers().
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "entire.fos"
+#include "spawner_container_h.fos"
+#include "traps_h.fos"
+
+import void SetWear(Item& item, int wearProcent) from "repair";
+import void SetMinWear(Item& item, int wearProcent) from "repair";
+
+#define EC_TYPE_NONE               (0)
+#define EC_TYPE_CONTAINER          (1)
+#define EC_TYPE_GRAVE              (2)
+
+#define EC_BASE_CHANCE             (20)
+
+#define EC_CONT_LOW_THRESHOLD      (7)
+#define EC_CONT_MED_THRESHOLD      (9)
+#define EC_CONT_HIGH_THRESHOLD     (10)
+
+#define EC_GRAVE_LOW_THRESHOLD     (8)
+#define EC_GRAVE_HIGH_THRESHOLD    (10)
+
+#define EC_FLAG_SPAWN              (0x1)
+#define EC_FLAG_FILL               (0x2)
+
+#define ED_TRAPS_RADIUS            (5)
+
+uint GetContainerType(Map& map)
+{
+    return EC_TYPE_CONTAINER;
+}
+
+Entire@ GetEntire(Map& map, uint type)
+{
+    array<Entire> entires;
+    uint          n = 0;
+    switch(type)
+    {
+    case EC_TYPE_CONTAINER:
+    {
+        n = ParseEntires(map, entires, ENTIRE_EC_CONT_H);
+        n += ParseEntires(map, entires, ENTIRE_EC_CONT_V);
+        break;
+    }
+    case EC_TYPE_GRAVE:
+    {
+        n = ParseEntires(map, entires, ENTIRE_EC_CONT_H);
+        break;
+    }
+    }
+    if(n == 0)
+        return null;
+    uint i = Random(0, n - 1);
+    return entires[i];
+}
+
+uint16 GetContainerPid(uint cont)
+{
+    switch(cont)
+    {
+    case ENTIRE_EC_CONT_H:
+        return PID_FOOTLOCKER_CLEAN_LEFT;
+    case ENTIRE_EC_CONT_V:
+        return PID_FOOTLOCKER_CLEAN_RIGHT;
+    case ENTIRE_EC_CONT_GRAVE:
+        return Random(PID_GRAVESITE_V, PID_GRAVESITE_H);
+    default:
+    }
+    return 0;
+}
+
+uint GetSpawnerType(uint type)
+{
+    switch(type)
+    {
+    case EC_TYPE_CONTAINER:
+    {
+        uint n = Random(1, EC_CONT_HIGH_THRESHOLD);
+        if(n > EC_CONT_MED_THRESHOLD)
+            return SPAWNER_CONTAINER_ENCOUNTER_HIGH;
+        if(n > EC_CONT_LOW_THRESHOLD)
+            return SPAWNER_CONTAINER_ENCOUNTER_MEDIUM;
+        return SPAWNER_CONTAINER_ENCOUNTER_LOW;
+    }
+    case EC_TYPE_GRAVE:
+    {
+        uint n = Random(1, EC_GRAVE_HIGH_THRESHOLD);
+        if(n > EC_GRAVE_LOW_THRESHOLD)
+            return SPAWNER_CONTAINER_GRAVE_HIGH;
+        return SPAWNER_CONTAINER_GRAVE_LOW;
+    }
+    }
+    return SPAWNER_CONTAINER_ENCOUNTER_LOW;
+}
+
+uint GetTrapsLevel(uint spawner)
+{
+    switch(spawner)
+    {
+    case SPAWNER_CONTAINER_ENCOUNTER_LOW:
+        return 15;
+    case SPAWNER_CONTAINER_ENCOUNTER_MEDIUM:
+        return 30;
+    case SPAWNER_CONTAINER_ENCOUNTER_HIGH:
+        return 60;
+    case SPAWNER_CONTAINER_GRAVE_LOW:
+    case SPAWNER_CONTAINER_GRAVE_HIGH:
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+uint RollFlags(uint type)
+{
+    uint ret = 0;
+    switch(type)
+    {
+    case EC_TYPE_CONTAINER:
+    {
+        if(Random(1, 100) <= EC_BASE_CHANCE)
+        {
+            SETFLAG(ret, EC_FLAG_SPAWN);
+            SETFLAG(ret, EC_FLAG_FILL);
+        }
+        break;
+    }
+    case EC_TYPE_GRAVE:
+    {
+        if(Random(1, 100) <= EC_BASE_CHANCE / 4)
+        {
+            SETFLAG(ret, EC_FLAG_SPAWN);
+            SETFLAG(ret, EC_FLAG_FILL);
+        }
+    }
+    default:
+    }
+    return ret;
+}
+
+void MakeTraps(Map& map, uint16 hx, uint16 hy, int trapslevel)
+{
+    trapslevel += 100;
+    trapslevel >>= 1;
+    uint  pid = (Random(0, 9) < 3) ? PID_ACTIVE_MINE : PID_BEAR_TRAP;   // todo: bear traps, alarm trap
+    Item@ item = null;
+    for(int i = -ED_TRAPS_RADIUS; i <= ED_TRAPS_RADIUS; i++)
+        for(int j = -ED_TRAPS_RADIUS; j <= ED_TRAPS_RADIUS; j++)
+        {
+            if(i == 0 && j == 0)
+                continue;
+            int nx = hx + i;
+            int ny = hy + j;
+            if(!map.IsHexPassed(nx, ny))
+                continue;
+            if(GetDistantion(hx, hy, nx, ny) > ED_TRAPS_RADIUS)
+                continue;
+            if(Random(1, 100) <= trapslevel)
+                @item = map.AddItem(nx, ny, pid, 1);
+            else
+                continue;
+            SETFLAG(item.Flags, ITEM_TRAP);
+
+            _Complexity(item) = Random(0, trapslevel);
+            if(pid == PID_ACTIVE_MINE)
+                _ExplodeSetBonusDamage(item, Random(0, trapslevel));
+            else
+                _BonusDamage(item) = Random(0, trapslevel);
+        }
+
+}
+
+
+// It is of utmost importance that this function never fails to execute
+void AddEncounterContainers(Map@ map, array<Critter@>@ critters)     // export
+{
+    if(!valid(map))
+        return;
+    uint type = GetContainerType(map);
+    if(type == EC_TYPE_NONE)
+        return;
+    uint flags = RollFlags(type);
+    if(!FLAG(flags, EC_FLAG_SPAWN))
+        return;
+
+    // Find en entire to spawn
+    Entire@ ent = GetEntire(map, type);
+    if(!valid(ent))
+    {
+        // Log("ERR: map pid "+map.GetProtoId()+" supposed to have container "+type+", but no entires found.");
+        return;
+    }
+
+    uint16 pid = GetContainerPid(ent.Number);
+    if(pid == 0)
+    {
+        Log("ERR: map pid " + map.GetProtoId() + " gives container pid 0.");
+        return;
+    }
+
+    // Add the container
+    Item@ item = map.AddItem(ent.HexX, ent.HexY, pid, 1);
+    if(!valid(item))
+        return;
+    int trapslevel = 0;
+
+    // Fill the container with items
+    if(FLAG(flags, EC_FLAG_FILL))
+    {
+        uint spawner = GetSpawnerType(type);
+        trapslevel = GetTrapsLevel(spawner);
+        MakeSpawnerContainer(item, spawner);
+        bool perk = false;
+        for(uint i = 0, j = critters.length(); i < j; i++)
+            if(critters[i].Perk[PE_TREASURE_HUNTER] > 0)
+            {
+                perk = true;
+                break;
+            }
+        if(perk)
+        {
+            array<Item@> items;
+            for(uint i = 0, j = item.GetItems(0, items); i < j; i++)
+            {
+                if(items[i].IsStackable())
+                    items[i].SetCount((items[i].GetCount() * 23) / 20);
+                else if(Random(1, 100) <= 15)
+                    item.AddItem(items[i].GetProtoId(), 1, 0);
+            }
+        }
+
+        // Add some deterioration to the spawned items
+        array<Item@> items;
+        for(uint i = 0, j = item.GetItems(0, items); i < j; i++)
+            if(items[i].IsDeteriorable())
+            {
+                SetWear(items[i], Random(15, 30));
+                SetMinWear(items[i], Random(5, 15));
+            }
+    }
+    else
+        trapslevel = 5;    // Grave handled above
+    if(trapslevel >= Random(1, 100))
+        MakeTraps(map, ent.HexX, ent.HexY, trapslevel);
+    array<Item@> dummy;
+    Log("(deleteme) added container at " + ent.HexX + "," + ent.HexY + " with " + item.GetItems(0, dummy) + " items.");
+}

@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// tests_astl.fos
+//
+
+#pragma bindfunc "uint64 getticks() -> Utils.dll getticks"
+#pragma bindfunc "void Dummy() -> ASTL.dll Dummy"
+
+void test(uint len)
+{
+    Log("insertAt in the middle time test with " + len + " elements:");
+
+    stlvector<int> vec;
+    array<int>     arr;
+
+    uint64         time = getticks();
+    for(uint i = 0; i < len; i++)
+        arr.insertAt(arr.length() / 2, i);
+    time = getticks() - time;
+    Log("array: " + time);
+
+    time = getticks();
+    for(uint i = 0; i < len; i++)
+        vec.insertAt(vec.size() / 2, i);
+    time = getticks() - time;
+    Log("stlvector: " + time);
+}
+
+void tmain()
+{
+    test(1);
+    test(10);
+    test(100);
+    test(1000);
+    test(10000);
+    test(100000);
+}

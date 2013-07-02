@@ -1,0 +1,58 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+4 1010 D _var n name_mem_npc_player = 0 D _var p q_bunker_base > 4 D _var p q_bunker_base < 20 #
+3 1020 D _script dialog@d_CheckNight 0  #
+2 1030 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 D _var p q_bunker_base < 15 R _var p q_bunker_base + 1 R _var n name_mem_npc_player + 1 #
+7 4020 D _var p q_bunker_base = 15 R _var p q_bunker_base + 1 R _var n name_mem_npc_player + 1 #
+6 4030 D _var p q_bunker_base > 15 D _var p q_bunker_base < 18 R _var p q_bunker_base + 1 R _var n name_mem_npc_player + 1 #
+9 4040 D _var p q_bunker_base = 18 R _var p q_bunker_base + 3 R _var n name_mem_npc_player + 1 #
+0 4050 @
+5 5000 None 0 #
+0 5010 @
+7 6000 None 0 #
+8 6010 @
+6 7000 None 0 #
+0 7010 @
+8 8000 None 0 @
+9 9000 None 0 #
+8 9010 &
+
+[engl]
+{100}{}{Ghoul}
+{200}{}{You see a Ghoul.}
+{210}{}{It seems to have been human once, or at least descended from humans. You guess that the deteriation in the body is most likely due to acid or radiation.}
+{240}{}{You see a dead Ghoul.}
+{250}{}{You examine the pitiful thing, but can not figure out what might have made it the way it is.}
+{260}{}{You see a slain Ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{You know about fucking base quest!}
+{1020}{}{night}
+{1030}{}{Answer text}
+{2000}{}{What do you want?@@Leave me alone.@@What?@@Don't mess with my stuff.@@Hi.@@Arrrr!@@Grrrrr!@@Uungh.@@Uhh.@@Ever since the mutants left, it's been better.@@Hello.}
+{3000}{}{What do you want?@@Leave me alone.@@What?@@Don't mess with my stuff.@@Hi.@@Arrrr!@@Grrrrr!@@Uungh.@@Uhh.@@Ever since the mutants left, it's been better.@@Hello.@@Good night, yaaa. . ?@@Uungh... too dark here.@@We need to fix the light.}
+{4000}{}{What do you want?@@Leave me alone.@@What?@@Don't mess with my stuff.@@Hi.@@Arrrr!@@Grrrrr!@@Uungh.@@Uhh.@@Ever since the mutants left, it's been better.@@Hello.}
+{4010}{}{Hello, I've heard about some trapper who might live here. He has a scar over the face and should be a bit older by now. Do you know someone who could fit this?@@Hey, I am serching an old man. He has a scar over his head and was known as a trapper. Do you know someone who could fit this?@@Uh... I am serching an old trapper. He has a scar over his head and people told me that he might be here in Necropolis.}
+{4020}{}{Hello, I've heard about some trapper who might live here. He has a scar over the face and should be a bit older by now. Do you know someone who could fit this?@@Hey, I am serching an old man. He has a scar over his head and was known as a trapper. Do you know someone who could fit this?@@Uh... I am serching an old trapper. He has a scar over his head and people told me that he might be here in Necropolis.}
+{4030}{}{I feel this question is kind awkward, but i must ask it - Do you happen to know, by any chance, where is Wally?}
+{4040}{}{I feel this question is kind awkward, but i must ask it - Do you happen to know, by any chance, where is Wally?}
+{4050}{}{Nothing, bye.}
+{5000}{}{GRAAAAA!@@UAARRRRR!@@Uhh.... [He looks at you and nothing happens.]}
+{5010}{}{Uh, ok, I need to go. Bye.@@Eh... it... seems like, I need to go. Bye.@@Oh, sorry, I thought you have been someone else. Bye.}
+{6000}{}{Uah... mmmhm... Smoothskin, I think I know such a person. Don't know where he is, but his name might be Wally. Wally the old. More I don't know.}
+{6010}{}{Wally you say? Thanks.}
+{7000}{}{Wha-wha?}
+{7010}{}{I've said Wally!}
+{8000}{}{Hurr hurr...}
+{9000}{}{Smoothskin. I know. But I am not the fastest anymore. My flesh smells and my bones are clunky. So keep ya down. I know a Wally. He lives somewhere alone at the Watershed. You should check it out and leave me alone.}
+{9010}{}{The watershed you say... very well. Hope I can find him. Bye.}
+

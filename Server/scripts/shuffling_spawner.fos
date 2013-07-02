@@ -1,0 +1,270 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// shuffling_spawner.fos
+//
+
+// This is the script responsible for handling "random shufflers", like for mine veins.
+
+#include "_macros.fos"
+#include "debug_h.fos"
+
+#define SPAWNDATA_NUMBER    # (item)        (item.Val0)
+
+class SpawnData
+{
+    private array<uint16> pids;
+    private array<uint>   chances;
+    private uint          totalChance;
+    private uint          delay;
+
+    SpawnData()
+    {
+        totalChance = 0;
+        delay = 0;
+    }
+
+    SpawnData@ Add(uint16 pid, uint chance)
+    {
+        if(chance == 0)
+            return this;
+        pids.insertLast(pid);
+        chances.insertLast(chance);
+        totalChance += chance;
+        return this;
+    }
+
+    SpawnData@ SetDelay(uint time)
+    {
+        delay = time;
+        return this;
+    }
+
+    bool TryRespawn(Map& map, Item& marker, Item& item)
+    {
+        if(delay == 0)
+            return Respawn(map, marker, item);
+
+        DeleteItem(item);
+        array<uint> val = { map.Id, marker.Id };
+        return CreateTimeEvent(AFTER(delay), "e_Respawn", val, true) != 0;
+    }
+
+    bool Respawn(Map& map, Item& marker, Item@ item)
+    {
+        // If nothing to spawn, bail out
+        if(totalChance == 0)
+            return false;
+
+        array<bool> spawned(pids.length(), false);         // To check if at least one is spawned
+        array<Item@> markers;
+
+        // Gather all markers of the same type minus self
+        uint len = map.GetItems(PID_SPOT_SHUFFLER, markers);
+        for(uint i = 0; i < len;)
+        {
+            if(markers[i].Id == marker.Id ||
+               SPAWNDATA_NUMBER(markers[i]) != SPAWNDATA_NUMBER(marker) ||
+               checkSpawned(map, markers[i], spawned))
+            {
+                len--;
+                @markers[i] = markers[len];
+                continue;
+            }
+            i++;
+        }
+
+        // Choose one if possible
+        if(len == 0)
+            return false;
+        Item@ spawnMarker = markers[Random(0, len - 1)];
+
+        // Select the index of pid to spawn
+        int idx = spawned.find(false);
+        if(idx < 0)
+            for(uint acc = chances[++idx], roll = Random(1, totalChance); acc < roll; acc += chances[++idx])
+                ;
+
+        Item@ spawnedItem = map.AddItem(spawnMarker.HexX, spawnMarker.HexY, pids[idx], 1);
+
+        if(!valid(spawnedItem))
+            return false;
+
+        spawnedItem.Dir = spawnMarker.Dir;
+        spawnedItem.Update();
+
+        if(valid(item))
+            DeleteItem(item);
+
+        return true;
+    }
+
+    private bool checkSpawned(Map& map, Item& marker, array<bool>& spawned)
+    {
+        array<Item@> items;
+        for(uint i = 0, j = map.GetItems(marker.HexX, marker.HexY, items); i < j; i++)
+        {
+            int idx = pids.find(items[i].GetProtoId());
+            if(idx < 0)
+                continue;
+            spawned[idx] = true;
+
+            // Skip the rest
+            return true;
+        }
+        return false;
+    }
+};
+
+array<SpawnData@> Data;
+
+SpawnData@ NewSpawnData(uint index)
+{
+    if(index >= Data.length())
+        Data.resize(index + 1);
+
+    SpawnData@ data = SpawnData();
+    @Data[index] = data;
+    return data;
+}
+
+SpawnData@ GetSpawnData(uint num)
+{
+    if(num >= Data.length())
+        return null;
+    return Data[num];
+}
+
+bool ShuffleItem(Item& item)   // export
+{
+    if(item.IsNotValid)
+        return false;
+    if(item.Accessory != ACCESSORY_HEX)
+    {
+        WLog("shuffler", "item " + item.Id + " is not on a map", DEBUG_ERROR);
+        return false;
+    }
+
+    uint16 hx = 0, hy = 0;
+    Map@   map = item.GetMapPosition(hx, hy);
+
+    if(!valid(map) || map.IsNotValid)
+    {
+        WLog("shuffler", "item " + item.Id + " is not on a valid map", DEBUG_ERROR);
+        return false;
+    }
+
+    array<Item@> items;
+    if(map.GetItems(hx, hy, 1, PID_SPOT_SHUFFLER, items) == 0)
+    {
+        WLog("shuffler", "item " + item.Id + " is not placed over a shuffle marker", DEBUG_ERROR);
+        return false;
+    }
+
+    Item@      marker = items[0];
+
+    SpawnData@ data = GetSpawnData(SPAWNDATA_NUMBER(marker));
+    if(!valid(data))
+    {
+        WLog("shuffler", "item marker " + marker.Id + " has an invalid spawn data: " + SPAWNDATA_NUMBER(marker), DEBUG_ERROR);
+        return false;
+    }
+
+    return data.TryRespawn(map, marker, item);
+}
+
+uint e_Respawn(array<uint>@ values)
+{
+    Map@ map = GetMap(values[0]);
+    if(!valid(map))
+        return 0;
+    Item@ marker = GetItem(values[1]);
+    if(!valid(marker))
+        return 0;
+
+    SpawnData@ data = GetSpawnData(SPAWNDATA_NUMBER(marker));
+    if(!valid(data))
+    {
+        WLog("shuffler", "item marker " + marker.Id + " has an invalid spawn data: " + SPAWNDATA_NUMBER(marker), DEBUG_ERROR);
+        return 0;
+    }
+
+    data.Respawn(map, marker, null);
+    return 0;
+}
+
+void InitShufflingSpawns() // export
+{
+    // PID1, PID2, PID3 with relative chances to spawn being 7, 20 and 30 respectively
+    // NewSpawnData(0).Add(PID1, 7).Add(PID2, 20).Add(PID3, 30);
+
+    NewSpawnData(0);                                                                                                                                             // Default (based on map pid)
+    NewSpawnData(1).Add(PID_VEIN_IRON, 50).Add(PID_VEIN_MINERALS, 50).SetDelay(REAL_SECOND(120));                                                                // Guarded mines
+    NewSpawnData(2).Add(PID_VEIN_IRON, 50).Add(PID_VEIN_MINERALS, 50).SetDelay(REAL_SECOND(120));                                                                // Ghost Farm
+    NewSpawnData(3).Add(PID_VEIN_IRON, 50).Add(PID_VEIN_MINERALS, 50).SetDelay(REAL_SECOND(600));                                                                // Bunker Base
+    NewSpawnData(4).Add(PID_VEIN_IRON, 10).Add(PID_VEIN_MINERALS, 10).Add(PID_VEIN_IRON2, 40).Add(PID_VEIN_MINERALS2, 40);                                       // Vault City mine
+    NewSpawnData(5).Add(PID_VEIN_IRON, 15).Add(PID_VEIN_MINERALS, 15).Add(PID_VEIN_IRON2, 30).Add(PID_VEIN_MINERALS2, 30).Add(PID_VEIN_GOLD, 10);                // Redding mine
+    NewSpawnData(6).Add(PID_VEIN_IRON, 15).Add(PID_VEIN_MINERALS, 15).Add(PID_VEIN_IRON2, 30).Add(PID_VEIN_MINERALS2, 30).Add(PID_VEIN_URANIUM, 10);             // Broken Hills mine
+    NewSpawnData(7).Add(PID_VEIN_IRON2, 100).SetDelay(REAL_HOUR(12));                                                                                            // Private mines
+    NewSpawnData(8).Add(PID_PILE_CHEMICALS, 100).SetDelay(REAL_SECOND(30));                                                                                      // Toxic Caves and Waterworks
+    NewSpawnData(9).Add(PID_PROD_BROC, 50).Add(PID_PROD_XANDER, 50).SetDelay(REAL_SECOND(420));                                                                  // Klamath
+}
+
+
+
+// Default spawn data
+void _InitSpot(Item& item, bool firstTime)
+{
+    if(firstTime && item.Val0 == 0)
+    {
+        array<uint> values = { item.Id };
+        CreateTimeEvent(AFTER(0), "e_InitSpot", values, true);
+    }
+}
+uint e_InitSpot(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(valid(item) && item.MapId > 0)
+    {
+        Map@ map = GetMap(item.MapId);
+        if(valid(map))
+        {
+            switch(map.GetProtoId())
+            {
+            case MAP_KlamathMiningSiteInside:
+            case MAP_NCRMiningSite:
+            case MAP_JunktownMiningSite:
+            case MAP_SanFranciscoMiningSiteInside:
+                item.Val0 = 1;
+                break;
+            case MAP_Modoc_Ghostcave:
+                item.Val0 = 2;
+                break;
+            case MAP_HQ_BunkerIndoor:
+                item.Val0 = 3;
+                break;
+            case MAP_VaultCityMineInside:
+                item.Val0 = 4;
+                break;
+            case MAP_ReddingMine:
+                item.Val0 = 5;
+                break;
+            case MAP_BrokenHillsMine:
+                item.Val0 = 6;
+                break;
+            case MAP_MiningSiteInside:
+                item.Val0 = 7;
+                break;
+            case MAP_KlamathToxicCaves2:
+            case MAP_Waterworks:
+                item.Val0 = 8;
+                break;
+            case MAP_KlamathDowntown:
+                item.Val0 = 9;
+                break;
+            }
+        }
+    }
+    return 0;
+}

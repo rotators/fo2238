@@ -1,0 +1,122 @@
+[comment]
+Modoc trader quest. Copied the NCR Buster script and changed it around. 
+The point of this quest is to make Modoc more useful. The player can earn 100 Xp + 8 Modoc Rep points + 1 Tobacco leaf for every quest completed.
+The quests involve trading items for items of more or less equal value. For example, you can trade 50x Meat, 10x stims, or 100x 10mm jhp for (in order) 1 Leather Jacket, 1 super stim or 1 leather armour. 
+This allows young and old players a chance at eighter selling this very common gear for caps or trading it for armour or a super stimpack in Modoc. But more importantly this quest allows the gaining of +1 tobacco leaf. So it is by far the only available way of gathering tobacco without the use of town control. 1 Tobacco leaf = the same value as 50x brahmin meat, 10 stims, or 100x 10mm jhp. The steep requirements of 10 stimpacks allows higher level players a chance at trading their 50x stims for 5 super stims. Great for Town Control preplanning -> Bring some stims to Modoc before hand. 
+
+It has a few references to Fallout 2 such as the ghost farm but I'm just not too sure if it is available in 2238... that is why I wrote it as a rumour. But I do know that Karl (the farmer) is in the Den and there are bodies all over the ghost farm. So it is safe for me to assume that Modoc has already sent in a team to investigate but turned up with nothing, so they stopped wasting their time and focused on their DYING town.
+
+I have also made referrence to the Ghost Farm's gang (I believe they might be the Skags? but I'm not too sure) claiming that they are a renegade group of "robbers, slaves, or bandits" from the den who are looking to make their own peaceful town. Unfortunately Modoc does not trust them so this issue remains a rumour and gossip until a quest can be created.
+
+This is my first attempt at making a quest. Sean Collins will not speak with Low charismatic players or unintelligent players. Prevents 1 charisma power builds at getting those super stims and tobacco.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+52 1010 D _param p ST_CHARISMA > 99 #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+3 1040 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+11 2010 #
+65506 2020 D _param p ST_STRENGTH = 1337 #
+4 2030 #
+8 2040 D _param p SK_SMALL_GUNS > 50 #
+0 2050 @
+3 3000 None 0 #
+65506 3010 D _param p ST_STRENGTH = 1337 #
+4 3020 #
+9 3030 D _item p PID_10MM_JHP = 100 R _item p PID_10MM_JHP - 100 R _item p PID_LEATHER_ARMOR + 1 #
+9 3040 D _item p PID_MEAT = 50 R _item p PID_LEATHER_JACKET + 1 R _item p PID_MEAT - 50 #
+9 3050 D _item p PID_STIMPAK = 10 R _item p PID_SUPER_STIMPAK + 1 R _item p PID_STIMPAK - 10 #
+0 3060 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+7 4030 #
+0 4040 @
+5 5000 None 0 #
+4 5010 #
+0 5020 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+0 7020 @
+50 8000 None 0 @
+52 9000 None 0 @
+8 10000 None 0 #
+0 10010 R _var p name_mem_player_npc = 1 #
+0 10020 @
+9 11000 None 0 #
+10 11010 R _param p ST_EXPERIENCE + 100 R _item p PID_TOBACCO + 1 R _script dialog@r_AddReputation 2 8 750 @
+10 12000 None 0 #
+0 12010 @
+11 13000 None 0 #
+12 13010 #
+4 13020 #
+65506 13030 D _param p ST_STRENGTH = 1337 #
+0 13040 @
+12 14000 None 0 #
+65506 14010 D _param p ST_STRENGTH = 1337 #
+0 14020 &
+
+[engl]
+{100}{}{Sean Collins}
+{200}{}{You see a member of the Modoc trading company. }
+{210}{}{He looks a little worried.}
+{210}{}{This guy's clothes are ragged and he's got gun-bluing all over his hands, arms, and face. Still, he seems pretty cheerful.}
+{1000}{}{error}
+{1010}{}{ugly}
+{1020}{}{Idiot}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{2000}{}{Hmm, you don't look like one of them damn robbers. What can Sean Collins do for ya'?}
+{2010}{}{Hi, my name is @pname@, nice to meet you Sean.}
+{2020}{}{I'm looking to trade a few things. You interested?}
+{2030}{}{I've actually got a couple of questions for ya'.}
+{2040}{}{You guys hiring? I'm a decent shot and I need the caps...}
+{2050}{}{Actually, nothing. Goodbye. }
+{3000}{}{Yeah?... (He looks rather impatient.)}
+{3010}{}{You wanna' trade with me?}
+{3020}{}{I've got some questions...}
+{3030}{}{Alright, it was tough but I got what you need: 100x rounds of 10mm JHP.}
+{3040}{}{I got those 50x Slabs of Brahmin Meat you asked for...}
+{3050}{}{I got those 10 stimpacks for the good ol' town of Modoc!}
+{3060}{}{That's all. See ya.}
+{4000}{}{Yeah? And I've got a couple of seconds, what is it?}
+{4010}{}{Tell me about Modoc...}
+{4020}{}{What's the deal with that farm North-East of here?}
+{4030}{}{What can you tell me about the wasteland?}
+{4040}{}{Yeah...Forget it. I'll be seeing you around.}
+{5000}{}{What's there to say that most people don't already know? We're at war with a group of robbers from the Den. Apparently they claim to be here to help, but we know better then to trust a bunch of small time crooks. They come by a couple of times a year, with their bullshit preachings about peace and unity. But I don't believe in any of that shit. Just look around you! This whole goddamn country is in the gutter! We've got Deathclaws and fucking giant ants to worry about! Arg!...Now where were we? }
+{5010}{}{Well good to know where you guys stand on politics. Tell me about...}
+{5020}{}{Wow, I don't think I trust you eighter! Goodbye}
+{6000}{}{I don't mess around with rumours and gossip. But some folks claim that it's haunted. A couple of years ago one of our farmers dissapeared while tending his fields. We sent in a group to investigate, but they never came back... We just stay the hell away from that place and so should you! We don't have time to deal with ghosts! Our town is dying man!}
+{6010}{}{Yeah I know... Tell me about...}
+{6020}{}{Well if you ever need help with them, just ask. See ya.}
+{7000}{}{What that you already don't know? Let's see...I've heard there's a shit load of Tribal camps around this area and the Slaver's guild is paying big bucks for their locations. Don't even think about selling those poor pigmi fucks out! I'm warning you now buddy! Look, the wasteland is dead and it's unsafe for anyone! Hell, we get random travellers here all the time from that goddamn desert! (He points south) And none of them are friendly! The only thing I can tell you about this country, is to buy a big goddamn gun and shoot everyone before they shoot you first. Now, are you done wasting my time? }
+{7010}{}{Nah, I need to know a few more things.}
+{7020}{}{Really? Well thanks for the info. I'd better get out of here before something bad happens to me again.}
+{8000}{}{Get lost man. I don't have time for this bullshit! And I don't speak in clicks and whistles eighter!}
+{9000}{}{What? I'm not talking to you. Your a time waster. Get lost before I turn you into Brahmin Meat, you ugly piece o' shit!}
+{10000}{}{Yeah, you look like you can handle yourself well enough out there. Look, to be frank. Modoc isn't doing too well. We're low on food, water, medical supplies, and ammunition. The good news, is that we're stocked up on miscellaneous gear. So if you have what we need, maybe we can make a deal. I'll trade you 50x chunks of Meat for one Leather Jacket. 10x Stimpaks for one Super Stimpak. Or 100x rounds of 10mm JHP for some Leather Armour. You keep bringing me this stuff and you'll be helping both of us out, trust me. }
+{10010}{}{That's going to be pretty tough, but seeing as we're both down on our luck, I'll help the good ol' town of Modoc out. I'll see you real soon Sean. }
+{10020}{}{Yeah right. Like I'm going to waste my neck or supplies for a bunch of redneck farmers? Go git' em' yourself!}
+{11000}{}{Great work! Keep it up and this town might just make something out of itself one day! Roll a couple of smokes on me.}
+{11010}{}{I hope so, this place is pretty desolate. Thanks a lot, I'll be seeing you around Sean.}
+{12000}{}{Hope to see you soon buddy. Take care.}
+{12010}{}{Hey, thanks!}
+{13000}{}{Welcome to Modoc @pname@, stay out of trouble now ya' hear? So what can I do ya' for?}
+{13010}{}{That depends on just what it is you do here, Sean.}
+{13020}{}{I've got some questions...}
+{13030}{}{Care to trade for a few things?}
+{13040}{}{Nothing, goodbye.}
+{14000}{}{I help regulate the flow of goods we recieve and ship out to the caravans. I'm also the Deputy around these parts, hell if it wasn't for me this whole town would fall apart.}
+{14010}{}{You must have something to trade then, how about it?}
+{14020}{}{I see, thank you. That's it for now, goodbye Sean.}
+

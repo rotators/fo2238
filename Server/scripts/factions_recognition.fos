@@ -1,0 +1,126 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_recognition.fos
+//
+
+// script handling automated radio response to give player's quick
+// access to info stored in faction database
+
+// TODO: fix it to use strings stored in proper files
+// TODO: it uses player's faction to determine db, it means non-member using
+// not his radio channel, will access HIS faction' db...
+
+#include "_macros.fos"
+#include "factions_h.fos"
+
+//
+// Gets the player name from the message, looks up for his id
+// then looks in the database of the faction the player who
+// called it belongs
+//
+void listen_Recognition(Critter& player, string& message)
+{
+    // message should look like: "order recognition <player_name>"
+    array<string@>@ strings = split(message, " ");
+
+    if(strings.length() < 3)
+        return;
+
+    string playername = strings[2];
+
+    for(uint i = 3; i < strings.length(); i++)
+    {
+        playername += " " + strings[i];
+    }
+
+    uint playerToCheckId = GetPlayerId(playername);
+
+    // without that check, it was crashing the server...
+    // if(not valid(playerToCheck))
+    //   return;
+
+    uint[] values = { player.Id, playerToCheckId };
+
+    CreateTimeEvent(AFTER(REAL_SECOND(Random(1, 2))), "e_Reply", values, false);
+}
+
+//
+// Event that sends the info about desired player through the radio
+//
+uint e_Reply(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    DLog("Recognition reply event fired.");
+    uint faction = GetPlayerFaction(values[0]);
+
+    // in that case player can't use that feature
+    if(faction == FACTION_NONE || faction == FACTION_UNKNOWN)
+    {
+        Log("Attempt to call factions recognition for NONE or UNKNOWN");
+        _TIMEEND;
+        return 0;
+    }
+    uint16 channel = GetFactionRadioChannel(faction);
+    uint   playerToCheck = values[1];
+
+    SendPlayerDesc(faction, playerToCheck, channel);
+    _TIMEEND;
+    return 0;
+}
+
+//
+// Creates appropriate string description for player
+//
+void SendPlayerDesc(uint checkingFaction, uint playerId, uint16 channel)
+{
+    if(StoredInDB(checkingFaction, playerId))
+    {
+        int faction = GetFaction(checkingFaction, playerId);
+        int rank = GetRank(checkingFaction, playerId);
+        int status = GetStatus(checkingFaction, playerId);
+
+        if(status == STATUS_ENEMY)
+            RadioMessage(channel, "We've checked the records. This is our enemy!");
+        else
+        {
+            string factionStr;
+            string factionName;
+
+            if(faction == FACTION_NONE)
+                factionStr = "not a member of any faction";
+            else if(faction == FACTION_UNKNOWN)
+                factionStr = "not known to be a member of any faction";
+            else
+            {
+                GetFactionNameStr(faction, factionName);
+                factionStr = "a member of " + factionName;
+            }
+
+            Critter@ player = GetCritter(playerId);
+            int      gender = valid(player) ? player.Stat[ST_GENDER] : GENDER_MALE;
+
+            if(status == STATUS_FRIEND)
+            {
+                if(gender == GENDER_MALE)
+                    RadioMessage(channel, "He is " + factionStr + ". From the reports we gather that he is our friend.");
+                else
+                    RadioMessage(channel, "She is " + factionStr + ". From the reports we gather that she is our friend.");
+            }
+            // neutral, or unknown (enemy was handled at the very beginning)
+            else
+            {
+                if(gender == GENDER_MALE)
+                    RadioMessage(channel, "He is " + factionStr);
+                else
+                    RadioMessage(channel, "She is " + factionStr);
+            }
+        }
+    }
+    // player's not in the records
+    else
+    {
+        RadioMessage(channel, "We've been unable to find info in our archives");
+    }
+}

@@ -1,0 +1,101 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+31 1010 D _var p q_ncr_rail_gang = 0 #
+30 1020 D _param p ST_INTELLECT < 4 #
+20 1030 D _var p q_ncr_rail_gang = 4 #
+2 1040 @
+2 2000 None 0 #
+4 2010 #
+3 2020 D _param p SK_SPEECH > 65 #
+5 2030 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+5 3020 @
+4 4000 None 0 #
+65507 4010 @
+5 5000 None 0 #
+6 5010 D _param p SK_SPEECH > 65 #
+10 5020 #
+12 5030 #
+4 5040 @
+6 6000 None 0 #
+8 6010 D _param p ST_CHARISMA > 5 D _param p SK_SPEECH > 65 #
+7 6020 D _param p ST_CHARISMA < 6 D _param p SK_SPEECH > 65 #
+8 6030 D _param p ST_STRENGTH > 6 #
+7 6040 D _param p ST_STRENGTH < 7 @
+7 7000 None 0 #
+65507 7010 @
+8 8000 None 0 #
+21 8010 R _var p q_ncr_rail_gang = 4 @
+10 9000 None 0 #
+11 9010 #
+4 9020 D _param p ST_STRENGTH < 10 #
+8 9030 D _param p ST_STRENGTH = 10 @
+11 10000 None 0 #
+5 10010 @
+12 11000 None 0 #
+4 11010 #
+5 11020 @
+20 12000 None 0 @
+21 13000 None 0 @
+30 14000 None 0 #
+4 14010 #
+4 14020 @
+31 15000 None 0 &
+
+[engl]
+{100}{}{Horatius}
+{200}{}{You see a rough-looking person.}
+{210}{}{You see Horatius, the leader of the Horatius rail line gang.}
+{1000}{}{Predialogue installations}
+{1010}{}{no quest}
+{1020}{}{dumb}
+{1030}{}{convinced}
+{1040}{}{Answer text}
+{2000}{}{I am Horatius, leader of the Horatius Rail Line Gang! And you are...?}
+{2010}{}{... Someone who's gonna kick you in the groin.}
+{2020}{}{I've been sent by the New California Republic as a diplomatic envoy to discuss the accident that happened here.}
+{2030}{}{I've got some questions. Guess you can answer them.}
+{2040}{}{Nobody. Bye.}
+{3000}{}{You want to make fun of old Horatius, don't you?}
+{3010}{}{Man, you're really not that smart, are you?}
+{3020}{}{No, sir. I am one hundred percent serious.}
+{4000}{}{Guys, let's kick this guttersnipe out of our territory!}
+{4010}{}{[Combat] }
+{5000}{}{So then, what do you want from Horatius?}
+{5010}{}{The New California Republic is worried about the situation here. It's not possible for you to continue the work on the railway lines at this spot. Basically, if you want to keep working, you'd need to move on.}
+{5020}{}{What are you guys doing here?}
+{5030}{}{I want to become a member of your gang!}
+{5040}{}{Nothing, will show up later again, pal.}
+{6000}{}{You think that I'll just up and move like that? This is our territory now. Horatio Rail Line Gang. We own this. We're not moving.}
+{6010}{}{Well, in that case, the NCR has to send out its troops to secure this part of the rail lines. As far as I can tell, that's not really going to end well for you and your little gang.}
+{6020}{}{Well, in that case, the NCR has to send out its troops to secure this part of the rail lines. As far as I can tell, that's not really going to end well for you and your little gang.}
+{6030}{}{Look, if you don't move yer sorry ass away from here, I, personally, will kick you so fucking hard in the groin that you will think you've been a crippled girl for many years.}
+{6040}{}{Look, if you don't move yer sorry ass away from here, I, personally, will kick you so fucking hard in the groin that you will think you've been a crippled girl for many years.}
+{7000}{}{Ha...No. We're not moving. [He draws his weapon.]}
+{7010}{}{[Combat]}
+{8000}{}{I guess maybe. Maybe we should just search ourself a new territory. I mean, the desert is big and wide, especially for the big Horatio and his Rail Line Gang. If we're going to get in hassle for staying here, then maybe we should move. Yeah, I guess that's it.}
+{8010}{}{Very well. I will go back to our Government to deliver the news. }
+{9000}{}{This is our land. We took it, and no one can cross our borders without paying protection money.}
+{9010}{}{So you guys are just highwaymen?}
+{9020}{}{Cool story. But now I have to exterminate you and your pals.}
+{9030}{}{Cool story. But now I have to exterminate you and your pals.}
+{10000}{}{Hey, we are the Horatius Rail Line Gang, not some two-bit highwaymen. You're starting to piss me off. You don't want to do that.}
+{10010}{}{Alright. I want something else.}
+{11000}{}{@sex@|Ha! Ha! [He laughs mockingly.] The Horatius Rail Line Gang is full, man! We don't pick up new meat, especially not something like you!||Ha! Ha! [He laughs mockingly.] The Horatius Rail Line Gang is full, girl! We don't pick up new meat, especially not something like you!|}
+{11010}{}{Well you just went and hurt my fucking feelings.}
+{11020}{}{Ok, some other question, if you don't mind...}
+{12000}{}{What do you want now?@@Get out.@@We will be gone tomorrow.@@Yeah, yeah.}
+{13000}{}{Don't worry. We'll be gone by tomorrow.}
+{14000}{}{I am Horatius, the leader of the Horatius Rail Line Gang! And you are...?}
+{14010}{}{Me keel you and tak armor!}
+{14020}{}{Me going. [Leave]}
+{15000}{}{The big Horatius doesn't want to talk to you!}
+

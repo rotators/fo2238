@@ -1,0 +1,99 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 1020 @
+20 2000 None 0 #
+3 2010 #
+0 2020 D _param p ST_INTELLECT > 3 #
+0 2030 D _param p ST_INTELLECT < 4 @
+2 3000 None 0 #
+3 3010 #
+0 3020 D _param p ST_INTELLECT > 3 #
+0 3030 D _param p ST_INTELLECT < 4 @
+3 4000 None 0 #
+65506 4010 D _param p ST_INTELLECT > 3 #
+4 4020 D _param p ST_INTELLECT > 3 #
+0 4030 D _param p ST_INTELLECT > 3 #
+65506 4040 D _param p ST_INTELLECT < 4 #
+4 4050 D _param p ST_INTELLECT < 4 #
+0 4060 D _param p ST_INTELLECT < 4 @
+4 5000 None 0 #
+5 5010 D _param p ST_INTELLECT > 3 #
+65506 5020 D _param p ST_INTELLECT > 3 #
+0 5030 D _param p ST_INTELLECT > 3 #
+5 5040 D _param p ST_INTELLECT < 4 #
+65506 5050 D _param p ST_INTELLECT < 4 #
+0 5060 D _param p ST_INTELLECT < 4 @
+5 6000 None 0 #
+6 6010 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH > 79 #
+6 6020 D _param p ST_INTELLECT > 3 D _param p SK_SPEECH < 80 #
+0 6030 D _param p ST_INTELLECT > 3 #
+6 6040 D _param p ST_INTELLECT < 4 #
+0 6050 D _param p ST_INTELLECT < 4 @
+6 7000 None 0 #
+7 7010 D _param p ST_INTELLECT > 3 R _script dialog@r_ShowLocation 1 8 #
+65506 7020 D _param p ST_INTELLECT > 3 #
+0 7030 D _param p ST_INTELLECT > 3 #
+7 7040 D _param p ST_INTELLECT < 4 R _script dialog@r_ShowLocation 1 8 #
+65506 7050 D _param p ST_INTELLECT < 4 #
+0 7060 D _param p ST_INTELLECT < 4 @
+7 8000 None 0 #
+0 8010 D _param p ST_INTELLECT > 3 #
+65506 8020 D _param p ST_INTELLECT > 3 #
+0 8030 D _param p ST_INTELLECT < 4 #
+65506 8040 D _param p ST_INTELLECT < 4 &
+
+[engl]
+{100}{}{Hermit}
+{200}{}{You see a hermit.}
+{210}{}{It looks as if he hasn't washed in years.}
+{1000}{}{Predialogue installations}
+{1010}{}{We are talking the first time.}
+{1020}{}{We talked already.}
+{2000}{}{Howdee traveller!}
+{2010}{}{Heya.@@Howdee.}
+{2020}{}{Hey. See you later aligator.@@Goodbye.@@See you.}
+{2030}{}{Me no time.}
+{3000}{}{Howdee traveller! I rarely meet people out here!}
+{3010}{}{Howdee!}
+{3020}{}{Hey. See you later aligator.@@Goodbye.@@See you.}
+{3030}{}{Me no time.}
+{4000}{}{Do you want to barter?}
+{4010}{}{Yeah, why not.}
+{4020}{}{Do you know some locations on this area of the world?}
+{4030}{}{No, sorry. I am in a hurry. See you.}
+{4040}{}{Barter!}
+{4050}{}{You travelman. You know location?}
+{4060}{}{Me going.}
+{5000}{}{Sure. There is New Reno in the south. It's a big dangerous city. I don't go there, don't like it. Broken Hills is in the south east. It's mining city with a uranium mine. If you need uranium, you go there. More I don't know.}
+{5010}{}{Something else?}
+{5020}{}{Cool, thanks. What about trade now?}
+{5030}{}{Thanks. Goodbye.}
+{5040}{}{I moar want.}
+{5050}{}{Me trade!}
+{5060}{}{Bye.}
+{6000}{}{I... found something strange some weeks ago. It was.... [He mumbles] Height...Tech!}
+{6010}{}{You mean High-Tech. Tell me more.}
+{6020}{}{Really? Tell me more.}
+{6030}{}{Sounds boring. Bye.}
+{6040}{}{Hai...tee?}
+{6050}{}{No, me go.}
+{7000}{}{I don't know what it was and I was too scared to look more at it. But I can show you the location, if you like to see...}
+{7010}{}{Sure, show me please.}
+{7020}{}{No, I just want to trade with you.}
+{7030}{}{No, sorry. I am in a hurry. See you.}
+{7040}{}{Me wants to know!}
+{7050}{}{Me want barter!}
+{7060}{}{No, me go.}
+{8000}{}{[He silently shows you the location on your PipBoy map.]}
+{8010}{}{Thanks. I have to go now. See you.}
+{8020}{}{What about the trade again..?}
+{8030}{}{Me going.}
+{8040}{}{Me trade.}
+

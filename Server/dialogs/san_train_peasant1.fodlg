@@ -1,0 +1,78 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _var p q_vc_train_doc > 0 D _var p q_vc_train1 < 4 #
+20 1020 D _var p q_la_train_caesar > 0 D _var p q_la_train1 < 4 #
+3 1030 D _script dialog@d_CheckNight 0  #
+2 1040 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+20 7000 None 0 #
+21 7010 @
+21 8000 None 0 #
+22 8010 D _var n name_mem_npc_player = 0 D _var p q_vc_train_doc > 0 D _var p q_vc_train1 < 4 R _var p q_vc_train1 + 1 R _var n name_mem_npc_player + 1 #
+4 8020 D _var p q_la_train_caesar > 0 D _var p q_la_train1 < 3 D _var n name_mem_player_npc = 0 R _var p q_la_train1 + 1 R _var n name_mem_player_npc + 1 R _var p q_la_train_count + 1 #
+5 8030 D _var p q_la_train_caesar > 0 D _var p q_la_train1 = 3 D _var n name_mem_player_npc = 0 D _var p q_la_train_count < 15 R _var n name_mem_player_npc + 1 R _var p q_la_train1 = 4 R _var p q_la_train_count + 1 #
+6 8040 D _var p q_la_train_caesar > 0 D _var p q_la_train1 = 3 D _var p q_la_train2 = 4 D _var p q_la_train3 = 4 D _var p q_la_train4 = 4 D _var n name_mem_player_npc = 0 D _var p q_la_train_count > 14 R _var p q_la_train1 + 1 R _var n name_mem_player_npc + 1 R _var p q_la_train_count + 1 R _var p q_la_train_caesar = 2 #
+23 8050 D _param p ST_INTELLECT > 999 #
+0 8060 @
+22 9000 None 0 #
+0 9010 D _var p q_vc_train1 < 4 #
+0 9020 D _var p q_vc_train1 < 4 #
+0 9030 D _var p q_vc_train1 > 3 R _var p q_vc_train_doc = 2 #
+0 9040 D _var p q_vc_train1 > 3 R _var p q_vc_train_doc = 2 @
+23 10000 None 0 #
+21 10010 #
+0 10020 @
+24 11000 None 0 #
+21 11010 #
+0 11020 &
+
+[engl]
+{100}{}{Train Station Peasant}
+{200}{}{You see a normal person.}
+{1000}{}{Predialogue installations}
+{1010}{}{Vault City Doctor quest is running. Player asks the NPC about stuff.}
+{1020}{}{caesars legion quest running.}
+{1030}{}{dark outside}
+{1040}{}{normal}
+{2000}{}{Who are you?@@Ha ha! Look at the funny round-eyes!@@You look like one of those punks.@@Leave us in peace.@@Those punks are always so loud.@@Isn't there more to life than this?@@We're smarter than you think.@@Welcome to San Francisco.@@You seem like a person with a straight head.@@We're proud of our community.@@Respect our community and everything will be fine.@@Life is good here.@@I'm glad I live here and not outside.@@The train is a very good thing.@@Did you came with the train?}
+{3000}{}{Isn't it too dark to talk?@@Ha ha! Look at the funny round-eyes!@@Are you a punk?@@I don't like the noise of the train in the night.@@Welcome to San Francisco.@@We're proud of our community.@@Respect our community and everything will be fine.@@Life is good here.@@I'm glad I live here and not outside.@@The train is a very good thing.@@Did you came with the train?}
+{4000}{}{No, I have never seen this man.@@No, I don't know this man.@@I don't know who this is.}
+{4010}{}{Thanks anyway...}
+{5000}{}{Yes, I think I remember this man. He took the train to one of the next train stations.}
+{5010}{}{Thanks. Will check it out.}
+{6000}{}{I saw him, yes. He talked about a leather jacket person who is waiting at the NCR train station. You should go there.}
+{6010}{}{NCR train station, you say? Thanks for the information. }
+{7000}{}{Who are you?@@Ha ha! Look at the funny round-eyes!@@You look like one of those punks, punk...}
+{7010}{}{Hello, could I ask a question?@@One question, if you don't mind.@@Can I ask you a question?@@One question, please.@@There is something I would like to talk about...}
+{8000}{}{If you don't need so long...@@Meh. Hope it's worth the time...@@If you stop bothering me then.@@Sure.}
+{8010}{}{I am doing some research for some doctor about how healthy the people at the new train stations are feeling. Can you tell me if you have been ill or similar in the last time?}
+{8020}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8030}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8040}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8050}{}{You like fish? *DEV NOTE: Deactivated for now.*}
+{8060}{}{Ah well. Nothing now. Bye...}
+{9000}{}{Uh... [He coughs strong.] I... *cough* ... Yeah, I think i've catched myself something.@@I feel good, but many others are ill. I try to keep distance to them. Just in case.@@Yes, I've heard about some issues from other people. It looks like a kind of epidemy is ongoing in this area.}
+{9010}{}{Don't come to close to me, pal... Gotta go.@@Thank you. This is all I wanted to know.... Don't come any closer...}
+{9020}{}{Good to know. Bye.}
+{9030}{}{Don't come to close to me, pal... Gotta go.@@Thank you. This is all I wanted to know.... Don't come any closer...}
+{9040}{}{Good to know. Bye.}
+{10000}{}{Why, do you want to sell fish?}
+{10010}{}{Eh... not really. I have another question.}
+{10020}{}{Good to know. Bye.}
+{11000}{}{You should better ask the conductor. He has all information.}
+{11010}{}{Interesting. I have another question.@@Another question, if you don't mind...}
+{11020}{}{Good to know. Bye.}
+

@@ -1,0 +1,325 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_raiders_farmhome.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "reputations_h.fos"
+#include "groups_h.fos"
+#include "mapdata_h.fos"
+#include "backend_h.fos"
+
+#define BREAK_WELL_REQ    (100)   // 100 in repair
+#define LOCKPICK_REQ      (120)   // 120 in lockpick + random element +- 30
+#define DOCTOR_REQ        (100)   // 100 in doctor + random element +- 30
+#define XP_REWARD         (200)
+
+#define PICK_PEN          (0)
+#define PICK_SHED         (1)
+
+
+bool WrongPlayer(Critter& player)
+{
+    GameVar@ locidv = GetLocalVar(LVAR_q_raiders_induction_locid, player.Id);
+    return(locidv.GetValue() != int(player.GetMap().GetLocation().Id));
+}
+
+bool WrongPlayer(Critter& player, Map@ map)
+{
+    GameVar@ locidv = GetLocalVar(LVAR_q_raiders_induction_locid, player.Id);
+    return(locidv.GetValue() != int(map.GetLocation().Id));
+}
+
+bool s_BreakWell(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(WrongPlayer(player))
+        return false;
+    int bonus = 0;
+    if(valid(item))
+    {
+        if(item.GetProtoId() == PID_MULTI_TOOL)
+            bonus = 25;
+        else if(item.GetProtoId() == PID_SUPER_TOOL_KIT)
+            bonus = 50;
+        else
+            return false;
+    }
+    else if(skill != SK_REPAIR)
+        return false;
+
+    Map@ map = player.GetMap();
+
+    if(map.GetData(MAP_DATA_WELL) != 0)
+    {
+        player.Say(SAY_NETMSG, "The well is already broken.");
+        return true;
+    }
+
+    if(player.Skill[SK_REPAIR] + bonus >= BREAK_WELL_REQ)
+    {
+        player.Say(SAY_NETMSG, "You've broken the well.");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+        LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+        map.SetData(MAP_DATA_WELL, 1);   // Well destroyed
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to break the well");
+    return true;
+}
+
+/*
+   bool s_PickPen(Critter& player, Scenery& terminal, int skill, Item@ item)
+   {
+    if (WrongPlayer(player)) return false;
+    if(not player.IsPlayer() || skill!=SK_LOCKPICK || valid(item)) return false;
+
+    Map@ map = player.GetMap();
+
+    if (map.GetData(MAP_DATA_PEN) != 0)
+    {
+        player.Say(SAY_NETMSG, "The pen is already picked.");
+        return false;
+    }
+
+    uint value = player.Skill[SK_LOCKPICK] - Random(-30, 30);
+    if(value > 119)
+    {
+        player.Say(SAY_NETMSG, "You've picked the fence. Run brahmin, run!");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+                LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+        UnlockDoor(67, 125, map);
+        map.SetData(MAP_DATA_PEN, 1);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to pick the fence");
+    return false;
+   }
+
+   bool s_PickShed(Critter& player, Scenery& terminal, int skill, Item@ item)
+   {
+    if (WrongPlayer(player)) return false;
+    if(not player.IsPlayer() || skill!=SK_LOCKPICK || valid(item)) return false;
+
+    Map@ map = player.GetMap();
+
+    if (map.GetData(MAP_DATA_SHED) != 0)
+    {
+        player.Say(SAY_NETMSG, "The shed is already picked.");
+        return false;
+    }
+
+    uint value = player.Skill[SK_LOCKPICK] - Random(-30, 30);
+    if(value > LOCKPICK_REQ - 1)
+    {
+        player.Say(SAY_NETMSG, "You've picked the shed.");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+                LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+
+        map.SetData(MAP_DATA_SHED, 1);
+        UnlockDoor(80, 101, map);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to pick the shed.");
+    return false;
+   }
+ */
+
+bool s_PoisonFood(Critter& player, Scenery& terminal, int skill, Item@ item)   // only skill, no doctor's bag etc.
+{
+    if(WrongPlayer(player))
+        return false;
+    if(!player.IsPlayer() || skill != SK_DOCTOR || valid(item))
+        return false;
+
+    Map@ map = player.GetMap();
+
+    if(map.GetData(MAP_DATA_FOOD) != 0)
+    {
+        player.Say(SAY_NETMSG, "The food is already poisoned.");
+        return true;
+    }
+
+    uint value = player.Skill[SK_DOCTOR] - Random(-30, 30);
+    if(value >= DOCTOR_REQ)
+    {
+        player.Say(SAY_NETMSG, "You've poisoned the food.");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+        LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+
+        map.SetData(MAP_DATA_FOOD, 1);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to poison the food.");
+    return true;
+}
+
+void _Pen(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_PenItem");
+    item.SetEvent(ITEM_EVENT_SKILL, "_PenSkill");
+}
+
+bool _PenItem(Item& item, Critter& crit, Item@ usedItem)
+{
+    if(!valid(item))
+        return false;
+    if(usedItem.GetProtoId() == PID_LOCKPICKS)
+        return PenPick(item, crit, 25);
+    if(usedItem.GetProtoId() == PID_EXP_LOCKPICK_SET)
+        return PenPick(item, crit, 50);
+    return false;
+}
+
+bool _PenSkill(Item& item, Critter& crit, int skill)
+{
+    if(skill == SK_LOCKPICK)
+        return PenPick(item, crit, 0);
+    return false;
+}
+
+
+bool PenPick(Item& item, Critter& player, int bonus)
+{
+    if(WrongPlayer(player))
+        return false;
+    Map@ map = player.GetMap();
+
+    if(map.GetData(MAP_DATA_PEN) != 0)
+    {
+        player.Say(SAY_NETMSG, "The pen is already picked.");
+        return true;
+    }
+
+    int value = player.Skill[SK_LOCKPICK] + bonus + Random(-30, 30);
+    if(value >= LOCKPICK_REQ)
+    {
+        player.Say(SAY_NETMSG, "You've picked the fence. Run brahmin, run!");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+        LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+
+        UnlockDoor(item.HexX, item.HexY, map);
+        map.SetData(MAP_DATA_PEN, 1);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to pick the fence");
+    return true;
+}
+
+void _Shed(Item& item, bool firstTime)   // works for both shed and pen door
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_ShedItem");
+    item.SetEvent(ITEM_EVENT_SKILL, "_ShedSkill");
+}
+
+bool _ShedItem(Item& item, Critter& crit, Item@ usedItem)
+{
+    if(!valid(item))
+        return false;
+    if(usedItem.GetProtoId() == PID_LOCKPICKS)
+        return ShedPick(item, crit, 25);
+    if(usedItem.GetProtoId() == PID_EXP_LOCKPICK_SET)
+        return ShedPick(item, crit, 50);
+    return false;
+}
+
+bool _ShedSkill(Item& item, Critter& crit, int skill)
+{
+    if(skill == SK_LOCKPICK)
+        return ShedPick(item, crit, 0);
+    return false;
+}
+
+
+bool ShedPick(Item& item, Critter& player, int bonus)
+{
+    if(WrongPlayer(player))
+        return false;
+    Map@ map = player.GetMap();
+
+    if(map.GetData(MAP_DATA_PEN) != 0)
+    {
+        player.Say(SAY_NETMSG, "The shed is already picked.");
+        return true;
+    }
+
+    int value = player.Skill[SK_LOCKPICK] + bonus + Random(-30, 30);
+    if(value >= LOCKPICK_REQ)
+    {
+        player.Say(SAY_NETMSG, "You've picked the shed.");
+        player.StatBase[ST_EXPERIENCE] += XP_REWARD;
+        LogQuestExperience(player, XP_REWARD, "raiders_farmhome");
+
+        UnlockDoor(item.HexX, item.HexY, map);
+        map.SetData(MAP_DATA_PEN, 1);
+        return true;
+    }
+    player.Say(SAY_NETMSG, "You've failed to pick the shed.");
+    return true;
+}
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // Lock doors
+        LockDoor(67, 125, map, 120, 1337);   // Lock brahmin pen door
+        LockDoor(80, 101, map, 120, 1337);   // Lock shed door
+
+        map.SetData(MAP_DATA_WELL, 0);
+        map.SetData(MAP_DATA_PEN, 0);
+        map.SetData(MAP_DATA_SHED, 0);
+        map.SetData(MAP_DATA_KILL, 0);
+        map.SetData(MAP_DATA_FREE, 0);
+        map.SetData(MAP_DATA_FOOD, 0);
+    }
+    // well... maybe
+    // yes, definitely!
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnInCritter");
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_OnOutCritter");
+}
+
+void _OnInCritter(Map& map, Critter& player)
+{
+    if(WrongPlayer(player))
+        return;
+    player.Say(SAY_NETMSG, "You've entered the farmhome area.");
+}
+
+void _OnOutCritter(Map& map, Critter& player)
+{
+    // Log("test");
+    if(WrongPlayer(player, map))
+        return;
+
+    // Log("ok");
+
+    // test for a success
+    if(map.GetData(MAP_DATA_KILL) != 0 ||
+       map.GetData(MAP_DATA_FOOD) != 0 ||
+       (map.GetData(MAP_DATA_PEN) != 0 && map.GetData(MAP_DATA_SHED) != 0) ||
+       map.GetData(MAP_DATA_WELL) != 0
+       )
+    {
+        map.GetLocation().AutoGarbage = true;
+        player.UnsetKnownLoc(true, map.GetLocation().Id);
+        GameVar@ var = GetLocalVar(LVAR_q_raiders_induction, player.Id);
+        var = 3; // success
+        player.Say(SAY_NETMSG, "You've successfully dealt with the renegade raider.");
+        return;
+    }
+
+    // test for a miserable failure
+    if(map.GetData(MAP_DATA_KILL) != 0)
+    {
+        map.GetLocation().AutoGarbage = true;
+        player.UnsetKnownLoc(true, map.GetLocation().Id);
+        GameVar@ var = GetLocalVar(LVAR_q_raiders_induction, player.Id);
+        var = 5;                                        // ouch
+        SubReputation(player, FACTION_RAIDERS, 2000);   // hate you!
+        player.Say(SAY_NETMSG, "You've failed here. Oh shit!");
+        return;
+    }
+}

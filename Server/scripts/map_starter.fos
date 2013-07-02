@@ -1,0 +1,29 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_starter.fos
+//
+
+#include "_macros.fos"
+
+import void SetQuestGarbager(uint time, uint playerid, uint locid, uint var, uint val) from "utils";
+
+// Map script for starter locations
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_OnLeaveMap");
+    if(firstTime)
+        SetQuestGarbager(3 * 60, 0, map.GetLocation().Id, 0, 0);
+}
+
+void _OnLeaveMap(Map& map, Critter& cr)
+{
+    if(map.Id != 0)
+        return;
+    Location@ loc = map.GetLocation();
+    if(valid(loc))
+        DeleteLocation(loc.Id);
+    else
+        Log("Invalid starter location.");
+}

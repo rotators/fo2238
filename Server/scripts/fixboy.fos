@@ -1,0 +1,891 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// fixboy.fos
+//
+
+#ifndef __FIXBOY__
+#define __FIXBOY__
+
+#include "_macros.fos"
+
+#include "buffer_h.fos"
+#include "fixboy_h.fos"
+
+// #pragma ignore "region"
+// #pragma ignore "endregion"
+
+#ifdef __CLIENT
+# define CLog                           # (msg)      { DMessage(msg); }
+#endif
+#ifndef __CLIENT
+# define CLog                           # (msg)      {}
+#endif
+
+#ifdef __DEBUG__
+# define FIXBOY_DEBUG
+#endif
+#ifdef __ASCOMPILER
+# define FIXBOY_DEBUG
+#endif
+
+#ifdef FIXBOY_DEBUG
+// no spaces allowed
+# define FIXBOY_STRING_ID               "ID"
+# define FIXBOY_STRING_SETUP            "SETUP"
+# define FIXBOY_STRING_NAME             "name"
+# define FIXBOY_STRING_DESCRIPTION      "description"
+# define FIXBOY_STRING_MINIMUM          "minimum"
+# define FIXBOY_STRING_MAXIMUM          "maximum"
+# define FIXBOY_STRING_STEP             "step"
+# define FIXBOY_STRING_REQUIRE          "REQUIRE"
+# define FIXBOY_STRING_SHOW             "[show]"
+# define FIXBOY_STRING_CRAFT            "[craft]"
+# define FIXBOY_STRING_NOTHING          "nothing"
+# define FIXBOY_STRING_PARAM            "param"
+# define FIXBOY_STRING_PARAMBASE        "parambase"
+# define FIXBOY_STRING_TOOL             "tool"
+# define FIXBOY_STRING_MATERIAL         "material"
+# define FIXBOY_STRING_LOWER            "<"
+# define FIXBOY_STRING_LOWER_EQUAL      "<="
+# define FIXBOY_STRING_EQUAL            "=="
+# define FIXBOY_STRING_NOT_EQAL         "!="
+# define FIXBOY_STRING_GREATER          ">"
+# define FIXBOY_STRING_GREATER_EQUAL    ">="
+# define FIXBOY_STRING_OR               "||"
+# define FIXBOY_STRING_AND              "&&"
+# define FIXBOY_STRING_RESULT           "RESULT"
+# define FIXBOY_STRING_EXPERIENCE       "exp"
+# define FIXBOY_STRING_SCRIPT           "script"
+#endif
+
+class CraftingRequire
+{
+    CraftingRequirement     type;
+    CraftingCheck           check;
+
+    uint16                  require;
+    uint16                  count;
+
+    array<CraftingRequire@> group;
+
+    CraftingRequire()
+    {
+        this.Clear();
+    }
+
+    CraftingRequire(CraftingRequirement type, uint require, CraftingCheck check, uint16 count)
+    {
+        this.Clear();
+
+        this.type = type;
+        this.check = check;
+        this.require = require;
+        this.count = count;
+    }
+
+    private void Clear()
+    {
+        this.type = REQUIRE_NOTHING;
+        this.check = CHECK_NONE;
+        this.require = 0;
+        this.count = 0;
+        this.group.resize(0);
+    }
+
+    bool Add(CraftingRequirement type, uint16 require, CraftingCheck check, uint16 count, CraftingCheck groupCheck = CHECK_AND)
+    {
+        #ifdef ANGELSCRIPT_INTERFACE_ENUM_BUG
+        if((type < REQUIRE_NOTHING || type > REQUIRE_GROUP) ||
+           (check < CHECK_NONE || check > CHECK_AND) ||
+           (groupCheck < CHECK_NONE || groupCheck > CHECK_AND))
+        {
+            Log("AS BUG ABUSE ~ illegal arguments values, throwing error");
+            Critter@cr;
+            cr.Id;
+        }
+        #endif
+        if(!this.IsGroup())
+        {
+            if(this.type == REQUIRE_NOTHING)
+            {
+                this.type = type;
+                this.require = require;
+                this.check = check;
+                this.count = count;
+
+                return(true);
+            }
+
+            CraftingRequire@ oldRequire = CraftingRequire(this.type, this.require, this.check, this.count);
+            this.group.insertLast(oldRequire);
+            this.type = REQUIRE_GROUP;
+            this.check = groupCheck;
+        }
+
+        CraftingRequire@ newRequire = CraftingRequire(type, require, check, count);
+        this.group.insertLast(newRequire);
+
+        return(true);
+    }
+
+    bool IsGroup()
+    {
+        uint dummy = 0;
+        return(this.IsGroup(dummy));
+    }
+
+    bool IsGroup(uint& length)
+    {
+        uint len = this.group.length();
+        if(this.type == REQUIRE_GROUP && len > 0)
+        {
+            length = len;
+            return(true);
+        }
+
+        length = 0;
+        return(false);
+    }
+
+    bool IsTrue(Critter& cr, uint16 multipler = 1)
+    {
+        if(this.type == REQUIRE_NOTHING)
+            return(true);
+
+        uint gLen = 0;
+        if(!this.IsGroup(gLen))
+        {
+            uint have = 0;
+            switch(this.type)
+            {
+            case REQUIRE_PARAM:
+            case REQUIRE_PARAMBASE:
+                if(this.type == REQUIRE_PARAM)
+                    have = cr.Param[this.require];
+                else
+                    have = cr.ParamBase[this.require];
+                break;
+            case REQUIRE_TOOL:
+            case REQUIRE_MATERIAL:
+            {
+                array<Item@> items;
+                uint         count = cr.GetItems(-1, items);
+                for(uint i = 0; i < count; i++)
+                {
+                    if(items[i].Proto.ProtoId == this.require)
+                        have += items[i].GetCount();
+                }
+
+                break;
+            }
+            }
+
+            switch(this.check)
+            {
+            case CHECK_LOWER:
+                if(have < (this.count * multipler))
+                    return(true);
+            case CHECK_LOWER_EQUAL:
+                if(have <= (this.count * multipler))
+                    return(true);
+            case CHECK_EQUAL:
+                if(have == (this.count * multipler))
+                    return(true);
+            case CHECK_NOT_EQAL:
+                if(have != (this.count * multipler))
+                    return(true);
+            case CHECK_GREATER:
+                if(have > (this.count * multipler))
+                    return(true);
+            case CHECK_GREATER_EQUAL:
+                if(have >= (this.count * multipler))
+                    return(true);
+            }
+        }
+        else         // IsGroup()
+        {
+            if(this.type != REQUIRE_GROUP)
+                return(false);
+
+            for(uint g = 0; g < gLen; g++)
+            {
+                if(this.check == CHECK_AND && !this.group[g].IsTrue(cr))
+                    return(false);
+                else if(this.check == CHECK_OR && this.group[g].IsTrue(cr))
+                    return(true);
+            }
+
+            if(this.check == CHECK_AND)
+                return(true);
+        }
+
+        return(false);
+    }
+
+    void Pack(Buffer& buff)
+    {
+        buff << uint8(this.type);
+        buff << uint8(this.check);
+
+        uint gLen = 0;
+        if(!this.IsGroup(gLen))
+        {
+
+            buff << this.require;
+            buff << this.count;
+        }
+        else         // IsGroup()
+        {
+            buff << uint8(this.group.length());
+            for(uint g = 0; g < gLen; g++)
+            {
+                this.group[g].Pack(buff);
+            }
+        }
+    }
+
+    void Unpack(Buffer& buff)
+    {
+        uint8 type = 0;
+        buff >> type;
+        this.type = CraftingRequirement(type);
+
+        uint8 check = 0;
+        buff >> check;
+        this.check = CraftingCheck(check);
+
+        if(this.type != REQUIRE_GROUP)
+        {
+            buff >> this.require;
+            buff >> this.count;
+        }
+        else
+        {
+            uint8 gLen = 0;
+            buff >> gLen;
+            for(uint g = 0; g < gLen; g++)
+            {
+                CraftingRequire@ empty = CraftingRequire();
+                this.group.insertLast(empty);
+                this.group.last().Unpack(buff);
+            }
+        }
+    }
+
+    #ifdef FIXBOY_DEBUG
+    void Dump(array<string>& arr)
+    {
+        if(this.type == REQUIRE_NOTHING)
+        {
+            arr.insertLast(FIXBOY_STRING_NOTHING);
+            return;
+        }
+
+        if(this.type != REQUIRE_GROUP)
+        {
+            switch(this.type)
+            {
+            case REQUIRE_PARAM:
+                arr.insertLast(FIXBOY_STRING_PARAM);
+                break;
+            case REQUIRE_PARAMBASE:
+                arr.insertLast(FIXBOY_STRING_PARAMBASE);
+                break;
+            case REQUIRE_TOOL:
+                arr.insertLast(FIXBOY_STRING_TOOL);
+                break;
+            case REQUIRE_MATERIAL:
+                arr.insertLast(FIXBOY_STRING_MATERIAL);
+                break;
+            default:
+                arr.insertLast("?type:" + this.type + "?");
+                break;
+            }
+
+            arr.insertLast("" + this.require);
+
+            switch(this.check)
+            {
+            case CHECK_LOWER:
+                arr.insertLast(FIXBOY_STRING_LOWER);
+                break;
+            case CHECK_LOWER_EQUAL:
+                arr.insertLast(FIXBOY_STRING_LOWER_EQUAL);
+                break;
+            case CHECK_EQUAL:
+                arr.insertLast(FIXBOY_STRING_EQUAL);
+                break;
+            case CHECK_NOT_EQAL:
+                arr.insertLast(FIXBOY_STRING_NOT_EQAL);
+                break;
+            case CHECK_GREATER:
+                arr.insertLast(FIXBOY_STRING_GREATER);
+                break;
+            case CHECK_GREATER_EQUAL:
+                arr.insertLast(FIXBOY_STRING_GREATER_EQUAL);
+                break;
+            default:
+                arr.insertLast("?check:" + this.check + "?");
+                break;
+            }
+
+            arr.insertLast("" + this.count);
+        }
+        else         // REQUIRE_GROUP
+        {
+            arr.insertLast("(");
+
+            for(uint g = 0, gLen = this.group.length(); g < gLen; g++)
+            {
+                if(g > 0)
+                {
+                    switch(this.check)
+                    {
+                    case CHECK_OR:
+                        arr.insertLast(FIXBOY_STRING_OR);
+                        break;
+                    case CHECK_AND:
+                        arr.insertLast(FIXBOY_STRING_AND);
+                        break;
+                    default:
+                        arr.insertLast("?check:" + this.check + "?");
+                        break;
+                    }
+                }
+
+                this.group[g].Dump(arr);
+            }
+
+            arr.insertLast(")");
+        }
+    }
+    #endif
+};
+
+class CraftingItem : ICraftingItem
+{
+    uint16           id;
+    string           name;
+    string           description;
+    uint16           minimum;
+    uint16           maximum;
+    uint16           step;
+    CraftingRequire@ requireShow;
+    CraftingRequire@ requireParam;
+    CraftingRequire@ requireTool;
+    CraftingRequire@ requireMaterial;
+    array<uint16>    result;
+
+    #ifdef __SERVER
+    uint16        experience;
+    string        script;
+
+    array<uint16> packed;
+    #endif
+
+    CraftingItem()
+    {
+        this.Clear();
+    }
+
+    private void Clear()
+    {
+        this.name = "";
+        this.description = "";
+        this.minimum = 1;
+        this.maximum = uint16(-1);
+        this.step = 1;
+        @this.requireShow = null;
+        @this.requireParam = null;
+        @this.requireTool = null;
+        @this.requireMaterial = null;
+        this.result.resize(0);
+        #ifdef __SERVER
+        this.experience = 0;
+        this.script = "";
+        this.packed.resize(0);
+        #endif
+    }
+
+// #pragma region "getters/setters"
+
+    uint16 get_ID()
+    {
+        return(this.id);
+    }
+
+    string get_Name()
+    {
+        return(this.name);
+    }
+
+    string get_Description()
+    {
+        return(this.description);
+    }
+
+    uint16 get_Minimum()
+    {
+        return(this.minimum);
+    }
+
+    uint16 get_Maximum()
+    {
+        return(this.maximum);
+    }
+
+    uint16 get_Step()
+    {
+        return(this.step);
+    }
+
+    #ifdef __SERVER
+    void set_ID(uint16 id)
+    {
+        this.id = id;
+    }
+
+    void set_Name(string name)
+    {
+        this.name = name;
+    }
+
+    void set_Description(string description)
+    {
+        this.description = description;
+    }
+
+    void set_Minimum(uint16 minimum)
+    {
+        this.minimum = minimum;
+
+    }
+
+    void set_Maximum(uint16 maximum)
+    {
+        this.maximum = maximum;
+    }
+
+    void set_Step(uint16 step)
+    {
+        this.step = step;
+    }
+
+    uint16 get_Experience()
+    {
+        return(this.experience);
+    }
+
+    void set_Experience(uint16 experience)
+    {
+        this.experience = experience;
+    }
+
+    string get_Script()
+    {
+        return(this.script);
+    }
+
+    void set_Script(string script)
+    {
+        this.script = script;
+    }
+
+    array<uint16> get_Packed()
+    {
+        if(this.packed.length() == 0)
+            this.Pack();
+
+        return(this.packed);
+    }
+    #endif
+
+// #pragma endregion
+
+    bool CanSee(Critter& cr)
+    {
+        return(this.requireShow.IsTrue(cr));
+    }
+
+    bool CanCraft(Critter& cr, uint16 multipler = 1)
+    {
+        return(this.HaveParams(cr) &&
+               this.HaveTools(cr) &&
+               this.HaveMaterials(cr, multipler));
+    }
+
+    bool HaveParams(Critter& cr)
+    {
+        return(this.requireParam.IsTrue(cr));
+    }
+
+    bool HaveTools(Critter& cr)
+    {
+        return(this.requireTool.IsTrue(cr));
+    }
+
+    bool HaveMaterials(Critter& cr, uint16 multipler = 1)
+    {
+        return(this.requireMaterial.IsTrue(cr, multipler));
+    }
+
+    private bool AddRequire(CraftingRequire& target, CraftingRequirement type, uint require, CraftingCheck check, uint16 count) final
+    {
+        if(type == REQUIRE_GROUP)
+            return(false);
+
+        return(target.Add(type, require, check, count));
+    }
+
+    bool AddRequireShow(CraftingRequirement type, uint require, CraftingCheck check, uint16 count)
+    {
+        if(!valid(this.requireShow))
+            @this.requireShow = CraftingRequire();
+
+        return(this.AddRequire(this.requireShow, type, require, check, count));
+    }
+
+    bool AddRequireParam(uint require, CraftingCheck check, uint16 count)
+    {
+        if(!valid(this.requireParam))
+            @this.requireParam = CraftingRequire();
+
+        return(this.AddRequire(this.requireParam, REQUIRE_PARAM, require, check, count));
+    }
+
+    bool AddRequireParamBase(uint require, CraftingCheck check, uint16 count)
+    {
+        if(!valid(this.requireParam))
+            @this.requireParam = CraftingRequire();
+
+        return(this.AddRequire(this.requireParam, REQUIRE_PARAMBASE, require, check, count));
+    }
+
+    bool AddRequireTool(uint require, CraftingCheck check, uint16 count)
+    {
+        if(!valid(this.requireTool))
+            @this.requireTool = CraftingRequire();
+
+        return(this.AddRequire(this.requireTool, REQUIRE_TOOL, require, check, count));
+    }
+
+    bool AddRequireMaterial(uint require, uint16 count)
+    {
+        if(!valid(this.requireMaterial))
+            @this.requireMaterial = CraftingRequire();
+
+        return(this.AddRequire(this.requireMaterial, REQUIRE_MATERIAL, require, CHECK_EQUAL, count));
+    }
+
+    uint GetResult(array<uint16>& outResult)
+    {
+        for(uint r = 0, rLen = result.length(); r < rLen; r++)
+        {
+            outResult.insertLast(result[r]);
+        }
+
+        return(this.result.length());
+    }
+
+    uint GetResult(array<array<uint16> >& outResult)
+    {
+        for(uint r = 0, rLen = this.result.length(); r < rLen; r += 2)
+        {
+            uint16[] tmpResult = { this.result[r], this.result[r + 1] };
+            outResult.insertLast(tmpResult);
+        }
+
+        return(this.result.length() / 2);
+    }
+
+    uint GetResult(array<ProtoItem@>& proto, array<uint16>& count)
+    {
+        uint added = 0;
+        for(uint r = 0, rLen = this.result.length(); r < rLen; r += 2)
+        {
+            ProtoItem@ item = GetProtoItem(this.result[r]);
+            if(valid(item))
+            {
+                proto.insertLast(item);
+                count.insertLast(this.result[r + 1]);
+                added++;
+            }
+        }
+
+        return(added);
+    }
+
+    bool AddResult(uint16 protoId, uint16 count = 1)       // root
+    {
+        if(protoId > 0 && count > 0)
+        {
+            if(valid(GetProtoItem(protoId)))
+            {
+                this.result.insertLast(protoId);
+                this.result.insertLast(count);
+            }
+
+            return(true);
+        }
+
+        return(false);
+    }
+
+    bool AddResult(array<uint16> newResult)
+    {
+        if(newResult.length() == 2)
+        {
+            return(this.AddResult(newResult[0], newResult[1]));
+        }
+
+        return(false);
+    }
+
+    bool AddResult(ProtoItem& proto, uint16 count = 1)
+    {
+        return(this.AddResult(proto.ProtoId, count));
+    }
+
+    bool SetResult(array<uint16> newResult)
+    {
+        if(newResult.length() % 2 != 0)
+            return(false);
+
+        this.result.resize(0);
+
+        for(uint r = 0, rLen = newResult.length(); r < rLen; r += 2)
+        {
+            this.AddResult(newResult[r], newResult[r + 1]);
+        }
+
+        return(true);
+    }
+
+    bool SetResult(array<array<uint16> > newResult)
+    {
+        uint nLen = newResult.length();
+        if(nLen == 0)
+            return(false);
+
+        this.result.resize(0);
+
+        for(uint r = 0; r < nLen; r++)
+        {
+            this.AddResult(newResult[r]);
+        }
+
+        return(true);
+    }
+
+    #ifdef __SERVER
+    void Pack()
+    {
+        Buffer@ buff = NewBuffer();
+
+        buff << this.id;
+        buff << this.name;
+        buff << this.description;
+        buff << this.minimum;
+        buff << this.maximum;
+        buff << this.step;
+
+        if(valid(this.requireShow))
+        {
+            buff << true;
+            this.requireShow.Pack(buff);
+        }
+        else
+            buff << false;
+
+        if(valid(this.requireParam))
+        {
+            buff << true;
+            this.requireParam.Pack(buff);
+        }
+        else
+            buff << false;
+
+        if(valid(this.requireTool))
+        {
+            buff << true;
+            this.requireTool.Pack(buff);
+        }
+        else
+            buff << false;
+
+        if(valid(this.requireMaterial))
+        {
+            buff << true;
+            this.requireMaterial.Pack(buff);
+        }
+        else
+            buff << false;
+
+        buff << this.result;
+
+        this.packed = buff.AsUint16();
+    }
+    #endif
+
+    void Unpack(array<uint16>& data)
+    {
+        Buffer@ buff = NewBuffer(data);
+
+        buff >> this.id;
+        buff >> this.name;
+        buff >> this.description;
+        buff >> this.minimum;
+        buff >> this.maximum;
+        buff >> this.step;
+
+        bool is_requireShow = false,
+             is_requireParam = false,
+             is_requireTool = false,
+             is_requireMaterial = false;
+
+        buff >> is_requireShow;
+        if(is_requireShow)
+        {
+            @requireShow = CraftingRequire();
+            requireShow.Unpack(buff);
+        }
+
+        buff >> is_requireParam;
+        if(is_requireParam)
+        {
+            @requireParam = CraftingRequire();
+            requireParam.Unpack(buff);
+        }
+
+        buff >> is_requireTool;
+        if(is_requireTool)
+        {
+            @requireTool = CraftingRequire();
+            requireTool.Unpack(buff);
+        }
+
+        buff >> is_requireMaterial;
+        if(is_requireMaterial)
+        {
+            @requireMaterial = CraftingRequire();
+            requireMaterial.Unpack(buff);
+        }
+
+        buff >> this.result;
+
+        #ifndef __CLIENT
+        buff >> this.experience;
+        buff >> this.script;
+        #endif
+    }
+
+    #ifdef FIXBOY_DEBUG
+    string Dump()
+    {
+        array<string> arr;
+
+        arr.insertLast(FIXBOY_STRING_ID);
+        arr.insertLast("" + this.id);
+
+        arr.insertLast(FIXBOY_STRING_SETUP);
+
+        arr.insertLast(FIXBOY_STRING_NAME);
+        if(this.name.length() > 0)
+            arr.insertLast("\"" + this.name + "\"");
+        else
+            arr.insertLast("(taken from ProtoItem(s))");
+
+        arr.insertLast(FIXBOY_STRING_DESCRIPTION);
+        if(this.description.length() > 0)
+            arr.insertLast("\"" + this.description + "\"");
+        else
+            arr.insertLast("(taken from ProtoItem(s))");
+
+        arr.insertLast(FIXBOY_STRING_MINIMUM);
+        arr.insertLast("" + this.minimum);
+
+        arr.insertLast(FIXBOY_STRING_MAXIMUM);
+        arr.insertLast("" + this.maximum);
+
+        arr.insertLast(FIXBOY_STRING_STEP);
+        arr.insertLast("" + this.step);
+
+        bool rShow = valid(this.requireShow), rCraft = valid(this.requireParam) || valid(this.requireTool) || valid(this.requireMaterial);
+        if(rShow || rCraft)
+        {
+            arr.insertLast(FIXBOY_STRING_REQUIRE);
+
+            if(rShow)
+            {
+                arr.insertLast(FIXBOY_STRING_SHOW);
+                this.requireShow.Dump(arr);
+            }
+
+            if(rCraft)
+            {
+                arr.insertLast(FIXBOY_STRING_CRAFT);
+                if(valid(this.requireParam))
+                    this.requireParam.Dump(arr);
+                if(valid(this.requireTool))
+                    this.requireTool.Dump(arr);
+                if(valid(this.requireMaterial))
+                    this.requireMaterial.Dump(arr);
+            }
+        }
+
+        uint rLen = this.result.length();
+        # ifdef __SERVER
+        uint xp = this.Experience, sLen = this.script.length();
+        # endif
+        if(rLen  > 0
+           # ifdef __SERVER
+           || xp > 0 || sLen > 0
+           # endif
+           )
+        {
+            arr.insertLast(FIXBOY_STRING_RESULT);
+
+            if(rLen > 0)
+            {
+                array<array<uint16> > res;
+                this.GetResult(res);
+                for(uint r = 0, rLen = res.length(); r < rLen; r++)
+                {
+                    arr.insertLast(res[r][0] + "=" + res[r][1]);
+                }
+            }
+            # ifdef __SERVER
+            if(xp > 0)
+            {
+                arr.insertLast(FIXBOY_STRING_EXPERIENCE);
+                arr.insertLast("" + xp);
+            }
+
+            if(sLen > 0)
+            {
+                arr.insertLast(FIXBOY_STRING_SCRIPT);
+                arr.insertLast(this.script);
+            }
+            # endif
+        }
+
+        string dump = "";
+        for(uint d = 0, dLen = arr.length(); d < dLen; d++)
+        {
+            if(d > 0)
+                dump += " ";
+            dump += arr[d];
+        }
+
+        return(dump);
+    }
+    #endif
+};
+
+ICraftingItem@ NewCraftingItem()
+{
+    return(@CraftingItem());
+}
+#endif // __FIXBOY__ //

@@ -1,0 +1,283 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// gmtools_csc.fos
+//
+
+// Game Master tools, client <-> server communication
+
+/* This file is included in client_gmtools.fos and gmtools.fos */
+
+#ifdef __CLIENT
+
+/**
+ * x
+ */
+class CGMTQuestion
+{
+    int        tick;
+    int        timer;
+    bool       old;
+    uint       type;
+    uint       flags;
+    int        status;
+    string     question_text;
+    string     answer_text;
+    array<int> answer_data;
+
+    CGMTQuestion(uint type, uint flags, string question_text, uint timer)
+    {
+        this.tick                       = GetTick();
+        this.timer                      = timer;
+        this.old                        = false;
+        this.type                       = type;
+        this.flags                      = flags;
+        this.status                     = GMT_STATUS_SEND;
+        this.question_text      = question_text;
+    }
+};
+array<CGMTQuestion> GMTquestion;
+
+void question(int timer, uint type)
+{
+    question(timer, type, 0, " ");
+}
+
+void question(uint timer, uint type, uint flags, string& text)
+{
+    if(text == "")
+        text = " ";
+
+    // send only one question of each type
+    for(uint i = 0; i < GMTquestion.length(); i++)
+    {
+        if(GMTquestion[i].type == type)
+        {
+            if(GMTquestion[i].old)
+            {
+                if(GMTconfig.CSCdebug)
+                    Message("GM Tools: Removing old question, type[" + GMTquestion[i].type + "]");
+
+                GMTquestion.removeAt(i);
+
+                if(GMTconfig.CSCdebug)
+                    Message("GM Tools: questions size: " + GMTquestion.length());
+                break;
+            }
+            else
+                Message("GM Tools: still waiting for answer, type[" + type + "]");
+
+            return;
+        }
+    }
+
+    if(timer > 0)
+        timer *= 1000;
+
+    CGMTQuestion new_question(type, flags, text, timer);
+    GMTquestion.insertLast(new_question);
+
+    RunServerScriptUnsafe("gmtools@unsafe_question", GMTquestion[GMTquestion.length() - 1].tick, type, flags, text, null);
+
+    if(GMTconfig.CSCdebug)
+    {
+        Message("GM Tools: sending question: tick[" + GMTquestion[GMTquestion.length() - 1].tick + "] type[" + type + "] flags[" + flags + "] text[" + text + "]");
+        Message("GM Tools: questions size: " + GMTquestion.length());
+    }
+};
+
+void answer(int tick, int status, int flags, string@ answer_text, array<int>@ data)     // <- server
+{
+    if(GMTconfig.CSCdebug)
+    {
+        string _d = "GMT->answer: tick[" + tick + "] status[" + status + "] flags[" + flags + "] answer[" + (answer_text == " " ? "" : answer_text) + "] data[";
+        if(valid(data) && data.length() > 0)
+        {
+            for(uint d = 0; d < data.length(); d++)
+            {
+                if(d > 0)
+                    _d += ",";
+                _d += "" + data[d];
+            }
+        }
+        Message(_d + "]");
+    }
+
+    int id = -1;
+    if(GMTquestion.length() > 0)
+    {
+        for(uint i = 0; i < GMTquestion.length(); i++)
+        {
+            if(GMTquestion[i].tick == tick)
+            {
+                if(GMTconfig.CSCdebug)
+                    Message("GMT->answer->question id: " + i);
+                id = i;
+                break;
+            }
+        }
+    }
+
+    if(id < 0)
+    {
+        if(status == GMT_STATUS_FORCE)
+        {
+            if((flags == GMT_QUESTION_CHAT) && (data.length() == 1))
+            {
+                GMTchat.insertLast(CGMTChat(data[0], answer_text));
+                return;
+            }
+
+            if((status == GMT_STATUS_FORCE) && (flags == GMT_NOACCESS))
+            {
+                DisableGMTools();
+                return;
+            }
+        }
+        ;
+
+        Message("GMT->answer->question: can't find (data len:" + data.length() + ")");
+        return;
+    }
+
+    if(status == GMT_STATUS_OK)
+    {
+        // if( GMTquestion[id].type == GMT_QUESTION_PING )
+        // {
+        //	Message( "GM Tools: Pong! ("+(flags-GMTquestion[id].tick)+")" );
+        // }
+        // else
+        if(GMTquestion[id].type == GMT_GETACCESS)
+        {
+            if(GMTconfig.CSCdebug)
+                Message("GMT->answer->access: " + flags);
+            GMTconfig.Enabled = true;
+            GMTconfig.Access = flags;
+            GMTconfig.AccessCheck = GetTick() + GMT_CHECKACCESS;
+        }
+
+        else if(GMTquestion[id].type == GMT_QUESTION_COMMAND &&
+                (flags == GMT_ACCESS_RUNSCRIPT || flags == GMT_ACCESS_RUNSCRIPT_UNSAFE))
+        {
+            if(GMTconfig.Access > ACCESS_CLIENT)
+            {
+                int m = 0;
+                if(StrToInt(answer_text, m))
+                {
+                    GMTmacro[m].swait == false;
+                }
+            }
+        }
+
+        if(GMTconfig.CSCdebug)
+            Message("GMT->answer->result: OK");
+    }
+    else if(status == GMT_STATUS_DENIED)
+    {
+        if(GMTconfig.CSCdebug)
+            Message("GMT->answer->result: DENIED");
+
+        if(GMTquestion[id].type == GMT_GETACCESS)
+            DisableGMTools();
+    }
+    else if(status == GMT_STATUS_BAD)
+    {
+        if(GMTconfig.CSCdebug)
+            Message("GMT->answer->result: BAD");
+    }
+    else
+    {
+        if(GMTconfig.CSCdebug)
+            Message("GMT->answer->result: unknown status");
+    }
+
+    if(valid(data))
+    {
+        if(GMTconfig.CSCdebug)
+            Message("GMT->result: resizing data: " + data.length());
+        GMTquestion[id].answer_data.resize(data.length());
+        for(uint d = 0; d < data.length(); d++)
+        {
+            GMTquestion[id].answer_data[d] = data[d];
+            if(GMTconfig.CSCdebug)
+                Message("GMT->result: data[" + d + "] = " + data[d]);
+        }
+    }
+    GMTquestion[id].answer_text = answer_text;
+    GMTquestion[id].flags  = flags;
+    GMTquestion[id].status = status;
+    GMTquestion[id].tick = GetTick();
+    if(GMTconfig.CSCdebug)
+        Message("GMT->answer: finished");
+}
+
+int get_answer(uint type)
+{
+    if(GMTquestion.length() > 0)
+    {
+        // if( GMTconfig.CSCdebug )
+        //	Message( "GMT:CSC: Searching for answer type["+type+"]" );
+        for(uint i = 0; i < GMTquestion.length(); i++)
+        {
+            if(GMTquestion[i].type == type)
+            {
+                // if( GMTconfig.CSCdebug )
+                //	Message( "   "+i+": "+GMTquestion[i].type+" == "+type );
+                return(i);
+            }
+            // else if( GMTconfig.CSCdebug )
+            //	Message( "   "+i+": "+GMTquestion[i].type+" != "+type );
+        }
+    }
+    return(-1);
+}
+
+// when you don't know question/answer id
+int FindAnswerData(int type, string& identifier)
+{
+    int answer = get_answer(type);
+    if(answer < 0)
+        return(-255);
+
+    return(GetAnswerData(answer, identifier));
+}
+
+// when you know question/answer id
+int GetAnswerData(int questionID, string& identifier)
+{
+    if(int(GMTquestion.length()) >= (questionID + 1))
+    {
+        int pos = findFirst(GMTquestion[questionID].answer_text, identifier);
+        if(pos >= 0)
+        {
+            return(GMTquestion[questionID].answer_data[pos]);
+        }
+    }
+    return(-255);
+}
+#endif /* __CLIENT */
+
+#ifdef __SERVER
+
+bool GMtools_CheckAccess(Critter& player, int access, uint tick, bool send_answer)
+{
+    if(player.GetAccess() < access)
+    {
+        if(send_answer)
+        {
+            GMtools_SendAnswer(player, tick, GMT_STATUS_DENIED, 0, " ", null_data);
+            LogCommandUsage(player, "GMTools: check access fail <" + access + ">");
+        }
+        return(false);
+    }
+    return(true);
+}
+
+void GMtools_SendAnswer(Critter& player, int tick, int status, int flags, string& answer, array<int>@ data)
+{
+    if(answer == "")
+        answer = " ";
+    player.RunClientScript("client_gmtools@answer", tick, status, flags, answer, data);
+}
+#endif /* __SERVER */

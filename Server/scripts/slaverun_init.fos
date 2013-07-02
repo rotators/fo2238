@@ -1,0 +1,155 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_init.fos
+//
+
+// This file is inlined.
+// It contains slave runs definitios.
+// See slaverun.fos for the list of all involved files.
+
+#define ADDLOC    # (locname, id, props) SlaverunLoc locname; locname.SetLocPid(id).props; SlaverunLocs.insertLast(locname);
+
+ADDLOC(tribal1, LOCATION_Slaverun1,
+       SetCoords(150, 150, 500, 350).SetReward(200).SetLevels(1, 1, 1).
+       AddHostile(3).AddHostile(4).AddNormal(3).AddNormal(4).
+       Scripts(SCRIPT_slaverun_slave_hostile, SCRIPT_slaverun_slave_normal).
+       AIPacks(AIPACKET_ARROYO_WARRIOR, AIPACKET_ARROYO_VILLAGER).Dialogs(0, 0, DIALOG_slaver_tribalcamp_1).      // TODO
+       AddWeapon(PID_SLEDGEHAMMER, 0, 0, 0).
+       AddWeapon(PID_SPEAR, 0, 0, 0).
+       AddWeapon(PID_KNIFE, 0, 0, 0).
+       AddWeapon(PID_SHARP_SPEAR, 0, 0, 0).
+       AddWeapon(PID_SHARPENED_POLE, 0, 0, 0).
+       AddWeapon(0, 0, 0, 0).
+       AddItem(PID_MEAT_JERKY, 30, 1, 3).
+       AddItem(PID_FLINT, 30, 1, 2).
+       AddItem(PID_ROCK, 20, 2, 4).
+       AddItem(PID_GECKO_PELT, 10, 1, 2).
+       AddItem(PID_BOTTLE_CAPS, 15, 10, 20).
+       AddItem(PID_GOLDEN_GECKO_PELT, 10, 1, 1).
+       AddContItem(PID_MEAT_JERKY, 60, 1, 3).
+       AddContItem(PID_BOTTLE_CAPS, 90, 50, 80).
+       AddContItem(PID_GECKO_PELT, 90, 2, 4).
+       AddContItem(PID_GOLDEN_GECKO_PELT, 40, 1, 2).
+       AddContItem(PID_BRAHMIN_HIDE, 40, 1, 2).
+       AddContItem(PID_MEAT, 60, 1, 3).
+       AddContItem(PID_ROCK, 90, 4, 6).
+       AddContItem(PID_URANIUM_ORE, 1, 1, 1).
+       AddContItem(PID_GOLD_NUGGET, 1, 1, 1)
+       );
+
+ADDLOC(tribal2, LOCATION_Slaverun2,
+       SetCoords(150, 150, 500, 350).SetReward(250).SetLevels(5, 5, 1).
+       AddHostile(3).AddHostile(4).AddNormal(3).AddNormal(4).AddNormal(206).AddNormal(207).
+       Scripts(SCRIPT_slaverun_slave_hostile, SCRIPT_slaverun_slave_normal).
+       AIPacks(AIPACKET_ARROYO_WARRIOR, AIPACKET_ARROYO_VILLAGER).Dialogs(0, 0, DIALOG_slaver_tribalcamp_1).      // TODO
+       AddWeapon(PID_SLEDGEHAMMER, 0, 0, 0).
+       AddWeapon(PID_SPEAR, 0, 0, 0).
+       AddWeapon(PID_KNIFE, 0, 0, 0).
+       AddWeapon(PID_SHARP_SPEAR, 0, 0, 0).
+       AddWeapon(PID_SHARPENED_POLE, 0, 0, 0).
+       AddWeapon(PID_THROWING_KNIFE, PID_THROWING_KNIFE, 5, 10).
+       AddWeapon(0, 0, 0, 0).
+       AddItem(PID_MEAT_JERKY, 30, 2, 3).
+       AddItem(PID_FLINT, 30, 1, 2).
+       AddItem(PID_ROCK, 50, 2, 4).
+       AddItem(PID_GECKO_PELT, 30, 1, 3).
+       AddItem(PID_BOTTLE_CAPS, 35, 15, 25).
+       AddItem(PID_GOLDEN_GECKO_PELT, 20, 1, 1).
+       AddContItem(PID_MEAT_JERKY, 60, 1, 3).
+       AddContItem(PID_BOTTLE_CAPS, 100, 70, 110).
+       AddContItem(PID_GECKO_PELT, 90, 2, 4).
+       AddContItem(PID_GOLDEN_GECKO_PELT, 50, 1, 2).
+       AddContItem(PID_BRAHMIN_HIDE, 40, 2, 3).
+       AddContItem(PID_MEAT, 60, 1, 3).
+       AddContItem(PID_ROCK, 90, 8, 12).
+       AddContItem(PID_URANIUM_ORE, 2, 1, 1).
+       AddContItem(PID_GOLD_NUGGET, 2, 1, 1)
+       );
+
+ADDLOC(caravan1, LOCATION_Slaverun3,
+       SetCoords(550, 150, 1000, 550).SetReward(900).SetLevels(1, 1, 3).SetNoItems().
+       AddHostile(30).AddHostile(40).AddHostile(41).AddNormal(58).AddNormal(59).AddNormal(60).AddNormal(61).
+       Scripts(SCRIPT_slaverun_slave_hostile, SCRIPT_slaverun_slave_normal).
+       AIPacks(AIPACKET_GENERIC_GUARDS, AIPACKET_STORE_OWNER).Dialogs(0, 0, DIALOG_slaver_caravan_1).      // TODO
+       AddWeapon(PID_10MM_PISTOL, PID_10MM_JHP, 3, 5).
+       AddWeapon(PID_DESERT_EAGLE, PID_44_MAGNUM_JHP, 3, 5).
+       AddWeapon(PID_SPRINGER_RIFLE, PID_10MM_JHP, 3, 10).
+       AddWeapon(PID_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+       AddWeapon(PID_SAWED_OFF_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+       AddWeapon(PID_HUNTING_RIFLE, PID_22_AMMO, 2, 4).
+       AddItem(PID_DECK_OF_TRAGIC_CARDS, 10, 1, 2).
+       AddItem(PID_BOX_OF_NOODLES, 5, 2, 4).
+       AddItem(PID_WATER_FLASK, 30, 1, 2).
+       AddItem(PID_HOWITZER_SHELL, 1, 1, 1).
+       AddItem(PID_RADIO, 25, 1, 1).
+       AddItem(PID_ROPE, 50, 2, 3).
+       AddItem(PID_LIGHTER, 30, 1, 2).
+       AddItem(PID_FIRST_AID_KIT, 10, 1, 1).
+       AddItem(PID_BIG_BOOK_OF_SCIENCE, 10, 1, 1).
+       AddItem(PID_DEANS_ELECTRONICS, 10, 1, 1).
+       AddItem(PID_FIRST_AID_BOOK, 10, 1, 1).
+       AddItem(PID_SCOUT_HANDBOOK, 10, 1, 1).
+       AddItem(PID_GUNS_AND_BULLETS, 10, 1, 1).
+       AddItem(PID_CHEMISTRY_MANUAL, 10, 1, 1).
+       AddItem(PID_STIMPAK, 20, 2, 3).
+       AddItem(PID_ANTIDOTE, 25, 2, 4).
+       AddItem(PID_HEALING_POWDER, 30, 1, 2).
+       AddItem(PID_NUKA_COLA, 10, 2, 5).
+       AddItem(PID_BEER, 10, 2, 5).
+       AddItem(PID_BOOZE, 10, 2, 5).
+       AddItem(PID_GAMMA_GULP_BEER, 10, 1, 3).
+       AddItem(PID_ROENTGEN_RUM, 10, 1, 3).
+       AddItem(PID_ROT_GUT, 10, 1, 3).
+       AddItem(PID_10MM_JHP, 10, 10, 20).
+       AddItem(PID_10MM_AP, 10, 10, 20).
+       AddItem(PID_44_MAGNUM_JHP, 10, 5, 15).
+       AddItem(PID_44_MAGNUM_FMJ, 10, 5, 15).
+       AddItem(PID_SHOTGUN_SHELLS, 10, 6, 10).
+       AddItem(PID_BOTTLE_CAPS, 75, 200, 400)
+       );
+/*
+   ADDLOC(farm1, LOCATION_Slaverun4,
+    SetCoords(750,200,900,300).SetReward(350).SetLevels(5,5,1).
+    AddHostile(214).AddNormal(65).AddNormal(215).AddNormal(52).AddNormal(53).AddNormal(220).
+    Scripts(SCRIPT_slaverun_slave_hostile,SCRIPT_slaverun_slave_normal).
+    AIPacks(AIPACKET_TOUGH_CITIZEN,AIPACKET_WIMPY_PEASANT).Dialogs(0,0,9315). // TODO
+    AddWeapon(PID_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+    AddWeapon(PID_SAWED_OFF_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+    AddItem(PID_MEAT_JERKY,30,2,3).
+    AddItem(PID_BOTTLE_CAPS,30,50,80).
+    AddContItem(PID_BRAHMIN_HIDE,40,2,3).
+    AddContItem(PID_MEAT,60,1,3).
+    AddContItem(PID_BEER,60,2,3)
+   );
+
+   ADDLOC(gasstation1, LOCATION_Slaverun5,
+    SetCoords(150,400,300,550).SetReward(550).SetLevels(3,3,4).
+    AddHostile(159).AddHostile(258).AddNormal(173).AddNormal(159).AddNormal(258).
+    Scripts(SCRIPT_slaverun_slave_hostile,SCRIPT_slaverun_slave_normal).
+    AIPacks(AIPACKET_TOUGH_CITIZEN,AIPACKET_GHOUL_PEASANT).Dialogs(0,0,9315). // TODO
+    AddWeapon(PID_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+    AddWeapon(PID_SAWED_OFF_SHOTGUN, PID_SHOTGUN_SHELLS, 6, 10).
+    AddItem(PID_DECK_OF_TRAGIC_CARDS,40,1,1).
+    AddItem(PID_PUMP_PARTS,20,1,2).
+    AddItem(PID_BEER,50,1,2).
+    AddItem(PID_BOTTLE_CAPS,50,60,90).
+    AddContItem(PID_BEER,60,2,3).
+    AddContItem(PID_BOOZE,30,1,2)
+   );
+ */
+ADDLOC(junkiehouse1, LOCATION_Slaverun6,
+       SetCoords(400, 400, 600, 650).SetReward(150).SetLevels(5, 5, 1).
+       AddHostile(55).AddHostile(54).AddNormal(54).AddNormal(55).
+       Scripts(SCRIPT_slaverun_slave_hostile, SCRIPT_slaverun_slave_normal).
+       AIPacks(AIPACKET_TOUGH_CITIZEN, AIPACKET_DRUG_ADDICT).Dialogs(0, 0, DIALOG_slaver_junkies_1).      // TODO
+       AddWeapon(PID_ROCK, PID_ROCK, 2, 4).
+       AddWeapon(0, 0, 0, 0).
+       AddItem(PID_JET, 20, 1, 1).
+       AddItem(PID_BEER, 50, 2, 3).
+       AddItem(PID_BOTTLE_CAPS, 20, 10, 20).
+       AddContItem(PID_JET, 90, 2, 8).
+       AddContItem(PID_BEER, 60, 2, 3).
+       AddContItem(PID_BOOZE, 30, 1, 2)
+       );

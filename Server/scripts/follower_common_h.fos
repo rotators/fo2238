@@ -1,0 +1,38 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// follower_common_h.fos
+//
+
+#ifndef __FOLLOWER_COMMON_H__
+#define __FOLLOWER_COMMON_H__
+#include "mercs_h.fos"
+import bool     IsFollowing(Critter& critter) from "follower_common";
+import bool     IsOwnersFollower(Critter& owner, Critter& critter) from "follower_common";
+import bool     CanHaveMoreFollowers(Critter& player, uint FollowerType) from "follower_common";
+import Critter@ GetFollowersOwner(Critter& critter) from "follower_common";
+import bool     RightDistance(Critter& follower, Critter& owner) from "follower_common";
+import bool     HasFollowerOfBaseType(Critter& owner, uint basetype) from "follower_common";
+import Critter@ GetFollowerByBaseType(Critter& owner, uint basetype) from "follower_common";
+import bool     RemoveFollowerByBaseType(Critter& owner, uint basetype) from "follower_common";
+import int      GetNumberOfFollowingFollowersOfPlayer(Critter& player) from "follower_common";
+import int      GetNumberOfFollowersOfPlayer(Critter& player) from "follower_common";
+import uint     GetSlaveTypes(Critter& player) from "follower_common";
+import void     ClearFollowersEnemy(Critter& player, Critter& target) from "follower_common";
+import void     AddFollowersEnemy(Critter& player, Critter& target) from "follower_common";
+import uint     NumberOfFollowersOnMap(Map@ map) from "follower_common";
+import uint     GetFollowerType(Critter& critter) from "follower_common";
+import bool     DisbandFollower(Critter& player, Critter& cr, bool reset) from "follower_common";
+import bool     MakeFollower(Critter& critter, uint type, string& script, uint dialogid, Critter& owner, bool FreeBarter) from "follower_common";
+import Critter@ LocateFollowerByType(IMerc@ merc, Critter& owner) from "follower_common";
+import Critter@ LocateFollowerByID(uint id, Critter& owner) from "follower_common";
+import int      GetFollowers(Critter& player, Map@ map, array<Critter@>& followers, bool OnlyIsSeen) from "follower_common";
+import int      GetFollowers(Critter& player, Map@ map, array<Critter@>& followers) from "follower_common";
+import int      GetFollowers(Critter& player, bool all, array<Critter@>& followers) from "follower_common";
+import uint     CountFollowers(Critter& player, bool all) from "follower_common";
+import uint     CountFollowers(Critter& player, Map@ map) from "follower_common";
+import uint     GetPartyPointsMax(Critter& player) from "follower_common";
+import uint     GetPartyPointsUsed(Critter& player) from "follower_common";
+import bool     IsMerc(Critter& follower) from "follower_common";
+#endif

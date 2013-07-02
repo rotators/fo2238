@@ -1,0 +1,344 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+51 1010 D _var p q_mordinos_joining_quest = 3 #
+45 1020 D _var p q_mordinos_joining_quest = 1 #
+35 1030 D _var p q_mordinos_metzger_delivery = 2 #
+36 1040 D _var p q_mordinos_metzger_delivery = 1 #
+31 1050 D _param p ST_INTELLECT < 4 #
+30 1060 D _param p ST_CHARISMA > 99 #
+2 1070 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+29 1080 D _var p loyality < -1 #
+3 1090 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+5 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+6 4010 #
+6 4020 #
+16 4030 #
+15 4040 #
+39 4050 D _var p q_mordinos_metzger_delivery = 3 D _var p q_mordinos_joining_quest = 0 D _param p ST_LEVEL > 9 #
+58 4060 D _param p ST_LEVEL < 10 D _var p q_mordinos_joining_quest = 0 D _var p q_mordinos_metzger_delivery = 3 #
+0 4070 @
+5 5000 None 0 #
+6 5010 #
+16 5020 #
+15 5030 #
+4 5040 @
+6 6000 None 0 #
+9 6010 #
+8 6020 #
+29 6030 #
+4 6040 @
+8 7000 None 0 #
+10 7010 #
+9 7020 #
+4 7030 #
+0 7040 @
+9 8000 None 0 #
+10 8010 #
+0 8020 #
+4 8030 #
+0 8040 @
+10 9000 None 0 #
+4 9010 @
+11 10000 None 0 #
+12 10010 #
+4 10020 @
+12 11000 None 0 #
+13 11010 @
+13 12000 None 0 #
+14 12010 @
+14 13000 None 0 #
+4 13010 @
+15 14000 None 0 #
+4 14010 #
+16 14020 #
+0 14030 @
+16 15000 None 0 #
+4 15010 #
+32 15020 D _var p q_mordinos_metzger_delivery = 0 #
+0 15030 @
+26 16000 None 0 #
+29 16010 #
+29 16020 #
+28 16030 #
+0 16040 @
+27 17000 None 0 #
+29 17010 #
+16 17020 #
+0 17030 @
+28 18000 None 0 #
+0 18010 #
+65507 18020 @
+29 19000 None 0 #
+65507 19010 #
+0 19020 R _var p loyality - 10 @
+30 20000 None 0 @
+31 21000 None 0 @
+32 22000 None 0 #
+33 22010 #
+38 22020 #
+0 22030 @
+33 23000 None 0 #
+34 23010 #
+0 23020 @
+34 24000 None 0 #
+0 24010 R _var p q_mordinos_metzger_delivery = 1 R _item p PID_METZGERS_CASE + 1 @
+35 25000 None 0 #
+0 25010 R _var p q_mordinos_metzger_delivery = 3 R _param p ST_EXPERIENCE + 1500 @
+36 26000 None 0 #
+0 26010 @
+37 27000 None 0 @
+38 28000 None 0 #
+0 28010 #
+65507 28020 @
+39 29000 None 0 #
+40 29010 #
+0 29020 @
+40 30000 None 0 #
+41 30010 #
+41 30020 #
+41 30030 #
+0 30040 @
+41 31000 None 0 #
+42 31010 #
+0 31020 @
+42 32000 None 0 #
+43 32010 @
+43 33000 None 0 #
+44 33010 #
+0 33020 @
+44 34000 None 0 #
+0 34010 R _var p q_mordinos_joining_quest = 1 R _item p PID_MORDINOS_CASE = 1 #
+0 34020 R _var p q_mordinos_joining_quest = 1 R _item p PID_MORDINOS_CASE = 1 #
+0 34030 R _var p q_mordinos_joining_quest = 1 R _item p PID_MORDINOS_CASE = 1 @
+45 35000 None 0 #
+46 35010 #
+46 35020 #
+46 35030 #
+0 35040 @
+46 36000 None 0 #
+49 36010 #
+47 36020 @
+47 37000 None 0 #
+48 37010 @
+48 38000 None 0 #
+49 38010 @
+49 39000 None 0 #
+0 39010 #
+50 39020 @
+50 40000 None 0 #
+53 40010 D _var p q_mordinos_induction_doctor < 401 D _item p PID_MORDINOS_CASE } 1 R _var p q_mordinos_joining_quest = 6 R _item p PID_MORDINOS_CASE - 1 #
+54 40020 D _var p q_mordinos_induction_doctor < 501 D _var p q_mordinos_induction_doctor > 400 D _item p PID_MORDINOS_CASE } 1 R _item p PID_MORDINOS_CASE - 1 #
+55 40030 D _var p q_mordinos_induction_doctor < 601 D _var p q_mordinos_induction_doctor > 500 D _item p PID_MORDINOS_CASE } 1 R _item p PID_MORDINOS_CASE - 1 #
+56 40040 D _var p q_mordinos_induction_doctor < 701 D _var p q_mordinos_induction_doctor > 600 D _item p PID_MORDINOS_CASE } 1 R _item p PID_MORDINOS_CASE - 1 #
+57 40050 D _var p q_mordinos_induction_doctor > 700 D _item p PID_MORDINOS_CASE } 1 R _item p PID_MORDINOS_CASE - 1 @
+51 41000 None 0 #
+52 41010 R _param p REPUTATION_MORDINOS - 1500 @
+52 42000 Attack 0 #
+65507 42010 @
+53 43000 None 0 #
+0 43010 R _var p q_mordinos_joining_quest = 6 R _param p REPUTATION_MORDINOS - 500 #
+0 43020 R _var p q_mordinos_joining_quest = 6 R _param p REPUTATION_MORDINOS - 500 #
+0 43030 R _var p q_mordinos_joining_quest = 6 R _param p REPUTATION_MORDINOS - 500 #
+0 43040 R _var p q_mordinos_joining_quest = 6 R _param p REPUTATION_MORDINOS - 500 @
+54 44000 None 0 #
+0 44010 R _param p ST_EXPERIENCE + 1500 R _item p PID_10MM_SMG + 1 R _item p PID_JET + 10 R _item p PID_10MM_JHP + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 200 R _script dialog@r_AddMember 0  #
+0 44020 R _param p ST_EXPERIENCE + 1500 R _item p PID_10MM_SMG + 1 R _item p PID_JET + 10 R _item p PID_10MM_JHP + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 200 R _script dialog@r_AddMember 0  @
+55 45000 None 0 #
+0 45010 R _param p ST_EXPERIENCE + 2000 R _item p PID_TOMMY_GUN + 1 R _item p PID_45_CALIBER_AMMO + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 300 R _script dialog@r_AddMember 0  R _item p PID_JET + 5 #
+0 45020 R _param p ST_EXPERIENCE + 2000 R _item p PID_TOMMY_GUN + 1 R _item p PID_45_CALIBER_AMMO + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 300 R _script dialog@r_AddMember 0  R _item p PID_JET + 5 @
+56 46000 None 0 #
+0 46010 R _param p ST_EXPERIENCE + 3000 R _item p PID_GREASE_GUN + 1 R _item p PID_45_CALIBER_AMMO + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 400 R _script dialog@r_AddMember 0  R _item p PID_JET + 8 #
+0 46020 R _param p ST_EXPERIENCE + 3000 R _item p PID_GREASE_GUN + 1 R _item p PID_45_CALIBER_AMMO + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 400 R _script dialog@r_AddMember 0  R _item p PID_JET + 8 @
+57 47000 None 0 #
+0 47010 R _param p ST_EXPERIENCE + 4500 R _item p PID_44_MAGNUM_SPEEDLOADER + 1 R _item p PID_44_MAGNUM_JHP + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 500 R _script dialog@r_AddMember 0  R _item p PID_M60 + 1 R _item p PID_7_62MM_AMMO + 30 R _item p PID_JET + 12 #
+0 47020 R _param p ST_EXPERIENCE + 4500 R _item p PID_LIGHT_SUPPORT_WEAPON + 1 R _item p PID_223_FMJ + 100 R _item p PID_44_MAGNUM_SPEEDLOADER + 1 R _item p PID_44_MAGNUM_JHP + 100 R _var p q_mordinos_joining_quest = 4 R _param p REPUTATION_MORDINOS + 500 R _script dialog@r_AddMember 0  R _item p PID_JET + 12 @
+58 48000 None 0 #
+4 48010 #
+0 48020 &
+
+[engl]
+{100}{}{Lil' Jesus}
+{200}{}{You see Lil' Jesus Mordino.}
+{200}{}{You see Lil' Jesus Mordino.}
+{210}{}{You see a sunburned young man dressed in black leather and chains. His face is pock-marked with acne scars.}
+{210}{}{You see Lil' Jesus Mordino. He is dressed mostly in black leather and playing with one of his knives.}
+{1000}{}{Predialogue installations}
+{1010}{}{Sold the case for joining quest}
+{1020}{}{On mordino join quest}
+{1030}{}{gave case to metzger}
+{1040}{}{need to give case to metzger}
+{1050}{}{stupid idiot}
+{1060}{}{ugly motherfuck}
+{1070}{}{Normal}
+{1080}{}{Hated}
+{1090}{}{Known}
+{2000}{}{Hunh? Something you want, amigo?}
+{2010}{}{Who are you?}
+{2020}{}{Sorry. I thought you were someone else.}
+{3000}{}{Eh...? You again? What do you want now?}
+{3010}{}{I had some questions…}
+{3020}{}{Nevermind. Sorry to bother you.}
+{4000}{}{(Picks fingernails with knife.) Questions…EVERYBODY got questions…@@(Picks his teeth with a dirty fingernail.) Yeah?@@Something on your mind?}
+{4010}{}{What was that you were saying about the Mordino Family again?}
+{4020}{}{Who is this Mordino Family you were talking about?}
+{4030}{}{I'm looking for a job.}
+{4040}{}{What is there to do around New Reno to relax?}
+{4050}{}{Lil' Jesus, we've known each other a while, you've seen what I can do. How about letting me become a Mordino?}
+{4060}{}{Lil' Jesus, we've known each other a while, you've seen what I can do. How about letting me become a Mordino?}
+{4070}{}{Nevermind. Catch you later.}
+{5000}{}{Me? If you gotta ask…heh. Name's Jesus. Jesus Mordino. Same as my Dad, he's the BIG Jesus, head of WHOLE Mordino family here in Reno. So most call me Lil' Jesus. Prevents confusion, y'know?}
+{5010}{}{Family Mordino? Who are they?}
+{5020}{}{I'm looking for a job. Is Family Mordino hiring?}
+{5030}{}{Know what there is to do around New Reno to relax?}
+{5040}{}{I see. Say, I had some questions…}
+{6000}{}{Family MORDINO? You been taking too much Jet, homes? We Mordinos run New Reno…and Redding, too.}
+{6010}{}{What do you mean about Redding?}
+{6020}{}{Redding? Where's that?}
+{6030}{}{You Mordinos talk big, but got small cojones. What you got to say about that, LITTLE Jesus?}
+{6040}{}{Sounds like the Mordinos have a bright future. Say, I had some questions…}
+{7000}{}{To the northwest, homes. If you ain't been there, you ain't missing nothing. Bunch of no-neck miners who like to FLY, know what I'm saying?}
+{7010}{}{Not really. What do you mean?}
+{7020}{}{They're a bunch of drug addicts?}
+{7030}{}{I hear you. I had some other questions…}
+{7040}{}{I have to go. Later, Jesus.}
+{8000}{}{Bunch of no-neck miners, dig in the dirt, but they like to FLY, know what I'm saying?}
+{8010}{}{Not really. What do you mean?}
+{8020}{}{They're a bunch of drug addicts?}
+{8030}{}{I hear you. I had some other questions…}
+{8040}{}{I have to go. Later, Jesus.}
+{9000}{}{Them no-necks dig for gold, see, but what WE give them is better than gold, know what I'm saying? They give us ALL
+ the gold they dig up just for a LEETLE Jet. Everybody happy.}
+{9010}{}{Sounds like it. Look, I had some other questions…}
+{10000}{}{Well, when they got their first taste o' Jet, they were. You can't have just one.}
+{10010}{}{Where does the Jet come from?}
+{10020}{}{I hear you. Look, I had some other questions…}
+{11000}{}{The Jet? It comes from HERE. See, we don't dig for gold, we MAKE it: liquid gold. Jet. Worth a fortune to the miners, costs
+ next to nothing to make. We ship it to Redding, they shoot up, they fly, they ship us gold. That simple.}
+{11010}{}{How long has this been going on? It seems like you would have controlled all of Northern California by now if Jet was that
+ addictive.}
+{12000}{}{You're right about that…see, we didn't always HAVE Jet. But we stumbled across this kid - he took a look at the shitty
+ drugs we was selling and said he could do 'better.' And he did. That simple.}
+{12010}{}{Who is this kid and where is he?}
+{13000}{}{Kid's name's Myron. We lost him a couple years back. He ran out into the wastes with some fuckin' tribal. (He spits) Shitheel.}
+{13010}{}{Got it. I had some other questions…}
+{14000}{}{The Desperado is the place to be, homes. We got the Jet, the games, the action…and we got all the putas you need right outside, wet and willing. Paradise, homes. Pair-a-dice.}
+{14010}{}{Say, I had some other questions…}
+{14020}{}{I'm looking for a job. Know of any place that's hiring?}
+{14030}{}{Thanks for the tip, thanks.}
+{15000}{}{Yeah? That's great. You look like a dick. Why should I even care?}
+{15010}{}{All right then. I had some other questions…}
+{15020}{}{Come on, I'm good and I'm sure you have something that needs doing. Give me a chance!}
+{15030}{}{Nevermind then. Thanks anyway.}
+{16000}{}{Eh? What are you talkin ab --? (Gets it.) You fucking PUTA! You better get yo tramp ass outta here 'fore I carve you into so many pieces your own mother won't recognize you.}
+{16010}{}{Try it and see what happens, LITTLE Jesus.}
+{16020}{}{Try it, and I'll add so many scars to your face you'll look like a jigsaw puzzle.}
+{16030}{}{Calm down…I was just kidding with you.}
+{16040}{}{I'm leaving. Great talking to someone as cultured as you.}
+{17000}{}{Ha! You all right, chica. You all right. Lil' Jesus gonna be keeping an eye on you…not that I couldn't help myself. What can I do for you?}
+{17010}{}{First thing you can do for me is keep your eyes to yourself, LITTLE Jesus. I'd sooner consider humping a rock before touching that cratered landscape you call a face.}
+{17020}{}{I'm looking for a job. Know of anyone who's hiring?}
+{17030}{}{Actually, I have to be going. Good talking to you, Jesus.}
+{18000}{}{Oh, so that makes it all better then, huh? (Spits at your feet.) Get the hell outta here 'fore I carve you.}
+{18010}{}{I'm leaving.}
+{18020}{}{You spit on my shoe? You fuck! I'm gonna teach you a lesson about respect, mother fucker.}
+{19000}{}{FUCK you. Get outta my family's casino 'fore I carve my initials on your dead body.}
+{19010}{}{Let's dance.}
+{19020}{}{Calm down, Jesus. I'm leaving.}
+{20000}{}{How the fuck did you get past the bouncers? Get the fuck out of my casino you ugly piece of shit.}
+{21000}{}{'Ey braindead, get the fuck out of here mang.}
+{22000}{}{Do some shitwork for us and maybe I'll think about starting to think about letting you in.}
+{22010}{}{Alright, tell me more.}
+{22020}{}{Shit work?  But I HATE shit!}
+{22030}{}{No thanks,}
+{23000}{}{We got a package that needs taking to Metzger. I give it to you and you take it to Metzger. Can you handle that?}
+{23010}{}{Yeah I'm pretty sure I can handle that.}
+{23020}{}{I dunno. I'll get back to you. Sounds complicated. I'll read a few books on the subject and let you know.}
+{24000}{}{Here's the case. Get it to Metzger and come back to me. Don't fuck around with that shit pendejo.}
+{24010}{}{Ok. I'll be back later.}
+{25000}{}{I thought you'd baulk for sure. Maybe there's a pachuco there yet homes. Not bad work.}
+{25010}{}{Told you. I'm the shit.}
+{26000}{}{What the fuck, homes? Give him the fucking case!}
+{26010}{}{Alright, fuck! I do have other things going on in my life besides moving briefcases across the wasteland, you know.}
+{27000}{}{One simple fucking job pendejo. Are you that stupid? Get the fuck out of here.}
+{28000}{}{Fucking stupid prick. Get the fuck out of here.}
+{28010}{}{Oops.}
+{28020}{}{Did I make you mad? You fucking crybaby motherfucker?}
+{29000}{}{Join? Shit homes, you think you can be a @sex@|pachuco||pachuca|? I don't know...you weren't bad on that Metzger job but shit homes, any retard could have done that.}
+{29010}{}{Maybe, but you can only do the job given to you.}
+{29020}{}{I guess. I am not worthy. Goodbye.}
+{30000}{}{You are right, and you did. But still, I gotta know you have the cut of a Mordino @sex@|man||woman|, homes. A job that'll really test your shit. To the limit, mang.}
+{30010}{}{I am totally ready to be tested to the fucking limit.}
+{30020}{}{Bring it on!}
+{30030}{}{Give me a job that would allow me to meet the criteria you have laid out.}
+{30040}{}{Yeah that's great. Bye.}
+{31000}{}{Ok. I gotta case fuckin' full of jet right here homes. I'm gonna give it to you, and you're going to wholesale as much of it as you can to suppliers in Reno right now.}
+{31010}{}{You want me to be a drug dealer?}
+{31020}{}{I must leave this conversation THIS INSTANT.}
+{32000}{}{Yeah braindead! You give them jet, they give you money. We wholesale at 5 caps per dose. We'll see how you perform.}
+{32010}{}{Okay I get it. Like a test to see if I'm up for it?}
+{33000}{}{Yeah it's a fuckin' test. But it's also real jet and real chips ese. You fuck with the count and you're fucking dead. If you're giving out jet, that money better be in my hand after.}
+{33010}{}{I got it. I am ready for this. Give me the case, Lil' Jesus.}
+{33020}{}{Not for me! I am out of here!}
+{34000}{}{Ok, here's the case. Sell as much as you can to as many dealers in Reno as you can, then come back to me and we'll see if you're a @sex@|pachuco||pachuca| or just some walking piece of shit.}
+{34010}{}{Aight. Later motherfucker.}
+{34020}{}{Okay, let's do this.}
+{34030}{}{Watch me fuckin go, Jesus. You will be astounded by just how fucking awesome I am.}
+{35000}{}{Look who's back!}
+{35010}{}{It's me. I am back.}
+{35020}{}{Yeah, here I am!}
+{35030}{}{What's up Lil' Jesus?}
+{35040}{}{Actually just stopping through. Need to sell some more stuff before I'm done, I reckon.}
+{36000}{}{So like, are you done or what?}
+{36010}{}{Totally done dogg.}
+{36020}{}{What do you mean done? Haven't I sold enough?}
+{37000}{}{When you hand over that case homes, I open it up, and it is like a picture of you inside. How much you have sold shows me what kind of man you are.}
+{37010}{}{A picture of me?}
+{38000}{}{Right homes. If there's not enough in here, that's it. No second chances here mang.}
+{38010}{}{I understand.}
+{39000}{}{So when you give me the case, it's all over. I decide if you're a @sex@|pachuco||pachuca| or not right here on the spot. So if you're not convinced mang, go and do some more work before you show that to me.}
+{39010}{}{Alright, I get what you mean. I'll go and try to sell some more.}
+{39020}{}{Alright, I get what you mean. But I've sold as much as I can. Take a look and see what you think of me.}
+{40000}{}{Ok homes, now hand me the case and let's see what kind of @sex@|man||chica|| you are...}
+{40010}{}{[Hand over the briefcase.]}
+{40020}{}{[Hand over the briefcase.]}
+{40030}{}{[Hand over the briefcase.]}
+{40040}{}{[Hand over the briefcase.]}
+{40050}{}{[Hand over the briefcase.]}
+{41000}{}{WHERE'S THE FUCKING CASE HOMES?!!?!}
+{41010}{}{Err..well...}
+{42000}{}{Ohhh FUCK you mang! You are so fucking dead. You are such a stupid pendejo to show you face here again. I will end you. [Lil' Jesus grips his knife in a combat stance and steps towards you.]}
+{42010}{}{I'm not going out like a sucker, Mordino. Give me what you've got, I can take it.}
+{43000}{}{This....this is shit homes. What the fuck are you doing bringing this to me like you are proud of yourself. Just...get out. You'll never be a Mordino.}
+{43010}{}{Well, I fucked that up!}
+{43020}{}{Guess I'm re-making this character.}
+{43030}{}{Shit, I am totally whining on IRC about this!}
+{43040}{}{I see. Guess I just wasn't good enough.}
+{44000}{}{Not bad my friend. I think you got what it takes to stand with us. Go upstairs and talk to my father. And take this with you; a present from me.}
+{44010}{}{Hooray!}
+{44020}{}{Thank you, Jesus. I will go and see your father.}
+{45000}{}{Good job homes, you did alright! You got my approval. Go upstairs and see my father. And take this too; a present.}
+{45010}{}{Thank you, Jesus. I will go and see your father.}
+{45020}{}{Hooray!}
+{46000}{}{What can I say, I'm impressed homes. You did good here. Better than I expected. Go upstairs and talk to me father. And hey, here's my first gift to you as a Mordino.}
+{46010}{}{Thank you, Jesus. I will go and see your father.}
+{46020}{}{Hooray!}
+{47000}{}{Damn homes, I ain't never seen a rookie shift product like that. You're gonna go far. Go upstairs and see my old man right away, we'll be glad to take you in. And hey, take this as a gift.}
+{47010}{}{Thank you, Jesus. I will go and see your father.}
+{47020}{}{Hooray!}
+{48000}{}{No offense, but we're not hiring such rookies. Look at you, no muscles, no brains... We don't need brains, but anyway. I won't cross you out, but you'll have to impress me first.}
+{48010}{}{Alright. May I ask you something?}
+{48020}{}{Alright. I guess I'll have to prove to you that I am not just another worthless Mr. Alt. So now I'll go and kill some speedrats. Or maybe I'll put together a gun. Anyway, bye.}
+

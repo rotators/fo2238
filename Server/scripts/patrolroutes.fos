@@ -1,0 +1,251 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// patrolroutes.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "patrolling_h.fos"
+
+#define ADD_ROUTE    # (name, pmap, properties) CPatrolRoute@ name; @name = CPatrolRoute(pmap); name.properties; AddPatrolRoute(name)
+
+array<IPatrolRoute@> PatrolRoutes;
+
+IPatrolRoute@ GetPatrolRoute(uint id)
+{
+    if(PatrolRoutes.length() > id - 1)
+        return PatrolRoutes[id - 1];
+    else
+        return null;
+}
+
+void AddPatrolRoute(CPatrolRoute& route)
+{
+    PatrolRoutes.insertLast(route);
+}
+
+// How to use:
+//
+// AddNode(nodeid, direction, waittime)
+// AddNode(x, y, direction, waittime)
+// AddNode(x, y, direction, waitmin, waitmax)
+// waittime = how long to wait at the node before continuing
+void InitRoutes()
+{
+    Log("Initializing patrol routes");
+
+    // Todo: Remake this not to have id=position in array+1
+
+    // ===================================
+    // Junktown routes #1
+    // ===================================
+    ADD_ROUTE(junktown_gate_patrol, MAP_Junktown, AddNode(123, 123, 1, 5000).AddNode(123, 123, 3, 5000));       // id 1
+
+    // ===================================
+    // Adytum routes
+    // ===================================
+    ADD_ROUTE(adytum_patrol, MAP_Adytum, AddNode(133, 85, 3, 27000)
+              .AddNode(140, 111, 1, 25000)
+              .AddNode(130, 141, 0, 23000)
+              .AddNode(100, 116, 5, 31000)
+              .AddNode(91, 82, 5, 27000)
+              .AddNode(107, 80, 3, 25000));                                                                    // id 2
+
+    // ===================================
+    // Hub routes
+    // ===================================
+    ADD_ROUTE(hub_guard1_patrol, MAP_HubDowntown, AddNode(30, 5, 39960).AddNode(31, 5, 40000));                                // id 3
+    ADD_ROUTE(hub_guard2_patrol, MAP_HubDowntown, AddNode(32, 5, 39980).AddNode(33, 5, 40000));                                // id 4
+    ADD_ROUTE(hub_guard3_patrol, MAP_HubDowntown, AddNode(34, 5, 40000).AddNode(35, 5, 40000));                                // id 5
+
+    ADD_ROUTE(hub_guard4_patrol, MAP_HubDowntown, AddNode(22, 3, 105000).AddNode(20, 3, 80000).AddNode(21, 0, 80000));         // id 6
+    ADD_ROUTE(hub_brahminguard1_patrol, MAP_HubDowntown, AddNode(23, 3, 150000).AddNode(24, 0, 150000));                       // id 7
+    ADD_ROUTE(hub_metro1_patrol, MAP_HubDowntown, AddNode(1, 4, 80000)
+              .AddNode(2, 3, 45000)
+              .AddNode(3, 2, 45000)
+              .AddNode(4, 3, 45000)
+              .AddNode(5, 3, 45000)
+              .AddNode(6, 4, 60000)
+              .AddNode(7, 5, 55000)
+              .AddNode(8, 5, 50000)
+              .AddNode(9, 1, 65000)
+              .AddNode(3, 4, 65000)
+              .AddNode(2, 5, 55000));     // id 8
+
+    ADD_ROUTE(hub_metro2_patrol, MAP_HubDowntown, AddNode(11, 5, 80000)
+              .AddNode(10, 2, 45000)
+              .AddNode(12, 1, 45000)
+              .AddNode(13, 2, 45000)
+              .AddNode(14, 2, 45000)
+              .AddNode(15, 3, 60000)
+              .AddNode(16, 3, 55000)
+              .AddNode(17, 5, 50000)
+              .AddNode(18, 0, 65000)
+              .AddNode(12, 5, 65000)
+              .AddNode(10, 5, 55000));     // id 9
+
+    // ===================================
+    // Junktown routes #2
+    // ===================================
+    ADD_ROUTE(junktown_guard1_patrol, MAP_Junktown, AddNode(1, 5, 60000)
+              .AddNode(2, 2, 60000)
+              .AddNode(3, 2, 80000)
+              .AddNode(4, 2, 40000)
+              .AddNode(5, 2, 60000)
+              .AddNode(6, 2, 50000)
+              .AddNode(7, 2, 60000)
+              .AddNode(8, 2, 50000)
+              .AddNode(9, 2, 40000)
+              .AddNode(10, 2, 60000)
+              .AddNode(11, 2, 60000)
+              .AddNode(12, 2, 60000)
+              .AddNode(13, 2, 80000)
+              .AddNode(14, 2, 40000)
+              .AddNode(15, 2, 60000));     // id 10
+
+    // ===================================
+    // VCity routes
+    // ===================================
+    ADD_ROUTE(VC_GUARD_PATROL1, MAP_VaultCityDowntown, AddNode(1, 3, 60000)
+              .AddNode(2, 2, 60000)
+              .AddNode(3, 4, 60000)
+              .AddNode(4, 3, 30000)
+              .AddNode(5, 2, 60000)
+              .AddNode(6, 1, 60000)
+              .AddNode(2, 2, 60000)
+              .AddNode(7, 2, 60000)
+              .AddNode(8, 5, 60000)
+              .AddNode(7, 5, 20000)
+              .AddNode(4, 4, 30000)
+              .AddNode(3, 1, 40000)
+              .AddNode(2, 5, 30000)
+              .AddNode(1, 1, 60000));     // id 11
+
+    ADD_ROUTE(VC_GUARD_PATROL2, MAP_VaultCityDowntown, AddNode(10, 4, 60000)
+              .AddNode(11, 5, 60000)
+              .AddNode(12, 1, 60000)
+              .AddNode(13, 2, 60000)
+              .AddNode(14, 3, 60000));     // id 12
+
+    // ===================================
+    // NCR routes
+    // ===================================
+    ADD_ROUTE(NCR_GUARD_PATROL1, MAP_NCR, AddNode(1, 0, 60000)
+              .AddNode(2, 5, 30000)
+              .AddNode(3, 0, 30000)
+              .AddNode(4, 4, 40000)
+              .AddNode(5, 3, 40000)
+              .AddNode(6, 2, 40000)
+              .AddNode(7, 2, 40000)
+              .AddNode(8, 3, 30000)
+              .AddNode(9, 2, 10000)
+              .AddNode(10, 2, 50000));     // id 13
+
+    // ===================================
+    // NCR Prison routes
+    // ===================================
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL1, MAP_NCRCF, AddNode(1, 2, 40000)
+              .AddNode(2, 2, 40000)
+              .AddNode(3, 3, 60000)
+              .AddNode(4, 3, 50000)
+              .AddNode(3, 3, 50000)
+              .AddNode(2, 2, 40000));     // id 14
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL2, MAP_NCRCF, AddNode(4, 3, 40000)
+              .AddNode(5, 3, 60000)
+              .AddNode(6, 5, 40000)
+              .AddNode(5, 3, 60000));     // id 15
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL3, MAP_NCRCF, AddNode(6, 5, 50000)
+              .AddNode(7, 5, 60000)
+              .AddNode(8, 5, 40000)
+              .AddNode(9, 5, 50000)
+              .AddNode(8, 5, 50000)
+              .AddNode(7, 5, 60000));     // id 16
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL4, MAP_NCRCF, AddNode(9, 5, 40000)
+              .AddNode(8, 5, 60000)
+              .AddNode(7, 5, 40000)
+              .AddNode(6, 5, 40000)
+              .AddNode(7, 5, 40000)
+              .AddNode(8, 5, 60000));     // id 17
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL5, MAP_NCRCF, AddNode(10, 0, 40000)
+              .AddNode(11, 0, 60000)
+              .AddNode(12, 1, 40000)
+              .AddNode(11, 0, 60000));     // id 18
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL6, MAP_NCRCF, AddNode(13, 1, 50000)
+              .AddNode(14, 2, 60000)
+              .AddNode(15, 2, 40000)
+              .AddNode(14, 2, 60000));     // id 19
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL7, MAP_NCRCF, AddNode(16, 3, 50000)
+              .AddNode(17, 4, 50000)
+              .AddNode(18, 5, 50000)
+              .AddNode(19, 0, 50000)
+              .AddNode(20, 0, 60000)
+              .AddNode(21, 1, 50000)
+              .AddNode(22, 3, 50000));     // id 20
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL8, MAP_NCRCF, AddNode(1, 3, 50000)
+              .AddNode(2, 2, 50000)
+              .AddNode(3, 3, 50000)
+              .AddNode(4, 3, 50000)
+              .AddNode(5, 4, 50000)
+              .AddNode(6, 5, 50000)
+              .AddNode(7, 5, 50000)
+              .AddNode(8, 5, 50000)
+              .AddNode(9, 5, 50000)
+              .AddNode(10, 0, 50000)
+              .AddNode(11, 0, 50000)
+              .AddNode(12, 0, 50000)
+              .AddNode(13, 2, 50000)
+              .AddNode(14, 2, 50000)
+              .AddNode(15, 2, 50000));     // id 21
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL9, MAP_Rails, AddNode(16, 0, 50000)
+              .AddNode(17, 0, 50000)
+              .AddNode(18, 5, 50000)
+              .AddNode(17, 2, 50000));     // id 22
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL10, MAP_Rails, AddNode(11, 4, 50000)
+              .AddNode(18, 3, 50000)
+              .AddNode(17, 0, 50000)
+              .AddNode(16, 4, 50000)
+              .AddNode(17, 2, 60000)
+              .AddNode(18, 3, 50000));     // id 23
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL11, MAP_Rails, AddNode(1, 1, 50000)
+              .AddNode(2, 1, 50000)
+              .AddNode(3, 0, 50000)
+              .AddNode(4, 0, 50000)
+              .AddNode(3, 0, 60000)
+              .AddNode(2, 1, 50000));     // id 24
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL12, MAP_Rails, AddNode(15, 3, 50000)
+              .AddNode(14, 3, 50000)
+              .AddNode(13, 3, 50000)
+              .AddNode(12, 3, 50000)
+              .AddNode(11, 3, 60000)
+              .AddNode(10, 4, 50000)
+              .AddNode(11, 3, 50000)
+              .AddNode(12, 3, 50000)
+              .AddNode(13, 3, 50000)
+              .AddNode(14, 3, 50000));     // id 25
+
+    ADD_ROUTE(NCR_GUARD_PRISON_PATROL13, MAP_Rails, AddNode(9, 5, 60000)
+              .AddNode(8, 0, 50000)
+              .AddNode(7, 0, 60000)
+              .AddNode(6, 0, 50000)
+              .AddNode(5, 0, 60000)
+              .AddNode(6, 0, 60000)
+              .AddNode(7, 0, 50000)
+              .AddNode(8, 0, 50000));     // id 26
+
+    // Add more...
+
+    Log("Patrol routes initialized successfully");
+}

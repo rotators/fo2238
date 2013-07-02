@@ -1,0 +1,38 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 duel@dlg_ShowBet 0 #
+3 2010 D _script duel@d_CanSignUp 1 0 D _script duel@d_CanAffordBet 1 0 R _script duel@r_SignUp 1 0 R _script duel@r_SetMatchType 1 1 #
+0 2020 #
+2 2030 D _script duel@d_CanClearVars 1 0 R _script duel@r_ClearVars 1 1 #
+5 2040 D _script duel@d_CanSetBet 1 0 #
+6 2050 @
+3 3000 None 0 @
+5 4000 duel@dlg_SetBet 0 #
+2 4010 @
+6 5000 None 0 #
+2 5010 &
+
+[engl]
+{100}{}{Johnson}
+{200}{}{You see Johnson, the one in charge of the arena fights.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{2000}{}{Hey there. Do you want to enter the duel? The bet is @lex bet@ caps.}
+{2010}{}{Sure.}
+{2020}{}{Nah, I'm ok.}
+{2030}{}{Clear vars}
+{2040}{}{I want to set a new bet.}
+{2050}{}{Can you tell me about the rules?}
+{3000}{}{Good luck, champ. You're gonna need it.}
+{4000}{}{Sure, how much? We don't allow higher bets than 10,000 caps. [Tell him with say how much you want to bet]}
+{4010}{}{Ok, I'm done.}
+{5000}{}{There's only two rules you need to follow. First of all, you must not begin fighting before I tell you to. If you do, your opponent will automatically win the game. Second, no weapons or armor is allowed here.}
+{5010}{}{Seems clear enough.}
+

@@ -1,0 +1,197 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 1020 @
+20 2000 None 0 #
+0 2010 #
+3 2020 D _var p q_la_dogs = 0 D _script quest_la_dogs@d_CheckDogs 0  #
+25 2030 D _var p q_la_dogs = 2 R _var p q_la_dogs = 3 R _param p REPUTATION_REGULATORS + 25 R _param p ST_EXPERIENCE + 500 R _script dialog@r_DogsQuestReward 0  R _script quest_la_dogs@r_DeleteLoc 0  R _script dialog@r_QuestTimeout 1 15 #
+24 2040 D _var p q_la_dogs = 3 D _script quest_la_dogs@d_CheckDogs 0  D _script dialog@d_QuestTimeoutReady 0  #
+32 2050 D _var p q_la_dogs = 3 D _script quest_la_dogs@d_NoDogs 0  #
+34 2060 D _script dialog@d_QuestTimeoutNotReady 0  D _script quest_la_dogs@d_CheckDogs 0  D _var p q_la_dogs = 3 #
+23 2070 D _var p q_la_dogs > 0 #
+30 2080 @
+2 3000 None 0 #
+0 3010 #
+3 3020 D _var p q_la_dogs = 0 @
+3 4000 None 0 #
+4 4010 #
+17 4020 #
+0 4030 @
+4 5000 None 0 #
+5 5010 @
+5 6000 None 0 #
+6 6010 @
+6 7000 None 0 #
+7 7010 @
+7 8000 None 0 #
+8 8010 #
+18 8020 @
+8 9000 None 0 #
+9 9010 #
+18 9020 @
+9 10000 None 0 #
+10 10010 #
+18 10020 @
+10 11000 None 0 #
+11 11010 #
+18 11020 @
+11 12000 None 0 #
+12 12010 #
+18 12020 @
+12 13000 None 0 #
+13 13010 #
+18 13020 @
+13 14000 None 0 #
+14 14010 #
+18 14020 @
+14 15000 None 0 #
+15 15010 #
+18 15020 @
+15 16000 None 0 #
+16 16010 #
+18 16020 @
+16 17000 None 0 #
+7 17010 #
+18 17020 @
+17 18000 None 0 #
+4 18010 #
+0 18020 @
+18 19000 None 0 #
+19 19010 #
+22 19020 #
+0 19030 @
+19 20000 None 0 #
+22 20010 #
+21 20020 @
+21 21000 None 0 #
+22 21010 @
+22 22000 None 0 #
+0 22010 R _var p q_la_dogs = 1 R _script quest_la_dogs@r_SpawnLoc 0  @
+23 23000 None 0 #
+26 23010 #
+20 23020 #
+0 23030 @
+24 24000 None 0 #
+0 24010 R _var p q_la_dogs = 1 R _script quest_la_dogs@r_SpawnLoc 0  @
+25 25000 None 0 #
+0 25010 @
+26 26000 None 0 #
+20 26010 #
+0 26020 @
+30 27000 None 0 #
+31 27010 R _script dialog@r_ShowLocation 1 38 #
+0 27020 @
+31 28000 None 0 #
+0 28010 @
+32 29000 None 0 #
+0 29010 #
+33 29020 @
+33 30000 None 0 #
+0 30010 @
+34 31000 None 0 #
+0 31010 &
+
+[engl]
+{100}{}{Governor Hendriks}
+{200}{}{You see Governor Hendriks.}
+{210}{}{You see Morgan Handriks, the Governor of New Adytum.}
+{1000}{}{Predialogue installations}
+{1010}{}{We are talking the first time.}
+{1020}{}{We talked already.}
+{2000}{}{What, what the hell do you want from me now?}
+{2010}{}{Eh, nothing. Bye.}
+{2020}{}{Slow down, what's your problem?}
+{2030}{}{The dogs are dead. }
+{2040}{}{I want to kill another pair of dogs.}
+{2050}{}{I want to kill another pair of dogs.}
+{2060}{}{I want to kill another pair of dogs.}
+{2070}{}{What do you know about the dogs?}
+{2080}{}{Can you tell me something about the salvagers?}
+{3000}{}{What the hell do you want from me?}
+{3010}{}{Just looking around, thanks and bye.}
+{3020}{}{Slow down, what's your problem?}
+{4000}{}{The dogs! The god damn dogs. }
+{4010}{}{What's up with the dogs?}
+{4020}{}{Sounds like you've got a hella fun with dogs.}
+{4030}{}{That's cool. Really. See you later.}
+{5000}{}{They are just everywhere! And they fucking eat the fucking salvagers...}
+{5010}{}{[Listen]}
+{6000}{}{... and they overrun our boneyard camps....}
+{6010}{}{[Listen]}
+{7000}{}{...yesterday, they have been close to the main gates...}
+{7010}{}{[Listen]}
+{8000}{}{...you want to salvage some metal parts? Fuck it! Some dog of a bastard is going to ruin your day and will attack you....}
+{8010}{}{[Listen]}
+{8020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{9000}{}{...and I tell you, they are not the normal dogs...}
+{9010}{}{[Listen]}
+{9020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{10000}{}{...they are like... I don't know. But you see it in their eyes...}
+{10010}{}{[Listen]}
+{10020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{11000}{}{...they are yellow. And god damn, these fuckers look angry...}
+{11010}{}{[Listen]}
+{11020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{12000}{}{...and hungry, but they eat all the time...}
+{12010}{}{[Listen]}
+{12020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{13000}{}{...few days ago, a salvagers camp in the east of the Boneyard got overrun... }
+{13010}{}{[Listen]}
+{13020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{14000}{}{...only a few managed it to survive the attack...}
+{14010}{}{[Listen]}
+{14020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{15000}{}{...we don't even know why the god damn dogs are like that...}
+{15010}{}{[Listen]}
+{15020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{16000}{}{...you can just kill them. And again. And again... }
+{16010}{}{[Listen]}
+{16020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{17000}{}{...but there will be always more. They are like rabbits. God damn dogs...}
+{17010}{}{[Listen]}
+{17020}{}{Enough! [You interrupt him.] Tell me where the damn dogs are and I'll hang 'em up.}
+{18000}{}{@sex@|Don't make fun of me, man!||Don't make fun of me, girl!|}
+{18010}{}{What's the problem with the dogs?}
+{18020}{}{I'll make fun about what I want! Bye.}
+{19000}{}{That would you do? But... but they can make easy meat out of you!}
+{19010}{}{I am tough enough, I can do it. Just tell me where they are and what I will get, when I get rid of them.}
+{19020}{}{Killing dogs sounds like fun and that's what I am searching for. Now tell me where the fuck the dogs are.}
+{19030}{}{That was just a lie. Bye.}
+{20000}{}{We can pay you in various ammo types for every dead group of dogs. }
+{20010}{}{Okay. Show me where the dogs are right now.}
+{20020}{}{What, for this I am not even going out of the bed.}
+{21000}{}{I am sorry, but we can't pay you more. Take it or leave it.}
+{21010}{}{Okay. Show me where the dogs are right now.}
+{22000}{}{Here, [He points you to a map on the table.] that's where we got the last salvagers reports. }
+{22010}{}{I am on my way.}
+{23000}{}{I know that they are god damn bastards. We are not sure why there are so many of them, but it's a hell of a job to get rid of them.}
+{23010}{}{And there is no chance to get them away for a longer time?}
+{23020}{}{Something else...}
+{23030}{}{That's all I wanted. See you.}
+{24000}{}{Great! Here is the position of another dog group... [He points you to a map on the table.] ... that's where we got the last salvagers reports. }
+{24010}{}{Fine. I will check it out.}
+{25000}{}{What, really? Great! Here is your reward. [He gives you some ammo.]}
+{25010}{}{Thanks. See you later.}
+{26000}{}{We tried already a lot shit. Even some chemicals from Miles, but nothing worked. They are just everywhere. }
+{26010}{}{Something else, if you don't mind...}
+{26020}{}{That's all I wanted. See you.}
+{27000}{}{They are free workers who go through the ruins and search for junk, metal, usable stuff... Everything that can be reused.}
+{27010}{}{Where can I find the salvagers?}
+{27020}{}{That's all I wanted to know. Bye.}
+{28000}{}{They are in the north west of here. It's an bigger building with many people running around... You can't really miss it.}
+{28010}{}{That's all I wanted to know. Bye.}
+{29000}{}{Great! But... How unbelievable it even sounds, but... It looks like the amount of dog packs has been decreased drastically over the last time. The ruin crawlers didn't met any since a while. }
+{29010}{}{Okay. Maybe I will check you out later again. Bye.}
+{29020}{}{The dogs are gone?}
+{30000}{}{Well, I wouldn't count on that. There have been always periods of time, where we could beat them off a bit. And they always came back. So... if you come back later, I can guarantee you, that we got new reports about attacks.}
+{30010}{}{Okay. Maybe I will check you out later again. Bye.}
+{31000}{}{Great! But... How unbelievable it even sounds, but... The ruin crawlers didn't met any pack of dogs since a while. You should check back, when I got a new report.}
+{31010}{}{Okay. Maybe I will check you out later again. Bye.}
+

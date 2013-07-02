@@ -1,0 +1,128 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_raiders_king = 0 D _param p ST_CHARISMA > 4 D _param p ST_STRENGTH > 6 #
+3 1020 D _param p ST_ENDURANCE > 6 D _param p ST_CHARISMA > 4 D _var p q_raiders_king = 0 #
+3 1030 D _param p ST_CHARISMA > 4 D _param p SK_UNARMED > 99 D _var p q_raiders_king = 0 #
+2 1040 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+0 3020 R _var p q_raiders_king + 1 @
+4 4000 None 0 #
+5 4010 #
+65507 4020 R _var p q_raiders_king + 1 @
+5 5000 None 0 #
+12 5010 #
+13 5020 #
+6 5030 #
+9 5040 @
+6 6000 None 0 #
+12 6010 #
+7 6020 @
+7 7000 None 0 #
+14 7010 #
+8 7020 @
+8 8000 None 0 #
+15 8010 #
+16 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+17 11010 #
+0 11020 R _var p q_raiders_king + 1 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+18 13010 #
+0 13020 R _var p q_raiders_king + 1 @
+14 14000 None 0 #
+21 14010 #
+0 14020 R _var p q_raiders_king + 1 @
+15 15000 None 0 #
+0 15010 R _var p q_raiders_king = 1 R _param p ST_EXPERIENCE + 191 R _item p PID_BUFFOUT + 2 @
+16 16000 None 0 #
+0 16010 R _var p q_raiders_king = 1 R _param p ST_EXPERIENCE + 183 R _param p SK_UNARMED + 15 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+20 18010 #
+19 18020 @
+19 19000 None 0 #
+0 19010 R _var p q_raiders_king = 1 R _param p ST_EXPERIENCE + 241 @
+20 20000 None 0 #
+0 20010 R _var p q_raiders_king = 1 R _param p ST_EXPERIENCE + 192 R _item p PID_BUFFOUT + 2 @
+21 21000 None 0 #
+0 21010 R _var p q_raiders_king = 1 R _param p ST_EXPERIENCE + 198 R _param p SK_UNARMED + 8 &
+
+[engl]
+{100}{}{King}
+{200}{}{You see King.}
+{200}{}{You see an extremely muscular man.}
+{210}{}{You see King, a towering individual. He's in the middle of doing two hundred squats.}
+{210}{}{This Khan's biceps are bigger than children.}
+{210}{}{Swear forms on King's brow as he works out relentlessly.}
+{1000}{}{Predialogue installations}
+{1010}{}{King Chat}
+{1020}{}{King Chat}
+{1030}{}{King Chat}
+{1040}{}{standard khan chatter}
+{2000}{}{Woo!@@Haha, yeah, YEAH!@@Feel the burn.@@Feel the burn. Feel the burn. FEEL THE BURN!!!@@Hooooowahh!!@@Huh, huh, huh@@::Pants heavily::@@Yeah, feel that motherfucking burn!@@Just 80 more...@@I feel like a god!@@Yeah!@@Hnnnnh!@@One, two. One, two.@@Pass me that packet.@@I need some more of that big sweet B.@@Damn my arm looks like a house.@@Damn, my arm looks like a hill.@@Damn, my arm looks like the Balkans.@@::Breathes deeply::@@You can do it!@@Yeah, you're doing it, you're doing it!}
+{3000}{}{[You catch King's eye as you walk past.] Hey! [He takes a break, stepping over to you and taking a long slug of water.] What's your name, brother?}
+{3010}{}{@pname@}
+{3020}{}{Fuck off.}
+{4000}{}{I'm King. I have a first name, but pretty much everyone just calls me King. Suits me just fine.}
+{4010}{}{Ok, King.}
+{4020}{}{Alright. I'm going to call you Cunt. But not until after I've killed you.}
+{5000}{}{It's good to see someone else who keeps their body in shape. Most of these guys, they'll smoke and drink their bodies in to all kinds of horrible mess that doesn't bear thinking about.}
+{5010}{}{Tell me about it. I don't know why anyone would do that to their body.}
+{5020}{}{I just like to look good and feel good.}
+{5030}{}{Yeah? But these guys can still handle themselves in a fight.}
+{5040}{}{I've got to say, you don't exactly look like a Khan. You keep in shape, and I'm pretty damn sure you shave your chest. How did you end up here?}
+{6000}{}{They can dose up enough jet to make it work when they need to, but it's just so destructive. You need to care for it and it will care for you.}
+{6010}{}{You're right about that. Fuck being a temple, my body is a weapon.}
+{6020}{}{No offence, but you're talking a lot of shit about drugs for a guy with a box of Buffout in his pocket...}
+{7000}{}{Buffout's not the same. It's just an aid. Helps you attain the next level! Look at this! [He flexes his ridiculous biceps.] Are you saying this is bad?}
+{7010}{}{Well, no. It looks like you could strangle a tree.}
+{7020}{}{Not bad, but you know, I just see it as unnatural.}
+{8000}{}{That's like saying exercise or eating protein is unnatural. It just makes sense to do it if you want to attain physical perfection.}
+{8010}{}{I think I see your point. Just how you view it, right? If you look at it like that, it's just another tool in your arsenal. Didn't mean to shout at you about it.}
+{8020}{}{No hard feelings, but it's just not my style. I'm all organic, you could say.}
+{9000}{}{This body doesn't come cheap. I need a lot of Buffout to keep pumped up. And it's not cheap. I owed some boys in the city a fair bag of caps for a case, and I couldn't exactly pay up. But here, it's free. On tap near enough.}
+{9010}{}{So you joined the Khans so you could work out for cheap?}
+{10000}{}{You saying that's wrong?}
+{10010}{}{Well, just unexpected compared to everyone else.}
+{11000}{}{And that's worse than me being here because I love raping little girls or shooting innocent men?}
+{11010}{}{Well when you say it like that, I suppose it's a better reason than most. Didn't mean to offend you.}
+{11020}{}{At least they're morally consistent, you're just nuts. I'm out of here, wacko.}
+{12000}{}{That's exactly what I'm talking about. We live like animals out in this here. Never been a more important time to be a physical creature - power, speed, stamina - these are the things that matter now.}
+{12010}{}{That's why I hit the gym every day.}
+{13000}{}{Me too, brother. Want to work out a while? I'll spot you.}
+{13010}{}{Of course I do!}
+{13020}{}{Thanks, but I just ate. I'd be sick all over the place, it would be hell of messy. I'll see you later.}
+{14000}{}{[He laughs proudly, slapping an arm around your back powerfully.] I know! Do you want arms like mine, brother?}
+{14010}{}{I guess I do.}
+{14020}{}{Not even a little bit, your army are fucking weird. [Run off.]}
+{15000}{}{I didn't mean to get hostile either, brother. This is just my passion, and Buffout brings me to the next level. Say, how about we dose up and hit the weights for a while? It's like nothing else in this world.}
+{15010}{}{Let's do it. [Work out with King, the insane meathead.]}
+{16000}{}{Well I didn't mean to get all preachy about it. Come on, let's forget about that and spar a little, I'm pent up.}
+{16010}{}{Let's do it. [Work out with King, the insane meathead.]}
+{17000}{}{No hard feelings. Want to do some sit-ups for a while, take a load off?}
+{17010}{}{Alright, let's do it.}
+{18000}{}{Excellent, brother. Do you pop the big B?}
+{18010}{}{Do you mean Buffout? Yeah, I take it.}
+{18020}{}{Do you mean Buffout? No, I don't touch it.}
+{19000}{}{Alright, no problem, you go clean, I'll go green, let's go compare!}
+{19010}{}{Alright, let's do it. [Work out with King, the insane meathead.]}
+{20000}{}{Glad to hear it. [He hands you some Buffout.] Eat those beans and touch the sky.}
+{20010}{}{Alright, let's do it. [Work out with King, the insane meathead.]}
+{21000}{}{Haha! WOOOO! Let's get you some arms, boy!}
+{21010}{}{Alright, let's do it. [Work out with King, the insane meathead.]}
+

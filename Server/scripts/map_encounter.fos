@@ -1,0 +1,257 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_encounter.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "entire.fos"
+#include "town_h.fos"
+#include "utils_h.fos"
+
+#define TRANSFER_RADIUS    (500)
+#define GARBAGE_TIMEOUT    (REAL_DAY(7))      // 6 hours for left out cars and stuff
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // scatter some stuff around
+        uint pid = map.GetProtoId();
+        uint locpid = map.GetLocation().GetProtoId();
+        if(GetMapType(map) == MAP_TYPE_DESERT_ENCOUNTER)
+        {
+            uint i = Random(0, 7);
+            if((i != 1) && (i != 0))                // 25%
+            {
+                uint[] pids = { PID_PLANT_APPLE_TREE, PID_PLANT_FIBER };
+                HideProductionFacility(map, pids, true);
+            }
+            else
+            {
+                uint[] pids = { PID_PLANT_APPLE_TREE, PID_PLANT_FIBER };
+                ShowProductionFacility(map, pids, true);
+            }
+            if(i != 2 && !_IsWithinRange(locpid, LOCATION_DesertWater1, LOCATION_DesertWater3))               // 12.5%
+            {
+                uint[] pids = { PID_TREE1_FIREWOOD, PID_TREE2_FIREWOOD, PID_TREE3_FIREWOOD };
+                HideProductionFacility(map, pids, true);
+            }
+            else
+            {
+                uint[] pids = { PID_TREE1_FIREWOOD, PID_TREE2_FIREWOOD, PID_TREE3_FIREWOOD };
+                ShowProductionFacility(map, pids, true);
+            }
+            if(i != 3)               // 12.5%
+            {
+                uint[] pids = { PID_PROD_BROC };
+                HideProductionFacility(map, pids, false);
+            }
+            if(i != 4)               // 12.5%
+            {
+                uint[] pids = { PID_PROD_XANDER };
+                HideProductionFacility(map, pids, true);
+            }
+            if(i != 5)               // 12.5%
+            {
+                uint[] pids = { PID_PROD_FLINT };
+                HideProductionFacility(map, pids, false);
+            }
+            // 12.5% if i == 7 (empty encounter)
+            // ------------------------------------------------
+            // 100% in total
+        }
+        uint t = GetMapType(map);
+        if((t == MAP_TYPE_CITY_ENCOUNTER) || (t == MAP_TYPE_COAST_ENCOUNTER) || (t == MAP_TYPE_SKYSCRAPER_ENCOUNTER))
+        {
+            uint chance = 39;
+            if(t == MAP_TYPE_SKYSCRAPER_ENCOUNTER)
+                chance -= 5;
+            #ifdef __DEBUG__
+            if(true)
+            #endif
+            #ifndef __DEBUG__
+            if((Random(0, chance) == 0))
+            #endif
+            {
+                array<Entire> entires;
+                ParseEntires(map, entires, ENTIRE_CAR);
+                if(entires.length() > 0)
+                {
+                    uint  r = Random(0, entires.length() - 1);
+                    Item@ car = map.AddItem(entires[r].HexX, entires[r].HexY, PID_WRECKED_CAR, 1);
+                }
+            }
+        }
+        // junk junk junk
+        if((t == MAP_TYPE_CITY_ENCOUNTER || t == MAP_TYPE_SKYSCRAPER_ENCOUNTER))
+        {
+            Scatter(map, PID_PUMP_PARTS, "prod_barrel_junk@_Junk");
+        }
+        // weed
+        if((t == MAP_TYPE_DESERT_ENCOUNTER || t == MAP_TYPE_MOUNTAIN_ENCOUNTER))
+        {
+            uint roll = Random(0, 1);
+            switch(roll)
+            {
+            case 0:
+                Scatter(map, PID_XANDER_ROOT, "prod_xander_root@item_init");
+                break;
+            case 1:
+                Scatter(map, PID_BROC_FLOWER, "prod_broc_flower@item_init");
+                break;
+            }
+        }
+        if((t == MAP_TYPE_MOUNTAIN_ENCOUNTER))
+            Scatter(map, PID_PROD_FLINT, "prod_flint@item_init");
+    }
+
+    // map.SetEvent(MAP_EVENT_FINISH, "_Finish");
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_CritterIn");
+    map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_CritterDead");
+}
+
+//
+// Scatters gathering items
+//
+void Scatter(Map& map, uint16 pid, string@ script)
+{
+    array<Entire> entires;
+    ParseEntires(map, entires, 0);
+    uint          re = Random(0, entires.length() - 1);
+
+    uint16        hx = 0;
+    uint16        hy = 0;
+    uint          dist = 0;
+    while(true)
+    {
+        hx = entires[re].HexX;
+        hy = entires[re].HexY;
+        dist = Random(20, 100);
+        map.GetHexCoord(entires[re].HexX, entires[re].HexY, hx, hy, Random(0, 359), dist);
+
+        if(map.IsHexPassed(hx, hy) && map.GetSceneries(hx, hy, null) == 0)
+            break;
+    }
+
+    uint count = dist / 10;
+    while(count > 0)
+    {
+        uint16 x = hx;
+        uint16 y = hy;
+        map.GetHexCoord(hx, hy, x, y, Random(0, 359), Random(0, 5));
+        if(map.GetSceneries(x, y, null) > 0)
+            continue;
+        uint  n = 1;       // Random(1, count);
+        count -= n;
+        Item@ it = map.AddItem(x, y, pid, n);
+        if(valid(script))
+            it.SetScript(script);
+    }
+}
+
+bool HasCars(Critter& cr, uint locid)
+{
+    Location@ loc = GetLocation(locid);
+    if(!valid(loc))
+        return false;
+    array<Map@>  maps;
+    array<Item@> items;
+    for(uint i = 0, j = loc.GetMaps(maps); i < j; i++)
+        maps[i].GetItems(0, items);
+
+    for(uint i = 0, j = items.length(); i < j; i++)
+        if(items[i].GetType() == ITEM_TYPE_CAR)
+        {
+            GameVar@ var = GetLocalVar(LIVAR_car_owner_id, items[i].Id);
+            if(var.GetValue() == int(cr.Id))
+                return true;
+        }
+    return false;
+}
+
+// make player forget this location
+void _CritterDead(Map& map, Critter& cr, Critter@)
+{
+    uint locid = map.GetLocation().Id;
+    if(cr.IsPlayer() && cr.IsKnownLoc(true, locid) && !HasCars(cr, locid))
+        cr.UnsetKnownLoc(true, locid);
+}
+
+void _CritterIn(Map& map, Critter& cr)
+{
+    // if(cr.IsPlayer() && map.GetLocation().GeckCount > 0)
+    //	SetGarbageTimer(map.GetLocation(), GARBAGE_TIMEOUT);
+}
+
+/**
+ * When encounter map is deleted, all items left out got converted to encounter's store.
+ */
+// note: it's commented out in map_init
+void _Finish(Map& map, bool deleted)
+{
+    if(!deleted)
+        return;
+
+/*	Item@[] items;
+        Critter@[] crits;
+
+        map.GetCritters(0, FIND_ALL, crits);
+
+        // take items from ground
+   map.GetItems(0, items);
+
+   //take items from critters inventory too
+   for (uint i=0, j=crits.length(); i < j; i++)
+    crits[i].GetItems(0,items);
+
+        // transfer items
+        DLog("!!!!!Transferring " + items.length() + " items from encounter map.");
+    uint wx = map.GetLocation().WorldX;
+    uint wy = map.GetLocation().WorldY;
+
+        for(uint i = 0, j = items.length(); i < j; i++)
+        {
+          DLog("removing pid="+items[i].GetProtoId()+", value="+BaseItemValue(items[i]));
+                InjectValue(wx, wy, BaseItemValue(items[i]), INJECTVALUE_RECYCLING);
+   }*/
+}
+
+
+
+//
+// Hiding production facilities to give maps more randomness
+//
+void HideProductionFacility(Map& map, array<uint>& pids, bool block)
+{
+    array<Item@> items;
+    uint         num = 0;
+
+    for(uint i = 0; i < pids.length(); i++)
+        num += map.GetItems(pids[i], items);
+
+    for(uint i = 0; i < num; i++)
+    {
+        SETFLAG(items[i].Flags, ITEM_HIDDEN);
+        SETFLAG(items[i].Flags, ITEM_NO_BLOCK);
+        items[i].Update();
+    }
+}
+
+void ShowProductionFacility(Map& map, array<uint>& pids, bool block)
+{
+    array<Item@> items;
+    uint         num = 0;
+
+    for(uint i = 0; i < pids.length(); i++)
+        num += map.GetItems(pids[i], items);
+
+    for(uint i = 0; i < num; i++)
+    {
+        UNSETFLAG(items[i].Flags, ITEM_NO_BLOCK);
+        items[i].Update();
+    }
+
+}

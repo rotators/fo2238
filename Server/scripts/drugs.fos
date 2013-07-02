@@ -1,0 +1,471 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// drugs.fos
+//
+
+// Original Fallout2 system
+// well, not anymore
+#include "_macros.fos"
+#include "MsgStr.h"
+
+import void VerboseAction(Critter& cr, string& text) from "utils";
+import void VerboseAction(Critter& cr, Critter& target, string& text) from "utils";
+
+import void AffectPoison(Critter& cr, int value) from "poison";
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+import void DropRadiation(Critter& cr) from "radiation";
+
+/*
+   #define DRUG_EFFECT_DIV2_WITHDRAWAL    (1)
+   #define DRUG_EFFECT_MUL2_ADDICTION     (2)
+   #define DRUG_EFFECT_DIV2_ADDICTION     (4)
+ */
+#define DRUG_EFFECT_DIV2_DURATION         (8)
+#define DRUG_EFFECT_MUL2_DURATION         (16)
+#define DRUG_EFFECT_ADDICTION_INFINITE    (32)
+#define DRUG_EFFECT_ADDICTION_IGNORE      (64)
+#define RATE_TO_STAGE                     # (rate)          ((rate) & 0xFFFFFF)
+#define RATE_TO_FLAGS                     # (rate)          ((rate) >> 24)
+#define FORM_RATE                         # (stage, flags)((((flags) & 0xFF) << 24) | ((stage) & 0xFFFFFF))
+
+#include "drugs_data.fos"
+
+// Table offsets
+#define TABLE_DRUG_ADDICT                 (0)
+#define TABLE_DRUG_PROC                   (1)
+#define TABLE_DURATION                    # (stage)      (2 + (stage))
+#define TABLE_STAT                        # (stat)           (6 + (stat) * 6)
+#define TABLE_AMOUNT                      # (stat, stage)(7 + (stage) + (stat) * 6)
+
+// Dumbed Down Drugs (only two stages)
+#define SPECIAL_DRUG                      # (_pid) ((_pid) == PID_MENTATS || (_pid) == PID_BUFFOUT || (_pid) == PID_PSYCHO || (_pid) == PID_JET || (_pid) == PID_BEER || (_pid) == PID_NUKA_COLA || (_pid) == PID_CIGARETTES)
+
+void UseDrug(Critter& cr, Item& drug)   // Export
+{
+    uint pid = drug.GetProtoId();
+    SetDrug(cr, pid);
+    _SubItem(drug, 1);
+    if(pid == PID_STIMPAK || pid == PID_SUPER_STIMPAK)
+    {
+        VerboseAction(cr, "injects stimpak");
+        if(Random(0, 1) == 0)
+            cr.AddItem(PID_HYPODERMIC_NEEDLE, 1);
+    }
+    else if(pid == PID_CIGARETTES)
+    {
+        VerboseAction(cr, "lights a ciggarette");
+        cr.PlaySound("smoking.ogg", true);
+    }
+    else if(pid == PID_BEER || pid == PID_GAMMA_GULP_BEER ||
+            pid == PID_NUKA_COLA ||
+            pid == PID_WATERBAG ||
+            pid == PID_BOTTLE_FULL ||
+            pid == PID_BOOZE ||
+            pid == PID_ROENTGEN_RUM ||
+            pid == PID_ROT_GUT)
+    {
+        string item = "something";
+        uint16 freeItem = 0;
+
+        if(pid == PID_BEER || pid == PID_GAMMA_GULP_BEER)
+        {
+            if(Random(1, 100) <= 15)
+                item = "warm beer";
+            else
+                item = "beer";
+            freeItem = PID_BOTTLE_CAPS;
+            cr.PlaySound("beer.acm", true);
+        }
+        else if(pid == PID_NUKA_COLA)
+        {
+            item = "nuka-cola";
+            freeItem = PID_BOTTLE_CAPS;
+            cr.PlaySound("nukacola.ogg", true);
+        }
+        else if(pid == PID_WATERBAG || pid == PID_BOTTLE_FULL)
+        {
+            item = "water";
+            if(pid == PID_WATERBAG)
+                freeItem = PID_WATERBAG_EMPTY;
+            else if(pid == PID_BOTTLE_FULL)
+                freeItem = PID_BOTTLE_EMPTY;
+        }
+        else if(pid == PID_BOOZE)
+            item = "booze";
+        else if(pid == PID_ROENTGEN_RUM)
+        {
+            item = "rum";
+            if(Random(1, 100) == 100)
+                item += "**  **Yarr!";
+        }
+
+        VerboseAction(cr, "drinks " + item);
+        if(freeItem > 0)
+            cr.AddItem(freeItem, 1);
+    }
+
+    // addicts
+    else if(pid == PID_JET)
+        VerboseAction(cr, "inhales jet");
+    else if(pid == PID_PSYCHO)
+        VerboseAction(cr, "injects psycho");
+    else if(pid == PID_BUFFOUT)
+        VerboseAction(cr, "swallows buffout");
+    else if(pid == PID_JET_ANTIDOTE)
+        VerboseAction(cr, "drinks jet antidote");
+
+    // adventurers
+    else if(pid == PID_HEALING_POWDER)
+        VerboseAction(cr, "uses healing powder");
+    else if(pid == PID_RAD_X)
+        VerboseAction(cr, "swallows rad-x");
+    else if(pid == PID_RADAWAY)
+        VerboseAction(cr, "injects radaway");
+    else if(pid == PID_ANTIDOTE)
+        VerboseAction(cr, "drinks antidote");
+
+    // other
+    else if(pid == PID_COOKIE)
+        VerboseAction(cr, "eats a " + ((Random(0, 10) == 0) ? "delicious " : "") + "cookie");
+    else if(pid == PID_IGUANA_ON_A_STICK)
+        VerboseAction(cr, "eats iguana");
+    else if(pid == PID_MUTATED_FRUIT)
+        VerboseAction(cr, "eats a fruit");
+    else if(pid == PID_MEAT_ON_A_STICK)
+        VerboseAction(cr, "eats some meat");
+    else if(pid == PID_MUTATED_TOE || pid == PID_MASTICATORS_EAR || pid == PID_PLAYERS_EAR)
+        VerboseAction(cr, "eats something disgusting");
+}
+
+void UseDrugOn(Critter& cr, Critter& onCr, Item& drug)   // Export
+{
+    if(onCr.IsDead())
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_NORESSURECT);
+        return;
+    }
+
+    uint pid = drug.GetProtoId();
+    bool isGoodDrug = (pid == PID_STIMPAK || pid == PID_SUPER_STIMPAK ||
+                       pid == PID_RADAWAY || pid == PID_WATERBAG || pid == PID_BOTTLE_FULL || pid == PID_HEALING_POWDER ||
+                       pid == PID_ANTIDOTE || pid == PID_RAD_X);
+
+    if(isGoodDrug /* || onCr.IsKnockout() || Random(0,cr.Skill[SK_FIRST_AID])>onCr.Stat[ST_PERCEPTION]*20*/)
+    {
+        onCr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_USE_ON_SUCC);
+        SetDrug(onCr, drug.GetProtoId());
+        _SubItem(drug, 1);
+
+        if((pid == PID_STIMPAK || pid == PID_SUPER_STIMPAK))
+        {
+            VerboseAction(cr, onCr, "injects stimpak to TARGET");
+            if(Random(0, 1) == 0)
+                cr.AddItem(PID_HYPODERMIC_NEEDLE, 1);
+        }
+        else if(pid == PID_HEALING_POWDER)
+            VerboseAction(cr, onCr, "uses healing powder on TARGET");
+        else if(pid == PID_RAD_X)
+            VerboseAction(cr, onCr, "uses rad-x on TARGET");
+        else if(pid == PID_RADAWAY)
+            VerboseAction(cr, onCr, "uses radaway on TARGET");
+        else if(pid == PID_ANTIDOTE)
+            VerboseAction(cr, onCr, "gives antidote to TARGET");
+        else if(pid == PID_WATERBAG || pid == PID_BOTTLE_FULL)
+        {
+            VerboseAction(cr, onCr, "gives some water to TARGET");
+            if(pid == PID_WATERBAG)
+                cr.AddItem(PID_WATERBAG_EMPTY, 1);
+            else if(pid == PID_BOTTLE_FULL)
+                cr.AddItem(PID_BOTTLE_EMPTY, 1);
+        }
+    }
+    else
+    {
+        onCr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_USE_ON_FAIL);
+    }
+}
+
+void DropDrugEffects(Critter& cr)   // Export
+{
+    DropDrugEffects(cr, true);
+}
+
+void DropDrugEffects(Critter& cr, bool dropAddictions)
+{
+    // Clear effects of all active drugs
+    // Drop
+    array<int>  identifiers;
+    array<uint> rates;
+    uint        count = cr.GetTimeEvents(DrugsIdentifiers, identifiers, null, null, rates);
+    for(uint i = 0; i < count; i++)
+        DropDrug(cr, identifiers[i], RATE_TO_STAGE(rates[i]));
+    // Erase all events
+    cr.EraseTimeEvents(DrugsIdentifiers);
+    // Unset addictions perks
+
+    if(dropAddictions)
+        for(uint i = ADDICTION_BEGIN; i <= ADDICTION_END; i++)
+            cr.AddictionBase[i] = 0;
+}
+
+void SetDrug(Critter& cr, uint16 drugPid)
+{
+    // Special drugs
+    if(drugPid == PID_JET_ANTIDOTE)
+    {
+        array<uint> rates;
+        uint        count = cr.GetTimeEvents(PID_JET, null, null, rates);
+        for(uint i = 0; i < count; i++)
+            DropDrug(cr, PID_JET, RATE_TO_STAGE(rates[i]));
+        cr.EraseTimeEvents(PID_JET);
+        if(count > 0 && cr.Addiction[ADDICTION_JET] != 0)
+        {
+            cr.AddictionBase[ADDICTION_JET] = 0;
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_ADDICTION_END);
+        }
+        else
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_NOTHING_HAPPENS);
+        return;
+    }
+
+    // Chem flags
+    uint flags = 0;
+
+    // todo:
+    if(cr.Trait[TRAIT_FAST_METABOLISM] != 0)
+        SETFLAG(flags, DRUG_EFFECT_DIV2_DURATION);
+    if(cr.Trait[TRAIT_CHEM_RELIANT] != 0)
+    {
+        SETFLAG(flags, DRUG_EFFECT_MUL2_DURATION);
+        SETFLAG(flags, DRUG_EFFECT_ADDICTION_INFINITE);
+    }
+    if(cr.Trait[TRAIT_CHEM_RESISTANT] != 0)
+        SETFLAG(flags, DRUG_EFFECT_ADDICTION_IGNORE);
+
+    // Other drugs
+    array<uint> indexes;
+    array<uint> rates;
+    uint        count = cr.GetTimeEvents(drugPid, indexes, null, rates);
+    int         index = GetDrugTableIndex(drugPid);
+
+    // Check
+    if(DrugEffects[index + TABLE_DRUG_ADDICT] >= 0)     // Addiction perk aviability
+    {
+
+        bool isBlocked = false;
+
+        if(SPECIAL_DRUG(drugPid))
+        {
+            for(uint i = 0; i < count; i++)
+            {
+                uint stage = RATE_TO_STAGE(rates[i]);
+                if(stage <= 1)
+                {
+                    isBlocked = true;
+                    break;
+                }
+                ;
+            }
+        }
+        else
+        {
+            uint positive = 0;
+            uint negative = 0;
+            for(uint i = 0; i < count; i++)
+            {
+                uint stage = RATE_TO_STAGE(rates[i]);
+                if(stage <= 1)
+                    positive++;
+                else if(stage == 2)
+                    negative++;
+            }
+            isBlocked = positive >= 2 - negative / 2;
+        }
+
+        if(isBlocked)
+        {
+            int addict = DrugEffects[index + TABLE_DRUG_ADDICT];
+            int addictProc = DrugEffects[index + TABLE_DRUG_PROC];
+            // if(FLAG(flags,DRUG_EFFECT_MUL2_ADDICTION)) addictProc*=2;
+            // if(FLAG(flags,DRUG_EFFECT_DIV2_ADDICTION)) addictProc/=2;
+            if(cr.Addiction[addict] == 0 && Random(1, 100) <= addictProc)
+                cr.AddictionBase[addict] = 1;
+            else
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_NOTHING_HAPPENS);
+            return;
+        }
+    }
+
+    // Clear active addictions
+    uint deleted = 0;   // After erase indexes decrement on one position
+    for(uint i = 0; i < count; i++)
+    {
+        uint stage = RATE_TO_STAGE(rates[i]);
+        if(stage >= 2)
+        {
+            DropDrug(cr, drugPid, stage);
+            cr.EraseTimeEvent(indexes[i] - deleted);
+            deleted++;
+        }
+    }
+
+    // Set critter time event
+    cr.AddTimeEvent("cte_Drug", 0, drugPid, FORM_RATE(0, flags));
+}
+
+uint ProcessDrug(Critter& cr, uint16 drugPid, uint& rate)
+{
+    uint stage = RATE_TO_STAGE(rate);
+    uint flags = RATE_TO_FLAGS(rate);
+
+    if(cr.IsDead())
+        return REAL_MINUTE(5);                 // Stop drug processing
+    if(drugPid == PID_JET && stage >= 4)
+        return REAL_YEAR(25);                  // Only after Jet Antidote was used
+
+    int  index = GetDrugTableIndex(drugPid);
+    uint duration = 0;
+
+    if(stage == 0 ||  // Instant effect
+       stage == 1 ||  // Withdrawal
+       stage == 2 ||  // Normalize
+       stage == 3 ||  // Addiction begin
+       stage == 4)    // Addiction end
+    {
+        if(!FLAG(flags, DRUG_EFFECT_ADDICTION_IGNORE) || stage < 3)
+        {
+            for(uint i = 0; i < 5; i++)
+            {
+                int stat = DrugEffects[index + TABLE_STAT(i)];
+                int amount = DrugEffects[index + TABLE_AMOUNT(i, stage)];
+                if(i == 1 && DrugEffects[index + TABLE_STAT(0)] == -2)
+                    amount = Random(DrugEffects[index + TABLE_AMOUNT(0, stage)], amount);                                                        // Take first
+                if(stat < 0)
+                    continue;
+
+                int statVal = cr.Stat[stat];
+                if(stat < STAT_EXT_BEGIN)
+                    cr.StatBase[STAT_EXT_BEGIN + stat] += amount;
+                else if(stat == ST_CURRENT_HP)
+                {
+                    if(amount > 0 && cr.Trait[TRAIT_CHEM_RESISTANT] != 0)
+                        amount /= 2;
+                    cr.StatBase[ST_CURRENT_HP] = CLAMP(statVal + amount, -9999, cr.Stat[ST_MAX_LIFE]);
+                    if(amount < 0 && cr.Stat[ST_CURRENT_HP] < 0)
+                        cr.ToDead(Random(0, 1) == 0 ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK, null);      // buggy, make macro for safety
+                }
+                else if(stat == ST_POISONING_LEVEL)
+                    AffectPoison(cr, amount);                                                         // cr.SetStat(ST_POISONING_LEVEL,CLAMP(statVal+amount,0,2000));
+                else if(stat == ST_RADIATION_LEVEL)
+                    AffectRadiation(cr, amount);                                                      // cr.SetStat(ST_RADIATION_LEVEL,CLAMP(statVal+amount,0,2000));
+                else
+                    continue;
+
+                statVal = cr.Stat[stat] - statVal;
+                if(statVal > 0)
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_STAT_GAIN, "$name @msg game " + STR_PARAM_NAME(stat) + "@$value" + statVal);
+                else if(statVal < 0)
+                    cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_STAT_LOSE, "$name @msg game " + STR_PARAM_NAME(stat) + "@$value" + (-statVal));
+            }
+        }
+
+        int addict = DrugEffects[index + TABLE_DRUG_ADDICT];
+        if(stage == 0)         // To withdrawal
+        {
+            duration = DrugEffects[index + TABLE_DURATION(stage)];
+            if(FLAG(flags, DRUG_EFFECT_MUL2_DURATION))
+                duration *= 2;
+            if(FLAG(flags, DRUG_EFFECT_DIV2_DURATION))
+                duration /= 2;
+            // Try set addiction perk
+            int addictProc = DrugEffects[index + TABLE_DRUG_PROC];
+            // if(FLAG(flags,DRUG_EFFECT_MUL2_ADDICTION)) addictProc*=2;
+            // if(FLAG(flags,DRUG_EFFECT_DIV2_ADDICTION)) addictProc/=2;
+            if(stage == 0 && addict >= 0 && Random(1, 100) <= addictProc)
+                cr.AddictionBase[addict] = 1;
+        }
+        else if(stage == 1)         // To normalize
+        {
+            duration = DrugEffects[index + TABLE_DURATION(stage)];
+            if(FLAG(flags, DRUG_EFFECT_MUL2_DURATION))
+                duration *= 2;
+            if(FLAG(flags, DRUG_EFFECT_DIV2_DURATION))
+                duration /= 2;
+        }
+        else if(stage == 2 && addict >= 0 && cr.Addiction[addict] != 0)     // To addiction
+        {
+            // Find already processed addiction
+            array<uint> rates;
+            uint        count = cr.GetTimeEvents(drugPid, null, null, rates);
+            bool        isPresent = false;
+            for(uint i = 0; i < count; i++)
+            {
+                if(RATE_TO_STAGE(rates[i]) >= 3)
+                {
+                    isPresent = true;
+                    break;
+                }
+            }
+            if(!isPresent)
+            {
+                duration = DrugEffects[index + TABLE_DURATION(stage)];
+                if(FLAG(flags, DRUG_EFFECT_MUL2_DURATION))
+                    duration *= 2;
+                if(FLAG(flags, DRUG_EFFECT_DIV2_DURATION))
+                    duration /= 2;
+            }
+        }
+        else if(stage == 3)         // To end of addiction
+        {
+            duration = DrugEffects[index + TABLE_DURATION(stage)];
+            if(FLAG(flags, DRUG_EFFECT_MUL2_DURATION))
+                duration *= 2;
+            if(FLAG(flags, DRUG_EFFECT_DIV2_DURATION))
+                duration /= 2;
+            // if(FLAG(flags,DRUG_EFFECT_DIV2_WITHDRAWAL)) duration/=2;
+            if(FLAG(flags, DRUG_EFFECT_ADDICTION_INFINITE))
+                duration = __TimeMultiplier * 5 * 365 * 24 * 60;  // in the end, it's 5 real years
+        }
+        else if(stage == 4)                                       // End of addiction
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DRUG_ADDICTION_END);
+            if(addict >= 0 && cr.Addiction[addict] != 0)
+                cr.AddictionBase[addict] = 0;
+        }
+    }
+
+    stage++;
+    rate = FORM_RATE(stage, flags);
+    return GAME_MINUTE(duration);
+}
+
+void DropDrug(Critter& cr, uint16 drugPid, uint stage)
+{
+    if(stage == 0 || stage == 3)
+        return;                           // Instant effect not happens or already normalize or wait Addidional effect
+
+    int index = GetDrugTableIndex(drugPid);
+
+    if(stage == 1 ||                                          // Instant effect already
+       stage == 2 ||                                          // Withdrawal already
+       (stage == 4 && cr.Trait[TRAIT_CHEM_RESISTANT] == 0))   // Addiction already
+    {
+        for(uint i = 0; i < 5; i++)
+        {
+            int stat = DrugEffects[index + TABLE_STAT(i)];
+            int amount = DrugEffects[index + TABLE_AMOUNT(i, stage + (stage == 1 ? -1 : 0))];   // Turn
+            if(stage == 1)
+                amount = -amount;
+            if(stat < STAT_EXT_BEGIN)
+                cr.StatBase[STAT_EXT_BEGIN + stat] += amount;
+        }
+    }
+}
+
+uint cte_Drug(Critter& cr, int identifier, uint& rate)
+{
+    return ProcessDrug(cr, identifier, rate);
+}

@@ -1,0 +1,63 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _script dialog@d_IsToHeal 0  #
+80 2020 D _param p PE_PROFESSION_DOCTOR < 2 #
+0 2030 @
+3 3000 dialog@dlg_ShowHealingPrice 0 #
+4 3010 D _script dialog@d_HealingMoney 0  #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _script dialog@r_DocHeal 0  @
+5 5000 None 0 @
+80 6000 None 0 #
+81 6010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDoctor0 1 0 #
+81 6020 D _script dialog@d_CheckDoctor1 1 0 #
+0 6030 @
+81 7000 None 0 #
+82 7010 D _script dialog@d_CheckDoctor0 1 1 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_FIRST_AID_BOOK + 1 R _param p PE_PROFESSION_DOCTOR = 1 R _script dialog@r_RemoveMoney 1 1500 #
+83 7020 D _script dialog@d_CheckDoctor1 1 1 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_DOCTOR = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 7030 @
+82 8000 None 0 #
+0 8010 @
+83 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Doc Jubilee}
+{200}{}{You see an old, kindly looking fellow.}
+{210}{}{It's Doc Jubilee.}
+{210}{}{He's an old man with a snow-white beard and a slightly blank stare.}
+{1000}{}{error}
+{1010}{}{default}
+{2000}{}{Welcome to the Doctor Jubilee's humble clinic. How can I help you?}
+{2010}{}{I need a doctor.}
+{2020}{}{I am quite interested into medicine myself, and this is the reason I am visiting you today. My hopes are that you could share some of your knowledge and experience with me...}
+{2030}{}{Nothing, bye.}
+{3000}{}{I think I can cure what ails ya. It's gonna cost you @lex price@$ bucks.}
+{3010}{}{Well... all right. That sounds fair.}
+{3020}{}{Changed my mind. I'll be back later.}
+{4000}{}{Alright, lie down. This may take a while.}
+{4010}{}{Sure thing, Doc.}
+{5000}{}{That should do it. Good luck, youngster.}
+{6000}{}{Oh, a colleague! It is not that I meet colleagues every day, you know... The reason more to say that I am very pleased to have you here. So, what did you want us to talk about then?}
+{6010}{}{I was hoping you can show me how to perform simple surgeries and... [You explain what you need]}
+{6020}{}{Well, I was interested in more complex methods of saving human lives, which would consider... [You explain him what you need]}
+{6030}{}{I, erhm... Not quite sure where to start from. Maybe I should drop a little bit later. [Leave]}
+{7000}{}{Sure, sure... We can already arrange something, I guess. But I would like to have something in return, a kind of compensation for my time and work. It's not that I'm trying to earn something out of this, but a help from a colleague like you would be quite appreciated. I'll keep it short then -- I would need $1500 for a short lesson or $3000 for one with more detail. Please, let me know when you have it.}
+{7010}{}{You don't have to worry, my appreciated colleague, I have $1500 right here! [You give him $1500]}
+{7020}{}{You don't have to worry, my appreciated colleague, I have $3000 right here! [You give him $3000]}
+{7030}{}{Well, I should start gathering some healing herbs then. See you later, doctor Jubilee!}
+{8000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Jubilee starts to show you his healing and surgery methods. After the session, you get a book from him.]}
+{8010}{}{Thank you very much, doctor Jubilee! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{9000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Jubilee starts to show you his healing and surgery methods.]}
+{9010}{}{Thank you very much, doctor Jubilee! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+

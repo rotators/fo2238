@@ -1,0 +1,117 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// blueprints.fos
+//
+
+/**
+ * \~english @defgroup BlueprintsGroup Blueprints
+ * The script governing consumption of blueprints and spawning of randomized ones.
+ *
+ * Item prototypes are scanned during the server initialization in search of blueprint items.
+ * See ProtoItem::Blueprint_* fields.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+#include "_macros.fos"
+#include "debug_h.fos"
+
+bool ConsumedBlueprintForPid(Critter& player, uint pid)   // export
+{
+    ProtoItem@ proto = GetProtoItem(pid);
+    return proto.NeedBlueprint == 0 || ConsumedBlueprint(player, proto.NeedBlueprint);
+}
+
+bool ConsumedBlueprint(Critter& player, uint pid)   // export
+{
+    ProtoItem@ proto = GetProtoItem(pid);
+    if(proto.Type != ITEM_TYPE_BLUEPRINT)
+        return false;
+    return FLAG(player.Param[proto.Blueprint_Param], (1 << proto.Blueprint_Id));
+}
+
+void ConsumeBlueprint(Critter& player, Item& item)   // export
+{
+    if(item.Proto.Type != ITEM_TYPE_BLUEPRINT)
+        return;
+    SETFLAG(player.ParamBase[item.Proto.Blueprint_Param], (1 << item.Proto.Blueprint_Id));
+    _SubItem(item, 1);
+}
+
+array<array<uint16> >         LevelBlueprints;
+array<array<array<uint16> > > TypeLevelBlueprints;
+
+void AddBlueprint(uint16 type, uint level, int pid)
+{
+    if(type >= TypeLevelBlueprints.length())
+        TypeLevelBlueprints.resize(type + 1);
+    if(level >= TypeLevelBlueprints[type].length())
+        TypeLevelBlueprints[type].resize(level + 1);
+    TypeLevelBlueprints[type][level].insertLast(pid);
+}
+
+// Scan protos for blueprints
+void InitBlueprints() // export
+{
+    Log("Init blueprints.");
+    for(uint16 i = 1; i < MAX_ITEM_PROTOTYPES; i++)
+    {
+        ProtoItem@ proto = GetProtoItem(i);
+        if(!valid(proto) || proto.Type != ITEM_TYPE_BLUEPRINT)
+            continue;
+        if(proto.Blueprint_Param < 0)
+            continue;                                 // skip random/special blueprints
+        if(proto.Blueprint_Level > 100)
+        {
+            Log("Proto " + i + " blueprint failed sanity check for level, ignored.");
+            continue;
+        }
+        if(proto.Blueprint_Level >= LevelBlueprints.length())
+            LevelBlueprints.resize(proto.Blueprint_Level + 1);
+        LevelBlueprints[proto.Blueprint_Level].insertLast(i);
+    }
+    for(uint i = 0, j = LevelBlueprints.length(); i < j; i++)
+        Log("Found " + LevelBlueprints[i].length() + " blueprints of level " + i);
+
+    for(uint16 i = 1; i < MAX_ITEM_PROTOTYPES; i++)
+    {
+        ProtoItem@ proto = GetProtoItem(i);
+        if(!valid(proto) || proto.NeedBlueprint == 0)
+            continue;
+        ProtoItem@ bp = GetProtoItem(proto.NeedBlueprint);
+        if(!valid(bp))
+        {
+            WLog("blueprints", "invalid blueprint pid " + proto.NeedBlueprint + " for item pid " + i, DEBUG_ERROR);
+            continue;
+        }
+        AddBlueprint(proto.Type, bp.Blueprint_Level, bp.ProtoId);
+    }
+}
+
+uint16 GetRandomBlueprintPid(uint8 level)
+{
+    uint16 pid = 0;
+    if(level >= LevelBlueprints.length())
+        return 0;
+    array<uint16>@ arr = LevelBlueprints[level];
+    pid = random_from_array(arr);
+    return pid;
+}
+
+uint16 GetRandomTypeBlueprintPid(int8 type, uint8 level)   // export
+{
+    if(type < 0)
+        return GetRandomBlueprintPid(level);
+    uint16 pid = 0;
+    if(uint(type) >= TypeLevelBlueprints.length())
+        return 0;
+    if(level >= TypeLevelBlueprints[type].length())
+        return 0;
+    array<uint16>@ arr = TypeLevelBlueprints[type][level];
+    pid = random_from_array(arr);
+    return pid;
+}
+
+/*@}*/

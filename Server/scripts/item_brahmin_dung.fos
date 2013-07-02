@@ -1,0 +1,139 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_brahmin_dung.fos
+//
+
+// Guess what.
+
+#include "_macros.fos"
+#include "production_h.fos"
+#include "backend_h.fos"
+#include "town_h.fos"
+#include "npc_planes_h.fos"
+
+import void AddScore(Critter@ cr, uint score, uint points) from "utils";
+// import void ModifyInfluenceBuffer(Critter& cr, int value) from "town";
+
+#define TEXT    (3015)
+
+array<string@> NormalPics = { "art\\items\\mstr49.fofrm", "art\\items\\mstr50.fofrm", "art\\items\\mstr51.fofrm", "art\\items\\mstr52.fofrm" };
+PicHashes NormalPicHashes(NormalPics);
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_DungSkill");
+    item.SetEvent(ITEM_EVENT_WALK, "_DungWalk");
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseOnDung");
+    if(firstTime)
+        item.PicMap = NormalPicHashes.GetRandom();
+}
+
+bool _DungSkill(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        if(IsOverweighted(crit))
+        {
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+            return true;
+        }
+        else
+        {
+            Item@ it = crit.AddItem(PID_BRAHMINSHIT, __BrahminCrapBatch);
+            it.SetScript(null);
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, TEXT);
+        }
+        DeleteItem(item);
+        return true;
+    }
+    else if(skill == SK_SCIENCE || skill == SK_DOCTOR)
+    {
+        if(crit.Skill[SK_SCIENCE] > 99 || crit.Skill[SK_DOCTOR] > 99)
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4201);
+        else
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4202);
+        return true;
+    }
+    return false;
+}
+
+void _DungWalk(Item& item, Critter& crit, bool entered, uint8 dir)
+{
+    if(!crit.IsPlayer())
+        return;
+
+    if(entered && Random(1, 10) == 1)                  // 10% chance to step into poop on ground
+    {
+        if(crit.Stat[ST_AGILITY] < Random(1, 10))      // Save yourself! AG test
+        {
+            if(crit.Stat[ST_LUCK] < Random(1, 10))     // LK test to see how bad it is...
+            {
+                crit.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0, 1) == 0), 4, crit.HexX, crit.HexY);
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4205);
+            }
+            else
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4203);
+            }
+        }
+    }
+}
+
+bool _UseOnDung(Item& item, Critter& crit, Item@ usedItem)
+{
+    // cleaning
+    if(usedItem.GetProtoId() == PID_SHOVEL || usedItem.GetProtoId() == PID_OLD_SHOVEL)
+    {
+
+        // A chance for pen brahmin to get angry if it's standing near the player who shovels the shit.
+        // Player will be given a warning and a moment later the agitated brahmin will try to ram into the player.
+        array<Critter@> critters;
+        uint            num = crit.GetMap().GetCrittersHex(crit.HexX, crit.HexY, 5, FIND_ONLY_NPC | FIND_LIFE, critters);
+        for(uint i = 0; i < num; i++)
+        {
+            if(_CritHasExtMode(critters[i], MODE_EXT_PEN_BRAHMIN) && Random(0, 3) == 0)
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4206);
+                AddMiscPlane(critters[i], AI_PLANE_ATTACK_PRIORITY, 0, crit.Id, 0, "all_brahmin@plane_agitated");
+                critters[i].Wait(Random(200, 500));
+            }
+        }
+
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4204);
+
+        // increase score
+        AddScore(crit, SCORE_EXPERT_EXCREMENT, 1);
+
+        uint xpBonus = 24 / crit.StatBase[ST_LEVEL];
+        if(xpBonus > 0)
+        {
+            crit.StatBase[ST_EXPERIENCE] += xpBonus;
+            LogExperience(crit, xpBonus, "Dung");
+        }
+
+        // check owner (pen.Id)
+        if(item.Val5 != 0)
+        {
+            #ifdef __DEBUG__
+            crit.Say(SAY_NETMSG, "This brahmin crap is from pen on map: " + item.Val5);
+            #endif
+            GameVar@ var = GetUnicumVar(UVAR_dung_cleaned, crit.Id, item.Val5);
+            if(valid(var))
+            {
+                var += 1;
+            }
+        }
+        else
+        {
+            #ifdef __DEBUG__
+            crit.Say(SAY_NETMSG, "This brahmin dung doesn't belong to anyone");
+            #endif
+        }
+        // remove dung
+        DeleteItem(item);
+        return true;
+    }
+    return false;
+}

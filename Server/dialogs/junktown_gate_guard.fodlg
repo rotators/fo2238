@@ -1,0 +1,33 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+3 1020 D _param p ST_INTELLECT > 999 @
+2 2000 None 0 #
+0 2010 D _param n ST_NPC_ROLE = 4 R _script dialog@r_TeleportToMap 2 70 3 R _script dialog@r_TeleportToMapFollowers 2 70 3 #
+0 2020 D _param n ST_NPC_ROLE = 5 R _script dialog@r_TeleportToMap 2 70 2 R _script dialog@r_TeleportToMapFollowers 2 70 2 #
+0 2030 @
+3 3000 None 0 #
+0 3010 R _script dialog@r_TeleportToMap 2 54 5 R _script dialog@r_TeleportToMapFollowers 2 54 5 R _script map_newreno@r_TransferWeapons 1 0 #
+0 3020 &
+
+[engl]
+{100}{}{Gate Guard}
+{200}{}{You see a Junktown gate guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{trying to enter}
+{1020}{}{trying to exit *DEV NOTE: Deactivated for now.*}
+{2000}{}{Yes, what can I do for you?@@What can I do for you?@@What do you want?@@Yeah?}
+{2010}{}{I want to exit the town to the north.}
+{2020}{}{I want to exit the town to the south.}
+{2030}{}{Nothing right now. Bye.}
+{3000}{}{What can I do for you?}
+{3010}{}{Am I allowed to enter Junktown?}
+{3020}{}{[Don't go yet.]}
+

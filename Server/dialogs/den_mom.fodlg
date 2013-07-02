@@ -1,0 +1,68 @@
+[comment]
+05.03.2009 -marvi
+- 25 iiuoa ca aii?in i?i i?ec?aea
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+8 1010 D _param p ST_CHARISMA > 99 #
+2 1020 D _var p name_mem_npc_player = 0 #
+3 1030 D _var p name_mem_npc_player = 1 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 #
+65506 2020 #
+6 2030 #
+7 2040 D _var p mod_q_meat_jerky = 1 D _item p PID_MEAT_BAG > 0 R _var p mod_q_meat_jerky = 2 R _item p PID_MEAT_BAG - 1 R _param p ST_EXPERIENCE + 125 R _script dialog@r_AddMoney 1 125 #
+0 2050 @
+3 3000 None 0 #
+4 3010 #
+65506 3020 #
+6 3030 #
+0 3040 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+3 6010 #
+0 6020 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 &
+
+[engl]
+{100}{}{Mom}
+{200}{}{You see a kindly-looking older woman.}
+{210}{}{You see Mom, busily cooking and cleaning.}
+{210}{}{You see a robust older woman, with a cheerful smile on her face.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{Hello there, my name's Mom and I run this place. Got the best food north of New Reno, too.}
+{2010}{}{You're not my mom.}
+{2020}{}{What do you have to eat here?}
+{2030}{}{I noticed there are a lot of orphans around town.}
+{2040}{}{Grisham sent me, Mom. I've got a big bag o' jerky with your name on it.}
+{2050}{}{I should go, goodbye.}
+{3000}{}{What did you want to talk to Mom about?}
+{3010}{}{You're not my mom.}
+{3020}{}{What do you have to eat here?}
+{3030}{}{I noticed there are a lot of orphans around town.}
+{3040}{}{I should go, goodbye.}
+{4000}{}{I know that. But everyone calls me that. Heck, I even treat people like they're my kin - long as you obey my rules that is.}
+{4010}{}{Rules?}
+{5000}{}{That's right. No stealing, no cursing, and no fighting - not in my shop you don't. 'Cause if'n you do, out you'll go. I like things peaceful here.}
+{5010}{}{I see. Let me ask you something else.}
+{5020}{}{That makes sense. See you later, Mom.}
+{6000}{}{Yes, isn't it a shame? These children have no home and many steal for a living...it's terrible. I had an idea some years back to start an orphanage but no one was really that interested. It's a shame really. Children are our future...}
+{6010}{}{It is a shame. Let me ask you something else.}
+{6020}{}{Maybe you will someday, bye.}
+{7000}{}{Oh, you're a dear. Maybe Grisham'll send you back my way some other time. Here's a couple caps, go get yourself a nice hot meal.}
+{7010}{}{Thanks Mom!}
+{8000}{}{I'll leave you some scraps out back.@@Oh, you poor thing.@@Please! Folks, it's rude to stare!@@I'm sorry, they can't quit staring.}
+

@@ -1,0 +1,38 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+6 1010 D _script quest_brahmin_run@d_HerdsmanCannotSetOut 0  #
+2 1020 D _script quest_brahmin_run@d_PlayerNotARunner 0  #
+3 1030 D _var p q_brahmin_run = 2 #
+5 1040 D _script quest_brahmin_run@d_BrahminAndHerdsmanAttacked 0  #
+4 1050 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 R _script quest_brahmin_run@r_HerdsmanEncounterLeave 0  #
+0 4020 @
+5 5000 None 0 @
+6 6000 None 0 &
+
+[engl]
+{100}{}{Herdsman}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{1030}{}{-}
+{1040}{}{-}
+{1050}{}{-}
+{2000}{}{Uh, who are you?}
+{3000}{}{All the brahmin are dead. There's no reason to continue.}
+{4000}{}{Shall we continue our journey?}
+{4010}{}{Off we go.}
+{4020}{}{Just give me a second, I need to get ready.}
+{5000}{}{Get us rid of these attackers first.}
+{6000}{}{Just give me a second to catch my breath.}
+

@@ -1,0 +1,75 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+11 1010 D _script dialog@d_IsNotMember 0  #
+2 1020 D _script dialog@d_IsLowerRankThan 1 3 #
+10 1030 @
+2 2000 None 0 #
+3 2010 #
+2 2020 D _var p factions_q_nav_mfc = 0 #
+6 2030 D _var p factions_q_nav_mfc > 1 D _script dialog@d_IsLowerRankThan 1 3 #
+6 2040 D _var p factions_q_nav_mfc > 1 #
+0 2050 @
+3 3000 None 0 #
+9 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _var p factions_q_nav_mfc = 1 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 D _var p factions_q_nav_mfc > 10 D _item p PID_MICRO_FUSION_CELL > 9 R _item p PID_MICRO_FUSION_CELL - 10 R _var p factions_q_nav_mfc - 10 R _script dialog@r_AddExpTeam 1 50 #
+7 6020 D _var p factions_q_nav_mfc > 20 D _item p PID_MICRO_FUSION_CELL > 19 R _item p PID_MICRO_FUSION_CELL - 20 R _var p factions_q_nav_mfc - 20 R _script dialog@r_AddExpTeam 1 100 #
+7 6030 D _var p factions_q_nav_mfc > 40 D _item p PID_MICRO_FUSION_CELL > 39 R _item p PID_MICRO_FUSION_CELL - 40 R _var p factions_q_nav_mfc - 40 R _script dialog@r_AddExpTeam 1 200 #
+7 6040 D _var p factions_q_nav_mfc > 80 D _item p PID_MICRO_FUSION_CELL > 79 R _item p PID_MICRO_FUSION_CELL - 80 R _var p factions_q_nav_mfc - 80 R _script dialog@r_AddExpTeam 1 400 #
+7 6050 D _var p factions_q_nav_mfc > 160 D _item p PID_MICRO_FUSION_CELL > 159 R _item p PID_MICRO_FUSION_CELL - 160 R _var p factions_q_nav_mfc - 160 R _script dialog@r_AddExpTeam 1 800 #
+0 6060 @
+7 7000 None 0 #
+6 7010 #
+0 7020 @
+9 8000 None 0 @
+10 9000 None 0 @
+11 10000 Attack 0 &
+
+[engl]
+{100}{}{Commander's Guard}
+{200}{}{You see the commander’s door guard.}
+{210}{}{You see someone in power armor. There is an insignia on the breastplate that you are not familiar with.}
+{1000}{}{Predialogue installations}
+{1010}{}{not member (attack)}
+{1020}{}{member}
+{1030}{}{important member}
+{2000}{}{This area is off limits to all personnel except officers. I’ll have to ask you to leave, soldier.@@This is the base commander’s office. What is the nature of your business, soldier?@@Soldier, I have to ask you to leave this area.}
+{2010}{}{I want to talk to the Commander, it's quite important.}
+{2020}{}{I'm looking for a new volunteer job. Is there anything I could help with?}
+{2030}{}{I would like to report about the mission, sir!}
+{2040}{}{I've got a report about the mission.}
+{2050}{}{Aye, aye! [Leave]}
+{3000}{}{Soldier, state your business to a higher rank officer, and that officer should report back to the Commander. That's the procedure.}
+{3010}{}{Is there any other way to see the Commander?}
+{3020}{}{Aye, aye! [Leave]}
+{4000}{}{There is always something to do, soldier. I could have a mission for you, you want to hear briefing?}
+{4010}{}{Yes, sir.}
+{4020}{}{No, not right now. [Leave]}
+{5000}{}{Very well then, listen carefully. There is a place south-east of here, there used to be a military base. We noticed it recently during one of the scouting operations and, according to our archives, it has to be Mariposa. That was the only place around here capable of producing Micro Fusion Cells, not massively, but for the requirements of the base. This could be an excellent opportunity to investigate the base and try to start the production facility, because we need all the cells we can get right now. If you manage to produce and bring any, it will be a great success for us, and I'm quite sure the Commander will have more understanding for your problems. Dismissed!}
+{5010}{}{On my way, sir! [Leave]}
+{6000}{}{Very good, I'm listening.}
+{6010}{}{I have managed to create 10 Micro Fusion Cells.}
+{6020}{}{I have managed to create 20 Micro Fusion Cells.}
+{6030}{}{I have managed to create 40 Micro Fusion Cells.}
+{6040}{}{I have managed to create 80 Micro Fusion Cells.}
+{6050}{}{I have managed to create 160 Micro Fusion Cells.}
+{6060}{}{No progress to report, at least not for now. I'll keep you informed.}
+{7000}{}{Outstanding job! See if you can make more of them and keep me informed about the progress regularly. The Commander will be very satisfied to hear about this.}
+{7010}{}{Let's talk about the Micro Fusion Cells again.}
+{7020}{}{Yes, of course. [Leave]}
+{8000}{}{Soldier, you must be either deaf or have fallen on your head during the birth. I bet my ass it was the second one, now beat it!}
+{9000}{}{Good day sir, you can enter.@@Nothing to report, sir. The commander is in his office.@@The commander is in there. You are free to enter, sir.@@Affirmative, sir. You better don't let the Commander wait for you.}
+{10000}{}{You're dead meat!}
+

@@ -1,0 +1,25 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// world_common_h.fos
+//
+
+// common world functions here, like IsNight and other things whose definitions encompass the whole world
+
+#ifndef __WORLD_COMMON_H__
+#define __WORLD_COMMON_H__
+
+import bool IsNight() from "world_common";
+import bool IsDay() from "world_common";
+import bool IsMorning() from "world_common";
+import bool IsAfternoon() from "world_common";
+import bool IsEvening() from "world_common";
+import bool IsHospital(Map@ map) from "world_common";
+import bool IsCave(Map@ map) from "world_common";
+import bool IsMine(Map@ map) from "world_common";
+import bool IsJail(Map@ map) from "world_common";
+import bool IsBase(Map@ map) from "world_common";
+import bool IsTent(Map@ map) from "world_common";
+import bool IsWarzone(Map@ map) from "world_common";
+#endif

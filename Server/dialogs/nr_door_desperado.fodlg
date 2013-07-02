@@ -1,0 +1,30 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _var p newr_incasino = 0 #
+3 1020 D _var p newr_incasino = 1 @
+2 2000 None 0 #
+0 2010 R _var p newr_incasino = 1 R _script dialog@r_TeleportToMap 2 54 6 R _script dialog@r_TeleportToMapFollowers 2 54 6 R _script map_newreno@r_TransferWeapons 1 1 #
+0 2020 @
+3 3000 None 0 #
+0 3010 R _var p newr_incasino = 0 R _script dialog@r_TeleportToMap 2 54 5 R _script dialog@r_TeleportToMapFollowers 2 54 5 R _script map_newreno@r_TransferWeapons 1 0 #
+0 3020 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{trying to enter}
+{1020}{}{trying to exit}
+{2000}{}{[In front of you is the Desperado.]}
+{2010}{}{[Enter the Desperado.]}
+{2020}{}{[Go away.]}
+{3000}{}{[Do you want to leave the Desperado?]}
+{3010}{}{[Exit the Desperado.]}
+{3020}{}{[Don't go yet.]}
+

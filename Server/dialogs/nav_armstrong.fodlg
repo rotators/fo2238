@@ -1,0 +1,94 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 #
+3 1020 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 R _var n name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+80 3020 D _var n acquaintance = 1 D _param p PE_PROFESSION_ARMORER < 3 #
+0 3030 @
+4 4000 None 0 #
+5 4010 R _var n acquaintance = 1 #
+7 4020 #
+0 4030 @
+5 5000 None 0 #
+6 5010 #
+80 5020 D _param p PE_PROFESSION_ARMORER < 3 #
+0 5030 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+65507 7020 #
+0 7030 @
+80 8000 None 0 #
+81 8010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckArmorer0 1 0 #
+82 8020 D _script dialog@d_CheckArmorer1 1 0 #
+0 8030 @
+81 9000 None 0 #
+84 9010 D _item p PID_BOTTLE_CAPS > 499 R _param p PE_PROFESSION_ARMORER = 1 R _script dialog@r_RemoveMoney 1 500 #
+0 9020 @
+82 10000 None 0 #
+84 10010 D _item p PID_BOTTLE_CAPS > 999 R _param p PE_PROFESSION_ARMORER = 2 R _script dialog@r_RemoveMoney 1 1000 #
+0 10020 @
+83 11000 None 0 #
+84 11010 D _item p PID_BOTTLE_CAPS > 2499 R _param p PE_PROFESSION_ARMORER = 3 R _script dialog@r_RemoveMoney 1 2500 #
+0 11020 @
+84 12000 None 0 #
+0 12010 &
+
+[engl]
+{100}{}{Armstrong}
+{200}{}{You see a technician.}
+{210}{}{You see a man in a military uniform. Judging by the tools he's using you think he is more of a technician than a soldier.}
+{1000}{}{Predialogue installations}
+{1010}{}{Unknown member}
+{1020}{}{Known member}
+{2000}{}{Hello there. Name's Armstrong, haven't seen ya around here before.}
+{2010}{}{Yeah, I'm getting familiar with the people here. Say, I had a few questions for you, if you don't mind.}
+{2020}{}{I think I'm in the wrong place.}
+{3000}{}{Hello again. What brings you here this time?}
+{3010}{}{Just wanted to ask you something...}
+{3020}{}{Let's talk about armors.}
+{3030}{}{Nothin, sorry to disturb you.}
+{4000}{}{Sure, why not?}
+{4010}{}{What are you doing here?}
+{4020}{}{What's that strange-looking piece of machinery over there?}
+{4030}{}{Ah, nothing. Sorry.}
+{5000}{}{I'm fixin' stuff, whaddya think? Armors mostly, but they send me all kinda junk over here.}
+{5010}{}{Why are you working in this hangar?}
+{5020}{}{Right, then you must be the right person to ask about armors...}
+{5030}{}{Okay, I think I'll leave you to your work then.}
+{6000}{}{What the hell do you think? We're short on room and resources, that's why. I was ordered to use the tools and accessories of this hangar, and it's fine by me -- as long as nobody bothers me.}
+{6010}{}{Okay, let me ask you something else then.}
+{6020}{}{I'm surely not one of those, bye!}
+{7000}{}{What, the vertibird? Don't tell me you've never seen one o' those!? @sex@|Man||Woman|, what stinking sinkhole are you from?}
+{7010}{}{Vertibird, you say... Good, another question.}
+{7020}{}{Stinking sinkhole? Instead of describing it, I think I'm gonna make one on your forehead right now...}
+{7030}{}{Rrr-ight. I'm outta here.}
+{8000}{}{Yeah?}
+{8010}{}{Can you show me some basics?}
+{8020}{}{I am interested in making metal armors... And any other trick you can show me, by the way.}
+{8030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{9000}{}{Sure, I can show ya... If ya show me five hundred caps first!}
+{9010}{}{Okay, sounds fair. [Give him $500]}
+{9020}{}{Sorry, that's too much for me. I might be back later, though.}
+{10000}{}{Yeah, and I'm interested in caps. How about a grand for the show, huh?}
+{10010}{}{Not a problem. [Give him $1000]}
+{10020}{}{Sorry, that's too much for me. I might be back later, though.}
+{11000}{}{[OBSOLETE] It might be true, if my locker becomes heavier for 2500 caps...}
+{11010}{}{That's not cheap, but I guess it'll pay off. Here you go. [Give him $2500]}
+{11020}{}{Sorry, that's too much for me. I might be back later, though.}
+{12000}{}{Nice doin' business with ya... [Armstrong shows you everything you wanted to know]}
+{12010}{}{Thank you Armstrong, I really appreciate your help. See you around!}
+

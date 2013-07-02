@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// show.fos
+//
+
+// this is a general script for controlling shows and other events
+
+#include "_basetypes.fos"
+#include "_macros.fos"
+#include "follower_common_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "world_common_h.fos"
+
+// trigger, and item-trigger that should prevent players from blocking certain hexes
+
+//
+// Item
+//
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_WALK, "_Walk");
+}
+
+void t_SharkClub(Critter& crit, Scenery& trigger, bool entered, uint8 dir)
+{
+    // Is player?
+    if(entered && crit.IsPlayer())
+    {
+        // check weapon slots for weapons
+
+        // check inventory for weapons
+
+        // if player has a weapon, kill him
+
+    }
+}

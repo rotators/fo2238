@@ -1,0 +1,198 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+62 1010 D _param p ST_CHARISMA > 99 #
+41 1020 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 1999 #
+40 1030 D _param p ST_INTELLECT < 4 #
+50 1040 D _script dialog@d_CheckNight 0  #
+2 1050 D _script dialog@d_IsNotMember 0  #
+60 1060 @
+2 2000 None 0 #
+3 2010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 2020 D _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 D _var n acquaintance = 0 #
+20 3020 D _var n acquaintance = 1 #
+10 3030 #
+0 3040 @
+4 4000 None 0 #
+5 4010 D _param p SK_BARTER > 99 D _item p PID_BOTTLE_CAPS > 49 R _var n acquaintance = 1 R _script dialog@r_RemoveMoney 1 50 #
+5 4020 D _param p SK_BARTER > 69 D _item p PID_BOTTLE_CAPS > 99 R _var n acquaintance = 1 R _script dialog@r_RemoveMoney 1 100 #
+5 4030 D _item p PID_BOTTLE_CAPS > 199 R _var n acquaintance = 1 R _script dialog@r_RemoveMoney 1 200 #
+0 4040 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+20 6000 None 0 #
+6 6010 #
+0 6020 @
+6 7000 None 0 #
+7 7010 #
+11 7020 #
+0 7030 @
+7 8000 None 0 #
+8 8010 #
+10 8020 #
+0 8030 @
+8 9000 None 0 #
+9 9010 #
+10 9020 #
+0 9030 @
+9 10000 None 0 #
+10 10010 #
+0 10020 @
+10 11000 None 0 #
+11 11010 #
+0 11020 @
+11 12000 None 0 #
+12 12010 #
+0 12020 @
+12 13000 None 0 #
+13 13010 #
+0 13020 @
+13 14000 None 0 #
+14 14010 D _var p factions_player_rank < 3 D _param p SK_BARTER > 89 D _item p PID_BOTTLE_CAPS > 699 #
+15 14020 D _var p factions_player_rank < 3 D _param p SK_BARTER > 59 D _item p PID_BOTTLE_CAPS > 1199 D _param p SK_BARTER < 90 #
+16 14030 D _var p factions_player_rank < 3 D _param p SK_BARTER < 60 D _item p PID_BOTTLE_CAPS > 1999 #
+14 14040 D _var p factions_player_rank > 2 D _item p PID_BOTTLE_CAPS > 699 #
+0 14050 @
+14 15000 None 0 #
+17 15010 D _item p PID_BOTTLE_CAPS } 700 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 700 #
+0 15020 @
+15 16000 None 0 #
+17 16010 D _item p PID_BOTTLE_CAPS } 1200 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 1200 #
+0 16020 @
+16 17000 None 0 #
+17 17010 D _item p PID_BOTTLE_CAPS > 1999 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 2000 #
+0 17020 @
+17 18000 None 0 #
+0 18010 @
+18 19000 None 0 #
+19 19010 #
+0 19020 @
+19 20000 None 0 #
+13 20010 #
+0 20020 @
+40 21000 None 0 @
+41 22000 None 0 #
+42 22010 #
+0 22020 @
+42 23000 None 0 #
+43 23010 D _item p PID_BOTTLE_CAPS } 2000 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 2000 #
+0 23020 #
+0 23030 @
+43 24000 None 0 #
+0 24010 #
+0 24020 @
+50 25000 None 0 @
+60 26000 None 0 #
+61 26010 #
+0 26020 @
+61 27000 None 0 #
+0 27010 @
+62 28000 None 0 &
+
+[engl]
+{100}{}{Skeev}
+{200}{}{You see Wallace's Assistant, Skeev.}
+{210}{}{You see a scrawny young man. His eyes are darting back and forth.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{dumb >$2K}
+{1030}{}{dumb <$2K}
+{1040}{}{night}
+{1050}{}{non-faction}
+{1060}{}{faction}
+{2000}{}{Look, Outsider, if you got customs business, Wallace is in the back, okay? He'll set you up with all the forms you need.}
+{2010}{}{Uh... what is this place?}
+{2020}{}{Say, what's this office, y'know, for?}
+{2030}{}{All right. Thanks.}
+{3000}{}{This is the CUSTOMS Office. Miss the huge sign? If you haven't got customs business, what are you doing here?}
+{3010}{}{Since you're a part of customs and all, I was wondering if you had any 'advice' on how to bring certain items within the city.}
+{3020}{}{Since you're a part of customs and all, I was wondering if you had any 'advice' on how to bring certain items within the city.}
+{3030}{}{I was looking to get inside the city.}
+{3040}{}{Nothing. Sorry to bother you.}
+{4000}{}{Advice? Well, advice is expensive, Outsider. If you catch my drift.}
+{4010}{}{I guess I can spare a few caps. Go buy youself a drink. [Give him $50]}
+{4020}{}{Well here's all I can spare right now. [Give him $100]}
+{4030}{}{Here. Take it and choke. [Give him $200]}
+{4040}{}{Too expensive for me, thanks. Maybe I'll be back with some cash later.}
+{5000}{}{[He greedily pockets your cash] Well, you could go see my boss, Wallace, and TRY to get permission to get inside, but you'd be wasting your time. He never lets anybody in. Of course, there are other ways...}
+{5010}{}{What other ways?}
+{5020}{}{Thanks. I'll go see Wallace then.}
+{6000}{}{Well, you could go see my boss, Wallace, and TRY to get permission to get inside, but you'd be wasting your time. He never lets anybody in. Of course, there are other ways...}
+{6010}{}{What other ways?}
+{6020}{}{Thanks. I'll go see Wallace then.}
+{7000}{}{Well, there's a few things you can do. One is become a Citizen. They pretty much never search Citizens. Of course, YOUR chances of becoming a Citizen are next to nothing.}
+{7010}{}{And why's that?}
+{7020}{}{Really? So are there any other ways to get inside?}
+{7030}{}{Nevermind. Maybe we'll talk some other time.}
+{8000}{}{If you're not born here, then you have to take the Citizenship Test. Prove you're a contribution to Vault City and all that crap. Number of Outsiders that've taken the test and become Citizens? Zero. Your chances? LESS than zero.}
+{8010}{}{What is this test?}
+{8020}{}{What else could I do to become a Citizen?}
+{8030}{}{Never mind. Maybe we'll talk some other time.}
+{9000}{}{The test used to be given to Outsiders by Preconsul Gregory. Now security's a a lot tighter, so it's administered by the guards. It tests cognitive and sensory abilities, you'd have to be one lucky bastard to pass. Most Citizens would have trouble with it - trash like you doesn't stand a chance.}
+{9010}{}{Why did they make it so hard?}
+{9020}{}{Are there any other ways of getting inside? I don't test well.}
+{9030}{}{Never mind. Maybe we'll talk some other time.}
+{10000}{}{You really are as dumb as you look. Since most Outsiders can't read, do trigonometry, or spell "Australopithecus," you figure it out. It's just an excuse to keep trash like you from becoming Citizens.}
+{10010}{}{What else could I do to become a Citizen?}
+{10020}{}{All right, then. Thanks.}
+{11000}{}{Just talk to the guards outside, they always need another whipping boy, provided you don't mind working for ignorant  thugs. Maybe they'll like their new lapdog so much they'll recommend you for Citizenship. But, as always, there are other options.}
+{11010}{}{Other options? Like what?}
+{11020}{}{Well maybe I'll go talk to them. Bye.}
+{12000}{}{You can get inside with a Day Pass, but your access is restricted and you don't get any of the benefits of actual Citizenship. That, and you can only get inside during the day. You try and get in at night... well, see the guards? See those guns? Well, even you can figure it out.}
+{12010}{}{A Day Pass, huh? How would I go about getting one?}
+{12020}{}{All right, then. Thanks.}
+{13000}{}{You CAN try next door. The only way you'll get a Day Pass outta ol' man Wallace is if you pry it from his cold, dead hands.}
+{13010}{}{Then how am I supposed to get inside?}
+{13020}{}{I'll try him anyway.}
+{14000}{}{[Skeev suddenly becomes businesslike] Well, for a small fee I can get you a Day Pass. You'll have free passage through the gate during the daytime, no hassle from the guards. They probably won't even check your stuff. Totally legit. I can print out the Pass, register your serial number, and have you on your way in five minutes. Interested?}
+{14010}{}{Sounds good. How much?}
+{14020}{}{Sounds good. How much?}
+{14030}{}{Sounds good. How much?}
+{14040}{}{Sounds good. How much?}
+{14050}{}{I think I'll try official channels.}
+{15000}{}{Well, let's say... $700, because I'm feeling charitable today. You better not tell any of your Outsider pals you got it so cheap, else I'll be cancelling that thing before you can even make it to the gate.}
+{15010}{}{Just give me the damn Day Pass already.}
+{15020}{}{Well, that's too steep for me. I might be back if I get some more money.}
+{16000}{}{Well, let's say... $1200, because I'm feeling charitable today. You better not tell any of your Outsider pals you got it so cheap, else I'll be cancelling that thing before you can even make it to the gate.}
+{16010}{}{Can it, Skeev. I know you're ripping me off. Here's the money.}
+{16020}{}{Well, that's too steep for me. I might be back if I get some more money.}
+{17000}{}{Well, let's say... $2000, because I'm feeling charitable today. You better not tell any of your Outsider pals you got it so cheap, else I'll be cancelling that thing before you can even make it to the gate.}
+{17010}{}{Two thousand? Charitable my ass. Here's your damn money, you bastard.}
+{17020}{}{Well, that's too steep for me. I might be back if I get some more money.}
+{18000}{}{Hey, no need to be rude... you got what you wanted, right? Enjoy your Day Pass, visitor.}
+{18010}{}{Yeah, whatever.}
+{19000}{}{Keep it down, you fucking moron! You clearly ain't been around long enough to hear about me getting caught selling the damn things. Turned in by a tribal, can you believe that? He goes straight to Wallace, and sells me out. Good thing the old bastard let me of the hook, I'm not stupid enough to make the same mistake twice.}
+{19010}{}{Wait, so what about the Day Passes? Won't people be able to spot a fake?}
+{19020}{}{OK, that's all I needed for now. Bye.}
+{20000}{}{Hey, they're not fake. They just don't go through Wallace, that's all.}
+{20010}{}{So, you can sell me a day Pass then?}
+{20020}{}{OK, that's all I needed for now. Bye.}
+{21000}{}{Get lost.@@Beat it. I got nothing to say to you.}
+{22000}{}{Oh... lookie here. Hello there, FRIEND. [He gives you a big smile. You see notice him checking out your gear] Say, you don't happen to have a bit of extra money on you...? Mo-ney. You know what I'm talking about, right?}
+{22010}{}{Mo-nee yes!}
+{22020}{}{No-pee}
+{23000}{}{Excellent! Boy, I'm amazed we got this far. See that gate? You wanna know what's past it? Only the most beautiful place you've ever seen. You like pretty things, don't you pal? All it's gonna cost you is two thousa-uh, a lot of those little round things you got in your pockets. What do you say?}
+{23010}{}{Boo-tee-full yes me like! Me go see that [You give him the money]}
+{23020}{}{Uh-huh}
+{23030}{}{[Shamble off]}
+{24000}{}{Marvelous! Here, take this Day Pass, now you can get inside! Aren't you happy? But only during the day. Day only, got it?}
+{24010}{}{Day only day only day only...}
+{24020}{}{[Shamble off]}
+{25000}{}{We're shut down for the night. Come back in the morning.}
+{26000}{}{Well, if it ain't the new Citizen.}
+{26010}{}{Uh... what is this place?}
+{26020}{}{Nothing. Sorry to bother you.}
+{27000}{}{This is the CUSTOMS Office. Like the sign outside says. Can't you read, "Citizen?". Damn it, I swear they're making that test easier these days. If you haven't got customs business, what are you doing here?}
+{27010}{}{Nothing, I was about to leave anyway.}
+{28000}{}{Nice try, freak. Ghouls don't get inside the city.@@Don't let the guards see you, mutant.@@Get out of here, you freak.@@Quit stinking up my office.}
+

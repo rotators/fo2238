@@ -1,0 +1,52 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave_critters.fos
+//
+
+// Critters that can appear in caves
+
+// void AddCaveCritter(uint id, uint pid, int[] bags, uint aipack)
+// void AddCaveCritter(uint id, uint pid, uint bag, uint aipack)
+
+#include "_ai.fos"
+
+int[] small_gun_bags = { 156, 157, 212, 234, 220, 230, 240, 241, 265 }; // Shotgun, Desert Eagle, 14mm, 10mm, CAWS, Combat Shotgun,
+// Sniper rifle, Assault rifle, Hunting rifle
+// int[] big_gun_bags = { 239, 242, 272, 273, 193, 194 }; // Flamer, Minigun, Rocketlauncher, Improved flamer, Avenger minigun, Light support
+int[] melee_bags = { 215, 247, 248, 161, 150, 152, 159, 190 };          // Combat knife, Sharpened spear, Knife, Cattle prod, Crowbar, Club, Switchblade, Ripper
+
+array<int> raider_bags;
+array<int> slaver_bags;
+array<int> all_bags;
+
+AddBagToBag(raider_bags, small_gun_bags);
+// AddBagToBag(raider_bags, big_gun_bags);
+
+AddBagToBag(slaver_bags, small_gun_bags);
+AddBagToBag(slaver_bags, melee_bags);
+
+AddBagToBag(all_bags, melee_bags);
+AddBagToBag(all_bags, small_gun_bags);
+// AddBagToBag(all_bags, big_gun_bags);
+
+AddCaveCritter(CAVE_CRITTER_DEATHCLAW, 84, 142, AIPACKET_DEATHCLAW);
+AddCaveCritter(CAVE_CRITTER_RAT, 11, 1, AIPACKET_RAT);
+AddCaveCritter(CAVE_CRITTER_MANTI, 12, 1, AIPACKET_MANTIS);
+AddCaveCritter(CAVE_CRITTER_DOG, 9, 1, AIPACKET_GENERIC_DOG);
+AddCaveCritter(CAVE_CRITTER_RADSCORPION, 6, 1, AIPACKET_SCORPION);
+AddCaveCritter(CAVE_CRITTER_RAIDER_MELEE, 239, melee_bags, AIPACKET_MERC_RAIDER);
+AddCaveCritter(CAVE_CRITTER_RAIDER_GUN, 238,  raider_bags, AIPACKET_MERC_RAIDER);
+AddCaveCritter(CAVE_CRITTER_RAIDER_GUN_2, 212, raider_bags, AIPACKET_MERC_RAIDER);
+AddCaveCritter(CAVE_CRITTER_CANNIBAL, 205, melee_bags, AIPACKET_ARROYO_WARRIOR);
+AddCaveCritter(CAVE_CRITTER_SLAVER, 205, slaver_bags, AIPACKET_SLAVER);
+AddCaveCritter(CAVE_CRITTER_SLAVER_2, 205, slaver_bags, AIPACKET_SLAVER);
+AddCaveCritter(CAVE_CRITTER_SLAVE_CUTE, 17, 1, AIPACKET_SLAVE);
+AddCaveCritter(CAVE_CRITTER_SLAVE_HANDSOME, 18, 1, AIPACKET_SLAVE);
+AddCaveCritter(CAVE_CRITTER_SLAVE_STRONG, 19, 1, AIPACKET_SLAVE);
+AddCaveCritter(CAVE_CRITTER_BOOTLEGGER, 234, melee_bags, AIPACKET_PEASANTS);
+AddCaveCritter(CAVE_CRITTER_BOOTLEGGER_2, 235, melee_bags, AIPACKET_PEASANTS);
+AddCaveCritter(CAVE_CRITTER_MERCENARY, 359, all_bags, AIPACKET_MERC_RAIDER);
+AddCaveCritter(CAVE_CRITTER_MERCENARY_2, 360, all_bags, AIPACKET_MERC_RAIDER);
+AddCaveCritter(CAVE_CRITTER_CENTIPEDE, 510, 1, AIPACKET_RAT);

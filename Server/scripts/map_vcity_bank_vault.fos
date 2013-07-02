@@ -1,0 +1,44 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_vcity_bank_vault.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "bank_vault.fos"
+#include "mapdata_h.fos"
+
+#define LOCK_ID            (1337)
+#define LOCK_COMPLEXITY    (150)
+
+//
+// map.Data:
+// 2 - Bank ID, for more information check _economy.fos
+//
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        map.SetData(MAP_DATA_BANK, BANK_VAULTCITY);         // This bank vault belongs to the VC bank
+
+        array<Item@> lockers;
+        uint         numlockers = map.GetItems(PID_WALL_LOCKER_CLEAN_LEFT, lockers);
+        for(uint i = 0; i < numlockers; i++)
+        {
+            lockers[i].LockerId = LOCK_ID;
+            lockers[i].LockerComplexity = LOCK_COMPLEXITY;
+            lockers[i].LockerCondition |= LOCKER_LOCKED;
+        }
+
+        Item@ vaultdoor = map.GetItem(3902);
+        if(!valid(vaultdoor))
+        {
+            Log("Couldn't find the bank vault door");
+            return;
+        }
+        vaultdoor.LockerCondition |= LOCKER_LOCKED;
+        vaultdoor.LockerComplexity = 9999;
+    }
+}

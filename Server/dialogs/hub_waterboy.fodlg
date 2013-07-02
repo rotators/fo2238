@@ -1,0 +1,96 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _var p hub_job_waterboy > 0 D _var p hub_job_waterboy < 11 #
+6 1020 D _var p hub_job_waterboy = 11 #
+2 1030 D _var p hub_job_waterboy = 0 #
+9 1040 D _var p hub_job_waterboy = 12 D _script dialog@d_QuestTimeoutReady 0  #
+8 1050 D _var p hub_job_waterboy = 12 D _script dialog@d_QuestTimeoutNotReady 0  @
+2 2000 None 0 #
+3 2010 #
+12 2020 D _var p q_hub_watertaxes = 0 #
+0 2030 @
+3 3000 None 0 #
+4 3010 R _var p hub_job_waterboy = 1 #
+10 3020 #
+0 3030 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 R _script dialog@r_QuestTimeout 1 20 R _param p ST_EXPERIENCE + 100 R _var p hub_job_waterboy = 12 R _script dialog@r_AddMoney 1 100 @
+7 7000 None 0 @
+8 8000 None 0 #
+12 8010 D _var p q_hub_watertaxes = 0 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+12 9020 D _var p q_hub_watertaxes = 0 #
+0 9030 @
+10 10000 None 0 #
+4 10010 R _var p hub_job_waterboy = 1 #
+11 10020 @
+11 11000 None 0 #
+4 11010 R _var p hub_job_waterboy = 1 #
+0 11020 @
+12 12000 None 0 #
+14 12010 D _param p SK_BARTER } 55 D or D _param p ST_CHARISMA } 6 R _var p q_hub_watertaxes = 1 #
+13 12020 D _param p SK_BARTER < 55 D or D _param p ST_CHARISMA < 6 #
+0 12030 @
+13 13000 None 0 #
+0 13010 @
+14 14000 None 0 #
+0 14010 &
+
+[engl]
+{100}{}{Hub Farmer}
+{200}{}{You see a farmer.}
+{240}{}{You see a dead farmer.}
+{260}{}{You see a slain farmer.}
+{1000}{}{Predialogue installations}
+{1010}{}{job running}
+{1020}{}{job done}
+{1030}{}{never took a job before}
+{1040}{}{there is a job again.}
+{1050}{}{no job right now.}
+{2000}{}{Hey, you! [He waves you over.] Yes, you! Do you want a job? I need someone to bring water to the workers on the fields. I'll give you 100 hubbucks.}
+{2010}{}{What am I supposed to do?}
+{2020}{}{What are the Water Merchants saying about your water service?}
+{2030}{}{Not interested. Bye.}
+{3000}{}{That's easy: You'll get yourself a waterbag, fill it with water on the waterpipe here [He points to his left.] and bring it to the workers on the east, and the west sides fields.}
+{3010}{}{I am on my way.}
+{3020}{}{From where do I get waterbags?}
+{3030}{}{Nah, not now. }
+{4000}{}{Good! Come back to me, after you have given out the water to at least 10 farmers.}
+{4010}{}{[End]}
+{5000}{}{Come back when you are done with the job.}
+{6000}{}{Are you done with the job?}
+{6010}{}{All done.}
+{7000}{}{Good! Here is your money, 100 hubbucks. Come back later, if you want to work for me again.}
+{8000}{}{Sorry, but I don't have any jobs for you in the moment. Check back later.}
+{8010}{}{What are the Water Merchants saying about your water service?}
+{8020}{}{Maybe.}
+{9000}{}{Do you want to work for me again? I need someone to bring water to the workers on the fields. Like the last time, I'll give you 100 hubbucks.}
+{9010}{}{Sure, I'll do that.}
+{9020}{}{What are the Water Merchants saying about your water service?}
+{9030}{}{Maybe later. Unfortunately, I am really out of time right now.}
+{10000}{}{Good! Get yourself a waterbag, fill it with water on the waterpipe here [He points to his left.] and bring it to the workers on the east side and west side fields.}
+{10010}{}{I am on my way.}
+{10020}{}{From where do I get waterbags again?}
+{11000}{}{Check the local traders. Shouldn't be too hard to get some. Maybe Mitch in his general store is your best chance.}
+{11010}{}{I am on my way.}
+{11020}{}{Maybe I do it later. Bye.}
+{12000}{}{We have a deal, like many other people in and around the Hub. Paying taxes on the given out water per gallon. It's bad and bleeds me - and everyone else - dry, but that's the way it goes, the Water Merchants are the caravan company with the biggest influence overall. }
+{12010}{}{Is your contract that bad? Maybe I could try to talk to the Water Merchants for something better.}
+{12020}{}{If you want to, I could try to talk to the Water Merchants.}
+{12030}{}{That's really bad. Anyway, see you later.}
+{13000}{}{It wouldn't change a damn anyway. Don't run around and yell bullshit in my name, it would hurt me more than it does already now! }
+{13010}{}{See you later.}
+{14000}{}{[He looks thoughtful.] Fine, I'll let you do this. But damn, you'll be sorry, if you make it any worse than it already is!}
+{14010}{}{See you later.}
+

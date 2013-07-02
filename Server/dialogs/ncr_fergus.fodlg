@@ -1,0 +1,80 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+6 1010 D _param p ST_CHARISMA > 99 #
+6 1020 D _param p ST_INTELLECT < 4 #
+2 1030 @
+2 2000 None 0 #
+9 2010 D _param p ST_INTELLECT < 4 #
+3 2020 D _param p ST_INTELLECT > 3 #
+7 2030 D _var p q_ncr_rail_gang = 10 D _param p ST_INTELLECT > 3 #
+0 2040 D _param p ST_INTELLECT > 3 #
+0 2050 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 D _var p q_ncr_rail_gang = 0 R _var p q_ncr_rail_gang = 1 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 @
+7 7000 None 0 #
+8 7010 D _param p SK_BARTER < 80 R _var p q_ncr_rail_gang = 11 R _script dialog@r_AddMoney 1 300 R _param p REPUTATION_NCR + 50 #
+11 7020 D _param p SK_BARTER > 79 R _var p q_ncr_rail_gang = 11 R _script dialog@r_AddMoney 1 450 R _param p REPUTATION_NCR + 100 #
+0 7030 R _var p q_ncr_rail_gang = 11 R _script dialog@r_AddMoney 1 300 @
+8 8000 None 0 #
+0 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 #
+10 9020 D _var p q_ncr_rail_gang = 0 R _var p q_ncr_rail_gang = 1 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 &
+
+[engl]
+{100}{}{Fergus}
+{200}{}{You see a plain-looking young man in respectable clothing.}
+{210}{}{It's the building receptionist.}
+{210}{}{There's nothing partiuclarly exceptional about the guy. He looks like the epitome of a budding bureaucrat.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{dumb}
+{1030}{}{2}
+{2000}{}{Welcome to Congress House. How can I help you?}
+{2010}{}{Me want work!}
+{2020}{}{I'm here to see President Tandi.}
+{2030}{}{Gunther said, you will give me my reward for that train job.}
+{2040}{}{You can't. bye.}
+{2050}{}{Nothing. Me going.}
+{3000}{}{And why do you want see Madam President?}
+{3010}{}{I'm looking for work.}
+{3020}{}{Forget it. Bye.}
+{4000}{}{That's nice, but this isn't a hiring hall. Why don't you try downtown?}
+{4010}{}{No, I am asking YOU for a job.}
+{4020}{}{Alright, screw you then.}
+{5000}{}{You're a sticky one, are you? Well, then... Maybe there is something you could do. Talk to Mr. Gunther, in the backroom.}
+{5010}{}{Thanks.}
+{6000}{}{Oh hell, from what zoo are you coming? Get out here!}
+{7000}{}{Ah yes, the job. Here, 300 caps for you. }
+{7010}{}{What, just 300 caps? Isn't this a bit less for such a job?}
+{7020}{}{What, just 300 caps? Isn't this a bit less for such a job?}
+{7030}{}{That's all I want to have. Bye.}
+{8000}{}{Well, you took all of the equipment the gang has stolen from us, didn't you? So this should weight enough.}
+{8010}{}{Yes, you are right. Thanks and bye.}
+{8020}{}{Fuck you. [Leave]}
+{9000}{}{That's nice. This isn't a hiring hall. Try downtown, maybe you find someone there for your... simple mind.?}
+{9010}{}{Okay.}
+{9020}{}{No, me WANT WORK!}
+{10000}{}{You are a sticky one, are you? Well, then... Maybe there is something you could do. Go to Mr. Gunther, in the backroom. Talk to him... or try at least.}
+{10010}{}{Good.}
+{11000}{}{You have done a good job... Maybe you are right. Here, I'll give you additional 150 caps. }
+{11010}{}{Thanks. Have to go now.}
+

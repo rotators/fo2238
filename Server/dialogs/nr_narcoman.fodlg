@@ -1,0 +1,58 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _var p q_nr_corsican_execution > 9 #
+2 1020 @
+2 2000 None 0 @
+10 3000 None 0 @
+50 4000 None 0 #
+52 4010 D _item p PID_BOTTLE_CAPS > 149 D _var p q_nr_corsican_execution = 13 R _script dialog@r_RemoveMoney 1 150 R _var p q_nr_corsican_execution = 2 #
+52 4020 D _item p PID_JET > 0 D _var p q_nr_corsican_execution = 13 R _item p PID_JET - 1 R _var p q_nr_corsican_execution = 2 #
+10 4030 D _var p q_nr_corsican_execution ! 13 #
+0 4040 #
+0 4050 @
+51 5000 None 0 @
+52 6000 None 0 #
+53 6010 @
+53 7000 None 0 #
+54 7010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 R _param p REPUTATION_NEW_RENO + 10 #
+0 7020 @
+54 8000 None 0 @
+55 9000 None 0 &
+
+[engl]
+{100}{}{Junkie}
+{200}{}{You see a wasted-looking junkie.}
+{210}{}{You see a wasted-looking junkie. He is moving very slowly.}
+{210}{}{You see a wasted-looking junkie. He looks ill.}
+{210}{}{You see a wasted-looking junkie. He is so thin, he looks like he would break in a strong wind.}
+{210}{}{You see a wasted-looking junkie. He is looking at you blearily.}
+{210}{}{You see a wasted-looking junkie. His eyes are so bloodshot it looks like he could cry bloody tears.}
+{210}{}{You see a wasted-looking junkie. Every time he moves, he winces, as if being stabbed with needles.}
+{210}{}{You see a wasted-looking junkie. There are bags under his eyes and a pained expression on his face.}
+{1000}{}{Predialogue installations}
+{1010}{}{Corsican Brothers Quest #3}
+{1020}{}{2}
+{2000}{}{I'll do anything you want me to for some chips. Or Jet, if you got it.@@You need someone to get high with, man?@@Dad?@@Man, I need to *fly,* know what I'm saying?@@No, man, I'm off drugs. Uh…why? You buying?@@Psssst. Can you set up with some Jet?@@Can I borrow a few chips…? I'll pay you back.@@I'll work for Jet…@@C'mon, friend, gimme just a few chips.@@Ken I borrow some cash? Look, I'll pay ya back.@@Hey, uh…you got any Jet, friend?@@I really need some medicine for my son. Help me out.@@Spare a few chips?@@I just need a few chips to buy some food…that's all…@@I'll sleep with you for some Jet or a few chips. I'm clean, I promise.@@I used to be the top man here in Reno. I can give you the scoop for some Jet…@@I'll be your slave, if you can give me some Jet.@@You can sell me into slavery if you give me some Jet.}
+{3000}{}{Stop bothering me, I know nothing.@@Just leave me alone, I've no idea what you're talking about.@@What were you talking about?}
+{4000}{}{I'll do anything you want me to for some chips. Or Jet, if you got it.@@You need someone to get high with, man?@@I need to *fly,* know what I'm saying?@@Psssst. Can you set up with some Jet?@@Can I borrow a few chips…? I'll pay you back.@@I'll work for Jet…@@C'mon, friend, gimme just a few chips.@@Ken I borrow some cash? Look, I'll pay ya back.@@Hey, uh… you got any Jet, friend?@@I really need some medicine for my son. Help me out.@@Spare a few chips?@@I just need a few chips to buy some food…that's all…@@I can give you the scoop for some Jet…@@I'll be your slave, if you can give me some Jet.@@You can sell me into slavery if you give me some Jet.}
+{4010}{}{I'm looking for Old Man McGee. How about I give you some chips, and you point me into the right direction? [Give him some caps]}
+{4020}{}{I'm looking for Old Man McGee. I guess I could donate some Jet for the info, you know? [Show him a Jet vial]}
+{4030}{}{I'm looking for Old Man McGee.}
+{4040}{}{Forget it.}
+{4050}{}{Stay away from me, you filthy scumm!}
+{5000}{}{- - - - - - - - - - - - - - - - - - - - CORSICAN BROTHERS QUEST #3 - - - - - - - - - - - - - - - - - - - -}
+{6000}{}{[You give him his small reward and he starts to talk] That old bastard! Used to drop by every once in a while and ease us for a few chips during nighttime. Begging all day long on the Virgin street just to find out next morning your pockets are empty leaves bitter taste in your mouth, y'know?}
+{6010}{}{Just tell me where he is.}
+{7000}{}{I think someone mentioned the Shark Club, but I doubt he's often there. Could be worth a shot.}
+{7010}{}{We'll see. Here, a small compensation for the bitter taste in your mouth. [Give him $5]}
+{7020}{}{Speaking of a shot... there will be one soon. In the knees. Now, get lost!}
+{8000}{}{WOW! Thanks, @sex@|man||sister|!}
+{9000}{}{- - - - - - - - - - - - - - - - - - - - QUEST END - - - - - - - - - - - - - - - - - - - -}
+

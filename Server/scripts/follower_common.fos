@@ -1,0 +1,636 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// follower_common.fos
+//
+
+#ifndef __FOLLOWER_COMMON__
+#define __FOLLOWER_COMMON__
+
+#include "_basetypes.fos"
+#include "_macros.fos"
+#include "follower_h.fos"
+#include "groups_h.fos"
+#include "lexems_h.fos"
+#include "mercs_h.fos"
+#include "utils_h.fos"
+
+#ifndef __FOLLOWER__
+import void FollowerBaseInit(Critter& follower, bool firstTime) from "follower";
+#endif
+
+/**
+ * \~english @defgroup FollowerCommonGroup Follower Common
+ * Functions to interact and manipulate followers (mercenaries/slaves).
+ * Include follower_common_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+bool IsMerc(Critter& follower)
+{
+    uint type = GetFollowerType(follower);
+    return(type == FOLLOWER_TYPE_MERC_HUMAN_BG ||
+           type == FOLLOWER_TYPE_MERC_HUMAN_EW ||
+           type == FOLLOWER_TYPE_MERC_HUMAN_SG ||
+           type == FOLLOWER_TYPE_MERC_HUMAN_MELEE ||
+           type == FOLLOWER_TYPE_MERC_HUMAN_UNARMED ||
+           type == FOLLOWER_TYPE_MERC_GHOUL_MELEE ||
+           type == FOLLOWER_TYPE_MERC_GHOUL_SG ||
+           type == FOLLOWER_TYPE_MERC_MUTANT_UNARMED ||
+           type == FOLLOWER_TYPE_MERC_MUTANT_BG);
+}
+
+/**
+ * Check if a follower is in follow mode (either automatic or manual).
+ */
+bool IsFollowing(Critter& critter)
+{
+    return(((critter.FollowerVar[FV_MODE] == FOLLOWMODE_FOLLOW) || (critter.FollowerVar[FV_MODE] == FOLLOWMODE_FOLLOW_CONTROL)) && (critter.Cond != COND_DEAD));
+}
+
+/**
+ * Check if a follower belongs to a specific owner.
+ * @param owner The proposed owner.
+ * @param critter The follower.
+ * @remarks If critter is not a follower, false will be returned.
+ */
+bool IsOwnersFollower(Critter& owner, Critter& critter)
+{
+    if(!_IsFollower(critter))
+        return false;
+
+    return(uint(critter.FollowerVar[FV_MASTER]) == owner.Id);
+}
+
+/**
+ * Checks how many partypoints a certain FollowerType consumes.
+ * @param FollowerType FOLLOWER_TYPE_* define of the specific follower type to get.
+ * @remarks If FollowerType is not found, a safeguard value is returned to prevent exploits.
+ */
+uint GetPartyPoints(uint FollowerType)
+{
+    switch(FollowerType)
+    {
+    case FOLLOWER_TYPE_MERC_MUTANT_BG:
+        return 90;
+    case FOLLOWER_TYPE_MERC_MUTANT_UNARMED:
+        return 70;
+    case FOLLOWER_TYPE_COMPANION:
+        return 70;
+    case FOLLOWER_TYPE_MERC_HUMAN_BG:
+        return 70;
+    case FOLLOWER_TYPE_MERC_HUMAN_EW:
+        return 70;
+    case FOLLOWER_TYPE_MERC_HUMAN_SG:
+        return 60;
+    case FOLLOWER_TYPE_MERC_GHOUL_SG:
+        return 50;
+    case FOLLOWER_TYPE_MERC_GHOUL_MELEE:
+        return 35;
+    case FOLLOWER_TYPE_MERC_HUMAN_MELEE:
+        return 50;
+    case FOLLOWER_TYPE_MERC_HUMAN_UNARMED:
+        return 40;
+    case FOLLOWER_TYPE_DOG:
+        return 40;
+    case FOLLOWER_TYPE_PIGRAT:
+        return 40;
+    case FOLLOWER_TYPE_MOLERAT:
+        return 0;
+    case FOLLOWER_TYPE_SLAVE:
+        return 0;
+    case FOLLOWER_TYPE_BRAHMIN:
+        return 0;
+    default:
+        return 1000; // Safeguard to avoid exploits if some type is not defined above.
+    }
+    return 0;
+}
+
+/**
+ * Checks how many followers a player has of a certain FollowerType.
+ */
+uint GetNumberOfType(Critter& player, uint FollowerType)
+{
+    array<Critter@> crits;
+    GetFollowers(player, true, crits);
+    uint            count = 0;
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        if(GetFollowerType(crits[i]) == FollowerType)
+            count++;
+    }
+    return count;
+}
+
+/**
+ * Checks how many companions a player has in total.
+ */
+uint GetNumberOfCompanions(Critter& player)
+{
+    array<Critter@> crits;
+    GetFollowers(player, true, crits);
+    uint            count = 0;
+    for(uint i = 0; i < crits.length(); i++)
+        if(GetFollowerType(crits[i]) == FOLLOWER_TYPE_COMPANION)
+            count++;
+    return count;
+}
+
+/**
+ * Checks how many mercs a player has in total.
+ */
+uint GetNumberOfMercs(Critter& player)
+{
+    array<Critter@> crits;
+    GetFollowers(player, true, crits);
+    uint            count = 0;
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        if(IsMerc(crits[i]))
+            count++;
+    }
+    return count;
+}
+
+/**
+ * Returns the amount of party points a player has.
+ */
+uint GetPartyPointsMax(Critter& player)
+{
+    return (player.Stat[ST_CHARISMA] * 10) + (player.Skill[SK_SPEECH] / 3) + (player.Perk[PE_MAGNETIC_PERSONALITY] * 50) + (player.Trait[TRAIT_GOOD_NATURED] * 50);
+}
+
+/**
+ * Returns the amount of party points a player is currently using.
+ */
+uint GetPartyPointsUsed(Critter& player)
+{
+    array<Critter@> crits;
+    GetFollowers(player, true, crits);
+    uint            PointsUsed = 0;
+    for(uint i = 0; i < crits.length(); i++)
+        PointsUsed += GetPartyPoints(GetFollowerType(crits[i]));
+    return PointsUsed;
+}
+
+/**
+ * Check if a player can have any more followers in his global slots.
+ * @param player Target player.
+ * @param FollowerType Check if a follower with this type can join the party.
+ * @remarks There's a maximum of 25 slots, in practice however, maximum is lower.
+ */
+bool CanHaveMoreFollowers(Critter& player, uint FollowerType)
+{
+    if(player.Trait[TRAIT_LONER] == 1)
+        return false;
+
+    if(FollowerType == FOLLOWER_TYPE_SLAVE)
+    {
+        if(player.Trait[TRAIT_GOOD_NATURED] == 1)
+            return false;
+
+        uint Slaves = GetNumberOfType(player, FOLLOWER_TYPE_SLAVE);
+        return(Slaves < 2 + GetNumberOfMercs(player) + GetNumberOfCompanions(player));
+    }
+    else if(FollowerType == FOLLOWER_TYPE_BRAHMIN)
+    {
+        uint Brahmin = GetNumberOfType(player, FOLLOWER_TYPE_BRAHMIN);
+        return(Brahmin < 1 + (GetNumberOfType(player, FOLLOWER_TYPE_DOG) / 2));
+    }
+    else if(FollowerType == FOLLOWER_TYPE_MOLERAT)
+    {
+        uint Molerat = GetNumberOfType(player, FOLLOWER_TYPE_MOLERAT);
+        return(Molerat < 1 + (GetNumberOfType(player, FOLLOWER_TYPE_PIGRAT) / 2));
+    }
+    else
+    {
+        return GetPartyPointsUsed(player) + GetPartyPoints(FollowerType) <= GetPartyPointsMax(player);
+    }
+}
+
+/**
+ *
+ * @remarks If critter is not a follower, a null handle will be returned.
+ */
+Critter@ GetFollowersOwner(Critter& critter)
+{
+    if(!_IsFollower(critter))
+        return null;
+
+    return GetCritter(critter.FollowerVar[FV_MASTER]);
+}
+
+/**
+ * Check if the follower is close enough to a specific owner.
+ * @remarks Used in GetFollowerByBaseType to make sure follower is close enough.
+ */
+bool RightDistance(Critter& follower, Critter& owner)
+{
+    return(GetCrittersDistantion(owner, follower) < 7);
+}
+
+/**
+ * Check if a player has a follower of the specified basetype.
+ * @remarks Uses GetFollowerByBaseType, so RightDistance needs to return true.
+ */
+bool HasFollowerOfBaseType(Critter& owner, uint basetype)
+{
+    return(valid(GetFollowerByBaseType(owner, basetype)));
+}
+
+Critter@ GetFollowerByBaseType(Critter& owner, uint basetype)
+{
+    array<Critter@> crits;
+    uint            num = owner.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        // Here we check to see if the critter matches our criteria.
+        if(crits[i].CrType != basetype)
+            continue;
+
+        if(!IsOwnersFollower(owner, crits[i]))
+            continue;
+
+        if(!RightDistance(crits[i], owner))
+            continue;
+
+        return crits[i];
+    }
+    return null;
+}
+
+bool RemoveFollowerByBaseType(Critter& owner, uint basetype)
+{
+    Critter@ follower = GetFollowerByBaseType(owner, basetype);
+    if(!valid(follower))
+    {
+        DLog("Follower of this basetype not found, maybe he's out of range?");
+        return false;
+    }
+
+    DeleteNpc(follower);
+    if(valid(follower))
+    {
+        Log("Couldn't delete follower with BaseType " + basetype + " belonging to " + GetSafePlayerName(owner.Id) + ".");
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Retrieve the number of followers that a player has in active following mode (automatic or manual) on the same map as him/her.
+ */
+int GetNumberOfFollowingFollowersOfPlayer(Critter& player)
+{
+    array<Critter@> crits;
+    uint            numcrits = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    uint            followers = 0;
+
+    for(uint i = 0; i < numcrits; i++)
+    {
+        if(IsOwnersFollower(player, crits[i]) && IsFollowing(crits[i]))
+            followers++;
+    }
+    return followers;
+}
+
+/**
+ * Returns how many followers of any type a player has.
+ * This only includes how many the player has, regardless of where they are, as long as their corpses have not decayed.
+ */
+int GetNumberOfFollowersOfPlayer(Critter& player)
+{
+    uint followers = 0;
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(player.Followers[i] != 0)
+        {
+            DLog("Validating NPC " + player.Followers[i]);
+            Critter@ cr = GetCritter(player.Followers[i]);
+            if(!valid(cr) || cr.Cond == COND_DEAD)       // warn: need to change if followers are going to respawn
+            {
+                DLog("Dead or doesn't exist, removing");
+                player.FollowersBase[i] = 0;
+                continue;
+            }
+
+            if(IsOwnersFollower(player, cr))
+                followers++;
+        }
+    }
+    return followers;
+}
+
+uint GetSlaveTypes(Critter& player)
+{
+    array<Critter@> crits;
+    uint            numcrits = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    uint            types = 0;
+    for(uint i = 0; i < numcrits; i++)
+    {
+        if(IsOwnersFollower(player, crits[i])  && IsFollowing(crits[i]))
+        {
+            switch(crits[i].FollowerVar[FV_MERCID])
+            {
+            // TODO: Add defines.
+            case 12:
+                types |= SLAVE_MALE0;
+                break;
+            case 13:
+                types |= SLAVE_MALE1;
+                break;
+            case 14:
+                types |= SLAVE_MALE2;
+                break;
+            case 15:
+                types |= SLAVE_FEMALE0;
+                break;
+            case 16:
+                types |= SLAVE_FEMALE1;
+                break;
+            case 17:
+                types |= SLAVE_FEMALE2;
+                break;
+            case 20:
+                types |= SLAVE_CHILD;
+                break;
+            case 21:
+                types |= SLAVE_GENERIC_MALE;
+                break;
+            case 22:
+                types |= SLAVE_GENERIC_FEMALE;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    return types;
+}
+
+void ClearFollowersEnemy(Critter& player, Critter& target)
+{
+    array<Critter@> crits;
+    uint            numcrits = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+
+    for(uint i = 0; i < numcrits; i++)
+        if(IsOwnersFollower(player, crits[i]))
+        {
+            crits[i].EraseEnemyFromStack(target.Id);
+            crits[i].ErasePlane(AI_PLANE_ATTACK, true);
+        }
+}
+
+void AddFollowersEnemy(Critter& player, Critter& target)
+{
+    array<Critter@> crits;
+    uint            numcrits = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+
+    for(uint i = 0; i < numcrits; i++)
+        if(IsOwnersFollower(player, crits[i]))
+            crits[i].AddEnemyInStack(target.Id);
+}
+
+/**
+ * Returns the number of followers, regardless of owner on the map
+ */
+uint NumberOfFollowersOnMap(Map@ map)
+{
+    array<Critter@> crits;
+    uint            numcrits = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    uint            followers = 0;
+
+    for(uint i = 0; i < numcrits; i++)
+    {
+        if(_IsFollower(crits[i]))
+            followers++;
+    }
+    return followers;
+}
+
+uint GetFollowerType(Critter& critter)
+{
+    return critter.FollowerVar[FV_TYPE];
+}
+
+//
+/**
+ * Critter is no longer follower a follower.
+ * Removes the follower from a follower slot and assigns a neutral dialog.
+ * @return If successfully disbanded, true, otherwise false.
+ */
+bool DisbandFollower(Critter& player, Critter& cr, bool reset)
+{
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(player.Followers[i] == int(cr.Id))
+        {
+            cr.StatBase[ST_FREE_BARTER_PLAYER] = 0;
+            SetGroupInfo(cr, FACTION_UNKNOWN, 0, FACTION_MODE_PASSIVE);
+            cr.FollowerVarBase[FV_MASTER] = 0;
+            player.FollowersBase[i] = 0;
+
+            if(reset)
+            {
+                cr.StatBase[ST_DIALOG_ID] = (cr.FollowerVar[FV_LAST_DIALOG_ID] > 0 ? cr.FollowerVar[FV_LAST_DIALOG_ID] : DIALOG_all_traveller);
+                ClearEvents(cr);
+                _CritUnsetExtMode(cr, MODE_EXT_FOLLOWER);
+                cr.SetScript("");
+                cr.RefreshVisible();
+            }
+
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Assign follower's id to the list of followers.
+ */
+bool AddToFollowerlist(Critter& master, Critter& follower)
+{
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(master.Followers[i] == 0)
+        {
+            master.FollowersBase[i] = follower.Id;
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Makes the critter a follower to the specified owner.
+ */
+bool MakeFollower(Critter& critter, uint type, string& script, uint dialogid, Critter& owner, bool FreeBarter)
+{
+    if(script == "")
+        script = "follower@critter_init";
+
+    critter.FollowerVarBase[FV_MASTER] = owner.Id;
+    critter.FollowerVarBase[FV_TYPE] = type;
+    critter.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE; // yes
+    if(FreeBarter)
+        critter.StatBase[ST_FREE_BARTER_PLAYER] = owner.Id;
+
+    if(type == FOLLOWER_TYPE_COMPANION)
+    {
+        string crName = GetStoredName(critter);
+        SetLexem(critter, "$name", crName);
+    }
+
+    ClearEvents(critter);
+    DropDeleteEvent(critter);
+
+    critter.SetBagRefreshTime((uint(-1)));
+    critter.SetScript(script);
+    critter.FollowerVarBase[FV_LAST_DIALOG_ID] = critter.Stat[ST_DIALOG_ID];
+    critter.StatBase[ST_DIALOG_ID] = dialogid;
+    SetGroupIndex(critter, GetGroupIndex(owner));
+    _CritUnsetExtMode(critter, MODE_EXT_NO_DETERIORATION);
+    _CritUnsetMode(critter, MODE_NO_BARTER);
+    if(owner.Perk[PE_SPEAKER] != 0)
+        SETFLAG(critter.FollowerVarBase[FV_FLAGS], FV_FLAG_MASTER_SPEAKER);
+
+    bool assigned = AddToFollowerlist(owner, critter);
+    if(!assigned)
+        Log("Failed to assign NPC's id to master(" + owner.Id + ") followerlist");
+
+    critter.RefreshVisible();
+
+    return true;
+}
+
+// Locate critter based on IMerc handle and return critter handle
+Critter@ LocateFollowerByType(IMerc@ merc, Critter& owner)
+{
+    if(!valid(merc))
+    {
+        DLog("Invalid merc object");
+        return null;
+    }
+
+    array<Critter@> crits;
+    uint            num = owner.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetFollowerType(crits[i]) != merc.GetType())
+            continue;
+
+        if(IsOwnersFollower(owner, crits[i]))
+            return crits[i];
+    }
+    return null;
+}
+
+/**
+* Locate critter based on merc id and return critter handle
+*/
+Critter@ LocateFollowerByID(uint id, Critter& owner)
+{
+    array<Critter@> crits;
+    uint            num = owner.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        if(crits[i].FollowerVar[FV_MERCID] != int(id))
+            continue;
+
+        if(IsOwnersFollower(owner, crits[i]))
+            return crits[i];
+    }
+    return null;
+}
+
+int GetFollowers(Critter& player, Map@ map, array<Critter@>& followers)
+{
+    return GetFollowers(player, map, followers, false);
+}
+
+int GetFollowers(Critter& player, Map@ map, array<Critter@>& followers, bool OnlyIsSeen)
+{
+    if(!valid(map))
+        return -1;
+    int             followersn = 0;
+    array<Critter@> crits;
+    uint            n = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < n; i++)
+    {
+        if(IsOwnersFollower(player, crits[i]))
+        {
+            if(OnlyIsSeen && !player.IsSee(crits[i]))
+                continue;
+            followersn++;
+            followers.insertLast(crits[i]);
+        }
+    }
+    return followersn;
+}
+
+/**
+ * Retrieves followers belonging to player.
+ * @param	all		    if true, then all followers are put in table, if false then only the active ones.
+ * @param    followers   Array to hold the retrieved followers.
+ * @return   Number of followers found.
+ */
+int GetFollowers(Critter& player, bool all, array<Critter@>& followers)
+{
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(player.Followers[i] != 0)
+        {
+            Critter@ cr = GetCritter(player.Followers[i]);
+            if(!valid(cr))
+            {
+                player.FollowersBase[i] = 0;
+                continue;
+            }
+            if(all || IsFollowing(cr))
+                followers.insertLast(cr);
+        }
+    }
+    return followers.length();
+}
+/**
+ * Counts the followers, either all or 'active' (following) ones.
+ */
+uint CountFollowers(Critter& player, bool all)
+{
+    uint num = 0;
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(player.Followers[i] != 0)
+        {
+            Critter@ cr = GetCritter(player.Followers[i]);
+            if(!valid(cr))
+                continue;
+            if(all || (IsFollowing(cr) && (cr.GetMapId() == player.GetMapId())))
+                num++;
+        }
+    }
+    return num;
+}
+
+/**
+ * Counts the followers on a specific map.
+ *
+ * @return   Number of followers on the specific map belonging to player
+ */
+uint CountFollowers(Critter& player, Map@ map)
+{
+    uint            num = 0;
+    array<Critter@> crits;
+    uint            n = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < n; i++)
+        if(IsOwnersFollower(player, crits[i]))
+            num++;
+    return num;
+}
+
+/*@}*/
+#endif

@@ -1,0 +1,381 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_utils.fos
+//
+
+// Various client funcs
+// Compile with -client switch
+
+#ifndef __CLIENT_UTILS__
+#define __CLIENT_UTILS__
+
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "_colors.fos"
+#include "strtoint_h.fos"
+
+uint COLOR_RGB_STRING(string& r, string& g, string& b)
+{
+    return COLOR_RGBA_STRING(r, g, b, "255");
+}
+
+uint COLOR_RGBA_STRING(string& r, string& g, string& b, string& a)
+{
+    uint _r = 0;
+    uint _g = 0;
+    uint _b = 0;
+    uint _a = 0;
+
+    // JIC
+    r = ReplaceText(r, "\r", "");
+    r = ReplaceText(r, "\n", "");
+    g = ReplaceText(g, "\r", "");
+    g = ReplaceText(g, "\n", "");
+    b = ReplaceText(b, "\r", "");
+    b = ReplaceText(b, "\n", "");
+    a = ReplaceText(a, "\r", "");
+    a = ReplaceText(a, "\n", "");
+
+    StrToInt(r, _r);
+    StrToInt(g, _g);
+    StrToInt(b, _b);
+    StrToInt(a, _a);
+
+    return __GetColor(_r, _g, _b, _a);
+}
+
+void COLOR_RGB_UNPACK(uint color, uint8& r, uint8& g, uint8& b)
+{
+    r = (color >> 16) & 0xFF;
+    g = (color >> 8)  & 0xFF;
+    b = (color)       & 0xFF;
+}
+
+void COLOR_RGB_UNPACK(uint color, uint8& r, uint8& g, uint8& b, uint8& a)
+{
+    a = (color >> 24) & 0xFF;
+    r = (color >> 16) & 0xFF;
+    g = (color >> 8)  & 0xFF;
+    b = (color)       & 0xFF;
+}
+
+/***** START -- USED FOR READING CONFIG FILE SETTINGS -- START *****/
+
+bool string2bool(string@ text)   // Export
+// "1", "true", "yes", "on"
+{
+    if(!valid(text) || text == "")
+    {
+        // Message( "string2bool: <"+text+"> INVALID, false" );
+        return(false);
+    }
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    if(text == "1" || text == "true" || text == "yes" || text == "on")
+    {
+        // Message( "string2bool: <"+text+"> (len "+text.length()+") true" );
+        return(true);
+    }
+
+    // Message( "string2bool: <"+text+"> (len "+text.length()+") false" );
+    return false;
+}
+
+uint string2uint(string@ text)   // Export
+// "1207"
+{
+    if(!valid(text) || text == "")
+        return(0);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    int num = 0;
+    if(StrToInt(text, num))
+    {
+        if(num < 0)
+            return(0);
+        return(num);
+    }
+    ;
+
+    return(0);
+}
+
+int string2int(string& text)   // Export
+// "1207", "-1337"
+{
+    if(!valid(text) || text == "")
+        return(0);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    int num = 0;
+    if(StrToInt(text, num))
+        return(num);
+
+    return(0);
+}
+
+uint rgb_string2uint(string& text)   // Export
+// "0 255 0"
+{
+    if(text == "")
+        return(COLOR_RGB(0, 255, 0));
+
+    array<string@>@ rgb = split(text, " ");
+
+    if(rgb.length() != 3)
+        return(COLOR_RGB(0, 255, 0));
+
+    if((rgb[0].length() > 0) && (rgb[1].length() > 0) && (rgb[2].length() > 0))
+        return(COLOR_RGB_STRING(rgb[0], rgb[1], rgb[2]));
+    else
+        return(COLOR_RGB(0, 255, 0));
+}
+
+uint rgba_string2uint(string& text)   // Export
+// "255 0 0 255"
+{
+    if(text == "")
+        return(COLOR_RGB(0, 255, 0));
+
+    array<string@>@ rgba = split(text, " ");
+
+    if(rgba.length() != 4)
+        return(COLOR_RGB(0, 255, 0));
+
+    if((rgba[0].length() > 0) && (rgba[1].length() > 0) && (rgba[2].length() > 0) && (rgba[3].length() > 0))
+        return(COLOR_RGBA_STRING(rgba[0], rgba[1], rgba[2], rgba[3]));
+    else
+        return(COLOR_RGB(0, 255, 0));
+}
+
+uint font_string2uint(string& text)   // Export
+{
+    if(text == "")
+        return(FONT_FALLOUT);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    uint num = FONT_FALLOUT;
+    StrToInt(text, num);
+    if(num < FONT_SPECIAL || num > FONT_BIG)
+        return(FONT_FALLOUT);
+
+    return(num);
+}
+
+uint fontex_string2uint(string& text)   // Export
+{
+    if(text == "")
+        return(FONT_FALLOUT);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    uint num = FONT_FALLOUT;
+    if(StrToInt(text, num))
+    {
+        if(num < FONT_OLD_FO || num > FONT_BIG)
+            return(FONT_FALLOUT);
+
+        return(num);
+    }
+    ;
+    return(FONT_FALLOUT);
+}
+
+// returns:
+//  0 - nothing was changed
+//  1 - 'from' and 'to' set to same value : "5" -> 5, 5
+//  2 - 'from' and 'to' set to different values : "5 10" -> 5, 10
+uint range_string2uint(string& text, uint& from, uint& to)
+{
+    uint returns = 0;
+
+    if(text == "")
+        return(0);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    array<string@>@ range = splitEx(text, " ");
+
+    if(!valid(range) || range.length() == 0)
+        return(0);
+
+    if(range.length() >= 1)
+    {
+        uint _uint = string2uint(range[0]);
+
+        from = _uint;
+        to   = _uint;
+        returns++;
+
+        if(range.length() >= 2)
+        {
+            uint _uint = string2uint(range[1]);
+            to = _uint;
+            if(to < from)
+                to = from;
+
+            returns++;
+        }
+    }
+
+    return(returns);
+}
+
+// returns:
+//  0 - nothing was changed
+//  1 - 'from' and 'to' set to same value : "5" -> 5, 5
+//  2 - 'from' and 'to' set to different values : "-5 10" -> -5, 10
+uint range_string2int(string& text, int& from, int& to)
+{
+    uint returns = 0;
+
+    if(text == "")
+        return(0);
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    array<string@>@ range = splitEx(text, " ");
+
+    if(!valid(range) || range.length() == 0)
+        return(0);
+
+    if(range.length() >= 1)
+    {
+        int _int = string2uint(range[0]);
+
+        from = _int;
+        to   = _int;
+        returns++;
+
+        if(range.length() >= 2)
+        {
+            int _int = string2uint(range[1]);
+            to = _int;
+            if(to < from)
+                to = from;
+
+            returns++;
+        }
+    }
+
+    return(returns);
+}
+
+void vis_string2bool(string& text, bool& head, bool& msgbox)
+{
+    head = false;
+    msgbox = false;
+
+    if(text == "")
+        return;
+
+    // JIC
+    text = ReplaceText(text, "\r", "");
+    text = ReplaceText(text, "\n", "");
+
+    if(text == "head" || text ==  "both")
+        head = true;
+
+    if(text == "msgbox" || text == "both")
+        msgbox = true;
+}
+
+/***** END -- USED FOR READING CONFIG FILE SETTINGS -- END *****/
+
+string RandomString(uint8 length)
+{
+    string result = "";
+
+    if(length == 0)
+        return(result);
+
+    array<uint8> all;
+
+    for(uint8 ch = 'A'; ch < 'Z'; ch++)
+        all.insertLast(ch);
+    for(uint8 ch = 'a'; ch < 'z'; ch++)
+        all.insertLast(ch);
+    for(uint8 ch = '0'; ch < '9'; ch++)
+        all.insertLast(ch);
+
+    for(uint l = 0; l < length; l++)
+    {
+        result.resize(result.length() + 1);
+        result[result.length() - 1] = all[Random(0, all.length() - 1)];
+    }
+
+    return(result);
+}
+
+// split text into array<string> for specified width
+array<string@> splitDrawText(string& input, string& split, uint maxWidth, int font, int flags, uint spaceFirst = 0, uint space = 0)
+{
+    array<string@> result;
+
+    result.resize(0);
+    bool   newLine = true;
+    string currentLine = "";
+    int    currentWidth = 0, ignored = 0;
+    array<string@>@ words = splitEx(input, split);
+
+    for(uint currentWord = 0, wordsLength = words.length(); currentWord < wordsLength; currentWord++)
+    {
+        if(newLine)
+        {
+            currentWidth = 0;
+            currentLine = words[currentWord];
+
+            if(currentWord == 0)
+                for(uint s = 0; s < spaceFirst; s++)
+                    currentLine = " " + currentLine;
+
+            for(uint s = 0; s < space; s++)
+                currentLine = " " + currentLine;
+
+            GetTextInfo(currentLine, 0, 0, font, flags, currentWidth, /*th*/ ignored, /*lines*/ ignored);
+            newLine = false;
+        }
+        else
+        {
+            int wordWidth = 0;
+            GetTextInfo(" " + words[currentWord], 0, 0, font, flags, wordWidth, /*th*/ ignored, /*lines*/ ignored);
+            if(uint(currentWidth + wordWidth) > maxWidth)
+            {
+                result.insertLast(currentLine);
+                currentWord--;
+                newLine = true;
+            }
+            else
+            {
+                currentLine += " " + words[currentWord];
+                currentWidth += wordWidth;
+            }
+        }
+    }
+
+    if(currentLine.length() > 0)
+        result.insertLast(currentLine);
+
+    return(result);
+}
+#endif /* __CLIENT_UTILS__ */

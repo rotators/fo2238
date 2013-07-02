@@ -1,0 +1,57 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_GENDER = 1 #
+3 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+7 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_LHD_JUMPSUIT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_LHD_JUMPSUIT #
+5 4020 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_MALE_DEFAULT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_MALE_DEFAULT #
+5 4030 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_BHD_JUMPSUIT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_BHD_JUMPSUIT #
+6 4040 D _item p PID_BOTTLE_CAPS < 50 #
+0 4050 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+0 7020 &
+
+[engl]
+{100}{}{Barber}
+{200}{}{You see a barber.}
+{1000}{}{Predialogue installations}
+{1010}{}{female}
+{1020}{}{Answer text}
+{2000}{}{Good day, madam.@@Hello.}
+{3000}{}{[The barber looks at you happy.] Good day. How can I help you?}
+{3010}{}{Can you use your fabulous magick on my hair?}
+{3020}{}{I would like to have a pink colored beard. Can you do this?}
+{3030}{}{In no kind of way. Bye.}
+{4000}{}{Of course. This will cost you 50 caps. }
+{4010}{}{[You give him the 50 caps.] I want to have longer hair!@@Fine. [You give him the 50 caps.] I want to have longer hair!}
+{4020}{}{[You give him the 50 caps.] I want to have shorter hair!@@Fine. [You give him the 50 caps.] I want to have shorter hair!}
+{4030}{}{[You give him the 50 caps.] I want to have a bald head!@@Fine. [You give him the 50 caps.] I want to have a bald head!}
+{4040}{}{I don't have enough money.}
+{4050}{}{I totally changed my mind. Your presence interrupts my aura. Bye.}
+{5000}{}{That's exactly what I like to do! [He is fiddleing around in your hair. You have absolutly no clue what happens right now. After a few minutes, he seems to be done.] }
+{5010}{}{Thanks! See you later again. Maybe.}
+{6000}{}{Then I can't use my fabulous magick on your hair. I am sorry.}
+{6010}{}{I bet you suck anyway. Bye.}
+{6020}{}{Okay, I might come back later. See you.}
+{7000}{}{Er... Uh... I am sorry, but I can't do this.}
+{7010}{}{Okay... Can you use your fabulous magick on my head hair then?}
+{7020}{}{This sucks! I am going!}
+

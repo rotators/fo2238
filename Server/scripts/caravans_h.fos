@@ -1,0 +1,875 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// caravans_h.fos
+//
+
+#include "_macros.fos"
+#include "_dialogs.fos"
+#include "utils_h.fos"
+#include "serializator.fos"
+#include "groups_h.fos"
+#include "debug_h.fos"
+#include "economy_h.fos"
+#include "npc_common_h.fos"
+
+#define CARAVAN_ENTIRE    (125)       // Entire marker id where the caravan can spawn in towns
+
+// Caravan trader
+#define CARAVAN_TRADER    (67)        // PID
+#define CARAVAN_LEVEL     (10)        // Experience level
+#define CARAVAN_BAG       (1)         // Empty inventory
+
+#define WAGON1            (2527)
+
+#define STATE_WAITING     (0)
+#define STATE_PREPARE     (1)
+#define STATE_RUNNING     (2)
+
+/*uint[][] PositionDirs={
+        {0}, // POSITION_NONE
+   // Steps Path 1       Path 2
+        {1, 4,3,2,1,0,5, 2,3,4,5,0,1}, // POSITION_SURROUNDING
+        {1, 5,0,1,2,3,4, 1,0,5,4,3,2}, // POSITION_HUDDLE
+        {1, 4,           2}, // POSITION_WEDGE
+        {1, 5,           1}, // POSITION_CONE
+        {2, 1,2,         4,5}, // POSITION_DOUBLE_LINE
+        {2, 1,2,         4,5} // POSITION_STRAIGHT_LINE
+   };*/
+
+// item's (caravan spawnpoint) field that denotes id of assigned caravan
+#define _ID               # (item)     (item.Val1)
+
+#ifndef __MODULE__
+
+// imports from main module
+import ICaravan@ GetCaravan(uint id) from "caravans";
+import ICaravan@ GetCaravan(Critter& cr) from "caravans";
+
+import void InitCaravans() from "caravans";
+#endif
+
+import bool TakeNextLine(file& f, string& line) from "trains";
+import array<int>@ TakeNextNumLine(file & f) from "trains";
+
+/**
+ * Checks if given critter is leader of some caravan.
+ */
+bool IsCaravanLeader(Critter& cr)
+{
+    ICaravan@ caravan = GetCaravan(cr);
+    // Log("caravan> "+(valid(caravan)));
+    // Log("caravan1 "+(caravan.GetWMLeaderId())+ " "+cr.Id);
+    return valid(caravan) && (caravan.GetLeaderId() == cr.Id || caravan.GetWMLeaderId() == cr.Id);
+}
+
+/**
+ * Starts the caravan (sends it to the worldmap).
+ *
+ * @param leader        Npc that's the leader of the caravan.
+ */
+void CaravanStart(Critter& leader)
+{
+    ICaravan@ caravan = GetCaravan(leader.Id);
+    if(!valid(caravan))
+    {
+        Log("ERR: Couldn't start caravan, npc is not assigned to any of them.");
+        return;
+    }
+
+    caravan.Start();
+}
+
+void CaravanProcessStartFast()
+{}
+
+void CaravanProcessMove()
+{}
+/**
+ * Global interface for caravan objects
+ */
+shared interface ICaravan
+{
+    void Init();
+
+    uint GetState();
+
+    uint GetLeaderId();
+    uint GetWMLeaderId();
+
+    bool IsCaravanMember(Critter&);
+
+    ICaravan@ Route(uint16 origLoc, uint8 origMap, uint16 destLoc, uint8 destMap);
+    ICaravan@ Route(uint16 x, uint16 y);
+    ICaravan@ _AddNpc(uint16 pid, uint dialogId, uint bagId, uint level);
+
+    void Assign(Critter& cr);
+    void Leave(Critter& cr);
+    void GetCurrentCoords(float&, float&);
+    bool EndOfTrack();
+    void IncRoutePosition();
+
+    string GetName();
+    string GetNextDestinationName();
+    uint   GetActPay();
+    uint   GetDepartTime();
+
+
+    void Start();
+    void PrepareDeparture(uint);
+    void Arrive();
+    void PrepareRespawn();
+    void Respawn();
+};
+
+/**
+ * Descriptor for caravan npc.
+ */
+class CCaravanNpc
+{
+    uint16 Pid;
+    uint   DialogId;
+    uint   BagId;
+    uint   Level;
+
+    CCaravanNpc(uint16 pid, uint dialogId, uint bagId, uint level)
+    {
+        this.Pid = pid;
+        this.DialogId = dialogId;
+        this.BagId = bagId;
+        this.Level = level;
+    }
+};
+/**
+ * Route coordinate
+ */
+class Coord
+{
+    uint16 X;
+    uint16 Y;
+    Coord(uint16 x, uint16 y)
+    {
+        this.X = x;
+        this.Y = y;
+    }
+};
+
+
+
+
+
+class CRoute
+{
+    private uint         Id;
+    private uint         HeadId;
+    private uint         TailId;
+    private array<float> X;
+    private array<float> Y;
+
+    uint GetId()     { return Id; }
+    uint GetHeadId() { return HeadId; }
+    uint GetTailId() { return TailId; }
+
+    CRoute(uint id, uint headId, uint tailId)
+    {
+        Id = id;
+        HeadId = headId;
+        TailId = tailId;
+    }
+    uint  NodesCount()                         { return X.length(); }
+    float GetX(uint node)                      { return X[node]; }
+    float GetY(uint node)                      { return Y[node]; }
+    void  GetXY(uint node, float& x, float& y) { x = X[node]; y = Y[node]; }
+    void  AddNode(float x, float y)            { X.insertLast(x); Y.insertLast(y); }
+    bool  IsLast(uint idx)                     { return idx + 1 == NodesCount(); }
+};
+
+class CCaravanStation
+{
+    private uint      Id;
+    private Map@      MapPtr;
+    private Location@ LocPtr;
+
+    CCaravanStation(uint id, uint map_pid)
+    {
+        Id = id;
+        @MapPtr = GetMapByPid(map_pid, 0);
+        if(!valid(MapPtr))
+        {
+            WLog("trains", "wrong map pid=" + map_pid, DEBUG_ERROR);
+            return;
+        }
+        @LocPtr = MapPtr.GetLocation();
+    }
+
+    uint      GetId()       { return Id; }
+    float     GetX()        { return LocPtr.WorldX; }
+    float     GetY()        { return LocPtr.WorldY; }
+    Map@      GetMap()      { return MapPtr; }
+    Location@ GetLocation() { return LocPtr; }
+};
+
+
+class CaravanManager
+{
+    // id==index here
+    array<CRoute@>          Routes;
+    array<CCaravanStation@> Stations;
+    array<ICaravan@>        Caravans;
+
+    CCaravanStation@ GetStation(uint id)
+    {
+        if(id >= Stations.length())
+            return null;
+        return Stations[id];
+    }
+    ICaravan@ GetCaravan(uint id)
+    {
+        if(id >= Caravans.length())
+            return null;
+        return Caravans[id];
+    }
+    CRoute@ GetRoute(uint id)
+    {
+        if(id >= Routes.length())
+            return null;
+        return Routes[id];
+    }
+
+    void Load(string& filename)
+    {
+        Caravans.insertLast(null);
+        file f;
+
+        f.open(filename, "r");
+
+        // stations
+        array<int>@ data = TakeNextNumLine(f);
+        array<int>@ data1;
+        array<int>@ data2;
+        for(uint i = 0, j = data.length(); i < j; i++)
+        {
+            CCaravanStation@ station = @CCaravanStation(i, data[i]);
+            Stations.insertLast(station);
+        }
+        WLog("caravans", "loaded " + Stations.length() + " stations");
+
+        // routes
+        @data = TakeNextNumLine(f);
+        uint routes = data[0];
+        for(uint i = 0; i < routes; i++)
+        {
+            @data = TakeNextNumLine(f);
+            CRoute@ route = CRoute(i, data[0], data[1]);
+            Routes.insertLast(route);
+            for(uint k = 2; k < data.length(); k += 2)
+                route.AddNode(data[k], data[k + 1]);                                                // extra waypoints
+            CCaravanStation@ station = GetStation(data[1]);
+            route.AddNode(station.GetX(), station.GetY());
+        }
+        for(uint i = 0; i < routes; i++)
+        {
+            CRoute@ toInvert = Routes[i];
+            CRoute@ inverted = CRoute(i + routes, toInvert.GetTailId(), toInvert.GetHeadId());
+            for(int j = toInvert.NodesCount() - 2; j >= 0; j--)
+            {
+                float x = 0;
+                float y = 0;
+                toInvert.GetXY(j, x, y);
+                inverted.AddNode(x, y);
+            }
+            CCaravanStation@ station = GetStation(toInvert.GetHeadId());
+            inverted.AddNode(station.GetX(), station.GetY());
+            Routes.insertLast(inverted);
+        }
+        WLog("caravans", "loaded " + Routes.length() + " caravan routes");
+
+
+        // caravans
+        @data = TakeNextNumLine(f);
+        uint caravans = data[0];
+        for(uint i = 0; i < caravans; i++)
+        {
+            string name = "";
+            TakeNextLine(f, name);
+            @data = TakeNextNumLine(f);
+            @data2 = TakeNextNumLine(f);
+
+            @data1 = TakeNextNumLine(f);
+            // TakeNextLine(f,name);
+            CCaravan@ caravan = CCaravan(i + 1, data, data2, data1[0], data1[1], data1[2], data1[3], data1[4], name, this);
+            @data = TakeNextNumLine(f);
+            uint      townPid = data[0];
+            uint      townBag = data[1];
+
+            @data = TakeNextNumLine(f);
+            uint leaderPid = data[0];
+            uint leaderBag = data[1];
+
+            @data = TakeNextNumLine(f);
+            uint guardTypeCount = data.length() / 2;
+            array<uint>@ guardPids = array<uint>(guardTypeCount);
+            // guardPids.resize(guardTypeCount);
+            array<uint>@ guardBags = array<uint>(guardTypeCount);
+            // guardBags.resize(guardTypeCount);
+
+            for(uint k = 0, l = 0; k < guardTypeCount; k++)
+            {
+                guardPids[k] = data[l];
+                guardBags[k] = data[l + 1];
+                l += 2;
+            }
+            caravan.SetBagsAndPids(townPid, townBag, leaderPid, leaderBag, guardPids, guardBags);
+            Caravans.insertLast(caravan);
+        }
+        WLog("caravans", "loaded " + Caravans.length() + " caravans");
+
+        f.close();
+
+        // CreatingCaravans=true;
+        for(uint i = 1; i < Caravans.length(); i++)
+            Caravans[i].Init();
+        // CreatingCaravans=false;
+    }
+};
+
+
+
+
+
+/**
+ * Holds the caravan info
+ */
+class CCaravan : ICaravan
+{
+    // index of the caravan
+    uint            id;
+
+    CaravanManager@ mgr;
+
+    /** Ids of the players that joined caravan */
+    array<uint> players;
+    /** Ids of the npcs that run caravan (leader first). */
+    array<uint> critters;
+
+    // npcs descriptors
+    array<CCaravanNpc> npcs;
+
+    // caravan wagon (item pid)
+    uint wagon;
+
+    uint routeIndex;
+    uint routePosition;
+
+    uint originStationId;
+    uint destinationStationId;
+
+    /** Caravan destination's location pid. */
+    uint16 destLoc;
+    /** Map in destination location (index to the location maps list) */
+    uint8  destMap;
+    /** Origin location */
+    uint16 origLoc;
+    uint8  origMap;
+    /** Current location. Either origin or destination, or 0 (worldmap).*/
+    uint   currLoc;
+    uint8  currMap;
+
+    uint   entire;
+    uint   timeInTown;
+
+    uint   timeEvent;
+    uint   departure;
+
+    uint   state;
+
+    /** Actual target (index to the routes table). */
+    int          target;
+    array<Coord> route;
+
+    array<int>@ routes;
+    array<int>@ rewards;
+    string name;
+
+    uint   townDlg;
+    uint   wmDlg;
+
+    uint   townLeaderPid;
+    uint   townLeaderBag;
+    uint   leaderPid;
+    uint   leaderBag;
+    uint   factionId;
+    array<uint>@ guardPids;
+    array<uint>@ guardBags;
+
+    Serializator serializer;
+
+    CCaravan(uint id, array<int>@ routes, array<int>@ rewards, int entire, int timeInTown, int townDlg, int wmDlg, int factionId, string name, CaravanManager@ mgr)
+    {
+        this.id = id;
+        @this.routes = routes;
+        @this.rewards = rewards;
+        this.entire = entire;
+        this.timeInTown = timeInTown;
+        this.name = name;
+        this.townDlg = townDlg;
+        this.factionId = factionId;
+        this.wmDlg = wmDlg;
+        @this.mgr = mgr;
+        timeEvent = 0;
+    }
+
+    void SetBagsAndPids(uint townLeaderPid, uint townLeaderBag, uint leaderPid, uint leaderBag, array<uint>@ guardPids, array<uint>@ guardBags)
+    {
+        this.townLeaderPid = townLeaderPid;
+        this.townLeaderBag = townLeaderBag;
+        this.leaderPid = leaderPid;
+        this.leaderBag = leaderBag;
+        @this.guardPids = guardPids;
+        @this.guardBags = guardBags;
+    }
+
+    //
+    // Loads caravan data from anydata array
+    //
+    void LoadData()
+    {
+        serializer.Load("Caravan_" + id);
+        uint num = 0;
+
+        serializer.Get(routeIndex);
+        routeIndex = (routeIndex % routes.length());
+        // serializer.Get(routePosition);
+
+        // hired players
+        // serializer.Get(num);
+        // players.resize(num);
+        // for(uint i = 0; i < num; i++)
+        //	serializer.Get(players[i]);
+
+        // npcs
+        serializer.Get(num);
+        critters.resize(num);
+        for(uint i = 0; i < num; i++)
+            serializer.Get(critters[i]);
+
+        // actual target, pos?
+    }
+
+    void SetDefault()
+    {
+        routeIndex = 0;
+        // routePosition=0;
+    }
+    //
+    // Stores caravan data
+    //
+    void SaveData()
+    {
+        serializer.Clear();
+        uint num = 0;
+
+        serializer.Set(routeIndex);
+        // serializer.Set(routePosition);
+
+        /*
+           // hired players
+           num = players.length();
+           serializer.Set(num);
+           for(uint i = 0; i < num; i++)
+                serializer.Set(players[i]);
+         */
+        // critters
+        num = critters.length();
+        serializer.Set(num);
+        for(uint i = 0; i < num; i++)
+            serializer.Set(critters[i]);
+
+        // actual target, pos?
+
+        serializer.Save("Caravan_" + id);
+    }
+
+
+
+    /**
+     * Sets the caravan id.
+     */
+    void SetId(uint id)
+    {
+        this.id = id;
+    }
+    /**
+     * Initializes caravan.
+     *
+     */
+    void Init()
+    {
+        // return;
+        DLog("Caravan::Init: " + id);
+
+        if(IsAnyData("Caravan_" + id))
+        {
+            // read
+            LoadData();
+        }
+        else
+        {
+            // wagon = WAGON1;
+            SetDefault();
+            SaveData();
+        }
+
+        ClearCaravan();
+
+
+        SpawnCaravan();
+    }
+
+    void ClearCaravan()
+    {
+        for(uint i = 0, j = critters.length(); i < j; i++)
+        {
+            Critter@ cr = GetCritter(critters[i]);
+            if(valid(cr))
+                DeleteNpc(cr);
+        }
+        critters.resize(2);
+
+        CRoute@ actRoute = mgr.GetRoute(routes[routeIndex]);
+        originStationId = actRoute.GetHeadId();
+
+        destinationStationId = actRoute.GetTailId();
+    }
+
+    /**
+     * Spawns caravan on current map, at the point marked by spawnpoint item.
+     */
+    void SpawnCaravan()
+    {
+
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        Map@             map = origin.GetMap();
+        int[] params = { ST_DIALOG_ID, townDlg, ST_BAG_ID, townLeaderBag, ST_TEAM_ID, factionId, ST_FACTION_MODE, 1, MODE_NO_LOOT, 1, MODE_NO_STEAL, 1 };
+        uint16           x = 0;
+        uint16           y = 0;
+        map.GetEntireCoords(entire, 0, x, y);
+        Critter@         cr = map.AddNpc(townLeaderPid, x, y, 3, params, null, "caravans@_CaravanTownNpc");
+
+        if(!valid(cr))
+            return;
+        cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_MINUTE(1);
+        SetLvar(cr.Id, LVAR_caravan_id, id);
+
+        critters[0] = cr.Id;
+        critters[1] = 0;
+
+        state = STATE_WAITING;
+
+        uint fullSec = AFTER(GAME_MINUTE(timeInTown));
+        departure = fullSec - fullSec % 3600 + 3600;
+
+        array<uint> departData = { id, departure };
+        timeEvent = CreateTimeEvent(departure - 3600, "caravans@e_PrepareCaravan", departData, false);
+
+
+        /*
+           // get the current map
+           if(currLoc == 0)
+           {
+                Log("ERR: Can't spawn caravan on worldmap.");
+                return;
+           }
+
+           DLog("Spawning caravan at location: " + currLoc + "/" + currMap);
+           Location@ loc = GetLocationByPid(currLoc, 0);
+           Map@ map = loc.GetMapByIndex(currMap);
+
+           // get the spawnpoint
+           array<Item@> items;
+           uint num = map.GetItems(PID_CARAVAN_SPAWNPOINT, items);
+           if(num == 0)
+           {
+                Log("ERR: Couldn't find caravan spawnpoint in location: " + currLoc);
+                return;
+           }
+           uint16 x = 0, y = 0;
+           for(uint i = 0; i < num; i++)
+           {
+                if(uint(_ID(items[i])) == id)
+                {
+                        items[i].GetMapPosition(x, y);
+                        break;
+                }
+           }
+
+           DLog("Spawning " + npcs.length() + " npcs.");
+         */
+        // for(uint i = 0, j = npcs.length(); i < j; i++)
+        // {
+        // (obj.Pid,posX,posY,reversDir,obj.Dialog,obj.Script,aiPack,obj.Bag,teamId,false/*isMob*/,0/*NpcLevel*/);
+        //	AddNpc(map, npcs[i].Pid, x, y, Random(0,5), npcs[i].DialogId, "", 0, npcs[i].BagId, FACTION_FREE_TRADERS, false, npcs[i].Level); // TODO_TEAM: consult this team
+        // }
+
+    }
+
+    void PrepareDeparture(uint departTime)
+    {
+        state = STATE_PREPARE;
+        timeEvent = CreateTimeEvent(departTime, "caravans@e_DepartCaravan", id, false);
+        int[] params = { ST_DIALOG_ID, wmDlg, ST_BAG_ID, leaderBag, ST_TEAM_ID, factionId, ST_FACTION_MODE, 1 };
+
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        Map@             map = origin.GetMap();
+        Critter@         leader = map.AddNpc(leaderPid, 0, 0, 0, params, null, "caravans@_CaravanDriver");
+        SetLvar(leader.Id, LVAR_caravan_id, id);
+        leader.TransitToGlobal(false);
+        critters[1] = leader.Id;
+    }
+
+    void GetCurrentCoords(float& x, float& y)
+    {
+        CRoute@ route = mgr.GetRoute(routes[routeIndex]);
+        route.GetXY(routePosition, x, y);
+    }
+
+    bool EndOfTrack()
+    {
+        CRoute@ route = mgr.GetRoute(routes[routeIndex]);
+        return route.IsLast(routePosition);
+    }
+
+    void IncRoutePosition()
+    {
+        routePosition++;
+    }
+
+    /**
+     * Caravan leader's id
+     */
+    uint GetLeaderId()
+    {
+        return critters[0];
+    }
+
+    uint GetWMLeaderId()
+    {
+        return critters[1];
+    }
+
+    bool IsCaravanMember(Critter& crit)
+    {
+        if(crit.IsPlayer())
+        {
+            for(uint i = 0, j = players.length(); i < j; i++)
+            {
+                if(players[i] == crit.Id)
+                    return true;
+            }
+        }
+        else
+        {
+            for(uint i = 0, j = critters.length(); i < j; i++)
+            {
+                if(critters[i] == crit.Id)
+                    return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * Sets origin/destination.
+     */
+    ICaravan@ Route(uint16 origLoc, uint8 origMap, uint16 destLoc, uint8 destMap)
+    {
+        DLog("Route: " + origLoc + "/" + origMap + "->" + destLoc + "/" + destMap);
+        this.origLoc = origLoc;
+        this.origMap = origMap;
+        this.destLoc = destLoc;
+        this.destMap = destMap;
+        // will be changed after Load
+        this.currLoc = origLoc;
+        this.currMap = origMap;
+
+        return this;
+    }
+    /**
+     * Adds coordinate to the caravan route.
+     * First and last are not needed, as they're taken from origin/destination locations.
+     */
+    ICaravan@ Route(uint16 x, uint16 y)
+    {
+        route.insertLast(Coord(x, y));
+        return this;
+    }
+    /**
+     * Adds npc to caravan.
+     *
+     * @remarks Leader is first.
+     */
+    ICaravan@ _AddNpc(uint16 pid, uint dialogId, uint bagId, uint level)
+    {
+        npcs.insertLast(CCaravanNpc(pid, dialogId, bagId, level));
+        return this;
+    }
+    /**
+     * Assigns critter to caravan.
+     */
+    void Assign(Critter& cr)
+    {
+        GameVar@ var = GetLocalVar(LVAR_caravan_id, cr.Id);
+        var = id;
+        // follow mode
+        cr.StatBase[ST_FOLLOW_CRIT] = GetWMLeaderId();
+    }
+    /**
+     * Remove critter from caravan.
+     */
+    void Leave(Critter& cr)
+    {
+        if(cr.IsPlayer())
+        {
+            for(uint i = 0, j = players.length(); i < j; i++)
+            {
+                if(players[i] == cr.Id)
+                    players[i] = 0;
+            }
+        }
+        else
+        {
+            for(uint i = 0, j = critters.length(); i < j; i++)
+            {
+                if(critters[i] == cr.Id)
+                    critters[i] = 0;
+            }
+        }
+        GameVar@ var = GetLocalVar(LVAR_caravan_id, cr.Id);
+        var = 0;
+        // cr.StatBase[ST_FOLLOW_CRIT]=0;
+    }
+
+    uint GetState()
+    {
+        return state;
+    }
+
+    string GetName()
+    {
+        return name;
+    }
+
+    string GetNextDestinationName()
+    {
+        CCaravanStation@ destination = mgr.GetStation(destinationStationId);
+        return GetLocationName(destination.GetLocation());
+    }
+
+    uint GetActPay()
+    {
+        return rewards[routeIndex];
+    }
+
+    uint GetDepartTime()
+    {
+        return departure;
+    }
+
+    /**
+     * Starts the caravan route to the next target (destination, or way back to origin).
+     */
+    void Start()
+    {
+        Map@     map;
+        Critter@ townNpc = GetCritter(critters[0]);
+        if(valid(townNpc))
+        {
+            @map = townNpc.GetMap();
+            DeleteNpc(townNpc);
+        }
+        critters[0] = 0;
+        routePosition = 0;
+        state = STATE_RUNNING;
+
+        Critter@        wmNpc = GetCritter(critters[1]);
+        // Log("Departin "+critters[1]+" "+wmNpc.Id);
+        array<Critter@> crits = wmNpc.GetGlobalGroup();
+        uint            playerCount = crits.length() - 1;
+        players.resize(playerCount);
+        for(uint i = 1, j = crits.length(); i < j; i++)
+        {
+            players[i - 1] = crits[i].Id;
+            SetLvar(crits[i].Id, LVAR_caravan_id, id);
+            crits[i].Say(SAY_NETMSG, "You have departed with caravan.");
+        }
+
+        uint neededGuards = 9 - playerCount;
+        // Log("plaz "+playerCount);
+        critters.resize(2 + neededGuards);
+        if(valid(map))
+        {
+            uint guardTypeCount = guardPids.length();
+            for(uint i = 0; i < neededGuards; i++)
+            {
+                uint     guardType = Random(0, guardTypeCount - 1);
+                int[] params = { ST_BAG_ID, guardBags[guardType], ST_TEAM_ID, factionId, ST_FACTION_MODE, 1 };
+                Critter@ npc = map.AddNpc(guardPids[guardType], 1, 1, 0, params, null, "caravans@_CaravanGuard");
+                npc.ParamBase[ST_VAR1] = critters[1];
+                critters[2 + i] = npc.Id;
+                npc.TransitToGlobalGroup(GetWMLeaderId());
+                SetLvar(npc.Id, LVAR_caravan_id, id);
+            }
+        }
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        CCaravanStation@ destination = mgr.GetStation(destinationStationId);
+        Log(GetName() + " departed on its journey, from " + GetLocationName(origin.GetLocation()) + " to " + GetLocationName(destination.GetLocation()) + ".");
+    }
+
+    void Reward()
+    {
+        Critter@ leader = GetCritter(GetWMLeaderId());
+        if(valid(leader))
+        {
+            array<Critter@> crits = leader.GetGlobalGroup();
+            uint            playerCount = crits.length() - 1;
+            players.resize(playerCount);
+            for(uint i = 1, j = crits.length(); i < j; i++)
+            {
+                if(crits[i].IsPlayer())
+                {
+                    uint reward = GetActPay();
+                    BanksTransferToCritter(crits[i], reward, TRANSACTION_DEFAULT, false);
+                    crits[i].Say(SAY_NETMSG, "You have recieved " + reward + " caps as your pay.");
+                }
+            }
+        }
+    }
+
+    void Arrive()
+    {
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        CCaravanStation@ destination = mgr.GetStation(destinationStationId);
+        Log(GetName() + " successfully completed its journey, from " + GetLocationName(origin.GetLocation()) + " to " + GetLocationName(destination.GetLocation()) + ".");
+        Reward();
+        routeIndex = (routeIndex + 1) % routes.length();
+        ClearCaravan();
+        SpawnCaravan();
+    }
+
+    void PrepareRespawn()
+    {
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        CCaravanStation@ destination = mgr.GetStation(destinationStationId);
+        Log(GetName() + " failed its journey, from " + GetLocationName(origin.GetLocation()) + " to " + GetLocationName(destination.GetLocation()) + ".");
+        routeIndex = (routeIndex + 1) % routes.length();
+        ClearCaravan();
+        CreateTimeEvent(AFTER(REAL_MINUTE(7)), "caravans@e_RespawnCaravan", id, false);
+    }
+
+    void Respawn()
+    {
+        SpawnCaravan();
+        CCaravanStation@ origin = mgr.GetStation(originStationId);
+        Log(GetName() + " respawned in " + GetLocationName(origin.GetLocation()) + ".");
+    }
+};

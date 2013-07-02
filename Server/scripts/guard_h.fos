@@ -1,0 +1,25 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// guard_h.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#ifndef __GUARD_H__
+#define __GUARD_H__
+#include "messages_h.fos"
+
+import void GuardInit(Critter& guard) from "guard";
+import void GuardOnIdle(Critter& guard) from "guard";
+import void GuardOnSomeoneSteal(Critter& guard, Critter& fromCrit, Critter& target, bool success, Item& item, uint count) from "guard";
+import void GuardOnShowCritter(Critter& cr, Critter& target) from "guard";
+import void GuardOnMessage(Critter& guard, Critter& sender, int num, int val) from "guard";
+import void CheckHealing(Critter& cr) from "guard";
+import void GuardPerks(Critter& cr) from "guard";
+import bool DetectStealing(Critter& cr, Critter& target, Critter& thief) from "guard";
+import void CheckForWeapons(Critter& guard, Critter& crit) from "guard";
+
+import bool InWeaponAllowedZone(Critter@ cr) from "guard";   // unsafe
+#endif

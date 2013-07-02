@@ -1,0 +1,53 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_attributes.fos
+//
+
+// Used for management items that have many attributes.
+// Export templates:
+// import void SetItemAttribute(Item& item, int attribute) from "item_attributes";
+//   - attribute get from _animation.fos ATTRIBUTE_*.
+// import void SetSuitNumber(Item& suit, int number) from "item_attributes";
+//   - tibbets prison suit have 1..24 numbers;
+//   - vault suit have 13, 26, 29 numbers.
+
+#include "_defines.fos"
+#include "_animation.fos"
+#include "_math.fos"
+#include "ITEMPID.H"
+
+
+void SetItemAttribute(Item& item, int attribute)   // Export
+{
+    uint16 pid = item.GetProtoId();
+    if(pid == PID_MOTORCYCLE_HELMET)
+    {
+        // Inventory lst numbers 417..429
+        attribute = CLAMP(attribute, ATTRIBUTE_Head_Motorcycle_White, ATTRIBUTE_Head_Motorcycle_Skull);
+        item.Val7 = attribute;
+        item.PicInv = 417 + (attribute - ATTRIBUTE_Head_Motorcycle_White);
+        item.Update();
+    }
+}
+
+void SetSuitNumber(Item& suit, int number)   // Export
+{
+    uint16 pid = suit.GetProtoId();
+    if(pid == PID_TIBBETS_PRISON)
+    {
+        // Valid numbers 1..24
+        number = CLAMP(number, 1, 24);
+        suit.Val7 = number;
+        suit.Update();
+    }
+    else if(pid == PID_VAULT_SUIT)
+    {
+        // Valid numbers 13, 26, 29
+        if(number != 13 && number != 26 && number != 29)
+            number = 13;
+        suit.Val7 = number;
+        suit.Update();
+    }
+}

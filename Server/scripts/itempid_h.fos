@@ -1,0 +1,831 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// itempid_h.fos
+//
+
+#ifndef __ITEMPID_H__
+#define __ITEMPID_H__
+
+/*
+   \#define {[A-Za-z0-9_]+}[\ \t]+\({[0-9]+}\)
+   \t\1\t\t= \2,
+ */
+
+/***********
+* HELMETS *
+***********/
+
+enum HelmetLight
+{
+    PID_MOTORCYCLE_HELMET                           = 722,
+    PID_LEATHER_JACKET_HELMET                       = 728,
+    PID_COMBAT_LEATHER_JACKET_HELMET        = 729,
+    PID_LEATHER_ARMOR_HELMET                        = 730,
+    PID_LEATHER_ARMOR_HELMET_MK2            = 731
+};
+
+enum HelmetMetal // -> HelmetMedium
+{
+    PID_METAL_HELMET                                        = 732,
+    PID_METAL_HELMET_MK2                            = 733,
+    PID_TESLA_HELMET                                        = 734
+};
+enum HelmetCombat // -> HelmetMedium
+{
+    PID_COMBAT_HELMET                                       = 725,
+    PID_COMBAT_HELMET_MK_II                         = 726,
+    PID_BROTHERHOOD_HELMET                          = 727,
+    PID_ENCLAVE_COMBAT_HELMET                       = 738,
+    PID_ENCLAVE_COMBAT_HELMET_MK2           = 739
+};
+
+enum HelmetHeavy
+{
+    PID_POWER_HELMET                                        = 721,
+    PID_APA_HELMET                                          = 735,
+    PID_APA_HELMET_MK2                                      = 736,
+    PID_HARDENED_POWER_HELMET                       = 737
+};
+
+/***********
+* CLOTHES *
+***********/
+
+enum ArmorCloth
+{
+    PID_VAULT_13_SUIT                                       = 753,
+    PID_VAULT_SUIT                                          = 754,
+    PID_WORN_ROBE                                           = 755,
+    PID_BLUE_ROBE                                           = 756,
+    PID_RED_ROBE                                            = 757,
+    PID_GRAY_ROBE                                           = 758,
+    PID_MOBSTER_BLUE                                        = 759,
+    PID_MOBSTER_GRAY                                        = 760,
+    PID_CLOTHES_POLICE                                      = 761,
+    PID_CLOTHES_GENERIC1                            = 762,
+    PID_CLOTHES_GENERIC2                            = 763,
+    PID_CLOTHES_SCIENTIST1                          = 764,
+    PID_CLOTHES_SCIENTIST2                          = 765,
+    PID_CLOTHES_ELEGANT_SUIT                        = 766,
+    PID_CLOTHES_RAGS                                        = 767,
+    PID_CLOTHES_DWARF                                       = 768,
+    PID_CLOTHES_RED_SHIRT                           = 769,
+    PID_CLOTHES_DOCTOR                                      = 770,
+    PID_CLOTHES_CHILD                                       = 771,
+    PID_CLOTHES_GRAY_SHIRT                          = 772,
+    PID_CLOTHES_FAT1                                        = 773,
+    PID_CLOTHES_BOXER                                       = 774,
+    PID_SF_COMBAT_JACKET                            = 775,
+    PID_MORDINO_METAL_JACKET                        = 776,
+    PID_CLOTHES_GENERIC3                            = 777
+};
+
+/**********
+* ARMORS *
+**********/
+
+enum ArmorRobe
+{
+    PID_PURPLE_ROBE                                         = 113,
+    PID_KEEPBRIGE_ROBE                                      = 524,      // PID_BRIDGEKEEPERS_ROBE
+    PID_SAND_ROBE                                           = 750       // Has same stats as PID_PURPLE_ROBE
+};
+
+enum ArmorLight
+{
+    PID_LEATHER_ARMOR                                       = 1,
+    PID_LEATHER_JACKET                                      = 74,
+    PID_LEATHER_ARMOR_MK_II                         = 379,
+    PID_CURED_LEATHER_ARMOR                         = 265
+};
+
+enum ArmorMetal // -> ArmorMedium
+{
+    PID_METAL_ARMOR                                         = 2,
+    PID_TESLA_ARMOR                                         = 240,
+    PID_METAL_ARMOR_MK_II                           = 380
+};
+
+enum ArmorCombat // -> ArmorMedium
+{
+    PID_COMBAT_ARMOR                                        = 17,
+    PID_BROTHERHOOD_COMBAT_ARMOR            = 239,
+    PID_COMBAT_ARMOR_MK_II                          = 381,
+    PID_ENVIROMENTAL_ARMOR                          = 751,      // Test
+    PID_ENCLAVE_COMBAT_ARMOR                        = 752,
+    PID_NCR_ARMOR                                           = 9654
+};
+
+enum ArmorHeavy
+{
+    PID_POWERED_ARMOR                                       = 3,
+    PID_HARDENED_POWER_ARMOR                        = 232,
+    PID_ADVANCED_POWER_ARMOR                        = 348,
+    PID_ADVANCED_POWER_ARMOR_MK2            = 349
+};
+
+/*
+   enum ArmorWaitFor3d
+   {
+        PID_STRAWHAT						= 719,
+        PID_ARMIN_CAP						= 720,
+        PID_TIBBETS_PRISON					= 723,
+        PID_VAULT_SUIT2						= 724
+ */
+
+/***********
+* WEAPONS *
+***********/
+enum WeaponPistol // -> WeaponSmallGuns
+{
+    PID_10MM_PISTOL                     = 8,
+    PID_DESERT_EAGLE                    = 18,
+    PID_14MM_PISTOL                     = 22,
+    PID_9MM_MAUSER                      = 122,
+    PID_223_PISTOL                      = 241,
+    PID_ZIP_GUN                         = 300,
+    PID_44_MAGNUM_REVOLVER              = 313,
+    PID_44_MAGNUM_SPEEDLOADER           = 398,
+    PID_NEEDLER_PISTOL                  = 388,          // HN Needler
+    PID_PK12_GAUSS_PISTOL               = 394,          // 2mm EC
+    PID_DESERT_EAGLE_EXT_MAG            = 404
+};
+
+enum WeaponRifle // -> WeaponSmallGuns
+{
+    PID_HUNTING_RIFLE                                       = 10,
+    PID_ASSAULT_RIFLE                                       = 23,
+    PID_SNIPER_RIFLE                                        = 143,
+    PID_RED_RYDER_BB_GUN                            = 161,
+    PID_RED_RYDER_LE_BB_GUN                         = 162,
+    PID_JONNY_BB_GUN                                        = 261,
+    PID_SCOPED_HUNTING_RIFLE                        = 287,
+    PID_SPRINGER_RIFLE                                      = 299,
+    PID_FN_FAL                                                      = 351,
+    PID_INDEPENDENT                                         = 353,
+    PID_M72_GAUSS_RIFLE                                     = 392,      // 2mm EC
+    PID_FN_FAL_NIGHT_SCOPE                          = 403,
+    PID_ASSAULT_RIFLE_EXT_MAG                       = 405,
+    PID_FN_FAL_HPFA                                         = 500
+};
+
+enum WeaponShotgun // -> WeaponSmallGuns
+{
+    PID_SHOTGUN                                                     = 94,
+    PID_COMBAT_SHOTGUN                                      = 242,
+    PID_HK_CAWS                                                     = 268,
+    PID_PANCOR_JACKHAMMER                           = 354,
+    PID_SAWED_OFF_SHOTGUN                           = 385 // 12 ga.
+};
+
+enum WeaponSubmachine                                     // -> WeaponSmallGuns
+{
+    PID_10MM_SMG                                            = 9,
+    PID_TOMMY_GUN                                           = 283,
+    PID_HK_P90C                                                     = 296,
+    PID_GREASE_GUN                                          = 332,
+    PID_HK_G11                                                      = 352,
+    PID_HK_G11E                                                     = 391 // 4.7mm Caseless
+};
+
+enum WeaponFlamer                                                         // -> WeaponBigGuns
+{
+    PID_FLAMER                                                      = 11,
+    PID_IMPROVED_FLAMETHROWER                       = 400
+};
+
+enum WeaponMinigun                                                        // -> WeaponBigGuns
+{
+    PID_MINIGUN                                                     = 12,
+    PID_AVENGER_MINIGUN                                     = 389,        // 5mm JHP
+    PID_VINDICATOR_MINIGUN                          = 395,                // 4.7mm Caseless
+    PID_LIGHT_SUPPORT_WEAPON                        = 355,
+    PID_M60                                                         = 387 // 7.62
+};
+
+enum WeaponBigMisc                                                        // -> WeaponBigGuns
+{
+    PID_BOZAR                                                       = 350,
+    PID_ROCKET_LAUNCHER                                     = 13
+};
+
+enum WeaponLaser // -> WeaponEnergy
+{
+    PID_LASER_PISTOL                                        = 16,
+    PID_GATLING_LASER                                       = 28,
+    PID_LASER_RIFLE                                         = 118,
+    PID_ALIEN_LASER_PISTOL                          = 120,
+    PID_SOLAR_SCORCHER                                      = 390, // No ammo
+    PID_LASER_RIFLE_EXT_CAP                         = 401,
+    PID_MAGNETO_LASER_PISTOL                        = 402,
+    PID_DUAL_LASER_CANNON                           = 9659         // Vault City Gun Turret
+};
+
+enum WeaponPlasma                                                  // -> WeaponEnergy
+{
+    PID_PLASMA_RIFLE                                        = 15,
+    PID_PLASMA_PISTOL                                       = 24,
+    PID_TURBO_PLASMA_RIFLE                          = 233,
+    PID_PLASMA_PISTOL_EXT_CART                      = 406
+};
+
+enum WeaponPulse                                                          // -> WeaponEnergy
+{
+    PID_YK32_PULSE_PISTOL                           = 396,                // Small Energy
+    PID_YK42B_PULSE_RIFLE                           = 397                 // Micro Fusion
+};
+
+enum WeaponGrenade                                                        // -> WeaponThrowing
+{
+    PID_FRAG_GRENADE                                        = 25,         // Grouped
+    PID_PLASMA_GRENADE                                      = 26,         // Grouped
+    PID_PULSE_GRENADE                                       = 27          // Grouped
+};
+
+enum WeaponGrenadeFake                                                    // -> WeaponThrowing
+{
+    PID_FAKE_FRAG_GRENADE                           = 9674,               // Grouped
+    PID_FAKE_PLASMA_GRENADE                         = 9675                // Grouped
+};
+
+enum WeaponFlare                                                          // -> WeaponThrowing
+{
+    PID_FLARE                                                       = 79, // Grouped
+    PID_FLARE_GREEN                                         = 9721,       // Grouped
+    PID_FLARE_WHITE                                         = 9723,       // Grouped
+    PID_FLARE_YELLOW                                        = 9725        // Grouped
+};
+
+enum WeaponFlareActive                                                    // -> WeaponThrowing
+{
+    PID_ACTIVE_FLARE                                        = 205,        // Active
+    PID_ACTIVE_FLARE_GREEN                          = 9722,               // Active
+    PID_ACTIVE_FLARE_WHITE                          = 9724,               // Active
+    PID_ACTIVE_FLARE_YELLOW                         = 9726                // Active
+};
+
+enum WeaponThrowMisc                                                      // -> WeaponThrowing
+{
+    PID_ROCK                                                        = 19, // Grouped
+    PID_THROWING_KNIFE                                      = 45,         // Grouped
+    PID_MOLOTOV_COCKTAIL                            = 159,                // Grouped
+    PID_PLANT_SPIKE                                         = 365,        // Grouped
+    PID_GOLD_NUGGET                                         = 423,        // Grouped
+    PID_URANIUM_ORE                                         = 426,        // Grouped - USED FOR MICRO FUSION CELL CRAFTING!!
+    PID_REFINED_ORE                                         = 486,        // Grouped - USED FOR MICRO FUSION CELL CRAFTING!!
+    PID_DYNACORD                                            = 1834,       // Grouped
+    PID_FAKE_SUPER_SLEDGE                           = 9676,               // Grouped
+    PID_FAKE_SPEAR                                          = 9916,       // Grouped
+    PID_FAKE_THROWING_KNIFE                         = 9917                // Grouped
+};
+
+enum WeaponCut                                                            // -> WeaponMelee
+{
+    PID_KNIFE                                                       = 4,
+    PID_COMBAT_KNIFE                                        = 236,
+    PID_SWITCHBLADE                                         = 319,
+    PID_SHIV                                                        = 383,
+    PID_LIL_JESUS_WEAPON                            = 517,
+    PID_WAKIZASHI_BLADE                                     = 522
+};
+
+enum WeaponPrick // -> WeaponMelee
+{
+    PID_SPEAR                                                       = 7,
+    PID_SHARP_SPEAR                                         = 280,
+    PID_SHARPENED_POLE                                      = 320
+};
+
+enum WeaponShock // -> WeaponMelee
+{
+    PID_CLUB                                                        = 5,
+    PID_SLEDGEHAMMER                                        = 6,
+    PID_CROWBAR                                                     = 20,
+    PID_SUPER_SLEDGE                                        = 115,
+    PID_WRENCH                                                      = 384,
+    PID_LOUISVILLE_SLUGGER                          = 386
+};
+
+enum WeaponElectric // -> WeaponMelee
+{
+    PID_RIPPER                                                      = 116,
+    PID_CATTLE_PROD                                         = 160,
+    PID_SUPER_CATTLE_PROD                           = 399
+};
+
+enum WeaponPlasmaMelee // -> WeaponMelee
+{
+    PID_PLASMA_TORCH                                        = 610
+};
+
+enum WeaponUnarmed
+{
+    PID_BRASS_KNUCKLES                                      = 21,
+    PID_SPIKED_KNUCKLES                                     = 234,
+    PID_POWER_FIST                                          = 235,
+    PID_BOXING_GLOVES                                       = 292,
+    PID_PLATED_BOXING_GLOVES                        = 293,
+    PID_MEGA_POWER_FIST                                     = 407,
+    PID_RING_BOXING_GLOVES                          = 496,
+    PID_RING_PLATED_BOXING_GLOVES           = 497
+};
+
+enum WeaponSpecial
+{
+    PID_ROBO_ROCKET_LAUNCHER                        = 270,
+    PID_EYEBALL_FIST_1                                      = 290,
+    PID_EYEBALL_FIST_2                                      = 291,
+    PID_DEATHCLAW_CLAW_1                            = 371,
+    PID_DEATHCLAW_CLAW_2                            = 372,
+    PID_PHAZER                                                      = 393, // Small Energy
+    PID_HOLY_HAND_GRENADE                           = 421,                 // Grenade
+    PID_FIRE_GECKO_FLAME_WEAPON                     = 427,
+    PID_SPECIAL_BOXER_WEAPON                        = 489,
+    PID_GUN_TURRET_WEAPON                           = 498,
+    PID_DUAL_MINIGUN                                        = 518,
+    PID_HEAVY_DUAL_MINIGUN                          = 520,
+    PID_END_BOSS_KIFE                                       = 530,
+    PID_END_BOSS_PLASMA_GUN                         = 531
+};
+
+/********
+* AMMO *
+********/
+
+enum AmmunitionBullet
+{
+    PID_10MM_JHP                                            = 29,
+    PID_10MM_AP                                                     = 30,
+    PID_44_MAGNUM_JHP                                       = 31,
+    PID_14MM_AP                                                     = 33,
+    PID_223_FMJ                                                     = 34,
+    PID_5MM_JHP                                                     = 35,
+    PID_5MM_AP                                                      = 36,
+    PID_SHOTGUN_SHELLS                                      = 95,
+    PID_44_MAGNUM_FMJ                                       = 111,
+    PID_9MM_BALL                                            = 121,
+    PID_4_7MM_CASELESS                                      = 359,
+    PID_45_CALIBER_AMMO                                     = 357,
+    PID_2MM_EC_AMMO                                         = 358,
+    PID_9MM_AMMO                                            = 360,
+    PID_7_62MM_AMMO                                         = 363,
+    PID_22_AMMO                                                     = 850
+};
+
+enum AmmunitionCartridge
+{
+    PID_HN_NEEDLER_CARTRIDGE                        = 361,
+    PID_HN_AP_NEEDLER_CARTRIDGE                     = 362
+};
+
+enum AmmunitionFuel
+{
+    PID_FLAMETHROWER_FUEL                           = 32,
+    PID_FLAMETHROWER_FUEL_MK_II                     = 382
+};
+
+enum AmmunitionRocket
+{
+    PID_EXPLOSIVE_ROCKET                            = 14,
+    PID_ROCKET_AP                                           = 37
+};
+
+enum AmmunitionMisc
+{
+    PID_SMALL_ENERGY_CELL                           = 38,
+    PID_MICRO_FUSION_CELL                           = 39,
+    PID_BBS                                                         = 163
+};
+
+enum AmunitionSpecial
+{
+    PID_ROBO_ROCKET_AMMO                            = 274
+};
+
+/***************
+* CONSUMABLES *
+***************/
+
+enum ConsumableMedicine
+{
+    PID_STIMPAK                                                     = 40,
+    PID_RADAWAY                                                     = 48,
+    PID_ANTIDOTE                                            = 49,
+    PID_RAD_X                                                       = 109,
+    PID_SUPER_STIMPAK                                       = 144,
+    PID_JET_ANTIDOTE                                        = 260,
+    PID_HEALING_POWDER                                      = 273,
+    PID_HYPO                                                        = 525,
+    PID_WEAK_HEALING_POWDER                         = 9655
+};
+
+enum ConsumableAlcohol
+{
+    PID_NUKA_COLA                                           = 106,
+    PID_BEER                                                        = 124,
+    PID_BOOZE                                                       = 125,
+    PID_GAMMA_GULP_BEER                                     = 310,
+    PID_ROENTGEN_RUM                                        = 311,
+    PID_ROT_GUT                                                     = 469
+};
+
+enum ConsumableDrug
+{
+    PID_MENTATS                                                     = 53,
+    PID_BUFFOUT                                                     = 87,
+    PID_PSYCHO                                                      = 110,
+    PID_JET                                                         = 259
+};
+
+enum ConsumableFood
+{
+    PID_MUTATED_FRUIT                                       = 71,
+    PID_IGUANA_ON_A_STICK                           = 81,
+    PID_MEAT_ON_A_STICK                                     = 103,
+    PID_COOKIE                                                      = 378
+};
+
+enum ConsumableSpecial
+{
+    PID_HYPO_POISON                                         = 334,
+    PID_MONUMENT_CHUNCK                                     = 424,
+    PID_MUTATED_TOE                                         = 473,
+    PID_KITTY_SEX_DRUG_AGILITY                      = 480, // + 1 agility for 1 hr
+    PID_KITTY_SEX_DRUG_INTELLIGENCE         = 481,         // + 1 iq for 1 hr
+    PID_KITTY_SEX_DRUG_STRENGTH                     = 482  // + 1 strength for 1 hr
+};
+
+/**************
+* CONTAINERS *
+**************/
+
+enum ContainerPot
+{
+    PID_SMALL_POT                                           = 243,
+    PID_TALL_POT                                            = 244,
+    PID_CHEST                                                       = 245,
+    PID_OLIVE_POT                                           = 248,
+    PID_FLOWER_POT                                          = 249
+};
+
+enum ContainerIceChest
+{
+    PID_ICE_CHEST_LEFT                                      = 43,
+    PID_ICE_CHEST_RIGHT                                     = 44
+};
+
+enum ContainerAmmoCrate
+{
+    PID_LG_LT_AMMO_CRATE                            = 367,
+    PID_SM_LT_AMMO_CRATE                            = 368,
+    PID_LG_RT_AMMO_CRATE                            = 369,
+    PID_SM_RT_AMMO_CRATE                            = 370
+};
+
+enum ContainerFootlocker
+{
+    PID_FOOTLOCKER_CLEAN_LEFT                       = 128,
+    PID_FOOTLOCKER_RUSTY_LEFT                       = 129,
+    PID_FOOTLOCKER_CLEAN_RIGHT                      = 130,
+    PID_FOOTLOCKER_RUSTY_RIGHT                      = 131
+};
+
+enum ContainerLocker
+{
+    PID_LOCKER_CLEAN_LEFT                           = 132,
+    PID_LOCKER_RUSTY_LEFT                           = 133,
+    PID_LOCKER_CLEAN_RIGHT                          = 134,
+    PID_LOCKER_RUSTY_RIGHT                          = 135,
+    PID_WALL_LOCKER_CLEAN_LEFT                      = 136,
+    PID_WALL_LOCKER_CLEAN_RIGHT                     = 137,
+    PID_WALL_LOCKER_RUSTY_LEFT                      = 138,
+    PID_WALL_LOCKER_RUSTY_RIGHT                     = 139,
+    PID_LOCKER_7                                            = 188,
+    PID_LOCKER_8                                            = 189
+};
+
+enum ContainerBookcase
+{
+    PID_BOOKCASE_0                                          = 60,
+    PID_BOOKCASE_1                                          = 61,
+    PID_BOOKCASE_2                                          = 62,
+    PID_BOOKCASE_3                                          = 63,
+    PID_BOOKCASE_4                                          = 64,
+    PID_BOOKCASE_5                                          = 65,
+    PID_LEFT_ARROYO_BOOKCASE                        = 246,
+    PID_RIGHT_ARROYO_BOOKCASE                       = 247,
+};
+
+enum ContainerSafe
+{
+    PID_WALL_SAFE                                           = 501,
+    PID_FLOOR_SAFE                                          = 502,
+};
+
+enum ContainerDesk
+{
+    PID_DESK_0                                                      = 66,
+    PID_DESK_1                                                      = 67,
+    PID_DESK_3                                                      = 181,
+    PID_DESK_4                                                      = 182,
+    PID_DESK_5                                                      = 183,
+    PID_DESK_6                                                      = 184,
+    PID_DESK_7                                                      = 185,
+    PID_DESK_8                                                      = 186,
+    PID_DESK_9                                                      = 187,
+    PID_DESK_10                                                     = 214,
+};
+
+enum ContainerDresser
+{
+    PID_DRESSER_0                                           = 68,
+    PID_DRESSER_1                                           = 69,
+    PID_DRESSER_2                                           = 70,
+};
+
+enum ContainerWorkbench
+{
+    PID_WORKBENCH                                           = 157,
+    PID_TOOL_BOARD                                          = 158,
+    PID_ADVANCED_BENCH                                      = 9914
+};
+
+enum ContainerBookshelf
+{
+    PID_BOOKSELF_0                                          = 145,
+    PID_BOOKSELF_1                                          = 146,
+    PID_BOOKSELF_2                                          = 147,
+    PID_BOOKSELF_3                                          = 149,
+    PID_SHELVES_0                                           = 151,
+    PID_SHELVES_1                                           = 152,
+    PID_SHELVES_2                                           = 153,
+    PID_SHELVES_3                                           = 155,
+};
+
+enum ContainerBox
+{
+    PID_BOX_0                                                       = 197,
+    PID_BOX_1                                                       = 198,
+    PID_BOX_2                                                       = 199,
+    PID_BOX_3                                                       = 200,
+    PID_BOX_4                                                       = 201,
+    PID_BOX_5                                                       = 202,
+    PID_BOX_6                                                       = 203,
+    PID_BOX_7                                                       = 204,
+};
+
+enum ContainerTable
+{
+    PID_TABLE_0                                                     = 166,
+    PID_TABLE_1                                                     = 167,
+};
+
+enum ContainerTableStuff
+{
+    PID_STUFF_0                                                     = 168,
+    PID_STUFF_1                                                     = 169,
+    PID_STUFF_2                                                     = 170,
+    PID_STUFF_3                                                     = 171,
+    PID_STUFF_4                                                     = 172,
+    PID_STUFF_5                                                     = 173,
+    PID_STUFF_6                                                     = 174,
+    PID_STUFF_7                                                     = 175,
+    PID_STUFF_8                                                     = 176,
+    PID_STUFF_9                                                     = 177,
+    PID_STUFF_10                                            = 178,
+    PID_STUFF_11                                            = 179,
+};
+
+enum ContainerPoolTable
+{
+    PID_POOL_TABLE_1                                        = 510,
+    PID_POOL_TABLE_2                                        = 511,
+    PID_POOL_TABLE_3                                        = 512,
+    PID_POOL_TABLE_4                                        = 513,
+    PID_POOL_TABLE_5                                        = 514,
+    PID_POOL_TABLE_6                                        = 515,
+};
+
+enum ContainerGrave
+{
+    PID_GRAVESITE_1                                         = 344,
+    PID_GRAVESITE_2                                         = 345,
+    PID_GRAVESITE_3                                         = 346,
+    PID_GRAVESITE_4                                         = 347,
+    PID_LF_GRAVESITE_1                                      = 374,
+    PID_LF_GRAVESITE_2                                      = 375,
+    PID_LF_GRAVESITE_3                                      = 376,
+};
+
+enum ContainerBackpack
+{
+    PID_BAG                                                         = 46,
+    PID_BACKPACK                                            = 90,
+    PID_BROWN_BAG                                           = 93
+};
+
+enum ContainerBody
+{
+    PID_ALIEN_SIDE                                          = 107,
+    PID_ALIEN_FORWARD                                       = 108,
+    PID_VAULT_DWELLER_BONES                         = 211,
+    PID_REMAINSOF_GIZMO                                     = 213,
+    PID_HUMAN_BONES                                         = 250,
+    PID_DEAD_REDSHIRT_0                                     = 526,
+    PID_DEAD_REDSHIRT_1                                     = 527,
+    PID_DEAD_REDSHIRT_2                                     = 528,
+};
+
+enum ContainerWagon
+{
+    PID_WAGON_RED                                           = 434,
+    PID_WAGON_GREY                                          = 435,
+};
+
+enum ContainerCarBag
+{
+    PID_CAR_TRUNK                                           = 455,
+    PID_CARAVAN_WHITE_BAG                           = 603,
+    PID_CARAVAN_ORANGE_BAG                          = 604,
+    PID_HUMMER_BAG                                          = 801,
+    PID_VERTIBIRD_BAG                                       = 809,
+    PID_HIGHWAYMAN_BAG                                      = 817,
+    PID_BUGGY_BAG                                           = 818,
+    PID_SCOUT_BAG                                           = 819,
+    PID_BOAT_BAG                                            = 823,
+    PID_POLICE_BAG                                          = 9747,
+    PID_MOTORCYCLE_BAG                                      = 9926,
+    PID_FIRETRUCK_BAG                                       = 9928,
+    PID_TRUCK_BAG                                           = 9930,
+    PID_BARGE_BAG                                           = 9933,
+};
+
+enum ContainerMisc
+{
+    PID_FRIDGE                                                      = 42,
+    PID_IGUANA_STAND                                        = 165,
+    PID_CONTAINER_WOOD_CRATE                        = 180,
+    PID_CRASHED_VERTI_BIRD                          = 330,
+    PID_STONE_HEAD                                          = 425,
+    PID_HIDDEN_CONTAINER                            = 467,
+    PID_POOR_BOX                                            = 521,
+    PID_MINING_MACHINE                                      = 529,
+    PID_TOBACCO_BENCH                                       = 9636,
+    PID_CAMPFIRE                                            = 9913
+};
+
+/********
+* MISC *
+********/
+
+enum MiscKey
+{
+    #define PID_KEY                    (82)
+    #define PID_KEYS                   (83)
+    #define PID_RED_PASS_KEY           (96)
+    #define PID_BLUE_PASS_KEY          (97)
+    #define PID_NUKE_KEY               (105)
+    #define PID_YELLOW_PASS_KEY        (223)
+    #define PID_TEMPLE_KEY             (438)
+    #define PID_JAIL_KEY               (456)      // PID_CELL_DOOR_KEY
+};
+
+enum MiscMoney
+{
+    #define PID_BOTTLE_CAPS            (41)
+    #define PID_MORNING_STAR_MINE      (420)
+    #define PID_KOKOWEEF_MINE_SCRIP    (494)
+    #define PID_REAL_BOTTLE_CAPS       (519)
+    #define PID_DOLLAR                 (9715)
+};
+
+#ifdef __SERVER // for now, client does not have required ASEngine-related functions
+# ifndef ITEMPID_SKIP_IMPORTS
+#  ifndef __ITEMPID__
+
+#   define IMPORTS                                        \
+    # (isName, listName)                                  \
+    import bool PidIs ## isName(uint pid) from "itempid"; \
+    import uint PidList_ ## listName(array<uint>&pids) from "itempid"
+
+import string PidToName(uint pid) from "itempid";
+import uint   NameToPid(string& name) from "itempid";
+
+import string PidToGroupName(uint pid) from "itempid";
+import uint   GroupNameToPids(string& name, array<uint>& pids) from "itempid";
+import uint   GroupNameToNames(string& name, array<string>& pidNames) from "itempid";
+
+IMPORTS(Helmet, Helmets);
+
+IMPORTS(LightHelmet,  LightHelmets);
+IMPORTS(MetalHelmet,  MetalHelmets);
+IMPORTS(CombatHelmet, CombatHelmets);
+IMPORTS(HeavyHelmet,  HeavyHelmets);
+
+IMPORTS(Armor, Armors);
+
+IMPORTS(Cloth,       Clothes);
+IMPORTS(Robe,        Robes);
+IMPORTS(LightArmor,  LightArmors);
+IMPORTS(MetalArmor,  MetalArmors);
+IMPORTS(CombatArmor, CombatArmors);
+IMPORTS(HeavyArmor,  HeavyArmors);
+
+IMPORTS(Weapon, Weapons);
+
+IMPORTS(SpecialWeapon, SpecialWeapons);
+
+IMPORTS(SmallGun, SmallGuns);
+
+IMPORTS(Pistol,     Pistols);
+IMPORTS(Shotgun,    Shotguns);
+IMPORTS(Rifle,      Rifles);
+IMPORTS(Submachine, Submachines);
+
+IMPORTS(BigGun, BigGuns);
+
+IMPORTS(Flamer,     Flamers);
+IMPORTS(Minigun,    Miniguns);
+IMPORTS(BigGunMisc, BigGunsMisc);
+
+IMPORTS(EnergyWeapon, EnergyWeapons);
+
+IMPORTS(LaserWeapon,  LaserWeapons);
+IMPORTS(PlasmaWeapon, PlasmaWeapons);
+IMPORTS(PulseWeapon,  PulseWeapons);
+
+IMPORTS(ThrowingWeapon, ThrowingWeapons);
+
+IMPORTS(ThrowingMisc, ThrowingMisc);
+
+IMPORTS(Grenade, Grenades);
+
+IMPORTS(RealGrenade, RealGrenades);
+IMPORTS(FakeGrenade, FakeGrenades);
+
+IMPORTS(Flare, Flares);
+
+IMPORTS(InactiveFlare, InactiveFlares);
+IMPORTS(ActiveFlare,   ActiveFlares);
+
+IMPORTS(MeleeWeapon,       MeleeWeapons);
+
+IMPORTS(CuttingWeapon,     CuttingWeapons);
+IMPORTS(PrickingWeapon,    PrickingWeapons);
+IMPORTS(ShockingWeapon,    ShockingWeapons);
+IMPORTS(ElectricWeapon,    ElectricWeapons);
+IMPORTS(MeleePlasmaWeapon, MeleePlasmaWeapons);
+
+IMPORTS(UnarmedWeapon, UnarmedWeapons);
+
+IMPORTS(Ammunition, Ammunition);
+
+IMPORTS(SpecialAmmunition, SpecialAmmunition);
+
+IMPORTS(Bullet,         Bullets);
+IMPORTS(Cartridge,      Cartridges);
+IMPORTS(WeaponFulel,    WeaponFuel);
+IMPORTS(Rocket,         Rockets);
+IMPORTS(AmmunitionMisc, AmmunitionMisc);
+
+IMPORTS(Consumable, Consumables);
+
+IMPORTS(SpecialConsumable, SpecialConsumables);
+
+IMPORTS(Medicine, Medicines);
+IMPORTS(Alcohol,  Alcohol);
+IMPORTS(Drug,     Drugs);
+IMPORTS(Food,     Food);
+
+IMPORTS(Container, Containers);
+
+IMPORTS(Pot,           Pots);
+IMPORTS(IceChest,      IceChests);
+IMPORTS(AmmoCrate,     AmmoCrates);
+IMPORTS(Footlocker,    Footlockers);
+IMPORTS(Locker,        Lockers);
+IMPORTS(Bookcase,      Bookcases);
+IMPORTS(Safe,          Safes);
+IMPORTS(Desk,          Desks);
+IMPORTS(Workbench,     Workbenches);
+IMPORTS(Bookshelf,     Bookshelves);
+IMPORTS(Box,           Boxes);
+IMPORTS(Table,         Tables);
+IMPORTS(TableStuff,    TablesStuff);
+IMPORTS(PoolTable,     PoolTables);
+IMPORTS(Grave,         Graves);
+IMPORTS(Backpack,      Backpacks);
+IMPORTS(Body,          Bodies);
+IMPORTS(Wagon,         Wagons);
+IMPORTS(CarBag,        CarBags);
+IMPORTS(ContainerMisc, ContainersMisc);
+
+IMPORTS(Key, Keys);
+
+IMPORTS(Money, Moneys);
+#  endif // !__ITEMPID__
+# endif  // !ITEMPID_SKIP_IMPORTS
+#endif   // __SERVER
+#endif   // __ITEMPID_H__ //

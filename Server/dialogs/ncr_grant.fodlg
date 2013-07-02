@@ -1,0 +1,75 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _script map_ncr_downtown@d_InsideWestinRanch 0  #
+11 1020 D _var p q_ncr_westin_quest1 = 8 #
+10 1030 D _var p q_ncr_westin_quest1 = 7 #
+7 1040 D _var p name_mem_npc_player = 1 #
+2 1050 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+5 3010 #
+0 3020 @
+5 4000 None 0 #
+6 4010 #
+6 4020 #
+8 4030 D _var p q_ncr_westin_quest1_billboard > 0 #
+0 4040 @
+6 5000 None 0 #
+0 5010 @
+7 6000 None 0 #
+0 6010 R _var p q_ncr_westin_inside = 1 R _script dialog@r_TeleportToMap 2 45 4 #
+0 6020 @
+8 7000 None 0 #
+0 7010 R _var p q_ncr_westin_inside = 1 R _script dialog@r_TeleportToMap 2 45 4 R _var p name_mem_npc_player = 1 @
+9 8000 None 0 #
+0 8010 R _var p q_ncr_westin_inside = 0 R _script dialog@r_TeleportToMap 2 45 3 #
+0 8020 @
+10 9000 None 0 #
+11 9010 R _var p q_ncr_westin_quest1 = 8 R _param p REPUTATION_NCR - 50 @
+11 10000 None 0 &
+
+[engl]
+{100}{}{Grant}
+{200}{}{You see a guard.}
+{210}{}{You see Grant, the guard}
+{210}{}{You see a guard. His armor and weapons are in excellent condition.}
+{1000}{}{Predialogue installations}
+{1010}{}{Inside}
+{1020}{}{Westin Brahmin killed, talked to guard about it already}
+{1030}{}{Westin Brahmin killed}
+{1040}{}{entered once}
+{1050}{}{2}
+{2000}{}{This is private property, please move along.}
+{2010}{}{Excuse me but who lives here?}
+{2020}{}{All right, I'll be going.}
+{3000}{}{This is Westin Ranch, home of councilman Westin.}
+{3010}{}{I need to see the councilman, please.}
+{3020}{}{I see. Well, I'll be on my way.}
+{4000}{}{What business do you have with Mr. Westin?}
+{4010}{}{Uh...}
+{4020}{}{I would like to chat with Mr. Westin.}
+{4030}{}{I'm looking for work and I hear that he's hiring.}
+{4040}{}{Never mind, I'll come back later.}
+{5000}{}{Mr. Westin doesn't just 'chat' with anyone who walks in off the street. If you don't have specific business with him then I suggest you leave until such time as you do. Now please go away.}
+{5010}{}{Fine.}
+{6000}{}{Hello. Did you need to see Mr. Westin again?}
+{6010}{}{Yes.}
+{6020}{}{No.}
+{7000}{}{Hmm... I seem to remember something about work being available. All right, come on in. Don't cause any trouble though, I'll be watching you.}
+{7010}{}{[Continue]}
+{8000}{}{Are you ready to leave?}
+{8010}{}{Yes, I need to be going now.}
+{8020}{}{No, I'll hang around a bit longer.}
+{9000}{}{Councilman Westin told me to tell you that you are fired. Someone killed the brahmin that you were supposed to watch. Do you know anything about it?}
+{9010}{}{Uhm... yes.... err... in fact I do. After I had come to the field, I saw a group of starving tribals skinning the dead brahmin! There was too many of them, I couldn't do anything. I swear! }
+{10000}{}{Get out of here!}
+

@@ -1,0 +1,1049 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// trains.fos
+//
+
+#include "_macros.fos"
+#include "_dialogs.fos"
+#include "follower_common_h.fos"
+#include "MsgStr.h"
+#include "polygon_h.fos"
+#include "entire.fos"
+#include "_entires.fos"
+#include "_vals.fos"
+#include "debug_h.fos"
+#include "messages_h.fos"
+
+#define TRAINS_CFG           "config\\Trains.cfg"
+#define STR_LOCATION_NAME    # (_pid) ((100 + (_pid)) * 1000)
+
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+import void MoveGlobalGroup(Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed) from "globalmap_group";
+
+#define STATE_WAITING        (0)
+#define STATE_RUNNING        (1)
+
+#define WAGON_CAPACITY       (9)
+
+uint PassengersCount(Critter& cr)               { return cr.Stat[ST_VAR0]; }
+void ResetPassengersCount(Critter& cr)          { cr.StatBase[ST_VAR0] = 0; }
+void IncPassengersCount(Critter& cr, int count) { cr.StatBase[ST_VAR0] += count; }
+
+int  TrainState(Critter& cr)                  { return cr.Stat[ST_VAR1]; }
+void ChangeTrainState(Critter& cr, int state) { cr.StatBase[ST_VAR1] = state; }
+
+int  CurrTrack(Critter& cr)             { return cr.Stat[ST_VAR2]; }
+void SetCurrTrack(Critter& cr, int idx) { cr.StatBase[ST_VAR2] = idx; }
+
+int  CurrTarget(Critter& cr)             { return cr.Stat[ST_VAR3]; }
+void SetCurrTarget(Critter& cr, int idx) { cr.StatBase[ST_VAR3] = idx; }
+void IncCurrTarget(Critter& cr)          { cr.StatBase[ST_VAR3] += 1; }
+
+int  TrainId(Critter& cr)             { return cr.Stat[ST_VAR4]; }
+void SetTrainId(Critter& cr, int idx) { cr.StatBase[ST_VAR4] = idx; }
+
+uint NextHour() { return (__Hour + 1) % 24; }
+
+void AddBlocker(Map@ map, uint16 hx, uint16 hy)
+{
+    Item@ blocker = map.AddItem(hx, hy, PID_UNVISIBLE_BLOCK, 1);
+    SETFLAG(blocker.Flags, ITEM_BAD_ITEM);
+    blocker.Val8 = SPECIAL_ITEM_TRAIN_BLOCKER;
+    blocker.Update();
+}
+
+void AddTrainBlockers(Map@ map, Item@ train)
+{
+    // Relative to train position
+    array<int> blockers = { 29, -1, 28, -2, 26, -2, 27, -1, 22, -2, 23, -1, 24, -2, 25, -1, 14, -2, 15, -1, 16, -2, 17, -1, 18, -2, 19, -1, 20, -2, 21, -1, 0, -2, 1, -1, 2, -2, 3, -1, 4, -2, 5, -1, 6, -2, 7, -1, 8, -2, 9, -1, 10, -2, 11, -1, 12, -2, 13, -1, 14, -2, 15, -1, -30, -2, -29, -1, -28, -2, -27, -1, -26, -2, -25, -1, -24, -2, -23, -1, -22, -2, -21, -1, -20, -2, -19, -1, -18, -2, -17, -1, -16, -2, -16, -2, -15, -1, -15, -1, -14, -2, -13, -1, -12, -2, -11, -1, -10, -2, -9, -1, -8, -2, -7, -1, -6, -2, -5, -1, -4, -2, -3, -1, -2, -2, -1, -1, 30, -1, -32, -1, -31, -1, -32, 0, -32, 1, -31, 2, -30, 2, -29, 2, -28, 2, -27, 2, -26, 2, -25, 2, -24, 2, -23, 2, -22, 2, -21, 2, -20, 2, -19, 2, -18, 2, -17, 2, -17, 2, -16, 2, -16, 2, -15, 2, -14, 2, -13, 2, -12, 2, -11, 2, -10, 2, -9, 2, -8, 2, -7, 2, -6, 2, -5, 2, -4, 2, -3, 2, -2, 2, -1, 2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2, 10, 2, 11, 2, 12, 2, 13, 2, 13, 2, 14, 2, 14, 2, 15, 2, 16, 2, 17, 2, 18, 2, 19, 2, 20, 2, 21, 2, 22, 2, 23, 2, 24, 2, 25, 2, 26, 2, 27, 2, 28, 2, 30, 2, 29, 2, 31, 2, 31, 1, 31, 0 };
+    for(uint i = 0, j = blockers.length(); i < j; i += 2)
+    {
+        AddBlocker(map, train.HexX - blockers[i], train.HexY - blockers[i + 1]);
+    }
+}
+
+void RemoveTrainBlockers(Map@ map)
+{
+    array<Item@> blockers;
+    for(uint i = 0, j = map.GetItems(PID_UNVISIBLE_BLOCK, blockers); i < j; i++)
+        if(blockers[i].Val8 == SPECIAL_ITEM_TRAIN_BLOCKER)
+            DeleteItem(blockers[i]);
+}
+
+class TrainStop // used only for displaying data
+{
+    uint  Destination;
+    uint8 Hour;
+    TrainStop(uint destination, uint8 hour)
+    {
+        Destination = destination;
+        Hour = hour;
+    }
+    bool Less(TrainStop& other)
+    {
+        if(this.Destination < other.Destination)
+            return true;
+        if(this.Destination > other.Destination)
+            return false;
+        return this.Hour < other.Hour;
+    }
+    void Swap(TrainStop& stop)
+    {
+        uint  tmp = this.Destination;
+        uint8 tmp2 = this.Hour;
+        this.Destination = stop.Destination;
+        this.Hour = stop.Hour;
+        stop.Destination = tmp;
+        stop.Hour = tmp2;
+    }
+};
+
+class CSchedule            // used only for displaying data
+{
+    // friend class CStation; oh wait.
+    uint             Id;   // train id
+    array<TrainStop> Stops;
+    CSchedule(uint id, array<uint8>&hours, array<uint>&destinations)
+    {
+        Id = id;
+        for(uint i = 0, j = hours.length(); i < j; i++)
+            Stops.insertLast(TrainStop(destinations[i], hours[i]));
+    }
+    void SortStops()
+    {
+        for(uint i = 0; i < Stops.length(); i++)
+        {
+            uint min = i;
+            for(uint j = i + 1; j < Stops.length(); j++)
+                if(Stops[j].Less(Stops[min]))
+                    min = j;
+            if(min != i)
+                Stops[i].Swap(Stops[min]);
+        }
+    }
+};
+
+class CStation
+{
+    private uint              Id;
+    private Map@              MapPtr;
+    private Location@         LocPtr;
+    private array<uint>       InboundArray;
+    private array<uint>       WaitingArray;
+    private array<CSchedule@> Schedules;
+    private array<string@>    SchedulesStrings;
+    private IPolygon@         Polygon;
+
+    CStation(uint id, uint map_pid)
+    {
+        Id = id;
+        @MapPtr = GetMapByPid(map_pid, 0);
+        if(!valid(MapPtr))
+        {
+            WLog("trains", "wrong map pid=" + map_pid, DEBUG_ERROR);
+            return;
+        }
+        @LocPtr = MapPtr.GetLocation();
+        @Polygon = LoadShapeFromEntires(MapPtr, ENTIRE_TRAIN_AREA_BEGIN, ENTIRE_TRAIN_AREA_END);
+    }
+
+    uint      GetId()       { return Id; }
+    float     GetX()        { return LocPtr.WorldX; }
+    float     GetY()        { return LocPtr.WorldY; }
+    Map@      GetMap()      { return MapPtr; }
+    Location@ GetLocation() { return LocPtr; }
+
+    uint WaitingCount()     { return WaitingArray.length(); }
+    uint GetWaiting(uint i) { return WaitingArray[i]; }
+
+    void Inbound(CTrain& train)
+    {
+        // assert no duplicates
+        for(uint i = 0, j = InboundArray.length(); i < j; i++)
+        {
+            if(Mgr.GetTrain(InboundArray[i]).GetId() == train.GetId())
+            {
+                WLog("trains", "train already inbound, train id=" + train.GetId() + ", station id=" + Id + ", hour" + __Hour, DEBUG_WARNING);
+                return;
+            }
+        }
+        InboundArray.insertLast(train.GetId());
+        return;
+    }
+
+    void Enter(CTrain& train)
+    {
+        bool found = false;
+        for(uint i = 0, j = InboundArray.length(); i < j; i++)
+        {
+            if(Mgr.GetTrain(InboundArray[i]).GetId() == train.GetId())
+            {
+                InboundArray.removeAt(i);
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            WLog("trains", "Train enters, but not inbound, train id=" + train.GetId() + ", station id=" + Id + ", hour" + __Hour, DEBUG_WARNING);
+
+        // assert no duplicates
+        for(uint i = 0, j = WaitingArray.length(); i < j; i++)
+        {
+            if(Mgr.GetTrain(WaitingArray[i]).GetId() == train.GetId())
+            {
+                WLog("trains", "train already waiting, train id=" + train.GetId() + ", station id=" + Id + ", hour" + __Hour, DEBUG_WARNING);
+                return;
+            }
+        }
+        WaitingArray.insertLast(train.GetId());
+        if(WaitingArray.length() == 1)
+            OnTrainEnter();
+        return;
+    }
+
+    void Leave(CTrain& train)
+    {
+        bool found = false;
+        for(uint i = 0, j = WaitingArray.length(); i < j; i++)
+        {
+            if(Mgr.GetTrain(WaitingArray[i]).GetId() == train.GetId())
+            {
+                WaitingArray.removeAt(i);
+                if(WaitingArray.length() == 0)
+                    OnTrainLeave();
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            WLog("trains", "Train leaves, but not waiting, train id=" + train.GetId() + ", station id=" + Id + ", hour" + __Hour, DEBUG_WARNING);
+    }
+
+    void OnTrainEnter()     // no guarantees on current state
+    {
+        array<Entire> entires;
+        ::ParseEntires(MapPtr, entires, ENTIRE_TRAIN);
+        if(entires.length() == 0)
+            return;
+        if(valid(MapPtr.GetItem(entires[0].HexX, entires[0].HexY, PID_TRAIN2)))
+            return;
+
+        // slaughter!
+        array<Critter@> crits;
+        for(uint i = 0, j = MapPtr.GetCritters(0, FIND_ALL, crits); i < j; i++)
+        {
+            Critter@ cr = crits[i];
+            if(!Polygon.IsWithin(cr))
+                continue;
+
+            if(cr.IsNpc())
+            {
+                uint   mapId = 0;
+                uint16 hx = 0, hy = 0;
+                uint8  dir = 0;
+                cr.GetHomePos(mapId, hx, hy, dir);
+                if(MapPtr.Id == mapId)
+                {
+                    cr.TransitToHex(hx, hy, dir);
+                    continue;
+                }
+            }
+            else
+                cr.Say(SAY_NETMSG, "You couldn't get off the rails fast enough and the train killed you.");
+
+            cr.ToDead(ANIM2_DEAD_BACK, null);
+        }
+
+        Item@ train = MapPtr.AddItem(entires[0].HexX, entires[0].HexY, PID_TRAIN2, 1);
+        AddTrainBlockers(MapPtr, train);
+    }
+
+    void OnTrainLeave()     // no guarantees on current state
+    {
+        array<Entire> entires;
+        ::ParseEntires(MapPtr, entires, ENTIRE_TRAIN);
+
+        if(entires.length() == 0)
+            return;
+        Item@ item = MapPtr.GetItem(entires[0].HexX, entires[0].HexY, PID_TRAIN2);
+        if(!valid(item))
+            return;
+        DeleteItem(item);
+        RemoveTrainBlockers(MapPtr);
+    }
+
+    void AddTrainSchedule(uint id, array<uint8>& hours, array<uint>& destinations)
+    {
+        CSchedule@ schedule = CSchedule(id, hours, destinations);
+        Schedules.insertLast(schedule);
+    }
+
+    array<string@> GetSchedulesStrings()
+    {
+        return this.SchedulesStrings;
+    }
+
+    void MakeSchedulesStrings()
+    {
+        for(uint i = 0, j = Schedules.length(); i < j; i++)
+        {
+            CTrain@ train = Mgr.GetTrain(Schedules[i].Id);
+            Schedules[i].SortStops();
+            string  s = "The train \"" + train.GetName() + "\": ";
+            int     state = 0;
+            for(uint k = 0; k < Schedules[i].Stops.length(); k++)
+            {
+                state = 0;
+                if(k + 1 == Schedules[i].Stops.length())
+                    state = 2;
+                else if(Schedules[i].Stops[k + 1].Destination != Schedules[i].Stops[k].Destination)
+                    state = 1;
+                if(state == 0)
+                {
+                    if(k != 0)
+                        s += ", ";
+                }
+                else
+                    s += " and ";
+
+                s += Schedules[i].Stops[k].Hour + ":00";
+                if(state != 0)
+                {
+                    s += " (to " + Mgr.GetStation(Schedules[i].Stops[k].Destination).GetNameTag() + ")";
+                    if(state == 1)
+                        s += ", ";
+                    else
+                        s += ".";
+                }
+            }
+            SchedulesStrings.insertLast(s);
+        }
+    }
+
+    string GetNameTag()
+    {
+        return "@msg gm " + STR_LOCATION_NAME(LocPtr.GetProtoId()) + "@";
+    }
+};
+
+class CTrack
+{
+    private uint         Id;
+    private uint         HeadId;
+    private uint         TailId;
+    private array<float> X;
+    private array<float> Y;
+
+    uint GetId()     { return Id; }
+    uint GetHeadId() { return HeadId; }
+    uint GetTailId() { return TailId; }
+
+    CTrack(uint id, uint headId, uint tailId)
+    {
+        Id = id;
+        HeadId = headId;
+        TailId = tailId;
+    }
+    uint  NodesCount()                         { return X.length(); }
+    float GetX(uint node)                      { return X[node]; }
+    float GetY(uint node)                      { return Y[node]; }
+    void  GetXY(uint node, float& x, float& y) { x = X[node]; y = Y[node]; }
+    void  AddNode(float x, float y)            { X.insertLast(x); Y.insertLast(y); }
+    bool  IsLast(uint idx)                     { return idx + 1 == NodesCount(); }
+};
+
+class CLane
+{
+    // train starts at Stations[0] and leaves Station[i] at Hours[i] hour
+    private uint         Id;
+    private array<uint>  Stations;
+    private array<uint8> Hours;
+
+    CLane(uint id)
+    {
+        Id = id;
+    }
+
+    uint      GetId()              { return Id; }
+    uint      StationsCount()      { return Stations.length(); }
+    CStation@ GetStation(uint idx) { return Mgr.GetStation(Stations[idx]); }
+    uint8     GetHour(uint idx)    { return Hours[idx]; }
+    void      AddStop(uint station, uint8 hour)
+    {
+        Stations.insertLast(station);
+        Hours.insertLast(hour);
+    }
+};
+
+class CTrain
+{
+    private uint    Id;
+    private uint    Lane;
+    private uint    LaneIndex;
+    array<Critter@> Wagons;     // aka conductors
+    private string  Name;
+
+    uint GetId()        { return Id; }
+    uint GetLaneIndex() { return LaneIndex; }
+
+    CTrain(uint id, uint wagons, uint lane, string & name)
+    {
+        Id = id;
+        Lane = lane;
+        Name = name;
+        Wagons.resize(wagons);
+    }
+
+    CLane@ GetLane()
+    {
+        return Mgr.GetLane(Lane);
+    }
+
+    uint WagonCount() { return Wagons.length(); }
+
+    Critter@ GetWagon(uint n)
+    {
+        if(n >= WagonCount())
+            return null;
+        return Wagons[n];
+    }
+
+    uint GetState(uint wagon)
+    {
+        return TrainState(Wagons[wagon]);
+    }
+
+    uint GetState()
+    {
+        for(uint i = 0, j = WagonCount(); i < j; i++)
+            if(GetState(i) == STATE_RUNNING)
+                return STATE_RUNNING;
+        return STATE_WAITING;
+    }
+
+    string GetName() { return Name; }
+
+    uint GetStartStation()
+    {
+        CLane@ lane = GetLane();
+        uint   idx = 0;
+        uint   best = 24;
+        uint   hour = NextHour();
+        for(uint i = 0, j = lane.StationsCount(); i < j; i++)     // minimize the time of next departure
+        {
+            uint nhour = lane.GetHour(i);
+            if(nhour < hour)
+                nhour += 24;
+            nhour -= hour;
+            if(nhour < best)
+            {
+                best = nhour;
+                idx = i;
+            }
+        }
+        return idx;
+    }
+
+    CStation@ GetCurrentStation()
+    {
+        return Mgr.GetStation(GetLane().GetStation(LaneIndex).GetId());
+    }
+
+    uint NextLaneIndex()
+    {
+        return (LaneIndex + 1) % GetLane().StationsCount();
+    }
+
+    CStation@ GetNextStation()
+    {
+        return Mgr.GetStation(GetLane().GetStation(NextLaneIndex()).GetId());
+    }
+
+    void Init()
+    {
+        LaneIndex = GetStartStation();
+        CLane@    lane = GetLane();
+        CStation@ start = lane.GetStation(LaneIndex);
+        Map@      map = start.GetMap();
+        for(uint i = 0, j = Wagons.length(); i < j; i++)
+        {
+            @Wagons[i] = Mgr.MakeWagon(map);
+            SetTrainId(Wagons[i], Id);
+        }
+        Inbound(start);
+        Enter(start);
+    }
+
+    uint8 GetDepartureHour()
+    {
+        return GetLane().GetHour(LaneIndex);
+    }
+
+    void CheckDeparture()
+    {
+        if(GetState() == STATE_WAITING && GetDepartureHour() == __Hour)
+            Depart();
+    }
+
+    void Depart()
+    {
+        CStation@ current = GetCurrentStation();
+        CStation@ next = GetNextStation();
+        Leave(current);
+        Inbound(next);
+        CTrack@ track = Mgr.FindTrack(current.GetId(), next.GetId());
+        for(uint i = 0, j = WagonCount(); i < j; i++)
+        {
+            SetCurrTrack(Wagons[i], track.GetId());
+            SetCurrTarget(Wagons[i], 0);
+            ChangeTrainState(Wagons[i], STATE_RUNNING);
+        }
+        // control passed to critter-wagons
+    }
+
+    void Inbound(CStation& station) { station.Inbound(this); }     // what a wrapper
+    void Enter(CStation& station)   { station.Enter(this); }       // what a wrapper
+    void Leave(CStation& station)   { station.Leave(this); }       // what a wrapper
+
+    void AllArrived()
+    {
+        LaneIndex = NextLaneIndex();
+        Enter(GetCurrentStation());
+    }
+
+    void CheckArrival()
+    {
+        if(GetState() == STATE_WAITING)
+            AllArrived();
+    }
+};
+
+class TrainManager
+{
+    // id==index here
+    array<CTrack@>   Tracks;
+    array<CLane@>    Lanes;
+    array<CStation@> Stations;
+    array<CTrain@>   Trains;
+
+    CTrack@ GetTrack(uint id)
+    {
+        if(id >= Tracks.length())
+            return null;
+        return Tracks[id];
+    }
+    CLane@ GetLane(uint id)
+    {
+        if(id >= Lanes.length())
+            return null;
+        return Lanes[id];
+    }
+    CStation@ GetStation(uint id)
+    {
+        if(id >= Stations.length())
+            return null;
+        return Stations[id];
+    }
+    CTrain@ GetTrain(uint id)
+    {
+        if(id >= Trains.length())
+            return null;
+        return Trains[id];
+    }
+
+    Critter@ MakeWagon(Map@ map)
+    {
+        int[] params =
+        {
+            ST_DIALOG_ID, DIALOG_train_conductor
+        };
+        Critter@ wagon = map.AddNpc(368, 0, 0, 0, params, null, "trains@_Conductor");
+        ChangeTrainState(wagon, STATE_WAITING);
+        wagon.TransitToGlobal(false);
+        return wagon;
+    }
+
+    void StartTrains()
+    {
+        for(uint i = 0, j = Trains.length(); i < j; i++)
+            Trains[i].CheckDeparture();
+    }
+
+    CTrack@ FindTrack(uint start_id, uint end_id)
+    {
+        for(uint i = 0, j = Tracks.length(); i < j; i++)
+            if(Tracks[i].GetHeadId() == start_id && Tracks[i].GetTailId() == end_id)
+                return Tracks[i];
+        return null;
+    }
+
+    void MakeSchedule(uint train_id, uint station_id)
+    {
+        array<uint>  destinations;
+        array<uint8> hours;
+        CLane@       lane = GetTrain(train_id).GetLane();
+        if(!valid(lane))
+        {
+            WLog("trains", "invalid lane at train=" + train_id, DEBUG_ERROR);
+            return;
+        }
+        CStation@ base_station = GetStation(station_id);
+        if(!valid(base_station))
+        {
+            WLog("trains", "invalid station id=" + station_id, DEBUG_ERROR);
+            return;
+        }
+        for(uint i = 0; i < lane.StationsCount(); i++)
+        {
+            CStation@ station = lane.GetStation(i);
+            if(station.GetId() == station_id)
+            {
+                hours.insertLast(lane.GetHour(i));
+                destinations.insertLast(lane.GetStation((i + 1) % lane.StationsCount()).GetId());
+            }
+        }
+        if(destinations.length() > 0)
+            base_station.AddTrainSchedule(train_id, hours, destinations);
+    }
+
+    CStation@ GetStationByMapId(uint map_id)
+    {
+        for(uint i = 0; i < Stations.length(); i++)
+        {
+            if(Stations[i].GetMap().Id == map_id)
+                return Stations[i];
+        }
+        return null;
+    }
+
+    void Load(string& filename)
+    {
+
+        file f;
+
+        f.open(filename, "r");
+
+        // stations
+        array<int>@ data = TakeNextNumLine(f);
+        for(uint i = 0, j = data.length(); i < j; i++)
+        {
+            CStation@ station = @CStation(i, data[i]);
+            Stations.insertLast(station);
+        }
+        WLog("trains", "loaded " + Stations.length() + " stations");
+
+        // tracks
+        @data = TakeNextNumLine(f);
+        uint tracks = data[0];
+        for(uint i = 0; i < tracks; i++)
+        {
+            @data = TakeNextNumLine(f);
+            CTrack@ track = CTrack(i, data[0], data[1]);
+            Tracks.insertLast(track);
+            for(uint k = 2; k < data.length(); k += 2)
+                track.AddNode(data[k], data[k + 1]);                                                // extra waypoints
+            CStation@ station = GetStation(data[1]);
+            track.AddNode(station.GetX(), station.GetY());
+        }
+        for(uint i = 0; i < tracks; i++)
+        {
+            CTrack@ toInvert = Tracks[i];
+            CTrack@ inverted = CTrack(i + tracks, toInvert.GetTailId(), toInvert.GetHeadId());
+            for(int j = toInvert.NodesCount() - 2; j >= 0; j--)
+            {
+                float x = 0;
+                float y = 0;
+                toInvert.GetXY(j, x, y);
+                inverted.AddNode(x, y);
+            }
+            CStation@ station = GetStation(toInvert.GetHeadId());
+            inverted.AddNode(station.GetX(), station.GetY());
+            Tracks.insertLast(inverted);
+        }
+        WLog("trains", "loaded " + Tracks.length() + " tracks");
+
+        // lanes
+        @data = TakeNextNumLine(f);
+        uint lanes = data[0];
+        for(uint i = 0; i < lanes; i++)
+        {
+            @data = TakeNextNumLine(f);
+            CLane@ lane = CLane(i);
+            Lanes.insertLast(lane);
+            for(uint k = 0; k < data.length(); k += 2)
+                lane.AddStop(data[k], data[k + 1]);
+        }
+        WLog("trains", "loaded " + Lanes.length() + " lanes");
+
+        // trains
+        @data = TakeNextNumLine(f);
+        uint trains = data[0];
+        for(uint i = 0; i < trains; i++)
+        {
+            @data = TakeNextNumLine(f);
+            string  name = "";
+            TakeNextLine(f, name);
+            CTrain@ train = CTrain(i, data[0], data[1], name);
+            Trains.insertLast(train);
+        }
+        WLog("trains", "loaded " + Trains.length() + " trains");
+
+        f.close();
+
+        // set up the stuff
+        for(uint i = 0; i < Stations.length(); i++)
+        {
+            for(uint j = 0; j < Trains.length(); j++)
+                MakeSchedule(j, i);
+            Stations[i].MakeSchedulesStrings();
+        }
+
+        CreatingTrains = true;
+        for(uint i = 0; i < Trains.length(); i++)
+            Trains[i].Init();
+        CreatingTrains = false;
+    }
+};
+
+void _Conductor(Critter& cr, bool firstTime)   // aka wagon
+{
+    if(!CreatingTrains)
+    {
+        DeleteNpc(cr);
+        return;
+    }
+    cr.ModeBase[MODE_INVULNERABLE] = 1;
+    cr.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS, "_GlobalProcess");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+void _StationConductor(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_VAR0] = -1;
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_YellingIdle");
+}
+
+void _YellingIdle(Critter& cr)
+{
+    if(cr.Stat[ST_VAR0] == -1)     // still determining on which station it is
+    {
+        CStation@ station = Mgr.GetStationByMapId(cr.GetMapId());
+        if(!valid(station))
+            return;
+        cr.StatBase[ST_VAR0] = station.GetId();
+    }
+
+    CStation@ station = Mgr.GetStation(cr.Stat[ST_VAR0]);
+
+    uint      n = station.WaitingCount();
+    if(n == 0)
+        return;
+    CTrain@ train = Mgr.GetTrain(station.GetWaiting(Random(0, n - 1)));       // not perfect
+
+    int     dep = GetNearFullSecond(0, 0, 0, train.GetDepartureHour(), 0, 0);
+    if((dep - ELAPSED_TIME) / 60 <= 20)
+    {
+        cr.SendMessage(MSG_TRAIN_LEAVING, (dep - ELAPSED_TIME) / 60, MESSAGE_TO_ALL_ON_MAP);
+        cr.SayMsg(SAY_SHOUT, TEXTMSG_TEXT, STR_TRAIN_ATTENTION,
+                  "$ttl" + ((dep - ELAPSED_TIME) / 60) + "$dest" + train.GetNextStation().GetNameTag());
+    }
+}
+
+void _Idle(Critter& cr)
+{
+    if(valid(cr.GetMap()))
+        cr.TransitToGlobal(false);
+}
+
+bool _GlobalProcess(Critter& cr, int type, Item@ car, float& x, float& y, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer)
+{
+    if(type == GLOBAL_PROCESS_MOVE)       // have to duplicate it, it's both good and bad in some respects
+    {
+        MoveGlobalGroup(cr, car, x, y, toX, toY, speed);
+        return true;
+    }
+
+    if(type != GLOBAL_PROCESS_NPC_IDLE)
+        return true;
+
+    if(TrainState(cr) == STATE_RUNNING)
+    {
+        speed = 25.0f;
+        GetCurrentCoords(cr, toX, toY);
+        if(x == toX && y == toY)
+        {
+            if(EndOfTrack(cr))
+            {
+                ChangeTrainState(cr, STATE_WAITING);
+                CTrain@ train = Mgr.GetTrain(TrainId(cr));
+                UnloadPassangers(cr);
+                train.CheckArrival();
+            }
+            else
+            {
+                IncCurrTarget(cr);
+                GetCurrentCoords(cr, toX, toY);
+            }
+        }
+    }
+    return true;
+}
+
+void UnloadPassangers(Critter& cr)   // technically the train is still "before" the target station
+{
+    ResetPassengersCount(cr);
+    array<Critter@>@ group = cr.GetGlobalGroup();
+    CStation@ station = Mgr.GetTrain(TrainId(cr)).GetNextStation();
+    uint      map_id = station.GetMap().Id;
+    uint16    loc_pid = station.GetLocation().GetProtoId();
+    for(uint i = 1, j = group.length(); i < j; i++)
+    {
+        group[i].StatBase[ST_FOLLOW_CRIT] = 0;
+        group[i].TransitToMap(map_id, 50);
+        if(group[i].IsPlayer())
+            group[i].SetKnownLoc(false, loc_pid);
+    }
+    if(valid(cr.GetMap()))
+        cr.TransitToGlobal(false);
+}
+
+TrainManager Mgr;
+bool         CreatingTrains = false;
+
+uint e_StartTrains(array<uint>@ values)
+{
+    Mgr.StartTrains();
+    return GAME_HOUR(1);
+}
+
+void InitTrains()
+{
+    Mgr.Load(TRAINS_CFG);
+
+    CreateTimeEvent(GetNearFullSecond(0, 0, 0, NextHour(), 0, 0), "e_StartTrains", false);
+}
+
+// Wagon
+void GetCurrentCoords(Critter& cr, float& x, float& y)
+{
+    CTrack@ track = Mgr.GetTrack(CurrTrack(cr));
+    uint    target = CurrTarget(cr);
+    track.GetXY(target, x, y);
+}
+
+bool EndOfTrack(Critter& cr)   // andy, give me static methods please
+{
+    CTrack@ track = Mgr.GetTrack(CurrTrack(cr));
+    uint    target = CurrTarget(cr);
+    return track.IsLast(target);
+}
+
+bool TakeNextLine(file& f, string& line)
+{
+    if(f.isEndOfFile())
+        return false;
+    f.readLine(line);
+    int pos = ::findFirst(line, "#");
+    if(pos >= 0)
+        line = substring(line, 0, pos);
+    return true;
+}
+
+array<int>@ TakeNextNumLine(file & f)
+{
+    string line = "";
+    if(!TakeNextLine(f, line))
+        return null;
+    array<string@> splitted = splitEx(line, " ");
+    uint           n = splitted.length();
+    array<int> arr(n);
+    uint           j = 0;
+    for(uint i = 0; i < n; i++)
+        if(splitted[i].length() > 0 && StrToInt(splitted[i], arr[j]))
+            j++;
+    arr.resize(j);
+    return arr;
+}
+
+string@ ArrToString(array<int>@ arr)     // deleteme
+{
+    if(!valid(arr))
+        return "<null>";
+    if(arr.length() == 0)
+        return "";
+    string s = "" + arr[0];
+    for(uint i = 1, j = arr.length(); i < j; i++)
+        s += ", " + arr[i];
+    return s;
+}
+
+// dialog stuff
+// var0-3 are used to store train ids referenced, var4 has their number
+bool d_ShowNode(Critter& cr, Critter@ npc, int node)
+{
+    return node < cr.Stat[ST_VAR4];
+}
+
+uint r_IfNoTrains(Critter& cr, Critter@ npc, int noTrains)
+{
+    CStation@ station = Mgr.GetStationByMapId(cr.GetMapId());
+    uint      n = station.WaitingCount();
+    if(n == 0)
+        return noTrains;
+    for(uint i = 0; i < n; i++)
+        cr.StatBase[ST_VAR0 + i] = station.GetWaiting(i);
+    cr.StatBase[ST_VAR0 + n] = -1;
+    cr.StatBase[ST_VAR4] = n;
+    return 0;
+}
+
+uint r_HereIsMyTicket(Critter& cr, Critter@ npc, int notHere, int trainFull, int animalsNotAllowed, int notEnoughTickets, int trainNum)
+{
+    int     trainId = cr.Stat[ST_VAR0 + trainNum];
+    CTrain@ train = Mgr.GetTrain(trainId);
+
+    if(cr.GetMapId() != train.GetCurrentStation().GetMap().Id)
+        return notHere;
+
+    array<Critter@> followers;
+    uint            num = GetFollowers(cr, cr.GetMap(), followers);
+    for(uint i = 0; i < num; i++)
+        if(!IsHumanoid(followers[i]))
+        {
+            return animalsNotAllowed;
+        }
+
+    uint count = CountFollowers(cr, cr.GetMap()) + 1;
+    bool enoughPlace = false;
+    for(uint i = 0; i < train.WagonCount(); i++)
+        if(PassengersCount(train.GetWagon(i)) + count <= WAGON_CAPACITY)
+        {
+            enoughPlace = true;
+            break;
+        }
+    if(!enoughPlace)
+    {
+        return trainFull;
+    }
+    if(cr.CountItem(PID_TICKET) < count)
+    {
+        return notEnoughTickets;
+    }
+    cr.StatBase[ST_VAR0] = trainId;
+    return 0;
+}
+
+uint r_GetIntoTrain(Critter& player, Critter@ npc, int notHere, int trainFull, int notEnoughTickets)
+{
+    CTrain@   train = Mgr.GetTrain(player.StatBase[ST_VAR0]);
+    CStation@ station = Mgr.GetStationByMapId(player.GetMapId());
+    if(train.GetState() != STATE_WAITING || train.GetCurrentStation().GetId() != station.GetId())
+    {
+        return notHere;
+    }
+
+    // check conditions again
+    uint count = CountFollowers(player, player.GetMap()) + 1;
+    bool enoughPlace = false;
+    for(uint i = 0; i < train.WagonCount(); i++)
+        if(PassengersCount(train.GetWagon(i)) + count <= WAGON_CAPACITY)
+        {
+            enoughPlace = true;
+            break;
+        }
+    if(!enoughPlace)
+    {
+        return trainFull;
+    }
+    if(player.CountItem(PID_TICKET) < count)
+    {
+        return notEnoughTickets;
+    }
+
+    for(uint i = 0; i < train.WagonCount(); i++)
+    {
+        Critter@ conductor = train.GetWagon(i);
+        if(PassengersCount(conductor) < WAGON_CAPACITY)
+        {
+            player.StatBase[ST_FOLLOW_CRIT] = conductor.Id;
+            player.TransitToGlobalGroup(conductor.Id);
+            IncPassengersCount(conductor, count);
+            break;
+        }
+    }
+    player.DeleteItem(PID_TICKET, count);
+    return 0;
+}
+
+void dlg_TrainInfo(Critter& player, Critter@ npc, string@ text)   // show a schedule
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    CStation@ station = Mgr.GetStationByMapId(player.GetMapId());
+    if(!valid(station))
+    {
+        WLog("trains", "invalid station!", DEBUG_ERROR);
+        return;
+    }
+    array<string@>@ strings = station.GetSchedulesStrings();
+    for(uint i = 0; i < strings.length(); i++)
+        text += "$train" + i + strings[i];
+    for(uint i = 0; i < 4; i++)
+        text += "$train" + i;
+
+}
+
+void dlg_TrainInfo2(Critter& player, Critter@ npc, string@ text)   // show waiting trains
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    uint i = 0;
+    while(player.Stat[ST_VAR0 + i] != -1)
+    {
+        CTrain@ train = Mgr.GetTrain(player.Stat[ST_VAR0 + i]);
+        text += "$train" + i + "The train " + train.GetName() + " departs at " + train.GetDepartureHour() + ":00, its next stop is " + train.GetNextStation().GetNameTag() + ".";
+        text += "$traina" + i + "I'd like to travel to " + train.GetNextStation().GetNameTag() + " by " + train.GetName() + ".";
+        i++;
+    }
+    while(i < 4)
+    {
+        text += "$train" + i;
+        text += "$traina" + i;
+        i++;
+    }
+}
+
+void dlg_TrainInfo3(Critter& player, Critter@ npc, string@ text)   // show waiting trains, dumb
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    uint i = 0;
+    while(player.Stat[ST_VAR0 + i] != -1)
+    {
+        CTrain@ train = Mgr.GetTrain(player.Stat[ST_VAR0 + i]);
+        text += "$train" + i + "The train " + train.GetName() + " departs at " + train.GetDepartureHour() + ":00, its next stop is " + train.GetNextStation().GetNameTag() + ".";
+        text += "$traina" + "Me wanna go " + train.GetNextStation().GetNameTag() + ".";
+        i++;
+    }
+    while(i < 4)
+    {
+        text += "$train" + i;
+        text += "$traina" + i;
+        i++;
+    }
+}
+
+void load(Critter&, int, int, int)
+{
+    Mgr.Load(TRAINS_CFG);
+}
+
+void init(Critter&, int, int, int)
+{
+    InitTrains();
+}

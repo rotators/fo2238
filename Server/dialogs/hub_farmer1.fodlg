@@ -1,0 +1,30 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p hub_job_waterboy { 10 D _script dialog@d_QuestTimeoutReady 0  D _var p hub_job_waterboy } 1 #
+2 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _item p PID_WATERBAG > 0 R _var p hub_job_waterboy + 1 R _script dialog@r_QuestTimeout 1 15 R _item p PID_WATERBAG_EMPTY + 1 R _item p PID_WATERBAG - 1 #
+0 3020 @
+4 4000 None 0 &
+
+[engl]
+{100}{}{Hub Farmer}
+{200}{}{You see a farmer.}
+{240}{}{You see a dead farmer.}
+{260}{}{You see a slain farmer.}
+{1000}{}{Predialogue installations}
+{1010}{}{got water job}
+{1020}{}{-}
+{2000}{}{I need better soil.@@I'm not hiring.@@I don't need more water, please leave.@@This soil is too hard.@@These stupid plants aren't going to survive.@@Why did I become a farmer?@@Those mutts better not be pissing on my crops.@@I hate dogs!@@What? Do you go around bothering everyone?@@What a day. I'm exhausted.@@I'll call the police.@@I'm tired. Please leave.}
+{3000}{}{What's up?@@Yeh?@@What?}
+{3010}{}{I've got some water for you.@@Here, some water for you.}
+{3020}{}{Nothing, bye.}
+{4000}{}{Thanks!@@Thank you.@@Great!@@About time!@@They should bring us some more water to the fields.}
+

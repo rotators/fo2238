@@ -1,0 +1,715 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gui.fos
+//
+
+// Client GUI
+
+#define CLIENT_GUI
+#include "client_gui_h.fos"
+#include "_client_defines.fos"
+#include "sprite.fos"
+#include "_colors.fos"
+
+#define REMOVE_FROM_ARRAY                                           \
+    # (a, idx)       { if(a.length() > 0 && uint(idx) < a.length()) \
+                           for(uint iter = idx; iter < a.length() - 1; iter++) { a[iter] = a[iter + 1]; }; a.resize(a.length() - 1); }
+#define IS_COLLISION    # (x1, y1, x2, y2, w, h)((x1) >= (x2) && (x1) <= (x2) + (w) && (y1) >= (y2) && (y1) <= (y2) + (h))
+
+array<GUIScreen@> AllScreens;
+array<GUIScreen@> ActiveScreens;
+array<bool>       KeyPressed;
+array<KeybData@>  KbData;
+IGUIScreenOpt@    LastScreenOpt = null;
+// IGUIElementOpt@ LastElementOpt=null;
+
+class KeybData
+{
+    KeybData(int8 r, int8 rs, int8 e, int8 es)
+    {
+        Char.resize(4);
+        Char[0] = r;
+        Char[1] = rs;
+        Char[2] = e;
+        Char[3] = es;
+    }
+    array<uint8> Char;     // Russian, Rissian Shift, English, English Shift
+};
+
+bool GUI_IsKeyPressed(uint8 key)
+{
+    return KeyPressed[key];
+}
+
+uint8 GUI_GetCharacter(uint8 key)
+{
+    KeybData@ k = KbData[key];
+    if(!(k is null))
+    {
+        bool shiftDown = (GUI_IsKeyPressed(DIK_LSHIFT) || GUI_IsKeyPressed(DIK_RSHIFT));
+        return k.Char[::GetKeybLang() * 2 + (shiftDown ? 1 : 0)];
+    }
+    else
+        return 0;
+}
+
+uint8 GUI_GetCharacterShift(uint8 key, bool shiftDown)
+{
+    KeybData@ k = KbData[key];
+    if(!(k is null))
+    {
+        return k.Char[::GetKeybLang() * 2 + (shiftDown ? 1 : 0)];
+    }
+    else
+        return 0;
+}
+
+void GUI_GetIniCoords(string& ini, int& left, int& top, int& right, int& bottom)
+{
+    array<string@>@ values = split(::GetIfaceIniStr(ini), " ");
+    if(values.length() < 4)
+    {
+        Message("Wrong ini data for entry: " + ini + ".");
+        left = top = right = bottom = 0;
+        return;
+    }
+    StrToInt(values[0], left);
+    StrToInt(values[1], top);
+    StrToInt(values[2], right);
+    StrToInt(values[3], bottom);
+}
+
+class GUIScreen : IGUIScreenOpt
+{
+    GUIScreen(string@ sprName, int path)
+    {
+        if(@sprName != null)
+            Surface.Load(sprName, path);
+        Index = 0;
+        IsCanMove = true;
+        IsModal = true;
+        IsMultiinstance = false;
+        IsIgnoreBorders = false;
+        IsCloseOnMiss = false;
+        IsAutoCursor = false;
+        IsHardcoded = false;
+        IsLMouseDown = false;
+
+        AutoCursorType = CURSOR_DEFAULT;
+        AutoCursorPrev = CURSOR_DEFAULT;
+
+        PosX = __ScreenWidth / 2 - Surface.Width / 2;
+        PosY = __ScreenHeight / 2 - Surface.Height / 2;
+        width = height = 0;
+        // LastX=0;
+        // LastY=0;
+        @CallbackShow = null;
+        @CallbackHide = null;
+        @CallbackMove = null;
+        @CallbackFocus = null;
+    }
+
+    void Draw()
+    {
+        if(IsHardcoded)
+        {
+            ::DrawHardcodedScreen(Index);
+            ::GetHardcodedScreenPos(Index, PosX, PosY);
+        }
+
+        if(Surface.Id != 0)
+            DrawSprite(Surface.Id, -1, PosX, PosY, 0);
+
+        if(valid(screenControl))
+            screenControl.Draw();
+    }
+    void Update()
+    {
+        if(valid(screenControl))
+            screenControl.Update();
+    }
+
+    bool MouseDown(int x, int y, int click)
+    {
+        bool intercepted = false;
+        if(valid(screenControl))
+            intercepted = screenControl.MouseDown(x, y, click);
+
+        if(!intercepted)
+        {
+            if(!IsHardcoded && click == MOUSE_CLICK_LEFT && IS_COLLISION(x, y, PosX, PosY, GetWidth(), GetHeight()))
+            {
+                IsLMouseDown = true;
+                // LastX=x;
+                // LastY=y;
+                return true;
+            }
+            else if(IsCloseOnMiss)
+            {
+                ::HideScreen(0, 0, 0, 0);
+                return true;
+            }
+            // window loosing focus
+            if(!IsModal && !IsHardcoded && !IS_COLLISION(x, y, PosX, PosY, GetWidth(), GetHeight()))
+            {
+                if(!(CallbackFocus is null))
+                    CallbackFocus.OnLostFocus();
+            }
+        }
+        return intercepted;
+    }
+
+    bool MouseUp(int x, int y, int click)
+    {
+        IsLMouseDown = false;
+        if(valid(screenControl))
+            return screenControl.MouseUp(x, y, click);
+        else
+            return false;
+    }
+
+    void MouseMove(int fromX, int fromY, int toX, int toY)
+    {
+        if(IsCanMove && IsLMouseDown)
+        {
+            int lastPosX = PosX;
+            int lastPosY = PosY;
+            int offsX = toX - fromX;
+            int offsY = toY - fromY;
+            // LastX=fromX;
+            // LastY=fromY;
+            PosX += offsX;
+            PosY += offsY;
+
+            // Check screen borders
+            if(!IsIgnoreBorders)
+            {
+                int px = PosX;
+                int py = PosY;
+                if(PosX < 0)
+                    PosX = 0;
+                if(PosY < 0)
+                    PosY = 0;
+                if(PosX + GetWidth() > __ScreenWidth)
+                    PosX = __ScreenWidth - GetWidth();
+                if(PosY + GetHeight() > __ScreenHeight)
+                    PosY = __ScreenHeight - GetHeight();
+                // LastX+=PosX-px;
+                // LastY+=PosY-py;
+            }
+            if(lastPosX != PosX || lastPosY != PosY)
+            {
+                if(!(CallbackMove is null))
+                    CallbackMove.OnMove(PosX, PosY);
+                if(valid(screenControl))
+                    screenControl.Position(GetPosX(), GetPosY());
+            }
+        }
+
+        if(valid(screenControl))
+            screenControl.MouseMove(fromX, fromY, toX, toY);
+    }
+
+    bool KeyDown(uint8 key)
+    {
+        if(valid(screenControl))
+            return screenControl.KeyDown(key);
+        else
+            return false;
+    }
+
+    void InputLost()
+    {
+        IsLMouseDown = false;
+        // for(uint i=0,j=Elements.length();i<j;i++) Elements[i].InputLost();
+    }
+
+    /*GUIScreen@ GetNewInstance()
+       {
+            GUIScreen screen=this;
+            IGUIScreenCallbackShow@ newCallback=CallbackShow;
+            //for(uint i=0,j=controls.length();i<j;i++) @screen.controls[i]=controls[i].Clone();
+            return @screen;
+       }*/
+
+    IControl@ Control()
+    {
+        return(@screenControl);
+    }
+    IGUIScreenOpt@ Control(IControl@ control)
+    {
+        @screenControl = control;
+        @LastScreenOpt = this;
+        control.Init();
+        control.Position(GetPosX(), GetPosY());
+        control.Width(GetWidth());
+        control.Height(GetHeight());
+        @LastScreenOpt = null;
+        return this;
+    }
+
+    // Options
+    IGUIScreenOpt@ SetCallbackShow(IGUIScreenCallbackShow@ callback)   { @CallbackShow = callback; return this; }
+    IGUIScreenOpt@ SetCallbackHide(IGUIScreenCallbackHide@ callback)   { @CallbackHide = callback; return this; }
+    IGUIScreenOpt@ SetCallbackMove(IGUIScreenCallbackMove@ callback)   { @CallbackMove = callback; return this; }
+    IGUIScreenOpt@ SetCallbackFocus(IGUIScreenCallbackFocus@ callback) { @CallbackFocus = callback; return this; }
+
+    IGUIScreenOpt@ Position(int x, int y)                   { PosX = x; PosY = y; return this; }
+    IGUIScreenOpt@ Size(int w, int h)                       { width = w; height = h; return this; }   // custom size, (in case there is no surface for example)
+    IGUIScreenOpt@ CanMove(bool enabled)                    { IsCanMove = enabled; return this; }
+    IGUIScreenOpt@ Modal(bool enabled)                      { IsModal = enabled; return this; }
+    IGUIScreenOpt@ Multiinstance(bool enabled)              { IsMultiinstance = enabled; return this; }
+    IGUIScreenOpt@ IgnoreBorders(bool enabled)              { IsIgnoreBorders = enabled; return this; }
+    IGUIScreenOpt@ CloseOnMiss(bool enabled)                { IsCloseOnMiss = enabled; return this; }
+    IGUIScreenOpt@ AutoCursor(bool enabled, int cursorType) { IsAutoCursor = enabled; AutoCursorType = cursorType; return this; }
+    IGUIScreenOpt@ Hardcoded(bool enabled)                  { IsHardcoded = enabled; return this; }
+
+    // Info
+    int GetPosX()   { return PosX; }
+    int GetPosY()   { return PosY; }
+    int GetWidth()  { return width != 0 ? width : Surface.Width; }
+    int GetHeight() { return height != 0 ? height : Surface.Height; }
+    int GetIndex()  { return Index; }
+
+    // Data
+    int Index;
+    int PosX;
+    int PosY;
+    int width;
+    int height;
+    // int LastX;
+    // int LastY;
+    Sprite                   Surface;
+    bool                     IsCanMove;
+    bool                     IsModal;
+    bool                     IsMultiinstance;
+    bool                     IsIgnoreBorders;
+    bool                     IsCloseOnMiss;
+    bool                     IsAutoCursor;
+    bool                     IsHardcoded;
+    bool                     IsLMouseDown;
+
+    int                      AutoCursorType;
+    int                      AutoCursorPrev;
+
+    IGUIScreenCallbackShow@  CallbackShow;
+    IGUIScreenCallbackHide@  CallbackHide;
+    IGUIScreenCallbackMove@  CallbackMove;
+    IGUIScreenCallbackFocus@ CallbackFocus;
+    // main control container for all screen child-controls
+    IControl@                screenControl;
+};
+
+//
+// API
+//
+
+// Create new screen
+IGUIScreenOpt@ GUI_CreateScreen(int screenIndex, string@ sprName)
+{
+    if(screenIndex == 0)
+        return null;
+    DeleteScreen(screenIndex);
+    return CreateScreen(screenIndex, sprName);
+}
+
+// Delete old screen, hardcoded screens included
+void GUI_DeleteScreen(int screenIndex)
+{
+    if(screenIndex == 0)
+        return;
+    DeleteScreen(screenIndex);
+}
+
+// Valid only on IGUIScreenCallbackShow::OnShow callback
+IGUIScreenOpt@ GUI_GetScreenOptions()
+{
+    return LastScreenOpt;
+}
+
+
+//
+// Engine callbacks
+//
+
+void GUI_Init()
+{
+    AllScreens.resize(0);
+    ActiveScreens.resize(0);
+    KeyPressed.resize(0x100);
+    for(uint i = 0, j = KeyPressed.length(); i < j; i++)
+        KeyPressed[i] = false;
+
+    // Register hardcoded screens
+    CreateScreen(CLIENT_MAIN_SCREEN_LOGIN, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_REGISTRATION, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_OPTIONS, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_CREDITS, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_GAME, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_GLOBAL_MAP, null);
+    CreateScreen(CLIENT_MAIN_SCREEN_WAIT, null);
+    CreateScreen(CLIENT_SCREEN_INVENTORY, null);
+    CreateScreen(CLIENT_SCREEN_PICKUP, null);
+    CreateScreen(CLIENT_SCREEN_MINIMAP, null);
+    CreateScreen(CLIENT_SCREEN_CHARACTER, null);
+    CreateScreen(CLIENT_SCREEN_DIALOG, null);
+    CreateScreen(CLIENT_SCREEN_BARTER, null);
+    CreateScreen(CLIENT_SCREEN_PIP_BOY, null);
+    CreateScreen(CLIENT_SCREEN_FIX_BOY, null);
+    CreateScreen(CLIENT_SCREEN_MENU, null);
+    CreateScreen(CLIENT_SCREEN_AIM, null);
+    CreateScreen(CLIENT_SCREEN_TEST, null);
+    CreateScreen(CLIENT_SCREEN_SPLIT, null);
+    CreateScreen(CLIENT_SCREEN_TIMER, null);
+    CreateScreen(CLIENT_SCREEN_DIALOGBOX, null);
+    CreateScreen(CLIENT_SCREEN_ELEVATOR, null);
+    CreateScreen(CLIENT_SCREEN_SAY, null);
+    CreateScreen(CLIENT_SCREEN_CHA_NAME, null);
+    CreateScreen(CLIENT_SCREEN_CHA_AGE, null);
+    CreateScreen(CLIENT_SCREEN_CHA_SEX, null);
+    CreateScreen(CLIENT_SCREEN_GM_TOWN, null);
+    CreateScreen(CLIENT_SCREEN_INPUT_BOX, null);
+    CreateScreen(CLIENT_SCREEN_SKILLBOX, null);
+    CreateScreen(CLIENT_SCREEN_USE, null);
+    CreateScreen(CLIENT_SCREEN_PERK, null);
+    CreateScreen(CLIENT_SCREEN_TOWN_VIEW, null);
+    CreateScreen(CLIENT_SCREEN_SAVE_LOAD, null);
+    for(uint i = 0, j = AllScreens.length(); i < j; i++)
+        AllScreens[i].IsHardcoded = true;
+
+    // Keyboard init
+    KbData.resize(0x100);
+    @KbData[DIK_1] =                         KeybData('1', '!', '1', '!');
+    @KbData[DIK_2] =                         KeybData('2', '"', '2', '@');
+    @KbData[DIK_3] =                         KeybData('3', '¹', '3', '#');
+    @KbData[DIK_4] =                         KeybData('4', ';', '4', '$');
+    @KbData[DIK_5] =                         KeybData('5', '%', '5', '%');
+    @KbData[DIK_6] =                         KeybData('6', ':', '6', '^');
+    @KbData[DIK_7] =                         KeybData('7', '?', '7', '&');
+    @KbData[DIK_8] =                         KeybData('8', '*', '8', '*');
+    @KbData[DIK_9] =                         KeybData('9', '(', '9', '(');
+    @KbData[DIK_0] =                         KeybData('0', ')', '0', ')');
+    @KbData[DIK_MINUS] =                     KeybData('-', '_', '-', '_');
+    @KbData[DIK_EQUALS] =            KeybData('=', '+', '=', '+');
+    @KbData[DIK_Q] =                         KeybData('é', 'É', 'q', 'Q');
+    @KbData[DIK_W] =                         KeybData('ö', 'Ö', 'w', 'W');
+    @KbData[DIK_E] =                         KeybData('ó', 'Ó', 'e', 'E');
+    @KbData[DIK_R] =                         KeybData('ê', 'Ê', 'r', 'R');
+    @KbData[DIK_T] =                         KeybData('å', 'Å', 't', 'T');
+    @KbData[DIK_Y] =                         KeybData('í', 'Í', 'y', 'Y');
+    @KbData[DIK_U] =                         KeybData('ã', 'Ã', 'u', 'U');
+    @KbData[DIK_I] =                         KeybData('ø', 'Ø', 'i', 'I');
+    @KbData[DIK_O] =                         KeybData('ù', 'Ù', 'o', 'O');
+    @KbData[DIK_P] =                         KeybData('ç', 'Ç', 'p', 'P');
+    @KbData[DIK_LBRACKET] =          KeybData('õ', 'Õ', '[', '{');
+    @KbData[DIK_RBRACKET] =          KeybData('ú', 'Ú', ']', '}');
+    @KbData[DIK_A] =                         KeybData('ô', 'Ô', 'a', 'A');
+    @KbData[DIK_S] =                         KeybData('û', 'Û', 's', 'S');
+    @KbData[DIK_D] =                         KeybData('â', 'Â', 'd', 'D');
+    @KbData[DIK_F] =                         KeybData('à', 'À', 'f', 'F');
+    @KbData[DIK_G] =                         KeybData('ï', 'Ï', 'g', 'G');
+    @KbData[DIK_H] =                         KeybData('ð', 'Ð', 'h', 'H');
+    @KbData[DIK_J] =                         KeybData('î', 'Î', 'j', 'J');
+    @KbData[DIK_K] =                         KeybData('ë', 'Ë', 'k', 'K');
+    @KbData[DIK_L] =                         KeybData('ä', 'Ä', 'l', 'L');
+    @KbData[DIK_SEMICOLON] =         KeybData('æ', 'Æ', ';', ':');
+    @KbData[DIK_APOSTROPHE] =        KeybData('ý', 'Ý', '"', '"');   // todo '
+    @KbData[DIK_Z] =                         KeybData('ÿ', 'ß', 'z', 'Z');
+    @KbData[DIK_X] =                         KeybData('÷', '×', 'x', 'X');
+    @KbData[DIK_C] =                         KeybData('ñ', 'Ñ', 'c', 'C');
+    @KbData[DIK_V] =                         KeybData('ì', 'Ì', 'v', 'V');
+    @KbData[DIK_B] =                         KeybData('è', 'È', 'b', 'B');
+    @KbData[DIK_N] =                         KeybData('ò', 'Ò', 'n', 'N');
+    @KbData[DIK_M] =                         KeybData('ü', 'Ü', 'm', 'M');
+    @KbData[DIK_COMMA] =                     KeybData('á', 'Á', ',', '<');
+    @KbData[DIK_PERIOD] =            KeybData('þ', 'Þ', '.', '>');
+    @KbData[DIK_SLASH] =                     KeybData('.', ',', '/', '?');
+    @KbData[DIK_MULTIPLY] =          KeybData('*', '*', '*', '*');
+    @KbData[DIK_SPACE] =                     KeybData(' ', ' ', ' ', ' ');
+    @KbData[DIK_GRAVE] =                     KeybData('¸', '¨', '`', '~');
+    @KbData[DIK_NUMPAD1] =           KeybData('1', '1', '1', '1');
+    @KbData[DIK_NUMPAD2] =           KeybData('2', '2', '2', '2');
+    @KbData[DIK_NUMPAD3] =           KeybData('3', '3', '3', '3');
+    @KbData[DIK_NUMPAD4] =           KeybData('4', '4', '4', '4');
+    @KbData[DIK_NUMPAD5] =           KeybData('5', '5', '5', '5');
+    @KbData[DIK_NUMPAD6] =           KeybData('6', '6', '6', '6');
+    @KbData[DIK_NUMPAD8] =           KeybData('8', '8', '8', '8');
+    @KbData[DIK_NUMPAD9] =           KeybData('9', '9', '9', '9');
+    @KbData[DIK_NUMPAD0] =           KeybData('0', '0', '0', '0');
+    @KbData[DIK_SUBTRACT] =          KeybData('-', '-', '-', '-');
+    @KbData[DIK_ADD] =                       KeybData('+', '+', '+', '+');
+    @KbData[DIK_DECIMAL] =           KeybData('.', '.', '.', '.');
+    @KbData[DIK_DIVIDE] =            KeybData('/', '/', '/', '/');
+    @KbData[DIK_RETURN] =            KeybData('\n', '\n', '\n', '\n');
+    @KbData[DIK_NUMPADENTER] =       KeybData('\n', '\n', '\n', '\n');
+    @KbData[DIK_TAB] =                       KeybData('\t', '\t', '\t', '\t');
+}
+
+int GUI_GetActiveMainScreen()
+{
+    return ActiveScreens.length() > 0 ? ActiveScreens.first().Index : CLIENT_SCREEN_NONE;
+}
+
+int GUI_GetActiveScreen()
+{
+    return ActiveScreens.length() > 0 ? ActiveScreens.last().Index : CLIENT_SCREEN_NONE;
+}
+
+void GUI_GetActiveScreens(array<int>& result)
+{
+    result.resize(ActiveScreens.length());
+    for(uint i = 0, j = result.length(); i < j; i++)
+        result[i] = ActiveScreens[i].Index;
+}
+
+int GUI_GetMainScreen()
+{
+    int screenIndex = CLIENT_SCREEN_NONE;
+    if(ActiveScreens.length() > 0)
+        screenIndex = ActiveScreens[0].Index;
+    return screenIndex;
+}
+
+IGUIScreenOpt@ GUI_GetScreen(int screenIndex)
+{
+    return GetScreen(screenIndex);
+}
+
+void GUI_ShowScreen(int screenIndex, int p0, int p1, int p2)
+{
+    GUIScreen@ screen = GetScreen(screenIndex);
+    if(!(screen is null))
+    {
+        if(!screen.IsMultiinstance)
+        {
+            // Close all another instances
+            for(uint i = ActiveScreens.length(); i > 0;)         // From end
+            {
+                i--;
+                if(ActiveScreens[i].Index == screenIndex)
+                {
+                    ActiveScreens.removeAt(i);
+                    if(!(screen.CallbackHide is null))
+                        screen.CallbackHide.OnHide(p0, p1, p2);
+                }
+            }
+        }
+
+        // Create new instance
+        // @screen=screen.GetNewInstance(); <- currently we don't handle this
+        ActiveScreens.insertLast(screen);
+
+        // Set screen cursor
+        if(screen.IsAutoCursor)
+        {
+            if(screen.AutoCursorPrev < 0)
+                screen.AutoCursorPrev = ::GetCurrentCursor();
+            ::ChangeCursor(screen.AutoCursorType);
+        }
+
+        // Call init callbacks
+        if(!(screen.CallbackShow is null))
+        {
+            @LastScreenOpt = screen;
+            screen.CallbackShow.OnShow(p0, p1, p2);
+            @LastScreenOpt = null;
+        }
+        /*for(uint i=0,j=screen.Elements.length();i<j;i++)
+           {
+                GUIElement@ e=screen.Elements[i];
+                if(not (e.CallbackInit is null))
+                {
+                        @LastElementOpt=e;
+                        e.CallbackInit.OnInit();
+                        @LastElementOpt=e;
+                }
+           }*/
+    }
+}
+
+void GUI_HideScreen(int screenIndex, int p0, int p1, int p2)
+{
+    for(uint i = ActiveScreens.length(); i > 0;)   // From end
+    {
+        i--;
+        GUIScreen@ screen = ActiveScreens[i];
+        if(screen.Index == screenIndex)
+        {
+            ActiveScreens.removeAt(i);
+            if(!(screen.CallbackHide is null))
+                screen.CallbackHide.OnHide(p0, p1, p2);
+
+            // Restore cursor
+            if(screen.IsAutoCursor)
+            {
+                ::ChangeCursor(screen.AutoCursorPrev);
+            }
+            break;
+        }
+    }
+}
+
+void GUI_Render()
+{
+    for(uint i = 0, j = ActiveScreens.length(); i < j; i++)
+    {
+        GUIScreen@ screen = ActiveScreens[i];
+        screen.Draw();
+    }
+}
+void GUI_Update()
+{
+    for(uint i = 0, j = ActiveScreens.length(); i < j; i++)
+    {
+        GUIScreen@ screen = ActiveScreens[i];
+        screen.Update();
+    }
+}
+
+bool GUI_MouseDown(int x, int y, int click)
+{
+    uint len = ActiveScreens.length();
+    if(len != 0)
+    {
+        GUIScreen@ screen = ActiveScreens[len - 1];
+        bool       result = screen.MouseDown(x, y, click);
+        if(result)
+            return true;
+
+        if(len > 1 && !screen.IsHardcoded && !screen.IsModal && click == MOUSE_CLICK_LEFT &&
+           !IS_COLLISION(x, y, screen.PosX, screen.PosY, screen.GetWidth(), screen.GetHeight()))
+        {
+            for(uint i = ActiveScreens.length() - 1; i > 0;)       // From end
+            {
+                i--;
+                GUIScreen@ nextScreen = ActiveScreens[i];
+                if(IS_COLLISION(x, y, nextScreen.PosX, nextScreen.PosY, nextScreen.Surface.Width, nextScreen.Surface.Height))
+                {
+                    // Swap screens
+                    GUIScreen@ tmpScreen = ActiveScreens[i];
+                    @ActiveScreens[i] = ActiveScreens[len - 1];
+                    @ActiveScreens[len - 1] = tmpScreen;
+                    return GUI_MouseDown(x, y, click);                    // Click new screen
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool GUI_MouseUp(int x, int y, int click)
+{
+    uint len = ActiveScreens.length();
+    if(len != 0)
+        return ActiveScreens[len - 1].MouseUp(x, y, click);
+    return false;
+}
+
+void GUI_MouseMove(int fromX, int fromY, int toX, int toY)
+{
+    uint len = ActiveScreens.length();
+    if(len != 0)
+        ActiveScreens[len - 1].MouseMove(fromX, fromY, toX, toY);
+}
+
+bool GUI_KeyDown(uint8 key)
+{
+    if(KeyPressed.length() != 0)
+        KeyPressed[key] = true;
+    uint len = ActiveScreens.length();
+    if(len != 0)
+        return ActiveScreens[len - 1].KeyDown(key);
+    return false;
+}
+
+bool GUI_KeyUp(uint8 key)
+{
+    if(KeyPressed.length() != 0)
+        KeyPressed[key] = false;
+    return false;
+}
+
+void GUI_InputLost()
+{
+    for(uint i = 0, j = KeyPressed.length(); i < j; i++)
+        KeyPressed[i] = false;
+    uint len = ActiveScreens.length();
+    if(len != 0)
+        ActiveScreens[len - 1].InputLost();
+}
+
+//
+// Internal
+//
+
+IGUIScreenOpt@ CreateScreen(int screenIndex, string@ sprName)
+{
+    GUIScreen screen(sprName, PT_ART_INTRFACE);
+    screen.CanMove(true);
+    screen.Position(__ScreenWidth / 2 - screen.Surface.Width / 2, __ScreenHeight / 2 - screen.Surface.Height / 2);
+    screen.Index = screenIndex;
+    AllScreens.insertLast(screen);
+    return @screen;
+}
+
+void DeleteScreen(int screenIndex)
+{
+    for(uint i = 0; i < ActiveScreens.length();)
+    {
+        if(ActiveScreens[i].Index == screenIndex)
+        {
+            ActiveScreens.removeAt(i);
+            i = 0;
+        }
+        else
+        {
+            i++;
+        }
+    }
+
+    for(uint i = 0, j = AllScreens.length(); i < j; i++)
+    {
+        if(AllScreens[i].Index == screenIndex)
+        {
+            AllScreens.removeAt(i);
+            break;
+        }
+    }
+}
+
+GUIScreen@ GetScreen(int screenIndex)
+{
+    if(screenIndex == 0)
+        return null;
+    for(uint i = 0, j = AllScreens.length(); i < j; i++)
+        if(AllScreens[i].Index == screenIndex)
+            return @AllScreens[i];
+    return null;
+}
+
+bool ProcessKey(uint8 key, string& text, uint8& letter)
+{
+    if(KeyPressed.length() == 0)
+        return false;
+
+    if(key == DIK_BACK)
+    {
+        if(text.length() > 0)
+            text.resize(text.length() - 1);
+        return true;
+    }
+
+    KeybData@ k = KbData[key];
+    if(!(k is null))
+    {
+        bool shiftDown = (KeyPressed[DIK_LSHIFT] || KeyPressed[DIK_RSHIFT]);
+        uint len = text.length();
+        text.resize(len + 1);
+        text[len] = k.Char[::GetKeybLang() * 2 + (shiftDown ? 1 : 0)];
+        letter = text[len];
+        return true;
+    }
+    return false;
+}

@@ -1,0 +1,162 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+21 1010 D _param p KARMA_SLAVER > 0 #
+2 1020 D _param p ST_INTELLECT < 4 #
+6 1030 D _var n name_mem_npc_player = 1 #
+4 1040 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+3 2020 #
+3 2030 #
+0 2040 @
+3 3000 None 0 @
+4 4000 None 0 #
+14 4010 #
+5 4020 #
+8 4030 #
+22 4040 D _var p q_klam_bob_thehole = 0 @
+5 5000 None 0 #
+7 5010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 #
+8 5020 #
+9 5030 #
+0 5040 @
+6 6000 None 0 #
+5 6010 #
+8 6020 #
+22 6030 D _var p q_klam_bob_thehole = 0 #
+26 6040 D _var p q_klam_bob_thehole = 2 #
+27 6050 D _var p q_klam_bob_thehole = 3 D _script dialog@d_QuestTimeoutReady 0  @
+7 7000 None 0 #
+14 7010 #
+12 7020 #
+8 7030 #
+22 7040 D _var p q_klam_bob_thehole = 0 #
+27 7050 D _var p q_klam_bob_thehole = 3 D _script dialog@d_QuestTimeoutReady 0  @
+8 8000 None 0 @
+9 9000 None 0 @
+12 10000 None 0 #
+13 10010 @
+13 11000 None 0 #
+14 11010 #
+0 11020 @
+14 12000 None 0 #
+17 12010 #
+18 12020 #
+0 12030 @
+17 13000 None 0 #
+14 13010 #
+0 13020 @
+18 14000 None 0 #
+14 14010 #
+0 14020 @
+19 15000 None 0 #
+14 15010 #
+0 15020 @
+20 16000 None 0 #
+14 16010 #
+0 16020 @
+21 17000 None 0 @
+22 18000 None 0 #
+23 18010 #
+23 18020 @
+23 19000 None 0 #
+24 19010 #
+0 19020 @
+24 20000 None 0 #
+25 20010 #
+0 20020 @
+25 21000 None 0 #
+0 21010 R _var p q_klam_bob_thehole = 1 @
+26 22000 None 0 #
+0 22010 D _param p ST_CHARISMA < 6 R _param p ST_EXPERIENCE + 350 R _item p PID_BEER + 2 R _var p q_klam_bob_thehole = 3 R _script dialog@r_QuestTimeout 1 144 R _script dialog@r_AddMoney 1 75 #
+0 22020 D _param p ST_CHARISMA < 8 D _param p ST_CHARISMA > 5 R _param p ST_EXPERIENCE + 350 R _item p PID_BOOZE + 2 R _item p PID_ROT_GUT + 2 R _var p q_klam_bob_thehole = 3 R _script dialog@r_QuestTimeout 1 144 R _script dialog@r_AddMoney 1 75 #
+0 22030 D _param p ST_CHARISMA > 7 R _param p ST_EXPERIENCE + 350 R _item p PID_ROT_GUT + 5 R _var p q_klam_bob_thehole = 3 R _script dialog@r_QuestTimeout 1 144 R _script dialog@r_AddMoney 1 75 @
+27 23000 None 0 #
+0 23010 R _var p q_klam_bob_thehole = 1 &
+
+[engl]
+{100}{}{Bob}
+{200}{}{You see an older man with a scraggly beard and a big red nose.}
+{210}{}{You see Whiskey Bob.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{Idiot}
+{1030}{}{Known}
+{1040}{}{Unknown}
+{2000}{}{Howdy, my name’s Whiskey Bob. What’s yours, fella?}
+{2010}{}{Whicky Gob? Zug, zug?}
+{2020}{}{Shiny nose (heh, heh)}
+{2030}{}{Me @pname@}
+{2040}{}{Goway}
+{3000}{}{You ain’t the sharpest tool in the shed, are ya? Well, nice talking to you anyhow. So long.}
+{4000}{}{Howdy stranger, my name’s Whiskey Bob. What’s yours?}
+{4010}{}{@pname@. What’s happening here in town?}
+{4020}{}{@pname@. Nice to meet you Whiskey Bob.}
+{4030}{}{I don’t think you need to know my name.}
+{4040}{}{@pname@, Bob. I'm looking for work.}
+{5000}{}{Always nice to find another drinking buddy. Wanna buy me a drink? Talking always makes me thirsty.}
+{5010}{}{Sure, Bob. Don’t mind a bit.}
+{5020}{}{I don’t want to buy you a drink, Whiskey Bob.}
+{5030}{}{I can't afford to right now.}
+{5040}{}{With a nickname like yours, Whiskey Bob, maybe you should be providing the drinks. Bye.}
+{6000}{}{Hello there, feller. Back to see Whiskey Bob again, huh? Ready to talk about drinks and business and suchlike?}
+{6010}{}{Sure, Bob - tell me about drinks and business.}
+{6020}{}{I think I had enough of that the last time.}
+{6030}{}{Not right now, Bob. I'm looking for work.}
+{6040}{}{Frankie sent me to tell you he's gonna pick up the hooch. But he's not paying double.}
+{6050}{}{Think you could send me on another hooch run, Bob?}
+{7000}{}{Thanks for the drink, partner. Now that my whistle’s wet, I can do some talking.}
+{7010}{}{What's happening here in town?}
+{7020}{}{Where does your whiskey come from, Bob?}
+{7030}{}{Not interested Bob, I'm out of here.}
+{7040}{}{Got any work for me, Bob?}
+{7050}{}{Think you could send me on another hooch run, Bob?}
+{8000}{}{Humph, if you’re not gonna be any drinking buddy of mine, then git.}
+{9000}{}{Looks as though your purse has run dry. You don’t have enough money to buy old Bob a drink.}
+{10000}{}{Well, you see, I have a little side business. I have a moonshine still outside of town that needs to be fueled up every so often. It's kept me and my buddies in hooch for quite a while.}
+{10010}{}{Really? You're a lucky guy.}
+{11000}{}{You bet. It's a pretty lucrative enterprise, if you catch my drift. Only problem is, with this gimpy leg of mine, it takes me damn near an hour to limp it out to the shack to refuel the still, but that's better than paying some poor sap every time I want it refuelled.}
+{11010}{}{Yeah, I can imagine. Say, I have a few questions about Klamath.}
+{11020}{}{I hope it works out for you, Bob. I gotta go.}
+{12000}{}{All sorts of things going on hereabouts lately. We’ve still got that big flying machine in the canyon, the Duntons are up to no good, we always get a few troublemakers from the Den.}
+{12010}{}{Flying machine? What's all that about?}
+{12020}{}{What's happening with the Den?}
+{12030}{}{That all sounds fascinating, Bob, but I gotta run.}
+{13000}{}{Yeah. Big darn thing crashed in the canyon a couple years back. Nobody knows where it came from. Big scary thing, innit?}
+{13010}{}{Well that's an awful shame, Bob, but I was wondering what else was going on in town.}
+{13020}{}{Sorry to hear that, Bob. Bye.}
+{14000}{}{You’ll not find a greater hive of scum and villainy. It’s a rough sort of place a few days travel south of Klamath. Anything can be had there for a price...even slaves. But you have to be very careful there - lots of short tempers attached to dangerous weapons. I don’t think they have much to do with us, though; we’re too poor here. A few stragglers just turn up in town before we turn 'em back out again.}
+{14010}{}{Sounds like my kind of place, but I've got a few other questions about Klamath.}
+{14020}{}{Well so long as you're safe here. Bye, Bob.}
+{15000}{}{Well, Vic's quite a fella. He didn’t like to work too much, so he specialized in expensive pre-war things and hawked them to stupid tribals as religious artifacts (chuckles to himself). Couple years ago, though, he waltzed back into town packing the biggest guns y'ever did see, boasting about how ol' Vic done saved the world somehow. 'Course, nobody believed him, why would ya? Most of us figured he'd lost his mind out in the desert. He mostly keeps to himself these days, I don't think he's in a state for doing a lot of travelling.}
+{15010}{}{Sounds like quite a fella, Bob, but I've got some other questions.}
+{15020}{}{Yeah, probably just making that stuff up. Bye, Bob.}
+{16000}{}{Sulik's a tribal that used to live at the Buckner place. We thought we'd never see him again when he bolted with that other one, whatever his name was. Then one day he walked back into town, all serious lookin', and not tellin' anyone where he'd been. The young Buckner lass had always taken a shine to him, and I think she's trying to get him to settle down these days.}
+{16010}{}{Just another tribal. I've got a few more questions.}
+{16020}{}{Sounds like quite a fella, Bob, but I've got some other questions.}
+{17000}{}{Move on, partner. You're not welcome here.}
+{18000}{}{Welp, I figure ol' Bob might have somethin' to toss your way. You ever been to the Den, friend?}
+{18010}{}{Yeah, plenty of times.}
+{18020}{}{Naw, sorry Bob.}
+{19000}{}{Well, heck, it don't matter, 'cause that's where you're goin'. It's a ways southeast of here. I want you to head to a bar called The Hole. Find a fella named Frankie.}
+{19010}{}{Frankie, huh? Who's he?}
+{19020}{}{This doesn't really sound my style. Later, Bob.}
+{20000}{}{He's an ol' drinkin' buddy. I brew him up a couple batches of hooch, he tosses a couple caps my way. Nice little arrangement.}
+{20010}{}{And this involves me how?}
+{20020}{}{Forget it, I don't care. Goodbye, Bob.}
+{21000}{}{Heck, I'm gettin' to that. Hold your dang horses. I want ya to tell him my latest batch all ready to be picked up, and I'm expectin' him to pay double! (He chuckles) Times are hard for poor ol' Bob.}
+{21010}{}{Alright Bob, I'll go tell him. Frankie at the Hole. The hooch is ready. I can remember that. See you later.}
+{22000}{}{(He cackles) Didn't expect that skinflint bastard to pay a cap more than what we agreed. I just like remindin' him what a good deal he's gettin'. Awright, I figure I owe you some caps and a couple drinks on me. Much obliged, friend.}
+{22010}{}{Thanks a lot, Bob. See you around.}
+{22020}{}{Thanks a lot, Bob. See you around.}
+{22030}{}{Thanks a lot, Bob. See you around.}
+{23000}{}{Sure thing. You know the drill by now. Head over to Frankie, tell him the batch is ready. Tell him I'm upping the usual rate, just to mess with the skinflint bastard, then get your ass back to me. I got hooch with your name on it.}
+{23010}{}{Thanks Bob, see you later.}
+

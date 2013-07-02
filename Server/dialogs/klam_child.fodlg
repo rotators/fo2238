@@ -1,0 +1,52 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _script dialog@d_IsWearingScaryHelmet 0  R _script dialog@r_RunAway 2 15 30 #
+500 1020 D _script perks@d_PerkCheck 1 397 #
+2 1030 D _param p KARMA_SLAVER > 0 #
+3 1040 D _param p ST_KARMA > -1 #
+2 1050 D _param p ST_KARMA < 0 #
+4 1060 D _param p ST_KARMA > 50 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 @
+5 5000 None 0 @
+500 6000 None 0 #
+501 6010 R _param p PE_LIGHT_STEP = 1 #
+502 6020 R _param p PE_LIGHT_STEP = 1 #
+0 6030 @
+501 7000 None 0 #
+0 7010 R _script dialog@r_RunAway 0  @
+502 8000 None 0 #
+0 8010 &
+
+[engl]
+{100}{}{Child}
+{200}{}{You see a child from Klamath.}
+{210}{}{You see a child from Klamath. His clothes are ragged but his eyes are shining brightly.}
+{1000}{}{Predialog installations}
+{1010}{}{Player wears metal mask}
+{1020}{}{Perk Light Steps ** DO NOT CHANGE THE POSITION OF THE ANSWERS IN THIS NODE !!! **}
+{1030}{}{slaver}
+{1040}{}{neutral}
+{1050}{}{evil}
+{1060}{}{good}
+{2000}{}{My dad told me that you're a bad person.@@Ahhh! Monster!@@Ahhh! Run!@@You scare me.@@Don't look at me.@@Don't touch me!@@Don't bother me!@@Aaahhh!@@I hate you!@@Mom! Mooom!@@Go away!}
+{3000}{}{Hello!@@Do you wanna play?@@Why are you so funny lookin'?@@My mommy says that you're all jerks.@@Why are you dressed up so funny?@@I think you're smarter than you look!@@Let's play tag! You're it.@@Your smell's not awful at all.@@Did you see my invisible friend?@@I'd like to travel the world too, when I grow up.@@I think you even wash yourself sometimes!@@You're smarter than Torr.@@Is your knife really sharp?@@I'd like to be like you when I grow up.@@My dog loves dried meat jerky.@@I have a shiny marble.@@Did you see my invisible friend anywhere?}
+{4000}{}{You're nice.@@You're looking funny.@@What is that you're wearing?@@I wanna come!@@Did you come from far away?@@Yeeah! Heh hah hah!@@Don't leave!@@Do you have any food?@@Did I bore you?@@Where are you going?@@Can I go with you?@@How old are you?@@What's your name?@@Do you like kids?@@What is this?Do you want to play?@@What are you doing?@@Don't you see the bugs?@@Where did you get this?@@Can I have that?@@What are you doing?@@I can run fast. Wanna see?@@Look! Look!@@Mom says I talk too much.@@Where is your house?@@Hey! Hey!}
+{5000}{}{An eyeless monster wants to eat my eyes!@@Help! Help! It's Michael!@@:: cry ::@@:: scream ::@@Leave me alone!@@Go away!@@Mooooom, I saw Michael!@@Run for your life!}
+{6000}{}{What do you want, @sex@|mister||ma'am|?}
+{6010}{}{You little brat! Tell me how do you keep avoiding those damn traps while playing in the Trapper Town, and you better tell me that right away, otherwise you'll get hurt... along with your whole family. Now, out with it! [Light Step]}
+{6020}{}{Oh, what a lovely kid you are! Listen, how about I tell you about one of my greatest adventures, and you tell me how you avoid the traps in the Trapper Town? [Light Step]}
+{6030}{}{Nothing, go on playing with your friends. [Leave]}
+{7000}{}{[The kid starts crying but keeps talking, no pause there. After a while you get what you need]}
+{7010}{}{Get the fuck outta here before I slit your throat, you little punk! [Leave]}
+{8000}{}{[In exchange for one of your stories, the kid tells you the secret of avoiding traps]}
+{8010}{}{Well, wasn't that one of the best secrets I've ever heard! It's a bit late, you better go home now. Bye!}
+

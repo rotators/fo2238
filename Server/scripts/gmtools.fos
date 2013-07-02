@@ -1,0 +1,464 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// gmtools.fos
+//
+
+// Game Master tools
+// Compile with -client switch
+
+/* TODO:
+        GMT_DATAFLAG
+        ?send info about quest maps? mapdata[20+]
+ */
+
+#ifndef __GMTOOLS__
+#define __GMTOOLS__
+
+#include "gmtools_h.fos"
+
+#ifdef GMTOOLS_CONFIG_ENABLED
+
+# include "_macros.fos"
+# include "_colors.fos"
+
+# include "logging_h.fos"
+# include "mapdata_h.fos"
+# include "utils_h.fos"
+
+# include "MsgStr.h"
+
+# include "gmtools_csc.fos"
+
+array<int> null_data;
+
+import void   QuakeScreen(Map& map) from "effects";
+import void   InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import bool   WrathOfTheGod(Critter& cr) from "cheats";
+import string AuthedInfo(uint id) from "cheats";
+import string GetAuthed(uint id) from "cheats";
+import int    stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+void ExplodeExEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId, int quake, string& sound1, string sound2)
+{
+    map.RunEffect(effectPid, hexX, hexY, effectRadius);
+    map.PlaySound(Random(0, 1) == 0 ? sound1 : sound2);
+    if(quake > 0)
+        QuakeScreen(map);
+
+    array<Critter@> critters;
+    if(map.GetCrittersHex(hexX, hexY, damageRadius, FIND_LIFE_AND_KO, critters) == 0)
+        return;
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        Critter@ cr = critters[i];
+        uint     dist = GetDistantion(hexX, hexY, cr.HexX, cr.HexY);
+        int      dir = (dist == 0 ? (cr.Dir + 3) % 6 : GetDirection(hexX, hexY, cr.HexX, cr.HexY));
+        if(damage > 0)
+            InjureCritter(cr, damage, damageType, dir, ownerId);
+        if(ownerId != 0)
+            cr.AddEnemyInStack(ownerId);
+    }
+}
+
+void AirstrikeEx(Critter& player, int hexX, int hexY, int unused, string@ sound, array<int>@ data)
+{
+    LogCommandUsage(player, "Server script: gmtools@AirstrikeEx");
+    if((hexX < 0) || (hexY < 0))
+        return;
+
+    // if( sound == " " )
+    //	return;
+
+    if(data.length() < 8 || data.length() > 9)
+    {
+        player.Say(SAY_NETMSG, "Data length < 8 || > 9 (" + data.length() + ")");
+        return;
+    }
+
+    uint   quake = data[0];
+    uint   damageType = data[1];
+    uint   damage = Random(data[2], data[3]);
+    uint   damageRadius = data[4];
+    uint16 effectPid = data[5];
+    uint   effectRadius = data[6];
+    uint   amount = data[7];
+    int    radius = 10;
+    if(data.length() == 9)
+    {
+        if(data[8] < 0)
+            player.Say(SAY_NETMSG, "Radius less than 0. Ignored");
+        radius = data[8];
+    }
+    array<string@>@ mysound = split(sound, ",");
+
+    player.Say(SAY_NETMSG, "Airstrike target confirmed. Dropping the payload now.");
+
+    for(uint i = 0; i < amount; i++)
+        ExplodeExEx(player.GetMap(), hexX + Random(-radius, radius), hexY + Random(-radius, radius), effectPid, effectRadius, damage, damageType, damageRadius, 0, quake, mysound[0], mysound[1]);
+}
+
+// ~runscript/RunServerScript functions starts HERE
+
+GMTServerFunc(findclients, player, param0, param1, param2, param3, param4)
+{
+    LogCommandUsage(player, "Server script: gmtools@findclients");
+    if(!valid(player.GetMap()))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    array<Critter@> critters;
+
+    uint            all = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint p = 0; p < all; p++)
+    {
+        if(critters[p].GetAccess() == ACCESS_CLIENT)
+        {
+            if(param0 == 1)
+                player.Say(SAY_NETMSG, critters[p].Name + ": " + critters[p].HexX + "," + critters[p].HexY);
+            else
+                critters[p].Say(SAY_SOCIAL, "I am here! (" + critters[p].HexX + "," + critters[p].HexY + ")");
+        }
+    }
+}
+
+GMTServerFunc(findnpcs, player, param0, param1, param2, param3, param4)
+{
+    LogCommandUsage(player, "Server script: gmtools@findclients");
+    if(!valid(player.GetMap()))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    array<Critter@> critters;
+
+    uint            all = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, critters);
+    for(uint p = 0; p < all; p++)
+    {
+        if(critters[p].IsNpc())             // JIC
+        {
+            if(param0 == 1)
+                player.Say(SAY_NETMSG, critters[p].Name + ": " + critters[p].HexX + "," + critters[p].HexY);
+            else
+                critters[p].Say(SAY_SOCIAL, "I am here! (" + critters[p].HexX + "," + critters[p].HexY + ")");
+        }
+    }
+}
+
+GMTServerFunc(findmapitems, player, param0, param1, param2, param3, param4)
+{
+    LogCommandUsage(player, "Server script: gmtools@findmapitems");
+    if(!valid(player.GetMap()))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    array<Item@> items;
+
+    uint         all = player.GetMap().GetItems(param0, items);
+    for(uint i = 0; i < all; i++)
+    {
+        player.GetMap().SetText(items[i].HexX, items[i].HexY, GMT_COLOR_SERVER, "item: (" + items[i].Id + ") <" + items[i].GetProtoId() + ">");
+    }
+
+    return;
+}
+
+GMTServerFunc(findmapsceneries, player, param0, param1, param2, param3, param4)
+{
+    LogCommandUsage(player, "Server script: gmtools@findmapsceneries");
+    if(!valid(player.GetMap()))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    array<Scenery@> scenery;
+
+    uint            all = player.GetMap().GetSceneries(param0, scenery);
+    for(uint s = 0; s < all; s++)
+    {
+        player.GetMap().SetText(scenery[s].HexX, scenery[s].HexY, GMT_COLOR_SERVER, "scenery: <" + scenery[s].ProtoId + ">");
+    }
+}
+
+// ~run/~runscript functions ends HERE
+
+/***** Client <-> Server Communication *****/
+
+import void unsafe_ExecCommand(Critter& player, int param0, int param1, int param2, string@ param3, array<int>@ param4) from "cheats";
+import int  GetFactionNameMsg(uint faction) from "factions";
+import uint GetMembersCount(uint faction) from "factions";
+
+# ifdef ASSCOMPILER
+#  define addata    # (iden, what);
+# endif
+# ifndef ASSCOMPILER
+#  define addata    # (iden, what)sendata.insertLast(what); answer += iden
+# endif
+
+void unsafe_question(Critter& player, int tick, int type, int flags, string@ question_text, array<int>@ data)
+{
+    if(GMT_ACCESS_ANY == ACCESS_CLIENT)
+    {
+        DLog("GMTools: GMT_ACCESS_ANY == ACCESS_CLIENT");
+        return;
+    }
+
+    if(!GMtools_CheckAccess(player, GMT_ACCESS_ANY, tick, true))
+    {
+        # ifdef __DEBUG__
+        player.Say(SAY_NETMSG, "You must construct additional pylons");
+        # endif
+        if(type == GMT_GETACCESS)
+        {
+            GMtools_SendAnswer(player, 0, GMT_STATUS_FORCE, GMT_NOACCESS, " ", null_data);
+            return;
+        }
+        return;
+    }
+
+    if(type == GMT_GETACCESS)
+    {
+        // send real access level
+        LogCommandUsage(player, "GM Tools: access granted (" + player.GetAccess() + ")");
+        GMtools_SendAnswer(player, tick, GMT_STATUS_OK, player.GetAccess(), " ", null_data);
+    }
+    // else if( type == GMT_QUESTION_PING )
+    // {
+    //	GMtools_SendAnswer( player, tick, GMT_STATUS_OK, ELAPSED_TIME, " ", null_data );
+    // }
+
+    else if(type == GMT_QUESTION_MAP)
+    {
+        if(!GMtools_CheckAccess(player, int GMT_ACCESS_MAP, tick, true))
+            return;
+
+        Map@ map = player.GetMap();
+        if(!valid(map))
+        {
+            GMtools_SendAnswer(player, tick, GMT_STATUS_BAD, 0, " ", null_data);
+            return;
+        }
+        int        temp;
+        array<int> sendata;
+        string     answer = "";
+
+        addata(GMT_DATA_MAP_ID,                map.Id);
+        addata(GMT_DATA_MAP_LOCATIONID, map.GetLocation().Id);
+
+        if(FLAG(flags, GMT_DATAFLAG_MAP_EX))
+        {
+            temp = map.GetData(MAP_DATA_OWNER);               // mapdata[5]
+            if(temp > 0)
+            {
+                addata(GMT_DATA_MAP_OWNER, temp);
+            }
+
+            temp = map.GetData(MAP_DATA_CREATED_ON);                // mapdata[1]
+            if(temp > 0)
+            {
+                addata(GMT_DATA_MAP_CREATED, temp);
+            }
+
+            temp = map.GetData(MAP_DATA_LAST_ENTERED);               // mapdata[6]
+            if(temp > 0)
+            {
+                addata(GMT_DATA_MAP_LASTENTER, temp);
+            }
+        }
+
+        if(FLAG(flags, GMT_DATAFLAG_MAP_SIZE))
+        {
+            addata(GMT_DATA_MAP_WIDTH,             map.GetWidth());
+            addata(GMT_DATA_MAP_HEIGHT,    map.GetHeight());
+        }
+
+        if(FLAG(flags, GMT_DATAFLAG_MAP_FACTION))
+        {
+            temp = map.GetData(MAP_DATA_FACTION);               // mapdata[0]
+            if(temp > 0)
+            {
+                addata(GMT_DATA_MAP_FACTION, temp);
+                addata(GMT_DATA_MAP_FACTIONAME, GetFactionNameMsg(temp));
+                addata(GMT_DATA_MAP_FACTIONMEMBERS, GetMembersCount(temp));
+            }
+        }
+
+        // TODO? - informations about quest maps (mapdata[20]+)
+
+        GMtools_SendAnswer(player, tick, GMT_STATUS_OK, 0, answer, sendata);
+    }
+    else if(type == GMT_QUESTION_LOCATION)
+    {
+        if(!GMtools_CheckAccess(player, int GMT_ACCESS_LOCATION, tick, true))
+            return;
+
+        Location@ location = player.GetMap().GetLocation();
+        if(!valid(location))
+        {
+            GMtools_SendAnswer(player, tick, GMT_STATUS_BAD, 0, " ", null_data);
+            return;
+        }
+
+        array<int> sendata;
+        string     answer = "";
+
+        addata(GMT_DATA_LOCATION_ID,                   location.Id);
+        addata(GMT_DATA_LOCATION_PID,                  location.GetProtoId());
+        addata(GMT_DATA_LOCATION_MAPCOUNT,             location.GetMapCount());
+
+        if(FLAG(flags, GMT_DATAFLAG_LOCATION_POSITION))
+        {
+            addata(GMT_DATA_LOCATION_WORLDX,               location.WorldX);
+            addata(GMT_DATA_LOCATION_WORLDY,               location.WorldY);
+            if(location.Visible)
+            {
+                addata(GMT_DATA_LOCATION_VISIBLE,    1);
+            }
+        }
+
+        if(FLAG(flags, GMT_DATAFLAG_LOCATION_TYPE))
+        {
+            if(location.IsEncounter() == true)
+            {
+                addata(GMT_DATA_LOCATION_ENCOUNTER, 1);
+            }
+            if(location.IsCityEncounter() == true)
+            {
+                addata(GMT_DATA_LOCATION_CITYENCOUNTER, 1);
+            }
+            if(location.IsCave() == true)
+            {
+                addata(GMT_DATA_LOCATION_CAVE, 1);
+            }
+            if(location.IsTown() == true)
+            {
+                addata(GMT_DATA_LOCATION_TOWN, 1);
+            }
+            if(location.IsTCTown() == true)
+            {
+                addata(GMT_DATA_LOCATION_TCTOWN, 1);
+            }
+            if(location.IsInstancedQuest() == true)
+            {
+                addata(GMT_DATA_LOCATION_INSTANCEDQUEST, 1);
+            }
+            if(location.IsTent() == true)
+            {
+                addata(GMT_DATA_LOCATION_TENT, 1);
+            }
+            if(location.IsBase() == true)
+            {
+                addata(GMT_DATA_LOCATION_BASE, 1);
+            }
+            if(location.IsMine() == true)
+            {
+                addata(GMT_DATA_LOCATION_MINE, 1);
+            }
+            if(location.IsReplication() == true)
+            {
+                addata(GMT_DATA_LOCATION_REPLICATION, 1);
+            }
+        }
+
+        GMtools_SendAnswer(player, tick, GMT_STATUS_OK, 0, answer, sendata);
+    }
+    else if(type == GMT_QUESTION_COMMAND)
+    {
+        if(!GMtools_CheckAccess(player, GMT_ACCESS_COMMAND, tick, true))
+            return;
+
+        // extra checks for runscript/runscript_unsafe
+        if(flags == GMT_ACCESS_RUNSCRIPT || flags == GMT_ACCESS_RUNSCRIPT_UNSAFE)
+        {
+            if(!GMtools_CheckAccess(player, flags, tick, true))
+                return;
+            GMtools_SendAnswer(player, tick, GMT_STATUS_OK, flags, question_text, null_data);
+        }
+        else
+        {
+            if(question_text != " ")
+            {
+                stringReplaceText(question_text, "$[LastSpawned.CritterId]", "" + player.LastSpawnedCritter);
+                stringReplaceText(question_text, "$[LastSpawned.ItemId]", "" + player.LastSpawnedItem);
+                stringReplaceText(question_text, "$[LastSpawned.LocationId]", "" + player.LastSpawnedLocation);
+                unsafe_ExecCommand(player, 0, 0, 0, question_text, null);
+            }
+            GMtools_SendAnswer(player, tick, GMT_STATUS_OK, flags, " ", null_data);
+        }
+    }
+    else if(type == GMT_QUESTION_CHAT)
+    {
+        if(!GMtools_CheckAccess(player, GMT_ACCESS_CHAT, tick, true))
+            return;
+
+        GMTools_Chat(player, question_text);
+        GMtools_SendAnswer(player, tick, GMT_STATUS_OK, flags, " ", null_data);
+    }
+}
+
+void GMTools_Chat(Critter& player, string& message)   // Export
+{
+    array<int> sendata;
+    string     text = AuthedInfo(player.Id);
+    if(WrathOfTheGod(player))
+    {
+        sendata.insertLast(1337);
+        text = GetAuthed(player.Id);
+    }
+    else
+        sendata.insertLast(player.GetAccess());
+
+    text += ": " + message;
+
+    ILog("gmchat", text);
+
+    array<Critter@> auth;
+    GetAuthenticatedPlayers(auth, true);
+    for(uint a = 0; a < auth.length(); a++)
+    {
+        GMtools_SendAnswer(auth[a], -1, GMT_STATUS_FORCE, GMT_QUESTION_CHAT, text, sendata);
+    }
+}
+
+/*
+   void GMTools_Broadcast( string& message ) // Export // TODO
+   {
+        int[] sendata;
+
+        Critter@[] auth;
+        GetAuthenticatedPlayers( auth );
+        for( uint a=0; a<auth.length(); a++ )
+        {
+                GMtools_SendAnswer( target, -1, GMT_STATUS_FORCE, GMT_QUESTION_BROADCAST, message, sendata );
+        }
+   }
+ */
+
+
+GMTServerFunc(_timeout, player, id, time, p2, p3, p4)
+{
+    Critter@ victim = GetCritter(id);
+
+    if(valid(victim))
+    {
+        victim.RunClientScript("client_timeouts@_add_unsafe", time, 0, 0, "Test", null);
+        player.Say(SAY_NETMSG, "Timeout send");
+    }
+}
+
+GMTServerFunc(version, player, p0, p1, p2, p3, p4)
+{
+    uint major = uint(GMTOOLS_VERSION / 1000);
+    uint minor = uint((GMTOOLS_VERSION - (major * 1000)) / 100);
+    uint fix   = uint((GMTOOLS_VERSION - (major * 1000)) - (minor * 100));
+    player.Say(SAY_NETMSG, "GM Tools, v" + major + "." + minor + (fix > 0 ? "." + fix : ""));
+}
+#endif /* GMTOOLS_CONFIG_ENABLED */
+#endif /* __GMTOOLS__ */

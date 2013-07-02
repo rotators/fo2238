@@ -1,0 +1,140 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_ncr_westin_quest1 = 2 D _var p name_mem_player_npc = 0 R _var p name_mem_player_npc = 1 #
+22 1020 D _var p q_ncr_westin_quest1 = 2 D _var p name_mem_player_npc = 1 #
+2 1030 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+8 3020 #
+0 3030 @
+4 4000 None 0 #
+9 4010 #
+5 4020 #
+6 4030 D _item p PID_MEAT_JERKY > 0 #
+10 4040 D _var p name_mem_npc_player = 0 #
+0 4050 @
+5 5000 Attack 0 @
+6 6000 None 0 #
+7 6010 R _var p q_ncr_westin_quest1 = 3 R _item p PID_MEAT_JERKY - 1 R _param p ST_EXPERIENCE + 150 R _script quest_ncr_brahmin@r_RemoveChildren 0  @
+7 7000 None 0 @
+8 8000 None 0 #
+10 8010 D _var p name_mem_npc_player = 0 #
+6 8020 D _item p PID_MEAT_JERKY > 0 @
+9 9000 None 0 #
+11 9010 D _param p ST_INTELLECT > 5 #
+10 9020 D _var p name_mem_npc_player = 0 #
+15 9030 D _param p SK_BARTER } 45 D _item p PID_BOTTLE_CAPS } 10 #
+16 9040 D _param p SK_BARTER < 45 D _item p PID_BOTTLE_CAPS } 10 #
+5 9050 @
+10 10000 None 0 #
+14 10010 D _script dialog@d_IsLocationVisible 1 30 R _var p name_mem_npc_player = 1 #
+13 10020 D _script dialog@d_IsLocationNotVisible 1 30 R _script dialog@r_ShowLocation 1 30 R _var p name_mem_npc_player = 1 @
+11 11000 None 0 #
+12 11010 R _script quest_ncr_brahmin@r_RemoveChildren 0  R _param p ST_EXPERIENCE + 150 R _var p q_ncr_westin_quest1 = 3 #
+10 11020 D _var p name_mem_npc_player = 0 @
+12 12000 None 0 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+11 14010 D _param p SK_SPEECH } 45 D or D _param p ST_INTELLECT } 5 D or D _param p ST_LEVEL } 10 #
+5 14020 #
+18 14030 #
+0 14040 @
+15 15000 None 0 #
+0 15010 D _item p PID_BOTTLE_CAPS } 10 R _var p q_ncr_westin_quest1 = 3 R _script quest_ncr_brahmin@r_RemoveChildren 0  R _param p ST_EXPERIENCE + 150 R _script dialog@r_RemoveMoney 1 10 @
+16 16000 None 0 #
+17 16010 D _item p PID_BOTTLE_CAPS } 50 #
+9 16020 @
+17 17000 None 0 #
+0 17010 D _item p PID_BOTTLE_CAPS } 50 R _script quest_ncr_brahmin@r_RemoveChildren 0  R _var p q_ncr_westin_quest1 = 3 R _param p ST_EXPERIENCE + 150 R _script dialog@r_RemoveMoney 1 50 @
+18 18000 None 0 #
+19 18010 D _param p ST_CHARISMA } 5 #
+21 18020 D _param p ST_CHARISMA < 5 #
+9 18030 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+0 20010 R _script quest_ncr_brahmin@r_RemoveChildren 0  R _param p ST_EXPERIENCE + 150 R _var p q_ncr_westin_quest1 = 3 @
+21 21000 None 0 @
+22 22000 None 0 #
+9 22010 #
+6 22020 D _item p PID_MEAT_JERKY } 0 #
+10 22030 D _var p name_mem_npc_player = 0 #
+0 22040 &
+
+[engl]
+{100}{}{Stray}
+{200}{}{You see a child.}
+{210}{}{You see a dirty, stray child.}
+{1000}{}{Predialogue installations}
+{1010}{}{quest }
+{1020}{}{talked to already}
+{1030}{}{no quest}
+{2000}{}{I don't like you!@@Boo!@@You are ugly!@@You can't do anything!@@Waaaah!@@Pah!@@I am free!@@}
+{3000}{}{What do you want?@@My mom doesn't allow me to talk to strangers!@@I am not allowed to talk to strangers!}
+{3010}{}{Hey, what are you kids doing here?}
+{3020}{}{Get away from here, that's no place to play for kids!}
+{3030}{}{[End]}
+{4000}{}{We are playing with the moo-moos!}
+{4010}{}{Playing? You are chasing them around!}
+{4020}{}{[Combat] I am going to show YOU what playing is!}
+{4030}{}{If I'll give you kids some meat jerky, will you leave then?}
+{4040}{}{Where are your parents, I am going to have a word with them!}
+{4050}{}{Fine... then... uh, continue.}
+{5000}{}{Aaaaaa! You are evil!}
+{6000}{}{@sex@|Sure, mister!||Sure, mam!| That's great! I am so hungry...}
+{6010}{}{Fine. [You give them some meat jerky.]}
+{7000}{}{@sex@|Thanks, mister!||Thanks, miss!|}
+{8000}{}{We always play here, you can't dictate us anything!}
+{8010}{}{Where are your parents, I am going to have a word with them!}
+{8020}{}{If I'll give you kids some meat jerky, will you leave then?}
+{9000}{}{No! We run around with them and they like it!}
+{9010}{}{Obviously you can't see how nervous the brahmin get when you and your friends are running around them all the time.}
+{9020}{}{Where are your parents, I am going to have a word with them!}
+{9030}{}{I'll give you 10 caps if you go to play somewhere else.}
+{9040}{}{I'll give you 10 caps if you go to play somewhere else.}
+{9050}{}{[Combat] Enough, is enough, I am going to teach you some respect!}
+{10000}{}{My parents are working at the quarry all day long, they don't care about what you say!}
+{10010}{}{At the quarry? But that's miles away! Shouldn't you be at the workers settlement instead of here?}
+{10020}{}{Where is that quarry you are talking about?}
+{11000}{}{They don't like it? Oh no! [The kid looks worried.]}
+{11010}{}{Yes, you should stop it, so they can relax again.}
+{11020}{}{They don't like it and I am going to tell your parents about what evil things you and your friends are doing!}
+{12000}{}{We don't want them to feel bad! We better play somewhere else then.}
+{13000}{}{It's in the mountains to the west of here! [He hasty points into some random direction with one of his arms.]}
+{13010}{}{But that's miles away! Shouldn't you be at the workers settlement instead of here?}
+{14000}{}{We don't like it there, and it stinks! We are free now, we can do whatever we want to do!}
+{14010}{}{You better stop chasing around the brahmin or you will get in trouble with the local brahmin baron.}
+{14020}{}{[Combat] Enough, is enough, I am going to teach you some respect!}
+{14030}{}{Your parents must be worried, you kids really should go back to them.}
+{14040}{}{Do whatever you want to do. Bye.}
+{15000}{}{@sex@|Sure, mister!||Sure, mam!| We'll be playing somewhere else! [He yells over to his friends and they run away.] }
+{15010}{}{[End]}
+{16000}{}{NO! ... We want 50 caps!}
+{16010}{}{You kids for sure are expensive. [You give him 50 caps.]}
+{16020}{}{I don't have that much money on me. Just stop running after the brahmin!}
+{17000}{}{@sex@|Thanks, mister!||Thanks, miss!| We go to play somewhere else! [He yells over to his friends and they run away.] }
+{17010}{}{[End]}
+{18000}{}{My parents don't care where I am, they don't even know I'm gone!}
+{18010}{}{[Bluff] I think that's not true, I saw some people looking for their children, I bet they were you're parents.}
+{18020}{}{[Bluff] I think that's not true, I saw some people looking for their children, I bet they were you're parents.}
+{18030}{}{Just stop running after the brahmin!}
+{19000}{}{Oh crap, they're looking for us already?}
+{19010}{}{Yes, you should go home now.}
+{20000}{}{We better go home! [He yells over to his friends and they run away.]}
+{20010}{}{[End]}
+{21000}{}{I don't believe you! You are lying!}
+{22000}{}{@sex@|Yes, mister?||Yes, miss?|}
+{22010}{}{Stop chasing around the brahmin!}
+{22020}{}{If I'll give you kids some meat jerky, will you leave then?}
+{22030}{}{Where are your parents, I am going to have a word with them!}
+{22040}{}{Goodbye.}
+

@@ -1,0 +1,324 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// polygon.fos
+//
+
+// A class for handling of polygon shapes.
+// The client version allows drawing them.
+
+#define __POLYGON_MODULE__
+#include "_macros.fos"
+#include "polygon_h.fos"
+
+#define SQRT3T2_FLOAT    (3.4641016151f)
+#define SQRT3_FLOAT      (1.732050807568877f)
+#define BIAS_FLOAT       (0.02f)
+
+#ifndef __SERVER
+# include "_client_defines.fos"
+class CTriPoly
+{
+    uint     count;
+    CVertex@ head;
+    CVertex@ tail;     // used only on adding vertices and not used later, can point to wrong list node
+
+    CTriPoly()
+    {
+        count = 0;
+        @head = null;
+        @tail = null;
+    }
+
+    CTriPoly@ AddVertex(float x, float y)
+    {
+        if(@tail == null)
+        {
+            @head = @CVertex(x, y, count++);
+            @head.next = head;
+            @head.prev = head;
+            @tail = head;
+            return this;
+        }
+        @tail.next = @CVertex(x, y, count++);
+        @tail.next.prev = tail;
+        @tail = tail.next;
+        @tail.next = head;
+        @head.prev = tail;
+        return this;
+    }
+
+};
+
+class CVertex
+{
+    float    x;
+    float    y;
+    uint     num;
+    CVertex@ next;
+    CVertex@ prev;
+    CVertex(float x, float y, uint num)
+    {
+        this.x = x;
+        this.y = y;
+        this.num = num;
+        @next = null;
+        @prev = null;
+    }
+};
+#endif
+
+class CPolygon : IPolygon
+{
+    array<float>  xs;
+    array<float>  ys;
+    array<uint16> hxs;
+    array<uint16> hys;
+
+    CPolygon()
+    {}
+
+    IPolygon@ AddVertex(uint16 x, uint16 y)
+    {
+        hxs.insertLast(x);
+        hys.insertLast(y);
+        float fx = 3 * float(x);
+        float fy = SQRT3T2_FLOAT * float(y) - (float(x % 2)) * SQRT3_FLOAT;
+        xs.insertLast(fx);
+        ys.insertLast(fy);
+        return this;
+    }
+
+    IPolygon@ AddVertices(array<uint16>& hexes)
+    {
+        int idx = hxs.length();
+        hxs.grow(hexes.length() / 2);
+        hys.grow(hexes.length() / 2);
+        xs.grow(hexes.length() / 2);
+        ys.grow(hexes.length() / 2);
+
+        for(uint i = 0, j = hexes.length(); i < j; i += 2)
+        {
+            hxs[idx] = hexes[i];
+            hys[idx] = hexes[i + 1];
+            float fx = 3 * float(hexes[i]);
+            float fy = SQRT3T2_FLOAT * float(hexes[i + 1]) - (float(hexes[i] % 2)) * SQRT3_FLOAT;
+            xs[idx] = fx;
+            ys[idx++] = fy;
+        }
+        return this;
+    }
+
+    #ifndef __SERVER
+    void GetTriangulation(array<uint16>& triangles)
+    {
+        CTriPoly poly;
+        for(uint i = 0, j = xs.length(); i < j; i++)
+            poly.AddVertex(xs[i], ys[i]);
+        array<uint> vertlist;
+        for(uint i = 0, j = xs.length() - 2; i < j; i++)
+            ClipEar(poly, vertlist);
+        for(uint i = 0, j = vertlist.length(); i < j; i++)
+        {
+            triangles.insertLast(hxs[vertlist[i]]);
+            triangles.insertLast(hys[vertlist[i]]);
+        }
+    }
+    #endif
+
+    bool Intersects(float x, float y, float x1, float y1, float x2, float y2)
+    {
+        if(y1 == y2)
+            return false;
+        if((y > y1 && y > y2) || (y < y1 && y < y2))
+            return false;
+        return(x <= x1 + ((x1 - x2) * (y1 - y)) / (y2 - y1));
+    }
+
+    bool IsWithin(uint16 x, uint16 y)
+    {
+        uint  count = 0;
+        float fx = 3 * float(x) + BIAS_FLOAT;
+        float fy = SQRT3T2_FLOAT * float(y) - (float(x % 2)) * SQRT3_FLOAT + BIAS_FLOAT;
+        int   i = 0;
+        for(int j = xs.length() - 1; i < j; i++)
+            if(Intersects(fx, fy, xs[i], ys[i], xs[i + 1], ys[i + 1]))
+                count++;
+
+        if(Intersects(fx, fy, xs[i], ys[i], xs[0], ys[0]))
+            count++;
+        return (count % 2) == 1;
+    }
+    #ifdef __SERVER
+    bool IsWithin(Critter& cr)
+    {
+        return IsWithin(cr.HexX, cr.HexY);
+    }
+
+    bool IsWithin(Item& item)
+    {
+        return IsWithin(item.HexX, item.HexY);
+    }
+    #endif
+};
+
+#ifndef __SERVER
+void ClipEar(CTriPoly& poly, array<uint>& vertlist)
+{
+    bool     zero = false;
+    CVertex@ vertex = poly.head;
+    @vertex = FindEar(vertex, zero);
+    if(!zero)
+    {
+        vertlist.insertLast(vertex.num);
+        vertlist.insertLast(vertex.next.num);
+        vertlist.insertLast(vertex.prev.num);
+    }
+    @vertex.prev.next = vertex.next;
+    @vertex.next.prev = vertex.prev;
+    if(vertex.num == poly.head.num)
+        @poly.head = vertex.next;
+}
+
+CVertex@ FindEar(CVertex@ vertex, bool& zero)
+{
+    while(true)
+    {
+        float edgeinx = vertex.x - vertex.prev.x;
+        float edgeiny = vertex.y - vertex.prev.y;
+        float edgeoutx = vertex.next.x - vertex.x;
+        float edgeouty = vertex.next.y - vertex.y;
+
+        float det = Determinant(edgeinx, edgeiny, edgeoutx, edgeouty);
+
+        if(det == 0.0f)            // co-linear
+        {
+            zero = true;
+            return @vertex;
+        }
+
+        if(det < 0.0f)            // concave vertex
+        {
+            @vertex = vertex.next;
+            continue;
+        }
+        float    edgediagx = vertex.prev.x - vertex.next.x;
+        float    edgediagy = vertex.prev.y - vertex.next.y;
+        // check if ear
+        bool     ok = true;
+        CVertex@ nextv = vertex.next.next;
+        while(nextv.num != vertex.prev.num)
+        {
+            if(DetNonnegative(edgeinx, edgeiny, nextv.x - vertex.prev.x, nextv.y - vertex.prev.y) &&
+               DetNonnegative(edgeoutx, edgeouty, nextv.x - vertex.x, nextv.y - vertex.y) &&
+               DetNonnegative(edgediagx, edgediagy, nextv.x - vertex.next.x, nextv.y - vertex.next.y))
+            {
+                ok = false;
+                break;
+            }
+            @nextv = nextv.next;
+        }
+        if(ok)
+            return @vertex;
+        @vertex = vertex.next;
+    }
+    return null;
+}
+
+bool DetNonnegative(float x1, float y1, float x2, float y2)
+{
+    return x1 * y2 - x2 * y1 >= 0;
+}
+
+float Determinant(float x1, float y1, float x2, float y2)
+{
+    return x1 * y2 - x2 * y1;
+}
+
+void GetDrawHexAreaData(array<uint16>& area, bool triangles, int color, array<int>& data)
+{
+    int x = 0;
+    int y = 0;
+
+    if(!triangles)
+    {
+        uint len = area.length() - 2;
+        data.resize(3 * area.length());
+        int  idx = 0;
+        for(uint i = 0; i < len; i += 2)
+        {
+            GetHexPos(area[i], area[i + 1], x, y);
+            data[idx++] = x;
+            data[idx++] = y;
+            data[idx++] = color;
+            GetHexPos(area[i + 2], area[i + 3], x, y);
+            data[idx++] = x;
+            data[idx++] = y;
+            data[idx++] = color;
+        }
+        GetHexPos(area[len], area[len + 1], x, y);
+        data[idx++] = x;
+        data[idx++] = y;
+        data[idx++] = color;
+        GetHexPos(area[0], area[1], x, y);
+        data[idx++] = x;
+        data[idx++] = y;
+        data[idx++] = color;
+    }
+    else
+    {
+        data.resize(3 * area.length() / 2);
+        int idx = 0;
+        for(uint i = 0, j = area.length(); i < j; i += 6)
+        {
+            GetHexPos(area[i], area[i + 1], x, y);
+            data[idx++] = x;
+            data[idx++] = y;
+            data[idx++] = color;
+            GetHexPos(area[i + 2], area[i + 3], x, y);
+            data[idx++] = x;
+            data[idx++] = y;
+            data[idx++] = color;
+            GetHexPos(area[i + 4], area[i + 5], x, y);
+            data[idx++] = x;
+            data[idx++] = y;
+            data[idx++] = color;
+        }
+    }
+
+}
+
+void DrawHexArea(array<uint16>& area, bool triangles, int color)
+{
+    array<int> data;
+    GetDrawHexAreaData(area, triangles, color, data);
+    DrawPrimitive(triangles ? DRAW_PRIMITIVE_TRIANGLELIST : DRAW_PRIMITIVE_LINELIST, data);
+}
+#endif
+
+IPolygon@ NewPolygon()
+{
+    return @CPolygon();
+}
+
+#ifdef __SERVER
+# include "entire.fos"
+IPolygon@ LoadShapeFromEntires(Map& map, uint first, uint last)
+{
+    IPolygon@ poly = NewPolygon();
+    for(uint i = first; i <= last; i++)
+    {
+        array<Entire> entires;
+        if(ParseEntires(map, entires, i) == 0)
+        {
+            Log("Missing entire number " + i);
+            continue;
+        }
+        if(entires.length() != 1)
+            Log("Ambiguous entire number " + i + ", taking at index 0");
+        poly.AddVertex(entires[0].HexX, entires[0].HexY);
+    }
+    return poly;
+}
+#endif

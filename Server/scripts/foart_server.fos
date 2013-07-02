@@ -1,0 +1,275 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_server.fos
+//
+
+#ifndef __FOART_SERVER__
+#define __FOART_SERVER__
+
+// inlined in foart.fos
+
+#ifdef _MSC_VER
+# include "foart.fos"
+#endif
+
+#include "_time.fos"
+
+#include "buffer_h.fos"
+
+#ifdef FOART_DEBUG
+#endif // FOART_DEBUG
+
+#define FOART_SayLog                                       \
+    # (__cr, __message)                                    \
+    {                                                      \
+        Log(__cr.Name + "<" + __cr.Id + "> " + __message); \
+        __cr.Say(SAY_NETMSG, __message);                   \
+    }
+
+class FOArt_Running
+{
+    FOArt@ foart;
+    uint   mapId;
+
+    int16  centerX;
+    int16  centerY;
+    uint   hexIndex;
+
+    uint   ownerId;
+
+    uint   definitionIndex;
+
+    uint   started;
+    bool   finished;
+
+    FOArt_Running(FOArt & foart, uint mapId, int16 centerX, int16 centerY, uint ownerId)
+    {
+        @this.foart                      = foart;
+        this.mapId                       = mapId;
+        this.centerX             = centerX;
+        this.centerY             = centerY;
+        this.hexIndex            = 0;
+        this.definitionIndex = 0;
+
+        this.ownerId         = ownerId;
+        this.finished        = false;
+        this.started         = __FullSecond;
+    }
+
+    void Process()
+    {
+        if(!valid(this.foart))             // should never happen
+        {
+            Log("ERROR !!! FOArt invalid, finishing");
+            this.finished = true;
+            return;
+        }
+
+        Map@ map = GetMap(this.mapId);
+        if(!valid(map))
+        {
+            Log("FOArt: invalid map<" + mapId + ">, finishing");
+            this.finished = true;
+            return;
+        }
+
+        FOArtDefinition@ definition = this.foart.GetDefinition(this.definitionIndex);
+        if(!valid(definition))
+        {
+            Log("FOArt: invalid definition index<" + this.definitionIndex + ">, finishing");
+            this.finished = true;
+            return;
+        }
+
+        int16 hexX = 0;
+        int16 hexY = 0;
+
+        if(!definition.GetHex(this.hexIndex, hexX, hexY))
+        {
+            Log("FOArt: invalid hex index<" + this.hexIndex + ">, finishing");
+            this.finished = true;
+            return;
+        }
+
+        if(this.foart.Relative())
+        {
+            hexX += this.centerX;
+            hexY += this.centerY;
+        }
+
+        int itemId =  definition.Spawn(map, hexX, hexY);
+        #ifdef FO2238
+        FOArt2238_ItemSpawned(itemId, this.ownerId);
+        #endif
+
+        if(++this.hexIndex == definition.GetHexesCount())
+        {
+            DebugLog("hexes end, try next definition");
+            hexIndex = 0;
+
+            if(++this.definitionIndex == this.foart.GetDefinitionsCount())
+            {
+                DebugLog("definitions end, finishing");
+                this.finished = true;
+            }
+        }
+    }
+};
+array<FOArt_Running@> FOArtRunning;
+
+uint                  FOART_TimeEvent = 0;
+
+void unsafe_spawnFast(Critter& cr, int, int, int, string@ filename, array<int32>@ data)
+{
+    #ifdef FO2238
+    if(cr.GetAccess() < ACCESS_TESTER)
+    {
+        Log("FOArt::unsafe_spawnFast called without access : " + cr.Name + "<" + cr.Id + ">");
+        return;
+    }
+    #endif
+
+    if(!valid(filename))
+        @filename = "<unknown>";
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+    {
+        FOART_SayLog(cr, filename + ": Not on worldmap");
+        return;
+    }
+
+    DebugLog("FOArt: reading data");
+    Buffer@ buff = NewBuffer(data);
+    if(!valid(buff))
+    {
+        FOART_SayLog(cr, filename + ": Buffer not valid");
+        return;
+    }
+
+    DebugLog("FOArt: loading data");
+    FOArt@ foart = NewFOArt(0);
+    if(foart.Load(buff.AsUint8()))
+    {
+        if(foart.Version() == 0)
+            FOART_SayLog(cr, filename + ": Load error");
+
+        FOART_Spawn(foart, map, cr.HexX, cr.HexY, cr.Id);
+    }
+    else
+        FOART_SayLog(cr, filename + ": FOArt not loaded");
+}
+
+void unsafe_spawnSlow(Critter& cr, int, int, int, string@ filename, array<int32>@ data)
+{
+    #ifdef FO2238
+    if(cr.GetAccess() < ACCESS_TESTER)
+    {
+        Log("FOArt::unsafe_spawnSlow called without access : " + cr.Name + "<" + cr.Id + ">");
+        return;
+    }
+    #endif
+
+    if(!valid(filename))
+        @filename = "<unknown>";
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+    {
+        FOART_SayLog(cr, filename + ": Not on worldmap");
+        return;
+    }
+
+    DebugLog("FOArt: reading data");
+    Buffer@ buff = NewBuffer(data);
+    if(!valid(buff))
+    {
+        FOART_SayLog(cr, filename + ": Buffer not valid");
+        return;
+    }
+
+    DebugLog("FOArt: loading data");
+    FOArt@ foart = NewFOArt(0);
+    if(foart.Load(buff.AsUint8()))
+    {
+        if(foart.Version() == 0)
+            FOART_SayLog(cr, filename + ": Load error");
+
+        FOART_Spawn(foart, map, cr.HexX, cr.HexY, cr.Id, true);
+    }
+    else
+        FOART_SayLog(cr, filename + ": FOArt not loaded");
+}
+
+void FOART_Spawn(FOArt@ foart, Map& map, uint16 hexX, uint16 hexY, uint ownerId, bool timeEvent = false)
+{
+    if(timeEvent)
+    {
+        timeEvent = false;
+
+        // detect servers with small __TimeMultiplier
+        if(REAL_MS(FOART_PROCESS_DELAY) == 0)
+        {
+            Log("ERROR !! FOART_PROCESS_DELAY is too small");
+            return;
+        }
+
+        FOArtRunning.insertLast(@FOArt_Running(foart, map.Id, hexX, hexY, ownerId));
+
+        if(FOART_TimeEvent == 0)
+            timeEvent = true;
+        else
+        {
+            uint        duration = 0;
+            array<uint> values;
+            if(!GetTimeEvent(FOART_TimeEvent, duration, values))
+            {
+                Log("WARNING ! FOArt time event not found, but its id is still set");
+                timeEvent = true;
+            }
+            else
+                SetTimeEvent(FOART_TimeEvent, duration, values);                   // !!!
+        }
+
+        if(timeEvent)
+        {
+            FOART_TimeEvent = CreateTimeEvent(__FullSecond + REAL_MS(FOART_PROCESS_DELAY), FOART_MODULE + "@e_FOART_Process", false);
+            DebugLog("FOArt: created time event<" + FOART_TimeEvent + ">");
+        }
+    }
+    else
+    {
+        int result = foart.Spawn(map, hexX, hexY);
+
+        if(result < 0)
+            Log("FOArt: Spawn error " + result);
+        else
+            Log("FOArt: spawned " + result + " item" + (result == 1 ? "" : "s"));
+    }
+}
+
+uint e_FOART_Process(array<uint>@)
+{
+    if(FOArtRunning.length() == 0)
+    {
+        DebugLog("FOArt: removed time event<" + FOART_TimeEvent + ">");
+        FOART_TimeEvent = 0;
+        return(0);
+    }
+
+    for(uint current = 0, max = FOArtRunning.length(); current < max; current++)
+    {
+        FOArtRunning[current].Process();
+
+        if(FOArtRunning[current].finished)
+        {
+            FOArtRunning.removeAt(current);
+            break;
+        }
+    }
+
+    return(REAL_MS(FOART_PROCESS_DELAY));
+}
+#endif // __FOART_SERVER__ //

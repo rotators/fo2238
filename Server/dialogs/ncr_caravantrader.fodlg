@@ -1,0 +1,99 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+58 1020 D _param p ST_CHARISMA < 2 #
+2 1030 @
+2 2000 None 0 #
+3 2010 #
+10 2020 R _script car_seller@r_CheckCar 1 0 #
+0 2030 @
+3 3000 car_seller@dlg_PrepareBuy 0 #
+12 3010 #
+13 3020 #
+0 3030 @
+5 4000 None 0 @
+6 5000 None 0 @
+7 6000 None 0 #
+0 6010 @
+8 7000 None 0 #
+0 7010 @
+10 8000 car_seller@dlg_SellCar 0 #
+11 8010 R _script car_seller@r_SellCar 1 0 #
+0 8020 @
+11 9000 None 0 @
+12 10000 car_seller@dlg_PrepareBuy 0 #
+14 10010 D _script follower@d_HasNoBrahmin 1 0 #
+14 10020 D _script car_seller@d_CanNotAffordCaravanOrange 0  #
+39 10030 D _script follower@d_HasBrahmin 1 0 D _script car_seller@d_CanAffordCaravanOrange 0  R _script car_seller@r_BuyCaravanOrange 1 0 R _script follower@r_RemoveBrahmin 1 0 #
+0 10040 @
+13 11000 car_seller@dlg_PrepareBuy 0 #
+14 11010 D _script follower@d_HasNoBrahmin 1 0 #
+14 11020 D _script car_seller@d_CanNotAffordCaravanWhite 0  #
+39 11030 D _script follower@d_HasBrahmin 1 0 D _script car_seller@d_CanAffordCaravanWhite 0  R _script car_seller@r_BuyCaravanWhite 1 0 R _script follower@r_RemoveBrahmin 1 0 #
+0 11040 @
+14 12000 None 0 @
+37 13000 None 0 @
+38 14000 None 0 @
+39 15000 None 0 @
+40 16000 None 0 @
+100 17000 None 0 @
+101 18000 None 0 @
+102 19000 None 0 @
+103 20000 None 0 @
+50 21000 None 0 @
+58 22000 None 0 &
+
+[engl]
+{100}{}{Paul}
+{200}{}{You see Paul, the caravan car seller.}
+{210}{}{You see Paul, the caravan car seller.}
+{1000}{}{Preddialogue settings}
+{1010}{}{Idiot}
+{1020}{}{ugly}
+{1030}{}{2}
+{2000}{}{I am a very busy man. What do you want?}
+{2010}{}{I see this caravan cars all around. Do you sell these?}
+{2020}{}{I want to sell my car. Are you interested in it?}
+{2030}{}{I am very busy too. Bye.}
+{3000}{}{Yes. If you want to buy one, talk to me. At the moment, I have one big and one medium size car available. You also have to bring me a brahmin because I don't think you can push that thing out of here...}
+{3010}{}{I would like to buy the medium size caravan car.}
+{3020}{}{I would like to buy the big size caravan car.}
+{3030}{}{Maybe next time.}
+{4000}{}{You have the money, I have the caravan. No money, no caravan.}
+{5000}{}{Our garage is too full right now. Come back when we have more room. }
+{6000}{}{[He gives you the key for the caravan.] Here, take this. If you need another car, come back to me.}
+{6010}{}{Thanks, bye.@@Nice, bye.@@I will do. Bye.}
+{7000}{}{[He gives you the key for the caravan.] Here, take this. If you need another car, come back to me.}
+{7010}{}{Thanks, bye.@@Nice, bye.@@I will do. Bye.}
+{8000}{}{Let me take a look at it... [He examines the vehicle very well.] Okay, I'll give you @lex sell_cost@ for it.}
+{8010}{}{Fine, deal.}
+{8020}{}{Not today. I'll hang onto it for now.}
+{9000}{}{Very well.}
+{10000}{}{Medium size, mhmmm... Okay, I can sell you one for @lex orange@ caps. Do you have a brahmin with you?}
+{10010}{}{Damn, need to bring my brahmin first... Bye.}
+{10020}{}{Oops, I have no cash.}
+{10030}{}{Fine, here you have the caps and the brahmin.}
+{10040}{}{I changed my mind. I come back later... maybe.}
+{11000}{}{Big size, mhmmm... Okay, I can sell you one for @lex white@ caps. Do you have a brahmin with you?}
+{11010}{}{Damn, need to bring my brahmin first... Bye.}
+{11020}{}{Oops, I have no cash.}
+{11030}{}{Fine, here you have the caps and the brahmin.}
+{11040}{}{I changed my mind. I come back later... maybe.}
+{12000}{}{Yeah, don't steal my time.}
+{13000}{}{You ain't got the caps, we ain't doing bitness.@@You have the money, I have the car. No money, no caravan.}
+{14000}{}{Your don't need these particular amen-ities, aiight?}
+{15000}{}{All set. Take her easy, now.}
+{16000}{}{Aiight, this ain't my normal bitness though, y'hear? You get any wheels, you drop by.}
+{17000}{}{I am very sorry but I don't have the time to talk to you right now.}
+{18000}{}{I have no clue about what car you are talking. Show me the key or get out.}
+{19000}{}{Yes, I can see the key. But where's the car?}
+{20000}{}{I have no clue about what car you are talking. Show me the key or get out.}
+{21000}{}{Eh... Hear, better go and play somewhere else. Okay?}
+{22000}{}{Oh my god, a monster! Please, go to somewhere else! Guards! Guards!}
+

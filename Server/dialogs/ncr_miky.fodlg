@@ -1,0 +1,74 @@
+[comment]
+7070 q_iguana_pete_message:
+1 = Recieved Quest
+2 = Spoken to NCR Miky
+3 = Spoken to NCR Mutant Lenny
+4 = Spoken to Bob Jr.
+5 = Visited Golgotha and discovered corpse.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+65506 2010 #
+3 2020 #
+4 2030 D _var p mod_q_meat_jerky = 1 D _item p PID_MEAT_BAG > 0 R _var p mod_q_meat_jerky = 2 R _item p PID_MEAT_BAG - 1 R _param p ST_EXPERIENCE + 220 R _script dialog@r_AddMoney 1 220 #
+5 2040 D _var p q_iguana_pete_message = 1 #
+0 2050 @
+3 3000 None 0 #
+65506 3010 #
+0 3020 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 #
+10 6020 @
+7 7000 None 0 #
+8 7010 R _var p q_iguana_pete_message = 2 @
+8 8000 None 0 #
+9 8010 D _item p PID_BOTTLE_CAPS > 0 R _script dialog@r_RemoveMoney 1 1 #
+11 8020 @
+9 9000 None 0 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 &
+
+[engl]
+{100}{}{Mikey}
+{200}{}{You see a sharp-dressed guy hawking lizard kebabs.}
+{210}{}{It's the lizard-on-a-stick vendor.}
+{210}{}{For a lizard-on-a-stick vendor, this guy's got style. He's clean, well-dressed and runs a pretty spotless little operation.}
+{1000}{}{Predialogue installations}
+{1010}{}{2}
+{2000}{}{Hungry, stranger? I got the best lizard around. Ask anybody!}
+{2010}{}{Sure, let's see what you got.}
+{2020}{}{What can you tell me about this town?}
+{2030}{}{Grisham sent me. I got a big bag of jerky with your name on, pal.}
+{2040}{}{I have a message for you from your father}
+{2050}{}{Goodbye.}
+{3000}{}{Look, I got a rule. I don't say nothing about nobody. It's a good rule, because if I keep my mouth shut, I keep out of trouble. Capice?}
+{3010}{}{Fine. Look, I'm hungry.}
+{3020}{}{Sorry for troubling, Christ!}
+{4000}{}{Nice job, I was nearly fresh out. Here's a few bucks for you trouble. Maybe Grisham'll send you down my way again sometime.}
+{4010}{}{No problem. See you later.}
+{5000}{}{Is that supposed to be a joke? Get out of here before I call the guards.}
+{5010}{}{No really, he says he forgives you.  You can go back and sell your shit with him in The Hub, instead of stinking up the bazaar here in Shady Sands.}
+{6000}{}{This 'shit' I'm selling is making me a profit!  More in a day, than you make in a month, and my pa died before I was even born, so unless you're a goddamn ghost I think you've got the wrong guy.}
+{6010}{}{But it says Son of Bob right there on the cart!}
+{6020}{}{I am a ghost! I came from the underworld to tell you that your father is disappointed in your career choices, and thinks you could do better with your life!}
+{7000}{}{So? There's a lot of signs around, don't mean anything. Son of Bobs was on this stand when I got it.}
+{7010}{}{Well where'd you get it?}
+{8000}{}{If I tell you will you leave? Hell, it doesn't matter.  I got it from a bet with the big green guy over at the Rawhide Saloon. Muties are stupid enough to fall for anything around here.}
+{8010}{}{Here's a cap for the info, goodbye Son of Bob.}
+{8020}{}{Right... see you later, Son of Bob...}
+{9000}{}{Gee thanks, I'll try not to spend it all at once.}
+{10000}{}{Get outta here!}
+{10010}{}{OOOoooooOOooooooo!}
+{11000}{}{My name is Mike, asshole!}
+

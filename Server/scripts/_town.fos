@@ -1,0 +1,85 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _town.fos
+//
+
+#ifndef ___TOWN__
+#define ___TOWN__
+
+#include "_macros.fos"
+
+#define TOWNCONTROL_REWARD_BASEVALUE             (30)                // 30%
+
+#define TOWNCONTROL_IDLE_CYCLE_LENGTH            (REAL_HOUR(24))     // 24 RT hours
+#define TOWNCONTROL_CYCLE_LENGTH                 (REAL_HOUR(2))      // 2 RT hours
+#define TOWNCONTROL_CYCLES_MAX                   (3)                 // Don't count more than three cycles
+
+#define TOWN_MODOC                               (1)
+#define TOWN_KLAMATH                             (2)
+#define TOWN_GECKO                               (3)
+#define TOWN_BH                                  (4)
+#define TOWN_DEN                                 (5)
+#define TOWN_REDDING                             (6)
+
+#define TOWN_COUNT                               (6)
+
+#define TOWN_CONTROL_TIME                        (REAL_MINUTE(15))     // How much time you need to defend town before you gain control
+#define TOWN_CONTROL_TIME_BONUS                  (REAL_SECOND(15))     // Decrease time by this amount for each additional captor above capture_total_requirement
+
+#define TOWN_CAPTURE_NEARBY_HEXES                (8)                   // How many hexes from leader/speaker the other members have to stand to be counted
+
+#ifdef __DEBUG__
+# define TOWN_CONTROL_TIME                       (REAL_MINUTE(5))
+#endif
+
+// #define TOWN_REWARD_START               (1500) // caps per hour
+// Defined in each town now, see towns.fos
+
+// #define TOWN_POLICY_ATTACKING         (0)
+#define TOWN_LAW_STEALING                        (1)
+#define TOWN_LAW_CARRYING_WEAPONS                (2)
+#define TOWN_LAW_ATTACK_FLAGGED                  (3)
+
+#define TOWN_SCORE_BASE                          (29) // base+town_id to set string in scoreboard.
+
+#define TOWN_STATUS_CAN_TAKE                     (0)  // Town can be taken
+#define TOWN_STATUS_CANT_TAKE                    (1)  // Town can't be taken
+
+#define LIMBO_MIN_VALUE                          (2)
+
+#define TOWN_UPDATE_TICK                         (REAL_SECOND(10))
+
+#define TOWN_MILITIA_START_NUM                   (5)  // How many militia at first generation of map
+#define TOWN_MILITIA_COST                        (750)
+#define TOWN_MILITIA_START_MAX                   (8)  // Max militia after taking town
+#define TOWN_MILITIA_MAX                         (20) // and can grow to this number with time
+
+#define TOWN_CAPTOR_LEVEL_REQ                    (4)  // Need to be this level to capture
+#define TOWN_CAPTOR_ARMOR_WEAR_REQ               (80) // If armor breakage % is higher than this value, deny captor.
+#define TOWN_CAPTOR_WEAPON_LEVEL_REQ             (1)  // Weapon must be this level or higher
+#define TOWN_CAPTOR_WEAPON_WEAR_REQ              (75) // If weapon breakage % is higher than this value, deny captor.
+
+#define TOWN_INFLUENCE_REWARD                    (5)  // Needed to loot chest
+#define TOWN_INFLUENCE_BETTER_REWARDS            (15) // Drugs, ammo, weapons(?) etc
+#define TOWN_INFLUENCE_MILITIA                   (25) // Needed to recruit militia
+#define TOWN_INFLUENCE_LAWS                      (50) // Enact laws
+#define TOWN_INFLUENCE_DECISIONS                 (100)
+
+#define TOWN_VERSION_CAPTURE_COUNTDOWN           (0)  // Capture town at any time from leaders.
+#define TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW    (1)  // As above, but with timewindow, set in towns.fos
+#define TOWN_VERSION_INFLUENCE                   (2)  // Uses influence system
+
+// #define TOWN_MILITIA_FREE_REINFORCEMENTS // There's a chance of reinforcements being spawned each hour
+// #define TOWN_MILITIA_INITIAL_MILITIA     // Spawn initial neutral militia when TC maps are created.
+
+#define TOWN_COUNTDOWN_ENABLED
+
+#define FRIENDLY_FACTION_INDEX                   (ST_VAR0)
+#define FRIENDLY_FACTION_ID                      (ST_VAR1)
+#define FRIENDLY_FACTION_MANIPULATE_MODE         (ST_VAR2) // add/remove
+
+#define FRIENDLY_FACTION_MODE_ADD                (0)
+#define FRIENDLY_FACTION_MODE_REMOVE             (1)
+#endif

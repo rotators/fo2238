@@ -1,0 +1,170 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _script mr_handy@d_IsOff 0  D _script mr_handy@d_IsMaster 0  #
+52 1020 D _script mr_handy@d_IsOff 0  #
+5 1030 D _script mr_handy@d_IsMaster 0  D _script mr_handy@d_IsActive 0  R _script mr_handy@r_Deactivate 0  #
+4 1040 D _script mr_handy@d_IsMaster 0  #
+51 1050 @
+2 2000 None 0 #
+3 2010 R _script mr_handy@r_TurnOn 0  #
+0 2020 @
+3 3000 None 0 #
+0 3010 @
+4 4000 mr_handy@dlg_MainMenu 0 #
+0 4010 R _script mr_handy@r_Activate 0  #
+41 4020 #
+666 4030 R _script mr_handy@r_SetValue 1 41 #
+65506 4040 #
+42 4050 R _script mr_handy@r_TurnOff 0  #
+0 4060 @
+5 5000 None 0 #
+4 5010 #
+0 5020 R _script mr_handy@r_Activate 0  @
+51 6000 None 0 @
+52 7000 None 0 #
+53 7010 #
+0 7020 @
+53 8000 mr_handy@dlg_AttemptHack 0 #
+0 8010 @
+41 9000 None 0 #
+41 9010 D _script mr_handy@d_RepDisabled 0  R _script mr_handy@r_EnableRep 0  #
+41 9020 D _script mr_handy@d_RepEnabled 0  R _script mr_handy@r_DisableRep 0  #
+411 9030 #
+41 9040 D _script mr_handy@d_DisDisabled 0  R _script mr_handy@r_EnableDis 0  #
+41 9050 D _script mr_handy@d_DisEnabled 0  R _script mr_handy@r_DisableDis 0  #
+412 9060 #
+4 9070 @
+411 10000 mr_handy@dlg_RepConf 0 #
+411 10010 R _script mr_handy@r_SetRepRandom 0  #
+411 10020 R _script mr_handy@r_SetRepPrimitive 0  #
+413 10030 R _script mr_handy@r_SetRepAdvanced 0  #
+41 10040 @
+412 11000 mr_handy@dlg_DisConf 0 #
+412 11010 R _script mr_handy@r_SetDissBeyond 0  #
+412 11020 R _script mr_handy@r_SetDissAll 0  #
+416 11030 R _script mr_handy@r_SetDissAdvanced 0  #
+41 11040 @
+413 12000 mr_handy@dlg_ItemDefinitionRepair 0 #
+414 12010 #
+415 12020 #
+413 12030 R _script mr_handy@r_ResetRepValues 0  #
+41 12040 @
+414 13000 mr_handy@dlg_ItemDefinitionRepair 0 #
+666 13010 R _script mr_handy@r_SetValue 1 4141 #
+666 13020 R _script mr_handy@r_SetValue 1 4142 #
+666 13030 R _script mr_handy@r_SetValue 1 4143 #
+666 13040 R _script mr_handy@r_SetValue 1 4144 #
+413 13050 @
+415 14000 mr_handy@dlg_ItemDefinitionRepair 0 #
+666 14010 R _script mr_handy@r_SetValue 1 4151 #
+666 14020 R _script mr_handy@r_SetValue 1 4152 #
+666 14030 R _script mr_handy@r_SetValue 1 4153 #
+666 14040 R _script mr_handy@r_SetValue 1 4154 #
+413 14050 @
+416 15000 mr_handy@dlg_ItemDefinitionDis 0 #
+666 15010 R _script mr_handy@r_SetValue 1 4161 #
+666 15020 R _script mr_handy@r_SetValue 1 4162 #
+666 15030 R _script mr_handy@r_SetValue 1 4163 #
+666 15040 R _script mr_handy@r_SetValue 1 4164 #
+416 15050 R _script mr_handy@r_ResetDisValues 0  #
+412 15060 @
+666 16000 mr_handy@dlg_SetValue 0 #
+666 16010 R _script mr_handy@r_SetValueBack 0  @
+42 17000 None 0 #
+0 17010 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{1030}{}{-}
+{1040}{}{-}
+{1050}{}{-}
+{2000}{}{Robot is Off}
+{2010}{}{Boot}
+{2020}{}{Exit}
+{3000}{}{Booten}
+{3010}{}{Wait...}
+{4000}{}{Is On
+@lex power@
+@lex mode@
+@lex range@
+@lex tools@}
+{4010}{}{Activate working mode}
+{4020}{}{Configurate modes}
+{4030}{}{Set working range}
+{4040}{}{Open inventory}
+{4050}{}{Turn off}
+{4060}{}{Leave}
+{5000}{}{Deactivating working mode...}
+{5010}{}{Continue}
+{5020}{}{Back to work.}
+{6000}{}{Unauthorized User.}
+{7000}{}{Is off but no master}
+{7010}{}{Attempt to hack}
+{7020}{}{Leave}
+{8000}{}{Attempted Hack @lex haxor@}
+{8010}{}{Leave}
+{9000}{}{Choose Mode}
+{9010}{}{Enable Repair mode}
+{9020}{}{Disable Repair mode}
+{9030}{}{Repair mode Config}
+{9040}{}{Enable Dissassemble mode}
+{9050}{}{Disable Dissassemble mode}
+{9060}{}{Dissassemble mode Config}
+{9070}{}{back}
+{10000}{}{Repair Config
+@lex repconf@}
+{10010}{}{Repair randomly}
+{10020}{}{Repair Better stuff with worse stuff}
+{10030}{}{Advanced...}
+{10040}{}{back}
+{11000}{}{Dissassemble Config
+@lex disconf@}
+{11010}{}{Stuff beyond repair}
+{11020}{}{All}
+{11030}{}{Advanced}
+{11040}{}{back}
+{12000}{}{Adv. Repair Config
+@lex itemrep@
+@lex itemres@}
+{12010}{}{Define repaired items}
+{12020}{}{Define resource items}
+{12030}{}{Reset to default}
+{12040}{}{back}
+{13000}{}{Define repaired items
+@lex itemrep@}
+{13010}{}{Condition bellow...}
+{13020}{}{Max. condition bellow...}
+{13030}{}{Condition above...}
+{13040}{}{Max. condition above...}
+{13050}{}{back}
+{14000}{}{Define repair resource items
+@lex itemres@}
+{14010}{}{Condition bellow...}
+{14020}{}{Max condition bellow...}
+{14030}{}{Condition above...}
+{14040}{}{Max condition above...}
+{14050}{}{back}
+{15000}{}{Define disassembled items
+@lex itemdis@
+}
+{15010}{}{Condition bellow...}
+{15020}{}{Max condition bellow...}
+{15030}{}{Condition above...}
+{15040}{}{Max condition above...}
+{15050}{}{Reset to default}
+{15060}{}{back}
+{16000}{}{@lex value@}
+{16010}{}{back}
+{17000}{}{Turning off...}
+{17010}{}{Wait...}
+

@@ -1,0 +1,543 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// squads.fos
+//
+
+#include "_macros.fos"
+#include "npc_planes_h.fos"
+
+#define POSITION_NONE             (0)
+#define POSITION_SURROUNDING      (1)              // ????????
+#define POSITION_HUDDLE           (2)              //
+#define POSITION_WEDGE            (3)
+#define POSITION_CONE             (4)
+#define POSITION_DOUBLE_LINE      (5)
+#define POSITION_STRAIGHT_LINE    (6)
+#define POSITION_DOUBLE_WEDGE     (7)
+#define POSITION_DOUBLE_CONE      (8)
+#define POSITION_TRIPLE_LINE      (9)
+
+uint[][] PositionDirs =
+{
+    { 0 },                                                                                       // POSITION_NONE
+// Steps Path 1								Path 2
+    { 1, 4, 3, 2, 1, 0, 5,                                                2, 3, 4, 5, 0, 1 },    // POSITION_SURROUNDING
+    { 1, 5, 0, 1, 2, 3, 4,                                                1, 0, 5, 4, 3, 2 },    // POSITION_HUDDLE
+    { 1, 4,                                                                  2 },                // POSITION_WEDGE
+    { 1, 5,                                                                  1 },                // POSITION_CONE
+    { 2, 4, 5, 0, 0, 4, 5, 3, 3,                                 0, 0, 1, 2, 3, 3, 1, 2 },       // POSITION_DOUBLE_LINE
+    { 2, 4, 5,                                                                1, 2 },            // POSITION_STRAIGHT_LINE
+    { 2, 4, 4, 0, 0, 4, 4, 3, 3,                                 0, 0, 2, 2, 3, 3, 2, 2 },       // POSITION_DOUBLE_WEDGE
+    { 2, 5, 5, 0, 0, 5, 5, 3, 3,                                 0, 0, 1, 1, 3, 3, 1, 1 },       // POSITION_DOUBLE_CONE
+    { 2, 4, 5, 0, 0, 0, 0, 4, 5, 3, 3, 3, 3,               0, 0, 0, 0, 1, 2, 3, 3, 3, 3, 1, 2 }, // POSITION_TRIPLE_LINE //use only for very large groups 10+
+    { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 5, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 5, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 2, 3, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 }
+};
+
+void creepy(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return;
+
+    uint          count = PositionDirs[10].length() - 1;
+    array<uint16> coords;
+    FormationCoordinates(map, coords, cr.HexX, cr.HexY - 1, 3, 10, 1, count, 0);
+    array<uint>   values;
+    values.resize(coords.length() / 8 + 3);
+    values[0] = 0;
+    values[1] = cr.HexX;
+    values[2] = cr.HexY - 1;
+
+    for(uint i = 0; i < coords.length(); i += 8)
+    {
+        Critter@ spawned = map.AddNpc(11, coords[i], coords[i + 1], 0, null, null, "");
+
+        if(valid(spawned))
+        {
+            values[3 + i / 8] = spawned.Id;
+            spawned.ModeBase[MODE_NO_HOME] = 1;
+            spawned.ModeBase[MODE_EXT] = spawned.ModeBase[MODE_EXT] | MODE_EXT_LOOK_ALWAYS_VISIBLE;
+            spawned.StatBase[ST_REPLICATION_TIME] = 1;
+        }
+    }
+
+    CreateTimeEvent(ELAPSED_TIME + REAL_MS(200), "e_Cre", values, false);
+}
+
+uint e_Cre(array<uint>@ values)
+{
+    Critter@ cr = GetCritter(values[3]);
+    if(!valid(cr))
+    {
+        for(uint i = 0; i < values.length() - 3; i++)
+        {
+            Critter@ crit = GetCritter(values[3 + i]);
+            if(valid(crit))
+            {
+                DeleteNpc(crit);
+            }
+        }
+        return 0;
+    }
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return 0;
+    array<uint16> coords;
+    FormationCoordinates(map, coords, values[1], values[2], 3, 10, 1, (values.length() - 3) * 4, 0);
+
+    bool msg = false;
+    bool delete = false;
+    if(values[0] % (values.length() * 2 / 3) == 0)
+        msg = true;
+
+    for(uint i = 0; i < values.length() - 3; i++)
+    {
+        Critter@ crit = GetCritter(values[3 + i]);
+        uint     x = coords[(i * 8 + values[0] * 4) % coords.length()];
+        uint     y = coords[(i * 8 + values[0] * 4 + 1) % coords.length()];
+        if(valid(crit))
+        {
+            crit.DropPlanes();
+            if(crit.IsLife())
+            {
+                if(msg && i % 4 == 0)
+                    crit.Say(SAY_NORM_ON_HEAD, "Happy Valentine!");
+                AddWalkPlane(crit, 0, x, y, GetDirection(crit.HexX, crit.HexY, x, y), false, 0);
+            }
+        }
+        else
+            delete = true;
+    }
+    if(delete)
+    {
+        for(uint i = 0; i < values.length() - 3; i++)
+        {
+            Critter@ crit = GetCritter(values[3 + i]);
+            if(valid(crit))
+            {
+                DeleteNpc(crit);
+            }
+        }
+    }
+
+    values[0] = (1 + values[0]) % ((values.length() - 3) * 2);
+
+    return REAL_MS(300);
+}
+
+import void MovePositionPoint(Map& map, uint16& pointX, uint16& pointY, array<uint>& positionDirs, uint pathIndex, uint count, uint spacing) from "worldmap";
+import void RotatePosition(uint toDir, array<uint>& positionsDirs) from "worldmap";
+
+void FormationCoordinates(Map& map, array<uint16>& coordinates, uint16 startX, uint16 startY, uint8 startDir, uint formation, uint spacing, uint count, uint skipFirst)
+{
+    coordinates.resize(2 * count);
+
+    uint16[] pointX = { startX, startX };
+    uint16[] pointY = { startY, startY };
+
+    array<uint> positionDirs = PositionDirs[formation];
+    int         steps = positionDirs[0];
+
+    uint8       freeDir = (startDir + 3) % 6;
+    if(freeDir != 0)
+        RotatePosition(freeDir, positionDirs);
+    uint reversDir = freeDir + 3;
+    if(reversDir > 5)
+        reversDir -= 6;
+
+    uint16 hx = pointX[0], hy = pointY[0];
+    MovePositionPoint(map, pointX[1], pointY[1], positionDirs, 1, 0, spacing);
+
+    uint16 oldPosX = startX, oldPosY = startY;
+    uint16 posX, posY;
+
+    for(uint curCount = 0; curCount < count + skipFirst; curCount++)
+    {
+        uint pathIndex = curCount % 2;
+        posX = pointX[pathIndex];
+        posY = pointY[pathIndex];
+        MovePositionPoint(map, pointX[pathIndex], pointY[pathIndex], positionDirs, pathIndex, curCount / 2 + pathIndex, spacing);
+
+        map.GetHexCoord(oldPosX, oldPosY, posX, posY, 0.0f, 0);    // Check for barrier
+        oldPosX = posX;
+        oldPosY = posY;
+
+        if(curCount >= skipFirst)
+        {
+            coordinates[(curCount - skipFirst) * 2] = posX;
+            coordinates[(curCount - skipFirst) * 2 + 1] = posY;
+        }
+    }
+}
+
+/*class CFollowingSquad //: CSquad
+   {
+        uint formation;
+        uint leaderId;
+        CFollowingSquad(Map@ map, uint faction, uint formation,	Critter@ leader)
+        {
+                //super(map, faction);
+                this.formation=formation;
+                leaderId=leader.Id;
+                if(valid(leader)) AddCritterId(leader.Id);
+        }
+
+        array<uint> folks;
+
+        uint GetNearestAllies(Critter& crit, uint max, array<Critter@>& crits)
+        {
+                crits.resize(0);
+                for(uint i=0;i<folks.length();i++)
+                {
+                        if(folks[i]==crit.Id) continue;
+                        crits.insertLast(GetCritter(folks[i]));
+                }
+                return crits.length();
+        }
+
+        ISquad@ AddCritterId(uint id)
+        {
+                folks.insertLast(id);
+                return this;
+        }
+
+        void UpdateFormation()
+        {
+                Critter@ leader = GetCritter(leaderId);
+                if(!valid(leader)) return;
+
+                array<Critter@> critters;
+                uint max=50;
+                uint cnt = GetNearestAllies(leader, max, critters);
+
+                array<uint16> coords;
+                Map@ map= GetMap(mapId);
+                if(!valid(map)) return;
+                FormationCoordinates(map,coords,leader.HexX,leader.HexY,leader.Dir,formation, 2, cnt,1);
+                for(uint i=0;i<cnt;i++)
+                {
+                        uint min=uint(-1);
+                        uint minInd=0;
+                        uint cur=0;
+                        for(uint j=i;j<cnt;j++)
+                        {
+                                cur=GetDistantion(coords[i*2], coords[i*2+1],critters[j].HexX,critters[j].HexY);
+                                if(cur<min)
+                                {
+                                        minInd=j;
+                                        cur=min;
+                                }
+                        }
+
+                        Critter@ swap=critters[i];
+                        @critters[i]=critters[minInd];
+                        @critters[minInd]=swap;
+                }
+
+
+                for(uint i=0;i<cnt;i++)
+                {
+                        critters[i].ModeBase[MODE_NO_HOME]=1;
+                        critters[i].DropPlanes();
+                        AddWalkPlane(critters[i], 0, coords[i*2], coords[i*2+1], leader.Dir, GetDistantion(coords[i*2], coords[i*2+1],critters[i].HexX,critters[i].HexY)>5, 0);
+                }
+        }
+   };*/
+
+
+
+#define SQUAD_ROLE_DEFAULT             (0)
+#define SQUAD_ROLE_TANK                (1)  // bursters
+#define SQUAD_ROLE_SUPPORT             (2)  // rockets
+#define SQUAD_ROLE_SNIPER              (3)  // snipers
+#define SQUAD_ROLE_VIP                 (4)
+#define SQUAD_ROLE_PASSIVE             (5)
+#define SQUAD_ROLE_LEADER              (6)
+
+#define SQUAD_OBJECTIVE_DEFAULT        (0)
+#define SQUAD_OBJECTIVE_ADVANCE        (1)
+#define SQUAD_OBJECTIVE_HOLD           (2)
+#define SQUAD_OBJECTIVE_TERMINATE      (3)
+#define SQUAD_OBJECTIVE_PROTECT_VIP    (4)
+#define SQUAD_OBJECTIVE_RETREAT        (5)
+
+#define SQUAD_BEHAVIOUR_DEFAULT        (0)          // attack enemies only
+#define SQUAD_BEHAVIOUR_PARANOID       (1)          // attack non-allies
+#define SQUAD_BEHAVIOUR_PEACEFUL       (2)          // attack when provoked only
+#define SQUAD_BEHAVIOUR_PANICKED       (3)          // attack everyone (allies included)
+#define SQUAD_BEHAVIOUR_CHAOS          (4)          // attack itself
+
+#define SQUAD_FLAG_NO_LEADER           (0x0001)
+#define SQUAD_FLAG_LEADER_REPLACE      (0x0002)
+
+#define SQUAD_FORMATION_NONE           (0)
+#define SQUAD_FORMATION_RAPETRAIN      (1)
+#define SQUAD_FORMATION_CIRCLE         (2)
+
+class MSquad
+{
+    int         id;
+
+    int         stepy;
+    bool        run;
+
+    uint        objective;
+    uint        objectiveExt;
+    uint        behaviour;
+    uint        mode;
+    uint        formation;
+    uint        spacing;
+
+    uint16      posX;
+    uint16      posY;
+    uint8       posDir;
+
+    uint        leader;
+    array<uint> members;
+    array<uint> memberRoles;
+
+
+
+    MSquad()
+    {
+        spacing = 1;
+        stepy = 0;
+    }
+
+    void UpdateFormation()
+    {
+
+        Critter@ leaderCr = GetCritter(leader);
+        if(!valid(leaderCr))
+            return;
+
+        array<Critter@> critters;
+        uint            cnt = members.length();
+        critters.resize(cnt);
+        for(uint i = 0; i < cnt; i++)
+        {
+            @critters[i] = GetCritter(members[i]);
+        }
+
+        array<uint16> coords;
+        Map@          map = leaderCr.GetMap();
+        if(!valid(map))
+            return;
+        FormationCoordinates(map, coords, leaderCr.HexX, leaderCr.HexY, leaderCr.Dir, formation, spacing, cnt, 0);
+
+        for(uint i = 0; i < cnt; i++)
+        {
+            if(critters[i].Id == leader)
+            {
+                Critter@ swap = critters[i];
+                @critters[i] = critters[0];
+                @critters[0] = swap;
+                uint slh = members[i];
+                members[i] = members[0];
+                members[0] = slh;
+                break;
+            }
+        }
+
+        for(uint i = 1; i < cnt; i++)
+        {
+            uint min = uint(-1);
+            uint minInd = 0;
+            uint cur = 0;
+            for(uint j = i; j < cnt; j++)
+            {
+                cur = GetDistantion(coords[i * 2], coords[i * 2 + 1], critters[j].HexX, critters[j].HexY);
+                if(cur < min)
+                {
+                    minInd = j;
+                    min = cur;
+                }
+            }
+
+            Critter@ swap2 = critters[i];
+            @critters[i] = critters[minInd];
+            @critters[minInd] = swap2;
+            uint slh2 = members[i];
+            members[i] = members[minInd];
+            members[minInd] = slh2;
+        }
+
+
+        for(uint i = 0; i < cnt; i++)
+        {
+            critters[i].ModeBase[MODE_NO_HOME] = 1;
+            critters[i].SetEvent(CRITTER_EVENT_PLANE_END, "_PlaneEnd");
+            critters[i].DropPlanes();
+            if(!AddWalkPlane(critters[i], 0, coords[i * 2], coords[i * 2 + 1], leaderCr.Dir, GetDistantion(coords[i * 2], coords[i * 2 + 1], critters[i].HexX, critters[i].HexY) > 1, 0))
+                stepy++;
+        }
+    }
+
+    void MoveTo(uint16 x, uint16 y, bool run)
+    {
+        Critter@ leaderCr = GetCritter(leader);
+        if(!valid(leaderCr))
+            return;
+        uint8 dir = GetDirection(leaderCr.HexX, leaderCr.HexY, x, y);
+        leaderCr.SetDir(dir);
+        stepy = 0;
+        this.run = run;
+        UpdateFormation();
+        posX = x;
+        posY = y;
+        posDir = dir;
+    }
+
+    bool AddMember(Critter& critter, uint role)
+    {
+        for(uint i = 0; i < members.length(); i++)
+        {
+            if(members[i] == critter.Id)
+                return false;
+        }
+        members.insertLast(critter.Id);
+        return true;
+    }
+
+    bool MakeLeader(Critter& critter)
+    {
+        for(uint i = 0; i < members.length(); i++)
+        {
+            if(members[i] == critter.Id)
+            {
+                leader = critter.Id;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void memberKilled(Critter& cr, Critter@ attacker)
+    {
+        for(uint i = 0; i < members.length(); i++)
+        {
+            if(members[i] == cr.Id)
+            {
+                members.removeAt(i);
+                memberRoles.removeAt(i);
+                if(cr.Id == leader)
+                {
+                    leader = 0;
+                    leaderKilled(cr, attacker);
+                }
+                return;
+            }
+        }
+    }
+
+    void leaderKilled(Critter& cr, Critter@ attacker)
+    {}
+
+    int planeEnd(Critter& follower, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+    {
+        if(reason != REASON_SUCCESS)
+            return PLANE_RUN_GLOBAL;
+        stepy++;
+        if(stepy == int(members.length()))
+        {
+            Critter@ leaderCr = GetCritter(leader);
+            if(!valid(leaderCr))
+                return PLANE_DISCARD;
+
+            array<Critter@> critters;
+            uint            cnt = members.length();
+            critters.resize(cnt);
+            for(uint i = 0; i < cnt; i++)
+            {
+                @critters[i] = GetCritter(members[i]);
+                if(!valid(critters[i]))
+                    Log("kidding me" + i + " " + members[i]);
+            }
+
+            array<uint16> coords;
+            Map@          map = leaderCr.GetMap();
+            if(!valid(map))
+                return PLANE_DISCARD;
+            FormationCoordinates(map, coords, posX, posY, posDir, formation, spacing, cnt, 0);
+
+
+            for(uint i = 0; i < cnt; i++)
+            {
+                critters[i].ModeBase[MODE_NO_HOME] = 1;
+                critters[i].SetEvent(CRITTER_EVENT_PLANE_END, "_PlaneEnd");
+                critters[i].DropPlanes();
+                AddWalkPlane(critters[i], 0, coords[i * 2], coords[i * 2 + 1], posDir, run, 0);
+            }
+        }
+        return PLANE_RUN_GLOBAL;
+    }
+
+    void memberFinish(Critter& cr, bool deleted)
+    {
+        for(uint i = 0; i < members.length(); i++)
+        {
+            if(members[i] == cr.Id)
+            {
+                members.removeAt(i);
+                memberRoles.removeAt(i);
+                return;
+            }
+        }
+    }
+};
+
+int _PlaneEnd(Critter& follower, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    return mysquad.planeEnd(follower, plane, reason, someCr, someItem);
+}
+
+
+
+// CFollowingSquad@ mysquad;
+MSquad@ mysquad;
+void squad2(Critter& cr, int x, int y, int r)
+{
+    mysquad.MoveTo(x, y, r > 0);
+}
+
+void squad(Critter& cr, int formation, int, int)
+{
+    if(valid(mysquad))
+    {
+        mysquad.formation = formation;
+        mysquad.UpdateFormation();
+        return;
+    }
+    // @mysquad = CFollowingSquad(cr.GetMap(),0,formation,cr);
+    @mysquad = MSquad();
+    mysquad.formation = formation;
+
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+    {
+        if(cr.Followers[i] != 0)
+        {
+            Critter@ critter = GetCritter(cr.Followers[i]);
+            if(!valid(critter))
+            {
+                cr.FollowersBase[i] = 0;
+                continue;
+            }
+            else
+            {
+                // mysquad.AddCritterId(critter.Id);
+                mysquad.AddMember(critter, 0);
+                if(i == FOLLOWER_BEGIN)
+                {
+                    mysquad.MakeLeader(critter);
+                }
+            }
+        }
+    }
+
+    mysquad.UpdateFormation();
+
+    array<uint> values;
+    // CreateTimeEvent(0, "e_Squad", values, false);
+}

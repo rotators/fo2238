@@ -1,0 +1,170 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_cath_basement.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "messages_h.fos"
+#include "utils_h.fos"
+
+#define GHOUL_KILLED       (2)
+#define PLANTS_KILLED      (3)
+
+#define MONK_DIALOG        (10275)
+
+#define STR_MONK_ATTACK    (1)
+
+void r_SpawnMap(Critter& player, Critter@ npc)
+{
+    int loc = CreateLocation(LOCATION_CathedralBasement, 610, 1618, null);
+
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_cath_basement_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    map.SetData(MAP_DATA_CATH_BASEMENT_OWNER, player.Id);
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_cath_basement, 5);
+
+    // Transport player into the quest location
+    player.TransitToMap(map.Id, 0);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteMap(Critter& critter, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_cath_basement_locid, critter.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetLocation().GetMapByIndex(0).GetData(MAP_DATA_CATH_BASEMENT_OWNER));
+}
+uint GetOwnerId(Map& map)
+{
+    return map.GetLocation().GetMapByIndex(0).GetData(MAP_DATA_CATH_BASEMENT_OWNER);
+}
+
+void r_TeleportToBasement(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_cath_basement_locid, player.Id);
+    if(!valid(var))
+        return;                 // panic
+    Location@ loc = GetLocation(var.GetValue());
+    if(valid(loc))
+        player.TransitToMap(loc.GetMapByIndex(0).Id, 0);
+}
+
+// =============================================
+// Map stuff
+// =============================================
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(proto == MAP_QCathedralBasement3)
+    {
+        // radiation loop
+        map.SetEvent(MAP_EVENT_LOOP_0, "_Radiate");
+        map.SetLoopTime(0, 10000);
+    }
+}
+
+void _Radiate(Map& map)
+{
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_ALL, crits);
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        AffectRadiation(crits[i], Random(0, 1));
+    }
+}
+
+void t_MonkAttack(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_MONK_ATTACK, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// =============================================
+// Critter stuff
+// =============================================
+
+void _Ghoul(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+}
+
+void _Plant(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_PlantDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+
+    if(firstTime)
+    {
+        Map @map = cr.GetMap();
+        map.SetData(MAP_DATA_CATH_BASEMENT_PLANTS, map.GetData(MAP_DATA_CATH_BASEMENT_PLANTS) + 1);
+    }
+}
+
+void _PlantDead(Critter& cr, Critter@ killer)
+{
+    Map @map = cr.GetMap();
+    map.SetData(MAP_DATA_CATH_BASEMENT_PLANTS, map.GetData(MAP_DATA_CATH_BASEMENT_PLANTS) - 1);
+    if(map.GetData(MAP_DATA_CATH_BASEMENT_PLANTS) == 0)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_cath_basement, GetOwnerId(map));
+        var = PLANTS_KILLED;
+        // Critter@ owner = GetOwner(map);
+        // if(valid(owner))
+        //	owner.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, fromCr);
+
+    if(message == MSG_MONK_ATTACK && cr.Stat[ST_NPC_ROLE] == ROLE_BASEMENT_MONK)
+    {
+        cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(MONK_DIALOG, STR_MONK_ATTACK));
+        AttackCritter(cr, fromCr);
+    }
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_CATH_BASEMENT_OWNER)));
+}
+void CheckPlants(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Plants dead: " + cr.GetMap().GetData(MAP_DATA_CATH_BASEMENT_PLANTS));
+}

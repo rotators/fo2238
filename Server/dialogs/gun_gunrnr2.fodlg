@@ -1,0 +1,48 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+6 1010 D _var p q_la_gunrunners_facility_inside = 1 #
+3 1020 D _param p REPUTATION_GUNRUNNERS } 500 D _var p q_la_gunrunners_facility_access > 0 #
+4 1030 D _param p REPUTATION_GUNRUNNERS < 500 D _var p q_la_gunrunners_facility_access > 0 R _var p q_la_gunrunners_facility_access = 0 #
+2 1040 @
+2 2000 None 0 @
+3 3000 None 0 #
+5 3010 D _var p q_la_gunrunners_facility_access = 1 R _var p q_la_gunrunners_facility_access = 2 #
+0 3020 D _var p q_la_gunrunners_facility_access = 2 R _script dialog@r_TeleportToMap 2 279 2 R _var p q_la_gunrunners_facility_inside = 1 #
+0 3030 @
+4 4000 None 0 @
+5 5000 None 0 #
+0 5010 R _script dialog@r_TeleportToMap 2 279 2 R _var p q_la_gunrunners_facility_inside = 1 #
+0 5020 @
+6 6000 None 0 #
+0 6010 R _script dialog@r_TeleportToMap 2 279 3 R _var p q_la_gunrunners_facility_inside = 0 #
+0 6020 &
+
+[engl]
+{100}{}{Gun Runner}
+{200}{}{You see a Gun Runner.}
+{210}{}{A rather well equipped member of the Gun Runners.}
+{1000}{}{Predialogue installations}
+{1010}{}{inside facility}
+{1020}{}{allowed to enter, good reputation}
+{1030}{}{allowed to enter, bad reputation}
+{1040}{}{normal float}
+{2000}{}{You aren't allowed to enter the facility.@@Stay back!}
+{3000}{}{What do you want?}
+{3010}{}{Marshal allowed me to use the Gun Runners facility.}
+{3020}{}{I want to go inside the facility.}
+{3030}{}{Nothing, Goodbye.}
+{4000}{}{You aren't trustworthy enough anymore. I can't let you into our facility.}
+{5000}{}{I've heard about it already. You want to go inside?}
+{5010}{}{Yes.}
+{5020}{}{Maybe later. Goodbye.}
+{6000}{}{Do you want to leave?}
+{6010}{}{Yes, let me out of here!}
+{6020}{}{Not yet.}
+

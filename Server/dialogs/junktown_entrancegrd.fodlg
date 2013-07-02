@@ -1,0 +1,138 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+15 1010 D _script dialog@d_CheckNight 0  #
+5 1020 D _script dialog@d_WeaponInHand 0  #
+2 1030 @
+2 2000 None 0 #
+9 2010 D _param p ST_INTELLECT > 3 #
+4 2020 D _param p ST_INTELLECT > 3 #
+11 2030 D _param p ST_INTELLECT > 3 #
+0 2040 D _param p ST_INTELLECT > 3 #
+0 2050 D _param p ST_INTELLECT < 4 @
+4 3000 None 0 #
+12 3010 @
+5 4000 None 0 #
+6 4010 #
+0 4020 @
+6 5000 None 0 #
+0 5010 #
+7 5020 @
+7 6000 None 0 #
+8 6010 #
+8 6020 @
+8 7000 None 0 #
+65507 7010 #
+0 7020 @
+9 8000 None 0 #
+10 8010 #
+0 8020 @
+10 9000 None 0 #
+0 9010 #
+0 9020 @
+11 10000 None 0 #
+0 10010 #
+14 10020 D _param p ST_GENDER = 1 #
+12 10030 @
+12 11000 None 0 #
+9 11010 #
+4 11020 #
+0 11030 @
+13 12000 None 0 @
+14 13000 None 0 #
+0 13010 #
+12 13020 @
+15 14000 None 0 #
+16 14010 D _param p ST_INTELLECT > 3 #
+0 14020 D _param p ST_INTELLECT > 3 #
+12 14030 D _param p ST_INTELLECT > 3 #
+18 14040 D _param p ST_INTELLECT > 3 #
+17 14050 D _param p ST_INTELLECT < 4 #
+19 14060 D _param p REPUTATION_JUNKTOWN < 500 D or D _script dialog@d_IsGangMember 0  #
+19 14070 D _param p REPUTATION_JUNKTOWN } 500 D or D _script dialog@d_NotMemberOfAnyFaction 0  @
+16 15000 None 0 #
+0 15010 @
+17 16000 None 0 #
+0 16010 @
+18 17000 None 0 #
+0 17010 #
+12 17020 @
+19 18000 None 0 #
+0 18010 R _script dialog@r_TeleportToMap 2 70 4 R _script dialog@r_TeleportToMapFollowers 2 70 4 #
+0 18020 &
+
+[engl]
+{100}{}{Guard}
+{200}{}{You see a guard of Junktown.}
+{240}{}{You see a dead guard of Junktown.}
+{260}{}{You see a slain guard of Junktown.}
+{1000}{}{Predialogue installations}
+{1010}{}{It is dark outside...}
+{1020}{}{Weapon in hand?}
+{1030}{}{Answer text}
+{2000}{}{Welcome to Junktown. What can I do for you?}
+{2010}{}{What are you doing here? What is this place?}
+{2020}{}{What is the local law regarding weapons?}
+{2030}{}{Hey, where can I get some supplies?}
+{2040}{}{Thanks, but I have to go...}
+{2050}{}{Wa-wa!}
+{3000}{}{Good you asked. No weapons can be drawn except in self-defense. If you start a fight, it's your fault. Other than that, it's your right to go around armed. Just don't pull a knife or gun without just cause. Have a good day.}
+{3010}{}{Sounds fair. I have some other question.}
+{4000}{}{You'd better put that away. Junktown is a friendly place, friend, and we want to keep it that way.}
+{4010}{}{Put what away?}
+{4020}{}{Uh, oh. Sorry.}
+{5000}{}{Your weapon, idiot. Jeremiah won't take your arms away, but you'd better damn well keep them in your holster.}
+{5010}{}{Oh, sorry.}
+{5020}{}{No way! I'm not putting down my shooters for nobody!}
+{6000}{}{You'd better behave, since it's the law, and I enforce the law. Put your weapon away. Don't draw it unless in self-defense and you won't have a problem with us guards. Disobey the law and we will return you to the lawless wasteland--dead or alive.}
+{6010}{}{Bite your laws!}
+{6020}{}{Don't tell me what to do, loser boy.}
+{7000}{}{Sure, since you put it that way... [He grabs his weapon.]}
+{7010}{}{[Combat]}
+{7020}{}{Wait..! Wait! Calm down, I put away my weapon...}
+{8000}{}{What does it look like? I'm a guard, and I'm keeping an eye out for strangers like you. And this place is called Junktown. Hey, don't laugh. I happen to like the name myself. We mostly do trading. Sometimes we trade with those stuck up bastards from Hub. Hey, you're not from the Hub are you?}
+{8010}{}{What? The Hub? Sure I am!}
+{8020}{}{Me? No, I'm not from the Hub.}
+{9000}{}{Then you must know most of the rules. Have a good day. And I am sorry about the bastards part, OK?}
+{9010}{}{Yeah! Hey, no problem. Bye.}
+{9020}{}{It's going to cause me some severe mental trauma. Later.}
+{10000}{}{Oh, heck. The place for that is Darkwater's. Jeremiah runs it. It's a little to the north. Jeremiah has the best supplies in town, so check it out.}
+{10010}{}{Thanks for the info. I will check it out.@@Thanks. I will check it out.}
+{10020}{}{You wanna show me where you keep "your" supplies?}
+{10030}{}{I still have some other question.}
+{11000}{}{Yeh?}
+{11010}{}{What are you doing here? What is this place?}
+{11020}{}{What is the local law regarding weapons?}
+{11030}{}{Thanks for the infos, dude. I have to go now.}
+{12000}{}{You'r lucky boy. I am not in the mood today to kill some asshole...}
+{13000}{}{Uh, no. Sorry, lady. I got work to do here.}
+{13010}{}{Oh boy, what a shame... [You leave.]}
+{13020}{}{Oh boy, what a shame... anyway! I got some question to ya. }
+{14000}{}{I'm sorry, the gates are closed for the night. Come back in the morning.}
+{14010}{}{Hey, I need to get in!}
+{14020}{}{No problem. See you in the morning.}
+{14030}{}{Okay. But I have some important questions to you!}
+{14040}{}{What if I do it anyway?}
+{14050}{}{Whu..?}
+{14060}{}{I really need to enter the town now.}
+{14070}{}{I have a good stand with Junktown and need to enter the town.}
+{15000}{}{Sorry, the rules are the rules. No strangers admitted during the night.}
+{15010}{}{Okay...}
+{16000}{}{Come . . . back . . . day . . .}
+{16010}{}{Uh... }
+{17000}{}{@sex@|We will shoot you, boy.||We will shoot you, lady.|}
+{17010}{}{Okay, no problem. See you in the morning.}
+{17020}{}{Okay. But I have some important questions to you!}
+{18000}{}{Well. I'll guess I can make an exception for you. Come on in, but hurry up...}
+{18010}{}{[Enter Junktown]}
+{18020}{}{I have changed my mind. Goodbye.}
+{100000001}{}{Welcome to Junktown, traveller!}
+{100000002}{}{I'm sorry, the gates are closed for the night. Come back in the morning.}
+{100000003}{}{Guys, get him!}
+

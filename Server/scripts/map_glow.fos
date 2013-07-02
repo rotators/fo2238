@@ -1,0 +1,161 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_glow.fos
+//
+
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "elevators_h.fos"
+#include "_maps.fos"
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+
+
+// Yellow Elevator 1-2-3
+CElevator YellowElevator(ELEVATOR_MILITARY_123);
+// Blue Elevator 4-5-6
+CElevator BlueElevator(ELEVATOR_MILITARY_456);
+// Red elevator
+// uint[] RedLevels = {3,4,6};
+CElevator RedElevator(ELEVATOR_MILITARY_346);
+
+bool  ElevatorsAdded = false;
+
+class BlueElevatorCallback : IElevatorOnMove
+{
+    BlueElevatorCallback() {}
+    bool OnMove(Critter@ cr, uint& floor)
+    {
+        uint time = GetRootMapData(cr.GetMap(), MAP_DATA_ELEVATOR_TIME);
+        if(time == 0 || time < ELAPSED_TIME)
+        {
+            cr.Say(SAY_NETMSG, "The elevator seems to be without power.");
+            return false;
+        }
+        return true;
+    }
+};
+
+BlueElevatorCallback@ callback;
+
+void map_init(Map& map, bool firstTime)
+{
+    // to add only one for all floors
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(YellowElevator);
+        AddElevator(BlueElevator);
+        AddElevator(RedElevator);
+        @callback = @BlueElevatorCallback();
+        BlueElevator.SetOnMove(callback);
+        ElevatorsAdded = true;
+    }
+    // parse elevators floors
+    uint16 x = 0, y = 0;
+
+    switch(map.GetProtoId())
+    {
+    case MAP_Glow_Floor1:
+    case MAP_Glow_Floor2:
+        if(map.GetEntireCoords(2, 0, x, y))
+            YellowElevator.AddFloor(map.Id, 2);
+        break;
+    case MAP_Glow_Floor3:
+        if(map.GetEntireCoords(2, 0, x, y))
+            YellowElevator.AddFloor(map.Id, 2);
+        if(map.GetEntireCoords(3, 0, x, y))
+            RedElevator.AddFloor(map.Id, 3);
+        break;
+    case MAP_Glow_Floor5:
+        if(map.GetEntireCoords(4, 0, x, y))
+            BlueElevator.AddFloor(map.Id, 4);
+        break;
+    case MAP_Glow_Floor4:
+    case MAP_Glow_Floor6:
+        if(map.GetEntireCoords(4, 0, x, y))
+            BlueElevator.AddFloor(map.Id, 4);
+        if(map.GetEntireCoords(3, 0, x, y))
+            RedElevator.AddFloor(map.Id, 3);
+        break;
+    default:
+    }
+
+    // radiation loop
+    map.SetEvent(MAP_EVENT_LOOP_0, "_Radiate");
+    map.SetLoopTime(0, 10000);
+}
+
+//
+// Irradiate all critters on map
+//
+void _Radiate(Map& map)
+{
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_ALL, crits);
+    for(uint i = 0; i < crits.length(); i++)
+    {
+        AffectRadiation(crits[i], Random(50, 100));
+    }
+}
+
+//
+// Elevator triggers
+//
+void t_ElevatorYellow(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(YellowElevator, critter, entered);
+}
+void t_ElevatorRed(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(RedElevator, critter, entered);
+}
+void t_ElevatorBlue(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(BlueElevator, critter, entered);
+}
+
+// glow lurking stuff
+bool s_RepairGenerator(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    int value = 0;
+    if(valid(item))
+    {
+        if(item.GetProtoId() == PID_MULTI_TOOL)
+            value = 25;
+        else if(item.GetProtoId() == PID_SUPER_TOOL_KIT)
+            value = 50;
+        else
+            return false;
+    }
+    else if(skill != SK_REPAIR)
+        return false;
+
+    value += player.Skill[SK_REPAIR];
+    int testvalue = CLAMP(value, 5, 95);
+    if(testvalue < Random(1, 100))
+    {
+        player.Say(SAY_NETMSG, "You've failed to repair the generator.");
+        return true;
+    }
+
+    SetRootMapData(player.GetMap(), MAP_DATA_ELEVATOR_TIME, AFTER(REAL_SECOND(Random(2 * value, 3 * value))));
+    player.Say(SAY_NETMSG, "You've successfully repaired generator, but it doesn't look like it's going to last for more than few minutes.");
+    _SetTimeout(player, TO_SK_REPAIR, REAL_MINUTE(2));
+    return true;
+}
+
+bool s_ReceiveHolodisk(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(valid(item) || skill != -1)
+        return false;
+    GameVar@ var = GetLocalVar(LVAR_q_glow_holodisk, player.Id);
+    if(var.GetValue() != 1)
+        return false;
+    var = 2;
+    Item@ disk = player.AddItem(PID_HOLODISK, 1);
+    disk.HolodiskNumber = 666; // TODO
+    return true;
+}

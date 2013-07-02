@@ -1,0 +1,188 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _var p event_outfitted = 1 #
+2 1020 D _script dialog@d_IsHighestParamInRange 3 200 200 205 #
+3 1030 D _script dialog@d_IsHighestParamInRange 3 201 200 205 #
+4 1040 D _script dialog@d_IsHighestParamInRange 3 202 200 205 #
+5 1050 D _script dialog@d_IsHighestParamInRange 3 203 200 205 #
+6 1060 D _script dialog@d_IsHighestParamInRange 3 204 200 205 #
+7 1070 D _script dialog@d_IsHighestParamInRange 3 205 200 205 #
+666 1080 @
+2 2000 None 0 #
+20 2010 R _script dialog@r_Outfitter 1 0 #
+20 2020 R _script dialog@r_Outfitter 1 1 #
+20 2030 R _script dialog@r_Outfitter 1 2 #
+20 2040 R _script dialog@r_Outfitter 1 3 #
+20 2050 R _script dialog@r_Outfitter 1 4 #
+8 2060 @
+3 3000 None 0 #
+20 3010 R _script dialog@r_Outfitter 1 5 #
+20 3020 R _script dialog@r_Outfitter 1 6 #
+20 3030 R _script dialog@r_Outfitter 1 7 #
+20 3040 R _script dialog@r_Outfitter 1 8 #
+20 3050 R _script dialog@r_Outfitter 1 9 #
+8 3060 @
+4 4000 None 0 #
+20 4010 R _script dialog@r_Outfitter 1 10 #
+20 4020 R _script dialog@r_Outfitter 1 11 #
+20 4030 R _script dialog@r_Outfitter 1 12 #
+20 4040 R _script dialog@r_Outfitter 1 13 #
+8 4050 @
+5 5000 None 0 #
+20 5010 R _script dialog@r_Outfitter 1 14 #
+20 5020 R _script dialog@r_Outfitter 1 15 #
+8 5030 @
+6 6000 None 0 #
+20 6010 R _script dialog@r_Outfitter 1 16 #
+20 6020 R _script dialog@r_Outfitter 1 17 #
+8 6030 @
+7 7000 None 0 #
+20 7010 R _script dialog@r_Outfitter 1 18 #
+20 7020 R _script dialog@r_Outfitter 1 19 #
+8 7030 @
+8 8000 None 0 #
+20 8010 R _script dialog@r_Outfitter 1 0 #
+20 8020 R _script dialog@r_Outfitter 1 1 #
+20 8030 R _script dialog@r_Outfitter 1 2 #
+20 8040 R _script dialog@r_Outfitter 1 3 #
+20 8050 R _script dialog@r_Outfitter 1 4 #
+20 8060 R _script dialog@r_Outfitter 1 5 #
+20 8070 R _script dialog@r_Outfitter 1 6 #
+20 8080 R _script dialog@r_Outfitter 1 7 #
+20 8090 R _script dialog@r_Outfitter 1 8 #
+20 8100 R _script dialog@r_Outfitter 1 9 #
+20 8110 R _script dialog@r_Outfitter 1 10 #
+20 8120 R _script dialog@r_Outfitter 1 11 #
+20 8130 R _script dialog@r_Outfitter 1 12 #
+20 8140 R _script dialog@r_Outfitter 1 13 #
+20 8150 R _script dialog@r_Outfitter 1 14 #
+20 8160 R _script dialog@r_Outfitter 1 15 #
+20 8170 R _script dialog@r_Outfitter 1 16 #
+20 8180 R _script dialog@r_Outfitter 1 17 #
+20 8190 R _script dialog@r_Outfitter 1 18 #
+20 8200 R _script dialog@r_Outfitter 1 19 @
+20 9000 None 0 #
+21 9010 D _param p TRAIT_CHEM_RELIANT > 0 #
+22 9020 D _param p TRAIT_CHEM_RELIANT = 0 #
+30 9030 R _script dialog@r_ToHeal 0  R _script dialog@r_Outfitter 1 20 @
+21 10000 None 0 #
+22 10010 #
+30 10020 R _script dialog@r_ToHeal 0  R _script dialog@r_Outfitter 1 20 @
+22 11000 None 0 #
+22 11010 D _item p PID_CIGARETTES = 0 D or D _item p PID_LIGHTER = 0 R _script dialog@r_Outfitter 1 21 #
+22 11020 D _item p PID_NUKA_COLA = 0 R _script dialog@r_Outfitter 1 22 #
+22 11030 D _item p PID_BUFFOUT = 0 R _script dialog@r_Outfitter 1 23 #
+22 11040 D _item p PID_PSYCHO = 0 R _script dialog@r_Outfitter 1 24 #
+22 11050 D _param p ADDICTION_JET ! 0 D _item p PID_JET = 0 R _script dialog@r_Outfitter 1 25 #
+22 11060 D _param p ADDICTION_MENTATS ! 0 D _item p PID_MENTATS = 0 R _script dialog@r_Outfitter 1 26 #
+30 11070 R _script dialog@r_ToHeal 0  R _script dialog@r_Outfitter 1 20 @
+30 12000 None 0 #
+40 12010 R _script dialog@r_Outfitter 1 27 #
+40 12020 R _script dialog@r_Outfitter 1 28 #
+40 12030 R _script dialog@r_Outfitter 1 29 #
+40 12040 R _script dialog@r_Outfitter 1 30 #
+40 12050 R _script dialog@r_Outfitter 1 31 #
+40 12060 R _script dialog@r_Outfitter 1 32 #
+40 12070 @
+40 13000 None 0 @
+50 14000 None 0 @
+666 15000 None 0 &
+
+[engl]
+{100}{}{Outfitter}
+{1000}{}{Predialogue installations}
+{1010}{}{Has taken gear}
+{1020}{}{Small Guns}
+{1030}{}{Big Guns}
+{1040}{}{Energy Weapons}
+{1050}{}{Unarmed}
+{1060}{}{Melee Weapons}
+{1070}{}{Throwing}
+{1080}{}{This shouldn't happen.}
+{2000}{}{Hello there. Choose your small guns outfit please.}
+{2010}{}{Infantry (Assault Rifle Ext. Mag. + Metal Armor Mk2)}
+{2020}{}{Special forces (2 x P90c + Combat Armor Mk2)}
+{2030}{}{Riot police (Pancor Jackhammer +  Combat Armor Mk2)}
+{2040}{}{Gunslinger (223 Pistol + Metal Armor Mk2)}
+{2050}{}{Sharpshooter (Sniper Rifle + Combat Leather Jacket)}
+{2060}{}{Show me all possible outfits for all combat skills.}
+{3000}{}{Hello there. Choose your big guns outfit please.}
+{3010}{}{Infantry (LSW + Combat Armor)}
+{3020}{}{Light tank (Avenger Minigun + Combat Armor)}
+{3030}{}{Heavy tank (M60 + Metal Armor Mk2)}
+{3040}{}{Artillery (Rocket Launcher + Metal Armor)}
+{3050}{}{Pyromaniac (Improved Flamer + Combat Armor Mk2)}
+{3060}{}{Show me all possible outfits for all combat skills.}
+{4000}{}{Hello there. Choose your energy weapons outfit please.}
+{4010}{}{Soldier (Plasma Rifle + Metal Armor Mk2)}
+{4020}{}{Sniper (Laser Rifle Ext. Cap. + Metal Armor)}
+{4030}{}{Tank (Gatling Laser + Metal Armor Mk2)}
+{4040}{}{Pistoleer (Magneto Laser Pistol + Plasma Pistol + Combat Armor)}
+{4050}{}{Show me all possible outfits for all combat skills.}
+{5000}{}{Hello there. Choose your unarmed outfit please.}
+{5010}{}{Puncher (Mega Power Fist + Combat Armor Mk2)}
+{5020}{}{Swarmer (Rock + Combat Armor Mk2)}
+{5030}{}{Show me all possible outfits for all combat skills.}
+{6000}{}{Hello there. Choose your melee outfit please.}
+{6010}{}{Miner (Super Sledge + Combat Armor Mk2)}
+{6020}{}{Farmer (Super Cattle Prod + Combat Armor Mk2)}
+{6030}{}{Show me all possible outfits for all combat skills.}
+{7000}{}{Hello there. Choose your throwing outfit please.}
+{7010}{}{Grenadier (Grenades + Combat Leather Jacket)}
+{7020}{}{Ninja (Throwing Knives + Combat Leather Jacket)}
+{7030}{}{Show me all possible outfits for all combat skills.}
+{8000}{}{As you wish. Choose your outfit please.}
+{8010}{}{SG Infantry (Assault Rifle Ext. Mag. + Metal Armor Mk2)}
+{8020}{}{SG Special forces (2 x P90c + Combat Armor Mk2)}
+{8030}{}{SG Riot police (Pancor Jackhammer +  Combat Armor Mk2)}
+{8040}{}{SG Gunslinger (223 Pistol + Metal Armor Mk2)}
+{8050}{}{SG Sharpshooter (Sniper Rifle + Combat Leather Jacket)}
+{8060}{}{BG Infantry (LSW + Combat Armor)}
+{8070}{}{BG Light tank (Avenger Minigun + Combat Armor)}
+{8080}{}{BG Heavy tank (M60 + Metal Armor Mk2)}
+{8090}{}{BG Artillery (Rocket Launcher + Metal Armor)}
+{8100}{}{BG Pyromaniac (Improved Flamer + Combat Armor Mk2)}
+{8110}{}{EW Soldier (Plasma Rifle + Metal Armor Mk2)}
+{8120}{}{EW Sniper (Laser Rifle Ext. Cap. + Metal Armor)}
+{8130}{}{EW Tank (Gatling Laser + Metal Armor Mk2)}
+{8140}{}{EW Pistoleer (Magneto Laser Pistol + Plasma Pistol + Combat Armor)}
+{8150}{}{UNARMED Puncher (Mega Power Fist + Combat Armor Mk2)}
+{8160}{}{UNARMED Swarmer (Rock + Combat Armor Mk2)}
+{8170}{}{MELEE Miner (Super Sledge + Combat Armor Mk2)}
+{8180}{}{MELEE Farmer (Super Cattle Prod + Combat Armor Mk2)}
+{8190}{}{THROWING Grenadier (Grenades + Combat Leather Jacket)}
+{8200}{}{THROWING Ninja (Throwing Knives + Combat Leather Jacket)}
+{9000}{}{Do you need any addictive chems?}
+{9010}{}{Show me what you've got.}
+{9020}{}{Show me what you've got.}
+{9030}{}{Nah, I don't need any. Just heal me up and give me a few super stimpaks.}
+{10000}{}{WARNING: You are chem reliant, if you will get addicted to any drug, it will be PERMANENT. Addictions will NOT be removed by Game Masters.}
+{10010}{}{Blah blah blah, show me the chems already.}
+{10020}{}{Perhaps you are right. Just heal me up and give me a few super stimpaks.}
+{11000}{}{Alright, here are the chems. Please remember addictions will NOT be removed by Game Masters. What do you want?}
+{11010}{}{Cigarettes.}
+{11020}{}{Nuka Cola.}
+{11030}{}{Buffout.}
+{11040}{}{Psycho.}
+{11050}{}{JET.}
+{11060}{}{Mentats.}
+{11070}{}{Just heal me up and give me a few super stimpaks.}
+{12000}{}{You can choose one more piece of equipment. You are...}
+{12010}{}{Geek (tesla helmet).}
+{12020}{}{Nerd (spectacles)}
+{12030}{}{Paranoid (motion sensor, goggles).}
+{12040}{}{Hypochondriac (three extra super stimpaks)}
+{12050}{}{Glutton (ten cookies).}
+{12060}{}{Poser (mirrored shades)}
+{12070}{}{Erm... no, thanks. I'm ready for combat.}
+{13000}{}{Good luck. Next!}
+{14000}{}{You've already received your gear. Next!}
+{15000}{}{Outfitter dialog error. If you see this message report it on forum.}
+

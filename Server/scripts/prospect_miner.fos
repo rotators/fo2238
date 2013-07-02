@@ -1,0 +1,91 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prospect_miner.fos
+//
+
+// Generic ore/minerals miner script - resources go to prospect owner/trader
+
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "production_h.fos"
+#include "npc_planes_h.fos"
+#include "_animation.fos"
+import bool Dig(Critter@ miner, Item@ tool, Item@ vein, uint16 productPid, uint amount, uint msgIndex) from "prod_veins";
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SkillBase[SK_SCIENCE] = 40;
+    npc.ModeBase[MODE_NO_HOME] = 1;
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+void _Idle(Critter& npc)
+{
+    // TODO: transfer ore/minerals surplussess to owner/trader
+
+    if(Random(0, 2) == 0)
+        MoveRandom(npc, 4);
+    else if(Random(0, 1) == 0)       // mine
+    {
+        // npc.Say(SAY_NORM, "Looking for facility...");
+        // get mine facilities
+        uint         num = 0;
+        array<Item@> items;
+        Item@        item;
+        Map@         map = npc.GetMap();
+
+        // num += map.GetItems(PID_ROCKS_ORE, items);
+        // num += map.GetItems(PID_ROCKS_MINERALS, items);
+
+        num += map.GetItems(PID_VEIN_IRON, items);
+        num += map.GetItems(PID_VEIN_IRON2, items);
+        num += map.GetItems(PID_VEIN_MINERALS, items);
+        num += map.GetItems(PID_VEIN_MINERALS2, items);
+        num += map.GetItems(PID_VEIN_URANIUM, items);
+        num += map.GetItems(PID_VEIN_GOLD, items);
+
+        // get random one
+        if(num > 0)
+            @item = @items[Random(0, num - 1)];
+        if(valid(item))
+        {
+            // npc.Say(SAY_NORM, "Found some...");
+            npc.StatBase[ST_VAR0] = item.Id;
+            AddWalkPlane(npc, 0, item.HexX, item.HexY, GetDirection(npc.HexX, npc.HexY, item.HexX, item.HexY), false, 1);
+            AddMiscPlane(npc, 0, Random(0, 1), "prospect_miner@plane_Mine");
+            // npc.SetHomePos(item.HexX, item.HexY, GetDirection(npc.HexX, npc.HexY, item.HexX, item.HexY)); // they don't use that mode now
+        }
+        // else
+        //	npc.Say(SAY_NORM_ON_HEAD, "Couldn't find one...");
+    }
+    // till next move
+    npc.Wait(Random(500, 20000));
+}
+
+
+void plane_Mine(Critter& npc)
+{
+    npc.Animate(ANIM1_HAMMER, ANIM2_SWING_2H, null, true, true);     // fixme
+
+    // get vein
+    Item@ vein = GetItem(npc.Stat[ST_VAR0]);
+    if(!valid(vein))
+        return;
+
+    Item@ hammer;
+    if(_CritCountItem(npc, PID_SUPER_SLEDGE) > 0)
+        @hammer = npc.GetItem(PID_SUPER_SLEDGE, -1);
+    else
+        @hammer = npc.AddItem(PID_SUPER_SLEDGE, 1);
+
+    // facility.EventUseOnMe(npc, hammer);
+
+    vein.EventUseOnMe(npc, hammer);
+    DeleteItem(hammer);     // Otherwise players can take sledgehammer from slave
+
+
+    npc.Wait(Random(1000, 5000));
+}

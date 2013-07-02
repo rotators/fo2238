@@ -1,0 +1,22 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_pen.fos
+//
+
+#ifndef __BRAHMIN_PEN__
+#define __BRAHMIN_PEN__
+
+#include "_macros.fos"
+#include "brahmin_pen_h.fos"
+
+bool GetPenIDOfBrahmin(Critter& brahmin, uint& out id)
+{
+    if(!_CritHasExtMode(brahmin, MODE_EXT_PEN_BRAHMIN))
+        return false;
+
+    id = brahmin.Stat[ST_NPC_ROLE];
+    return true;
+}
+#endif

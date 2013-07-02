@@ -1,0 +1,70 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_killmobs_h.fos
+//
+
+// some repeated functionality for various - 'spawn location, kill mobs' quests
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "_basetypes.fos"
+
+#define ALL_KILLED     (2)
+
+#define IDLE_NORMAL    (3000)
+
+uint GetOwnerId(Map& map)
+{
+    return GetRootMapData(map, MAP_DATA_OWNER);
+}
+void SetOwnerId(Map& map, uint playerId)
+{
+    SetRootMapData(map, MAP_DATA_OWNER, playerId);
+}
+
+void MobIdle(Critter& mob)
+{
+    // MoveMob(mob, false);
+    if(Random(0, 1) == 0)
+        mob.MoveRandom();
+    mob.Wait(IDLE_NORMAL + Random(0, 500));
+}
+
+void MobShowCritter(Critter& mob, Critter& showCrit)
+{
+    if(showCrit.Stat[ST_BASE_CRTYPE] != mob.Stat[ST_BASE_CRTYPE])
+        AddAttackPlane(mob, AI_PLANE_ATTACK_PRIORITY, showCrit);
+}
+
+// Checks if there are other mobs (with given pids) alive
+bool MobsDead(Map& map, array<uint16>& pids)
+{
+    uint num = 0;
+    for(uint i = 0, j = pids.length(); i < j; i++)
+        num += map.GetCritters(pids[i], FIND_LIFE_AND_KO, null);
+    DLog("MobsAlive: " + num);
+    return num == 0;
+}
+
+bool MobAttacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void MobOnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, GetCritter(value));
+}
+
+void check_owner(Critter& cr, int, int, int)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(GetOwnerId(cr.GetMap())));
+}

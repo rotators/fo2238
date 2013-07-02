@@ -1,0 +1,1179 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// reinforcements.fos
+//
+
+// Based on town_supply.fos
+
+#define __REINFORCEMENTS_MODULE__
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_dialogs.fos"
+#include "_bags.fos"
+
+#include "npc_planes_h.fos"
+#include "mapdata_h.fos"
+#include "reputations_h.fos"
+#include "utils_h.fos"
+#include "reinforcements_h.fos"
+#include "guard_h.fos"
+
+#include "entire.fos"
+#include "serializator.fos"
+
+#ifndef __DEBUG__
+# define Observe    # (__num, __str) // Log(""+__num+": "+__str)
+#endif
+#ifdef __DEBUG__
+# define Observe    # (__num, __str)ExecObserve(__num, __str)
+#endif
+
+// reinforcement guy vars:
+// ST_VAR0  idle timeout
+// ST_VAR1  type
+// ST_VAR2  alert index
+
+uint[] Thresholds = { ALERT_LEVEL_LIGHT, ALERT_LEVEL_HEAVY };
+bool Initialized = false;
+
+/*
+   class CAlertSettings
+   {
+   void Init();
+   void Load();
+   void Save();
+   void Update();
+   }
+ */
+
+class CAlertSettings
+{
+    uint AlertLevelNone;
+    uint AlertLevelLight;
+    uint AlertLevelHeavy;
+
+    uint AlertCountGuard;
+    uint AlertCountNpc;
+    uint AlertCountDrop;
+    uint AlertCountPDrop;
+
+    uint ReinforcementsDelayLow;
+    uint ReinforcementsDelayHigh;
+    uint ReinforcementsDelayRet;
+    uint ReinforcementsCountLow;
+    uint ReinforcementsCountHigh;
+
+    uint CycleLength;
+
+    CAlertSettings()
+    {
+        AlertLevelNone = ALERT_LEVEL_NONE;
+        AlertLevelLight = ALERT_LEVEL_LIGHT;
+        AlertLevelHeavy = ALERT_LEVEL_HEAVY;
+
+        AlertCountGuard = ALERT_COUNT_GUARD;
+        AlertCountNpc = ALERT_COUNT_NPC;
+        AlertCountDrop = ALERT_COUNT_DROP;
+        AlertCountPDrop = ALERT_COUNT_P_DROP;
+
+        ReinforcementsDelayLow = REINFORCEMENTS_DELAY_LOW;
+        ReinforcementsDelayHigh = REINFORCEMENTS_DELAY_HIGH;
+        ReinforcementsDelayRet = REINFORCEMENTS_DELAY_RET;
+        ReinforcementsCountLow = REINFORCEMENTS_COUNT_LOW;
+        ReinforcementsCountHigh = REINFORCEMENTS_COUNT_HIGH;
+
+        CycleLength = ALERT_CYCLE;
+    }
+
+    void Init()
+    {
+        __AlertLevelReact = ALERT_LEVEL_REACT;
+        Load();
+        Update();
+    }
+
+    void Load()
+    {
+        if(!IsAnyData("AlertSettings"))
+            return;
+        Serializator serializer;
+        serializer.Load("AlertSettings");
+        serializer.Get(this.AlertLevelNone)
+        .Get(this.AlertLevelLight)
+        .Get(this.AlertLevelHeavy)
+        .Get(this.AlertCountGuard)
+        .Get(this.AlertCountNpc)
+        .Get(this.AlertCountDrop)
+        .Get(this.AlertCountPDrop)
+        .Get(this.ReinforcementsDelayLow)
+        .Get(this.ReinforcementsDelayHigh)
+        .Get(this.ReinforcementsDelayRet)
+        .Get(this.ReinforcementsCountLow)
+        .Get(this.ReinforcementsCountHigh)
+        .Get(this.CycleLength)
+        .Get(__AlertLevelReact);
+    }
+
+    void Save()
+    {
+        Serializator serializer;
+        serializer.Set(this.AlertLevelNone)
+        .Set(this.AlertLevelLight)
+        .Set(this.AlertLevelHeavy)
+        .Set(this.AlertCountGuard)
+        .Set(this.AlertCountNpc)
+        .Set(this.AlertCountDrop)
+        .Set(this.AlertCountPDrop)
+        .Set(this.ReinforcementsDelayLow)
+        .Set(this.ReinforcementsDelayHigh)
+        .Set(this.ReinforcementsDelayRet)
+        .Set(this.ReinforcementsCountLow)
+        .Set(this.ReinforcementsCountHigh)
+        .Set(this.CycleLength)
+        .Set(__AlertLevelReact);
+        serializer.Save("AlertSettings");
+    }
+
+    void Update()
+    {
+        Thresholds[0] = this.AlertLevelLight;
+        Thresholds[1] = this.AlertLevelHeavy;
+    }
+};
+
+/*
+   class CAlertMap
+   {
+   void StartCalling(uint type);
+   void Spawn(uint type);
+   void Cycle();
+   void ProcessDeath(Critter& cr);
+   void ReinforcementReturn(uint type);
+   bool IsDead();
+   void Validate();
+   }
+ */
+
+class CAlertMap
+{
+    uint        Index;
+    uint        MapId;
+
+    uint        AlertLevel;
+    bool        NoReinforcements;
+    bool        Dead;
+
+    array<uint> Reinforcements;
+    array<uint> ReinforcementsMax;
+    array<bool> Calling;
+    array<uint> EventId;
+    array<uint> Attackers;
+
+    CAlertMap()
+    {
+        Index = 0;
+        MapId = 0;
+
+        AlertLevel = 0;
+        NoReinforcements = true;
+        Dead = false;
+
+        Reinforcements.resize(REINFORCEMENT_COUNT);
+        fill_array(Reinforcements, 0);
+        ReinforcementsMax.resize(REINFORCEMENT_COUNT);
+        fill_array(ReinforcementsMax, 0);
+        Calling.resize(REINFORCEMENT_COUNT);
+        fill_array(Calling, false);
+        EventId.resize(REINFORCEMENT_COUNT);
+        fill_array(EventId, 0);
+    }
+
+    CAlertMap(uint index, uint mapid, array<uint>@ maxes)
+    {
+        Index = index;
+        MapId = mapid;
+
+        AlertLevel = 0;
+
+        if(!valid(maxes) || maxes.length() == 0)
+            NoReinforcements = true;
+        else
+        {
+            NoReinforcements = false;
+            Dead = false;
+            Reinforcements.resize(REINFORCEMENT_COUNT);
+            ReinforcementsMax.resize(REINFORCEMENT_COUNT);
+            for(uint i = 0, j = MIN(maxes.length(), REINFORCEMENT_COUNT); i < j; i++)
+                ReinforcementsMax[i] = maxes[i];
+            for(uint i = 0, j = MIN(maxes.length(), REINFORCEMENT_COUNT); i < j; i++)
+                Reinforcements[i] = maxes[i];
+            Calling.resize(REINFORCEMENT_COUNT);
+            fill_array(Calling, false);
+            EventId.resize(REINFORCEMENT_COUNT);
+            fill_array(EventId, 0);
+        }
+    }
+
+    void StartCalling(uint type)
+    {
+        if(type >= REINFORCEMENT_COUNT)
+            type = REINFORCEMENT_COUNT - 1;
+        type++;
+        do
+        {
+            type--;
+            if(this.Calling[type])
+                continue;
+            Observe(this.Index, "starting to call " + type);
+            uint[] values = { this.Index, type };
+            this.EventId[type] = CreateTimeEvent(AFTER(Random(settings.ReinforcementsDelayLow, settings.ReinforcementsDelayHigh)), "e_CallReinforcements", values, true);
+            this.Calling[type] = (this.EventId[type] > 0);
+        }
+        while(type > 0);
+    }
+
+    void Spawn(uint type)
+    {
+        if(IsDead())
+            return;
+        Observe(this.Index, "trying to spawn " + type);
+        if(type >= REINFORCEMENT_COUNT)
+            return;
+        if(this.Reinforcements[type] == 0)
+            return;
+        uint n = Random(settings.ReinforcementsCountLow, settings.ReinforcementsCountHigh);
+        n = MIN(n, this.Reinforcements[type]);
+        n = CallReinforcements(this.Attackers, this, n, type);
+        this.Reinforcements[type] -= n;
+        Observe(this.Index, "... spawned " + n + ", " + this.Reinforcements[type] + ", remaining");
+    }
+
+    void Cycle()
+    {
+        if(IsDead())
+            return;
+        Observe(this.Index, "cycle start, alert level " + this.AlertLevel);
+        uint drop = (settings.AlertCountPDrop * this.AlertLevel) / 100;
+        drop = MAX(drop, settings.AlertCountDrop);
+        if(this.AlertLevel < drop)
+            this.AlertLevel = 0;
+        else
+            this.AlertLevel -= drop;
+        if(NoReinforcements)
+        {
+            Observe(this.Index, "cycle end, alert level " + this.AlertLevel);
+            return;
+        }
+        if(this.AlertLevel == 0)
+            this.Attackers.resize(0);
+        for(uint i = 0; i < REINFORCEMENT_COUNT; i++)
+            if(this.Calling[i] && this.AlertLevel < Thresholds[i])
+            {
+                this.Calling[i] = false;
+                EraseTimeEvent(this.EventId[i]);
+                this.EventId[i] = 0;
+                Observe(this.Index, "cycle: stopped calling " + i);
+            }
+        Observe(this.Index, "cycle end, alert level " + this.AlertLevel);
+    }
+
+    void ProcessDeath(Critter& cr, Critter@ killer)
+    {
+        if(IsDead())
+            return;
+        Observe(this.Index, "process death start, alert level " + this.AlertLevel);
+
+        if(_CritHasExtMode(cr, MODE_EXT_GUARD))
+            this.AlertLevel += settings.AlertCountGuard;
+        else if(_IsTrueNpc(cr))
+            this.AlertLevel += settings.AlertCountNpc;
+
+        if(NoReinforcements)
+        {
+            Observe(this.Index, "process death end, alert level " + this.AlertLevel);
+            return;
+        }
+
+        if(this.AlertLevel >= ALERT_LEVEL_REGISTER && valid(killer))
+            if(!Present(killer.Id, this.Attackers))
+                this.Attackers.insertLast(killer.Id);
+
+        uint i = REINFORCEMENT_COUNT;
+        do
+        {
+            i--;
+            if(this.AlertLevel >= Thresholds[i])
+            {
+                if(!this.Calling[i])
+                    StartCalling(i);
+                break;
+            }
+        }
+        while(i > 0);
+        Observe(this.Index, "process death end, alert level " + this.AlertLevel);
+    }
+
+    void ReinforcementReturn(uint type)
+    {
+        if(IsDead())
+            return;
+        if(type >= REINFORCEMENT_COUNT)
+            return;
+        this.Reinforcements[type]++;
+        if(this.Reinforcements[type] > this.ReinforcementsMax[type])
+            this.Reinforcements[type] = this.ReinforcementsMax[type];
+        Observe(this.Index, "returned " + type + ", current amount: " + this.Reinforcements[type]);
+    }
+
+    bool IsDead()
+    {
+        return this.Dead;
+    }
+
+    void Validate()
+    {
+        Map@ map = GetMap(MapId);
+        if(!valid(map) || map.GetData(MAP_DATA_ALERT_INDEX) != int(this.Index))
+            this.Dead = true;
+    }
+
+};
+
+
+CAlertSettings    settings;
+array<CAlertMap@> alerts;
+
+void SaveAlertMaps() // export, call on world save or on adding new alertmap
+{
+    // Log("saving alert maps");
+    settings.Save();
+    Serializator serializer;
+    uint         len = alerts.length();
+    if(len == 0)
+    {
+        Log("ERR: no dummy alert");
+        return;
+    }
+    serializer.Set(len - 1);
+    for(uint i = 1; i < len; i++)
+    {
+        serializer.Set(alerts[i].Index)
+        .Set(alerts[i].MapId)
+        .Set(alerts[i].AlertLevel)
+        .Set(alerts[i].NoReinforcements)
+        .Set(alerts[i].Dead)
+        .Set(alerts[i].Reinforcements)
+        .Set(alerts[i].ReinforcementsMax)
+        .Set(alerts[i].Calling)
+        .Set(alerts[i].EventId);
+    }
+    serializer.Save("AlertMaps");
+}
+
+void SetAlertMap(Map& map, array<uint>@ maxes)     // export
+{
+    if(!Initialized)
+        InitAlertMaps();
+    uint n = alerts.length();
+    for(uint i = 1; i < n; i++)
+        alerts[i].Validate();
+    // Log("setting map id "+map.Id+" as alert map "+n);
+    CAlertMap@ alert = CAlertMap(n, map.Id, maxes);
+    alerts.insertLast(alert);
+    map.SetData(MAP_DATA_ALERT_INDEX, n);
+}
+
+bool InitAlertMaps() // export
+{
+    if(Initialized)
+        return true;
+    if(Thresholds.length() != REINFORCEMENT_COUNT)
+    {
+        Log("ERR: Failed to initialize: Thresholds length != REINFORCEMENT_COUNT");
+        return false;
+    }
+    settings.Init();
+    CreateTimeEvent(AFTER(settings.CycleLength), "e_AlertMapsCycle", false);
+    Initialized = true;
+    CAlertMap@   dummy = CAlertMap();
+    alerts.insertLast(dummy);   // dummy alert with 0 level, so that others start from 1 (*)
+    Serializator serializer;
+    if(!IsAnyData("AlertMaps"))
+        return true;
+    if(!serializer.Load("AlertMaps"))
+        return true;
+    uint n = 0;
+    serializer.Get(n);
+    for(uint i = 0; i < n; i++)
+    {
+        CAlertMap@ alert = CAlertMap();
+        serializer.Get(alert.Index)
+        .Get(alert.MapId)
+        .Get(alert.AlertLevel)
+        .Get(alert.NoReinforcements)
+        .Get(alert.Dead)
+        .Get(alert.Reinforcements)
+        .Get(alert.ReinforcementsMax)
+        .Get(alert.Calling)
+        .Get(alert.EventId);
+        alerts.insertLast(alert);
+    }
+    // Log("loaded "+n);
+    return true;
+}
+
+bool IsAlertMap(Map& map)                           // export
+{
+    return map.GetData(MAP_DATA_ALERT_INDEX) > 0;   // (*) this is the reason
+}
+
+uint GetAlertLevel(Map& map)                        // export
+{
+    if(map.GetData(MAP_DATA_ALERT_INDEX) == 0)
+        return 0;
+    return alerts[map.GetData(MAP_DATA_ALERT_INDEX)].AlertLevel;
+}
+
+void ProcessDeath(Map& map, Critter& cr, Critter@ killer)   // export
+{
+    if(map.GetData(MAP_DATA_ALERT_INDEX) == 0)
+        return;
+    alerts[map.GetData(MAP_DATA_ALERT_INDEX)].ProcessDeath(cr, killer);
+}
+
+void ReinforcementReturn(Critter& npc)
+{
+    alerts[npc.Stat[ST_VAR2]].ReinforcementReturn(npc.Stat[ST_VAR1]);
+}
+
+uint e_ReinforcementReturn(array<uint>@ values)     // index, type
+{
+    alerts[values[0]].ReinforcementReturn(values[1]);
+    return 0;
+}
+
+uint e_CallReinforcements(array<uint>@ values)     // index, type
+{
+    if(alerts[values[0]].Dead)
+        return 0;
+    alerts[values[0]].Spawn(values[1]);
+    return Random(settings.ReinforcementsDelayLow, settings.ReinforcementsDelayHigh);
+}
+
+uint e_AlertMapsCycle(array<uint>@ values)
+{
+    for(uint i = 1, j = alerts.length(); i < j; i++)
+        alerts[i].Cycle();
+    return settings.CycleLength;
+}
+
+
+/**
+ * Gets the PID number for the reinforcement guard appropriate for the location
+ * @param     locpid     Location pid
+ * @param     mappid     Map pid
+ * @param     type       Reinforcements weight
+ *
+ * @return PID number
+ */
+uint GetPid(uint locpid, uint mappid, uint type)
+{
+    if(type == 0)     // light
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard4:
+        case LOCATION_VaultCity:
+            return Random(0, 1) == 0 ? 134 : 135;
+        case LOCATION_BrokenHills:
+            return 119;
+        case LOCATION_MiningSiteSF:
+        case LOCATION_SanFrancisco:
+            return 386;
+        case LOCATION_NCR:
+        case LOCATION_MiningSiteNCR:
+        case LOCATION_Prison:
+            return Random(0, 1) == 0 ? 518 : 519;
+        case LOCATION_Trainyard1:
+        case LOCATION_Trainyard3:
+        case LOCATION_Hub:
+        case LOCATION_Junktown:
+        case LOCATION_MiningSiteJunktown:
+        case LOCATION_MiningSiteKlamath:
+            return Random(0, 1) == 0 ? 71 : 72;
+        case LOCATION_Trainyard2:
+        case LOCATION_Library:
+        case LOCATION_Scavenger:
+        case LOCATION_Boneyard:
+            return Random(0, 1) == 0 ? 46 : 47;
+        case LOCATION_Fortress:
+            return Random(0, 1) == 0 ? 261 : 262;
+        default:
+            return 71;
+        }
+    }
+    else // heavy
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard4:
+        case LOCATION_VaultCity:
+            return Random(0, 1) == 0 ? 222 : 223;
+        case LOCATION_BrokenHills:
+            return 119;
+        case LOCATION_Trainyard3:
+        case LOCATION_MiningSiteNCR:
+        case LOCATION_NCR:
+        case LOCATION_Prison:
+            return Random(0, 1) == 0 ? 475 : 476;
+        case LOCATION_Trainyard1:
+        case LOCATION_MiningSiteSF:
+        case LOCATION_SanFrancisco:
+            return 386;
+        case LOCATION_Hub:
+        case LOCATION_Junktown:
+        case LOCATION_MiningSiteJunktown:
+        case LOCATION_MiningSiteKlamath:
+            return Random(0, 1) == 0 ? 71 : 72;
+        case LOCATION_Trainyard2:
+        case LOCATION_Library:
+        case LOCATION_Scavenger:
+        case LOCATION_Boneyard:
+            return Random(0, 1) == 0 ? 46 : 47;
+        case LOCATION_Fortress:
+            return Random(0, 1) == 0 ? 261 : 262;
+        default:
+            return 71;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Gets the bag number for the reinforcement guard appropriate for the location
+ * @param     locpid     Location pid
+ * @param     mappid     Map pid
+ * @param     type       Reinforcements weight
+ *
+ * @return Bag number
+ */
+uint GetBag(uint locpid, uint mappid, uint type)
+{
+    if(type == 0)     // light
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard1:
+            return Random(0, 1) == 0 ? 212 : 15;                        // FRISCO               14mm pistol, 10mm SMG
+        case LOCATION_Trainyard2:
+            return Random(0, 1) == 0 ? 394 : 167;                       // BONEYARD		10mm SMG, Hunting Rifle
+        case LOCATION_Trainyard3:
+            return Random(0, 1) == 0 ? 332 : 327;                       // NCR			10mm SMG, Combat Shotgun
+        case LOCATION_Trainyard4:
+            return Random(0, 1) == 0 ? 12 : 11;                         // VAULT CITY	Sniper Rifle, Hunting Rifle
+
+        case LOCATION_MiningSiteNCR:
+            return Random(0, 1) == 0 ? 212 : 327;                       // 14mm Pistol, Combat Shotgun
+        case LOCATION_MiningSiteJunktown:
+            return Random(0, 1) == 0 ? 15 : 11;                         // 10mm SMG, Hunting Rifle
+        case LOCATION_MiningSiteKlamath:
+            return Random(0, 1) == 0 ? 234 : 11;                        // 10mm Pistol, Hunting Rifle
+        case LOCATION_MiningSiteSF:
+            return Random(0, 1) == 0 ? 15 : 212;                        // 10mm SMG, 14mm pistol
+
+        case LOCATION_NCR:
+            return Random(0, 1) == 0 ? 332 : 327;                       // 10mm SMG, Combat Shotgun
+        case LOCATION_Prison:
+            return Random(0, 1) == 0 ? 332 : 327;                       // 10mm SMG, Combat Shotgun
+        case LOCATION_VaultCity:
+            return Random(0, 1) == 0 ? 211 : 13;                        // Combat Shotgun, Assault Rifle
+        case LOCATION_BrokenHills:
+            return Random(0, 1) == 0 ? 307 : 312;                       // Laser Rifle, Flamer
+        case LOCATION_SanFrancisco:
+            return Random(0, 1) == 0 ? 15 : 212;                        // 10mm SMG, 14mm pistol
+        case LOCATION_Fortress:
+            return Random(0, 1) == 0 ? 221 : 13;                        // P90, Assault Rifle
+        case LOCATION_Junktown:
+        case LOCATION_Hub:
+        case LOCATION_Library:
+        case LOCATION_Scavenger:
+        case LOCATION_Boneyard:
+            return Random(0, 1) == 0 ? 394 : 167;                               // 10mm SMG, Hunting Rifle
+        default:
+            return 211;                                                         // Combat Shotgun
+        }
+    }
+    else // heavy
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard1:
+            return Random(0, 1) == 0 ? 212 : 16;                                // FRISCO		14mm Pistol, G11
+        case LOCATION_Trainyard2:
+            return Random(0, 1) == 0 ? 13 : 14;                                 // BONEYARD		Assault Rifle, FNFAL
+        case LOCATION_Trainyard3:
+            return Random(0, 1) == 0 ? 14 : 396;                                // NCR			FNFAL, M60
+        case LOCATION_Trainyard4:
+            return Random(0, 1) == 0 ? 211 : 13;                                // VAULT CITY	Combat Shotgun, Assault Rifle
+
+        case LOCATION_MiningSiteNCR:
+            return Random(0, 1) == 0 ? 14 : 396;                                // FNFAL, M60
+        case LOCATION_MiningSiteJunktown:
+            return Random(0, 1) == 0 ? 211 : 13;                                // Combat Shotgun, Assault Rifle
+        case LOCATION_MiningSiteKlamath:
+            return Random(0, 1) == 0 ? 15 : 13;                                 // 10mm SMG, Assault Rifle
+        case LOCATION_MiningSiteSF:
+            return Random(0, 1) == 0 ? 221 : 16;                                // P90, G11
+
+        case LOCATION_NCR:
+            return Random(0, 1) == 0 ? 14 : 396;                                // FNFAL, M60
+        case LOCATION_Prison:
+            return Random(0, 1) == 0 ? 14 : 396;                                // FNFAL, M60
+        case LOCATION_VaultCity:
+            return Random(0, 9) == 0 ? 16 : 203;                                // G11, PancorJackhammer
+        case LOCATION_BrokenHills:
+            return Random(0, 1) == 0 ? 306 : 308;                               // Avenger Minigun, Plasma Rifle
+        case LOCATION_SanFrancisco:
+            return Random(0, 1) == 0 ? 221 : 16;                                // P90, G11
+        case LOCATION_Fortress:
+            return Random(0, 1) == 0 ? 271 : 194;                               // Turbo Plasma, Light Support Weapon
+        case LOCATION_Junktown:
+        case LOCATION_Hub:
+        case LOCATION_Library:
+        case LOCATION_Scavenger:
+        case LOCATION_Boneyard:
+        {
+            switch(Random(0, 3))
+            {
+            case 0:
+                return 191;                                                                                     // Sniper Rifle
+            case 1:
+                return 394;                                                                                     // 10mm SMG
+            case 2:
+                return 194;                                                                                     // Light Support Weapon
+            case 3:
+                return 396;                                                                                     // M60
+            default:
+            }
+        }
+        default:
+            return 211;                                                                                                 // Combat Shotgun
+        }
+    }
+    return 0;
+}
+
+/**
+ * Gets the level for the reinforcement guard appropriate for the location
+ * @param     locpid     Location pid
+ * @param     mappid     Map pid
+ * @param     type       Reinforcements weight
+ *
+ * @return Level
+ */
+uint GetLevel(uint locpid, uint mappid, uint type)
+{
+    return 12 + 9 * type;
+}
+
+/**
+ * Gets the team id for the reinforcement guard appropriate for the location
+ * @param     locpid     Location pid
+ * @param     mappid     Map pid
+ * @param     type       Reinforcements weight
+ *
+ * @return Team id
+ */
+uint GetTeamId(uint locpid, uint mappid, uint type)
+{
+    switch(mappid)
+    {
+    case MAP_SanFranTanker:
+        return FACTION_VAGRANTS;
+    case MAP_NCRCF:
+        return FACTION_NCR;
+    case MAP_Gunrunner:
+        return FACTION_GUNRUNNERS;
+    case MAP_Blade:
+        return FACTION_REGULATORS;
+    case MAP_Library:
+        return FACTION_REGULATORS;
+    case MAP_SanFransiscoTrainStation:
+        return FACTION_COMMUNISTS;
+    case MAP_BoneyardTrainStation:
+        return FACTION_REGULATORS;
+    case MAP_NCRTrainStation:
+        return FACTION_NCR;
+    case MAP_VaultCityTrainStation:
+        return FACTION_VAULT_CITY;
+    case MAP_MilitaryCamp:
+        return FACTION_NCR;
+    case MAP_SanFranciscoMiningSite:
+        return FACTION_COMMUNISTS;
+    case MAP_SanFranciscoMiningSiteInside:
+        return FACTION_COMMUNISTS;
+    case MAP_KlamathMiningSite:
+        return FACTION_KLAMATH;
+    case MAP_KlamathMiningSiteInside:
+        return FACTION_KLAMATH;
+    case MAP_NCRMiningSite:
+        return FACTION_NCR;
+    case MAP_JunktownMiningSite:
+        return FACTION_JUNKTOWN;
+        // default: return ReputationIndex(locpid);
+    }
+    return ReputationIndex(locpid);
+}
+
+/**
+ * Gets the dialog id for the reinforcement guard appropriate for the location
+ * @param     locpid     Location pid
+ * @param     mappid     Map pid
+ * @param     type       Reinforcements weight
+ *
+ * @return DIalog id
+ */
+uint GetDialog(uint locpid, uint mappid, uint type)
+{
+    if(type == 0)     // light
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard1:
+            return 1444;
+        case LOCATION_Trainyard2:
+            return 9460;
+        case LOCATION_Trainyard3:
+            return 1051;
+        case LOCATION_Trainyard4:
+            return 449;
+
+        case LOCATION_MiningSiteNCR:
+            return 11000;                                       // ncr soldier
+        case LOCATION_MiningSiteJunktown:
+            return 1700;
+        case LOCATION_MiningSiteKlamath:
+            return 226;
+        case LOCATION_MiningSiteSF:
+            return 1401;
+
+        case LOCATION_NCR:
+            return 11000;                                       // ncr soldier
+        case LOCATION_Prison:
+            return 11000;                                       // ncr soldier
+        case LOCATION_VaultCity:
+            return 402;
+        case LOCATION_SanFrancisco:
+            return 1401;
+        case LOCATION_Fortress:
+            return 9459;
+        case LOCATION_Junktown:
+            return 1700;
+        case LOCATION_Hub:
+            return 2500;
+        case LOCATION_Library:
+            return 9459;
+        case LOCATION_Scavenger:
+            return 9459;
+        case LOCATION_Boneyard:
+            return 9459;
+        }
+    }
+    else // heavy
+    {
+        switch(locpid)
+        {
+        case LOCATION_Trainyard1:
+            return 1444;
+        case LOCATION_Trainyard2:
+            return 9460;
+        case LOCATION_Trainyard3:
+            return 1051;
+        case LOCATION_Trainyard4:
+            return 449;
+
+        case LOCATION_MiningSiteNCR:
+            return 83;                                                  // ncr ranger
+        case LOCATION_MiningSiteJunktown:
+            return 1700;
+        case LOCATION_MiningSiteKlamath:
+            return 226;
+        case LOCATION_MiningSiteSF:
+            return 1401;
+
+        case LOCATION_NCR:
+            return 83;                                                  // ncr ranger
+        case LOCATION_Prison:
+            return 83;                                                  // ncr ranger
+        case LOCATION_VaultCity:
+            return 402;
+        case LOCATION_SanFrancisco:
+            return 1401;
+        case LOCATION_Fortress:
+            return 9439;
+        case LOCATION_Junktown:
+            return 1700;
+        case LOCATION_Hub:
+            return 2500;
+        case LOCATION_Library:
+            return 9459;
+        case LOCATION_Scavenger:
+            return 9459;
+        case LOCATION_Boneyard:
+            return 9459;
+        }
+    }
+    return 0;
+}
+/**
+ * Summons the reinforcement guards
+ * @param     enemy     Critter that will be attacked by the guard
+ * @param     map       Map instance on which the guard will spawn
+ *
+ */
+uint CallReinforcements(array<uint>@ enemies, CAlertMap& alert, uint amount, uint type)
+{
+    Map@ map = GetMap(alert.MapId);
+    if(!valid(map))
+        return 0;
+
+    array<Entire> enter_entires;
+    if(ParseEntires(map, enter_entires, ENTIRE_REINFORCEMENTS) == 0)
+        return 0;
+
+    Entire@ entire = enter_entires[Random(0, (enter_entires.length() - 1))];
+
+    if(!valid(entire))
+        return 0;
+
+    uint locpid = map.GetLocation().GetProtoId();
+    uint mappid = map.GetProtoId();
+
+    // todo: move to external file
+    uint pid = GetPid(locpid, mappid, type);
+    uint bag = GetBag(locpid, mappid, type);
+    uint level = GetLevel(locpid, mappid, type);
+    uint teamid = GetTeamId(locpid, mappid, type);
+    uint dialog = GetDialog(locpid, mappid, type);
+
+    for(uint i = 0; i < amount; i++)
+    {
+        int[] params =
+        {
+            ST_TEAM_ID, teamid,
+            ST_FACTION_RANK, 1,
+            ST_FACTION_MODE, 1,
+            ST_VAR0, 0,
+            ST_VAR1, type,
+            ST_VAR2, alert.Index,
+            ST_BAG_ID, bag,
+            ST_KILL_EXPERIENCE, 0,
+            ST_REPLICATION_TIME, REPLICATION_DELETE,
+            ST_LEVEL, level,
+            ST_DIALOG_ID, dialog
+        };
+
+        Critter@     npc = map.AddNpc(pid, entire.HexX, entire.HexY, Random(0, 5), params, null, "reinforcements@_ReinforcementInit");
+        array<Item@> items;
+        /*
+           if (npc.GetItemsByType(ITEM_TYPE_WEAPON,items)==0)
+           Log("fail: no weapons available for pid/bag "+pid+"/"+bag);
+           else
+           {
+           npc.SetFavoriteItem(SLOT_HAND1, items[0].GetProtoId());
+           npc.MoveItem(items[0].Id,items[0].GetCount(),SLOT_HAND1);
+           }*/
+
+        if(!valid(npc))
+            return i;
+
+        for(int i = 0, j = enemies.length(); i < j; i++)
+        {
+            Critter@ enemy = GetCritter(enemies[i]);
+            if(valid(enemy))
+                AddAttackPlane(npc, 0, enemy, true);
+        }
+    }
+
+    return amount;
+}
+
+void _ReinforcementInit(Critter& npc, bool firstTime)
+{
+    GuardInit(npc);
+
+    if(firstTime)
+        GuardPerks(npc);
+
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_ReinforcementIdle");
+    npc.SetEvent(CRITTER_EVENT_PLANE_END, "_ReinforcementPlaneEnd");
+    npc.SetEvent(CRITTER_EVENT_FINISH, "_ReinforcementFinish");
+    npc.ModeBase[MODE_NO_HOME] = 1;
+}
+
+void _ReinforcementIdle(Critter& npc)
+{
+    if(npc.Stat[ST_VAR0] == 0)
+    {
+        npc.StatBase[ST_VAR0] = ELAPSED_TIME;
+        npc.Wait(500);
+    }
+
+    if(GetAlertLevel(npc.GetMap()) >= Thresholds[npc.Stat[ST_VAR1]] - 4)
+    {
+        // wander aimlessly
+        uint16 pbx = 0;
+        uint16 pby = 0;
+        uint16 bx = 0;
+        uint16 by = 0;
+        npc.GetMap().GetCrittersPath(npc.HexX, npc.HexY, npc.HexX, npc.HexY + 1, float(Random(0, 359)), Random(1, 10), 0, null, pbx, pby, bx, by);
+        AddWalkPlane(npc, 0, PLANE_WANDER, 0, pbx, pby, uint8(-1), false, 0);
+        return;
+    }
+
+    if(npc.Stat[ST_VAR0] + (REAL_MINUTE(1) >> 1) > int(ELAPSED_TIME))
+    {
+        npc.Wait(10000);
+        return;
+    }
+
+    uint16 hx = npc.HexX, hy = npc.HexY;
+    if(!GetNearEntire(npc.GetMap(), ENTIRE_REINFORCEMENTS, hx, hy))
+        DeleteNpc(npc);
+    else
+    {
+        NpcPlane@ plane = CreatePlane();
+        plane.Type = AI_PLANE_WALK;
+        plane.Priority = AI_PLANE_WALK_PRIORITY;
+        plane.Identifier = PLANE_GOTO_EXIT;
+        plane.Walk_HexX = hx;
+        plane.Walk_HexY = hy;
+        plane.Walk_Dir = 0xFF;
+        plane.Run = false;
+        plane.Walk_Cut = 1;
+        if(!npc.AddPlane(plane))
+            DeleteNpc(npc);
+    }
+}
+
+void _ReinforcementFinish(Critter& npc, bool deleted)
+{
+    if(!npc.IsDead())
+    {
+        ReinforcementReturn(npc);
+        return;
+    }
+    uint[] values = { npc.Stat[ST_VAR2], npc.Stat[ST_VAR1] };
+    CreateTimeEvent(AFTER(settings.ReinforcementsDelayRet), "e_ReinforcementReturn", values, true);
+}
+
+int _ReinforcementPlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(plane.Identifier == PLANE_WANDER)
+    {
+        npc.Wait(5000);
+        return PLANE_DISCARD;
+    }
+
+    if(plane.Identifier == PLANE_GOTO_EXIT)
+    {
+        DeleteNpc(npc);
+        return PLANE_DISCARD;
+    }
+
+    npc.StatBase[ST_VAR0] = ELAPSED_TIME;
+
+    return PLANE_RUN_GLOBAL;
+}
+/*
+   uint Index;
+   uint MapId;
+
+   uint AlertLevel;
+   bool NoReinforcements;
+
+   uint[] Reinforcements;
+   uint[] ReinforcementsMax;
+   bool[] Calling;
+   uint[] EventId;
+ */
+
+void log(Critter& cr, int, int, int)
+{
+    for(uint j = 1, k = alerts.length(); j < k; j++)
+    {
+        CAlertMap@ alert = alerts[j];
+        cr.Say(SAY_NETMSG, "Index: " + alert.Index);
+        if(alert.Dead)
+        {
+            cr.Say(SAY_NETMSG, "Dead");
+            continue;
+        }
+        cr.Say(SAY_NETMSG, "MapId: " + alert.MapId);
+        cr.Say(SAY_NETMSG, "Alert level: " + alert.AlertLevel);
+        cr.Say(SAY_NETMSG, "NoReinforcements: " + (alert.NoReinforcements ? "true" : "false"));
+        string s = "";
+        for(uint i = 0; i < REINFORCEMENT_COUNT; i++)
+        {
+            s += (alert.Reinforcements[i] + "/" + alert.ReinforcementsMax[i]);
+            if(alert.Calling[i])
+                s += "!";
+            if(i + 1 != REINFORCEMENT_COUNT)
+                s += ", ";
+        }
+        cr.Say(SAY_NETMSG, "Reinforcements: " + s);
+    }
+}
+
+void logthis(Critter& cr, int, int, int)
+{
+    if(!IsAlertMap(cr.GetMap()))
+    {
+        cr.Say(SAY_NETMSG, "Not an alert map.");
+        return;
+    }
+    CAlertMap@ alert = alerts[cr.GetMap().GetData(MAP_DATA_ALERT_INDEX)];
+    cr.Say(SAY_NETMSG, "Index: " + alert.Index);
+    if(alert.Dead)
+    {
+        cr.Say(SAY_NETMSG, "Dead");
+        return;
+    }
+    cr.Say(SAY_NETMSG, "MapId: " + alert.MapId);
+    cr.Say(SAY_NETMSG, "Alert level: " + alert.AlertLevel);
+    cr.Say(SAY_NETMSG, "NoReinforcements: " + (alert.NoReinforcements ? "true" : "false"));
+    string s = "";
+    for(uint i = 0; i < REINFORCEMENT_COUNT; i++)
+    {
+        s += (alert.Reinforcements[i] + "/" + alert.ReinforcementsMax[i]);
+        if(alert.Calling[i])
+            s += "!";
+        if(i + 1 != REINFORCEMENT_COUNT)
+            s += ", ";
+    }
+    cr.Say(SAY_NETMSG, "Reinforcements: " + s);
+}
+
+/*
+   uint AlertLevelNone;
+   uint AlertLevelLight;
+   uint AlertLevelHeavy;
+
+   uint AlertCountGuard;
+   uint AlertCountNpc;
+   uint AlertCountDrop;
+   uint AlertCountPDrop;
+
+   uint ReinforcementsDelayLow;
+   uint ReinforcementsDelayHigh;
+   uint ReinforcementsDelayRet;
+   uint ReinforcementsCountLow;
+   uint ReinforcementsCountHigh;
+
+   uint CycleLength;
+
+   __AlertLevelReact;
+ */
+
+void showsettings(Critter& cr, int, int, int)
+{
+    cr.Say(SAY_NETMSG, "AlertLevelNone (0) : " + settings.AlertLevelNone);
+    cr.Say(SAY_NETMSG, "AlertLevelLight (1) : " + settings.AlertLevelLight);
+    cr.Say(SAY_NETMSG, "AlertLevelHeavy (2) : " + settings.AlertLevelHeavy);
+
+    cr.Say(SAY_NETMSG, "AlertCountGuard (3) : " + settings.AlertCountGuard);
+    cr.Say(SAY_NETMSG, "AlertCountNpc (4) : " + settings.AlertCountNpc);
+    cr.Say(SAY_NETMSG, "AlertCountDrop (5) : " + settings.AlertCountDrop);
+    cr.Say(SAY_NETMSG, "AlertCountPDrop (6) : " + settings.AlertCountPDrop);
+
+    cr.Say(SAY_NETMSG, "ReinforcementsDelayLow (7) : " + settings.ReinforcementsDelayLow);
+    cr.Say(SAY_NETMSG, "ReinforcementsDelayHigh (8) : " + settings.ReinforcementsDelayHigh);
+    cr.Say(SAY_NETMSG, "ReinforcementsDelayRet (9) : " + settings.ReinforcementsDelayRet);
+    cr.Say(SAY_NETMSG, "ReinforcementsCountLow (10) : " + settings.ReinforcementsCountLow);
+    cr.Say(SAY_NETMSG, "ReinforcementsCountHigh (11) : " + settings.ReinforcementsCountHigh);
+
+    cr.Say(SAY_NETMSG, "CycleLength (12) : " + settings.CycleLength);
+
+    cr.Say(SAY_NETMSG, "AlertLevelReact (13) : " + __AlertLevelReact);
+}
+
+void setsettings(Critter& cr, int n, int val, int)
+{
+    switch(n)
+    {
+    case 0:
+        settings.AlertLevelNone = val;
+        break;
+    case 1:
+        settings.AlertLevelLight = val;
+        break;
+    case 2:
+        settings.AlertLevelHeavy = val;
+        break;
+
+    case 3:
+        settings.AlertCountGuard = val;
+        break;
+    case 4:
+        settings.AlertCountNpc = val;
+        break;
+    case 5:
+        settings.AlertCountDrop = val;
+        break;
+    case 6:
+        settings.AlertCountPDrop = val;
+        break;
+
+    case 7:
+        settings.ReinforcementsDelayLow = val;
+        break;
+    case 8:
+        settings.ReinforcementsDelayHigh = val;
+        break;
+    case 9:
+        settings.ReinforcementsDelayRet = val;
+        break;
+    case 10:
+        settings.ReinforcementsCountLow = val;
+        break;
+    case 11:
+        settings.ReinforcementsCountHigh = val;
+        break;
+
+    case 12:
+        settings.CycleLength = val;
+        break;
+
+    case 13:
+        __AlertLevelReact = val;
+        break;
+    default:
+    }
+    settings.Update();
+}
+
+void clear(Critter& cr, int, int, int)
+{
+    alerts.resize(1);
+}
+
+// debug
+
+#ifdef __DEBUG__
+uint obs = 0;
+
+void observer(Critter& cr, int, int, int)
+{
+    obs = cr.Id;
+}
+
+void ExecObserve(uint n, string& str)
+{
+    Critter@ cr = GetCritter(obs);
+    if(valid(cr))
+        cr.Say(SAY_NETMSG, "" + n + ": " + str);
+}
+#endif

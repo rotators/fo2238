@@ -1,0 +1,40 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_h.fos
+//
+
+// This is slave runs main header.
+// See slaverun.fos for the list of all involved files.
+
+#ifndef __SLAVERUN_H__
+#define __SLAVERUN_H__
+
+// map states
+#define UNITIALIZED                (0)
+#define INITIALIZED                (1)
+
+// map data
+#include "mapdata_h.fos"
+#include "_entires.fos"
+#include "backend_h.fos"
+
+// current quest state, (*) - set only in location
+#define SLAVERUN_UNKNOWN           (0x0)  // this shouldn't change
+#define SLAVERUN_KNOWN             (0x1)
+#define SLAVERUN_ACTIVE            (0x2)  // taken, before going to the location
+#define SLAVERUN_SLAVERS_KILLED    (0x4)  // too many slavers killed (*)
+#define SLAVERUN_SLAVES_KILLED     (0x8)  // too many slaves killed (*)
+#define SLAVERUN_BOTCHED           (0x10) // total failure (*)
+#define SLAVERUN_TOO_LATE          (0x20) // player never got there in time
+#define SLAVERUN_ATTEMPTED         (0x40) // location was entered (*)
+#define SLAVERUN_COMPLETED         (0x80) // all hostiles killed (*)
+
+#define SLAVERUN_PID_SLAVER        (217)
+
+#define RUN_TIME                   (GAME_MINUTE(2880))     // time to get to the location, ingame minutes (default 2880)
+
+#define SLAVERUN_TIMEOUT           (REAL_MINUTE(120))      // timeout for quest, real minutes (default was 120)
+
+#endif

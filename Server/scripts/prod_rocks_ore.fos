@@ -1,0 +1,108 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_rocks_ore.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+// import void ModifyInfluenceBuffer(Critter& cr, int value) from "town";
+
+#define STR_TEXT_ORE    (3012)
+
+int OreCount = 0;
+int Ore2Count = 0;
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOre");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishOre");
+    if(firstTime && AMOUNT(item) == 0)
+        AMOUNT(item) = __IronOreCapacity;
+    OreCount++;
+    StartRegeneration(item, "e_RegenOre");
+}
+void _NormalDepletable(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOre");
+    if(firstTime && AMOUNT(item) == 0)
+        AMOUNT(item) = __IronOreCapacity;
+}
+void _Advanced(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOre2");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishOre2");
+    if(firstTime && AMOUNT(item) == 0)
+        AMOUNT(item) = __Ore2Capacity;
+    Ore2Count++;
+    StartRegeneration(item, "e_RegenOre2");
+}
+void _AdvancedDepletable(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOre2");
+    if(firstTime && AMOUNT(item) == 0)
+        AMOUNT(item) = __Ore2Capacity;
+}
+void _FinishOre(Item& item, bool)
+{
+    OreCount--;
+    ReduceCounter(PID_METAL_ORE, COUNTER(item));
+}
+void _FinishOre2(Item& item, bool)
+{
+    Ore2Count--;
+    ReduceCounter(PID_ORE2, COUNTER(item));
+}
+uint e_RegenOre(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_METAL_ORE, __IronOreCapacity, __IronOreRegen, OreCount);
+    return RegenerationInterval;
+}
+uint e_RegenOre2(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_ORE2, __Ore2Capacity, __Ore2Regen, Ore2Count);
+    return RegenerationInterval;
+}
+
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter& cr, Item@ usedItem)
+    {
+        cr.Animate(ANIM1_HAMMER, ANIM2_SWING_1H, usedItem, true, true);
+
+        if(cr.Mode[MODE_HIDE] != 0 && cr.GetAccess() < ACCESS_TESTER)
+            cr.ModeBase[MODE_HIDE] = 0;
+
+        // ModifyInfluenceBuffer(cr, 10);
+    }
+};
+GatherCallback Callback;
+
+bool _UseItemOre(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(usedItem.GetProtoId() == PID_SLEDGEHAMMER ||
+       usedItem.GetProtoId() == PID_SUPER_SLEDGE ||
+       usedItem.GetProtoId() == PID_PRIMITIVE_TOOL)
+    {
+        return Gather(item, cr, usedItem, PID_METAL_ORE, __IronOreBatch, STR_TEXT_ORE, STR_PROD_DEPLETED, Callback);
+    }
+    return false;
+}
+bool _UseItemOre2(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(usedItem.GetProtoId() == PID_SLEDGEHAMMER ||
+       usedItem.GetProtoId() == PID_SUPER_SLEDGE ||
+       usedItem.GetProtoId() == PID_PRIMITIVE_TOOL)
+    {
+        return Gather(item, cr, usedItem, PID_ORE2, __Ore2Batch, STR_TEXT_ORE, STR_PROD_DEPLETED, Callback);
+    }
+    return false;
+}

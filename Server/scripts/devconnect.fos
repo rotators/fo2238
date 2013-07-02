@@ -1,0 +1,78 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// devconnect.fos
+//
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+#pragma bindfunc "void dummy_devconnect() -> DevConnect.dll SERVER"
+#pragma bindfunc "void dummy_utils() -> Utils.dll SERVER"
+
+import string IpToString(uint ip) from "utils";
+import uint   GetAllOnlinePlayers(array<Critter@>& out players) from "utils";
+
+void InitDevConnect(uint port)   // export
+{
+    string me = "";
+    if(GetCurrentModule(me) && DevConnectInit(me, port))
+        Log("DevConnect initialized : " + me + ", " + port);
+    else
+        Log("DevConnect init failed");
+}
+
+void ProcessDevConnect()
+{
+    DevConnectWork();
+}
+
+bool dev_connect(uint ip)   // critical
+{
+    Log("DevConnect : " + IpToString(ip) + " (" + ip + ")");
+
+    return(true);
+}
+
+bool dev_login(string& name, string& password)   // critical
+{
+    Log("DevConnect : name<" + name + "> password<" + password + ">");
+
+    return(true);
+}
+
+void dev_welcome(DevClient& dev)   // critical
+{
+    dev.SendText("Welcome to FOnline:2238\n");
+}
+
+void dev_command(DevClient& dev, string& command)   // critical
+{
+    command = strlwr(command);
+    array<string@>@ words = split(command, " ");
+    if(words.length() <= 0)
+        return;
+
+    if(words[0] == "exit" || words[0] == "quit" || words[0] == "bye")
+    {
+        dev.SendText("Bye!\n");
+        dev.Disconnect();
+    }
+    else if(words[0] == "devlist")
+    {
+        array<DevClient@> devs;
+        uint              count = GetDevClients(devs);
+        for(uint d = 0; d < count; d++)
+        {
+            dev.SendText("DevList " + (d + 1));
+            dev.SendText(" " + devs[d].Id);
+            dev.SendText(" " + devs[d].GetIp());
+            dev.SendText(" " + IpToString(devs[d].GetIp()));
+            dev.SendText("\n");
+        }
+        dev.SendText("DevList *\n");
+    }
+    else
+        dev.SendText("You typed '" + command + "' but nothing happens\n");
+}

@@ -1,0 +1,165 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+22 1020 D _param p ST_INTELLECT > 3 D _var p crimson_caravan_job = 2 #
+2 1030 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p crimson_caravan_job = 1 #
+2 1040 D _param p ST_INTELLECT > 3 D _var p name_mem_npc_player = 1 D _var p crimson_caravan_job = 1 #
+23 1050 D _param p ST_INTELLECT > 3 D _var n name_mem_npc_player = 1 #
+3 1060 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+4 2010 D _var p crimson_caravan_job = 1 #
+0 2020 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+7 5010 R _var p crimson_caravan_job = 1 #
+8 5020 R _var p crimson_caravan_job = 1 #
+0 5030 @
+6 6000 None 0 #
+19 6010 #
+8 6020 #
+7 6030 #
+0 6040 @
+7 7000 None 0 #
+10 7010 #
+0 7020 @
+8 8000 None 0 #
+0 8010 #
+0 8020 @
+9 9000 None 0 @
+10 10000 None 0 #
+13 10010 #
+15 10020 #
+16 10030 #
+17 10040 #
+14 10050 #
+18 10060 #
+14 10070 #
+0 10080 @
+11 11000 None 0 #
+14 11010 #
+18 11020 #
+14 11030 #
+0 11040 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 #
+12 13010 #
+20 13020 @
+14 14000 None 0 #
+12 14010 #
+20 14020 @
+15 15000 None 0 #
+12 15010 #
+20 15020 @
+16 16000 None 0 #
+12 16010 #
+20 16020 @
+17 17000 None 0 #
+12 17010 #
+20 17020 @
+18 18000 None 0 #
+12 18010 #
+20 18020 @
+19 19000 None 0 #
+12 19010 @
+20 20000 None 0 #
+0 20010 @
+21 21000 None 0 #
+10 21010 #
+0 21020 @
+22 22000 None 0 #
+0 22010 @
+23 23000 None 0 #
+4 23010 D _var p crimson_caravan_job = 1 #
+0 23020 &
+
+[engl]
+{100}{}{Ailis}
+{200}{}{You see Ailis from the Crimson Caravan.}
+{210}{}{You see Ailis, the daughter of Keri McLafferty.}
+{1000}{}{Predialogue installations}
+{1010}{}{I dont know you}
+{1020}{}{Last caravan job done good.}
+{1030}{}{Caravan today}
+{1040}{}{Caravan on other day}
+{1050}{}{I know you}
+{1060}{}{Stupid?}
+{2000}{}{Who the hell are you?  If you want a job you'll need to talk to my mother Keri.}
+{2010}{}{She told me I have to talk to you because of a job.}
+{2020}{}{Sorry, wrong door, I guess...}
+{3000}{}{Get off, stupid!}
+{4000}{}{So, my mother gave you the okay to work for us, eh? Well you must be one tough bitch. I'm impressed, but we'll see how you do. We leave only twice a month, on the 3rd and 17th. Can you handle that? We go to all the local hot spots: The Brotherhood of Steel, Junktown, Necropolis, Reno, Frisco, Redding and the Boneyard.}
+{4010}{}{And the pay?}
+{4020}{}{Eh, nevermind. 'Changed my mind.}
+{5000}{}{Our pay's the best, 600 caps, and yes, that is for each way and yes, that is for each way but you don't have to do both. This is a pretty tough caravan ride, and you're almost guaranteed to run into some raiders or worse. We'll have no sissies on my caravans and you better have plenty of ammo.}
+{5010}{}{Sounds good to me.@@Count on me, I'm in. // job today}
+{5020}{}{Sounds good to me.@@Count on me, I'm in. // job in future}
+{5030}{}{Not with me!}
+{6000}{}{You again. What do you want?}
+{6010}{}{I want another job. // if caravan dead}
+{6020}{}{I want another job. // if next job is in the future}
+{6030}{}{I want another job. // if job today}
+{6040}{}{Nothing.}
+{7000}{}{We're all heading out today and the pay is 600 caps. So..?@@We're going out on today and the pay is 600 caps. So..?}
+{7010}{}{Sounds good to me.@@Sounds fair to me.}
+{7020}{}{Never mind.  I have something I forgot to do.}
+{8000}{}{We're going out on the 3rd and 17th every month. Come back then and I'll put you on a caravan. As always, it pays 600 scripts.}
+{8010}{}{Okay.}
+{8020}{}{Sorry, I can't wait that long.}
+{9000}{}{@sex@|I should string you up by your balls! Because of you we lost a whole damn caravan! Get the hell out of my face! I'm going to catch some serious shit for this one.|I should string you up by your eye lids!  Because of you we lost a whole damn caravan!  Get the hell out of my face! I'm going to catch some serious shit for this one.|}
+{10000}{}{Good. Like I said before we pay 600 scripts. Which route did you want to take?}
+{10010}{}{Brotherhood of Steel.}
+{10020}{}{Junktown.}
+{10030}{}{Necropolis.}
+{10040}{}{Boneyard.}
+{10050}{}{Redding.}
+{10060}{}{San Francisco.}
+{10070}{}{New Reno.}
+{10080}{}{Never mind.  I have something I forgot to do.}
+{11000}{}{Good. Like I said before we pay 600 scripts. Which route did you want to take?}
+{11010}{}{Redding}
+{11020}{}{San Francisco}
+{11030}{}{New Reno}
+{11040}{}{Never mind.  I have something I forgot to do.}
+{12000}{}{Very good. Go to the Hub entrance and talk to our caravan leader. }
+{12010}{}{[Leave]}
+{13000}{}{Brotherhood of Steel, here we come! Welllk to our caravan leader. }
+{13010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{13020}{}{Wait, there have something I forgot to do...}
+{14000}{}{I hope you like mountains!  You're going right into them. You should see lots of action there.@@Ready to go, and you'll be heading straight though the mountains! It should be a blast!}
+{14010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{14020}{}{Wait, there have something I forgot to do...}
+{15000}{}{Junktown's pretty tame. I prefer the more dangerous routes.@@Junktown's a short trip, you should be back soon.}
+{15010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{15020}{}{Wait, there have something I forgot to do...}
+{16000}{}{Watch your ass, Necropolis isn't a very friendly place.@@That town's full of skags! Well, I better get you going.}
+{16010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{16020}{}{Wait, there have something I forgot to do...}
+{17000}{}{LA's pretty cool. You'll like it, but just be sure not to leave the caravan until it arrives. It's not to safe, for the caravans that is.@@Hope you get a chance to see it, there's also a cool church just a few miles to the south of it. The people are whacked, though.@@I'm told the Boneyard used to be a place called LA. I don't know what the person's initials stand for, but it's a cool place.}
+{17010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{17020}{}{Wait, there have something I forgot to do...}
+{18000}{}{Frisco, here we come! You'll like it, but just be sure not to leave the caravan until it arrives. }
+{18010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{18020}{}{Wait, there have something I forgot to do...}
+{19000}{}{Yeah right! So you can abandoned another caravan? You're lucky they made it in one piece.}
+{19010}{}{Okay, I am ready.@@Okay, I am ready. Let's go.}
+{20000}{}{What - the - fuck? Are you ready or not? Hurry up or you are OUT, douche. }
+{20010}{}{[Exit]}
+{21000}{}{We're all heading out today. Are you interested?}
+{21010}{}{Sure.}
+{21020}{}{Not today, I have no time.}
+{22000}{}{You did good on that last job. If you are looking for another one, come back next time.}
+{22010}{}{Sure.}
+{23000}{}{You again, are you somewhat stupid? If you want a job you'll need to talk to my mother Keri, god damn.}
+{23010}{}{She told me I have to talk to you because of a job.}
+{23020}{}{Sorry, wrong door, I guess...}
+

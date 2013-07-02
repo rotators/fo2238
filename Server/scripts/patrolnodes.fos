@@ -1,0 +1,27 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// patrolnodes.fos
+//
+
+// This is needed because AS can't store objects defined in AS in an object that inherits from an interface.
+
+#include "_macros.fos"
+#include "patrolnodes_h.fos"
+
+array<INode@> Nodes;
+
+INode@ GetNode(uint id)
+{
+    if(Nodes.length() >= id)
+        return Nodes[id];
+    else
+        return null;
+}
+
+uint AddPNode(INode@ node)
+{
+    Nodes.insertLast(node);
+    return Nodes.length() - 1;
+}

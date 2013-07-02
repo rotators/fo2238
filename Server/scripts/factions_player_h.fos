@@ -1,0 +1,43 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_player_h.fos
+//
+
+// This is a script for handling player factions
+
+// generic script for playerfaction maps
+
+#define LOCATION_CAMP           (202)
+#define LOCATION_RAIDER_CAMP    (203)
+#define LOCATION_BLADES         (204)
+#define LOCATION_SCRAPHEAP      (205)
+#define LOCATION_CAVE           (207)
+#define LOCATION_CAVE2          (75)
+#define LOCATION_BUNKER         (208)
+#define LOCATION_DEPOT          (210)
+#define LOCATION_GASSTATION     (245)
+#define LOCATION_TENTS          (246)
+
+// Small
+#define CAVE_COST               (30000)
+#define CAVE2_COST              (33000)
+#define DEPOT_COST              (30000)
+// Medium
+#define GASSTATION_COST         (50000)
+#define TENTS_COST              (50000)
+#define SCRAPHEAP_COST          (70000)
+#define RAIDER_CAMP_COST        (100000)
+// Big
+#define CAMP_COST               (130000)
+#define BLADES_COST             (130000)
+
+// Very Big
+#define BUNKER_COST             (500000)
+
+#ifndef __FACTIONS_PLAYER__
+import bool CreateFaction(Critter& leader, string@ name, uint locationpid, uint currentlocation, uint& force) from "factions_player";
+import bool CreatePlayerHQ(uint faction, array<Critter@>@ players, uint& out id, uint locationpid, uint currentlocation) from "factions_player";
+import bool FindBaseEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& encounterDescriptor, bool& waitForAnswer) from "factions_player";
+#endif

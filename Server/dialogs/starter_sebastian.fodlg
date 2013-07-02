@@ -1,0 +1,98 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+14 1020 D _param p ST_CHARISMA < 4 #
+10 1030 D _var p starter_casequest = 5 @
+2 2000 None 0 #
+3 2010 D _var p starter_greg_quests = 2 R _item p PID_LIGHTER + 1 R _var p starter_greg_quests = 3 #
+4 2020 D _var p starter_casequest = 1 #
+0 2030 @
+3 3000 None 0 #
+0 3010 R _var p starter_casequest = 1 R _var p starter_greg_quests = 4 @
+4 4000 None 0 #
+5 4010 R _var p starter_casequest = 2 #
+6 4020 R _var p starter_casequest = 2 #
+0 4030 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+11 7010 #
+8 7020 @
+8 8000 None 0 #
+11 8010 #
+9 8020 @
+9 9000 None 0 #
+0 9010 R _param p ST_KARMA - 10 R _var p starter_casequest = 5 @
+10 10000 None 0 @
+11 11000 None 0 #
+0 11010 R _item p PID_BRIEFCASE + 1 R _var p starter_casequest = 3 #
+12 11020 R _item p PID_BRIEFCASE + 1 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+0 13010 R _item p PID_BRIEFCASE - 1 R _var p starter_casequest = 5 R _param p ST_KARMA - 20 R _param p ST_EXPERIENCE + 150 R _script dialog@r_AddMoney 1 120 #
+0 13020 R _var p starter_casequest = 5 R _param p ST_KARMA - 20 R _param p ST_EXPERIENCE + 150 R _script dialog@r_AddMoney 1 70 @
+14 14000 None 0 @
+15 15000 None 0 #
+16 15010 #
+0 15020 R _item p PID_LEATHER_JACKET + 1 @
+16 16000 None 0 #
+0 16010 R _item p PID_LEATHER_JACKET + 1 &
+
+[engl]
+{100}{}{Sebastian}
+{200}{}{You see Sebastian.}
+{210}{}{You see a young, delicately built man.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Ugly}
+{1030}{}{Hated}
+{2000}{}{Hmm? Yeah? What is it?}
+{2010}{}{Greg sent me, he wants his lighter back.}
+{2020}{}{You mentioned something about a job earlier?}
+{2030}{}{Nothing, nevermind.}
+{3000}{}{And he didn't come himself? Hmph. Lazy bastard. Sometimes I wonder why we're even.. eh, forget it. Hey, get back here when you're done, I might have a job for you.}
+{3010}{}{Okay, be right back.}
+{4000}{}{Yeah, I figure I might have some work for ya. You're not opposed to any, uh, unscrupulous activity, are you? Once you're in, there's no backing out.}
+{4010}{}{That all depends what it is.}
+{4020}{}{Little bit of law breaking never did anyone any harm. What's the job?}
+{4030}{}{This sounds a little too dubious for my tastes. Forget it.}
+{5000}{}{That's not how it works. You're in or you're out. I don't have time to waste.}
+{5010}{}{Fine. I'm in.}
+{5020}{}{Screw you, I'm leaving.}
+{6000}{}{That's the spirit. Right, as you know, this shitwater burg's pretty much under lockdown. No people or supplies get in without the Captain's say so.}
+{6010}{}{Right, meaning...?}
+{7000}{}{MEANING trade's so restricted we can barely eke out our miserable lives. But more importantly, medical supplies are few and far between. People get sick, there's only so much the Doc can do for 'em. That's where I come in. I get what I can and hand it over the Doctor.}
+{7010}{}{So what do you want me to do?}
+{7020}{}{I don't like the sound of this. I'm outta here.}
+{8000}{}{No you're not. You breathe one goddamn word of this to anyone, and I will cut your fucking throat. You're doing this whether you like it or not.}
+{8010}{}{Fine. What do you want me to do?}
+{8020}{}{No problem. Just let me go get the Captain and we'll get his take on the whole thing.}
+{9000}{}{Nice try, you fuck. He won't buy it an' he ain't got reason to. You think that idiot's ever gonna believe something got past him without him noticing? You can't prove anything. Get out of my sight, you miserable little pissant.}
+{9010}{}{I'll take my chances, prick.}
+{10000}{}{Fuck you.@@I'm gonna punch that dumb look right off your stupid face.@@Get out of here.@@How's being fucked in the ass by the Captain workin' out?@@You're dead, you fuck.}
+{11000}{}{(He hands you a briefcase) I want you to bring this down to the Doctor on the south side of town. It's all the supplies I could scrape together from the caravans. Should keep him going for another month, at least.}
+{11010}{}{Alright, I'll get it to him. Be right back.}
+{11020}{}{You need to be more careful about who you give this kinda thing to. Be an awful shame if someone took this to the Captain, and you and the nice Doctor were caught smuggling.}
+{12000}{}{(He freezes) You wouldn't.}
+{12010}{}{Try me.}
+{13000}{}{You fuckers are all the same. I -might- have a little cash stashed away. Here, take it and choke. Now give me the damn briefcase.}
+{13010}{}{Sure thing. Easiest money I ever made. Pleasure doing business.}
+{13020}{}{Thanks for the money, but I think I'm going to be hanging onto this. See you later, Sebastian.}
+{14000}{}{Goddamn, that's a face a mother couldn't love.@@Sheee-it.@@Hot damn, you're not a looker, ain'tcha?@@I ain't looking to chat, beat it.}
+{15000}{}{Hey, the doc already told me. Nice work on the delivery, I've been digging around, I got something for you - Greg wants you out of that goddamn jumpsuit. (He hands you a leather jacket)}
+{15010}{}{Hey, thanks Sebastian!}
+{15020}{}{Much appreciated. Bye.}
+{16000}{}{Hey, no problem. You did me a big favour, and I figured it was fair to pay you back proper.}
+{16010}{}{Thanks, see you around.}
+

@@ -1,0 +1,52 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _script arena@d_TryingToEnter 0  #
+5 1020 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 D _script arena@d_CanEnter 0  #
+3 2020 D _param p ST_INTELLECT < 4 D _script arena@d_CanEnter 0  #
+4 2030 D _param p ST_INTELLECT > 3 D _script arena@d_CanNotEnter 0  #
+4 2040 D _param p ST_INTELLECT < 4 D _script arena@d_CanNotEnter 0  #
+0 2050 D _param p ST_INTELLECT > 3 #
+0 2060 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+0 3010 R _script arena@r_DoorTransport 1 1 #
+0 3020 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+0 5010 D _param p ST_INTELLECT > 3 #
+0 5020 D _param p ST_INTELLECT > 3 R _script arena@r_DoorTransport 1 0 #
+0 5030 D _param p ST_INTELLECT < 4 #
+0 5040 D _param p ST_INTELLECT < 4 R _script arena@r_DoorTransport 1 0 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{trying to enter}
+{1020}{}{trying to exit}
+{2000}{}{[You see a guard on the other side of the fence] Yes?}
+{2010}{}{Hello, I would like to enter this facility.}
+{2020}{}{Me wanna in.}
+{2030}{}{Hello, I would like to enter this facility.}
+{2040}{}{Me wanna in.}
+{2050}{}{Uh, nothing.}
+{2060}{}{Uuuuh. [Shamble off]}
+{3000}{}{You're clean, come in.}
+{3010}{}{[Pass through the gate]}
+{3020}{}{[Turn away]}
+{4000}{}{Sorry, no drugs and real weapons are allowed inside the lobby and arena facilities.}
+{4010}{}{I'll be back.}
+{5000}{}{[A guard notices you] Going home already?}
+{5010}{}{Actually, I was going to stay here for a while longer.}
+{5020}{}{Yeah, it's time for me to go.}
+{5030}{}{No, me fight more.}
+{5040}{}{Ohh, out!}
+

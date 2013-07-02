@@ -1,0 +1,237 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+26 1010 D _var p q_redding_mcgrew_runner = 4 R _var p q_redding_mcgrew_runner = 5 #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+15 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+16 2020 #
+14 2030 #
+80 2040 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+30 2050 D _script trader_mcgrew@d_HasStock 0  #
+32 2060 D _script trader_mcgrew@d_HasNotStock 0  #
+0 2070 @
+3 3000 None 0 #
+15 3010 #
+4 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 #
+0 10030 @
+11 11000 None 0 #
+65507 11010 #
+12 11020 @
+12 12000 None 0 #
+13 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+15 13020 #
+0 13030 @
+14 14000 None 0 #
+21 14010 D _param p ST_CHARISMA > 4 D _var p q_redding_mcgrew_runner = 0 #
+25 14020 D _param p ST_CHARISMA < 5 D _var p q_redding_mcgrew_runner = 0 #
+15 14030 #
+0 14040 #
+19 14050 @
+15 15000 None 0 #
+3 15010 #
+16 15020 #
+14 15030 #
+80 15040 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+0 15050 #
+30 15060 D _script trader_mcgrew@d_HasStock 0  #
+32 15070 D _script trader_mcgrew@d_HasNotStock 0  @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+65507 17010 #
+18 17020 #
+18 17030 @
+18 18000 None 0 #
+65507 18010 #
+0 18020 @
+19 19000 None 0 #
+20 19010 #
+0 19020 @
+20 20000 None 0 #
+15 20010 #
+0 20020 @
+50 21000 None 0 @
+80 22000 None 0 #
+81 22010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDemolitionExpert0 1 0 #
+82 22020 D _script dialog@d_CheckDemolitionExpert1 1 0 #
+0 22030 @
+81 23000 None 0 #
+83 23010 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 1 #
+0 23020 @
+82 24000 None 0 #
+83 24010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 2 #
+0 24020 @
+83 25000 None 0 #
+0 25010 @
+21 26000 None 0 #
+22 26010 @
+22 27000 None 0 #
+23 27010 @
+23 28000 None 0 #
+24 28010 @
+24 29000 None 0 #
+0 29010 R _var p q_redding_mcgrew_runner = 1 @
+25 30000 None 0 #
+0 30010 R _var p q_redding_mcgrew_runner = -1 @
+26 31000 None 0 #
+0 31010 R _item p PID_LEATHER_ARMOR + 1 R _item p PID_FRAG_GRENADE + 10 R _item p PID_JET + 1 @
+30 32000 None 0 #
+31 32010 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_DETONATOR_PARTS + 1 R _script dialog@r_RemoveMoney 1 10 R _script trader_mcgrew@r_ReduceStock 0  #
+0 32020 @
+31 33000 None 0 #
+0 33010 @
+32 34000 None 0 #
+0 34010 &
+
+[engl]
+{100}{}{Dan McGrew}
+{200}{}{You see a short, barrel-chested man with a full, dark, beard. He's covered in rock-dust.}
+{210}{}{You see Dangerous Dan McGrew, the owner of the Morningstar Mine.}
+{210}{}{You see a heavily muscled man with a scar on his face. He looks tough and confident.}
+{1000}{}{Predialogue installations}
+{1010}{}{finished his more jet quest.}
+{1020}{}{Dumb}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{2000}{}{Hello there. My name's Dangerous Dan McGrew. I run the Morningstar Mine here. What can I do for you?}
+{2010}{}{What do you mine here?}
+{2020}{}{Why do they call you *Dangerous* Dan McGrew?}
+{2030}{}{What's going on here in town lately?}
+{2040}{}{You're a miner right? Then you must know how to blow things up.}
+{2050}{}{Do you have any Detonator parts for sale?}
+{2060}{}{Do you have any Detonator parts for sale?}
+{2070}{}{I was just moving through. Goodbye.}
+{3000}{}{We mine gold. Everybody wants it, too. Send it all the way to Vault City, New Reno, and even down to the NCR. You might say that Redding has something for everybody - that's what keeps us independent.}
+{3010}{}{Nice to be so well liked. Let me ask you about something else.}
+{3020}{}{I'd think that someone would try to control Redding.}
+{3030}{}{Thanks for the information. Goodbye.}
+{4000}{}{What makes you think they haven't? Everybody would like to have Redding under their belt. My guess is that someone will get us pretty soon. About the only thing we can do is choose our master, if we want to survive.}
+{4010}{}{What do you mean?}
+{4020}{}{I guess that makes sense. Well, good-luck and goodbye.}
+{5000}{}{I mean that we're going to be put under someone's thumb. Only a fool thinks otherwise. Our choice is to pick the lightest thumb.}
+{5010}{}{Which you've done, of course.}
+{5020}{}{Happy thumb hunting, then. Goodbye.}
+{6000}{}{You bet I have. If we don't ally ourselves with one of the families in New Reno, you can just kiss Redding goodbye. At least any type of Redding that I'd want to live in.}
+{6010}{}{What do you mean?}
+{6020}{}{I see. Well, goodbye.}
+{7000}{}{If the NCR takes over, Redding's going to be put under the thumb, hard. They aren't real big on personal freedom. They're going to turn Redding into another splotch on the New California Republic map. The Redding I know will be gone forever.}
+{7010}{}{Hmm, what about Vault City, then?}
+{7020}{}{Interesting. Goodbye.}
+{8000}{}{Vault City? (he laughs) Those bigots would turn Redding into a slave-labor camp. They don't see anyone who's not one of their precious Citizens as being worth a warm bucket of spit. Spending my life bowing and scraping to those bigots isn't my idea of any kind of life.}
+{8010}{}{How's New Reno any different?}
+{8020}{}{Thanks for clueing me in to what's going on here. Goodbye.}
+{9000}{}{New Reno's strong enough to protect Redding from the other two. Since New Reno's divvied up amongst different gang-families, it's divided enough to give us our best chance for autonomy. In New Reno, they don't care how we run things - as long as they get their gold.}
+{9010}{}{That doesn't sound so great, either.}
+{9020}{}{Bummer. Later.}
+{10000}{}{This ain't a perfect world, chum. Sometimes you've got to make the best of a bad situation. Just turns out that bad people may be best bet for Redding. Not everyone sees it that way, though.}
+{10010}{}{So what do you think is going to happen?}
+{10020}{}{Opinions are like assholes, Dan - everyone's got 'em and they all stink. Goodbye.}
+{10030}{}{Not everyone sees it your way, huh? I can't imagine that. Goodbye, Dan.}
+{11000}{}{Don't know for sure, but things are heating up. Whatever city has the strongest backers here in Redding is gonna get the whole pie. I'm just doing my damnedest to make sure it's New Reno that wins. The way I see it, that's Redding's only chance.}
+{11010}{}{Somebody wins, somebody loses. Bye, Dan.}
+{11020}{}{How can you help New Reno to take over?}
+{12000}{}{Best thing to do is just to make my mine prosper and make sure my miners know who's paying the bills. The fact that they get all their happy-sauce from New Reno makes the place a lot more popular, too.}
+{12010}{}{Happy sauce?}
+{12020}{}{Everybody needs a little sunshine in their lives from time to time. Goodbye, Dan.}
+{13000}{}{Booze, drugs, all sorts of chemical recreation. You name it and New Reno supplies it. It's just about the only thing that some of my miners work for. Be hell to pay if something ever happened to that.}
+{13010}{}{How's your Jet supply lately?}
+{13020}{}{I bet. Let me ask you about something else.}
+{13030}{}{Thanks for the information. I'll see you around, Dan. Goodbye.}
+{14000}{}{Right now we don't get hardly enough Jet in town to keep everyone happy. I sure hope those next few caravans get through all right, and Doc Johnson preps it quick.}
+{14010}{}{You're having supply issues? Say, I travel a lot, I could head over to Reno and try and sort some things out for you?}
+{14020}{}{You're having supply issues? Say, I travel a lot, I could head over to Reno and try and sort some things out for you?}
+{14030}{}{Interesting. Let me ask you about something else, Dan.}
+{14040}{}{I better be rambling, Dan. Goodbye.}
+{14050}{}{Who's Doc Johnson?}
+{15000}{}{What do you want from me now?}
+{15010}{}{What do you mine here?}
+{15020}{}{Why do they call you *Dangerous* Dan McGrew?}
+{15030}{}{What's going on here in town lately?}
+{15040}{}{You must be one of the experts when it comes to blowing things up.}
+{15050}{}{I was just moving through. Goodbye.}
+{15060}{}{Do you have any Detonator parts for sale?}
+{15070}{}{Do you have any Detonator parts for sale?}
+{16000}{}{Cause I'm nothing but the biggest, toughest, mine-crawling, gullywumpin', snake-eatin' buck in these here parts. *Dangerous* Dan McGrew; that's me, all right.}
+{16010}{}{You don't look so damn tough to me.}
+{17000}{}{Them's fightin' words in these here parts. You ready to back that up?}
+{17010}{}{Yes, I am. You've opened your big yap once too many times. Draw…pilgrim.}
+{17020}{}{I could if I thought you'd give me enough satisfaction to pay for the ammo it'd take to kill you.}
+{17030}{}{I could, if I wanted too. But I'm too busy to mess with you right now.}
+{18000}{}{Yeah, that's what I thought. (pause) You're yellow.}
+{18010}{}{I'll show you yellow...when I cut out your spleen. I'm a-callin' you out.}
+{18020}{}{We'll just see about that, someday. Goodbye for now.}
+{19000}{}{"Painless" Doc Johnson is our town quack. Oh, I suppose he knows something about doctoring, but
+ I don't guess he knows too much. He's on the west side of Downtown. Anyhow, he usually sells all the
+ medicine and drugs that we get here in town.}
+{19010}{}{He sells all of it?}
+{19020}{}{I'll see you later, Dan. Goodbye.}
+{20000}{}{Yeah, well, when we get Jet in it's often sent in bulk, and so he fills the ampules. Folks trust him to do it. Makes a big show about it being all clean and all. Simple remedies for simple minds, I say.}
+{20010}{}{Ahh. Let me ask you about something else, then.}
+{20020}{}{Thanks for the information, Dan. Goodbye.}
+{21000}{}{If you had a brain, I think it'd just up and die of loneliness.@@I'll be damned. I guess evolution can go in reverse.@@You ain't got all your dogs on one leash, do you?@@I don't have time for you. I reckon you're just a few peas short of a casserole.@@Just a couple of clowns short of a circus aren't you?}
+{22000}{}{Well, it's not quite as simple as all that. Those methods are quite rare these days. But yes, I can still "blow things up." What were you interested in?}
+{22010}{}{Dan, I want to know how to make bigger explosions whilst using less explosives.}
+{22020}{}{Just wanted to know how to make some fancy exploding thingies... [You explain everything to Dan]}
+{22030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{23000}{}{Yeah, yeah, got ya -- but I need something in return. You see, my miners are pretty addicted to that new drug - the Jet. If they're out of it, the gold flow suffers, that's all there is to it. You bring me $1500 to buy some and then we can talk explosives, okay?}
+{23010}{}{It's already taken care of, here you go. [You give him the $1500]}
+{23020}{}{Roger that, on my way.}
+{24000}{}{That can be arranged, I guess... But, you see, my miners need Jet badly, so you could do me a favor and give me some caps to buy some. Let me see -- $3000 should be enough to keep them working for a while.}
+{24010}{}{It's already taken care of, here you go. [You give him the $3000]}
+{24020}{}{Roger that, on my way.}
+{25000}{}{Man, that's great! Wait, we're gonna start right after I put this to a safe place. [After counting the money and putting it to a safe place, Dan explains everything you wanted to know]}
+{25010}{}{You really helped me a lot, thanks for that. I have to go now, bye!}
+{26000}{}{[He sizes you up a moment before responding.] Hmm. Yeah, okay. Better to send you than one of my boys. I'd never see 'em again. Our connection in Reno is some doctor or pharmacist or something.}
+{26010}{}{Alright, so, chase that guy down, then what?}
+{27000}{}{I don't really know exactly what you'll have to do. I organise caravans, sure, but mine haul gold, not that stuff.}
+{27010}{}{So I'm just using my own initiative?}
+{28000}{}{Yeah you'll be pretty much winging it. Can't say I'm expecting anything, but if you deliver I'll be impressed.}
+{28010}{}{Alright. Well, I'll give it a shot.}
+{29000}{}{No hard feelings if I don't see you again.}
+{29010}{}{Let's hope that aint the case.}
+{30000}{}{Yeah you uh...no offence but you just don't look like someone who can 'get things done'.}
+{30010}{}{Oh...okay.}
+{31000}{}{[The man's face brightens.] You don't say! Thanks, stranger. That's really good news. It'll really help out the workforce, and it'll push us a little towards Reno too. Here, take this as thanks.}
+{31010}{}{Glad to help out. And thank you, too.}
+{32000}{}{Sure I do! They're only $10, but I don't have many.}
+{32010}{}{I'll take one then please. [Give him $10]}
+{32020}{}{I can't afford that right now, I'll be back later.}
+{33000}{}{Pleasure doing business with you.}
+{33010}{}{Goodbye.}
+{34000}{}{Sorry, my supplier has let me down. Don't have any at the moment.}
+{34010}{}{Oh, nevermind, goodbye.}
+

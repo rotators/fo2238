@@ -1,0 +1,124 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p REPUTATION_HUB < -200 #
+4 1020 D _var p q_hub_wasteland_band = 7 #
+5 1030 D _var p q_hub_wasteland_band } 1 D _var p q_hub_wasteland_band { 5 #
+19 1040 D _var p q_hub_wasteland_band = 6 #
+3 1050 R _var p q_hub_wasteland_band = 0 @
+3 2000 None 0 #
+8 2010 D _param p ST_INTELLECT } 4 #
+8 2020 D _param p ST_INTELLECT } 4 #
+12 2030 D _param p ST_INTELLECT < 4 #
+0 2040 D _param p ST_INTELLECT } 4 @
+8 3000 None 0 #
+9 3010 #
+10 3020 #
+0 3030 @
+9 4000 None 0 #
+11 4010 #
+0 4020 @
+10 5000 None 0 #
+11 5010 #
+0 5020 @
+12 6000 None 0 #
+13 6010 @
+11 7000 None 0 #
+14 7010 #
+0 7020 @
+14 8000 None 0 #
+0 8010 R _var p q_hub_wasteland_band = 1 R _script dialog@r_AddMoney 1 200 @
+5 9000 None 0 #
+15 9010 D _var p q_hub_wasteland_band = 2 #
+17 9020 D _var p q_hub_wasteland_band = 4 #
+0 9030 @
+4 10000 None 0 @
+2 11000 None 0 @
+13 12000 None 0 @
+15 13000 None 0 #
+16 13010 D _param p SK_SPEECH } 60 #
+0 13020 R _var p q_hub_wasteland_band = 3 R _param p ST_EXPERIENCE + 250 R _script dialog@r_AddMoney 1 200 @
+16 14000 None 0 #
+0 14010 R _var p q_hub_wasteland_band = 3 R _param p ST_EXPERIENCE + 250 R _script dialog@r_AddMoney 1 350 @
+17 15000 None 0 #
+18 15010 @
+18 16000 None 0 #
+0 16010 R _var p q_hub_wasteland_band = 5 R _param p ST_EXPERIENCE + 350 R _script dialog@r_AddMoney 1 400 @
+19 17000 None 0 #
+20 17010 @
+20 18000 None 0 #
+4 18010 R _var p q_hub_wasteland_band = 7 R _param p ST_EXPERIENCE + 500 R _item p PID_CIGARETTES + 5 R _param p REPUTATION_HUB + 250 R _script dialog@r_AddMoney 1 500 #
+21 18020 #
+22 18030 D _param p SK_SPEECH } 85 @
+21 19000 None 0 #
+0 19010 R _item p PID_CIGARETTES + 5 R _var p q_hub_wasteland_band = 7 R _param p ST_EXPERIENCE + 500 R _param p REPUTATION_HUB + 250 R _item p PID_CURED_LEATHER_ARMOR + 1 @
+22 20000 None 0 #
+0 20010 R _param p REPUTATION_HUB + 250 R _var p q_hub_wasteland_band = 7 R _item p PID_CIGARETTES + 5 R _item p PID_STIMPAK + 3 R _script dialog@r_AddMoney 1 750 R _param p ST_EXPERIENCE + 500 &
+
+[engl]
+{100}{}{Mick}
+{210}{}{You see a relaxed, but aware man. He smells like cigarettes and is obviously not sober.}
+{1000}{}{Predialogue installations}
+{1010}{}{Hostile}
+{1020}{}{Non-Hostile, Quest Finished
+}
+{1030}{}{Non-Hostile, Looking for Man}
+{1040}{}{Non-Hostile, Found them all.}
+{1050}{}{Non-Hostile, Quest Not Started}
+{2000}{}{I've been lookin' around for someone to help me. Are you a cool enough cat to give me a hand?}
+{2010}{}{Yeah, man. You seem like you've got big plans, and I want in. Name's @pname@.}
+{2020}{}{Depends on what you need. @pname@. Nice to meet you.}
+{2030}{}{I's no cat. And yoo can't have one of my hands! I only haf too!}
+{2040}{}{Get away from me you damn junkie.}
+{3000}{}{Mama named me Michael, but everyone calls me Mick. How do you feel about music?
+}
+{3010}{}{Music's the expression of the soul, man.}
+{3020}{}{I've heard this music stuff is pretty cool. Never experienced it firsthand, though.}
+{3030}{}{Music is worthless, and you're a burned out jackass. We're done here.}
+{4000}{}{Right on. Music can influence people's moods, make them angry. But it can also chill them out and bring them together.
+ You get me?}
+{4010}{}{Hell yeah man! What can I do to help?}
+{4020}{}{Sounds like an addict's bullshit. No way.}
+{5000}{}{That's a cryin' shame. But then you absolutely have to do this. I wouldn't be doing my spiritual duty of spreading music across the wasteland if I didn't bring you into the light.}
+{5010}{}{Sounds interesting enough. What the hell, alright. I'm always looking for adventure.}
+{5020}{}{Seems pretty sketchy to me, Come find me when you've sobered up a bit.}
+{6000}{}{No, that's not what I meant. My name is Mick. Have you ever heard of music?}
+{6010}{}{Moozik? No. Me like moo-moos though.}
+{7000}{}{I've heard there's some guys in this part of the world with the same dream as mine- to let go and play music for the people of this dark, desolate land. I want you to find them.}
+{7010}{}{I'm sold. This is just what these people need.}
+{7020}{}{We've all got problems brother. Handle this yourself.}
+{8000}{}{Good deal. First, you need to head over to the Skum Pitt over in Junktown. Look for Ronnie. He's an old friend of mine, we used to talk about playing music all the time. Take this money. If he won't come easily, maybe that'll help you out.}
+{8010}{}{Sounds like a plan, my man. Be back as soon as I can.}
+{9000}{}{Hey hey, my main @sex@|man||girl|. Any luck in the search?@@Lay it on me @sex@|brother||sister|. What you got for Mick?@@Come on, let me hear some good news.@@My favorite wastelander! I know seeing you means something's good.}
+{9010}{}{Ronnie's on board. }
+{9020}{}{Charlie took some convincing, but I got him.}
+{9030}{}{Nothing so far, but I don't give up that easily. I'll be back.}
+{10000}{}{You're always cool in my book.@@May the music carry you away.@@Wasteland treatin' you well?}
+{11000}{}{You might be a @sex@|cool||pretty| @sex@|dude||lady|, but don't bring them harsh vibes around me.}
+{12000}{}{Moo-moos. Yeah. Uh, rock on...}
+{13000}{}{Haha! That's what I'm talkin' about. The next guy we need is named Charlie. He lives in that old tanker in San Fran. That's all the info I got on him though. Here's another 200 caps.}
+{13010}{}{Hold up, man. 200? Getting to San Fran is going to cost me at least 100. I know you can toss a little extra in there.}
+{13020}{}{I'll get on that right now.}
+{14000}{}{It's cool, I understand. You seem to be working hard enough anyway. Here's 350.}
+{14010}{}{Now we're talking.}
+{15000}{}{I couldn't have found anyone better to spread the word. We're almost done here. One more guy, but it's gonna be a trip.}
+{15010}{}{I'm here, aren't I? What's his name?}
+{16000}{}{Keith, the most important part of this ensemble. Hangs around the Harp up in Gecko. Take 400 with you - he's gonna be hard to persuade.}
+{16010}{}{Time to put a band together.}
+{17000}{}{That look on your face tells me we're in business.}
+{17010}{}{Yes we are. And business should be good.}
+{18000}{}{I can't thank you enough. The wasteland will thank you too, when they realize what you've helped create for them. I can give you what money I have left and some smokes, but past that, I've only got the gift of music.}
+{18010}{}{Hey man, that's good enough for me. Keep on rockin', brother.}
+{18020}{}{You need that money to get started. I am pretty keen on that jacket you have though.}
+{18030}{}{I know you have more than that. I just ran halfway across the wasteland for you. }
+{19000}{}{I've had this thing through good and bad times, and it's served me well. It'll definitely do you the same.}
+{19010}{}{I'll wear it well. Keep on keepin' on, man.}
+{20000}{}{Damn, you drive a hard bargain, but I still can't thank you enough for what you've done. Use it well.}
+{20010}{}{It's been a pleasure, Mick.}
+

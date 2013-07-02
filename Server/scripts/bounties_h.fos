@@ -1,0 +1,162 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// bounties_h.fos
+//
+
+// Bounty record for a given NPC
+//
+
+#include "_macros.fos"
+#include "serializator.fos"
+
+shared interface IBountyRecord
+{
+    uint GetCount();
+    bool GetBounty(uint index, uint& out playerId, uint& out amount);
+    void AddBounty(uint playerId, uint amount);
+    uint FetchBounty(uint playerId);
+};
+
+class BountyRecord : IBountyRecord
+{
+    // id of the record (npc id in most cases)
+    uint id;
+    // array layout:
+    // {id, bounty, id, bounty, ...}
+    array<uint>  data;
+    Serializator serialiser;
+
+    BountyRecord(uint id)
+    {
+        this.id = id;
+        // gets data
+        if(serialiser.Load("BountyRecord_" + id))
+            serialiser.Get(data);
+        else
+            // store
+            UpdateData();
+    }
+
+    //
+    // Gets the number of bounties stored
+    //
+    uint GetCount()
+    {
+        return data.length() / 2;
+    }
+
+    //
+    // Gets bounty for specific index on the list
+    //
+    // Returns false when index out of bounds
+    bool GetBounty(uint index, uint& out playerId, uint& out amount)
+    {
+        if(index < GetCount())
+        {
+            playerId = data[index * 2];
+            amount = data[index * 2 + 1];
+            return true;
+        }
+        else
+        {
+            DLog("Wrong index");
+            return false;
+        }
+    }
+    //
+    // Adds a bounty for given player
+    //
+    void AddBounty(uint playerId, uint amount)
+    {
+        uint i;
+        bool added = false;
+        DLog("Adding bounty for player: " + playerId);
+        if(data.length() >= 2)
+        {
+            // check existing bounties
+            for(i = 0; i < data.length(); i += 2)
+            {
+                if(data[i] == playerId)
+                {
+                    DLog("Existing bounty found, with amount: " + data[i + 1] + ", increasing amount by: " + amount);
+                    data[i + 1] += amount;
+                    added = true;
+                    i = i + 1;
+                    break;
+                }
+            }
+        }
+        // add at the end of the array
+        if(!added)
+        {
+            DLog("Adding bounty at the end of the array");
+            data.insertLast(playerId);
+            data.insertLast(amount);
+            i = data.length() - 1;
+        }
+
+        uint temp;
+
+        if(i > 2)
+            DLog("Resorting the list, i: " + i);
+        // make the list sorted
+        for(uint j = i; j > 2; j -= 2)
+        {
+            if(data[j] > data[j - 2])
+            {
+                DLog("Moving new bounty up");
+                temp = data[j];
+                data[j] = data[j - 2];
+                data[j - 2] = temp;
+                temp = data[j - 1];
+                data[j - 1] = data[j - 3];
+                data[j - 3] = temp;
+            }
+            else
+                break;
+        }
+        UpdateData();
+    }
+
+    //
+    // Gets the bounty for given player, removes his record from the list
+    //
+    uint FetchBounty(uint playerId)
+    {
+        uint value = 0;
+        uint i;
+        DLog("Fetching bounty for: " + GetSafePlayerName(playerId));
+        for(i = 0; i < data.length(); i += 2)
+        {
+            if(data[i] == playerId)
+            {
+                DLog("Bounty amount: " + data[i + 1]);
+                value = data[i + 1];
+            }
+        }
+
+        // remove it from list
+        DLog("Removing bounty from list");
+        for(uint j = i; i < data.length() - 2; i += 2)
+        {
+            data[j] = data[j + 2];
+            data[j + 1] = data[j + 3];
+        }
+        data.resize(data.length() - 2);
+        DLog("Array resized to: " + data.length());
+
+        UpdateData();
+
+        return value;
+    }
+
+    void UpdateData()
+    {
+        // update any data
+        serialiser.Set(data);
+        if(!serialiser.Save("BountyRecord_" + id))
+            Log("ERR: Couldn't update any data array");
+    }
+};

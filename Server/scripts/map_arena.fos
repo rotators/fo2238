@@ -1,0 +1,81 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_arena.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "follower_common_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+#include "utils_h.fos"
+
+#define  ARENA_DOOR_DIALOG    (10806)
+
+import void ProcessArena(Map& map) from "arena";
+import void InitArenas(Map& map) from "arena";
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "arena@_OnOutCritter");
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "arena@_OnInCritter");
+    map.SetEvent(MAP_EVENT_LOOP_0, "_Arenas");
+    map.SetLoopTime(0, 4500);
+    InitArenas(map);
+}
+
+void _Arenas(Map& map)
+{
+    ProcessArena(map);
+}
+
+void _Door(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOnDoor");
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillOnDoor");
+}
+
+bool _UseItemOnDoor(Item& item, Critter& crit, Item@ usedItem)
+{
+    return true;
+}
+
+bool _UseSkillOnDoor(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        crit.StatBase[ST_VAR9] = item.Val0;
+        RunDialog(crit, ARENA_DOOR_DIALOG, item.HexX, item.HexY, false);
+    }
+    return true;
+}
+
+/*void t_Nearby(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+   {
+        if(!critter.IsPlayer() || !entered) return;
+    if (dir == 2 || dir == 3 || dir == 4) return;
+
+        Critter@ cr = critter.GetMap().GetNpc(ROLE_ARENA_GUARD_TALK, FIND_LIFE | FIND_ONLY_NPC, 1);
+        if(!valid(cr)) // if guard is dead
+        @cr=critter.GetMap().GetNpc(ROLE_ARENA_GUARD_TALK, FIND_LIFE | FIND_ONLY_NPC, 0);
+    if(valid(cr))
+    {
+        if(HasIllegalItems(critter)||(GetNumberOfFollowingFollowersOfPlayer(critter)>0))
+            cr.Say(SAY_NORM_ON_HEAD, (HasIllegalItems(critter)?"You may not bring weapons or drugs here!":"")+(GetNumberOfFollowingFollowersOfPlayer(critter)>0?" Followers are not allowed in here, let them wait outside!":""));
+        else
+            cr.Say(SAY_NORM_ON_HEAD, "Welcome!");
+    }
+   }
+
+   void t_Enter(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+   {
+    if(_CritHasExtMode(cr, MODE_EXT_GUARD))
+        return;
+    if(_CritHasExtMode(cr, MODE_EXT_FOLLOWER))
+        cr.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+    if(HasIllegalItems(cr))
+        cr.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+   }*/

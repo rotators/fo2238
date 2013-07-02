@@ -1,0 +1,150 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+21 1010 D _param p KARMA_SLAVER > 0 #
+2 1020 D _param p ST_INTELLECT < 4 #
+6 1030 D _var n name_mem_npc_player = 0 D _param p ST_GENDER = 0 R _var p name_mem_npc_player = 1 #
+7 1040 D _var n name_mem_npc_player = 0 D _param p ST_GENDER = 1 R _var p name_mem_npc_player = 1 #
+17 1050 D _var n name_mem_npc_player = 1 #
+21 1060 D _param p ST_KARMA < -100 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+5 2030 @
+3 3000 None 0 @
+4 4000 None 0 @
+5 5000 None 0 @
+6 6000 None 0 #
+11 6010 #
+9 6020 #
+8 6030 @
+7 7000 None 0 #
+9 7010 #
+11 7020 #
+8 7030 #
+9 7040 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 #
+10 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 #
+11 10030 @
+11 11000 None 0 #
+16 11010 #
+14 11020 #
+15 11030 #
+9 11040 #
+12 11050 #
+18 11060 @
+12 12000 None 0 #
+11 12010 #
+8 12020 @
+14 13000 None 0 #
+20 13010 D _item p PID_BOTTLE_CAPS > 54 R _var p klam_sally_pay = 3 R _script dialog@r_RemoveMoney 1 55 #
+19 13020 D _item p PID_BOTTLE_CAPS < 55 #
+11 13030 #
+8 13040 @
+15 14000 None 0 #
+20 14010 D _item p PID_BOTTLE_CAPS > 124 R _var p klam_sally_pay = 4 R _script dialog@r_RemoveMoney 1 125 #
+19 14020 D _item p PID_BOTTLE_CAPS < 125 #
+11 14030 #
+8 14040 @
+16 15000 None 0 #
+20 15010 D _item p PID_BOTTLE_CAPS > 14 R _var p klam_sally_pay = 1 R _script dialog@r_RemoveMoney 1 15 #
+19 15020 D _item p PID_BOTTLE_CAPS < 15 #
+11 15030 #
+0 15040 @
+17 16000 None 0 #
+8 16010 #
+11 16020 #
+18 16030 @
+18 17000 None 0 #
+11 17010 #
+8 17020 @
+19 18000 None 0 #
+0 18010 @
+20 19000 None 0 @
+21 20000 None 0 &
+
+[engl]
+{100}{}{Sally}
+{200}{}{You see a plump, older woman with a large nose.}
+{210}{}{You see Big Nose Sally, the owner of the Bathhouse.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{Dumb}
+{1030}{}{Unknown man}
+{1040}{}{Unknown woman}
+{1050}{}{Known}
+{1060}{}{Hated}
+{2000}{}{Hello there, my name’s Sally Dunton. Hmm, did you catch that?}
+{2010}{}{Ally Onion? Gurk?}
+{2020}{}{I gotta pee-ee}
+{2030}{}{Oog? (shaking head)}
+{3000}{}{Well, that’s a right nice try for an idjit. But I ain’t having none of your kind in here. Now, git out. Shoo, shoo.}
+{4000}{}{I know you’re a tribal and all, but this is a bathhouse, not an outhouse. Git out afore I have you thrown out!}
+{5000}{}{I won’t have you in my place. Now, get out.}
+{6000}{}{My name’s Sally Dunton, but mostly they call me Big Nose Sally. I’m the owner of this here bathhouse. We have a whole hassleful of special, attended baths for you to pick from.}
+{6010}{}{What kind of special, attended baths do you have here?}
+{6020}{}{Gee, Miss Sally, I just wanted a regular bath. You don’t have a bubble bath, do you?}
+{6030}{}{I think I’ve changed my mind; I may try back later.}
+{7000}{}{My name’s ‘Big Nose’ Sally Dunton and I’m the owner of this here bathhouse. I’m afraid that we just have girl bath attendants here. That alright with you?}
+{7010}{}{I’m just here for a bath.}
+{7020}{}{Women suit me just fine.}
+{7030}{}{Gee, I was really looking for a male attendant.}
+{7040}{}{I don’t think this is what I was looking for.}
+{8000}{}{I’m sorry that we couldn’t help you out. Come on back later, though.}
+{8010}{}{Alright, thanks anyway. Bye.}
+{9000}{}{If you just want an unattended bath, you might try the Golden Gecko or the Buckner House. But I doubt that you’ll find that as enjoyable.}
+{9010}{}{Thanks, Miss Big Nose. I’ll try that instead. Good-bye.}
+{9020}{}{I was just kidding; I’d like a special bath.}
+{10000}{}{The special baths that we have available vary in cost by the amount of time that the gal spends with you, and any special services that you take advantage of.}
+{10010}{}{You mean I get to be with a real-live girl? Sign me up!}
+{10020}{}{I don’t think I’m ready for this; I better go.}
+{10030}{}{I think that the appearance of the attendant better figure into the cost, too.}
+{11000}{}{The baths that we have available are: a Wash Cloth Hand Wipe, a brief Full Body Wash, and, lastly, the Round-the-World Full Squeaky Clean Servicing, offered by the beautiful and talented Jenny, recently trained at the finest house in the Den.}
+{11010}{}{I think I can get by with the Hand Wipe; how much is that?}
+{11020}{}{Sounds like quite a fella, Bob, but I've got some other questions.}
+{11030}{}{Beautiful and talented? I’ve got to hear more about the Round-the-World Full Squeaky Clean Wash.}
+{11040}{}{I don’t think I’m ready to take a bath with someone else watching; I’m going to leave.}
+{11050}{}{Can I mix and match the different types of baths?}
+{11060}{}{What about getting a discount on those baths?}
+{12000}{}{No, you have to choose one at a time, but you can always come back for more -- usually after a brief rest.}
+{12010}{}{Tell me the different types of bath again.}
+{12020}{}{If I can’t make my own combinations, I don’t even want a bath; I’m outta here.}
+{13000}{}{I think any of our girls would be happy to give you a full body wash; I just better watch the time to make sure it’s a brief one (chuckle). The Brief Full Body Wash will cost you $55.}
+{13010}{}{That sounds like fun. Here’s my $55.}
+{13020}{}{Sorry, don't think I can afford that.}
+{13030}{}{Hmm, what are the other choices again?}
+{13040}{}{Thanks, but I think that I’ll save my money for now.}
+{14000}{}{Well I’m sure that your Round-the-World trip Servicing with beautiful Jenny will be an experience that you’ll savor for quite a while. A real bargain at only $125.}
+{14010}{}{I can’t wait to enjoy Jenny’s special talents. Here’s my $125.}
+{14020}{}{I don't think I have that much on me.}
+{14030}{}{Maybe I should hear about the other bath choices again.}
+{14040}{}{I don’t think that I’ll ever need $125 worth of cleaning. I’m going to leave before I get myself into trouble.}
+{15000}{}{Well, for an attractive individual like yourself that would only cost $15.}
+{15010}{}{$15? That’s a bargain; I’ll take it.}
+{15020}{}{Sorry, I don't think I have $15.}
+{15030}{}{Hmm, tell me about the other types of baths again.}
+{15040}{}{Maybe I don’t need this right now. I’m leaving.}
+{16000}{}{Back again, huh? A lot of folks just can’t seem to get clean enough.}
+{16010}{}{I’m just looking around this time; I don’t need a bath.}
+{16020}{}{Tell me the types of bath that you have again.}
+{16030}{}{Do I get a return customer discount?}
+{17000}{}{Well now, it wouldn’t be fair to discount any of our services. My gals are well worth what they charge.}
+{17010}{}{I guess that’s fair enough. Tell me what baths you have available.}
+{17020}{}{Well, if I can’t get a discount, I’m leaving.}
+{18000}{}{It seems as though your eyes are bigger than your budget. Perhaps you’d like to try a cheaper washing.}
+{18010}{}{Yeah, maybe. Bye.}
+{19000}{}{Best money you ever spent!}
+{20000}{}{Now hold on, we can't have folks like you in my establishment. You ain't to be trusted. Now go on, git!}
+

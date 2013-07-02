@@ -1,0 +1,88 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _vals.fos
+//
+
+// Items ValN fields
+// This is mostly for documentation purpose, put any related defines here
+
+// FOR LOCAL USE:
+
+// int Val0;
+//  car flags, arena door helper,
+//  tb/rt item timer
+//	map-changing doors - target map index
+//  holodisk id (when passed from map)
+//  dynamic spawnpoint point minigameTeam and minigameId (team identification)
+//  item reshuffler marker - spawner type
+
+// int Val1;
+//  wrecked car - used flag, PID_CARAVAN_SPAWNPOINT id, cave quest item owner
+//  geiger counter on/off state, patrol node id, nuka cola prod SEC count,
+//  still rotgut firewoods counter, production facilities items amount left,
+//  explosives event number, plastic dynamite switch - item id,
+//  spear trap - spear count, shot trap - projectile pid,
+//  alert trap - pid/min/max bits
+//  motion sensor on/off state
+//	map-changing doors - target map entire
+//	firetruck - max water
+//  dynamic spawnpoint captureSettings (capturableByTeam, captureOptions, timeToCapture)
+
+// int Val2;
+//  wrecked car - critter id, geiger counter charges left, nuka cola prod fruits count,
+//  still rotgut fruits count, explosives owner id, shot trap - min damage
+//  motion sensor charges left
+//	firetruck - current water
+//  dynamic spawnpoint captureEventNum (event number of the spawnpoint capture counter event)
+
+// int Val3;
+//  geiger counter event id, hotel room lock - hotel id,
+//  all traps complexity
+//  motion sensor event id
+//  courier box - reputation
+//  dynamic spawnpoint prevSpawnpoint (id of previous spawnpoint in spawnpoint chain)
+
+// int Val4;
+//  cheats - blockers group id, bag spawner id, hotel room lock - room id,
+//  item spawner id, spear trap and bear trap bonus damage, explosives bonus damage,
+//  shot trap - max damage, alert trap - bag/level/entire bits
+//  courier box - opening/disarming status
+//  dynamic spawnpoint nextSpawnpoint (id of next spawnpoint in spawnpoint chain)
+
+// int Val5;
+//  brahmin dung - map id, bounty tag - critter id,
+//  VC day pass - player id, doors - autoclose event,
+//  production facility timeout, prospect map - location id,
+//  hotel doors - autoclose event
+//  explosives bonus radius
+//  courier box - critter id
+//	dogtags - faction of original owner
+//  dynamic spawnpoint transportToMap (id of map of spawnpoint recheck if it's last spawnpoint in chain)
+//  map item - location id
+//	tent campfire - light update time
+//	dynamic items - real pid
+
+// FOR GLOBAL USE:
+
+// int Val6;
+// this val is visible in client
+//	dogtags - type (blank/military/custom)
+
+// int Val7;
+//  3d items attributes
+
+// int Val8;
+//  special item id
+#define SPECIAL_ITEM_BLOCKER            (92)
+#define SPECIAL_ITEM_DOOR_NPC_SCRIPT    (400)   // Scripted doors openable by NPCs (by default doors with script block NPCs)
+#define SPECIAL_ITEM_TRAIN_BLOCKER      (1234)
+#define SPECIAL_ITEM_ARENA              (1337)
+#define SPECIAL_ITEM_FOART              (36278)
+#define SPECIAL_ITEM_AURA               (2872)
+#define SPECIAL_ITEM_DYNAMIC            (3661783)
+
+// int Val9;
+//	cheats.fos - item spawner id
+//	exclusive, don't use for anything else!

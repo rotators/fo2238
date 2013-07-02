@@ -1,0 +1,57 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _param p REPUTATION_NECROPOLIS < 0 #
+10 1020 D _var p q_necro_gecko = 1 #
+7 1030 D _var p q_necro_gecko = 3 #
+6 1040 D _var p q_necro_gecko = 2 #
+2 1050 R _var p q_necro_gecko = 0 @
+2 2000 None 0 #
+4 2010 #
+65507 2020 #
+0 2030 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+0 5010 R _item p PID_HOLODISK + 1 R _var p q_necro_gecko = 1 #
+0 5020 @
+6 6000 None 0 #
+8 6010 D _item p PID_HOLODISK } 1 R _var p q_necro_gecko = 2 R _param p ST_EXPERIENCE + 500 R _item p PID_HOLODISK - 1 R _param p REPUTATION_NECROPOLIS + 250 #
+0 6020 @
+8 7000 None 0 @
+7 8000 None 0 @
+9 9000 None 0 @
+10 10000 None 0 &
+
+[engl]
+{100}{}{Set}
+{1000}{}{Predialogue installations}
+{1010}{}{Hostile to Necropolis.}
+{1020}{}{Non-hostile, quest started.}
+{1030}{}{Non-hostile, quest finished.}
+{1040}{}{Non-hostile, quest part 1 finished.}
+{1050}{}{Non-hostile, quest not started.}
+{2000}{}{I normally don't trust you smoothskins, but we need something. You gonna help or waste my time?}
+{2010}{}{Yeah I can probably do something for you.}
+{2020}{}{Yeah I'll do you a favor. I'm gonna put you out of your misery.}
+{2030}{}{I'm not helping anything as disgusting as you.}
+{3000}{}{Just by looking at you, I don't trust you. Get out of my town.}
+{4000}{}{We've been having trouble lately. Hell, we've always had trouble. NCR ignores us, and the ghouls in Broken Hills have always been more concerned with mining, than with helping their brothers. Gecko is our last hope.}
+{4010}{}{So what do you need me for?}
+{5000}{}{Take this holodisk to Gecko. Bring it to Skeeter, and return with his reply.}
+{5010}{}{I'll see what I can do.}
+{5020}{}{Not worth my time.}
+{6000}{}{So have you done what I asked?}
+{6010}{}{Yes. Skeeter told me to give you this.}
+{6020}{}{No, not yet. I'm working on it.}
+{7000}{}{Your kind isn't all bad. Good work, kid.}
+{8000}{}{You're alright, smoothskin.}
+{9000}{}{Just get it done. I'm not too patient.}
+{10000}{}{I don't even have to ask. You haven't seen Skeeter yet.}
+

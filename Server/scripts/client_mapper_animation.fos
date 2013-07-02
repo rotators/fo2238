@@ -1,0 +1,2046 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_mapper_animation.fos
+//
+
+// Client and mapper script
+#include "_defines.fos"
+#include "_animation.fos"
+
+#ifndef __MAPPER
+
+# include "_macros.fos"
+
+import void HideVolumeIndicator() from "client_container_volume";
+import void SetVolumeIndicator(uint pid) from "client_container_volume";
+
+uint8 lastMode = 0;
+
+void SetLastMode(uint8 mode)
+{
+    lastMode = mode;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on some critter action.
+void critter_action(bool localCall, CritterCl& cr, int action, int actionExt, ItemCl@ item)
+{
+    if(cr.IsChosen())
+    {
+        array<uint> actions;
+        uint        cnt = GetChosenActions(actions);
+        if(cnt != 0)
+        {
+            if(actions[0] == 10)
+            {
+                HideVolumeIndicator();
+            }
+            else if(actions[0] == 14)
+            {
+                SetVolumeIndicator(actions[1]);
+            }
+            else if(actions[0] == 11 && actions[2] == SK_STEAL)
+            {
+                ItemCl@ item = GetItem(actions[3]);
+                if(valid(item))
+                    SetVolumeIndicator(item.GetProtoId());
+            }
+            else if(actions[0] == 15 && actions[2] == 0)
+            {
+                HideVolumeIndicator();
+            }
+        }
+
+        if(ACTION_RELOAD_WEAPON == action)
+        {
+            ItemCl@ item = cr.GetItem(0, SLOT_HAND1);
+            if(valid(item) && lastMode != 0)
+            {
+                item.SetMode(lastMode);
+                lastMode = 0;
+            }
+        }
+    }
+/*    if (cr.IsChosen())
+        ActionUpdate(cr);*/
+
+    // Not process locally called actions
+    if(cr.IsChosen() && !localCall)
+    {
+        switch(action)
+        {
+        case ACTION_MOVE_ITEM:
+        case ACTION_MOVE_ITEM_SWAP:
+        case ACTION_USE_ITEM:
+        case ACTION_DROP_ITEM:
+        case ACTION_USE_WEAPON:
+        case ACTION_RELOAD_WEAPON:
+        case ACTION_USE_SKILL:
+        case ACTION_PICK_ITEM:
+        case ACTION_PICK_CRITTER:
+        case ACTION_OPERATE_CONTAINER:
+            return;
+        default:
+            break;
+        }
+    }
+
+    uint8            mode = 0;
+    const ProtoItem@ proto = (valid(item) ? item.Proto : cr.GetSlotProto(SLOT_HAND1, mode));
+
+    if((action >= ACTION_MOVE_ITEM && action <= ACTION_OPERATE_CONTAINER) || action == ACTION_STANDUP)
+        cr.Wait(__Breaktime);
+
+    switch(action)
+    {
+    case ACTION_MOVE:
+        // Not implemented
+        // cr.Wait(move time);
+        break;
+    case ACTION_RUN:
+        // Not implemented
+        // cr.Wait(run time);
+        break;
+    case ACTION_MOVE_ITEM:
+        if(cr.IsLife())
+        {
+            uint8 fromSlot = actionExt;
+            uint8 toSlot = item.CritSlot;
+
+            cr.ClearAnim();
+
+            if(toSlot == SLOT_HAND1)
+                cr.Animate(0, ANIM2_SHOW_WEAPON, item);
+            else if(fromSlot == SLOT_HAND1)
+                cr.Animate(0, ANIM2_HIDE_WEAPON, item);
+            else
+                cr.Animate(0, ANIM2_SWITCH_ITEMS);
+        }
+        break;
+    case ACTION_MOVE_ITEM_SWAP:
+        break;
+    case ACTION_USE_ITEM:
+        if(cr.IsLife() && valid(proto))
+        {
+            cr.ClearAnim();
+
+            if(proto.Type == ITEM_TYPE_WEAPON && FLAG(proto.Flags, ITEM_CAN_USE_ON_SMTH) && cr.IsAnimAviable(proto.Weapon_Anim1, proto.Weapon_Anim2_0))
+                cr.Animate(proto.Weapon_Anim1, proto.Weapon_Anim2_0, item);
+            else
+                cr.Animate(0, ANIM2_USE, item);
+        }
+        break;
+    case ACTION_DROP_ITEM:
+        if(cr.IsLife())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, ANIM2_PICKUP);
+        }
+        break;
+    case ACTION_USE_WEAPON:
+        if(cr.IsLife() && valid(proto))
+        {
+            int  use = actionExt & 0xF;
+            int  aim = (actionExt >> 4) & 0xF;
+            bool fail = ((actionExt >> 8) & 1) != 0;
+
+            cr.ClearAnim();
+            cr.Animate(0, ANIM2_PREPARE_WEAPON);
+
+            PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(proto, use), use != 1 ? '1' : '2');
+            cr.Animate(0, _WeaponAnim2(proto, use), item);
+
+            if(fail)
+                cr.Animate(0, ANIM2_DAMAGE_FRONT, item);
+            else
+                cr.Animate(0, ANIM2_TURNOFF_WEAPON);
+        }
+        break;
+    case ACTION_RELOAD_WEAPON:
+        if(cr.IsLife() && valid(proto))
+        {
+            cr.ClearAnim();
+            PlaySound('W', SOUND_WEAPON_RELOAD, proto.Weapon_SoundId_0, '1');
+            cr.Animate(item.Proto.Weapon_Anim1, ANIM2_RELOAD, item);
+        }
+        break;
+    case ACTION_USE_SKILL:
+        if(cr.IsLife() && actionExt != SK_SNEAK)
+        {
+            cr.ClearAnim();
+            cr.Animate(0, ANIM2_USE);
+        }
+        break;
+    case ACTION_PICK_ITEM:
+        if(cr.IsLife() && valid(proto))
+        {
+            bool isGround = (proto.Type >= ITEM_TYPE_ARMOR && proto.Type <= ITEM_TYPE_KEY && item.GetType() != ITEM_TYPE_CAR);
+            if(proto.Type == ITEM_TYPE_CONTAINER)
+                isGround = proto.GroundLevel;
+            cr.ClearAnim();
+            cr.Animate(0, isGround ? ANIM2_PICKUP : ANIM2_USE);
+        }
+        break;
+    case ACTION_PICK_CRITTER:
+        if(cr.IsLife())
+        {
+            cr.ClearAnim();
+            switch(actionExt)               // 0 - loot, 1 - steal, 2 - push
+            {
+            case 0:
+                cr.Animate(0, ANIM2_LOOT);
+                break;
+            case 1:
+                cr.Animate(0, ANIM2_STEAL);
+                break;
+            case 2:
+                cr.Animate(0, ANIM2_PUSH);
+                break;
+            default:
+                break;
+            }
+        }
+        break;
+    case ACTION_OPERATE_CONTAINER:
+        if(cr.IsLife())
+        {
+            cr.ClearAnim();
+            int transferType  = actionExt / 10;
+            int directionType = actionExt % 10;
+
+            if(transferType == TRANSFER_HEX_CONT_DOWN || transferType == TRANSFER_CRIT_LOOT)
+                cr.Animate(0, ANIM2_PICKUP);
+            else
+                cr.Animate(0, ANIM2_USE);
+        }
+        break;
+    case ACTION_DODGE:
+        if(!cr.IsAnimPlaying() && cr.IsLife())
+        {
+            cr.Animate(0, actionExt == 0 ? ANIM2_DODGE_FRONT : ANIM2_DODGE_BACK);
+        }
+        break;
+    case ACTION_DAMAGE:
+        if(!cr.IsAnimPlaying())
+        {
+            if(cr.IsLife())
+                cr.Animate(0, actionExt == 0 ? ANIM2_DAMAGE_FRONT : ANIM2_DAMAGE_BACK);
+            else if(cr.IsKnockout())
+                cr.Animate(0, actionExt == 0 ? ANIM2_DAMAGE_PRONE_FRONT : ANIM2_DAMAGE_PRONE_BACK);
+        }
+        else
+        {
+            // Todo:
+            // ANIM2_WALK_DAMAGE_FRONT
+            // ANIM2_WALK_DAMAGE_BACK
+            // ANIM2_LIMP_DAMAGE_FRONT
+            // ANIM2_LIMP_DAMAGE_BACK
+            // ANIM2_RUN_DAMAGE_FRONT
+            // ANIM2_RUN_DAMAGE_BACK
+        }
+        break;
+    case ACTION_DAMAGE_FORCE:
+        if(cr.IsLife())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, actionExt == 0 ? ANIM2_DAMAGE_FRONT : ANIM2_DAMAGE_BACK);
+        }
+        else if(cr.IsKnockout())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, actionExt == 0 ? ANIM2_DAMAGE_PRONE_FRONT : ANIM2_DAMAGE_PRONE_BACK);
+        }
+        break;
+    case ACTION_KNOCKOUT:
+        if(!cr.IsKnockout())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, actionExt);
+        }
+        break;
+    case ACTION_STANDUP:
+        if(cr.IsKnockout())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, actionExt);
+        }
+        break;
+    case ACTION_FIDGET:
+        if(cr.IsLife() && !cr.IsAnimPlaying())
+        {
+            cr.Animate(0, ANIM2_FIDGET);
+        }
+        break;
+    case ACTION_DEAD:
+        if(!cr.IsDead())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, actionExt);
+        }
+        break;
+    case ACTION_CONNECT:
+        break;
+    case ACTION_DISCONNECT:
+        break;
+    case ACTION_RESPAWN:
+        if(!cr.IsChosen())
+        {
+            cr.ClearAnim();
+            cr.Animate(0, ANIM2_STANDUP_FRONT);
+        }
+        break;
+    case ACTION_REFRESH:
+        break;
+    default:
+        break;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call before 2d animation playing.
+void animation2d_process(bool animateStay, CritterCl& cr, uint anim1, uint anim2, ItemCl@ item)
+{
+    if(!animateStay)
+        PlayAnimSound(cr.CrType, cr.Stat[ST_GENDER], anim1, anim2);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call before 3d animation playing.
+void animation3d_process(bool animateStay, CritterCl& cr, uint anim1, uint anim2, ItemCl@ item)
+{
+    if(!animateStay)
+        PlayAnimSound(cr.CrType, cr.Stat[ST_GENDER], anim1, anim2);
+
+    # ifdef PLAYERS_3D
+    // You must implement this pids
+    #  define PID_STRAWHAT             uint(-1)      // Head slot
+    #  define PID_ARMIN_CAP            uint(-2)      // Head slot
+    #  define PID_POWER_HELMET         uint(-3)      // Head slot
+    #  define PID_MOTORCYCLE_HELMET    uint(-4)      // Head slot
+    #  define PID_TIBBETS_PRISON       uint(-5)      // Armor slot
+    #  define PID_VAULT_SUIT           uint(-6)      // Armor slot
+
+    // Change values
+    uint8   mode = 0;
+    uint16  armorPid   = (valid(cr.GetSlotProto(SLOT_ARMOR, mode)) ? cr.GetSlotProto(SLOT_ARMOR, mode).ProtoId : 0);
+    uint16  headPid    = 0;
+    uint16  weapPid    = (valid(item) ? item.GetProtoId() : cr.GetSlotProto(SLOT_HAND1, mode).ProtoId);
+    uint16  weapExPid  = (valid(cr.GetSlotProto(SLOT_HAND2, mode)) ? cr.GetSlotProto(SLOT_HAND2, mode).ProtoId : 0);
+    ItemCl@ armorItem = cr.GetItem(0, SLOT_ARMOR);
+    ItemCl@ headItem  = null;
+
+    #  ifndef PLAYERS_3D_NO_HEAD
+    headPid    = (valid(cr.GetSlotProto(SLOT_HEAD,  mode)) ? cr.GetSlotProto(SLOT_HEAD,  mode).ProtoId : 0);
+    @headItem       = cr.GetItem(0, SLOT_HEAD);
+    #  endif
+
+    bool weapBigGun = false;
+    if(valid(item))
+    {
+        if(FLAG(item.Flags, ITEM_BIG_GUN))
+            weapBigGun = true;
+    }
+    else
+    {
+        ItemCl@ weap = cr.GetItem(0, SLOT_HAND1);
+        if(valid(weap) && FLAG(weap.Flags, ITEM_BIG_GUN))
+            weapBigGun = true;
+    }
+
+    int rhandleAtr  = 0;
+    int lhandleAtr  = 0;
+    int handsAtr    = 0;
+    int bodyAtr     = 0;
+    int feetAtr     = 0;
+    int headAtr     = 0;
+    int eyeAtr      = 0;
+    int shoulderAtr = 0;
+    int backAtr     = 0;
+    int backpackAtr = 0;
+
+    /*switch(armorPid)
+       {
+       case PID_LEATHER_JACKET:
+            bodyAtr     = ATTRIBUTE_Body_LeatherOutfit;
+            handsAtr    = ATTRIBUTE_Hands_LeatherOutfit; // ATTRIBUTE_Hands_LeatherOutfitGauntlet
+            feetAtr     = ATTRIBUTE_Feet_LeatherOutfit;
+            shoulderAtr = ATTRIBUTE_Shoulderpieces_LeatherOutfit;
+            break;
+       case PID_POWERED_ARMOR:
+       case PID_HARDENED_POWER_ARMOR:
+            bodyAtr     = ATTRIBUTE_Body_PowerArmor;
+            handsAtr    = ATTRIBUTE_Hands_PowerArmor;
+            feetAtr     = ATTRIBUTE_Feet_PowerArmor;
+            shoulderAtr = ATTRIBUTE_Shoulderpieces_PowerArmor;
+            headAtr     = ATTRIBUTE_Head_ArmingCap;
+       #ifdef PLAYERS_3D_NO_HEAD
+            headAtr     = ATTRIBUTE_Head_PowerArmor;
+       #endif
+            break;
+       case PID_TIBBETS_PRISON:
+            bodyAtr     = ATTRIBUTE_Body_PrisonSuit;
+            feetAtr     = ATTRIBUTE_Feet_PrisonSuit;
+            backAtr     = armorItem.Val5;
+            break;
+       case PID_VAULT_SUIT:
+            bodyAtr     = ATTRIBUTE_Body_VaultSuit;
+            feetAtr     = ATTRIBUTE_Feet_VaultSuit;
+            backAtr     = armorItem.Val5;
+            break;
+            // Missed models, set some default clothes
+       case PID_LEATHER_ARMOR:
+       case PID_LEATHER_ARMOR_MK_II:
+       case PID_CURED_LEATHER_ARMOR:
+       case PID_METAL_ARMOR:
+       case PID_METAL_ARMOR_MK_II:
+       case PID_TESLA_ARMOR:
+       case PID_COMBAT_ARMOR:
+       case PID_COMBAT_ARMOR_MK_II:
+       case PID_BROTHERHOOD_COMBAT_ARMOR:
+       case PID_ADVANCED_POWER_ARMOR:
+       case PID_ADVANCED_POWER_ARMOR_MK2:
+       case PID_PURPLE_ROBE:
+       case PID_KEEPBRIGE_ROBE:
+            bodyAtr     = ATTRIBUTE_Body_PrisonSuit;
+            feetAtr     = ATTRIBUTE_Feet_PrisonSuit;
+            break;
+       default:
+            break;
+       }*/
+
+    // Temporary sets, mostly intended for work with PLAYERS_3D_NO_HEAD
+    // Will be corrected as the development of the missing content
+    switch(armorPid)
+    {
+    case PID_LEATHER_JACKET:
+        bodyAtr     = ATTRIBUTE_Body_LeatherOutfit;
+        handsAtr    = ATTRIBUTE_Hands_LeatherOutfit;
+        feetAtr     = ATTRIBUTE_Feet_LeatherOutfit;
+        break;
+
+    case PID_POWERED_ARMOR:
+    case PID_HARDENED_POWER_ARMOR:
+        bodyAtr     = ATTRIBUTE_Body_PowerArmor;
+        handsAtr    = ATTRIBUTE_Hands_PowerArmor;
+        feetAtr     = ATTRIBUTE_Feet_PowerArmor;
+        headAtr     = ATTRIBUTE_Head_ArmingCap;
+        break;
+
+    case PID_TIBBETS_PRISON:
+        bodyAtr     = ATTRIBUTE_Body_PrisonSuit;
+        feetAtr     = ATTRIBUTE_Feet_PrisonSuit;
+        backAtr     = armorItem.Val7;
+        break;
+
+    case PID_VAULT_SUIT:
+        bodyAtr     = ATTRIBUTE_Body_VaultSuit;
+        feetAtr     = ATTRIBUTE_Feet_VaultSuit;
+        backAtr     = armorItem.Val7;
+        break;
+
+    case PID_LEATHER_ARMOR:
+    case PID_LEATHER_ARMOR_MK_II:
+    case PID_CURED_LEATHER_ARMOR:
+        bodyAtr     = ATTRIBUTE_Body_LeatherOutfit;
+        handsAtr    = ATTRIBUTE_Hands_LeatherOutfitGauntlet;
+        feetAtr     = ATTRIBUTE_Feet_LeatherOutfit;
+        shoulderAtr = ATTRIBUTE_Shoulderpieces_LeatherOutfit;
+        break;
+
+    case PID_METAL_ARMOR:
+    case PID_METAL_ARMOR_MK_II:
+    case PID_TESLA_ARMOR:
+        bodyAtr     = ATTRIBUTE_Body_PowerArmor;
+        feetAtr     = ATTRIBUTE_Feet_PowerArmor;
+        break;
+
+    case PID_COMBAT_ARMOR:
+    case PID_COMBAT_ARMOR_MK_II:
+    case PID_BROTHERHOOD_COMBAT_ARMOR:
+        bodyAtr     = ATTRIBUTE_Body_CombatArmor;
+        handsAtr    = ATTRIBUTE_Hands_CombatArmor;
+        feetAtr     = ATTRIBUTE_Feet_CombatArmor;
+        shoulderAtr = ATTRIBUTE_Shoulderpieces_CombatArmor;
+        #  ifdef PLAYERS_3D_NO_HEAD
+        headAtr     = ATTRIBUTE_Head_CombatArmor;
+        #  endif
+        break;
+    case PID_ADVANCED_POWER_ARMOR:
+    case PID_ADVANCED_POWER_ARMOR_MK2:
+        bodyAtr     = ATTRIBUTE_Body_PowerArmor;
+        handsAtr    = ATTRIBUTE_Hands_PowerArmor;
+        feetAtr     = ATTRIBUTE_Feet_PowerArmor;
+        shoulderAtr = ATTRIBUTE_Shoulderpieces_PowerArmor;
+        headAtr     = ATTRIBUTE_Head_PowerArmor;
+        break;
+
+    case PID_PURPLE_ROBE:
+        bodyAtr     = ATTRIBUTE_Body_PrisonSuit;
+        feetAtr     = ATTRIBUTE_Feet_PrisonSuit;
+        break;
+    case PID_KEEPBRIGE_ROBE:
+        bodyAtr     = ATTRIBUTE_Body_PrisonSuit;
+        feetAtr     = ATTRIBUTE_Feet_PrisonSuit;
+        headAtr     = ATTRIBUTE_Head_StrawHat;
+        break;
+
+    default:
+        break;
+    }
+
+    // Head
+    switch(headPid)
+    {
+    case PID_STRAWHAT:
+        headAtr     = ATTRIBUTE_Head_StrawHat;
+        break;
+    case PID_ARMIN_CAP:
+        headAtr     = ATTRIBUTE_Head_ArmingCap;
+        break;
+    case PID_POWER_HELMET:
+        headAtr     = ATTRIBUTE_Head_PowerArmor;
+        break;
+    case PID_MOTORCYCLE_HELMET:
+        headAtr     = (headItem.Val7 != 0 ? headItem.Val7 : ATTRIBUTE_Head_Motorcycle_White);
+        break;
+    default:
+        break;
+    }
+
+    // Backpack
+    if(weapPid   == PID_BAG || weapPid   == PID_BROWN_BAG)
+        backpackAtr = ATTRIBUTE_Backpack_PaLg01;
+    else if(weapPid   == PID_BACKPACK)
+        backpackAtr = ATTRIBUTE_Backpack_PaSm01;
+    else if(weapExPid == PID_BAG || weapExPid == PID_BROWN_BAG)
+        backpackAtr = ATTRIBUTE_Backpack_PaLg01;
+    else if(weapExPid == PID_BACKPACK)
+        backpackAtr = ATTRIBUTE_Backpack_PaSm01;
+
+    // Hands
+    if(weapPid == PID_POWER_FIST || weapPid == PID_MEGA_POWER_FIST)
+    {
+        handsAtr = ATTRIBUTE_Hands_PowerFist;
+    }
+    else if(weapBigGun)
+    {
+        rhandleAtr = GetHandleValue(weapPid);
+    }
+    else
+    {
+        rhandleAtr = GetHandleValue(weapPid);
+        lhandleAtr = GetHandleValue(weapExPid);
+    }
+
+    #  ifdef PLAYERS_3D_VAULT_SUITE
+    bool isSkeleton = (cr.CrType == CRTYPE_3D_MALE_SKELETON || cr.CrType == CRTYPE_3D_FEMALE_SKELETON);
+    if(bodyAtr == 0 && !isSkeleton)
+        bodyAtr = ATTRIBUTE_Body_VaultSuit;
+    #  endif
+
+    cr.Anim3dLayer[ANIM3D_LAYER_RHANDLE] = rhandleAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_LHANDLE] = lhandleAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_BODY] = bodyAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_FEET] = feetAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_HANDS] = handsAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_HEAD] = headAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_SHOULDER] = shoulderAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_EYE] = eyeAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_BACK] = backAtr;
+    cr.Anim3dLayer[ANIM3D_LAYER_BACKPACK] = backpackAtr;
+
+    // Set custom values
+    for(uint i = ANIM3D_LAYER_SKIN; i <= ANIM3D_LAYER_BACKPACK; i++)
+        if(cr.Stat[ST_ANIM3D_LAYERS + i] != 0)
+            cr.Anim3dLayer[i] = cr.Stat[ST_ANIM3D_LAYERS + i];
+    # endif // PLAYERS_3D
+}
+
+# ifdef PLAYERS_3D
+int GetHandleValue(uint16 pid)
+{
+    if(pid == 0 || (pid >= 1000 && pid <= 1100))
+        return 0;
+
+    int handle = 0;
+    switch(pid)
+    {
+    case PID_ZIP_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_22Autoloader;
+        break;
+    case PID_9MM_MAUSER:
+        handle = ATTRIBUTE_Handle_Weapon_9mmAutoloader;
+        break;
+    case PID_10MM_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_22Autoloader;
+        break;
+    case PID_14MM_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_22Autoloader;
+        break;
+    case PID_DESERT_EAGLE:
+        handle = ATTRIBUTE_Handle_Weapon_45Autoloader;
+        break;
+    case PID_DESERT_EAGLE_EXT_MAG:
+        handle = ATTRIBUTE_Handle_Weapon_45Autoloader_GunExtClip;
+        break;
+    case PID_223_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_223Autoloader;
+        break;
+    case PID_44_MAGNUM_REVOLVER:
+        handle = ATTRIBUTE_Handle_Weapon_44Revolver;
+        break;
+    case PID_44_MAGNUM_SPEEDLOADER:
+        handle = ATTRIBUTE_Handle_Weapon_44Revolver;
+        break;
+    case PID_NEEDLER_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_22Autoloader;
+        break;
+    case PID_PK12_GAUSS_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_2mmGaussPistol;
+        break;
+    case PID_HUNTING_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_SCOPED_HUNTING_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_SPRINGER_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_ASSAULT_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_ASSAULT_RIFLE_EXT_MAG:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_SNIPER_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_FN_FAL:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_FN_FAL_NIGHT_SCOPE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_FN_FAL_HPFA:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_RED_RYDER_BB_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_RED_RYDER_LE_BB_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_JONNY_BB_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_INDEPENDENT:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_M72_GAUSS_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_SHOTGUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_SAWED_OFF_SHOTGUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_COMBAT_SHOTGUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_HK_CAWS:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_PANCOR_JACKHAMMER:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_10MM_SMG:
+        handle = ATTRIBUTE_Handle_Weapon_9mmMachinePistol;
+        break;
+    case PID_HK_P90C:
+        handle = ATTRIBUTE_Handle_Weapon_9mmMachinePistol;
+        break;
+    case PID_TOMMY_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_SawedOffShotgun;
+        break;
+    case PID_HK_G11:
+        handle = ATTRIBUTE_Handle_Weapon_9mmMachinePistol;
+        break;
+    case PID_HK_G11E:
+        handle = ATTRIBUTE_Handle_Weapon_9mmMachinePistol;
+        break;
+    case PID_GREASE_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_9mmMachinePistol;
+        break;
+    case PID_FLAMER:
+        handle = ATTRIBUTE_Handle_Weapon_Flamethrower;
+        break;
+    case PID_IMPROVED_FLAMETHROWER:
+        handle = ATTRIBUTE_Handle_Weapon_Flamethrower_FlamerExtTank;
+        break;
+    case PID_ROCKET_LAUNCHER:
+        handle = ATTRIBUTE_Handle_Weapon_15mmArtemisRailGun;
+        break;
+    case PID_MINIGUN:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_AVENGER_MINIGUN:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_VINDICATOR_MINIGUN:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_BOZAR:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_LIGHT_SUPPORT_WEAPON:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_M60:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_LASER_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_LaserPistol;
+        break;
+    case PID_MAGNETO_LASER_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_LaserPistol;
+        break;
+    case PID_SOLAR_SCORCHER:
+        handle = ATTRIBUTE_Handle_Weapon_APOLLOLaserPistol;
+        break;
+    case PID_LASER_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_LASER_RIFLE_EXT_CAP:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_GATLING_LASER:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_ALIEN_LASER_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_APOLLOLaserPistol;
+        break;
+    case PID_PLASMA_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_LaserPistol;
+        break;
+    case PID_PLASMA_PISTOL_EXT_CART:
+        handle = ATTRIBUTE_Handle_Weapon_LaserPistol;
+        break;
+    case PID_PLASMA_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_TURBO_PLASMA_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_YK32_PULSE_PISTOL:
+        handle = ATTRIBUTE_Handle_Weapon_2mmGaussPistol;
+        break;
+    case PID_YK42B_PULSE_RIFLE:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_MOLOTOV_COCKTAIL:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeFrag;
+        break;
+    case PID_FRAG_GRENADE:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeFrag;
+        break;
+    case PID_PLASMA_GRENADE:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadePlasma;
+        break;
+    case PID_PULSE_GRENADE:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeEMP;
+        break;
+    case PID_FLARE:
+        handle = ATTRIBUTE_Handle_Weapon_Flare;
+        break;
+    case PID_ACTIVE_FLARE:
+        handle = ATTRIBUTE_Handle_Weapon_Flare;
+        break;
+    case PID_PLANT_SPIKE:
+        handle = ATTRIBUTE_Handle_Weapon_Rock;
+        break;
+    case PID_THROWING_KNIFE:
+        handle = ATTRIBUTE_Handle_Weapon_ThrowingKnife;
+        break;
+    case PID_ROCK:
+        handle = ATTRIBUTE_Handle_Weapon_Rock;
+        break;
+    case PID_GOLD_NUGGET:
+        handle = ATTRIBUTE_Handle_Weapon_Rock;
+        break;
+    case PID_URANIUM_ORE:
+        handle = ATTRIBUTE_Handle_Weapon_Rock;
+        break;
+    case PID_REFINED_ORE:
+        handle = ATTRIBUTE_Handle_Weapon_Rock;
+        break;
+    case PID_KNIFE:
+        handle = ATTRIBUTE_Handle_Weapon_CombatKnife;
+        break;
+    case PID_COMBAT_KNIFE:
+        handle = ATTRIBUTE_Handle_Weapon_CombatKnife;
+        break;
+    case PID_LIL_JESUS_WEAPON:
+        handle = ATTRIBUTE_Handle_Weapon_CombatKnife;
+        break;
+    case PID_SHIV:
+        handle = ATTRIBUTE_Handle_Weapon_Shiv;
+        break;
+    case PID_SWITCHBLADE:
+        handle = ATTRIBUTE_Handle_Weapon_Switchblade;
+        break;
+    case PID_WAKIZASHI_BLADE:
+        handle = ATTRIBUTE_Handle_Weapon_Machete;
+        break;
+    case PID_SPEAR:
+        handle = ATTRIBUTE_Handle_Weapon_Spear;
+        break;
+    case PID_SHARP_SPEAR:
+        handle = ATTRIBUTE_Handle_Weapon_Spear;
+        break;
+    case PID_SHARPENED_POLE:
+        handle = ATTRIBUTE_Handle_Weapon_Spear;
+        break;
+    case PID_AXE:
+        handle = ATTRIBUTE_Handle_Weapon_Hatchet;
+        break;
+    case PID_CLUB:
+        handle = ATTRIBUTE_Handle_Weapon_NightStick;
+        break;
+    case PID_CROWBAR:
+        handle = ATTRIBUTE_Handle_Weapon_Crowbar;
+        break;
+    case PID_WRENCH:
+        handle = ATTRIBUTE_Handle_Weapon_HeavyWrench;
+        break;
+    case PID_SLEDGEHAMMER:
+        handle = ATTRIBUTE_Handle_Weapon_Sledgehammer;
+        break;
+    case PID_LOUISVILLE_SLUGGER:
+        handle = ATTRIBUTE_Handle_Weapon_Baseballbat;
+        break;
+    case PID_SUPER_SLEDGE:
+        handle = ATTRIBUTE_Handle_Weapon_Sledgehammer;
+        break;
+    case PID_CATTLE_PROD:
+        handle = ATTRIBUTE_Handle_Weapon_CattleProd;
+        break;
+    case PID_SUPER_CATTLE_PROD:
+        handle = ATTRIBUTE_Handle_Weapon_CattleProd;
+        break;
+    case PID_RIPPER:
+        handle = ATTRIBUTE_Handle_Weapon_Machete;
+        break;
+    case PID_BOXING_GLOVES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_PLATED_BOXING_GLOVES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_RING_BOXING_GLOVES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_RING_PLATED_BOXING_GLOVES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_BRASS_KNUCKLES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_SPIKED_KNUCKLES:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeBio;
+        break;
+    case PID_DYNAMITE:
+        handle = ATTRIBUTE_Handle_Weapon_Dynamite;
+        break;
+    case PID_PLASTIC_EXPLOSIVES:
+        handle = ATTRIBUTE_Handle_Weapon_Dynamite;
+        break;
+    case PID_MINE:
+        handle = ATTRIBUTE_Handle_Weapon_Dynamite;
+        break;
+    // Player will never have this weapons anyway
+    case PID_ROBO_ROCKET_LAUNCHER:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_PHAZER:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_DEATHCLAW_CLAW_1:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_DEATHCLAW_CLAW_2:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_FIRE_GECKO_FLAME_WEAPON:
+        handle = ATTRIBUTE_Handle_Weapon_Flamethrower;
+        break;
+    case PID_SPECIAL_BOXER_WEAPON:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_GUN_TURRET_WEAPON:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_EYEBALL_FIST_1:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_EYEBALL_FIST_2:
+        handle = ATTRIBUTE_Handle_Weapon_45Revolver;
+        break;
+    case PID_DUAL_MINIGUN:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_HEAVY_DUAL_MINIGUN:
+        handle = ATTRIBUTE_Handle_Weapon_223Minigun;
+        break;
+    case PID_END_BOSS_KIFE:
+        handle = ATTRIBUTE_Handle_Weapon_Machete;
+        break;
+    case PID_END_BOSS_PLASMA_GUN:
+        handle = ATTRIBUTE_Handle_Weapon_LaserArraygun;
+        break;
+    case PID_HOLY_HAND_GRENADE:
+        handle = ATTRIBUTE_Handle_Weapon_GrenadeFrag;
+        break;
+    // Other items
+    case PID_STIMPAK:
+    case PID_RADAWAY:
+    case PID_SUPER_STIMPAK:
+    case PID_HYPO:
+    case PID_PSYCHO:
+    case PID_HYPO_POISON:
+        handle = ATTRIBUTE_Handle_Item_FirstAidKit;
+        break;
+    case PID_LOCKPICKS:
+    case PID_EXP_LOCKPICK_SET:
+    case PID_ELECTRONIC_LOCKPICKS:
+    case PID_ELEC_LOCKPICK_MKII:
+        handle = ATTRIBUTE_Handle_Item_SecurityKit;
+        break;
+    case PID_MULTI_TOOL:
+    case PID_SUPER_TOOL_KIT:
+    case PID_OIL_CAN:
+        handle = ATTRIBUTE_Handle_Item_Toolkit;
+        break;
+    // No handle
+    case PID_POWER_FIST:
+    case PID_MEGA_POWER_FIST:
+    case PID_BAG:
+    case PID_BROWN_BAG:
+    case PID_BACKPACK:
+        handle = 0;
+        break;
+    // Generic item
+    default:
+        handle = 0;
+        break;
+    }
+
+    return handle;
+}
+# endif // PLAYERS_3D
+#endif  // !__MAPPER
+
+//////////////////
+
+string@ _disguise999 = null;
+string@ critter_animation(int animType, uint crType, uint anim1, uint anim2, uint& pass, uint& flags, int& ox, int& oy)
+{
+    if(crType == 999)
+        return(_disguise999);
+    return null;
+}
+
+#ifdef __CLIENT
+
+void disguise999(int, int, int, string@ str, array<int>@)
+{
+    if(valid(str) && str.length() > 0)
+    {
+        @_disguise999 = "art\\" + str;
+        Message("disguise999=<" + _disguise999 + ">");
+    }
+    else
+    {
+        @_disguise999 = null;
+        Message("disguise999=<<removed>>");
+    }
+    uint zerro = 0;
+    int  zero = 0;
+    critter_animation(int(4), 999, 0, 0, zerro, zerro, zero, zero);
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on animation substitute seeking.
+
+bool critter_animation_substitute(int animType, uint crTypeBase, uint anim1Base, uint anim2Base, uint& crType, uint& anim1, uint& anim2)
+{
+    // Unset shield (Arcanum animations)
+    if((anim1 & ANIM1_SHIELD) != 0)
+    {
+        anim1 ^= ANIM1_SHIELD;
+        return true;
+    }
+
+    // Check crType alias
+    if(crTypeBase != 0)       // Zero for 3d animations
+    {
+        uint crTypeAlias = GetCritterAlias(crTypeBase);
+        if(crType == crTypeBase && crType != crTypeAlias)
+        {
+            switch(anim2)
+            {
+            case ANIM2_DEAD_PULSE:
+            case ANIM2_DEAD_PULSE_DUST:
+            case ANIM2_DEAD_BURN:
+            case ANIM2_DEAD_BURN_RUN:
+                crType = crTypeAlias;
+                return true;
+            default:
+                break;
+            }
+        }
+    }
+    crType = crTypeBase;
+
+    // Check Unarmed specific substitute
+    if((anim1 & ANIM1_WEAPON_MASK) == ANIM1_UNARMED)
+    {
+        bool swapped = true;
+        switch(anim2)
+        {
+        case ANIM2_LIMP:
+            anim2 = ANIM2_WALK;
+            break;
+        case ANIM2_RUN:
+            anim2 = ANIM2_WALK;
+            break;
+        case ANIM2_PANIC_RUN:
+            anim2 = ANIM2_RUN;
+            break;
+        case ANIM2_SNEAK_WALK:
+            anim2 = ANIM2_WALK;
+            break;
+        case ANIM2_SNEAK_RUN:
+            anim2 = ANIM2_SNEAK_WALK;
+            break;
+        case ANIM2_PICKUP:
+            anim2 = ANIM2_USE;
+            break;
+        case ANIM2_SWITCH_ITEMS:
+            anim2 = ANIM2_USE;
+            break;
+        default:
+            swapped = false;
+            break;
+        }
+        if(swapped)
+            return true;
+    }
+
+    // Check anim2 substitute
+    bool swapped = true;
+    switch(anim2)
+    {
+    case ANIM2_IDLE_STUNNED:
+        anim2 = ANIM2_IDLE;
+        break;
+    case ANIM2_IDLE_COMBAT:
+        anim2 = ANIM2_IDLE;
+        break;
+    case ANIM2_CLIMBING:
+        anim2 = ANIM2_USE;
+        break;
+    case ANIM2_PUNCH_LEFT:
+        anim2 = ANIM2_PUNCH_RIGHT;
+        break;
+    case ANIM2_PUNCH_COMBO:
+        anim2 = ANIM2_PUNCH_LEFT;
+        break;
+    case ANIM2_KICK_HI:
+        anim2 = ANIM2_PUNCH_RIGHT;
+        break;
+    case ANIM2_KICK_LO:
+        anim2 = ANIM2_KICK_HI;
+        break;
+    case ANIM2_KICK_COMBO:
+        anim2 = ANIM2_KICK_HI;
+        break;
+    case ANIM2_SWING_1H:
+        anim2 = ANIM2_THRUST_1H;
+        break;
+    case ANIM2_THRUST_2H:
+        anim2 = ANIM2_THRUST_1H;
+        break;
+    case ANIM2_SWING_2H:
+        anim2 = ANIM2_SWING_1H;
+        break;
+    case ANIM2_SWEEP:
+        anim2 = ANIM2_BURST;
+        break;
+    case ANIM2_BURST:
+        anim2 = ANIM2_SINGLE;
+        break;
+    case ANIM2_BUTT:
+        anim2 = ANIM2_PUNCH_RIGHT;
+        break;
+    case ANIM2_FLAME:
+        anim2 = ANIM2_SINGLE;
+        break;
+    case ANIM2_NO_RECOIL:
+        anim2 = ANIM2_USE;
+        break;
+    case ANIM2_THROW:
+        anim2 = ANIM2_PUNCH_RIGHT;
+        break;
+    case ANIM2_RELOAD:
+        anim2 = ANIM2_USE;
+        break;
+    case ANIM2_REPAIR:
+        anim2 = ANIM2_RELOAD;
+        break;
+    case ANIM2_DODGE_BACK:
+        anim2 = ANIM2_DODGE_FRONT;
+        break;
+    case ANIM2_DAMAGE_BACK:
+        anim2 = ANIM2_DAMAGE_FRONT;
+        break;
+    case ANIM2_DAMAGE_MUL_BACK:
+        anim2 = ANIM2_DAMAGE_MUL_FRONT;
+        break;
+    case ANIM2_WALK_DAMAGE_BACK:
+        anim2 = ANIM2_WALK_DAMAGE_FRONT;
+        break;
+    case ANIM2_LIMP_DAMAGE_BACK:
+        anim2 = ANIM2_LIMP_DAMAGE_FRONT;
+        break;
+    case ANIM2_RUN_DAMAGE_BACK:
+        anim2 = ANIM2_RUN_DAMAGE_FRONT;
+        break;
+    case ANIM2_LOOT:
+        anim2 = ANIM2_PICKUP;
+        break;
+    case ANIM2_STEAL:
+        anim2 = ANIM2_USE;
+        break;
+    case ANIM2_PUSH:
+        anim2 = ANIM2_PUNCH_RIGHT;
+        break;
+    case ANIM2_SHOW_WEAPON:
+        anim2 = ANIM2_USE;
+        break;
+    case ANIM2_HIDE_WEAPON:
+        anim2 = ANIM2_USE;
+        break;
+
+    case ANIM2_KNOCK_BACK:
+        anim2 = ANIM2_KNOCK_FRONT;
+        break;
+    case ANIM2_LAYDOWN_BACK:
+        anim2 = ANIM2_LAYDOWN_FRONT;
+        break;
+    case ANIM2_IDLE_PRONE_BACK:
+        anim2 = ANIM2_IDLE_PRONE_FRONT;
+        break;
+    case ANIM2_STANDUP_BACK:
+        anim2 = ANIM2_STANDUP_FRONT;
+        break;
+    case ANIM2_DEAD_PRONE_BACK:
+        anim2 = ANIM2_DEAD_PRONE_FRONT;
+        break;
+    case ANIM2_DAMAGE_PRONE_BACK:
+        anim2 = ANIM2_DAMAGE_PRONE_FRONT;
+        break;
+    case ANIM2_DAMAGE_MUL_PRONE_BACK:
+        anim2 = ANIM2_DAMAGE_MUL_PRONE_FRONT;
+        break;
+    case ANIM2_TWITCH_PRONE_BACK:
+        anim2 = ANIM2_TWITCH_PRONE_FRONT;
+        break;
+
+    case ANIM2_DEAD_FRONT:
+        anim2 = ANIM2_KNOCK_FRONT;
+        break;
+    case ANIM2_DEAD_BACK:
+        anim2 = ANIM2_KNOCK_BACK;
+        break;
+    case ANIM2_DEAD_BLOODY_SINGLE:
+    case ANIM2_DEAD_BLOODY_BURST:
+    case ANIM2_DEAD_BURST:
+    case ANIM2_DEAD_PULSE:
+    case ANIM2_DEAD_PULSE_DUST:
+    case ANIM2_DEAD_LASER:
+    case ANIM2_DEAD_FUSED:
+    case ANIM2_DEAD_EXPLODE:
+    case ANIM2_DEAD_BURN:
+        anim2 = ANIM2_DEAD_FRONT;
+        break;
+    case ANIM2_DEAD_BURN_RUN:
+        anim2 = ANIM2_DEAD_BURN;
+        break;
+
+    default:
+        swapped = false;
+        break;
+    }
+    if(swapped)
+        return true;
+
+    // Restore anim2
+    anim2 = anim2Base;
+
+    // Find anim1 substitute
+    uint flags = anim1 & ANIM1_FLAGS_MASK; // Store flags
+    anim1 &= ANIM1_WEAPON_MASK;            // Keep only weapon
+    switch(anim1)
+    {
+    case ANIM1_KNIFE:
+        anim1 = ANIM1_UNARMED;
+        break;
+    case ANIM1_CLUB:
+        anim1 = ANIM1_KNIFE;
+        break;
+    case ANIM1_HAMMER:
+        anim1 = ANIM1_CLUB;
+        break;
+    case ANIM1_SPEAR:
+        anim1 = ANIM1_KNIFE;
+        break;
+    case ANIM1_PISTOL:
+        anim1 = ANIM1_UNARMED;
+        break;
+    case ANIM1_SMG:
+        anim1 = ANIM1_PISTOL;
+        break;
+    case ANIM1_SHOOTGUN:
+        anim1 = ANIM1_SMG;
+        break;
+    case ANIM1_RIFLE:
+        anim1 = ANIM1_SHOOTGUN;
+        break;
+    case ANIM1_MINIGUN:
+        anim1 = ANIM1_RIFLE;
+        break;
+    case ANIM1_ROCKET_LAUNCHER:
+        anim1 = ANIM1_MINIGUN;
+        break;
+    case ANIM1_FLAMER:
+        anim1 = ANIM1_ROCKET_LAUNCHER;
+        break;
+    case ANIM1_HEAVY_RIFLE:
+        anim1 = ANIM1_RIFLE;
+        break;
+    case ANIM1_SWORD:
+        anim1 = ANIM1_KNIFE;
+        break;
+    case ANIM1_LONG_SWORD:
+        anim1 = ANIM1_KNIFE;
+        break;
+    case ANIM1_AXE:
+        anim1 = ANIM1_HAMMER;
+        break;
+    case ANIM1_BOW:
+        anim1 = ANIM1_KNIFE;
+        break;
+    default:
+        return false;
+    }
+    anim1 |= flags;     // Merge weapon and flags
+
+    return true;
+}
+
+// Fallout animations
+#define ANIM1_FALLOUT_UNARMED               (1)
+#define ANIM1_FALLOUT_DEAD                  (2)
+#define ANIM1_FALLOUT_KNOCKOUT              (3)
+#define ANIM1_FALLOUT_KNIFE                 (4)
+#define ANIM1_FALLOUT_CLUB                  (5)
+#define ANIM1_FALLOUT_HAMMER                (6)
+#define ANIM1_FALLOUT_SPEAR                 (7)
+#define ANIM1_FALLOUT_PISTOL                (8)
+#define ANIM1_FALLOUT_UZI                   (9)
+#define ANIM1_FALLOUT_SHOOTGUN              (10)
+#define ANIM1_FALLOUT_RIFLE                 (11)
+#define ANIM1_FALLOUT_MINIGUN               (12)
+#define ANIM1_FALLOUT_ROCKET_LAUNCHER       (13)
+#define ANIM1_FALLOUT_AIM                   (14)
+#define ANIM2_FALLOUT_STAY                  (1)
+#define ANIM2_FALLOUT_WALK                  (2)
+#define ANIM2_FALLOUT_SHOW                  (3)
+#define ANIM2_FALLOUT_HIDE                  (4)
+#define ANIM2_FALLOUT_DODGE_WEAPON          (5)
+#define ANIM2_FALLOUT_THRUST                (6)
+#define ANIM2_FALLOUT_SWING                 (7)
+#define ANIM2_FALLOUT_PREPARE_WEAPON        (8)
+#define ANIM2_FALLOUT_TURNOFF_WEAPON        (9)
+#define ANIM2_FALLOUT_SHOOT                 (10)
+#define ANIM2_FALLOUT_BURST                 (11)
+#define ANIM2_FALLOUT_FLAME                 (12)
+#define ANIM2_FALLOUT_THROW_WEAPON          (13)
+#define ANIM2_FALLOUT_DAMAGE_FRONT          (15)
+#define ANIM2_FALLOUT_DAMAGE_BACK           (16)
+#define ANIM2_FALLOUT_KNOCK_FRONT           (1)  // Only with ANIM1_FALLOUT_DEAD
+#define ANIM2_FALLOUT_KNOCK_BACK            (2)
+#define ANIM2_FALLOUT_STANDUP_BACK          (8)  // Only with ANIM1_FALLOUT_KNOCKOUT
+#define ANIM2_FALLOUT_STANDUP_FRONT         (10)
+#define ANIM2_FALLOUT_PICKUP                (11) // Only with ANIM1_FALLOUT_UNARMED
+#define ANIM2_FALLOUT_USE                   (12)
+#define ANIM2_FALLOUT_DODGE_EMPTY           (14)
+#define ANIM2_FALLOUT_PUNCH                 (17)
+#define ANIM2_FALLOUT_KICK                  (18)
+#define ANIM2_FALLOUT_THROW_EMPTY           (19)
+#define ANIM2_FALLOUT_RUN                   (20)
+#define ANIM2_FALLOUT_DEAD_FRONT            (1) // Only with ANIM1_FALLOUT_DEAD
+#define ANIM2_FALLOUT_DEAD_BACK             (2)
+#define ANIM2_FALLOUT_DEAD_BLOODY_SINGLE    (4)
+#define ANIM2_FALLOUT_DEAD_BURN             (5)
+#define ANIM2_FALLOUT_DEAD_BLOODY_BURST     (6)
+#define ANIM2_FALLOUT_DEAD_BURST            (7)
+#define ANIM2_FALLOUT_DEAD_PULSE            (8)
+#define ANIM2_FALLOUT_DEAD_LASER            (9)
+#define ANIM2_FALLOUT_DEAD_BURN2            (10)
+#define ANIM2_FALLOUT_DEAD_PULSE_DUST       (11)
+#define ANIM2_FALLOUT_DEAD_EXPLODE          (12)
+#define ANIM2_FALLOUT_DEAD_FUSED            (13)
+#define ANIM2_FALLOUT_DEAD_BURN_RUN         (14)
+#define ANIM2_FALLOUT_DEAD_FRONT2           (15)
+#define ANIM2_FALLOUT_DEAD_BACK2            (16)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Convert from common to fallout specific
+bool critter_animation_fallout(uint crType, uint& anim1, uint& anim2, uint& anim1ex, uint& anim2ex, uint& flags)
+{
+    // Still only weapon
+    anim1 &= ANIM1_WEAPON_MASK;
+
+    // Weapon
+    switch(anim1)
+    {
+    case ANIM1_UNARMED:
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM1_KNIFE:
+        anim1 = ANIM1_FALLOUT_KNIFE;
+        break;
+    case ANIM1_CLUB:
+        anim1 = ANIM1_FALLOUT_CLUB;
+        break;
+    case ANIM1_HAMMER:
+        anim1 = ANIM1_FALLOUT_HAMMER;
+        break;
+    case ANIM1_SPEAR:
+        anim1 = ANIM1_FALLOUT_SPEAR;
+        break;
+    case ANIM1_PISTOL:
+        anim1 = ANIM1_FALLOUT_PISTOL;
+        break;
+    case ANIM1_SMG:
+        anim1 = ANIM1_FALLOUT_UZI;
+        break;
+    case ANIM1_SHOOTGUN:
+        anim1 = ANIM1_FALLOUT_SHOOTGUN;
+        break;
+    case ANIM1_HEAVY_RIFLE:
+        anim1 = ANIM1_FALLOUT_RIFLE;
+        break;
+    case ANIM1_MINIGUN:
+        anim1 = ANIM1_FALLOUT_MINIGUN;
+        break;
+    case ANIM1_ROCKET_LAUNCHER:
+        anim1 = ANIM1_FALLOUT_ROCKET_LAUNCHER;
+        break;
+    case ANIM1_FLAMER:
+        anim1 = ANIM1_FALLOUT_RIFLE;
+        break;
+    case ANIM1_RIFLE:
+        anim1 = ANIM1_FALLOUT_RIFLE;
+        break;
+    case ANIM1_SWORD:
+        anim1 = ANIM1_FALLOUT_KNIFE;
+        break;
+    case ANIM1_LONG_SWORD:
+        anim1 = ANIM1_FALLOUT_KNIFE;
+        break;
+    case ANIM1_AXE:
+        anim1 = ANIM1_FALLOUT_CLUB;
+        break;
+    case ANIM1_BOW:
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    default:
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    }
+
+    // Action
+    switch(anim2)
+    {
+    case ANIM2_IDLE:
+        anim2 = ANIM2_FALLOUT_STAY;
+        flags |= ANIM_FLAG_FIRST_FRAME;
+        break;
+    case ANIM2_IDLE_STUNNED:
+        anim2 = ANIM2_FALLOUT_STAY;
+        flags |= ANIM_FLAG_FIRST_FRAME;
+        break;
+    case ANIM2_WALK:
+        anim2 = ANIM2_FALLOUT_WALK;
+        break;
+    case ANIM2_LIMP:
+        anim2 = ANIM2_FALLOUT_WALK;
+        break;
+    case ANIM2_RUN:
+        anim2 = ANIM2_FALLOUT_RUN;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_PANIC_RUN:
+        anim2 = ANIM2_FALLOUT_RUN;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_SHOW_WEAPON:
+        anim2 = ANIM2_FALLOUT_SHOW;
+        break;
+    case ANIM2_HIDE_WEAPON:
+        anim2 = ANIM2_FALLOUT_HIDE;
+        break;
+    case ANIM2_PREPARE_WEAPON:
+        anim2 = ANIM2_FALLOUT_PREPARE_WEAPON;
+        break;
+    case ANIM2_TURNOFF_WEAPON:
+        anim2 = ANIM2_FALLOUT_TURNOFF_WEAPON;
+        break;
+    case ANIM2_FIDGET:
+        anim2 = ANIM2_FALLOUT_STAY;
+        break;
+//	case ANIM2_CLIMBING:           anim2 = ;                                                     break;
+    case ANIM2_PICKUP:
+        anim2 = ANIM2_FALLOUT_PICKUP;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_USE:
+        anim2 = ANIM2_FALLOUT_USE;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_SWITCH_ITEMS:
+        anim2 = ANIM2_FALLOUT_USE;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_LOOT:
+        anim2 = ANIM2_FALLOUT_PICKUP;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_STEAL:
+        anim2 = ANIM2_FALLOUT_USE;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_PUSH:
+        anim2 = ANIM2_FALLOUT_PUNCH;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_IDLE_COMBAT:
+        anim2 = ANIM2_FALLOUT_STAY;
+        flags |= ANIM_FLAG_FIRST_FRAME;
+        break;
+    case ANIM2_PUNCH_RIGHT:
+        anim2 = ANIM2_FALLOUT_PUNCH;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_KICK_HI:
+        anim2 = ANIM2_FALLOUT_KICK;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_THRUST_1H:
+        anim2 = ANIM2_FALLOUT_THRUST;
+        break;
+    case ANIM2_THRUST_2H:
+        anim2 = ANIM2_FALLOUT_THRUST;
+        break;
+    case ANIM2_SWING_1H:
+        anim2 = ANIM2_FALLOUT_SWING;
+        break;
+    case ANIM2_SWING_2H:
+        anim2 = ANIM2_FALLOUT_SWING;
+        break;
+    case ANIM2_SINGLE:
+        anim2 = ANIM2_FALLOUT_SHOOT;
+        break;
+    case ANIM2_BURST:
+        anim2 = ANIM2_FALLOUT_BURST;
+        break;
+    case ANIM2_SWEEP:
+        anim2 = ANIM2_FALLOUT_BURST;
+        break;
+    case ANIM2_FLAME:
+        anim2 = ANIM2_FALLOUT_FLAME;
+        break;
+    case ANIM2_BUTT:
+        anim2 = ANIM2_FALLOUT_PUNCH;
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        break;
+    case ANIM2_THROW:
+        anim2 = (anim1 == ANIM1_FALLOUT_UNARMED ? ANIM2_FALLOUT_THROW_EMPTY : ANIM2_FALLOUT_THROW_WEAPON);
+        break;
+    case ANIM2_DODGE_FRONT:
+        anim2 = (anim1 == ANIM1_FALLOUT_UNARMED ? ANIM2_FALLOUT_DODGE_EMPTY : ANIM2_FALLOUT_DODGE_WEAPON);
+        break;
+    case ANIM2_DODGE_BACK:
+        anim2 = (anim1 == ANIM1_FALLOUT_UNARMED ? ANIM2_FALLOUT_DODGE_EMPTY : ANIM2_FALLOUT_DODGE_WEAPON);
+        break;
+    case ANIM2_DAMAGE_FRONT:
+        anim2 = ANIM2_FALLOUT_DAMAGE_FRONT;
+        break;
+    case ANIM2_DAMAGE_BACK:
+        anim2 = ANIM2_FALLOUT_DAMAGE_BACK;
+        break;
+    case ANIM2_DAMAGE_MUL_FRONT:
+        anim2 = ANIM2_FALLOUT_DAMAGE_FRONT;
+        break;
+    case ANIM2_DAMAGE_MUL_BACK:
+        anim2 = ANIM2_FALLOUT_DAMAGE_BACK;
+        break;
+    case ANIM2_KNOCK_FRONT:
+        anim2 = ANIM2_FALLOUT_KNOCK_FRONT;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_KNOCK_BACK:
+        anim2 = ANIM2_FALLOUT_KNOCK_BACK;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_STANDUP_FRONT:
+        anim2 = ANIM2_FALLOUT_STANDUP_FRONT;
+        anim1 = ANIM1_FALLOUT_KNOCKOUT;
+        break;
+    case ANIM2_STANDUP_BACK:
+        anim2 = ANIM2_FALLOUT_STANDUP_BACK;
+        anim1 = ANIM1_FALLOUT_KNOCKOUT;
+        break;
+    case ANIM2_DEAD_PRONE_FRONT:
+        anim2 = ANIM2_FALLOUT_DEAD_FRONT2;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_PRONE_BACK:
+        anim2 = ANIM2_FALLOUT_DEAD_BACK2;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_BLOODY_SINGLE:
+        anim2 = ANIM2_FALLOUT_DEAD_BLOODY_SINGLE;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_BLOODY_BURST:
+        anim2 = ANIM2_FALLOUT_DEAD_BLOODY_BURST;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_BURST:
+        anim2 = ANIM2_FALLOUT_DEAD_BURST;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_PULSE:
+        anim2 = ANIM2_FALLOUT_DEAD_PULSE;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_PULSE_DUST:
+        anim2 = ANIM2_FALLOUT_DEAD_PULSE_DUST;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_LASER:
+        anim2 = ANIM2_FALLOUT_DEAD_LASER;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_FUSED:
+        anim2 = ANIM2_FALLOUT_DEAD_FUSED;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+    case ANIM2_DEAD_EXPLODE:
+        anim2 = ANIM2_FALLOUT_DEAD_EXPLODE;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;
+
+    case ANIM2_IDLE_PRONE_FRONT:
+        anim2 = ANIM2_FALLOUT_KNOCK_FRONT;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        flags |= ANIM_FLAG_LAST_FRAME;
+        break;
+    case ANIM2_IDLE_PRONE_BACK:
+        anim2 = ANIM2_FALLOUT_KNOCK_BACK;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        flags |= ANIM_FLAG_LAST_FRAME;
+        break;
+
+    case ANIM2_DEAD_BURN:
+        anim2 = ANIM2_FALLOUT_DEAD_BURN;
+        anim1 = ANIM1_FALLOUT_DEAD;
+        break;                                                                                                          // ANIM2_FALLOUT_DEAD_BURN2
+    case ANIM2_DEAD_BURN_RUN:
+        anim2   = ANIM2_FALLOUT_DEAD_BURN_RUN;
+        anim1   = ANIM1_FALLOUT_DEAD;
+        anim2ex = ANIM2_FALLOUT_DEAD_BURN;
+        anim1ex = ANIM1_FALLOUT_DEAD;
+        break;
+
+    case ANIM2_DEAD_FRONT:
+        anim1 = ANIM1_FALLOUT_DEAD;
+        anim1ex = ANIM1_FALLOUT_DEAD;
+        anim2 = ANIM2_FALLOUT_KNOCK_FRONT;
+        anim2ex = ANIM2_FALLOUT_DEAD_FRONT2;
+        break;
+    case ANIM2_DEAD_BACK:
+        anim1 = ANIM1_FALLOUT_DEAD;
+        anim1ex = ANIM1_FALLOUT_DEAD;
+        anim2 = ANIM2_FALLOUT_KNOCK_BACK;
+        anim2ex = ANIM2_FALLOUT_DEAD_BACK2;
+        break;
+    case ANIM2_NO_RECOIL:
+    case ANIM2_RELOAD:
+    case ANIM2_REPAIR:
+        anim1ex = anim1;
+        anim2 = ANIM2_FALLOUT_PREPARE_WEAPON;
+        anim2ex = ANIM2_FALLOUT_TURNOFF_WEAPON;
+        break;
+
+    // ANIM2_BEGIN_COMBAT
+    // ANIM2_END_COMBAT
+    // ANIM2_PUNCH_LEFT
+    // ANIM2_PUNCH_COMBO
+    // ANIM2_KICK_LO
+    // ANIM2_KICK_COMBO
+    // ANIM2_WALK_DAMAGE_FRONT
+    // ANIM2_WALK_DAMAGE_BACK
+    // ANIM2_LIMP_DAMAGE_FRONT
+    // ANIM2_LIMP_DAMAGE_BACK
+    // ANIM2_RUN_DAMAGE_FRONT
+    // ANIM2_RUN_DAMAGE_BACK
+    // ANIM2_LAYDOWN_FRONT
+    // ANIM2_LAYDOWN_BACK
+    // ANIM2_DAMAGE_PRONE_FRONT
+    // ANIM2_DAMAGE_PRONE_BACK
+    // ANIM2_DAMAGE_MUL_PRONE_FRONT
+    // ANIM2_DAMAGE_MUL_PRONE_BACK
+    // ANIM2_TWITCH_PRONE_FRONT
+    // ANIM2_TWITCH_PRONE_BACK
+    default:
+        return false;
+    }
+    return true;
+}
+
+#ifdef __CLIENT
+void PlayAnimSound(uint crType, int gender, uint anim1, uint anim2)
+{
+    if(anim2 == ANIM2_WALK || anim2 == ANIM2_LIMP || anim2 == ANIM2_RUN ||
+       anim2 == ANIM2_PANIC_RUN || anim2 == ANIM2_SNEAK_WALK || anim2 == ANIM2_SNEAK_RUN)
+        return;
+
+    bool   isFemale = gender == GENDER_FEMALE;
+    int    animType = GetCritterAnimType(crType);
+    string crTypeSound = GetCritterSoundName(crType);
+
+    // Keep only weapon
+    anim1 &= ANIM1_WEAPON_MASK;
+
+    if(animType == ANIM_TYPE_FALLOUT)
+    {
+        // Convert indicies to fallout specific
+        uint fAnim1 = anim1, fAnim2 = anim2, fAnim1ex = 0, fAnim2ex = 0, fFlags = 0;
+        if(!critter_animation_fallout(crType, fAnim1, fAnim2, fAnim1ex, fAnim2ex, fFlags) || fFlags != 0)
+            return;
+
+        // Make name
+        const string abc = "_abcdefghijklmnopqrstuvwxyz0123456789";
+        string       sound = crTypeSound;
+        sound.resize(sound.length() + 1);
+        sound[sound.length() - 1] = abc[fAnim1];
+        sound.resize(sound.length() + 1);
+        sound[sound.length() - 1] = abc[fAnim2];
+        sound += ".acm";
+
+        // Convert 'ha' to 'hm' / 'hf'
+        if(sound[0] == 'h' && sound[1] == 'a')
+            sound[1] = (isFemale ? 'f' : 'm');
+
+        // Try play
+        if(PlaySound(sound))
+            return;
+
+        // Find substitutes for humans
+        if(sound[0] == 'h')
+        {
+            // Try find by mask (hmxxxxab)
+            for(uint i = 2, j = crTypeSound.length(); i < j; i++)
+                sound[i] = 'x';
+            if(PlaySound(sound))
+                return;
+
+            // Convert 'hf' to 'hm'
+            if(sound[1] == 'f')
+            {
+                sound[1] = 'm';
+                if(PlaySound(sound))
+                    return;
+            }
+        }
+    }
+    else
+    {
+        uint sexPos = crTypeSound.length() - 1;
+        if(crTypeSound[sexPos] == 'U')
+            crTypeSound[sexPos] = (isFemale ? 'F' : 'M');
+
+        for(uint pass = 0; pass < 4; pass++)
+        {
+            if(pass == 2)
+            {
+                if(crTypeSound[sexPos] == 'I')
+                    break;
+                crTypeSound[sexPos] = 'U';
+            }
+
+            string sound = crTypeSound + "_";
+
+            if(pass == 0 || pass == 2)
+            {
+                switch(anim1)
+                {
+                case ANIM1_UNARMED:
+                    sound += "Unarmed";
+                    break;
+                case ANIM1_KNIFE:
+                    sound += "Knife";
+                    break;
+                case ANIM1_CLUB:
+                    sound += "Club";
+                    break;
+                case ANIM1_HAMMER:
+                    sound += "Hammer";
+                    break;
+                case ANIM1_SPEAR:
+                    sound += "Spear";
+                    break;
+                case ANIM1_PISTOL:
+                    sound += "Pistol";
+                    break;
+                case ANIM1_SMG:
+                    sound += "SMG";
+                    break;
+                case ANIM1_SHOOTGUN:
+                    sound += "Shootgun";
+                    break;
+                case ANIM1_HEAVY_RIFLE:
+                    sound += "HeavyRifle";
+                    break;
+                case ANIM1_MINIGUN:
+                    sound += "Minigun";
+                    break;
+                case ANIM1_ROCKET_LAUNCHER:
+                    sound += "RocketLauncher";
+                    break;
+                case ANIM1_FLAMER:
+                    sound += "Flamer";
+                    break;
+                case ANIM1_RIFLE:
+                    sound += "Rifle";
+                    break;
+                case ANIM1_SWORD:
+                    sound += "Sword";
+                    break;
+                case ANIM1_LONG_SWORD:
+                    sound += "LongSword";
+                    break;
+                case ANIM1_AXE:
+                    sound += "Axe";
+                    break;
+                case ANIM1_BOW:
+                    sound += "Bow";
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            switch(anim2)
+            {
+            case ANIM2_IDLE:
+                sound += "Idle";
+                break;
+            case ANIM2_IDLE_STUNNED:
+                sound += "IdleStunned";
+                break;
+            case ANIM2_WALK:
+                sound += "Walk";
+                break;
+            case ANIM2_LIMP:
+                sound += "Limp";
+                break;
+            case ANIM2_RUN:
+                sound += "Run";
+                break;
+            case ANIM2_PANIC_RUN:
+                sound += "PanicRun";
+                break;
+            case ANIM2_SNEAK_WALK:
+                sound += "SneakWalk";
+                break;
+            case ANIM2_SNEAK_RUN:
+                sound += "SneakRun";
+                break;
+            case ANIM2_STAND:
+                sound += "Stand";
+                break;
+            case ANIM2_CROUCH:
+                sound += "Crouch";
+                break;
+            case ANIM2_PRONE:
+                sound += "Prone";
+                break;
+            case ANIM2_SHOW_WEAPON:
+                sound += "ShowWeapon";
+                break;
+            case ANIM2_HIDE_WEAPON:
+                sound += "HideWeapon";
+                break;
+            case ANIM2_PREPARE_WEAPON:
+                sound += "PrepareWeapon";
+                break;
+            case ANIM2_TURNOFF_WEAPON:
+                sound += "TurnoffWeapon";
+                break;
+            case ANIM2_FIDGET:
+                sound += "Fidget";
+                break;
+            case ANIM2_CLIMBING:
+                sound += "Climbing";
+                break;
+            case ANIM2_PICKUP:
+                sound += "Pickup";
+                break;
+            case ANIM2_USE:
+                sound += "Use";
+                break;
+            case ANIM2_SWITCH_ITEMS:
+                sound += "SwitchItems";
+                break;
+            case ANIM2_RELOAD:
+                sound += "Reload";
+                break;
+            case ANIM2_REPAIR:
+                sound += "Repair";
+                break;
+            case ANIM2_LOOT:
+                sound += "Loot";
+                break;
+            case ANIM2_STEAL:
+                sound += "Steal";
+                break;
+            case ANIM2_PUSH:
+                sound += "Push";
+                break;
+            case ANIM2_BEGIN_COMBAT:
+                sound += "BeginCombat";
+                break;
+            case ANIM2_IDLE_COMBAT:
+                sound += "IdleCombat";
+                break;
+            case ANIM2_END_COMBAT:
+                sound += "EndCombat";
+                break;
+            case ANIM2_PUNCH_RIGHT:
+                sound += "PunchRight";
+                break;
+            case ANIM2_PUNCH_LEFT:
+                sound += "PunchLeft";
+                break;
+            case ANIM2_PUNCH_COMBO:
+                sound += "PunchCombo";
+                break;
+            case ANIM2_KICK_HI:
+                sound += "KickHi";
+                break;
+            case ANIM2_KICK_LO:
+                sound += "KickLo";
+                break;
+            case ANIM2_KICK_COMBO:
+                sound += "KickCombo";
+                break;
+            case ANIM2_THRUST_1H:
+                sound += "Thrust1H";
+                break;
+            case ANIM2_THRUST_2H:
+                sound += "Thrust2H";
+                break;
+            case ANIM2_SWING_1H:
+                sound += "Swing1H";
+                break;
+            case ANIM2_SWING_2H:
+                sound += "Swing2H";
+                break;
+            case ANIM2_THROW:
+                sound += "Throw";
+                break;
+            case ANIM2_SINGLE:
+                sound += "Single";
+                break;
+            case ANIM2_BURST:
+                sound += "Burst";
+                break;
+            case ANIM2_SWEEP:
+                sound += "Sweep";
+                break;
+            case ANIM2_BUTT:
+                sound += "Butt";
+                break;
+            case ANIM2_FLAME:
+                sound += "Flame";
+                break;
+            case ANIM2_NO_RECOIL:
+                sound += "NoRecoil";
+                break;
+            case ANIM2_DODGE_FRONT:
+                sound += "DodgeFront";
+                break;
+            case ANIM2_DODGE_BACK:
+                sound += "DodgeBack";
+                break;
+            case ANIM2_DAMAGE_FRONT:
+                sound += "DamageFront";
+                break;
+            case ANIM2_DAMAGE_BACK:
+                sound += "DamageBack";
+                break;
+            case ANIM2_DAMAGE_MUL_FRONT:
+                sound += "DamageMulFront";
+                break;
+            case ANIM2_DAMAGE_MUL_BACK:
+                sound += "DamageMulBack";
+                break;
+            case ANIM2_WALK_DAMAGE_FRONT:
+                sound += "WalkDamageFront";
+                break;
+            case ANIM2_WALK_DAMAGE_BACK:
+                sound += "WalkDamageBack";
+                break;
+            case ANIM2_LIMP_DAMAGE_FRONT:
+                sound += "LimpDamageFront";
+                break;
+            case ANIM2_LIMP_DAMAGE_BACK:
+                sound += "LimpDamageBack";
+                break;
+            case ANIM2_RUN_DAMAGE_FRONT:
+                sound += "RunDamageFront";
+                break;
+            case ANIM2_RUN_DAMAGE_BACK:
+                sound += "RunDamageBack";
+                break;
+            case ANIM2_KNOCK_FRONT:
+                sound += "KnockFront";
+                break;
+            case ANIM2_KNOCK_BACK:
+                sound += "KnockBack";
+                break;
+            case ANIM2_LAYDOWN_FRONT:
+                sound += "LaydownFront";
+                break;
+            case ANIM2_LAYDOWN_BACK:
+                sound += "LaydownBack";
+                break;
+            case ANIM2_IDLE_PRONE_FRONT:
+                sound += "IdleProneFront";
+                break;
+            case ANIM2_IDLE_PRONE_BACK:
+                sound += "IdleProneBack";
+                break;
+            case ANIM2_STANDUP_FRONT:
+                sound += "StandupFront";
+                break;
+            case ANIM2_STANDUP_BACK:
+                sound += "StandupBack";
+                break;
+            case ANIM2_DAMAGE_PRONE_FRONT:
+                sound += "DamageProneFront";
+                break;
+            case ANIM2_DAMAGE_PRONE_BACK:
+                sound += "DamageProneBack";
+                break;
+            case ANIM2_DAMAGE_MUL_PRONE_FRONT:
+                sound += "DamageMulProneFront";
+                break;
+            case ANIM2_DAMAGE_MUL_PRONE_BACK:
+                sound += "DamageMulProneBack";
+                break;
+            case ANIM2_TWITCH_PRONE_FRONT:
+                sound += "TwitchProneFront";
+                break;
+            case ANIM2_TWITCH_PRONE_BACK:
+                sound += "TwitchProneBack";
+                break;
+            case ANIM2_DEAD_PRONE_FRONT:
+                sound += "DeadProneFront";
+                break;
+            case ANIM2_DEAD_PRONE_BACK:
+                sound += "DeadProneBack";
+                break;
+            case ANIM2_DEAD_FRONT:
+                sound += "DeadFront";
+                break;
+            case ANIM2_DEAD_BACK:
+                sound += "DeadBack";
+                break;
+            case ANIM2_DEAD_BLOODY_SINGLE:
+                sound += "DeadBloodySingle";
+                break;
+            case ANIM2_DEAD_BLOODY_BURST:
+                sound += "DeadBloodyBack";
+                break;
+            case ANIM2_DEAD_BURST:
+                sound += "DeadBurst";
+                break;
+            case ANIM2_DEAD_PULSE:
+                sound += "DeadPulse";
+                break;
+            case ANIM2_DEAD_PULSE_DUST:
+                sound += "DeadPulseDust";
+                break;
+            case ANIM2_DEAD_LASER:
+                sound += "DeadLaser";
+                break;
+            case ANIM2_DEAD_FUSED:
+                sound += "DeadFused";
+                break;
+            case ANIM2_DEAD_EXPLODE:
+                sound += "DeadExplode";
+                break;
+            case ANIM2_DEAD_BURN:
+                sound += "DeadBurn";
+                break;
+            case ANIM2_DEAD_BURN_RUN:
+                sound += "DeadBurnRun";
+                break;
+            default:
+                break;
+            }
+
+            // Try play
+            if(PlaySound(sound + ".wav"))
+                return;
+
+            // Try erase 'Front' / 'Back'
+            uint len = 0;
+            int  pos = findLast(sound, "Front");
+            if(pos != -1)
+                len = 5;
+            else
+            {
+                pos = findLast(sound, "Back");
+                if(pos != -1)
+                    len = 4;
+                else
+                    continue;
+            }
+            sound.resize(sound.length() - len);
+
+            if(PlaySound(sound + ".wav"))
+                return;
+        }
+    }
+}
+#endif

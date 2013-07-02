@@ -1,0 +1,351 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// lexems.fos
+//
+
+// Flexible lexems
+
+//
+// 'Remember to forget' about SetLexems()!
+// Critter::SetLexems( "$lex" + "value" ) -> SetLexem( Critter, "$lex", "value" )
+// Item::SetLexems( "$lex" + "value" )    -> SetLexem( Item, "$lex", "value" )
+//
+
+#ifndef __LEXEMS__
+#define __LEXEMS__
+
+// shared!
+
+#include "lexems_h.fos"
+
+#ifdef __SERVER
+# pragma bindfunc "void Critter::GetLexems(string&) -> Utils.dll Critter_GetLexems"
+# pragma bindfunc "void Item::GetLexems(string&)    -> Utils.dll Item_GetLexems"
+#endif
+
+string GetCritterLexems(CritterMutual& critter)
+{
+    #ifdef __CLIENT
+    return(critter.Lexems);
+    #endif
+
+    #ifdef __SERVER
+    string lexems = "";
+    critter.GetLexems(lexems);
+    return(lexems);
+    #endif
+}
+
+string GetItemLexems(ItemMutual& item)
+{
+    #ifdef __CLIENT
+    return(item.Lexems);
+    #endif
+
+    #ifdef __SERVER
+    string lexems = "";
+    item.GetLexems(lexems);
+    return(lexems);
+    #endif
+}
+
+bool IsLexem(CritterMutual& critter, string& lex)
+{
+    return(IsLexem(GetCritterLexems(critter), lex));
+}
+
+bool IsLexem(ItemMutual& item, string& lex)
+{
+    return(IsLexem(GetItemLexems(item), lex));
+}
+
+bool IsLexem(string& lexems, string& lex)
+{
+    if(lexems.length() < 3 || lex.length() < 2)       // $nV || $n
+        return(false);
+
+    int pos = findFirst(lexems, lex);
+    if(pos < 0)
+        return(false);
+    else
+        return(true);
+}
+
+string GetLexem(CritterMutual& critter, string& lex)
+{
+    return(GetLexem(GetCritterLexems(critter), lex));
+}
+
+string GetLexem(ItemMutual& item, string& lex)
+{
+    return(GetLexem(GetItemLexems(item), lex));
+}
+
+string GetLexem(string& lexems, string& lex)
+{
+    if(lexems.length() < 3 || lex.length() < 2)       // $nV || $n
+        return("");
+
+    if(lex[0] != '$')
+        return("");
+
+    if(!IsLexem(lexems, lex))
+        return("");
+
+    array<string@>@ lexem = split(lexems, "$");
+    for(uint l = 0; l < lexem.length(); l++)
+    {
+        if(("$" + substring(lexem[l], 0, lex.length() - 1)) == lex)
+        {
+            return(substring(lexem[l], lex.length() - 1, lexem[l].length() - (lex.length() - 1)));
+        }
+    }
+    return("");
+}
+
+#ifdef __SERVER
+void SetLexem(CritterMutual& critter, string& lex, string& value)
+{
+    string lexems = SetLexem(GetCritterLexems(critter), lex, value);
+    critter.SetLexems(lexems);
+}
+
+void SetLexem(ItemMutual& item, string& lex, string& value)
+{
+    string lexems = SetLexem(GetItemLexems(item), lex, value);
+    item.SetLexems(lexems);
+    item.Update();
+}
+
+string SetLexem(string& lexems, string& lex, string& value)
+{
+    if(lex.length() < 2)       // $n
+        return(lexems);
+
+    if(!IsLexem(lexems, lex))
+        return(lexems + lex + value);
+
+    if(value.length() == 0)
+        return(UnsetLexem(lexems, lex));
+
+    array<string@>@ lexem = split(lexems, "$");
+    if(lexem[0].length() == 0)
+        lexem.removeAt(0);
+    for(uint l = 0; l < lexem.length(); l++)
+    {
+        if(("$" + substring(lexem[l], 0, lex.length() - 1)) == lex)
+        {
+            lexem[l] = substring(lex, 1, lex.length() - 1) + value;
+            break;
+        }
+    }
+
+    string result = "";
+    for(uint l = 0; l < lexem.length(); l++)
+        result += "$" + lexem[l];
+
+    return(result);
+}
+
+void UnsetLexem(CritterMutual& critter, string& lex)
+{
+    critter.SetLexems(UnsetLexem(GetCritterLexems(critter), lex));
+}
+
+void UnsetLexem(ItemMutual& item, string& lex)
+{
+    item.SetLexems(UnsetLexem(GetItemLexems(item), lex));
+    item.Update();
+}
+
+string UnsetLexem(string& lexems, string& lex)
+{
+    if(lexems.length() < 3 || lex.length() < 2)       // $nV || $n
+        return(lexems);
+
+    if(!IsLexem(lexems, lex))
+        return(lexems);
+
+    array<string@>@ lexem = split(lexems, "$");
+    if(lexem[0].length() == 0)
+        lexem.removeAt(0);
+    for(uint l = 0; l < lexem.length(); l++)
+    {
+        if(("$" + substring(lexem[l], 0, lex.length() - 1)) == lex)
+        {
+            lexem.removeAt(l);
+            break;
+        }
+    }
+
+    string result = "";
+    for(uint l = 0; l < lexem.length(); l++)
+        result += "$" + lexem[l];
+
+    return(result);
+}
+
+# include "_macros.fos"
+void get(Critter& player, int, int crId, int itId)
+{
+    if(crId > 0)
+    {
+        Critter@ cr = GetCritter(crId);
+        if(valid(cr))
+        {
+            string lexems = "";
+            cr.GetLexems(lexems);
+            player.Say(SAY_NETMSG, "critter <" + lexems + ">");
+        }
+    }
+    if(itId > 0)
+    {
+        Item@ it = GetItem(itId);
+        if(valid(it))
+        {
+            string lexems = "";
+            it.GetLexems(lexems);
+            player.Say(SAY_NETMSG, "item <" + lexems + ">");
+        }
+    }
+}
+
+// tests
+/*
+   #include "_defines.fos"
+
+   void test( Critter& cr, int, int, int )
+   {
+        string lexems = "";
+        uint max = Random(3,5);
+        for( uint r=1; r<=max; r++ )
+        {
+                lexems += "$lex"+r+"Value"+Random(0,9);
+        }
+        cr.SetLexems( lexems );
+        array<string@>@ lexem = split( lexems, "$" );
+
+        cr.Say( SAY_NETMSG, "prepared lexems: "+lexems );
+        cr.Say( SAY_NETMSG, "---------------" );
+        // GetCritterLexems
+        {
+                cr.Say( SAY_NETMSG, "GetCritterLexems()" );
+                string lexems = GetCritterLexems(cr);
+                cr.Say( SAY_NETMSG, "GetCritterLexems(cr) = "+GetCritterLexems(cr) );
+        }
+        // IsLexem
+        {
+                cr.Say( SAY_NETMSG, "IsLexem()" );
+                string lx = GetCritterLexems(cr);
+                int c = Random( 1, max );
+                int t = Random( max+2, max+5 );
+                int f = Random( -1, -5 );
+                cr.Say( SAY_NETMSG, "IsLexem("+lx+",$lex"+c+") = "+(IsLexem(lx,"$lex"+c)?"true":"false") );
+                cr.Say( SAY_NETMSG, "IsLexem("+lx+",$lex"+t+") = "+(IsLexem(lx,"$lex"+t)?"true":"false") );
+                cr.Say( SAY_NETMSG, "IsLexem("+lx+",$lex"+f+") = "+(IsLexem(lx,"$lex"+f)?"true":"false") );
+                cr.Say( SAY_NETMSG, "IsLexem(cr,$lex"+c+") = "+(IsLexem(cr,"$lex"+c)?"true":"false") );
+                cr.Say( SAY_NETMSG, "IsLexem(cr,$lex"+t+") = "+(IsLexem(cr,"$lex"+t)?"true":"false") );
+                cr.Say( SAY_NETMSG, "IsLexem(cr,$lex"+f+") = "+(IsLexem(cr,"$lex"+f)?"true":"false") );
+        }
+        // GetLexem
+        {
+                cr.Say( SAY_NETMSG, "GetLexem()" );
+                string lx = GetCritterLexems(cr);
+                int c = Random( 1, max );
+                int t = Random( max+2, max+5 );
+                int f = Random( -1, -5 );
+                cr.Say( SAY_NETMSG, "GetLexem("+lx+",$lex"+c+") = "+GetLexem(lx,"$lex"+c) );
+                cr.Say( SAY_NETMSG, "GetLexem("+lx+",$lex"+f+") = "+GetLexem(lx,"$lex"+f) );
+                cr.Say( SAY_NETMSG, "GetLexem("+lx+",$lex"+t+") = "+GetLexem(lx,"$lex"+t) );
+                cr.Say( SAY_NETMSG, "GetLexem(cr,$lex"+c+") = "+GetLexem(cr,"$lex"+c) );
+                cr.Say( SAY_NETMSG, "GetLexem(cr,$lex"+f+") = "+GetLexem(cr,"$lex"+f) );
+                cr.Say( SAY_NETMSG, "GetLexem(cr,$lex"+t+") = "+GetLexem(cr,"$lex"+t) );
+        }
+        // SetLexem
+        {
+                cr.Say( SAY_NETMSG, "SetLexem()" );
+                string lx = GetCritterLexems(cr);
+                int c = Random( 1, max );
+                int t = Random( max+2, max+5 );
+                int f = Random( -1, -5 );
+                {
+                        cr.Say( SAY_NETMSG, "c" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "SetLexem("+lx+",$lex"+c+",Edit"+e+")" );
+                        string ed = SetLexem(lx,"$lex"+c,"Edit"+e);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+                {
+                        cr.Say( SAY_NETMSG, "t" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "SetLexem("+lx+",$lex"+t+",Edit"+e+")" );
+                        string ed = SetLexem(lx,"$lex"+t,"Edit"+e);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+                {
+                        cr.Say( SAY_NETMSG, "f" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "SetLexem("+lx+",$lex"+f+",Edit"+e+")" );
+                        string ed = SetLexem(lx,"$lex"+f,"Edit"+e);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+        }
+        // UnsetLexem
+        {
+                cr.Say( SAY_NETMSG, "UnsetLexem()" );
+                string lx = GetCritterLexems(cr);
+                int c = Random( 1, max );
+                int t = Random( max+2, max+5 );
+                int f = Random( -1, -5 );
+                {
+                        cr.Say( SAY_NETMSG, "c" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "UnsetLexem("+lx+",$lex"+c+")" );
+                        string ed = UnsetLexem(lx,"$lex"+c);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+                {
+                        cr.Say( SAY_NETMSG, "t" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "UnsetLexem("+lx+",$lex"+t+")" );
+                        string ed = UnsetLexem(lx,"$lex"+t);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+                {
+                        cr.Say( SAY_NETMSG, "f" );
+                        cr.SetLexems( lx );
+                        int e = Random( 0, 9 );
+                        cr.Say( SAY_NETMSG, "BEFORE: "+GetCritterLexems(cr) );
+                        cr.Say( SAY_NETMSG, "UnsetLexem("+lx+",$lex"+f+")" );
+                        string ed = UnsetLexem(lx,"$lex"+f);
+                        cr.Say( SAY_NETMSG, "AFTER:  "+ed );
+                }
+        }
+   }
+
+   #include "_macros.fos"
+
+
+   void unset( Critter& cr, int id, int, int )
+   {
+        Critter@ target = GetCritter(id);
+        if( valid(target) )
+        {
+                cr.SetLexems( null );
+        }
+   }
+ */
+#endif // __SERVER
+#endif

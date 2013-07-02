@@ -1,0 +1,113 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _script dialog@d_IsNotMember 0  #
+4 1030 D _var n name_mem_npc_player = 0 #
+6 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+65507 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+80 6010 D _param p PE_PROFESSION_GUNSMITH_B < 2 #
+90 6020 D _param p PE_PROFESSION_ARMORER < 3 #
+0 6030 @
+50 7000 None 0 @
+80 8000 None 0 #
+81 8010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithB0 1 0 #
+82 8020 D _script dialog@d_CheckGunsmithB1 1 0 #
+0 8030 @
+81 9000 None 0 #
+83 9010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_B = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 9020 @
+82 10000 None 0 #
+83 10010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_B = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 10020 @
+83 11000 None 0 #
+0 11010 @
+90 12000 None 0 #
+91 12010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckArmorer0 1 0 #
+92 12020 D _script dialog@d_CheckArmorer1 1 0 #
+0 12030 @
+91 13000 None 0 #
+94 13010 D _item p PID_BOTTLE_CAPS > 499 R _param p PE_PROFESSION_ARMORER = 1 R _script dialog@r_RemoveMoney 1 500 #
+0 13020 @
+92 14000 None 0 #
+94 14010 D _item p PID_BOTTLE_CAPS > 999 R _param p PE_PROFESSION_ARMORER = 2 R _script dialog@r_RemoveMoney 1 1000 #
+0 14020 @
+93 15000 None 0 #
+94 15010 D _item p PID_BOTTLE_CAPS > 2499 R _param p PE_PROFESSION_ARMORER = 3 R _script dialog@r_RemoveMoney 1 2500 #
+0 15020 @
+94 16000 None 0 #
+0 16010 &
+
+[engl]
+{100}{}{Bronco}
+{200}{}{You see a man in grease-stained clothes, probably a mechanic.}
+{210}{}{It's Bronco, one of the Brotherhood's mechanics.}
+{210}{}{You think he's a mechanic, but he is wearing a sidearm which does seem a little odd.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Not BoS member}
+{1030}{}{BoS member unknown}
+{1040}{}{BoS member known}
+{2000}{}{What the hell are you doing here?}
+{2010}{}{What is this place?}
+{2020}{}{Nothing, I was just leaving.}
+{3000}{}{This is... Just what the hell? Get lost before I blow you to pieces!}
+{3010}{}{That's what I've been waiting for...}
+{3020}{}{Okay, got it! I'm leaving.}
+{4000}{}{Welcome to the San Francisco Outpost, @sex@|buddy||beauty|. I can't recall your face, you must be new around here?}
+{4010}{}{Actually, I am. My name is @pname@. What are you doing here?}
+{4020}{}{Maybe some other time.}
+{5000}{}{Well, I don't know about others, but I sure as hell do the right thing - repair old stuff, put some junk together, try to make it work... This is my place, the repair shop.}
+{5010}{}{I see. Let me ask you something else then.}
+{5020}{}{Yes, true... I think I'll be going now.}
+{6000}{}{What can I help you with, @pname@?}
+{6010}{}{Say, do you work with guns here too?}
+{6020}{}{Say, you also work with armors here, don't you?}
+{6030}{}{Nothing right now.}
+{7000}{}{I think you took the wrong turn, pal.@@Nothing for you here.@@You should be outside, playing with kids.@@I really wonder how did you end up here.@@This is private property. Do you mind?@@Just get outta my sight.@@Do I have to repeat myself, buddy?}
+{8000}{}{Yes, we work with all kinds of junk, including guns. Big guns, mostly.}
+{8010}{}{I would like to know how the big guns work, what are they made of... technical stuff.}
+{8020}{}{I thought you could clarify some things about the construction and usage of big guns to me.}
+{8030}{}{I'm not quite sure what I wanted to ask you... Maybe I should get ready for this first. Thanks anyway!}
+{9000}{}{I really hope you know what you're talking about, otherwise it'll be waste of time. And I need something in return, let's say... $1500. For that amount, I'm even gonna give you this "Guns & Bullets" magazine.}
+{9010}{}{Okay, I think I've got five hundred right here. Why don't you take it, so we can start right away? [Give him 500 5mm AP rounds]}
+{9020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{10000}{}{Yeah, I see you're already skilled with those, so it shouldn't take too long. But, you see, I recently ran into some financial problems... How about you get me $3000 and I show you everything I know?}
+{10010}{}{It wasn't easy to find this all of these caps. It better be worth it! [Give him $3000]}
+{10020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{11000}{}{Good investement @sex@|buddy||beauty|, I guarantee. Now... [Bronco shows you everything you wanted to know]}
+{11010}{}{Well... Thanks for that, Bronco. I must go now, see you later.}
+{12000}{}{Armors? Yes, they can be considered junk as well, I guess. What about them?}
+{12010}{}{Can you show me how to make some basic armor?}
+{12020}{}{I am interested in making metal armor... And any other tricks you can show me, really.}
+{12030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{13000}{}{Of course I can, that's exactly what I do to here. [Looking carefully at you] Hmmm, interesting in expanding your skills, right? OK, you do look like you already know some basics... I can show you some tips, but it'll cost you five hundreds.}
+{13010}{}{Okay, I think I've got five hundred right here. Why don't you take it, so we can start right away? [Give him $500]}
+{13020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{14000}{}{Well, I think there is something I could show you... For a grand.}
+{14010}{}{I just happen to have 1000$ ready for you... [You give him the money] Let's get to it.}
+{14020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{15000}{}{[OBSOLETE] It might be true, but such knowledge costs... 2500 caps. But rest assured -- there's only a few people out there with such skills.}
+{15010}{}{That's not cheap, but I guess it'll pay off. Here you go. [Give him $2500]}
+{15020}{}{Sorry, that's too much for me. I might be back later, though.}
+{16000}{}{Nice doin' business with ya... [Bronco shows you everything you wanted to know]}
+{16010}{}{Thanks Bronco, I really appreciate your help. See you around!}
+

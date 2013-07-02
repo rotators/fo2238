@@ -1,0 +1,105 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// logging.fos
+//
+
+#ifndef __LOGGING__
+#define __LOGGING__
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "logging_h.fos"
+#include "config_file_h.fos"
+
+array<file@>  f;
+array<string> filenames;
+string        ilogdir = "";
+
+uint AddLog(string& filename)
+{
+    file fi;
+    f.insertLast(fi);
+    filenames.insertLast(filename);
+    return filenames.length() - 1;
+}
+
+uint AddLog(string& filename, uint index)
+{
+    file fi;
+    @f[index] = fi;
+    filenames.insertLast(filename);
+    return filenames.length() - 1;
+}
+
+void InitLogs()
+{
+    f.resize(LOG_COUNT);
+    AddLog("logs/banks.log",        LOG_BANKS);
+    AddLog("logs/gms/commands.log", LOG_COMMANDS);
+    AddLog("logs/weapons.log",      LOG_WEAPONS);
+    AddLog("logs/explode.log",      LOG_EXPLODE);
+    AddLog("logs/gm_help.log",      LOG_GM_HELP);
+    AddLog("logs/gms/critter.log",  LOG_CRITTER);
+    AddLog("logs/getaccess.log",    LOG_GETACCESS);
+    AddLog("logs/cars.log",         LOG_CAR);
+    AddLog("logs/focd.log",         LOG_FOCD);
+    AddLog("logs/debug.log",        LOG_DEBUG);
+    AddLog("logs/follower.log",     LOG_FOLLOWER);
+    AddLog("logs/traders.log",      LOG_TRADERS);
+    AddLog("logs/perks.log",                LOG_PERKS);
+    AddLog("logs/factions.log",             LOG_FACTIONS);
+    AddLog("logs/wmlocations.log",  LOG_WMLOCATIONS);
+
+    LoadConfig("config/ilog.cfg");
+    string@ tmp = GetConfigValue("config/ilog.cfg", "ILog", "OutputDir");
+    if(valid(tmp) && tmp.length() > 0)
+        ilogdir = tmp;
+}
+
+void GMLog(Critter& cr, string& text)
+{
+    _FileWriteString("logs/gms/" + cr.Name + ".log", GetLogHeader() + text + "\n");
+    #ifdef LOG_TO_SERVERLOG
+    Log(GetLogHeader() + text);
+    #endif
+}
+
+void FLog(uint logindex, string& text)
+{
+    f[logindex].open(filenames[logindex], "a");
+    f[logindex].writeString(GetLogHeader() + text + "\n");
+    // f[logindex].flush();
+    #ifdef LOG_TO_SERVERLOG
+    Log(GetLogHeader() + text);
+    #endif
+    f[logindex].close();
+}
+
+// it's bad and ugly, should be replaced by DevConnect...
+void ILog(string& section, string& text)
+{
+    if(ilogdir.length() == 0 || section.length() == 0 || text.length() == 0)
+        return;
+    string filename = ilogdir + "/" + section + "." + ELAPSED_TIME;
+
+    file   ilog;
+    if(ilog.open(filename, "a") >= 0)
+    {
+        ilog.writeString(text + "\n");
+        ilog.close();
+    }
+}
+
+string GetLogHeader()
+{
+    return "[" + GetCurrentDateTimeString() + "] ";
+}
+
+void CloseLogs()
+{
+    for(uint i = 0; i < f.length(); i++)
+        f[i].close();
+}
+#endif

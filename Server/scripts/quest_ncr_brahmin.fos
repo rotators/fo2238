@@ -1,0 +1,217 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_ncr_brahmin.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "npc_planes_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+#include "entire.fos"
+#include "_entires.fos"
+
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+
+#define ALL_CHILDREN_KILLED    (4)
+#define BRAHMIN_KILLED         (7)
+
+void r_SpawnMap(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_Q_BrahminWillow, 1725, 1375, crits);
+    if(loc == 0)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_ncr_westin_quest1_locid, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    map.SetData(MAP_DATA_NCR_BRAHMIN_WILLOW_OWNER, player.Id);
+
+    SendChildrenToSleep(map);
+
+    // Add timer event, to move the critters to their home position.
+    uint[] data = { npc.Id, player.Id };
+    CreateTimeEvent(AFTER(REAL_MINUTE(1)), "e_SpawnNpcs", data, false);
+
+    // Transport player into the quest location
+    player.TransitToMap(map.Id, 0);
+
+    // Quest garbager is not needed in this quest
+    // SetQuestGarbager(0, player.Id, loc, LVAR_q_ncr_westin-quest1, 0);
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_OWNER));
+}
+uint GetOwnerId(Map& map)
+{
+    return map.GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_OWNER);
+}
+
+uint e_SpawnNpcs(array<uint>@ values)
+{
+    uint     npcid = values[0];
+    uint     playerid = values[1];
+
+    Critter@ npc = GetCritter(values[0]);
+    if(!valid(npc))
+        return 0;
+
+    Critter@ player = GetCritter(values[1]);
+    if(!valid(player))
+        return 0;
+
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return 0;
+
+    // Move critters to their correct positions.
+    array<Critter@> children;
+    for(uint i = 0, j = GetChildren(map, children); i < j; i++)
+    {
+        Critter@ child = children[i];
+        uint     dummy = 0;
+        uint8    dir = child.Dir;
+        uint16   hx = child.HexX;
+        uint16   hy = child.HexY;
+        child.GetHomePos(dummy, hx, hy, dir);
+        child.TransitToHex(hx, hy, dir);
+
+        // children[i].Say(SAY_SHOUT,"child found");
+    }
+
+    player.Say(SAY_NETMSG, "Nothing happens for quite some time, then you start to notice loud yelling coming from the south east of the willow.");
+
+    return 0;
+}
+
+// =============================================
+// Demand / Result stuff
+// =============================================
+
+void r_RemoveChildren(Critter& player, Critter@ tray)
+{
+    FlushScreen(player, false, 500);
+    // Show is over, send the children home.
+    array<Critter@> children;
+    for(uint i = 0, j = GetChildren(player.GetMap(), children); i < j; i++)
+        DeleteNpc(children[i]);
+    FlushScreen(player, true, 5000);
+}
+
+// =============================================
+// Critter stuff
+// =============================================
+
+void _Brahmin(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_IDLE, "all_brahmin@_Idle");
+    npc.SetEvent(CRITTER_EVENT_DEAD, "_BrahminDead");
+    _CritSetExtMode(npc, MODE_EXT_NO_SLAVE);
+    _CritSetExtMode(npc, MODE_EXT_PEN_BRAHMIN);
+}
+
+void _BrahminDead(Critter& cr, Critter@ killer)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_ncr_westin_quest1, GetOwnerId(cr.GetMap()));
+    if(var != BRAHMIN_KILLED)
+        var = BRAHMIN_KILLED;
+
+}
+
+
+void _Child(Critter& cr, bool firstTime)
+{
+    DLog("Init child");
+
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_ChildDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+
+    if(firstTime)
+    {
+        Map @map = cr.GetMap();
+        map.SetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN, map.GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN) + 1);
+    }
+}
+
+void _Idle(Critter& npc)
+{
+    if(npc.GetTalkedPlayers(null) > 0)
+        return;
+
+    // WALKING needs to be replaced with RUNNING
+    if(Random(0, 2) == 0)
+        MoveRandom(npc, 12, true);
+    // till next move
+    npc.Wait(Random(25, 10000));
+}
+
+void _ChildDead(Critter& cr, Critter@ killer)
+{
+    Map @map = cr.GetMap();
+    map.SetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN, map.GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN) - 1);
+    if(map.GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN) == 0)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_ncr_westin_quest1, GetOwnerId(map));
+        if(var != BRAHMIN_KILLED)
+            var = ALL_CHILDREN_KILLED;
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, fromCr);
+}
+
+void SendChildrenToSleep(Map& map)
+{
+    array<Entire> entires;
+    if(ParseEntires(map, entires, ENTIRE_NCR_CHILDREN_SLEEP) == 0)
+        return;
+    array<Critter@> children;
+    for(uint i = 0, j = GetChildren(map, children); i < j; i++)
+        children[i].TransitToHex(entires[0].HexX, entires[0].HexY, 0);
+}
+
+uint GetChildren(Map& map, array<Critter@>@ critters)
+{
+    uint num = GetCrittersWithScript(map, 0, FIND_ONLY_NPC | FIND_LIFE, "quest_ncr_brahmin@_Child", "void %s(Critter&,bool)", critters);
+    // DLog("Children found: " + num);
+    return num;
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_OWNER)));
+}
+void CheckChildren(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Children dead: " + cr.GetMap().GetData(MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN));
+}
+
+void PointChildren(Critter& cr, int p0, int p1, int p2)
+{
+    array<Critter@> children;
+    for(uint i = 0, j = GetChildren(cr.GetMap(), children); i < j; i++)
+        children[i].Say(SAY_SHOUT, "Here!");
+}

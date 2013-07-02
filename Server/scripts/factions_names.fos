@@ -1,0 +1,242 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_names.fos
+//
+
+#include "_macros.fos"
+#include "debug_h.fos"
+
+// list of factions names aliases with the string num assigned
+dictionary    NameAliases;
+// list of factions names('official' not aliases) accessed through string id
+array<string> FactionNames;
+
+//
+// Global dictionary holding names that are assigned to specific faction id
+//
+dictionary@ AssignedNames;
+// free faction names (stringid)
+array<int>  UnassignedNames;
+
+//
+// Gets the string number for the given faction name
+//
+// Params:
+//		name - faction name
+//		id - resulting id will be stored here
+// Returns true if found, false otherwise.
+bool GetFactionNameStringId(const string@ name, uint& out id)
+{
+    return NameAliases.get(name, id);
+}
+
+//
+// Retrieves faction name (as a string) fro a given stringId
+//
+bool GetFactionName(uint stringId, string& out name)
+{
+    if(stringId >= FactionNames.length())
+        return false;
+    if(!valid(FactionNames[stringId]))
+        return false;
+    name = FactionNames[stringId];
+    return true;
+}
+
+
+//
+// Retrieves the id of faction with given name
+// Faction has to be registered first
+//
+// Returns true if found, false otherwise
+bool GetFactionId(const string@ name, uint& out id)
+{
+    uint stringId = 0;
+    if(!NameAliases.get(name, stringId))
+        return false;
+
+    return AssignedNames.get(FactionNames[stringId], id);
+}
+
+//
+// Assign given name with specific faction id
+//
+// Params:
+//		- name: desired faction name
+//		- faction: desired faction id
+//		- stringId: id to the FactionNames array
+//
+// Returns REGRESULT_* errorcode
+int AssignFactionName(const string@ name, uint faction, uint& out stringId)
+{
+    if(AssignedNames.exists(name))
+    {
+        NameAliases.get(name, stringId);
+        return REGRESULT_ALREADY_TAKEN;
+    }
+    else
+    {
+        if(!NameAliases.get(name, stringId))
+            return REGRESULT_WRONG_NAME;
+        // in case when alias was used, check if 'real' name pointed by stringId is assigned
+        if(AssignedNames.exists(FactionNames[stringId]))
+            return REGRESULT_ALREADY_TAKEN;
+        // otherwise, assign
+        AssignedNames.set(FactionNames[stringId], faction);
+        WLog("factions", "Unassigned remove: " + stringId + "/" + UnassignedNames.find(stringId));
+        UnassignedNames.removeAt(UnassignedNames.find(stringId));
+        return REGRESULT_SUCCESS;
+    }
+}
+void UnassignFactionName(int stringId, const string& name)
+{
+    AssignedNames.delete(name);
+    UnassignedNames.insertLast(stringId);
+}
+
+//
+// Assigns given faction name number to the given faction
+//
+void AssignFactionNameByStringId(uint faction, uint stringId)
+{
+    if(stringId >= FactionNames.length())
+    {
+        WLog("factions", "Incorrect faction name string id: " + stringId, DEBUG_ERROR);
+        return;
+    }
+    AssignedNames.set(FactionNames[stringId], faction);
+    WLog("factions", "Unassigned remove: " + stringId + "/" + UnassignedNames.find(stringId));
+    UnassignedNames.removeAt(UnassignedNames.find(stringId));
+}
+
+/**
+ * Retrieves the list of string id numbers for all faction names
+ * that are not taken.
+ */
+uint GetUnassignedFactionNames(array<int>& res)
+{
+    for(int i = 0, j = UnassignedNames.length(); i < j; i++)
+    {
+        int stringId = UnassignedNames[i];
+        res.insertLast(1000000 + stringId * 2);
+    }
+    return UnassignedNames.length();
+}
+
+/**
+ * Checks if given name(alias) is free
+ */
+bool IsFactionNameFree(const string& name)
+{
+    int stringId;
+    if(!NameAliases.get(name, stringId))
+        return false;
+    return !AssignedNames.exists(FactionNames[stringId]);
+}
+/**
+ * Checks if given faction name(alias) is valid
+ */
+bool IsFactionNameValid(const string& name)
+{
+    return NameAliases.exists(name);
+}
+
+//
+// Initialize global dictionary with lookup for factions id
+//
+void InitFactionsNames()
+{
+    @AssignedNames = @dictionary();
+    Log("Initializing factions names lookup");
+    ReadMsgStrings("text/engl/fotext.msg", 1000000, 1002000);
+}
+
+//
+// Read msg strings from the specified file to the output array of string objects.
+//
+// Parameters:
+//		fileName - path to the msg file
+//		min, max - range of numbers of the strings we need to read
+//		strings - array which will be filled with strings
+void ReadMsgStrings(string@ fileName, int min, int max)
+{
+    file f;
+    Log("Reading strings from file" + fileName);
+    // Open the file in 'read' mode
+    if(f.open(fileName, "r") >= 0)
+    {
+        // Read the whole file into the string buffer
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+
+        // now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        Log("Read " + lines.length() + " lines");
+
+        int stringId = 0;
+
+        // process the lines
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            string msgStr;
+            int    num;
+
+            // comment
+            if(lines[i].length() <= 2)
+                continue;
+
+            if(ParseMsgString(lines[i], min, max, num, msgStr))
+            {
+                if(num % 2 == 0)
+                {
+                    WLog("factions", "Faction name(" + (stringId + 1) + "): " + msgStr);
+                    FactionNames.insertLast(msgStr);
+                    UnassignedNames.insertLast(stringId);
+                    stringId++;
+                }
+                else
+                {
+                    WLog("factions", "with Alias: " + msgStr);
+                    NameAliases.set(msgStr, stringId - 1);
+                }
+            }
+        }
+    }
+}
+
+//
+// Retrieves string from the line with following format:
+// {number}{}{string}
+// only if the number is within a min, max range.
+//
+bool ParseMsgString(const string& in line, int min, int max, int& out num, string& out msgStr)
+{
+    array<string@>@ parts = split(line, "{");
+    if(parts.length() != 4)
+    {
+        // Log("ERR: Incorrect line format: " + line);
+        return false;
+    }
+    // Log("Processing line: " + line);
+    // for(uint i = 0; i < parts.length(); i++)
+    //	Log(parts[i]);
+    string number = substring(parts[1], 0, parts[1].length() - 1);
+    // Log("Found number: " + number + " in: " + parts[1]);
+    if(!StrToInt(number, num))
+    {
+        Log("ERR: Incorrect number string: " + number);
+        return false;
+    }
+
+    // return msg string if in range
+    if(num >= min && num <= max)
+    {
+        msgStr = substring(parts[3], 0, parts[3].length() - 2);
+        return true;
+    }
+    else
+        return false;
+}

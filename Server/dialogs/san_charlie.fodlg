@@ -1,0 +1,36 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _param p REPUTATION_COMMUNISTS < -200 D or D _param p REPUTATION_VAGRANTS < -200 #
+3 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _var p q_hub_wasteland_band = 3 #
+0 3020 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 R _var p q_hub_wasteland_band = 4 R _param p ST_EXPERIENCE + 250 R _param p REPUTATION_VAGRANTS + 250 R _param p REPUTATION_COMMUNISTS + 250 @
+6 6000 None 0 &
+
+[engl]
+{100}{}{Charlie}
+{1000}{}{Predialogue installations}
+{1010}{}{Hostile}
+{1020}{}{Everything else}
+{2000}{}{I've heard about you. I want nothing to do with your plans.}
+{3000}{}{Something I can do for you?}
+{3010}{}{A man in the Hub, Mick, wants to put together a band. He needs you.}
+{3020}{}{Nope, just checking out the boat.}
+{4000}{}{Sure. Sounds more interesting than this damn boat.}
+{4010}{}{Just like that, you're in?}
+{5000}{}{Why not? Life's too short in this world. You have to enjoy things while you can. }
+{5010}{}{Well thanks for making my life easier. I'll go tell him.}
+{6000}{}{No problem. Don't forget what I just told you.}
+

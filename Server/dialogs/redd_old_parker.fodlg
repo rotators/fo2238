@@ -1,0 +1,65 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p name_mem_npc_player = 1 #
+2 1020 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 D _script quest@d_AtNode 2 5 0 #
+5 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 D _script quest@d_AtNode 2 5 0 #
+5 3020 #
+8 3030 D _item p PID_SPECTACLES > 0 D _var p q_redd_glasses = 0 #
+0 3040 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 D _script quest@d_AtNode 2 5 0 #
+0 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 D _script q@dd 2 5 0 R _script q@rr 2 5 0 #
+0 7020 @
+8 8000 None 0 #
+9 8010 R _item p PID_SPECTACLES - 1 R _param p REPUTATION_REDDING + 25 R _var p q_redd_glasses = 1 R _item p PID_GOLD_NUGGET + 4 R _param p ST_EXPERIENCE + 500 @
+9 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Old Parker}
+{200}{}{You see an old man in washed out rags.}
+{210}{}{This man looks a tad nervous, while scanning the surroundings all the time from left to right. He seems to be nearly blind.}
+{1000}{}{Predialogue installations}
+{1010}{}{known}
+{1020}{}{unkown}
+{2000}{}{What? Who's there? [The old man is looking around, trying to focus you.]}
+{2010}{}{Are you blind? [You wave three fingers in the air.]}
+{2020}{}{What are you doing here, old man?}
+{2030}{}{Goodbye.}
+{3000}{}{Yes, yes, yes, what do you want?@@What do you want?@@What do you want now?}
+{3010}{}{Are you blind? [You wave three fingers in the air.]}
+{3020}{}{What are you doing here, old man?}
+{3030}{}{I've got a pair of glasses for you. [You wave with the object close to his nose.]}
+{3040}{}{Goodbye.}
+{4000}{}{No! ... Yes... Ehw! Maybe a little bit... [He secretly nods.] I don't get younger and with the age coming, my sight was going. I'll tell ya, it's so damn hard to find a pair of glasses nowdays! A pair of not-broken-glasses... What do you want from Old Parker?}
+{4010}{}{What are you doing here, Old Parker?}
+{5000}{}{What I am doing here...}
+{5010}{}{...Something I can help you with?}
+{5020}{}{Enough of this! Goodbye.}
+{6000}{}{[From one moment to the next, he hastly scans the surrounding from left to right and left to right again with his molerat-eyes, trying to see if nobody else is around.] ... Yes, yes, there is something. I have something that needs to be delivered! To Mel Williams in the Saloon.}
+{6010}{}{Go on...}
+{7000}{}{Go to the Saloon, talk with Mel Williams, tell him the Old Parker is sending you, then give him that. [He hastly hands you over something that looks like a gold nugget. It's of unusual size, though.] }
+{7010}{}{Will be done. [You go away.]}
+{7020}{}{Nay, do it yourself. [You throw the gold nugget back to him and leave.]}
+{8000}{}{Oh thank god! [With a fast move, faster than you've expected, he grabs the glasses.] How very friendly of you! [He takes the glasses and places them on his nose, now trying to scan the surrounding again from the left to right and again.] It's... It's not perfect, but much better than before! Ye-haww! }
+{8010}{}{Glad I could help.}
+{9000}{}{How can I ever thank you! ... Do you know how hard it is to find a pair of glasses? Unbelievable! Here, please take this. It's the least I can do. [Old Parker hands you a small leather bag with gold nuggets in it.]}
+{9010}{}{Goodbye.}
+

@@ -1,0 +1,168 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _scripts.fos
+//
+
+#ifndef __SCRIPTS__
+#define __SCRIPTS__
+
+#define SCRIPT_main                          (1)                              // Game main script
+#define SCRIPT_critical_table                (2)                              // Critical table
+#define SCRIPT_worldmap                      (3)                              // Worldmap encaunters
+#define SCRIPT_dialog                        (5)                              // Functions using in Npc dialogs
+#define SCRIPT_explode                       (6)                              // Explode functions
+#define SCRIPT_mob                           ("mob@critter_init")             // Generic mob ai
+#define SCRIPT_fix_boy                       (8)                              // Fix boy
+#define SCRIPT_combat                        (9)                              // Combat
+#define SCRIPT_trader                        ("trader@critter_init")          // Generic Trader
+#define SCRIPT_repair                        (11)                             // Items wear, repair
+#define SCRIPT_replication                   (12)                             // Replication
+#define SCRIPT_casino                        (13)                             // Casino stuff (like Onehanded)
+#define SCRIPT_car                           (14)                             // Cars (Hummer, Buggy, etc)
+#define SCRIPT_base                          (15)                             // Base game
+#define SCRIPT_npc_planes                    (17)                             // Npc planes
+#define SCRIPT_wanted                        (18)                             // Wanted sign
+#define SCRIPT_perks                         (19)                             // Perks
+#define SCRIPT_drugs                         (21)
+#define SCRIPT_all_merchant                  (22)                             // Wasteland Merchants
+#define SCRIPT_quest_warehouse               (40)                             // Quest, Find warehouse
+#define SCRIPT_warehouse_turret              (41)                             // Warehouse, Turret
+#define SCRIPT_bigbro                        (42)
+#define SCRIPT_manufact_alco                 (50)                             // Alcohol manufacture
+#define SCRIPT_all_guard                     (60)                             // Wasteland Guards of Merchants
+#define SCRIPT_den_poorman                   (100)                            // Den, West side, Poorman
+#define SCRIPT_den_barbekky_boy              (104)                            // Den, Bar Bekky, Boy
+#define SCRIPT_den_virgin                    (103)                            // Den, Virginia
+#define SCRIPT_den_hub_bank1                 (124)                            // Den, Bank, Bankir
+#define SCRIPT_den_hub_guard                 (125)                            // Den, Bank, Guards
+#define SCRIPT_den_ghost                     (126)                            // Den, Ghost
+#define SCRIPT_den_triggers                  (199)                            // Den, Triggers
+#define SCRIPT_vaul_guard                    ("vaul_guard@critter_init")      // Vault City, All Guardian
+#define SCRIPT_golden_globes                 (700)                            // New Reno, GoldenGlobes porno studio
+#define SCRIPT_nr_t                          -ray(739)                        // New Reno, Carstop, T-Ray, Chop Shop head.
+#define SCRIPT_repl_bank_banker              (9050)                           // Replication banks, Banker
+#define SCRIPT_repl_bank_guard               (9051)                           // Replication banks, Guard
+#define SCRIPT_repl_bank_keeper              (9052)                           // Replication banks, Store Keeper
+#define SCRIPT_repl_terminal                 (9053)                           // Replication terminal
+#define SCRIPT_repl_hubologist               (9054)                           // Replication hubologist
+#define SCRIPT_repl_turret                   (9055)                           // Replication turret
+#define SCRIPT_repl_hell                     (9060)                           // Replication hell, triggers, turret
+#define SCRIPT_factions_terminal             (9100)                           // generic faction database terminal for factions
+#define SCRIPT_factions_generic              (9101)                           // generic scripts for factions
+#define SCRIPT_factions_common               (9105)                           // common dialog functions
+#define SCRIPT_faction_data                  (9106)                           // for factions functionality
+#define SCRIPT_factions_recognition          (9107)                           // radio recognition system
+#define SCRIPT_factions_generic_bartender    (9109)                           // generic 'greetings' bartender:)
+#define SCRIPT_factions_player               (9110)                           // Player factions
+#define SCRIPT_map_playerfaction_hq          (9200)                           // Generic map script for player faction hq map, some unique scripts can be added too
+#define SCRIPT_bos_lh_guard                  ("bos_lh_guard@critter_init")    // BoS guard
+#define SCRIPT_cathedral_guard               ("cathedral_guard@critter_init") // Cathedral cellar Mutants guard
+#define SCRIPT_navarro_guard                 ("navarro_guard@critter_init")   // Navarro guards
+#define SCRIPT_raiders_guard                 ("raiders_guard@critter_init")   // Raiders guards
+#define SCRIPT_economy                       (9710)                           // "Realistic" economy
+#define SCRIPT_economy_banker                (9711)                           // Banker in the new banks
+#define SCRIPT_bounties                      (9720)                           // functions to keep track of the bounties
+#define SCRIPT_doors                         (9721)                           // auto-doors
+#define SCRIPT_rooms                         (9723)                           // rooms renting
+#define SCRIPT_radiation                     (9724)
+#define SCRIPT_deploy_tent_camp              (9726)                           // Deployable tent camp
+#define SCRIPT_worldmap_locations            (9727)                           // Discovering dynamic locations on worldmap
+#define SCRIPT_prospects                     (9728)                           // Claiming prospects fun
+#define SCRIPT_brahmin_pens                  (9729)
+#define SCRIPT_bounty_poster                 (9900)
+#define SCRIPT_town                          (9901)                           // TC feature
+#define SCRIPT_towns                         (9902)
+#define SCRIPT_cave                          (9903)                           // Cave randomization
+#define SCRIPT_antiblock                     ("antiblock@item_init")          // antiblock trigger and item
+#define SCRIPT_production                    (9730)                           // manager, main module for production
+#define SCRIPT_prod_plant_fruit              (9731)
+#define SCRIPT_prod_rocks_minerals           (9732)
+#define SCRIPT_prod_rocks_ore                (9733)
+#define SCRIPT_prod_barrel_junk              (9734)
+#define SCRIPT_prod_tree_firewood            (9735)
+#define SCRIPT_prod_still_rotgut             (9736)
+#define SCRIPT_prod_table_brahmin            (9737)
+#define SCRIPT_prod_xander_root              (9738)
+#define SCRIPT_prod_broc_flower              (9739)
+#define SCRIPT_prod_flint                    (9740)
+#define SCRIPT_prod_plant_fiber              (9741)
+#define SCRIPT_workbench                     (9760)
+#define SCRIPT_traders                       (9770) // manager, main module for all traders
+#define SCRIPT_trader_drug_dealer            (9771) // drug dealing trader (obsolete)
+#define SCRIPT_trader_container              (9772) // Script for buying containers
+#define SCRIPT_roomkeeper                    (9773) // Generic roomkeeper script
+#define SCRIPT_brahmin_trader                (9774)
+#define SCRIPT_brahmin_traders               (9775)
+#define SCRIPT_trader_zaius                  (9776) // Zaius from BH sells Uranium Ore
+#define SCRIPT_bank_vault_guard              (9800) // Guard who protects the bank vaults
+#define SCRIPT_mercs                         (9811) // Script for hireable followers
+#define SCRIPT_merc                          (9812) // Handles all mercenaries
+#define SCRIPT_patrolroutes                  (9813)
+#define SCRIPT_patrolnodes                   (9814)
+#define SCRIPT_follower                      (9832) // Script for NPC followers
+#define SCRIPT_floyd                         (9999)
+#define SCRIPT_all_brahmin                   ("all_brahmin@critter_init")
+#define SCRIPT_wandering_ghoul               (10001)
+#define SCRIPT_iguana_pete                   (10002)
+#define SCRIPT_pen_brahmin                   ("all_brahmin@_Domesticated")
+#define SCRIPT_junktown_drunkpriest          (10004)
+#define SCRIPT_junktown_guard                ("junktown_guard@critter_init")
+#define SCRIPT_all_brahmin_herdsman          (10006)
+#define SCRIPT_hub_guard                     ("hub_guard@critter_init")
+#define SCRIPT_ncr_guard                     ("ncr_guard@critter_init")
+#define SCRIPT_la_ady_guard                  ("la_ady@critter_init")
+#define SCRIPT_frisco_guard                  ("frisco_guard@critter_init")
+#define SCRIPT_frisco_trader                 (10041)
+#define SCRIPT_den_metzger_guard             ("den_metzger_guard@critter_init")
+#define SCRIPT_prospect_owner                ("prospect_owner@critter_init")
+#define SCRIPT_prospect_guard                ("prospect_guard@critter_init")
+#define SCRIPT_prospect_miner                ("prospect_miner@critter_init")
+#define SCRIPT_factions_vc_q_scoutsf         (10301)     // Quest to scout SF
+#define SCRIPT_item_brahmin_dung             (20001)
+#define SCRIPT_item_bag_container            (20002)
+#define SCRIPT_map_denbus                    (30000)     // Den Business
+#define SCRIPT_map_vcity_hq                  (30015)     // Vault City headquarters
+#define SCRIPT_map_vcity                     (30016)     // Vault City
+#define SCRIPT_map_vcity_bank_vault          (30020)
+#define SCRIPT_map_sad                       (30025)     // Sierra Army Depot
+#define SCRIPT_map_klamath                   (30030)
+#define SCRIPT_map_ncr_downtown              (30042)
+#define SCRIPT_map_mariposa                  (30049)     // Mariposa Military Base
+#define SCRIPT_map_redding                   (30060)     // Main redding map
+#define SCRIPT_map_redding_lost              (30064)     // hq of some cool redding faction
+#define SCRIPT_map_redding_bank_vault        (30065)     // Bank vault under the Redding bank
+#define SCRIPT_map_cathedral                 (30075)     // All Cathedral levels
+#define SCRIPT_map_bos_lh                    (30085)     // Lost Hills bunker
+#define SCRIPT_map_junktown                  (30090)
+#define SCRIPT_map_hub                       (30095)
+#define SCRIPT_map_boneyard                  (30100)
+#define SCRIPT_map_modoc                     (30105)
+#define SCRIPT_map_navarro                   (30109)               // Navarro
+#define SCRIPT_map_navarro_sub1              (30111)               // Navarro Sublevel
+#define SCRIPT_map_broken                    (30115)
+#define SCRIPT_map_gecko                     (30120)
+#define SCRIPT_map_sf_tanker                 (30135)               // tanker, vagrants 'hq'
+#define SCRIPT_map_sf_china                  (30137)               // SF Chinatown
+#define SCRIPT_map_sf_shi                    (30139)               // SF Shi HQ
+#define SCRIPT_map_sf_bos                    (30140)               // sf bos bunker
+#define SCRIPT_map_necropolis                (30145)               // necropolis vault(others in the future)
+#define SCRIPT_map_glow                      (30240)               // self explanatory
+#define SCRIPT_map_raiders_cave_entrance     (30260)               // Raiders Cave Entrance
+#define SCRIPT_map_raiders_cave              (30261)               // Raiders Cave
+#define SCRIPT_map_prospect                  (30291)               // Prospects
+#define SCRIPT_map_raiders_farmhome          (30500)               // Raiders Quest: Farmhome
+#define SCRIPT_map_slaverun                  ("map_slaverun@map_init")
+#define SCRIPT_map_encounter                 (31000)               // generic encounter map-script
+#define SCRIPT_wild_brahmin                  ("all_brahmin@_Wild") // unused?
+#define SCRIPT_map_random_cave               (32000)               // randomly generated caves
+#define SCRIPT_slaverun                      (41000)
+#define SCRIPT_slaverun_slave_hostile        ("slaverun_slave_hostile@critter_init")
+#define SCRIPT_slaverun_slave_normal         ("slaverun_slave_normal@critter_init")
+#define SCRIPT_slaverun_slaver               ("slaverun_slaver@critter_init")
+#define SCRIPT_cheats                        (133700)
+#define SCRIPT_dev_menu                      (133701) // functions for client' devmenu
+
+#define SCRIPT_encounter_guard               ("encounter_guard@critter_init")
+#endif // __SCRIPTS__

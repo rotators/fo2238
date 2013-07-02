@@ -1,0 +1,205 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// achievements.fos
+//
+
+// "How amazing you are today?"
+
+// shared!
+
+#ifndef __ACHIEVEMENTS__
+#define __ACHIEVEMENTS__
+
+#include "_macros.fos"
+#include "achievements_h.fos"
+
+#ifdef __SERVER
+bool AddAchievement(Critter& cr, uint8 achievement)   // Export
+{
+    # ifndef __DEBUG__
+    // only one achievement for authed chars
+    // chars which executed any cheats in past are not allowed to get achievements
+    if((cr.GetAccess() > ACCESS_CLIENT && achievement != ACHIEVEMENT_GM_ABUSE) ||
+       (cr.GetAccess() == ACCESS_CLIENT && HaveAchievement(cr, ACHIEVEMENT_GM_ABUSE)))
+        return(false);
+    # endif
+
+    # ifdef __DEBUG__ // don't remove until feature is ready :)
+    if(!HaveAchievement(cr, achievement))
+    {
+        #  ifndef __DEBUG__
+        // clear all achievements on chars using cheats
+        if(achievement == ACHIEVEMENT_GM_ABUSE)
+        {
+            for(uint a = ACHIEVEMENT_BEGIN; a <= ACHIEVEMENT_END; a++)
+                cr.ParamBase[a] = 0;
+        }
+        #  endif
+
+        DPlayerLog(cr, "Added achievement<" + achievement + ">");
+        SETFLAG(cr.ParamBase[ACHIEVEMENT_BEGIN + achievement / 32], 1 << (achievement % 32));
+        cr.RunClientScript("achievements@_Show", achievement, 0, 0, " ", null);
+
+        return(true);
+    }
+    # endif
+
+    return(false);
+}
+
+bool HaveAchievement(Critter& cr, uint8 achievement)   // Export
+{
+    if(FLAG(cr.Param[ACHIEVEMENT_BEGIN + achievement / 32], 1 << (achievement % 32)))
+        return(true);
+
+    return(false);
+}
+
+# ifdef __DEBUG__
+void send(Critter& cr, int, int, int achievement)
+{
+    if(achievement < ACHIEVEMENT_MIN || achievement > ACHIEVEMENT_MAX)         // uint8
+    {
+        cr.Say(SAY_NETMSG, "No.");
+        return;
+    }
+
+    AddAchievement(cr, achievement);
+}
+# endif // __DEBUG
+#endif  // __SERVER
+
+#ifdef __CLIENT
+
+# include "_client_defines.fos"
+# include "sprite.fos"
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+# define ACHIEVEMENT_SHOWTIME             (45)
+# define ACHIEVEMENT_TITLE_X              (10)
+# define ACHIEVEMENT_TITLE_Y              (5)
+# define ACHIEVEMENT_TITLE_COLOR          (0)
+# define ACHIEVEMENT_TITLE_FONT           (FONT_FALLOUT)
+# define ACHIEVEMENT_TITLE_FLAGS          (0)
+
+# define ACHIEVEMENT_DESCRIPTION_X        (10)
+# define ACHIEVEMENT_DESCRIPTION_Y        (20)
+# define ACHIEVEMENT_DESCRIPTION_COLOR    (0)
+# define ACHIEVEMENT_DESCRIPTION_FONT     (FONT_FALLOUT)
+# define ACHIEVEMENT_DESCRIPTION_FLAGS    (0)
+
+Sprite AchievementSprite;
+class  CAchievement
+{
+    string title;
+    string descr;
+    uint   started;
+
+    CAchievement(string & title, string & descr)
+    {
+        this.title = title;
+        this.descr = descr;
+        this.started = GetTick();
+    }
+
+};
+array<CAchievement@> Achievements;
+
+void DrawAchievements()
+{
+    if(!valid(GetChosen))
+    {
+        if(Achievements.length() > 0)
+            Achievements.resize(0);
+        return;
+    }
+
+    if(AchievementSprite.Id == 0)
+    {
+        if(!AchievementSprite.Load("dialogbox_top.png", PT_ART_INTRFACE))
+            return;
+    }
+
+    for(uint a = 0, aLen = Achievements.length(); a < aLen; a++)
+    {
+        if(GetTick() > Achievements[a].started + (ACHIEVEMENT_SHOWTIME * 1000))
+        {
+            DMessage("Remove achievement[" + a + "]");
+            Achievements.removeAt(a);
+            return;
+        }
+
+        uint x = __ScreenWidth - AchievementSprite.Width - 10;
+        uint y = 10 + (AchievementSprite.Height * a) + (7 * a);
+
+        AchievementSprite.Draw(x, y);
+        DrawText(Achievements[a].title,
+                 x + ACHIEVEMENT_TITLE_X, y + ACHIEVEMENT_TITLE_Y,
+                 AchievementSprite.Width - ACHIEVEMENT_TITLE_X,
+                 AchievementSprite.Height - ACHIEVEMENT_TITLE_Y,
+                 ACHIEVEMENT_TITLE_COLOR, ACHIEVEMENT_TITLE_FONT,
+                 ACHIEVEMENT_TITLE_FLAGS);
+        DrawText(Achievements[a].descr,
+                 x + ACHIEVEMENT_DESCRIPTION_X, y + ACHIEVEMENT_DESCRIPTION_Y,
+                 AchievementSprite.Width - ACHIEVEMENT_DESCRIPTION_X,
+                 AchievementSprite.Height - ACHIEVEMENT_DESCRIPTION_Y,
+                 ACHIEVEMENT_DESCRIPTION_COLOR, ACHIEVEMENT_DESCRIPTION_FONT,
+                 ACHIEVEMENT_DESCRIPTION_FLAGS);
+    }
+}
+
+bool HaveAchievement(uint8 achievement)   // Export
+{
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return(false);
+
+    if(FLAG(chosen.Param[ACHIEVEMENT_BEGIN + achievement / 32], 1 << (achievement % 32)))
+        return(true);
+
+    return(false);
+}
+
+void _Show(int achievement, int, int, string@, array<int>@)
+{
+    if(achievement < ACHIEVEMENT_MIN || achievement > ACHIEVEMENT_MAX)
+        return;
+
+    DMessage("Got achievement: " + achievement);
+
+    if(__ConfigDisplayAchievements == 0)
+        return;
+
+    // prepare text for 1 and 2 setting
+
+    string title = "Achievement " + achievement + " [Title]";
+    string descr = "Achievement " + achievement + " [Description]";
+
+    if(IsMsgStr(TEXTMSG_TEXT, ACHIEVEMENT_MSG_TITLE(achievement)))
+    {
+        title = GetMsgStr(TEXTMSG_TEXT, ACHIEVEMENT_MSG_TITLE(achievement));
+        stringReplaceText(title, "\\n", "\n");
+    }
+
+    if(IsMsgStr(TEXTMSG_TEXT, ACHIEVEMENT_MSG_DESCR(achievement)))
+    {
+        descr = GetMsgStr(TEXTMSG_TEXT, ACHIEVEMENT_MSG_DESCR(achievement));
+        stringReplaceText(descr, "\\n", "\n");
+    }
+
+    // show it
+
+    PlaySound("levelup.acm");
+    if(__ConfigDisplayAchievements == 1)
+    {
+        Message("Achievement: " + title);
+        Message(descr);
+    }
+    else
+        Achievements.insertLast(@CAchievement(title, descr));
+}
+#endif // __CLIENT
+#endif // __ACHIEVEMENTS__ //

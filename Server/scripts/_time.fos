@@ -1,0 +1,40 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _time.fos
+//
+
+#ifndef __TIME__
+#define __TIME__
+
+// Time
+#define ELAPSED_TIME          (__FullSecond)
+
+#define REAL_MS               # (x)              ((x) * __TimeMultiplier / 1000)
+#define REAL_SECOND           # (x)          ((x) * __TimeMultiplier)
+#define REAL_MINUTE           # (x)          ((x) * __TimeMultiplier * 60)
+#define REAL_HOUR             # (x)            ((x) * __TimeMultiplier * 3600)
+#define REAL_DAY              # (x)             ((x) * __TimeMultiplier * 86400)
+#define REAL_WEEK             # (x)            ((x) * __TimeMultiplier * 604800)
+#define REAL_MONTH            # (x)           ((x) * __TimeMultiplier * 2592000)
+#define REAL_YEAR             # (x)            ((x) * __TimeMultiplier * 31536000)
+
+#define GAME_SECOND           # (x)          ((x))
+#define GAME_MINUTE           # (x)          ((x) * 60)
+#define GAME_HOUR             # (x)            ((x) * 3600)
+#define GAME_DAY              # (x)             ((x) * 86400)
+#define GAME_WEEK             # (x)            ((x) * 604800)
+#define GAME_MONTH            # (x)           ((x) * 2592000)
+#define GAME_YEAR             # (x)            ((x) * 31536000)
+
+#define REPLICATION_SECOND    # (x)          ((x))
+#define REPLICATION_MINUTE    # (x)          ((x) * 60)
+#define REPLICATION_HOUR      # (x)            ((x) * 3600)
+#define REPLICATION_DAY       # (x)             ((x) * 86400)
+#define REPLICATION_WEEK      # (x)            ((x) * 604800)
+#define REPLICATION_MONTH     # (x)           ((x) * 2592000)
+#define REPLICATION_YEAR      # (x)            ((x) * 31536000)
+
+#define AFTER                 # (x)                (ELAPSED_TIME + (x))
+#endif

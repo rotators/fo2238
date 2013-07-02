@@ -1,0 +1,517 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_combat.fos
+//
+
+#include "_client_defines.fos"
+#include "_macros.fos"
+#include "combat_h.fos"
+#include "lexems_h.fos"
+
+import uint8 GetCurrentAim() from "client_keybinds";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// To-hit chance.
+int to_hit(CritterCl& chosen, CritterCl& target, ProtoItem& weapon, uint8 weaponMode)
+{
+    int use = _WeaponModeUse(weaponMode);
+    int hitLocation = _WeaponModeAim(weaponMode);
+    if(hitLocation == 0 || hitLocation == 9)
+    {
+        if(_WeaponAim(weapon, use))
+            hitLocation = GetCurrentAim();
+    }
+
+    if(use > 2)
+        return 0;
+    if(target.IsDead())
+        return 0;
+    if(!chosen.IsLife())
+        return 0;
+
+    ItemCl@    realWeapon = _CritGetItemHand(chosen);
+    ProtoItem@ ammo = null;
+
+    if(valid(realWeapon) && _WeaponRound(weapon, use) > 0)
+    {
+        if(realWeapon.AmmoCount == 0)
+            return 0;
+        @ammo = GetProtoItem(realWeapon.AmmoPid);
+        if(!valid(ammo))
+            return 0;
+    }
+
+    uint skillNum = _WeaponSkill(weapon, use);
+    int  wpnMaxDist = _WeaponMaxDist(weapon, use);
+    if(skillNum == SK_THROWING)
+    {
+        wpnMaxDist = MIN(wpnMaxDist, 3 * MIN(int(10), chosen.Stat[ST_STRENGTH]));
+        wpnMaxDist += 3 * (chosen.Perk[PE_HEAVE_HO] + chosen.Perk[PE_HEAVE_HO_II]);
+    }
+
+    int dist = GetCrittersDistantion(chosen, target);
+    if(dist > wpnMaxDist)
+        return 0;
+
+    int toHit = int(chosen.Skill[skillNum]);
+    int weaponPerk = weapon.Weapon_Perk;
+    int blockers = 0;
+
+    if(skillNum != SK_UNARMED && skillNum != SK_MELEE_WEAPONS)
+    {
+        // cr.Say(SAY_NETMSG, "Applying range modifiers.");
+        // ranged attack modifiers
+        int distmod1 = 2; // used for initial weapon bonus
+        int distmod2 = 0; // minimal distance
+        if(weaponPerk == WEAPON_PERK_LONG_RANGE)
+            distmod1 = 4;
+        else if(weaponPerk == WEAPON_PERK_SCOPE_RANGE)
+        {
+            distmod1 = 5;
+            distmod2 = 8;
+        }
+
+        int perception = chosen.Stat[ST_PERCEPTION];
+        int acc = dist;
+
+        if(dist < distmod2)
+            acc += distmod2;
+        else
+        {
+            if(chosen.IsPlayer())
+                acc -= (perception - 2) * distmod1;              // we want to keep it, because fo2238 might use it to display NPCs chance (via possessing)
+            else
+                acc -= perception * distmod1;
+        }
+
+        if(-2 * perception > acc)
+            acc = -2 * perception;
+
+        acc -= 2 * chosen.Perk[PE_SHARPSHOOTER];
+
+        if(acc >= 0)
+        {
+            if(chosen.Damage[DAMAGE_EYE] != 0)
+                acc *= -12;
+            else
+                acc *= -4;
+        }
+        else
+            acc *= -4;
+
+        toHit += acc;
+
+        // Map@ map = chosen.GetMap();
+        blockers = GetCrittersPath(chosen.HexX, chosen.HexY, target.HexX, target.HexY, 0.0f, dist, FIND_LIFE, null);   // + map
+        if(!target.IsKnockout())
+            blockers--;
+        toHit -= 10 * blockers;
+    } // end range modifiers
+
+    if(!(weapon.Weapon_IsUnarmed) && chosen.Trait[TRAIT_ONE_HANDER] != 0 && valid(realWeapon))
+        toHit += (FLAG(weapon.Flags, ITEM_TWO_HANDS) ? -40 : 20);
+
+    int handlingStrength = chosen.Stat[ST_STRENGTH];
+    int reqStrength = weapon.Weapon_MinStrength;
+    if(chosen.Perk[PE_WEAPON_HANDLING] != 0)
+        handlingStrength += 2;
+    if(handlingStrength < reqStrength)
+        toHit -= (reqStrength - handlingStrength) * 20;
+    if(weaponPerk == WEAPON_PERK_ACCURATE)
+        toHit += 20;
+
+    int acmod = target.GetAC(hitLocation == HIT_LOCATION_HEAD || hitLocation == HIT_LOCATION_EYES);
+    if(valid(ammo))
+        acmod += ammo.Ammo_AcMod;
+    if(acmod > 0)
+        toHit -= acmod;
+    // TODO: tohit+=15 if target is multihex
+    // TODO: light penalty
+
+    if(chosen.Damage[DAMAGE_EYE] != 0)
+        toHit -= 25;
+    if(target.IsKnockout())
+        toHit += 40;
+    if(target.GetMultihex() > 0)
+        toHit += 15;
+
+    int hitMod = GetHitAim(hitLocation);
+    if(skillNum == SK_MELEE_WEAPONS || skillNum == SK_UNARMED)
+        hitMod /= 2;
+    toHit -= hitMod;
+    toHit = CLAMP(toHit, 5, 95);
+    if(chosen.Timeout[TO_SLEEPY] > 0 && chosen.Param[TO_SLEEPY_STOPPED] == -1 && chosen.Param[ST_MINIGAME_DATA] == 0)
+    {
+        toHit = 5;
+    }
+
+    return toHit;
+}
+
+uint GetHitAim(int hitLocation)
+{
+    switch(hitLocation)
+    {
+    case HIT_LOCATION_NONE:
+        break;
+    case HIT_LOCATION_UNCALLED:
+        break;
+    case HIT_LOCATION_TORSO:
+        return __HitAimTorso;
+    case HIT_LOCATION_EYES:
+        return __HitAimEyes;
+    case HIT_LOCATION_HEAD:
+        return __HitAimHead;
+    case HIT_LOCATION_LEFT_ARM:
+    case HIT_LOCATION_RIGHT_ARM:
+        return __HitAimArms;
+    case HIT_LOCATION_GROIN:
+        return __HitAimGroin;
+    case HIT_LOCATION_RIGHT_LEG:
+    case HIT_LOCATION_LEFT_LEG:
+        return __HitAimLegs;
+    default:
+        break;
+    }
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Override aim location set by player through targetting screen or simple click on target.
+void hit_aim(uint8& aim)
+{
+    if(0 < aim && aim < 9)
+        return;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+
+    ItemCl@ item = chosen.GetItem(0, SLOT_HAND1);
+    if(valid(item))
+    {
+        uint8 use = _WeaponModeUse(item.Mode);
+        if(!_WeaponAim(item.Proto, use))
+            return;
+    }
+    if(chosen.Trait[TRAIT_FAST_SHOT] != 0)
+        return;
+
+    uint8 current_aim = GetCurrentAim();
+    if(current_aim != HIT_LOCATION_UNCALLED)
+        aim = current_aim;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Combat results.
+void combat_result(array<uint>& data)
+{
+    uint datalen = data.length();
+    if(datalen == 0)
+        return;
+    if(data[0] != datalen)
+        return;
+
+    // [23:49] <+cvet> Okay. __CombatMessagesType, 0 - brief (default), 1 - verbose
+    // note: verbose is default, afaik
+
+    uint current = 1;
+    /*
+       string debugsay;
+       for (uint i=0;i<datalen;i++)
+       {
+       debugsay+=data[i];
+       if (i+1 != datalen) debugsay+=", ";
+       }
+
+       Message(debugsay);
+     */
+    while(current < datalen)
+    {
+        int        damage = -1;
+        uint       effect = 0;
+        uint       loc = 0;
+        int        message = -1;
+
+        uint       mode = data[current++];
+        uint       who = data[current++];
+        uint       who2;
+        CritterCl@ trueTarget = null;
+
+        CritterCl@ cr = GetCritter(who);
+        CritterCl@ chosen = GetChosen();
+
+        bool       self = (who == GetChosen().Id);
+
+        string     name = "error0";
+        if(valid(cr))
+        {
+            if(!self)
+            {
+                if(IsLexem(cr, "$name"))
+                {
+                    name = GetLexem(cr, "$name");
+                    name = FormatTags(name, "");
+                }
+                else
+                    name = cr.Name;
+            }
+            else
+                name = GetMsgStr(TEXTMSG_COMBAT, chosen.Stat[ST_GENDER] == GENDER_MALE ? 506 : 556);
+        }
+
+        uint offset;
+        if(self)
+        {
+            if(cr.Stat[ST_GENDER] == GENDER_MALE)
+                offset = 506;
+            else
+                offset = 556;
+        }
+        else
+        {
+            if(cr.Stat[ST_GENDER] == GENDER_MALE)
+                offset = 606;
+            else
+                offset = 706;
+        }
+
+        string result;
+
+        // reading and preparing the data:
+        switch(mode)
+        {
+        case CMSG_CRIT_MISS:
+            effect = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + 8);
+            result = ReplaceText(result, "%s", name);
+            break;
+        case CMSG_CRIT_MISS_DAMAGE:
+            effect = data[current++];
+            damage = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 28 : 27));
+            result = ReplaceText(result, "%s", name);
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_HIT:
+        case CMSG_HIT_DEAD:
+            damage = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 7 : (damage != 0 ? 17 : 21)));
+            result = ReplaceText(result, "%s", name);
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_AIMED_HIT:
+        case CMSG_AIMED_HIT_DEAD:
+            loc = data[current++];
+            damage = data[current++];
+            // Message("loc,damage"+loc+","+damage);
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 6 : (damage != 0 ? 16 : 20)));
+            result = ReplaceText(result, "%s", name);
+            // Message("mess #"+(1000+cr.CrTypeAlias*10+loc-1)+"="+GetMsgStr(TEXTMSG_COMBAT,1000+cr.CrTypeAlias*10+loc-1));
+            result = ReplaceText(result, "%s", GetMsgStr(TEXTMSG_COMBAT, 1000 + cr.CrTypeAlias * 10 + loc - 1));
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_CRIT_HIT:
+            damage = data[current++];
+            effect = data[current++];
+            message = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 14 : (damage != 0 ? 18 : 22)));
+            result = ReplaceText(result, "%s", name);
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_CRIT_AIMED_HIT:
+            loc = data[current++];
+            damage = data[current++];
+            effect = data[current++];
+            message = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 5 : (damage != 0 ? 15 : 19)));
+            result = ReplaceText(result, "%s", name);
+            result = ReplaceText(result, "%s", GetMsgStr(TEXTMSG_COMBAT, 1000 + cr.CrTypeAlias * 10 + loc - 1));
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_CRIT_HIT_DEAD:
+            damage = data[current++];
+            effect = data[current++] & HF_BYPASS_ARMOR;
+            message = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 14 : (damage != 0 ? 18 : 22)));
+            result = ReplaceText(result, "%s", name);
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_CRIT_AIMED_HIT_DEAD:
+            loc = data[current++];
+            damage = data[current++];
+            effect = data[current++] & HF_BYPASS_ARMOR;
+            message = data[current++];
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + (damage > 1 ? 5 : (damage != 0 ? 15 : 19)));
+            // Message("loc,damage"+loc+","+damage);
+            // Message("mess #"+(1000+cr.CrTypeAlias*10+loc-1)+"="+GetMsgStr(TEXTMSG_COMBAT,1000+cr.CrTypeAlias*10+loc-1));
+            result = ReplaceText(result, "%s", name);
+            result = ReplaceText(result, "%s", GetMsgStr(TEXTMSG_COMBAT, 1000 + cr.CrTypeAlias * 10 + loc - 1));
+            if(damage > 1)
+                result = ReplaceText(result, "%d", damage);
+            break;
+        case CMSG_OOPS:
+            who2 = data[current++]; // who2 was hit instead of who
+            // +2 "... was hit instead of you!"
+            // +3 "... was hit instead of ...!"
+            @trueTarget = GetCritter(who2);
+            if(self)     // i was original target
+            {
+                result = GetMsgStr(TEXTMSG_COMBAT, (cr.Stat[ST_GENDER] == GENDER_MALE ? 608 : 708));
+                string nameTrue = "something";
+                if(valid(trueTarget))
+                    nameTrue = trueTarget.Name;
+                result = ReplaceText(result, "%s", nameTrue);
+            }
+            else
+            {
+                // i was not original target
+                result = GetMsgStr(TEXTMSG_COMBAT, offset + 3);
+                if(who2 == GetChosen().Id)
+                    result = ReplaceText(result, "%s", GetMsgStr(TEXTMSG_COMBAT, chosen.Stat[ST_GENDER] == GENDER_MALE ? 506 : 556));
+                else
+                {
+                    string nameTrue = "something";
+                    if(valid(trueTarget))
+                        nameTrue = trueTarget.Name;
+                    result = ReplaceText(result, "%s", nameTrue);
+                }
+                result = ReplaceText(result, "%s", name);
+            }
+
+            break;
+        case CMSG_MISS:
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + 9);
+            result = ReplaceText(result, "%s", name);
+            break;
+        case CMSG_HIT_RANDOMLY:
+            result = GetMsgStr(TEXTMSG_COMBAT, offset + 9);
+            result = ReplaceText(result, "%s", name);
+            result += GetMsgStr(TEXTMSG_COMBAT, 108) + GetMsgStr(TEXTMSG_COMBAT, offset - 306 + 20);
+        default:
+            break;
+        }
+
+        bool           isVerbose = false;   // disabled until new messages are prepared // (__CombatMessagesType == 0);
+        // bool isVerbose=true;
+        array<string@> ext;
+        string @ floatExt = "";
+        if(message != -1 && isVerbose)     // must be critical hit
+        {
+            result += GetMsgStr(TEXTMSG_COMBAT, message);
+        }
+        else if(effect != 0)
+        {
+            offset -= 306;
+            if(mode > CMSG_CRIT_MISS_DAMAGE)     // hit flags
+            {
+                if(FLAG(effect, HF_KNOCKOUT))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset));
+                if(FLAG(effect, HF_KNOCKDOWN))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 1));
+                if(FLAG(effect, HF_CRIPPLED_LEFT_LEG))
+                {
+                    floatExt += "\ncrippled left leg";
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 2));
+                }
+                if(FLAG(effect, HF_CRIPPLED_RIGHT_LEG))
+                {
+                    floatExt += "\ncrippled right leg";
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 3));
+                }
+                if(FLAG(effect, HF_CRIPPLED_LEFT_ARM))
+                {
+                    floatExt += "\ncrippled left arm";
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 4));
+                }
+                if(FLAG(effect, HF_CRIPPLED_RIGHT_ARM))
+                {
+                    floatExt += "\ncrippled right arm";
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 5));
+                }
+                if(FLAG(effect, HF_BLINDED))
+                {
+                    floatExt += "\nblinded";
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 6));
+                }
+                // if(FLAG(effect,HF_DEATH)) ext.insertLast( GetMsgStr(TEXTMSG_COMBAT,offset)); // this is handled elsewhere
+                // if(FLAG(effect,HF_ON_FIRE)) ext.insertLast(GetMsgStr(TEXTMSG_COMBAT,offset+10)); // not used
+                if(FLAG(effect, HF_BYPASS_ARMOR))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 11));
+                if(FLAG(effect, HF_DROPPED_WEAPON))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 14));                     // not used
+                if(FLAG(effect, HF_LOST_NEXT_TURN))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 15));
+                if(FLAG(effect, HF_RANDOM))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 21));
+            }
+            else
+            {
+                if(FLAG(effect, MF_KNOCKED_DOWN))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 1));
+                // if(FLAG(effect,MF_ON_FIRE)) ext.insertLast(GetMsgStr(TEXTMSG_COMBAT,offset+10)); // not used
+                if(FLAG(effect, MF_WEAPON_EXPLODED))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 12));
+                if(FLAG(effect, MF_WEAPON_DESTROYED))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 13));
+                if(FLAG(effect, MF_WEAPON_DROPPED))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 14));
+                if(FLAG(effect, MF_LOST_NEXT_TURN))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 15));
+                if(FLAG(effect, MF_HIT_SELF))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 16));
+                if(FLAG(effect, MF_LOST_REST_OF_AMMO))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 17));
+                if(FLAG(effect, MF_FIRED_DUD_SHOT))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 18));
+                if(FLAG(effect, MF_HURT_SELF))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 19));
+                // if(FLAG(effect,MF_HIT_RANDOMLY)) ext.insertLast( GetMsgStr(TEXTMSG_COMBAT,offset+20)); // this is handled elsewhere
+                if(FLAG(effect, MF_CRIPPLED_RANDOM_LIMB))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 21));
+                if(FLAG(effect, MF_WAS_KILLED))
+                    ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 7));
+            }
+            offset += 306;
+        }
+
+        if(8 <= mode && mode <= 11 && (!isVerbose || message == -1))
+            ext.insertLast(GetMsgStr(TEXTMSG_COMBAT, offset + 7 - 306));
+
+        for(uint m = 0, n = ext.length(); m < n; m++)
+        {
+            if(m == n - 1)
+                result += GetMsgStr(TEXTMSG_COMBAT, 108);
+            else
+                result += ", ";
+            result += ext[m];
+        }
+
+        result += ".";
+
+        Message(result, FOMB_COMBAT_RESULT);
+
+        if(8 <= mode && mode <= 11 && isVerbose && message != -1)
+            Message(name + " " + GetMsgStr(TEXTMSG_COMBAT, offset + 7 - 306) + ".", FOMB_COMBAT_RESULT);
+
+        // On head indication  <-- whatever it does
+        if(__DamageHitDelay > 0 && (damage > 0 || floatExt.length() > 0))
+        {
+            if(damage < 1)
+            {
+                @floatExt = substring(floatExt, 1, floatExt.length() - 1);
+                MapMessage(floatExt, cr.HexX, cr.HexY, __DamageHitDelay, __ConfigDamageHitColor, true, Random(__ConfigDamageHitOffXfrom, __ConfigDamageHitOffXto), Random(__ConfigDamageHitOffYfrom, __ConfigDamageHitOffYto));
+            }
+            else
+                MapMessage("-" + damage + floatExt, cr.HexX, cr.HexY, __DamageHitDelay, __ConfigDamageHitColor, true, Random(__ConfigDamageHitOffXfrom, __ConfigDamageHitOffXto), Random(__ConfigDamageHitOffYfrom, __ConfigDamageHitOffYto));
+        }
+    }
+}

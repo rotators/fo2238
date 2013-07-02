@@ -1,0 +1,99 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 #
+8 1020 D _var p event_outfitted = 1 #
+2 1030 @
+2 2000 None 0 #
+3 2010 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_LEATHER_ARMOR_MK_II + 1 R _item p PID_223_PISTOL + 1 R _item p PID_223_FMJ + 100 R _script dialog@r_ToHeal 0  #
+3 2020 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_COMBAT_ARMOR + 1 R _item p PID_HK_P90C + 1 R _item p PID_10MM_AP + 144 R _item p PID_10MM_JHP + 288 R _script dialog@r_ToHeal 0  #
+3 2030 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_COMBAT_ARMOR_MK_II + 1 R _item p PID_PANCOR_JACKHAMMER + 1 R _item p PID_SHOTGUN_SHELLS + 160 R _script dialog@r_ToHeal 0  #
+3 2040 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_LEATHER_ARMOR_MK_II + 1 R _item p PID_SNIPER_RIFLE + 1 R _item p PID_223_FMJ + 100 R _script dialog@r_ToHeal 0  #
+3 2050 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_METAL_ARMOR_MK_II + 1 R _item p PID_LIGHT_SUPPORT_WEAPON + 1 R _item p PID_223_FMJ + 220 R _script dialog@r_ToHeal 0  #
+3 2060 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_METAL_ARMOR_MK_II + 1 R _item p PID_MINIGUN + 1 R _item p PID_5MM_AP + 240 R _item p PID_5MM_JHP + 330 R _script dialog@r_ToHeal 0  #
+3 2070 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_METAL_ARMOR + 1 R _item p PID_ROCKET_LAUNCHER + 1 R _item p PID_EXPLOSIVE_ROCKET + 9 R _item p PID_ROCKET_AP + 5 R _script dialog@r_ToHeal 0  #
+3 2080 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_LEATHER_ARMOR_MK_II + 1 R _item p PID_LASER_RIFLE + 1 R _item p PID_MICRO_FUSION_CELL + 100 R _script dialog@r_ToHeal 0  #
+3 2090 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_COMBAT_ARMOR_MK_II + 1 R _item p PID_PLASMA_RIFLE + 1 R _item p PID_MICRO_FUSION_CELL + 100 R _script dialog@r_ToHeal 0  #
+3 2100 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_BROTHERHOOD_COMBAT_ARMOR + 1 R _item p PID_POWER_FIST + 1 R _item p PID_SMALL_ENERGY_CELL + 50 R _item p PID_SUPER_STIMPAK + 4 R _script dialog@r_ToHeal 0  #
+3 2110 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_BROTHERHOOD_COMBAT_ARMOR + 1 R _item p PID_SUPER_SLEDGE + 1 R _item p PID_SUPER_STIMPAK + 4 R _script dialog@r_ToHeal 0  #
+3 2120 D _var p event_outfitted = 0 R _var p event_outfitted = 1 R _item p PID_COMBAT_ARMOR_MK_II + 1 R _item p PID_PLASMA_GRENADE + 15 R _item p PID_FRAG_GRENADE + 25 R _script dialog@r_ToHeal 0  #
+0 2130 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _item p PID_CIGARETTES + 2 #
+6 4020 R _item p PID_NUKA_COLA + 2 #
+7 4030 R _item p PID_SUPER_STIMPAK + 2 #
+0 4040 @
+5 5000 None 0 #
+5 5010 R _item p PID_CIGARETTES + 2 #
+6 5020 R _item p PID_NUKA_COLA + 2 #
+7 5030 R _item p PID_SUPER_STIMPAK + 2 #
+0 5040 @
+6 6000 None 0 #
+5 6010 R _item p PID_CIGARETTES + 2 #
+6 6020 R _item p PID_NUKA_COLA + 2 #
+7 6030 R _item p PID_SUPER_STIMPAK + 2 #
+0 6040 @
+7 7000 None 0 #
+5 7010 R _item p PID_CIGARETTES + 2 #
+6 7020 R _item p PID_NUKA_COLA + 2 #
+7 7030 R _item p PID_SUPER_STIMPAK + 2 #
+0 7040 @
+8 8000 None 0 @
+9 9000 None 0 &
+
+[engl]
+{100}{}{Outfitter}
+{1000}{}{Preddialogue settings}
+{1010}{}{Deprecated, do not use.}
+{1020}{}{Has taken gear}
+{1030}{}{ }
+{2000}{}{Hello there. What  do you need?}
+{2010}{}{The pistolero outfit (.223 Pistol).}
+{2020}{}{The infantry outfit (P90).}
+{2030}{}{The Close Quarter Battle outfit (Pancor Jackhammer).}
+{2040}{}{The sniper outfit (Sniper Rifle).}
+{2050}{}{The support soldier outfit (Light Support Weapon).}
+{2060}{}{The heavy gunner outfit (Minigun).}
+{2070}{}{The demolition man outfit (Rocket Launcher).}
+{2080}{}{The energy sniper outfit (Laser Rifle).}
+{2090}{}{The energy soldier outfit (Plasma Rifle).}
+{2100}{}{The unarmed outfit (Power Fist).}
+{2110}{}{The melee outfit (Super Sledge).}
+{2120}{}{The thrower outfit (Grenades).}
+{2130}{}{Nothing.}
+{3000}{}{Here you go.}
+{3010}{}{I need healing supplies.}
+{3020}{}{[Exit]}
+{4000}{}{What do you need?}
+{4010}{}{Two cigarettes.}
+{4020}{}{Two bottles of Nuka Cola.}
+{4030}{}{Two super stimpaks.}
+{4040}{}{[Exit]}
+{5000}{}{Here, two cigarettes. What else?}
+{5010}{}{Two cigarettes.}
+{5020}{}{Two bottles of Nuka Cola.}
+{5030}{}{Two super stimpaks.}
+{5040}{}{[Exit]}
+{6000}{}{Here, two bottles of Nuka Cola.}
+{6010}{}{Two cigarettes.}
+{6020}{}{Two bottles of Nuka Cola.}
+{6030}{}{Two super stimpaks.}
+{6040}{}{[Exit]}
+{7000}{}{Here, two super stimpaks.}
+{7010}{}{Two cigarettes.}
+{7020}{}{Two bottles of Nuka Cola.}
+{7030}{}{Two super stimpaks.}
+{7040}{}{[Exit]}
+{8000}{}{You've already received your gear. Next!}
+{9000}{}{I am deprecated. Sorry.
+}
+

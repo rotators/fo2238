@@ -1,0 +1,1058 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_autowall.fos
+//
+
+// mapper's autowall feature
+// using scypior's developers' menu for client
+// Compile with -mapper switch
+
+#include "_mapper_macros.fos"
+#include "_defines.fos"
+#include "mapper_gui.fos"
+#include "setentry.fos"
+#include "strtoint_h.fos"
+#include "mapper_plugin_h.fos"
+
+// ini sections
+#define SECTION_NONE                    (0)
+#define SECTION_TILE_GROUPS             (1)
+#define SECTION_ROOF_GROUPS             (2)
+#define SECTION_WALL_SECTIONS           (3)
+#define SECTION_HORIZONTAL_INCIDENTS    (4)
+#define SECTION_VERTICAL_INCIDENTS      (5)
+#define SECTION_SET                     (6)
+
+#define DIK_AUTOWALL                    (DIK_A)
+
+#define WALL_NW                         (0)
+#define WALL_SE                         (1)
+#define WALL_NE                         (2)
+#define WALL_SW                         (3)
+
+#define AUTOWALL_WALLS                  (0)
+#define AUTOWALL_PATH                   (1)
+
+#define SGN_ODD                         # (x) ((x) > 0 ? ((x) % 2 == 1 ? 1 : 0) : ((-(x)) % 2 == 1 ? -1 : 0))
+
+class CContextButton : CButton
+{
+    uint16        hexX;
+    uint16        hexY;
+    uint16        tileX;
+    uint16        tileY;
+    MapperObject@ object;
+
+    CContextButton(int x, int y, string caption)
+    {
+        super(x, y, caption);
+        hexX = 0;
+        hexY = 0;
+        tileX = 0;
+        tileY = 0;
+        @object = null;
+    }
+
+    //
+    // Assign hex
+    //
+    void SetHex(uint16 x, uint16 y)
+    {
+        this.hexX = x;
+        this.hexY = y;
+    }
+
+    void SetTile(uint16 x, uint16 y)
+    {
+        this.tileX = x;
+        this.tileY = y;
+    }
+
+    void SetObject(MapperObject@ obj)
+    {
+        @this.object = obj;
+    }
+};
+
+
+class CSomeButton : CContextButton
+{
+    CSomeButton(int x, int y)
+    {
+        super(x, y, "button");
+    }
+
+    void Click()
+    {
+        Message("clicked!");
+    }
+};
+
+
+//
+// Left-click context menu
+//
+class CContextMenu : Control
+{
+    CButton@     title;
+    CSomeButton@ some;
+
+    CContextMenu(IGuiManager@ manager)
+    {
+        int top = 0;
+        super(0, 0, 119, 30);
+        visible = false;
+
+        @title = CButton(0, top, "caption");
+        title.Disable();
+        AddControl(@title);
+        @some = CSomeButton(0, top + 30);
+        AddControl(@some);
+    }
+
+    void Show(int x, int y)
+    {
+        Control::Show(x, y);
+        Enable();
+    }
+
+    bool MouseUp(int click)
+    {
+        if(!IsInside(__MouseX, __MouseY))
+        {
+            visible = false;
+            active = false;
+        }
+        return Control::MouseUp(click);
+    }
+};
+
+#define SECT_WALL_H1                    (5001) // long piece
+#define SECT_WALL_H2                    (5003) // short piece
+#define SECT_WALL_V1                    (5018)
+#define SECT_WALL_V2                    (5015)
+
+uint[] wallsNW = { SECT_WALL_H1, SECT_WALL_H2 };
+uint[] wallsSE = { SECT_WALL_H1, SECT_WALL_H2 };
+uint[] wallsNE = { SECT_WALL_V1, SECT_WALL_V2 };
+uint[] wallsSW = { SECT_WALL_V1, SECT_WALL_V2 };
+uint[] cornerN = { 5020, 0 };
+uint[] cornerS = { 5022, 5003 };
+uint[] cornerE = { 5021, 0 };
+uint[] cornerW = { 5019, 5003 };
+
+int[] autowallData = { 0, 0, int(0xFF00FF00), 0, 0, int(0xFF00FF00) };
+int[] autowallRoomData = { 0, 0, int(0xFF00FF00), 0, 0, int(0xFF00FF00), 0, 0, int(0xFF00FF00), 0, 0, int(0xFF00FF00), 0, 0, int(0xFF00FF00) };
+
+class CAutowall : CGuiManager
+{
+    bool              buttonPressed;
+    bool              lClick;
+    bool              autowallSet;
+    bool              autowallUsed;
+    bool              autowallHoriz;
+    bool              autowallRoom;
+    uint16            autowallX;
+    uint16            autowallY;
+    int               autowallMode;
+
+    dictionary        entrynames;
+    array<CSetEntry@> entries;
+    array<CWallSet@>  wallsets;
+    uint              entrycount;      // excluding groups, at the end
+    array<uint>       horizincident;   // incidental matrix
+    array<uint>       vertincident;    // incidental matrix
+    int               wallset;         // index
+
+    CContextMenu@     context;
+
+    CAutowall()
+    {
+        buttonPressed = false;
+        lClick = false;
+        autowallSet = false;
+        autowallUsed = false;
+        autowallHoriz = false;
+        autowallRoom = false;
+        autowallX = 0;
+        autowallY = 0;
+        autowallMode = AUTOWALL_WALLS;
+        entrycount = 0;
+        wallset = -1;
+        @context = CContextMenu(this);
+        RegisterControl(@context);
+    }
+
+    void Draw()
+    {
+        CGuiManager::Draw();
+
+        if(autowallSet)
+        {
+            int    x = __MouseX, y = __MouseY;
+            uint16 hX = 0, hY = 0;
+            // GetMousePosition(x,y);
+
+            if(GetMonitorHex(x, y, hX, hY))
+            {
+                hX += SGN_ODD(int(hX) - int(autowallX));
+                hY += SGN_ODD(int(hY) - int(autowallY));
+
+                if(ABS(int(hX) - int(autowallX)) > 3 && ABS(int(hY) - int(autowallY)) > 3)
+                {
+                    DrawText("Room placement", 10, 10, 768, 80, COLOR_GREEN, FONT_FAT, 0);
+                    autowallUsed = true;
+                    autowallRoom = true;
+                    bool ok = true;
+                    if(GetHexPos(autowallX, autowallY, autowallRoomData[0], autowallRoomData[1]) && GetHexPos(hX, autowallY, autowallRoomData[3], autowallRoomData[4]))
+                    {
+                        // DrawText("1", 10, 30, 768, 80, COLOR_GREEN, FONT_FAT, 0);
+                        if(ABS(int(hX) - int(autowallX)) % 2 == 1)
+                        {
+                            int dx = 0, dy = 0;
+                            if(GetHexPos(hX, autowallY + 1 - 2 * (autowallX % 2), dx, dy))
+                            {
+                                autowallRoomData[3] += dx;
+                                autowallRoomData[3] >>= 1;
+                                autowallRoomData[4] += dy;
+                                autowallRoomData[4] >>= 1;
+
+                            }
+                        }
+                    }
+                    else
+                        ok = false;
+                    if(!(GetHexPos(autowallX, hY, autowallRoomData[9], autowallRoomData[10])))
+                        ok = false;
+
+                    if(GetHexPos(hX, hY, autowallRoomData[6], autowallRoomData[7]))
+                    {
+                        if(ABS(int(hX) - int(autowallX)) % 2 == 1)
+                        {
+                            int dx = 0, dy = 0;
+                            if(GetHexPos(hX, hY + 1 - 2 * (autowallX % 2), dx, dy))
+                            {
+                                autowallRoomData[6] += dx;
+                                autowallRoomData[6] >>= 1;
+                                autowallRoomData[7] += dy;
+                                autowallRoomData[7] >>= 1;
+
+                            }
+                        }
+                    }
+                    else
+                        ok = false;
+
+                    autowallRoomData[12] = autowallRoomData[0];
+                    autowallRoomData[13] = autowallRoomData[1];
+
+
+                    if(ok)
+                        DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP, autowallRoomData);
+                }
+                else if(hX != autowallX || hY != autowallY)
+                {
+                    autowallUsed = true;
+                    autowallRoom = false;
+                    if(ABS(int(hX) - int(autowallX)) > ABS(int(hY) - int(autowallY)))
+                    {
+                        if(GetHexPos(autowallX, autowallY, autowallData[0], autowallData[1]) && GetHexPos(hX, autowallY, autowallData[3], autowallData[4]))
+                        {
+                            if(ABS(int(hX) - int(autowallX)) % 2 == 1)
+                            {
+                                int dx = 0, dy = 0;
+                                if(GetHexPos(hX, autowallY + 1 - 2 * (autowallX % 2), dx, dy))
+                                {
+                                    autowallData[3] += dx;
+                                    autowallData[3] >>= 1;
+                                    autowallData[4] += dy;
+                                    autowallData[4] >>= 1;
+                                    DrawText(((hY < autowallY) ? "South" : "North") + " wall placement", 10, 10, 768, 80, COLOR_GREEN, FONT_FAT, 0);
+                                    DrawPrimitive(DRAW_PRIMITIVE_LINELIST, autowallData);
+                                    autowallHoriz = true;
+                                }
+                            }
+                            else
+                            {
+                                DrawText(((hY < autowallY) ? "South" : "North") + " wall placement", 10, 10, 768, 80, COLOR_GREEN, FONT_FAT, 0);
+                                DrawPrimitive(DRAW_PRIMITIVE_LINELIST, autowallData);
+                                autowallHoriz = true;
+                            }
+                        }
+                    }
+                    else if(GetHexPos(autowallX, autowallY, autowallData[0], autowallData[1]) && GetHexPos(autowallX, hY, autowallData[3], autowallData[4]))
+                    {
+                        DrawText(((hX < autowallX) ? "West" : "East") + " wall placement", 10, 10, 768, 80, COLOR_GREEN, FONT_FAT, 0);
+                        DrawPrimitive(DRAW_PRIMITIVE_LINELIST, autowallData);
+                        autowallHoriz = false;
+                    }
+                }
+                else
+                    autowallUsed = false;
+            }
+        }
+    }
+
+    bool MouseDown(int click)
+    {
+        if(CGuiManager::MouseDown(click))
+            return true;
+        if(click == MOUSE_CLICK_LEFT)
+            lClick = true;
+        if(buttonPressed && !autowallSet)
+        {
+            autowallSet = GetMonitorHex(__MouseX, __MouseY, autowallX, autowallY);
+            if(autowallX % 2 == 1)
+                autowallX--;
+        }
+        return buttonPressed;
+    }
+
+    bool MouseUp(int click)
+    {
+        if(!autowallUsed)
+        {
+            if(buttonPressed)
+            {
+                Message("Showing context for: " + __MouseX + "," + __MouseY);
+                context.Show(__MouseX, __MouseY);
+            }
+            else
+                CGuiManager::MouseUp(click);
+        }
+
+        if(CGuiManager::AnyVisible())
+        {
+            autowallSet = false;
+            autowallUsed = false;
+        }
+
+        if(click == MOUSE_CLICK_LEFT)
+            lClick = false;
+        if(autowallUsed)
+        {
+            uint16 hX = 0, hY = 0;
+            if(GetMonitorHex(__MouseX, __MouseY, hX, hY))
+            {
+                hX += SGN_ODD(int(hX) - int(autowallX));
+                hY += SGN_ODD(int(hY) - int(autowallY));
+                array<MapperMap@> maps;
+                int               index = GetLoadedMaps(maps);
+                MapperMap@        map = maps[index];
+
+                if(autowallRoom)
+                {
+                    if(cornerN[1] != 0)
+                        map.AddObject(MIN(hX, autowallX) - 1, MIN(hY, autowallY), MAP_OBJECT_SCENERY, cornerN[1]);
+                    if(cornerN[0] != 0)
+                        map.AddObject(MIN(hX, autowallX), MIN(hY, autowallY), MAP_OBJECT_SCENERY, cornerN[0]);
+
+                    if(cornerS[1] != 0)
+                        map.AddObject(MAX(hX, autowallX) - 1, MAX(hY, autowallY), MAP_OBJECT_SCENERY, cornerS[1]);
+                    if(cornerS[0] != 0)
+                        map.AddObject(MAX(hX, autowallX), MAX(hY, autowallY), MAP_OBJECT_SCENERY, cornerS[0]);
+
+                    if(cornerW[1] != 0)
+                        map.AddObject(MAX(hX, autowallX) - 1, MIN(hY, autowallY), MAP_OBJECT_SCENERY, cornerW[1]);
+                    if(cornerW[0] != 0)
+                        map.AddObject(MAX(hX, autowallX), MIN(hY, autowallY), MAP_OBJECT_SCENERY, cornerW[0]);
+
+                    if(cornerE[1] != 0)
+                        map.AddObject(MIN(hX, autowallX) - 1, MAX(hY, autowallY), MAP_OBJECT_SCENERY, cornerE[1]);
+                    if(cornerE[0] != 0)
+                        map.AddObject(MIN(hX, autowallX), MAX(hY, autowallY), MAP_OBJECT_SCENERY, cornerE[0]);
+
+                    for(uint16 i = MIN(hX, autowallX) + 1, j = MAX(hX, autowallX) - 2; i <= j; i++)
+                        if(wallsNW[i % 2] != 0)
+                            map.AddObject(i, MIN(hY, autowallY), MAP_OBJECT_SCENERY, wallsNW[i % 2]);
+                    for(uint16 i = MIN(hX, autowallX) + 1, j = MAX(hX, autowallX) - 2; i <= j; i++)
+                        if(wallsSE[i % 2] != 0)
+                            map.AddObject(i, MAX(hY, autowallY), MAP_OBJECT_SCENERY, wallsSE[i % 2]);
+
+                    for(uint16 i = MIN(hY, autowallY) + 2, j = MAX(hY, autowallY) - 1; i <= j; i++)
+                        if(wallsNE[i % 2] != 0)
+                            map.AddObject(MIN(hX, autowallX), i, MAP_OBJECT_SCENERY, wallsNE[i % 2]);
+                    for(uint16 i = MIN(hY, autowallY) + 2, j = MAX(hY, autowallY) - 1; i <= j; i++)
+                        if(wallsSW[i % 2] != 0)
+                            map.AddObject(MAX(hX, autowallX), i, MAP_OBJECT_SCENERY, wallsSW[i % 2]);
+                }
+                else
+                {
+                    if(autowallHoriz)
+                    {
+                        bool isSouth = (hY < autowallY);
+                        for(uint16 i = MIN(hX, autowallX), j = MAX(hX, autowallX); i <= j; i++)
+                            if((isSouth ? wallsSE[i % 2] : wallsNW[i % 2]) != 0)
+                                map.AddObject(i, autowallY, MAP_OBJECT_SCENERY, isSouth ? wallsSE[i % 2] : wallsNW[i % 2]);
+                    }
+                    else
+                    {
+                        bool isWest = (hX < autowallX);
+                        for(uint16 i = MIN(hY, autowallY), j = MAX(hY, autowallY); i <= j; i++)
+                            if((isWest ? wallsSW[i % 2] : wallsNE[i % 2]) != 0)
+                                map.AddObject(autowallX, i, MAP_OBJECT_SCENERY, isWest ? wallsSW[i % 2] : wallsNE[i % 2]);
+                    }
+                }
+            }
+            autowallSet = false;
+            autowallUsed = false;
+        }
+        return buttonPressed;
+    }
+
+    void MouseMove(int x, int y)
+    {
+        CGuiManager::MouseMove(x, y);   // what i am doing here?
+    }
+
+    bool KeyDown(uint8 key)
+    {
+        if(key == DIK_AUTOWALL)
+            buttonPressed = true;
+        return CGuiManager::KeyDown(key);
+    }
+    bool KeyUp(uint8 key)
+    {
+        if(key == DIK_AUTOWALL)
+        {
+            buttonPressed = false;
+            autowallSet = false;
+            autowallUsed = false;
+        }
+
+        return CGuiManager::KeyUp(key);
+    }
+
+    void InputLost()
+    {
+        buttonPressed = false;
+        lClick = false;
+        autowallSet = false;
+    }
+
+
+    // here the stuff begins
+
+    bool RegisterEntry(string name, CSetEntry& entry)
+    {
+        if(name.length() == 0)
+        {
+            Message("Trying to register empty entry name");
+            return false;
+        }
+        if(entrynames.exists(name))
+        {
+            Message("Entry " + name + " already registered");
+            return false;
+        }
+        uint len = entries.length();
+        entries.resize(len + 1);
+        @entries[len] = entry;
+        entrynames.set(name, len);
+        return true;
+    }
+
+    CSetEntry@ GetEntry(string name)
+    {
+        uint num = 0;
+        if(!entrynames.get(name, num))
+            return null;
+        return entries[num];
+    }
+
+    CSetEntry@ GetEntry(uint num)
+    {
+        if(num >= entries.length())
+            return null;
+        return entries[num];
+    }
+
+    void SetRoles(array<uint> numbers, uint role)
+    {
+        for(uint i = 0, j = numbers.length(); i < j; i++)
+        {
+            CSetEntry@ entry = GetEntry(numbers[i]);
+            if(valid(entry))
+                entry.role = role;
+            else
+                Message("Internal error #1: setting role " + role + " to number " + numbers[i]);
+        }
+    }
+
+    void LogEntry(uint n)
+    {
+        CSetEntry@ entry = GetEntry(n);
+        if(!valid(entry))
+        {
+            Message("Entry not found");
+            return;
+        }
+        Message("Entry " + n + (entry.isGroup ? " (group)" : "") + ": role=" + entry.role + ", (" + entry.ent1 + "," + entry.ent2 + "), length " + entry.entries.length());
+    }
+
+    void AddIncidents(uint num1, uint num2, bool verti)   // assert: correct num1, num2
+    {
+        CSetEntry@ ent1 = GetEntry(num1);
+        CSetEntry@ ent2 = GetEntry(num2);
+        if(ent1.isGroup)
+            for(uint i = 0, j = ent1.entries.length(); i < j; i++)
+                AddIncidents(ent1.entries[i], num2, verti);
+        else
+        {
+            if(ent2.isGroup)
+            {
+                ent1.AddIncidents(ent2.entries, verti);
+                for(uint i = 0, j = ent2.entries.length(); i < j; i++)
+                    horizincident[num1 * entrycount + ent2.entries[i]] = 1;
+            }
+            else
+            {
+                ent1.AddIncident(num2, verti);
+                horizincident[num1 * entrycount + num2] = 1;
+            }
+        }
+    }
+
+    bool ParseSets()
+    {
+        uint       section = SECTION_NONE;
+        uint       set = 0;
+        dictionary sections;
+
+        sections.set("Tile Groups", SECTION_TILE_GROUPS);
+        sections.set("Roof Groups", SECTION_ROOF_GROUPS);
+        sections.set("Wall Sections", SECTION_WALL_SECTIONS);
+        sections.set("Horizontal Incidents", SECTION_HORIZONTAL_INCIDENTS);
+        sections.set("Vertical Incidents", SECTION_VERTICAL_INCIDENTS);
+
+        file f;
+        if(f.open("data/scripts/autowall.txt", "r") == -1)
+        {
+            Message("File data/scripts/autowall.txt not found");
+            return false;
+        }
+        uint linecount = 0;
+        uint len = 0;
+        uint act = 0;
+
+        while(!f.isEndOfFile())
+        {
+            string line;
+
+            // read one line and preprocess (trim trailing spaces and comments)
+            len = f.readLine(line);
+            linecount++;
+            if(len == 0)
+                continue;
+            act = 0;
+            while(line[act] != 10 && line[act] != 13 && line[act] != '#' && act < len)
+                act++;
+            if(act == 0)
+                continue;
+            line = substring(line, 0, act);
+            act = 0;
+            len = line.length();
+            while((line[act] == ' ' || line[act] == '\t') && act < len)
+                act++;
+            line = substring(line, act, line.length() - act);
+            if(line.length() == 0)
+                continue;
+            act = line.length() - 1;
+            while((line[act] == ' ' || line[act] == '\t') && act > 0)
+                act--;
+            line = substring(line, 0, act + 1);
+            len = line.length();
+            if(len == 0)
+                continue;
+            // if (linecount<=8) Message(""+linecount+":"+line+"X");
+            // preprocessed
+
+            if(line[0] == '[')
+            {
+                array<string@>@ splittedline = split(line, "]");
+                if(splittedline.length() > 2 || splittedline.length() < 2 || splittedline[1].length() > 0)
+                {
+                    Message("Line " + linecount + ": cannot load a section: '" + line + "': illegal characters at the end");
+                    f.close();
+                    return false;
+                }
+
+                if(substring(splittedline[0], 0, 4) == "[Set")
+                {
+                    StrToInt(substring(splittedline[0], 5, splittedline[0].length() - 5), set);
+                    if(set == 0)
+                    {
+                        Message("Line " + linecount + ": cannot load a section: '" + line + "': can't parse a set number");
+                        f.close();
+                        return false;
+                    }
+                    section = SECTION_SET;
+                    // Message("current set = "+set);
+                    CWallSet@ newset = CWallSet(set);
+                    wallsets.insertLast(newset);
+                    set = wallsets.length() - 1;
+                    wallset = set;
+                    continue;
+                }
+                splittedline[0] = substring(splittedline[0], 1, splittedline[0].length() - 1);
+                if(!sections.exists(splittedline[0]))
+                {
+                    Message("Line " + linecount + ": cannot load a section: '" + line + "': section '" + splittedline[0] + "' does not exist");
+                    f.close();
+                    return false;
+                }
+                else
+                {
+                    uint newsection = 0;
+                    sections.get(splittedline[0], newsection);
+                    if(newsection <= section)
+                    {
+                        Message("Wrong section order, " + newsection + "<=" + section);
+                        f.close();
+                        return false;
+                    }
+                    section = newsection;
+                    if(newsection == SECTION_HORIZONTAL_INCIDENTS)
+                    {
+                        entrycount = entries.length();
+                        horizincident.resize(entrycount * entrycount);
+                        vertincident.resize(entrycount * entrycount);
+                    }
+                    // Message("section set to "+section);
+                    continue;
+                }
+            }
+
+            // section is already set
+            switch(section)
+            {
+            case SECTION_NONE:
+                Message("Line " + linecount + ": illegal line outside section");
+                f.close();
+                return false;
+
+            case SECTION_TILE_GROUPS:
+            {
+                array<string@>@ splittedline2 = split(line, "=");
+                if(splittedline2.length() != 2 || splittedline2[0].length() == 0 || splittedline2[1].length() == 0)
+                {
+                    Message("Line " + linecount + ": cannot parse tile definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                array<string@>@ picstrings = split(splittedline2[1], ",");
+                array<uint> pictures(picstrings.length());
+                for(uint i = 0, j = picstrings.length(); i < j; i++)
+                {
+                    StrToInt(picstrings[i], pictures[i]);
+                    if(pictures[i] == 0)
+                    {
+                        Message("Line " + linecount + ": cannot parse integer in tile definition: '" + line + "'");
+                        f.close();
+                        return false;
+                    }
+                }
+                CSetEntry@ newentry = CSetEntry(pictures);
+                newentry.role = ROLE_TILE;
+                if(!RegisterEntry(splittedline2[0], newentry))
+                {
+                    Message("Line " + linecount + ": failed to register: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                continue;
+            }
+
+            case SECTION_ROOF_GROUPS:
+            {
+                array<string@>@ splittedline2 = split(line, "=");
+                if(splittedline2.length() != 2 || splittedline2[0].length() == 0 || splittedline2[1].length() == 0)
+                {
+                    Message("Line " + linecount + ": cannot parse roof tile definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                array<string@>@ picstrings = split(splittedline2[1], ",");
+                array<uint> pictures(picstrings.length());
+                for(uint i = 0, j = picstrings.length(); i < j; i++)
+                {
+                    StrToInt(picstrings[i], pictures[i]);
+                    if(pictures[i] == 0)
+                    {
+                        Message("Line " + linecount + ": cannot parse integer in roof tile definition: '" + line + "'");
+                        f.close();
+                        return false;
+                    }
+                }
+                CSetEntry@ newentry = CSetEntry(pictures);
+                newentry.role = ROLE_ROOF;
+                if(!RegisterEntry(splittedline2[0], newentry))
+                {
+                    Message("Line " + linecount + ": failed to register: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                continue;
+            }
+
+            case SECTION_WALL_SECTIONS:
+            {
+                array<string@>@ splittedline2 = split(line, "=");
+                if(splittedline2.length() != 2 || splittedline2[0].length() == 0 || splittedline2[1].length() == 0)
+                {
+                    Message("Line " + linecount + ": cannot parse wall section definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                array<string@>@ splittedline3 = split(splittedline2[1], ",");
+                array<uint> pids(splittedline3.length());
+                for(uint i = 0, j = splittedline3.length(); i < j; i++)
+                {
+                    StrToInt(splittedline3[i], pids[i]);
+                    if(pids[i] == 0)
+                    {
+                        Message("Line " + linecount + ": cannot parse integer in wall section definition: '" + line + "'");
+                        f.close();
+                        return false;
+                    }
+                }
+                CSetEntry@ newentry = CSetEntry(pids.length() > 0 ? pids[0] : 0, pids.length() > 1 ? pids[1] : 0);
+                if(!RegisterEntry(splittedline2[0], newentry))
+                {
+                    Message("Line " + linecount + ": failed to register: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                continue;
+            }
+
+            case SECTION_HORIZONTAL_INCIDENTS:
+            {
+                // first we try to parse a group
+                array<string@>@ splittedline = split(line, "=");
+                if(splittedline.length() > 2)
+                {
+                    Message("Line " + linecount + ": failed to parse a group: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                if(splittedline.length() == 2)
+                {
+                    array<string@>@ splittedline2 = split(splittedline[1], ",");
+                    array<uint> ids(splittedline2.length());
+                    for(uint i = 0, j = splittedline2.length(); i < j; i++)
+                        if(!entrynames.get(splittedline2[i], ids[i]))
+                        {
+                            Message("Line " + linecount + ": entry name '" + splittedline2[i] + "' in group definition '" + line + "' is not registered");
+                            f.close();
+                            return false;
+                        }
+                    CSetEntry@ newentry = CSetEntry(ids);
+                    newentry.isGroup = true;
+                    if(!RegisterEntry(splittedline[0], newentry))
+                    {
+                        Message("Line " + linecount + ": entry already exists, failed to register: '" + line + "'");
+                        f.close();
+                        return false;
+                    }
+                    // Message("registered group "+splittedline[0]+", members: "+newentry.entries.length());
+                    continue;
+                }
+                // neither group nor error, trying normal incident definition
+                splittedline = split(line, ",");
+                if(splittedline.length() != 2 || splittedline[0].length() == 0 || splittedline[1].length() == 0)
+                {
+                    Message("Line " + linecount + ": failed to parse incident definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                uint part1 = 0;
+                uint part2 = 0;
+                if(!entrynames.get(splittedline[0], part1))
+                {
+                    Message("Line " + linecount + ": entry name '" + splittedline[0] + "' in incident definition: '" + line + "' is not registered");
+                    f.close();
+                    return false;
+                }
+                if(!entrynames.get(splittedline[1], part2))
+                {
+                    Message("Line " + linecount + ": entry name '" + splittedline[1] + "' in incident definition: '" + line + "' is not registered");
+                    f.close();
+                    return false;
+                }
+                // Message("correct incident between "+splittedline[0]+" ("+part1+") and "+splittedline[1]+" ("+part2+")");
+                AddIncidents(part1, part2, false);
+                continue;
+            }
+
+            case SECTION_VERTICAL_INCIDENTS:
+            {
+                // first we try to parse a group
+                array<string@>@ splittedline = split(line, "=");
+                if(splittedline.length() > 2)
+                {
+                    Message("Line " + linecount + ": failed to parse a group: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                if(splittedline.length() == 2)
+                {
+                    array<string@>@ splittedline2 = split(splittedline[1], ",");
+                    array<uint> ids(splittedline2.length());
+                    for(uint i = 0, j = splittedline2.length(); i < j; i++)
+                        if(!entrynames.get(splittedline2[i], ids[i]))
+                        {
+                            Message("Line " + linecount + ": entry name '" + splittedline2[i] + "' in group definition '" + line + "' is not registered");
+                            f.close();
+                            return false;
+                        }
+                    CSetEntry@ newentry = CSetEntry(ids);
+                    newentry.isGroup = true;
+                    if(!RegisterEntry(splittedline[0], newentry))
+                    {
+                        Message("Line " + linecount + ": entry already exists, failed to register: '" + line + "'");
+                        f.close();
+                        return false;
+                    }
+                    // Message("registered group "+splittedline[0]+", members: "+newentry.entries.length());
+                    continue;
+                }
+                // neither group nor error, trying normal incident definition
+                splittedline = split(line, ",");
+                if(splittedline.length() != 2 || splittedline[0].length() == 0 || splittedline[1].length() == 0)
+                {
+                    Message("Line " + linecount + ": failed to parse incident definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                uint part1 = 0;
+                uint part2 = 0;
+                if(!entrynames.get(splittedline[0], part1))
+                {
+                    Message("Line " + linecount + ": entry name '" + splittedline[0] + "' in incident definition: '" + line + "' is not registered");
+                    f.close();
+                    return false;
+                }
+                if(!entrynames.get(splittedline[1], part2))
+                {
+                    Message("Line " + linecount + ": entry name '" + splittedline[1] + "' in incident definition: '" + line + "' is not registered");
+                    f.close();
+                    return false;
+                }
+                // Message("correct incident between "+splittedline[0]+" ("+part1+") and "+splittedline[1]+" ("+part2+")");
+                AddIncidents(part1, part2, true);
+                continue;
+            }
+
+            case SECTION_SET:
+            {
+                array<string@>@ splittedline = split(line, "=");
+                if(splittedline.length() != 2 || splittedline[0].length() == 0)
+                {
+                    Message("Line " + linecount + ": failed to parse set entry definition: '" + line + "'");
+                    f.close();
+                    return false;
+                }
+                array<string@>@ splittedline2 = split(splittedline[1], ",");
+                array<uint> numbers;
+                if(splittedline[0] != "Name" && splittedline2[0].length() > 0)
+                {
+                    numbers.resize(splittedline2.length());
+                    for(uint i = 0, j = splittedline2.length(); i < j; i++)
+                        if(!entrynames.get(splittedline2[i], numbers[i]))
+                        {
+                            Message("Line " + linecount + ": entry name '" + splittedline2[i] + "' in set entry definition '" + line + "' is not registered");
+                            f.close();
+                            return false;
+                        }
+                }
+                if(splittedline[0] == "Name")
+                    wallsets[set].name = splittedline[1];
+                else if(splittedline[0] == "Walls_nw")
+                {
+                    append_array(wallsets[set].walls_nw, numbers);
+                    SetRoles(numbers, ROLE_WALL_NW);
+                }
+                else if(splittedline[0] == "Walls_se")
+                {
+                    append_array(wallsets[set].walls_se, numbers);
+                    SetRoles(numbers, ROLE_WALL_SE);
+                }
+                else if(splittedline[0] == "Walls_ne")
+                {
+                    append_array(wallsets[set].walls_ne, numbers);
+                    SetRoles(numbers, ROLE_WALL_NE);
+                }
+                else if(splittedline[0] == "Walls_sw")
+                {
+                    append_array(wallsets[set].walls_sw, numbers);
+                    SetRoles(numbers, ROLE_WALL_SW);
+                }
+                else if(splittedline[0] == "Wall_blank_nw")
+                {
+                    append_array(wallsets[set].wall_blank_nw, numbers);
+                }
+                else if(splittedline[0] == "Wall_blank_se")
+                {
+                    append_array(wallsets[set].wall_blank_se, numbers);
+                }
+                else if(splittedline[0] == "Wall_blank_ne")
+                {
+                    append_array(wallsets[set].wall_blank_ne, numbers);
+                }
+                else if(splittedline[0] == "Wall_blank_sw")
+                {
+                    append_array(wallsets[set].wall_blank_sw, numbers);
+                }
+                else if(splittedline[0] == "Corners_n")
+                {
+                    append_array(wallsets[set].corners_n, numbers);
+                    SetRoles(numbers, ROLE_CORNER_N);
+                }
+                else if(splittedline[0] == "Corners_e")
+                {
+                    append_array(wallsets[set].corners_e, numbers);
+                    SetRoles(numbers, ROLE_CORNER_E);
+                }
+                else if(splittedline[0] == "Corners_w")
+                {
+                    append_array(wallsets[set].corners_w, numbers);
+                    SetRoles(numbers, ROLE_CORNER_W);
+                }
+                else if(splittedline[0] == "Corners_s")
+                {
+                    append_array(wallsets[set].corners_s, numbers);
+                    SetRoles(numbers, ROLE_CORNER_S);
+                }
+                else if(splittedline[0] == "Junctions_nw")
+                {
+                    append_array(wallsets[set].junctions_nw, numbers);
+                    SetRoles(numbers, ROLE_JUNCTION_NW);
+                }
+                else if(splittedline[0] == "Junctions_ne")
+                {
+                    append_array(wallsets[set].junctions_ne, numbers);
+                    SetRoles(numbers, ROLE_JUNCTION_NE);
+                }
+                else if(splittedline[0] == "Junctions_sw")
+                {
+                    append_array(wallsets[set].junctions_sw, numbers);
+                    SetRoles(numbers, ROLE_JUNCTION_SW);
+                }
+                else if(splittedline[0] == "Junctions_se")
+                {
+                    append_array(wallsets[set].junctions_se, numbers);
+                    SetRoles(numbers, ROLE_JUNCTION_SE);
+                }
+                else if(splittedline[0] == "Crosses")
+                {
+                    append_array(wallsets[set].crosses, numbers);
+                    SetRoles(numbers, ROLE_CROSS);
+                }
+                else if(splittedline[0] == "Tilegroups")
+                {
+                    append_array(wallsets[set].tilegroups, numbers);
+                    SetRoles(numbers, ROLE_TILE);
+                }
+                else if(splittedline[0] == "Roofgroups")
+                {
+                    append_array(wallsets[set].roofgroups, numbers);
+                    SetRoles(numbers, ROLE_ROOF);
+                }
+                else
+                {
+                    Message("Line " + linecount + ": entry name '" + splittedline[0] + "' in set entry definition '" + line + "' is invalid");
+                    f.close();
+                    return false;
+                }
+                continue;
+            }
+            }
+        }
+        f.close();
+        Message("Autowall initialized");
+        return true;
+    }
+
+    void SetWallset(uint n)
+    {
+        if(n < wallsets.length())
+            wallset = int(n);
+    }
+    void SetWallsetById(uint id)
+    {
+        for(uint i = 0, j = wallsets.length(); i < j; i++)
+        {
+            if(wallsets[i].id == id)
+                wallset = int(i);
+        }
+    }
+    void SetWallsetByName(string name)
+    {
+        for(uint i = 0, j = wallsets.length(); i < j; i++)
+        {
+            if(wallsets[i].name == name)
+                wallset = int(i);
+        }
+    }
+
+    // tile-based drawing itself
+    void MakeWall(uint16 tx, uint16 ty, uint length, uint8 type, bool justblank)   // justblank is always now
+    {
+        array<uint>@ use;
+        CWallSet@ set = wallsets[wallset];
+        /*
+           switch (type)
+           {
+           case WALL_NW:
+            @use=set.walls_nw;
+            break;
+           case WALL_NE:
+            @use=set.walls_ne;
+            break;
+           case WALL_SE:
+            @use=set.walls_se;
+            break;
+           case WALL_SW:
+            @use=set.walls_sw;
+            break;
+           }*/
+        array<uint> p1;
+        array<uint> p2;
+        // for ()
+    }
+};
+
+class CAutowallPlugin : IMapperPlugin // oh inheritance bugs
+{
+    CAutowall@ autowall;
+    CAutowallPlugin()
+    {
+        @autowall = @CAutowall();
+    }
+
+    void Render(uint layer)
+    {
+        if(layer == 2)
+            autowall.Draw();
+    }
+    bool MouseDown(int click)    { return autowall.MouseDown(click); }
+    bool MouseUp(int click)      { return autowall.MouseUp(click); }
+    void MouseMove(int x, int y) { autowall.MouseMove(x, y); }
+    bool KeyDown(uint8 key)      { return autowall.KeyDown(key); }
+    bool KeyUp(uint8 key)        { return autowall.KeyUp(key); }
+    void InputLost()             { autowall.InputLost(); }
+    void Loop()                  {}
+    bool Message(string&)        { return false; }
+    void RenderMap()             {}
+};
+
+void RegisterAutowall() // export
+{
+    IMapperPlugin@ autowall = CAutowallPlugin();
+    // autowall.ParseSets();
+    if(Plugins_Register(autowall))
+        Message("Autowall (WIP) registered.");
+}

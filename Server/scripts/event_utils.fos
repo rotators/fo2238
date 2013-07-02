@@ -1,0 +1,335 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// event_utils.fos
+//
+
+// Utilities for GMs and events, spawning stuff, etc.
+#include "_macros.fos"
+#include "follower_common_h.fos"
+#include "groups_h.fos"
+#include "lexems_h.fos"
+#include "pids_groups.fos"
+#include "utils_h.fos"
+#include "weap_anim_table_h.fos"
+
+#define _AddItem           # (group, max, chance) { if((value > 0) && Random(0, chance) == 0) { uint item = random_from_array(group); uint ival = Random(0, max); containers[j].AddItem(item, ival, 0); value -= BaseItemValue(item, true) * ival; DLog("deducting: " + (BaseItemValue(item, true) * ival) + " for " + item); } }
+// Spawn some stuff in containers on map where issuer is
+//
+
+#define WT_NO_ITEMS        (0x01)
+#define WT_DELETE_ITEMS    (0x02)
+#define WT_NO_FOLLOWERS    (0x04)
+
+array<Item@> FindContainers(Map@ map)
+{
+    array<Item@> containers;
+
+    for(uint16 x = 0; x < map.GetWidth(); x++)
+    {
+        for(uint16 y = 0; y < map.GetHeight(); y++)
+        {
+            array<Item@> items;
+            uint         num = map.GetItems(x, y, items);
+            for(uint j = 0; j < num; j++)
+            {
+                if(items[j].GetType() == ITEM_TYPE_CONTAINER)
+                    containers.insertLast(items[j]);
+            }
+        }
+    }
+    return containers;
+}
+
+void spawncontitems(Critter& cr, int techlvl, int startvalue, int p2)
+{
+    uint players = 0;
+    uint avglvl = 0; // average level
+    Map@ map = cr.GetMap();
+
+    if(startvalue == 0)
+        startvalue = 25000;
+
+    array<Critter@> crits;
+    players = map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, crits);
+    for(uint i = 0; i < players; i++)
+    {
+        avglvl += crits[i].Stat[ST_LEVEL];
+    }
+    avglvl /= players;
+    DLog("Average lvl is " + avglvl);
+
+    if(techlvl == 0)
+    {
+        if(avglvl < 6)
+            techlvl = 1;
+        else if(avglvl < 12)
+            techlvl = 2;
+        else
+            techlvl = 3;
+        DLog("Choosing techlevel " + techlvl);
+    }
+
+    int value = (startvalue * (players * avglvl)) * techlvl;
+
+    DLog("value is: " + value);
+
+    array<Item@> containers = FindContainers(map);
+    while(value > 0)
+    {
+        for(uint j = 0; j < containers.length(); j++)
+        {
+            uint contpid = containers[j].GetProtoId();
+            if(!(contpid == PID_GRAVESITE_V || contpid == PID_GRAVESITE_H))
+            {
+                if(techlvl == 1)
+                    _AddItem(Pids_ArmorLight, 1, 10);
+                if(techlvl > 1)
+                {
+                    _AddItem(Pids_ArmorMedium, 1, 10);
+                    _AddItem(Pids_WeaponPistolMachineGun, 1, 10);
+                    _AddItem(Pids_WeaponRifles, 1, 10);
+                    _AddItem(Pids_WeaponGrenade, 1, 10);
+                    _AddItem(Pids_WeaponThrowing, 1, 10);
+                    _AddItem(Pids_WeaponPistols, 1, 10);
+                }
+                if(techlvl > 2)
+                {
+                    _AddItem(Pids_WeaponLaser, 1, 14);
+                    _AddItem(Pids_WeaponBigGuns, 1, 15);
+                    _AddItem(Pids_WeaponPlasma, 1, 12);
+                    _AddItem(Pids_WeaponPulse, 1, 12);
+                    _AddItem(Pids_WeaponEnergo, 1, 11);
+                    _AddItem(Pids_ArmorHeavy, 1, 13);
+                    _AddItem(Pids_ArmorRobes, 1, 12);
+                    _AddItem(Pids_AllAmmo, 10, 2);
+                }
+                _AddItem(Pids_Ammo, 10, 2);
+                _AddItem(Pids_AllDrugs, 2, 5);
+                _AddItem(Pids_WeaponShotguns, 1, 7);
+                _AddItem(Pids_WeaponUnarmed, 1, 7);
+                _AddItem(Pids_WeaponMelee, 1, 7);
+                _AddItem(Pids_MiscOther, 1, 6);
+
+                DLog("Value now: " + value);
+            }
+        }
+    }
+}
+
+void removeitems(Critter& cr, int p0, int p1, int p2)
+{
+    Map@            map = cr.GetMap();
+    array<Critter@> crits;
+    uint            players = map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, crits);
+    for(uint i = 0; i < players; i++)
+    {
+        array<Item@> items;
+        uint         num = crits[i].GetItems(-1, items);
+        for(uint i = 0; i < num; i++)
+            DeleteItem(items[i]);
+    }
+}
+
+void dlg_TeleportToVarMap(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    if(!valid(npc))
+    {
+        Log("dlg_TeleportToVarMap failed, npc not found");
+        return;
+    }
+
+    int    mapId = GetLvar(npc, LVAR_warzone_terminal_destination);
+    string mapName = "";
+
+    if(mapId == 0)
+    {
+        Map@ map = GetMapByPid(MAP_NCR, 0);
+        if(valid(map))
+        {
+            SetLvar(npc, LVAR_warzone_terminal_destination, map.Id);
+            mapId = map.Id;
+        }
+        else
+        {
+            Log("r_TeleportToVarMap failed, NCR not found!!!");
+            return;
+        }
+    }
+
+    int policy = GetLvar(npc, LVAR_warzone_terminal_policy);
+    if(policy == 0)
+    {
+        SETFLAG(policy, WT_DELETE_ITEMS);
+        SetLvar(npc, LVAR_warzone_terminal_policy, policy);
+    }
+
+    if(IsLexem(npc, "$destination"))
+        mapName = GetLexem(npc, "$destination");
+    else
+    {
+        Map@ map = GetMap(mapId);
+        if(valid(map))
+            mapName = "@msg gm " + ((map.GetProtoId() + 1) * 10 + 0) + "@";
+        else
+            mapName = "[invalid data]";
+    }
+
+    text = "$destination" + mapName;
+}
+
+uint r_TeleportToVarMap(Critter& player, Critter@npc)
+{
+    if(!valid(npc))
+    {
+        Log("r_TeleportToVarMap failed, npc not found");
+        return(DIALOG_END);
+    }
+
+    int mapId = GetLvar(npc, LVAR_warzone_terminal_destination);
+
+    if(mapId == 0)
+    {
+        Log("r_TeleportToVarMap failed, LVAR is 0");
+        return(DIALOG_END);
+    }
+
+    Map@ map = GetMap(mapId);
+    if(!valid(map))
+    {
+        Log("r_TeleportToVarMap failed, map " + mapId + " not found.");
+        return(DIALOG_END);
+    }
+
+    int teleportPolicy = GetLvar(npc, LVAR_warzone_terminal_policy);
+
+    if(teleportPolicy != 0)
+    {
+        if(FLAG(teleportPolicy, WT_NO_ITEMS) || FLAG(teleportPolicy, WT_DELETE_ITEMS))
+        {
+            array<Item@> items;
+            int          count = player.GetItems(-1, items);
+            if(FLAG(teleportPolicy, WT_DELETE_ITEMS))
+                DeleteItems(items);
+            else
+                return(0);
+        }
+
+        if(FLAG(teleportPolicy, WT_NO_FOLLOWERS))
+        {
+            array<Critter@> crits;
+            GetFollowers(player, player.GetMap(), crits, false);
+            bool            following = false;
+            for(uint c = 0, cLen = crits.length(); c < cLen; c++)
+            {
+                if(IsFollowing(crits[c]))
+                {
+                    following = true;
+                    break;
+                }
+            }
+            if(following)
+                return(0);
+        }
+    }
+
+    player.TransitToMap(map.Id, 0);
+    return(DIALOG_END);
+}
+
+uint r_TeleportToVarMapCoordinates(Critter& player, Critter@npc)
+{
+    if(!valid(npc))
+    {
+        Log("r_TeleportToVarMap failed, npc not found");
+        return(DIALOG_END);
+    }
+
+    int mapId = GetLvar(npc, LVAR_warzone_terminal_destination);
+
+    if(mapId == 0)
+    {
+        Log("r_TeleportToVarMapCoordinates failed, LVAR is 0");
+        return(DIALOG_END);
+    }
+
+    Map@ map = GetMap(mapId);
+    if(!valid(map))
+    {
+        Log("r_TeleportToVarMapCoordinates failed, map " + mapId + " not found.");
+        return(DIALOG_END);
+    }
+
+    uint16 hexX = 0x0000FFFF & npc.Param[ST_VAR1];
+    uint16 hexY = 0x0000FFFF & (npc.Param[ST_VAR1] >> 16);
+
+    if(hexX > map.GetWidth() - 2 || hexY > map.GetHeight() - 2 || hexY < 2 || hexY < 2)
+    {
+        Log("r_TeleportToVarMapCoordinates failed, invalid coordinates x: " + hexX + "  y: " + hexY + ".");
+        return(DIALOG_END);
+    }
+
+    int teleportPolicy = GetLvar(npc, LVAR_warzone_terminal_policy);
+
+    if(teleportPolicy != 0)
+    {
+        if(FLAG(teleportPolicy, WT_NO_ITEMS))
+        {
+            array<Item@> items;
+            int          count = player.GetItems(-1, items);
+            if(count > 0)
+            {
+                player.Say(SAY_NETMSG, "No items allowed.");
+                return(0);
+            }
+
+        }
+
+        if(FLAG(teleportPolicy, WT_NO_FOLLOWERS))
+        {
+            array<Critter@> crits;
+            GetFollowers(player, player.GetMap(), crits, false);
+            bool            following = false;
+            for(uint c = 0, cLen = crits.length(); c < cLen; c++)
+            {
+                if(IsFollowing(crits[c]))
+                {
+                    following = true;
+                    break;
+                }
+            }
+            if(following)
+            {
+                player.Say(SAY_NETMSG, "No followers allowed.");
+                return(0);
+            }
+        }
+    }
+
+    player.TransitToMap(map.Id, hexX, hexY, Random(0, 5));
+    return(DIALOG_END);
+}
+
+bool d_IsAuth(Critter& player, Critter@ npc)
+{
+    return(d_IsTester(player, npc));
+}
+
+bool d_IsTester(Critter& player, Critter@ npc)
+{
+    return(player.GetAccess() >= ACCESS_TESTER);
+}
+
+bool d_IsModer(Critter& player, Critter@ npc)
+{
+    return(player.GetAccess() >= ACCESS_MODER);
+}
+
+bool d_IsAdmin(Critter& player, Critter@ npc)
+{
+    return(player.GetAccess() == ACCESS_ADMIN);
+}

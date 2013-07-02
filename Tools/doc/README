@@ -1,0 +1,42 @@
+Directory contents:
+ \src                  # directory which contains documentation sources
+ \tools                # some tools which are needed to build documentation
+ \Build.cmd            # base build script, do not use it directly
+ \BuildAll.cmd         # builds "ru" and "en" documentation
+ \BuildEn.cmd          # builds english documentation
+ \BuildRu.cmd          # builds russian documentation
+ \FOnlineDoc.cbp       # Code::Blocks project
+ \FOnlineDoc.cfg       # doxygen configuration file.
+ \FOnlineDoc.en.cfg    # doxygen configuration file for english documentation.
+                       # includes FOnlineDoc.cfg and overrides some properties.
+ \FOnlineDocLayout.xml # see http://www.stack.nl/~dimitri/doxygen/customize.html#layout
+ \Makefile             # simple makefile which uses build.cmd batch script
+ \readme.txt           
+
+Requirements to build documentation:
+
+- Doxygen
+  
+  Doxygen doesn't directly support AngelScript. Although AngelScript syntax is pretty similar
+  to C++ syntax doxygen parser ignores handles (@ and @+) and messes array type identifiers ([])
+  in the type declarations.
+  
+  Therefore some slight adjustments have been introduced to the doxygen parser. You can
+  find windows binary based on modified version of doxygen 1.5.9 in tools\doxygen\bin\win32.
+  Also you can try to build doxygen from the sources using patch file which can be found in the
+  tools\doxygen\src directory.
+
+Requirements to generate wiki documentation:
+
+  doxygen2wiki is a simple tool heavily based on the doxygen2gwiki (http://code.google.com/p/doxygen2gwiki/)
+  written on Python with a usage of the Cheetah template engine. Therefore you need:
+  - Python (http://python.org/)
+  - Cheetah (http://www.cheetahtemplate.org/)
+
+Optional tools:
+
+- Code::Blocks IDE (www.codeblocks.org/)
+
+  You can find Code::Blocks project file in the root directory. With a conjuction to makefile it's
+  a very handy documentation development engine: it supports doxygen comment highlighting, outlines
+  AngelScript code and can filter out error and warning messages from doxygen.

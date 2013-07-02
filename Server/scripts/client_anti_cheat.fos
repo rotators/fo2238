@@ -1,0 +1,41 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_anti_cheat.fos
+//
+
+#define SKIP_PRAGMAS    // deleteme as soon the pragma bug is fixed
+#include "_client_defines.fos"
+#include "client_anti_cheat_h.fos"
+#include "_macros.fos"
+
+uint x;
+uint y;
+uint sacount;
+
+void ActionUpdate(CritterCl& cr)
+{
+    if((cr.HexX == x) && (cr.HexY == y))
+    {
+        #ifdef __DEBUG__
+        Message("Static action++");
+        #endif
+        sacount++;
+    }
+    else
+    {
+        x = cr.HexX;
+        y = cr.HexY;
+        sacount = 0;
+        #ifdef __DEBUG__
+        Message("Static action reset");
+        #endif
+    }
+
+    if(sacount >= AC_STATIC_SKILL_THRESHOLD)
+    {
+        RunServerScriptUnsafe("unsafe_client@unsafe_ExecACReport", 0, 0, 0, "", null);
+        sacount = 0;
+    }
+}

@@ -1,0 +1,55 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+8 1010 D _script slaverun_dialog@d_Var1isSet 1 1 #
+9 1020 D _script slaverun_dialog@d_Var1isSet 1 2 #
+2 1030 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 R _script slaverun_dialog@r_Var1Set 1 2 @
+7 7000 None 0 #
+0 7010 R _script slaverun_dialog@r_StartSlaverunCombat 1 0 #
+0 7020 @
+8 8000 None 0 @
+9 9000 None 0 #
+0 9010 R _script slaverun_dialog@r_StartSlaverunCombat 1 0 #
+0 9020 &
+
+[engl]
+{100}{}{Slaver}
+{200}{}{You see a slaver.}
+{210}{}{This slaver is leading your expedition.}
+{1000}{}{Predialogue installations}
+{1010}{}{all done}
+{1020}{}{talked}
+{1030}{}{2}
+{2000}{}{Yo. Alright, keep your voice down.}
+{2010}{}{Why?}
+{3000}{}{We're hitting a jet-house today. The guys in there are gonna be wired-up as fuck, no help in spooking them now.}
+{3010}{}{A house full of junkies? Is that really the best option?}
+{4000}{}{Sure man, it's full of a shitload of slobbering morons. Easy fucking money.}
+{4010}{}{It's that easy?}
+{5000}{}{Well, there's always a couple of guys who're so fucked outta their minds they think they can take us on single-handed. And they're so fucked on jet they can be a bit of a problem.}
+{5010}{}{That really doesn't sound that easy.}
+{6000}{}{But the other half of them are gonna be fucking shitting themselves. Once you drop the nutjobs, the rest will be easy to haul off.}
+{6010}{}{Well, that part sounds good. Ok, let's go.}
+{7000}{}{Move out!}
+{7010}{}{Roger.}
+{7020}{}{Wait a second and let me check my gear again.}
+{8000}{}{I'll take it from here@@Go and report to Metzger@@We're done here@@Tell the boss we're done}
+{9000}{}{Ready?}
+{9010}{}{Yeah, let's go get them.}
+{9020}{}{Uh, wait, my boot lace...}
+

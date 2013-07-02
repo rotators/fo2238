@@ -1,0 +1,497 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mob_wave.fos
+//
+
+/*
+
+   Mob Wave is a cyclic mob spawner.  It was created to spawn predatory creatures
+   attacking characters who stay for too long in a real time encounter.  It may be
+   used for various other purposes, e.g. PvE events, quests with NPC invasion etc.
+
+   The Mob Wave event consist of 2 phases: warning and spawning.  If there is no
+   mobs to spawn defined in the event data, the phase is a warning phase.
+
+   WARNING PHASE
+
+   If there is no player inside location during warning phase, MOB_WAVE_RESET count
+   is increased by one.  Every time it's increased, D20 roll is done against it.
+   If the roll is successful, the Mob Wave is removed from the location along with
+   all mobs spawned by the Mob Wave.  Either way, the next phase will be warning
+   phase in MOB_WAVE_TIME_WARNING.
+
+   If there are players inside, a mob group is randomly picked according to the Mob
+   Wave type and level (from the MobWaves array) and the group index is stored in
+   event data, ensuring the next phase will be spawning phase.  All players with at
+   least 100% Outdoorsman are warned with proper message about the incoming mobs.
+   The next phase will happen in MOB_WAVE_TIME_SPAWNING.
+
+   SPAWNING PHASE
+
+   If there is no players inside the location during spawning phase, mobs aren not
+   spawned.  If there are players, mobs spawn and the wave level is increased.
+   Either way, mob group index is removed from the event data. The next phase will
+   be warning phase with MOB_WAVE_TIME_WARNING.
+
+   MOB WAVE SPAWNING
+
+   For each map in the location presence of players is checked.  If there are
+   players in the map, presence of PID_SPOT_MOB_WAVE is checked.  Mobs are spawned
+   around PID_SPOT_MOB_WAVE only if both the players and the spots are present.
+   Mobs are also spawned for followers of the player who are in the same map.
+
+   OTHER NOTES
+
+   Mobs spawned by Mob Wave are removed after death.
+
+ */
+
+#ifndef __MOB_WAVE__
+#define __MOB_WAVE__
+
+#include "MsgStr.h"
+
+#include "_ai.fos"
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_time.fos"
+
+#include "follower_common_h.fos"
+#include "mapdata_h.fos"
+#include "mob_wave_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "utils_h.fos"
+
+#include "mob_wave_data.fos"
+
+
+
+void TryStartEncounterMobWave(Map& map)
+{
+    if(GetRootMapData(map, MAP_DATA_MOB_WAVE) > 0 || map.IsTurnBasedAvailability())
+    {
+        return;
+    }
+    StartMobWave(map.GetLocation(), MOB_WAVE_TYPE_ENCOUNTER, 0, 100);
+}
+
+
+
+void StartMobWave(Location@ loc, uint type, uint level, uint timeScale)
+{
+    if(type >= MobWaves.length() || level >= MobWaves[type].length())
+    {
+        return;
+    }
+
+    array<Item@> spots;
+    if(LocationGetItems(loc, PID_SPOT_MOB_WAVE, spots) == 0)
+    {
+        Log("Mob Wave without PID_SPOT_MOB_WAVE inside location " + loc.Id);
+    }
+
+    EraseMobWave(loc);
+
+    if(timeScale == 0)
+    {
+        timeScale = 100;
+    }
+
+    array<uint> data = { loc.Id, type, level, 0, 0, 0, timeScale };
+    uint        eventId = CreateTimeEvent(AFTER(MOB_WAVE_TIME_WARNING(data)), "e_MobWave", data, true);
+    SetRootMapData(loc, MAP_DATA_MOB_WAVE, eventId);
+
+    DLog("Mob Wave started in location " + loc.Id + ".");
+}
+
+
+
+void EraseMobWave(Location@ loc)
+{
+    if(!valid(loc))
+    {
+        return;
+    }
+    uint eventId = GetRootMapData(loc, MAP_DATA_MOB_WAVE);
+    if(eventId > 0)
+    {
+        array<Map@> maps;
+        uint        mapsNum = loc.GetMaps(maps);
+        for(uint i = 0; i < mapsNum; i++)
+        {
+            uint mobsNum = maps[i].GetNpcCount(ROLE_MOB_WAVE, FIND_ONLY_NPC | FIND_ALL);
+            for(uint j = 0; j < mobsNum; j++)
+            {
+                Critter@ mob = maps[i].GetNpc(ROLE_MOB_WAVE, FIND_ONLY_NPC | FIND_ALL, j);
+                DeleteNpc(mob);
+            }
+        }
+        EraseTimeEvent(eventId);
+        DLog("Mob Wave erased in location " + loc.Id + ".");
+    }
+}
+
+
+
+uint e_MobWave(array<uint>@ data)
+{
+    Location@ loc = GetLocation(MOB_WAVE_LOCATION(data));
+    if(!valid(loc))
+    {
+        return 0;
+    }
+
+    array<Critter@> players;
+    uint            playersNum = LocationGetCritters(loc, FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, players);
+
+    //
+    //  *** WARNING PHASE ***
+    //
+    if(MOB_WAVE_MOBS(data) == 0)
+    {
+        if(playersNum == 0)
+        {
+            MOB_WAVE_RESET(data) += 1;
+            if(MOB_WAVE_RESET(data) > uint(Random(1, 20)))
+            {
+                EraseMobWave(loc);
+                return 0;
+            }
+            else
+            {
+                return MOB_WAVE_TIME_WARNING(data);
+            }
+        }
+        else
+        {
+            MOB_WAVE_MOBS(data) = Random(1, MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)].length() - 1);
+            uint warningNum = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][0];
+            if(warningNum > 0)
+            {
+                for(uint i = 0; i < playersNum; i++)
+                {
+                    if(players[i].Param[SK_OUTDOORSMAN] > 99)
+                    {
+                        players[i].SayMsg(SAY_NETMSG, TEXTMSG_GAME, warningNum);
+                    }
+                }
+            }
+            return MOB_WAVE_TIME_SPAWNING(data);
+        }
+    }
+    //
+    //  *** SPAWNING PHASE ***
+    //
+    else
+    {
+        if(playersNum == 0)
+        {
+            MOB_WAVE_MOBS(data) = 0;
+            return MOB_WAVE_TIME_WARNING(data);
+        }
+        else
+        {
+            array<Map@> maps;
+            uint        mapsNum = loc.GetMaps(maps);
+            for(uint i = 0; i < mapsNum; i++)
+            {
+                uint mobCount = maps[i].GetNpcCount(ROLE_MOB_WAVE, FIND_ONLY_NPC | FIND_LIFE);
+                if(mobCount > MOB_WAVE_MAX_MOBS)
+                {
+                    continue;
+                }
+
+                array<Critter@> mapPlayers;
+                uint            mapPlayersNum = maps[i].GetCritters(0, FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, mapPlayers);
+                if(mapPlayersNum > 0)
+                {
+                    array<Item@> spots;
+                    uint         spotsNum = maps[i].GetItems(PID_SPOT_MOB_WAVE, spots);
+                    if(spotsNum > 0)
+                    {
+                        for(uint j = 0; j < mapPlayersNum; j++)
+                        {
+                            if(_IsOnline(mapPlayers[j]) && _IsRealPlayer(mapPlayers[j]))
+                            {
+                                SpawnMobWaveAtCritter(mapPlayers[j], @data, @spots);
+
+                                // Followers
+                                //
+                                array<Critter@> followers;
+                                int             followersNum = GetFollowers(mapPlayers[j], maps[i], followers, false);
+                                if(followersNum > 0)
+                                {
+                                    for(uint f = 0; f < uint(followersNum); f++)
+                                    {
+                                        SpawnMobWaveAtCritter(followers[f], @data, @spots);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(MOB_WAVE_LEVEL(data) < (MobWaves[MOB_WAVE_TYPE(data)].length() - 1))
+            {
+                MOB_WAVE_LEVEL(data) += 1;
+            }
+            MOB_WAVE_COUNT(data) += 1;
+            MOB_WAVE_MOBS(data) = 0;
+            return MOB_WAVE_TIME_WARNING(data);
+        }
+    }
+}
+
+
+
+void SpawnMobWaveAtCritter(Critter@ cr, array<uint>@ data, array<Item@>@ spots)
+{
+
+    DSay(cr, "Mob Wave Spawns (wave type: " + MOB_WAVE_TYPE(data) + ", level: " + MOB_WAVE_LEVEL(data) + ", count: " + MOB_WAVE_COUNT(data) + ", mob variant: " + MOB_WAVE_MOBS(data) + ")");
+
+    Map@ map = cr.GetMap();
+
+    uint spotsNum = spots.length();
+    uint spotsRnd = Random(0, spotsNum - 1);
+
+    for(uint i = spotsRnd, j = spotsRnd + spotsNum; i < j; i++)
+    {
+        uint iFixed = i % spotsNum;
+        uint distance = GetDistantion(cr.HexX, cr.HexY, spots[iFixed].HexX, spots[iFixed].HexY);
+        if(distance > 20)
+        {
+            for(uint i = 1, j = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)].length(); i < j; i += 4)
+            {
+
+                uint param  = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i];
+                uint num    = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 1];
+                uint bag    = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 2];
+                uint level  = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 3];
+                if(level == 0)
+                {
+                    level = cr.Param[ST_LEVEL];
+                }
+                else
+                {
+                    level = (cr.Param[ST_LEVEL] * level) / 100;
+                }
+
+                for(uint k = 0; k < num; k += 1)
+                {
+                    uint16 mobX = spots[iFixed].HexX;
+                    uint16 mobY = spots[iFixed].HexY;
+                    if(FindNearestFreeHex(map, mobX, mobY, 2))
+                    {
+                        Critter@ mob = AddNpc(map, param, mobX, mobY, Random(0, 5), 0, "mob@_DontMove", AIPACKET_MEAN_DEATHCLAW, bag, TEAM_Mob9, false, level);
+                        if(valid(mob))
+                        {
+                            mob.ParamBase[MODE_NO_HOME] = 1;
+                            mob.ParamBase[ST_PERCEPTION] = 10;
+                            mob.ParamBase[ST_REPLICATION_TIME] = REPLICATION_DELETE_FAST;
+                            mob.ParamBase[PE_LIVING_ANATOMY] = 1;
+                            mob.ParamBase[ST_NPC_ROLE] = ROLE_MOB_WAVE;
+                            mob.AddEnemyInStack(cr.Id);
+                            AddAttackPlane(mob, 1000, cr);
+                        }
+                    }
+                }
+
+            }
+            return;
+        }
+    }
+
+    // Didn't find spot with 20+ distance, try spawn the mobs at random spots
+    // TODO: Refactor
+    //
+    for(uint i = 1, j = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)].length(); i < j; i += 4)
+    {
+
+        uint param  = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i];
+        uint num    = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 1];
+        uint bag    = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 2];
+        uint level  = MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][MOB_WAVE_MOBS(data)][i + 3];
+        if(level == 0)
+        {
+            level = cr.Param[ST_LEVEL];
+        }
+        else
+        {
+            level = (cr.Param[ST_LEVEL] * level) / 100;
+        }
+
+        for(uint k = 0; k < num; k += 1)
+        {
+            uint   spotIndex = Random(0, spots.length() - 1);
+            uint16 mobX = spots[spotIndex].HexX;
+            uint16 mobY = spots[spotIndex].HexY;
+            if(FindNearestFreeHex(map, mobX, mobY, 2))
+            {
+                Critter@ mob = AddNpc(map, param, mobX, mobY, Random(0, 5), 0, "mob@_DontMove", AIPACKET_MEAN_DEATHCLAW, bag, TEAM_Mob9, false, level);
+                if(valid(mob))
+                {
+                    mob.ParamBase[ST_PERCEPTION] = 10;
+                    mob.ParamBase[ST_NPC_ROLE] = ROLE_MOB_WAVE;
+                    mob.ParamBase[ST_REPLICATION_TIME] = REPLICATION_DELETE_FAST;
+                    mob.ParamBase[PE_LIVING_ANATOMY] = 1;
+                    mob.ParamBase[MODE_NO_HOME] = 1;
+                    mob.AddEnemyInStack(cr.Id);
+                    AddAttackPlane(mob, 1000, cr);
+                }
+            }
+        }
+    }
+
+}
+
+
+
+// *****************************************************************************
+// RUN COMMANDS
+// *****************************************************************************
+
+
+// Start a mob wave in the location
+//
+void start(Critter& cr, int type, int level, int timeScale)
+{
+    if(type < 0 || type >= int(MobWaves.length()))
+    {
+        cr.Say(SAY_NETMSG, "Invalid Mob Wave type.");
+        return;
+    }
+    else if(level < 0)
+    {
+        cr.Say(SAY_NETMSG, "Invalid Mob Wave level.");
+        return;
+    }
+    else if(timeScale < 0)
+    {
+        cr.Say(SAY_NETMSG, "Invalid Mob Wave time scale.");
+        return;
+    }
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+    {
+        cr.Say(SAY_NETMSG, "You have to be inside a location to start a Mob Wave.");
+        return;
+    }
+
+    Location@ loc = map.GetLocation();
+    StartMobWave(loc, type, level, timeScale);
+}
+
+// Erase mob wave in the location
+//
+void erase(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+    {
+        cr.Say(SAY_NETMSG, "You have to be inside a location to erase a Mob Wave.");
+        return;
+    }
+
+    Location@ loc = map.GetLocation();
+    EraseMobWave(loc);
+}
+
+void info(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(valid(map))
+    {
+        Location@    loc = map.GetLocation();
+
+        array<Item@> spots;
+        uint         spotsNum = LocationGetItems(loc, PID_SPOT_MOB_WAVE, spots);
+        cr.Say(SAY_NETMSG, "Number of Spots: |0x00BBBB " + spotsNum);
+
+        uint eventId = GetRootMapData(map, MAP_DATA_MOB_WAVE);
+        if(eventId > 0)
+        {
+            cr.Say(SAY_NETMSG, "Mob Wave Id: |0x00BBBB " + eventId);
+            uint        duration = 0;
+            array<uint> values;
+            if(GetTimeEvent(eventId, duration, values))
+            {
+                cr.Say(SAY_NETMSG, "  Next Phase: |0x00BBBB " + (duration / __TimeMultiplier) + " s");
+                cr.Say(SAY_NETMSG, "  Phase Type: |0x00BBBB " + (MOB_WAVE_MOBS(values) == 0 ? "Warning" : "Spawning"));
+                cr.Say(SAY_NETMSG, "  Location: |0x00BBBB " + MOB_WAVE_LOCATION(values));
+                cr.Say(SAY_NETMSG, "  Wave Type: |0x00BBBB " + MOB_WAVE_TYPE(values));
+                cr.Say(SAY_NETMSG, "  Wave Level: |0x00BBBB " + MOB_WAVE_LEVEL(values));
+                cr.Say(SAY_NETMSG, "  Wave Count: |0x00BBBB " + MOB_WAVE_COUNT(values));
+                cr.Say(SAY_NETMSG, "  Wave Mobs: |0x00BBBB " + MOB_WAVE_MOBS(values));
+                cr.Say(SAY_NETMSG, "  Wave Reset: |0x00BBBB " + MOB_WAVE_RESET(values));
+                cr.Say(SAY_NETMSG, "  Time Scale: |0x00BBBB " + MOB_WAVE_TIME_SCALE(values));
+            }
+            else
+            {
+                cr.Say(SAY_NETMSG, "  Mob Wave event not found!");
+            }
+        }
+        else
+        {
+            cr.Say(SAY_NETMSG, "  There is no Mob Wave running here.");
+        }
+    }
+}
+
+
+void spots_show(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(valid(map))
+    {
+        array<Item@> spots;
+        uint         spotsNum = LocationGetItems(map.GetLocation(), PID_SPOT_MOB_WAVE, spots);
+        for(uint i = 0; i < spotsNum; i++)
+        {
+            UNSETFLAG(spots[i].Flags, ITEM_HIDDEN);
+            SETFLAG(spots[i].Flags, ITEM_ALWAYS_VIEW);
+            spots[i].Update();
+        }
+    }
+}
+
+void spots_hide(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(valid(map))
+    {
+        array<Item@> spots;
+        uint         spotsNum = LocationGetItems(map.GetLocation(), PID_SPOT_MOB_WAVE, spots);
+        for(uint i = 0; i < spotsNum; i++)
+        {
+            SETFLAG(spots[i].Flags, ITEM_HIDDEN);
+            UNSETFLAG(spots[i].Flags, ITEM_ALWAYS_VIEW);
+            spots[i].Update();
+        }
+    }
+}
+
+
+void spots_add(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(valid(map))
+    {
+        map.AddItem(cr.HexX, cr.HexY, PID_SPOT_MOB_WAVE, 1);
+    }
+}
+
+
+void spots_delete(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(valid(map))
+    {
+        LocationDeleteItems(map.GetLocation(), PID_SPOT_MOB_WAVE);
+    }
+}
+#endif // __MOB_WAVE__ //

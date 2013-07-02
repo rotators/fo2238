@@ -1,0 +1,481 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// itempid.fos
+//
+
+#ifndef __ITEMPID__
+#define __ITEMPID__
+
+#include "itempid_h.fos"
+
+#ifndef valid
+# define valid         # (ptr) (@ptr != null)
+#endif // !valid
+
+#define FUNCTION_IS    # (isName, listName) bool PidIs ## isName(uint p) { array<uint> l; PidList_ ## listName(l); return (l.find(p) >= 0); }
+#define FUNCTIONS      # (isName, listName, enumName) bool PidIs ## isName(uint p) { array<uint> l; PidList_ ## listName(l); return (l.find(p) >= 0); } uint PidList_ ## listName(array<uint>&v) { return (GroupNameToPids(enumName, v)); }
+
+#ifdef __SERVER
+# pragma bindfunc "void dummy() -> Utils.dll SERVER"
+#endif
+
+void test() // ASCompiler -run
+{
+    Log("PidToName( 241 ) = \"" + PidToName(241) + "\"");
+    Log("PidToGroupName( 241 ) = \"" + PidToGroupName(241) + "\"");
+    Log("NameToPid( \"PID_223_PISTOL\" ) = " + NameToPid("PID_223_PISTOL"));
+    Log("PidIsPistol( 241 ) = " + (PidIsPistol(241) ? "yes" : "no"));
+    array<string> sgn;
+    array<uint>   sgp;
+    uint          sgnc = 0, sgpc = 0;
+    Log("Pistols: " + (sgnc = GroupNameToNames(PidToGroupName(241), sgn)) + " or " +
+        (sgpc = GroupNameToPids(PidToGroupName(241), sgp)));
+    if(sgnc != sgpc)
+        Log("ERROR> sgnc != sgpc <ERROR");
+    for(uint g = 0; g < sgnc; g++)
+    {
+        Log(sgn[g] + " = " + sgp[g]);
+    }
+}
+
+void check0(Critter& cr, int, int, int)
+{
+    array<string@> enumNames;
+    array<string@> names;
+    array<int>     values;
+    uint           enumCount = GetEnumList(enumNames);
+    for(uint e = 0; e < enumCount; e++)
+    {
+        uint pidCount = GetEnum(enumNames[e], names, values);
+        for(uint n = 0, nlen = names.length(); n < nlen; n++)
+        {
+            if(values[n] <= 0)
+                Log("ZERO:" + enumNames[e] + "->" + names[n] + "=" + values[n]);
+
+            // must be server function, ASCompiler will always return valid, but empty proto
+            ProtoItem@ proto = GetProtoItem(values[n]);
+            if(!valid(proto))
+                cr.Say(11 /*SAY_NETMSG*/, "INVALID: " + enumNames[e] + "->" + names[n] + "=" + values[n]);
+        }
+    }
+}
+
+string PidToName(uint pid)
+{
+    array<string@> enumNames;
+    uint           enumCount = GetEnumList(enumNames);
+    for(uint e = 0; e < enumCount; e++)
+    {
+        array<string@> names;
+        array<int>     values;
+        uint           pidCount = GetEnum(enumNames[e], names, values);
+        for(uint v = 0, vlen = values.length(); v < vlen; v++)
+        {
+            if(values[v] <= 0)
+                continue;
+
+            if(uint(values[v]) == pid)
+                return(names[v]);
+        }
+    }
+
+    return("<PID:" + pid + ">");
+}
+
+string PidToGroupName(uint pid)
+{
+    array<string@> enumNames;
+    array<string@> names;
+    array<int>     values;
+    uint           enumCount = GetEnumList(enumNames);
+    for(uint e = 0; e < enumCount; e++)
+    {
+        uint pidCount = GetEnum(enumNames[e], names, values);
+        for(uint v = 0, vlen = values.length(); v < vlen; v++)
+        {
+            if(values[v] <= 0)
+                continue;
+
+            if(uint(values[v]) == pid)
+                return(enumNames[e]);
+        }
+    }
+
+    return("<PID:" + pid + ">");
+}
+
+uint NameToPid(string& name)
+{
+    array<string@> enumNames;
+    array<string@> names;
+    array<int>     values;
+    uint           enumCount = GetEnumList(enumNames);
+    for(uint e = 0; e < enumCount; e++)
+    {
+        uint pidCount = GetEnum(enumNames[e], names, values);
+        for(uint n = 0, nlen = names.length(); n < nlen; n++)
+        {
+            if(values[n] <= 0)
+                continue;
+
+            if(strupr(name) == strupr(names[n]))
+                return(values[n]);
+        }
+    }
+
+    return(0);
+}
+
+uint GroupNameToPids(string& groupName, array<uint>& pids)
+{
+    array<string@> names;
+    array<int>     values;
+    uint           count = GetEnum(groupName, names, values), realCount = 0;
+    for(uint v = 0; v < count; v++)
+    {
+        if(values[v] <= 0)
+            continue;
+
+        pids.insertLast(values[v]);
+        realCount++;
+    }
+
+    return(realCount);
+}
+
+uint GroupNameToNames(string& groupName, array<string>& pidNames)
+{
+    array<string@> names;
+    array<int>     values;
+    uint           count = GetEnum(groupName, names, values), realCount = 0;
+    for(uint n = 0; n < count; n++)
+    {
+        if(values[n] <= 0)
+            continue;
+
+        if(!valid(names[n]) || names[n].length() == 0)
+            continue;
+
+        pidNames.insertLast(names[n]);
+        realCount++;
+    }
+
+    return(realCount);
+}
+
+/***********
+* HELMETS *
+***********/
+
+uint PidList_Helmets(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_LightHelmets(pids);
+    count += PidList_MetalHelmets(pids);
+    count += PidList_CombatHelmets(pids);
+    count += PidList_HeavyHelmets(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Helmet, Helmets);
+
+FUNCTIONS(LightHelmet,  LightHelmets,  "HelmetLight");
+FUNCTIONS(MetalHelmet,  MetalHelmets,  "HelmetMetal");
+FUNCTIONS(CombatHelmet, CombatHelmets, "HelmetCombat");
+FUNCTIONS(HeavyHelmet,  HeavyHelmets,  "HelmetHeavy");
+
+/**********
+* ARMORS *
+**********/
+
+uint PidList_Armors(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Clothes(pids);
+    count += PidList_Robes(pids);
+    count += PidList_LightArmors(pids);
+    count += PidList_MetalArmors(pids);
+    count += PidList_CombatArmors(pids);
+    count += PidList_HeavyArmors(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Armor, Armors);
+
+FUNCTIONS(Cloth,       Clothes,      "ArmorCloth");
+FUNCTIONS(Robe,        Robes,        "ArmorRobe");
+FUNCTIONS(LightArmor,  LightArmors,  "ArmorLight");
+FUNCTIONS(MetalArmor,  MetalArmors,  "ArmorMetal");
+FUNCTIONS(CombatArmor, CombatArmors, "ArmorCombat");
+FUNCTIONS(HeavyArmor,  HeavyArmors,  "ArmorHeavy");
+
+/***********
+* WEAPONS *
+***********/
+
+uint PidList_Weapons(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_SmallGuns(pids);
+    count += PidList_BigGuns(pids);
+    count += PidList_EnergyWeapons(pids);
+    count += PidList_ThrowingWeapons(pids);
+    count += PidList_MeleeWeapons(pids);
+    count += PidList_UnarmedWeapons(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Weapon, Weapons);
+
+FUNCTIONS(SpecialWeapon, SpecialWeapons, "WeaponSpecial");
+
+uint PidList_SmallGuns(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Pistols(pids);
+    count += PidList_Rifles(pids);
+    count += PidList_Shotguns(pids);
+    count += PidList_Submachines(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(SmallGun, SmallGuns);
+
+FUNCTIONS(Pistol,     Pistols,     "WeaponPistol");
+FUNCTIONS(Shotgun,    Shotguns,    "WeaponShotgun");
+FUNCTIONS(Rifle,      Rifles,      "WeaponRifle");
+FUNCTIONS(Submachine, Submachines, "WeaponSubmachine");
+
+uint PidList_BigGuns(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Flamers(pids);
+    count += PidList_Miniguns(pids);
+    count += PidList_BigGunsMisc(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(BigGun, BigGuns);
+
+FUNCTIONS(Flamer,     Flamers,     "WeaponFlamer");
+FUNCTIONS(Minigun,    Miniguns,    "WeaponMinigun");
+FUNCTIONS(BigGunMisc, BigGunsMisc, "WeaponBigMisc");
+
+uint PidList_EnergyWeapons(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_LaserWeapons(pids);
+    count += PidList_PlasmaWeapons(pids);
+    count += PidList_PulseWeapons(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(EnergyWeapon, EnergyWeapons);
+
+FUNCTIONS(LaserWeapon,  LaserWeapons,  "WeaponLaser");
+FUNCTIONS(PlasmaWeapon, PlasmaWeapons, "WeaponPlasma");
+FUNCTIONS(PulseWeapon,  PulseWeapons,  "WeaponPulse");
+
+uint PidList_ThrowingWeapons(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Grenades(pids);
+    count += PidList_Flares(pids);
+    count += PidList_ThrowingMisc(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(ThrowingWeapon, ThrowingWeapons);
+
+FUNCTIONS(ThrowingMisc, ThrowingMisc, "WeaponThrowMisc");
+
+uint PidList_Grenades(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_RealGrenades(pids);
+    count += PidList_FakeGrenades(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Grenade, Grenades);
+
+FUNCTIONS(RealGrenade, RealGrenades, "WeaponGrenade");
+FUNCTIONS(FakeGrenade, FakeGrenades, "WeaponGrenadeFake");
+
+uint PidList_Flares(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_InactiveFlares(pids);
+    count += PidList_ActiveFlares(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Flare,         Flares);
+
+FUNCTIONS(InactiveFlare, InactiveFlares, "WeaponFlare")
+FUNCTIONS(ActiveFlare,   ActiveFlares,   "WeaponFlareActive")
+
+uint PidList_MeleeWeapons(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_CuttingWeapons(pids);
+    count += PidList_PrickingWeapons(pids);
+    count += PidList_ShockingWeapons(pids);
+    count += PidList_ElectricWeapons(pids);
+    count += PidList_MeleePlasmaWeapons(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(MeleeWeapon,       MeleeWeapons);
+
+FUNCTIONS(CuttingWeapon,     CuttingWeapons,     "WeaponCut");
+FUNCTIONS(PrickingWeapon,    PrickingWeapons,    "WeaponPrick");
+FUNCTIONS(ShockingWeapon,    ShockingWeapons,    "WeaponShock");
+FUNCTIONS(ElectricWeapon,    ElectricWeapons,    "WeaponElectric");
+FUNCTIONS(MeleePlasmaWeapon, MeleePlasmaWeapons, "WeaponPlasmaMelee");
+
+FUNCTIONS(UnarmedWeapon, UnarmedWeapons, "WeaponUnarmed");
+
+/********
+* AMMO *
+********/
+
+uint PidList_Ammunition(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Bullets(pids);
+    count += PidList_Cartridges(pids);
+    count += PidList_WeaponFuel(pids);
+    count += PidList_Rockets(pids);
+    count += PidList_AmmunitionMisc(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Ammunition, Ammunition);
+
+FUNCTIONS(SpecialAmmunition, SpecialAmmunition, "AmmunitionSpecial");
+
+FUNCTIONS(Bullet,         Bullets,        "AmmunitionBullet");
+FUNCTIONS(Cartridge,      Cartridges,     "AmmunitionCartridge");
+FUNCTIONS(WeaponFulel,    WeaponFuel,     "AmmunitionWeaponFuel");
+FUNCTIONS(Rocket,         Rockets,        "AmmunitionRocket");
+FUNCTIONS(AmmunitionMisc, AmmunitionMisc, "AmmunitionMisc");
+
+/***************
+* CONSUMABLES *
+***************/
+
+uint PidList_Consumables(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Medicines(pids);
+    count += PidList_Alcohol(pids);
+    count += PidList_Drugs(pids);
+    count += PidList_Food(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Consumable, Consumables);
+
+FUNCTIONS(SpecialConsumable, SpecialConsumables, "ConsumableSpecial");
+
+FUNCTIONS(Medicine, Medicines, "ConsumableMedicine");
+FUNCTIONS(Alcohol,  Alcohol,   "ConsumableAlcohol");
+FUNCTIONS(Drug,     Drugs,     "ConsumableDrug");
+FUNCTIONS(Food,     Food,      "ConsumableFood");
+
+/**************
+* CONTAINERS *
+**************/
+
+uint PidList_Containers(array<uint>& pids)
+{
+    uint count = 0;
+
+    count += PidList_Pots(pids);
+    count += PidList_IceChests(pids);
+    count += PidList_AmmoCrates(pids);
+    count += PidList_Footlockers(pids);
+    count += PidList_Lockers(pids);
+    count += PidList_Bookcases(pids);
+    count += PidList_Safes(pids);
+    count += PidList_Desks(pids);
+    count += PidList_Dressers(pids);
+    count += PidList_Workbenches(pids);
+    count += PidList_Bookshelves(pids);
+    count += PidList_Boxes(pids);
+    count += PidList_Tables(pids);
+    count += PidList_TablesStuff(pids);
+    count += PidList_PoolTables(pids);
+    count += PidList_Graves(pids);
+    count += PidList_Backpacks(pids);
+    count += PidList_Bodies(pids);
+    count += PidList_Wagons(pids);
+    count += PidList_CarBags(pids);
+    count += PidList_ContainersMisc(pids);
+
+    return(count);
+}
+
+FUNCTION_IS(Container, Containers);
+
+FUNCTIONS(Pot,           Pots,           "ContainerPot");
+FUNCTIONS(IceChest,      IceChests,      "ContainerIceChests");
+FUNCTIONS(AmmoCrate,     AmmoCrates,     "ContainerAmmoCrate");
+FUNCTIONS(Footlocker,    Footlockers,    "ContainerFootlocker");
+FUNCTIONS(Locker,        Lockers,        "ContainerLocker");
+FUNCTIONS(Bookcase,      Bookcases,      "ContainerBookcase");
+FUNCTIONS(Safe,          Safes,          "ContainerSafe");
+FUNCTIONS(Desk,          Desks,          "ContainerDesk");
+FUNCTIONS(Dresser,       Dressers,       "ContainerDresser");
+FUNCTIONS(Workbench,     Workbenches,    "ContainerWorkbench");
+FUNCTIONS(Bookshelf,     Bookshelves,    "ContainerBookshelf");
+FUNCTIONS(Box,           Boxes,          "ContainerBox");
+FUNCTIONS(Table,         Tables,         "ContainerTable");
+FUNCTIONS(TableStuff,    TablesStuff,    "ContainerTableStuff");
+FUNCTIONS(PoolTable,     PoolTables,     "ContainerPoolTable");
+FUNCTIONS(Grave,         Graves,         "ContainerGrave");
+FUNCTIONS(Backpack,      Backpacks,      "ContainerBackpack");
+FUNCTIONS(Body,          Bodies,         "ContainerBody");
+FUNCTIONS(Wagon,         Wagons,         "ContainerWagon");
+FUNCTIONS(CarBag,        CarBags,        "ContainerCarBag");
+FUNCTIONS(ContainerMisc, ContainersMisc, "ContainerMisc");
+
+/********
+* KEYS *
+********/
+
+FUNCTIONS(Key, Keys, "Key");
+
+/*********
+* MONEY *
+*********/
+
+FUNCTIONS(Money, Moneys, "Money");
+#endif // __ITEMPID__ //

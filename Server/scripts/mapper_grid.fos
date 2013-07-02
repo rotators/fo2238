@@ -1,0 +1,228 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_grid.fos
+//
+
+// Grid Plugin - renders grid, guides etc
+
+
+#ifndef __MAPPER_GRID__
+#define __MAPPER_GRID__
+
+#include "_mapper_macros.fos"
+#include "mapper_plugin_h.fos"
+#include "mapper_utils_h.fos"
+#include "strtoint_h.fos"
+
+class CGrid : IMapperPlugin
+{
+    string GetName() { return "Grid"; }
+
+
+    private bool edgeGrid = true;
+    private uint edgeGridMinZoom = 5;    // Minimal zoom when hex grid appears
+    private uint edgeGridMaxZoom = 1500; // Minimal zoom when hex grid appears
+    private uint edgeGridColor = COLOR_RGB(200, 200, 200);
+
+    private bool tileGrid = true;
+    private uint tileGridDiv = 10;                                  // Divided every n tiles
+    private uint tileGridMinZoom = 5;                               // Minimal zoom when hex grid appears
+    private uint tileGridMaxZoom = 1500;                            // Max zoom when hex grid appears
+    private uint tileGridColor = COLOR_RGBA(130, 130, 130, 160);
+    private uint tileGridColor2 = COLOR_RGBA(160, 160, 160, 240);   // Color of div
+
+    private bool hexGrid = false;
+    private uint hexGridSize = 8;                                   // Size of hex grid
+    private uint hexGridMinZoom = 5;                                // Minimal zoom when hex grid appears
+    private uint hexGridMaxZoom = 1500;                             // Max zoom when hex grid appears
+    private uint hexGridColor = COLOR_RGBA(190, 190, 100, 120);
+
+    private bool enabled = true;
+    private uint color = COLOR_RGB(160, 160, 160);
+
+    void Render(uint layer)
+    {
+        if(layer == 1)
+        {
+            MapperMap@ map = GetActiveMap();
+            if(!valid(map))
+            {
+                return;
+            }
+            uint zoom = GetZoom();
+
+            // (crappy) grid...
+            if(hexGrid)
+            {
+                int gridW = GetHexWidth();
+                int gridH = gridW / 2;
+                int gridW2 = gridH;
+                int gridH2 = gridW / 4;
+                int gridH4 = gridW / 8;
+
+                for(uint i = 0, j = map.Width - 1; i < j; i += 2)
+                {
+                    int c = tileGridColor;
+                    if(i % tileGridDiv == 0)
+                    {
+                        c = tileGridColor2;
+                    }
+                    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+                    GetHexPos(i, 0, x1, y1);
+                    GetHexPos(i, map.Height - 1, x2, y2);
+
+                    array<int> gridData =
+                    {
+                        x1, y1, c,
+                        x2, y2, c
+                    };
+                    DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP, gridData);
+                }
+                for(uint i = 1, j = map.Height - 1; i < j; i += 2)
+                {
+                    int c = tileGridColor;
+                    if((i + 1) % tileGridDiv == 0)
+                    {
+                        c = tileGridColor2;
+                    }
+                    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+                    GetHexPos(0, i, x1, y1);
+                    GetHexPos(map.Width - 1, i, x2, y2);
+
+                    if(map.Width % 2 == 0)
+                    {
+                        int ox = 0, oy = 0;
+                        HexOffset(3, ox, oy);
+                        x2 += ox;
+                        y2 += oy;
+                    }
+
+                    array<int> gridData =
+                    {
+                        x1, y1, c,
+                        x2, y2, c
+                    };
+                    DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP, gridData);
+                }
+            }
+
+            // edge
+            //
+
+            int x1 = 0, y1 = 0,
+                x2 = 0, y2 = 0,
+                x3 = 0, y3 = 0,
+                x4 = 0, y4 = 0;
+
+            uint16 lastHexX = map.Width - 1;
+            uint16 lastHexY = map.Height - 1;
+
+            GetHexPos(0, 0, x1, y1);
+            GetHexPos(0, lastHexY, x2, y2);
+            GetHexPos(lastHexX, lastHexY, x3, y3);
+            GetHexPos(lastHexX, 0, x4, y4);
+
+            if(map.Width % 2 == 0)
+            {
+                int ox = 0, oy = 0;
+                HexOffset(3, ox, oy);
+                x3 += ox;
+                y3 += oy;
+                x4 += ox;
+                y4 += oy;
+            }
+
+            array<int> gridData =
+            {
+                x1, y1, edgeGridColor,
+                x2, y2, edgeGridColor,
+                x3, y3, edgeGridColor,
+                x4, y4, edgeGridColor,
+                x1, y1, edgeGridColor
+            };
+
+            DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP, gridData);
+        }
+    }
+
+    bool Message(string& message)
+    {
+        if(message == "grid")
+        {
+            message = "Grid plugin commands: on, off, color <r> <g> <b>.";
+            return true;
+        }
+
+        array<string@> msg = splitEx(message, " ");
+        if(msg[0] == "grid")
+        {
+            if(msg[1] == "on")
+            {
+                message = "Grid enabled.";
+                hexGrid = true;
+                edgeGrid = true;
+                tileGrid = true;
+            }
+            else if(msg[1] == "off")
+            {
+                message = "Grid disabled.";
+                hexGrid = false;
+                edgeGrid = false;
+                tileGrid = false;
+            }
+            else if(msg[1] == "color")
+            {
+                uint r = 0, g = 0, b = 0;
+                if(StrToInt(msg[2], r) && StrToInt(msg[3], g) && StrToInt(msg[4], b))
+                {
+                    color = COLOR_RGB(r, g, b);
+                    message = "Grid color changed.";
+                }
+            }
+            else
+            {
+                message = "Unknown grid plugin command.";
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    void RenderMap()         {}
+    bool MouseDown(int)      { return false; }
+    bool MouseUp(int)        { return false; }
+    void MouseMove(int, int) {}
+    bool KeyDown(uint8 key)
+    {
+        if(key == DIK_G)
+        {
+            if(hexGrid)
+            {
+
+                hexGrid = false;
+            }
+            else
+            {
+                hexGrid = true;
+            }
+        }
+        return false;
+    }
+    bool KeyUp(uint8) { return false; }
+    void InputLost()  {}
+    void Loop()       {}
+
+};
+
+void RegisterGrid()
+{
+    IMapperPlugin@ grid = CGrid();
+    if(Plugins_Register(grid))
+    {
+        Message("Grid plugin (WIP) registered. Press G to switch grid mode.");
+    }
+}
+#endif // __MAPPER_GRID__ //

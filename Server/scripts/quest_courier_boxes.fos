@@ -1,0 +1,309 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_courier_boxes.fos
+//
+
+#include "_macros.fos"
+#include "reputations_h.fos"
+
+import void ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+import int  SkillCheck(Critter& cr, int skill, int skillused, Item@ item, int bonus) from "utils";
+
+#define BOX_QUEST_GUNRUNNERS_COURIER    (0)
+#define BOX_QUEST_GUNRUNNERS_CARAVAN    (1)
+
+#define _BoxReputation                  # (it)   (it.Val3)
+#define _BoxStatus                      # (it)   (it.Val4)
+#define _BoxCritterId                   # (it)   (it.Val5)
+
+#define BOX_STATUS_UNTOUCHED            (0)
+#define BOX_STATUS_DISARMED             (1)
+#define BOX_STATUS_OPENED               (2)
+#define BOX_STATUS_JAMMED               (3)
+
+void r_GiveGunRunnerCourierBox(Critter& cr, Critter@ npc)
+{
+    Item@ Box = cr.AddItem(PID_Q_GUNRUNNER_COURIER_BOX, 1);
+    _BoxCritterId(Box) = cr.Id;
+    _BoxReputation(Box) = cr.Reputation[FACTION_GUNRUNNERS];
+    _BoxStatus(Box) = BOX_STATUS_UNTOUCHED;
+}
+
+void _GunRunnersBoxInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_GunRunnersBoxUsed");
+    item.SetEvent(ITEM_EVENT_SKILL, "_GunRunnersBoxUseSkill");
+}
+
+bool _GunRunnersBoxUsed(Item& item, Critter& player, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+        return false;
+
+    // ===============================================
+    // Blueprints box from Gun Runners quest location
+    // ===============================================
+
+    if(_BoxStatus(item) == BOX_STATUS_OPENED)
+    {
+        player.Say(SAY_NETMSG, "The box is empty.");
+        return true;
+    }
+    player.Say(SAY_NETMSG, "The box is rigged with explosives. Opening it would destroy the content.");
+    return true;
+}
+
+void ExplodeBomb(Critter& player, Item& item)
+{
+    // Add explosion in here
+    ExplodeEx(player.GetMap(), player.HexX, player.HexY, PID_EXPLODE_ROCKET, /*effect radius*/ 1, /*damage*/ Random(50, 80), DAMAGE_EXPLODE, /*radius*/ 3, player.Id);
+    // if (item.GetCount()>1)
+    //	item.SetCount(item.GetCount()-1);
+    // else
+    DeleteItem(item);
+
+    SubReputation(player, FACTION_GUNRUNNERS, 200);
+    Critter@ owner = GetCritter(_BoxCritterId(item));
+    if(valid(owner))
+        SubReputation(owner, FACTION_GUNRUNNERS, 200);
+}
+
+bool DetonateBomb(Critter& player)
+{
+    return(player.Perk[PE_DEMOLITION_EXPERT] == 0 && Random(0, 3) == 0);
+}
+
+bool _GunRunnersBoxUseSkill(Item& item, Critter& player, int skill)
+{
+    // ===============================================
+    // Blueprints from Gun Runners quest location
+    // ===============================================
+
+    if(_BoxStatus(item) == BOX_STATUS_JAMMED)
+    {
+        player.Say(SAY_NETMSG, "The box is jammed tightly, you probably won't be able to get it open, no matter how much try.");
+        return true;
+    }
+
+    if(_BoxStatus(item) == BOX_STATUS_OPENED)
+    {
+        player.Say(SAY_NETMSG, "The box is empty.");
+        return true;
+    }
+
+    if(skill == SK_TRAPS)
+    {
+        if(_BoxStatus(item) != BOX_STATUS_UNTOUCHED)
+        {
+            player.Say(SAY_NETMSG, "The explosives are already disarmed.");
+            return true;
+        }
+
+        if(DetonateBomb(player))
+        {
+            ExplodeBomb(player, item);
+            player.Say(SAY_NETMSG, "You try to disarm the bomb but make a terrible mistake. The metal case is exploding in your hands.");
+        }
+        else if(player.Skill[SK_TRAPS] < Random(1, 100) + 75)
+        {
+            player.Say(SAY_NETMSG, "You can't figure out how to disarm the explosives.");
+        }
+        else
+        {
+            player.StatBase[ST_EXPERIENCE] += 1000;
+            player.Say(SAY_NETMSG, "You have been able to disarm the explosives on the box.");
+            _BoxStatus(item) = BOX_STATUS_DISARMED;
+        }
+        return true;
+    }
+    else if(skill == SK_LOCKPICK)
+    {
+        if(_BoxStatus(item) == BOX_STATUS_UNTOUCHED)
+        {
+            ExplodeBomb(player, item);
+
+            player.Say(SAY_NETMSG, "The bomb-rigged box explodes!");
+            return true;
+        }
+
+
+
+        if(player.Skill[SK_LOCKPICK] < Random(1, 100) + 75)
+        {
+            player.Say(SAY_NETMSG, "You've failed to pick the lock.");
+            if(Random(0, 4) == 0)
+            {
+                player.Say(SAY_NETMSG, "While trying to pick the lock, you've managed to jam the box.");
+                _BoxStatus(item) = BOX_STATUS_JAMMED;
+            }
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "You've managed to pick the lock and open the box.");
+            player.StatBase[ST_EXPERIENCE] += 1000;
+
+            SubReputation(player, FACTION_GUNRUNNERS, 400);
+            Critter@ owner = GetCritter(_BoxCritterId(item));
+            if(valid(owner))
+                SubReputation(owner, FACTION_GUNRUNNERS, 400);
+
+            // Quest reward:
+            if(item.GetProtoId() == PID_Q_GUNRUNNER_BOX)
+            {
+                player.AddItem(PID_BLUEPRINT_14MM_PISTOL, 1);
+                player.AddItem(PID_BLUEPRINT_PLASMA_PISTOL, 1);
+                player.AddItem(PID_BLUEPRINT_LASER_RIFLE, 1);
+                player.AddItem(PID_BLUEPRINT_LIGHT_SUPPORT_WEAPON, 1);
+            }
+            else if(item.GetProtoId() == PID_Q_GUNRUNNER_COURIER_BOX)
+            {
+                // TODO: Fill me
+                if(_BoxReputation(item) == 0)
+                {
+                    player.AddItem(PID_COOKIE, 1);
+                }
+                else if(_BoxReputation(item) < 100)
+                {
+                    player.AddItem(PID_10MM_PISTOL, Random(1, 2));
+                    player.AddItem(PID_10MM_JHP, 15);
+                    player.AddItem(PID_10MM_AP, 15);
+                }
+                else if(_BoxReputation(item) < 200)
+                {
+                    if(Random(1, 2) == 1)
+                    {
+                        player.AddItem(PID_GREASE_GUN, Random(1, 2));
+                        player.AddItem(PID_45_CALIBER_AMMO, 30);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_10MM_SMG, Random(1, 2));
+                        player.AddItem(PID_10MM_JHP, 30);
+                        player.AddItem(PID_10MM_AP, 30);
+                    }
+                }
+                else if(_BoxReputation(item) < 300)
+                {
+                    if(Random(1, 2) == 1)
+                    {
+                        player.AddItem(PID_DESERT_EAGLE, Random(1, 2));
+                        player.AddItem(PID_44_MAGNUM_JHP, 15);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_14MM_PISTOL, Random(1, 2));
+                        player.AddItem(PID_14MM_AP, 15);
+                    }
+                }
+                else if(_BoxReputation(item) < 400)
+                {
+                    if(Random(1, 2) == 1)
+                    {
+                        player.AddItem(PID_SAWED_OFF_SHOTGUN, Random(1, 3));
+                        player.AddItem(PID_SHOTGUN_SHELLS, 20);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_SHOTGUN, Random(1, 2));
+                        player.AddItem(PID_SHOTGUN_SHELLS, 20);
+                    }
+                }
+                else if(_BoxReputation(item) < 500)
+                {
+                    if(Random(1, 5) == 1)
+                    {
+                        player.AddItem(PID_HK_CAWS, 1);
+                        player.AddItem(PID_SHOTGUN_SHELLS, 30);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_COMBAT_SHOTGUN, Random(1, 2));
+                        player.AddItem(PID_SHOTGUN_SHELLS, 30);
+                    }
+                }
+                else if(_BoxReputation(item) < 600)
+                {
+                    player.AddItem(PID_HUNTING_RIFLE, Random(1, 2));
+                    player.AddItem(PID_22_AMMO, 15);
+                }
+                else if(_BoxReputation(item) < 700)
+                {
+                    if(Random(1, 2) == 1)
+                    {
+                        player.AddItem(PID_ASSAULT_RIFLE, Random(1, 2));
+                        player.AddItem(PID_5MM_JHP, 15);
+                        player.AddItem(PID_5MM_AP, 15);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_TOMMY_GUN, Random(1, 2));
+                        player.AddItem(PID_45_CALIBER_AMMO, 30);
+                    }
+                }
+                else if(_BoxReputation(item) < 800)
+                {
+                    player.AddItem(PID_FN_FAL, Random(1, 2));
+                    player.AddItem(PID_7_62MM_AMMO, 30);
+                }
+                else if(_BoxReputation(item) < 900)
+                {
+                    if(Random(1, 5) == 1)
+                    {
+                        player.AddItem(PID_VINDICATOR_MINIGUN, 1);
+                        player.AddItem(PID_4_7MM_CASELESS, 50);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_MINIGUN, 1);
+                        player.AddItem(PID_5MM_JHP, 50);
+                        player.AddItem(PID_5MM_AP, 50);
+                    }
+                }
+                else if(_BoxReputation(item) <= 1000)
+                {
+                    if(Random(1, 5) == 1)
+                    {
+                        player.AddItem(PID_BOZAR, 1);
+                        player.AddItem(PID_223_FMJ, 30);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_ROCKET_LAUNCHER, Random(1, 2));
+                        player.AddItem(PID_EXPLOSIVE_ROCKET, 2);
+                        player.AddItem(PID_ROCKET_AP, 2);
+                    }
+                }
+                else
+                {
+                    int roll = Random(1, 10);
+                    if(roll == 1)
+                    {
+                        player.AddItem(PID_VINDICATOR_MINIGUN, 1);
+                        player.AddItem(PID_4_7MM_CASELESS, 100);
+                    }
+                    else if(roll == 2)
+                    {
+                        player.AddItem(PID_BOZAR, 1);
+                        player.AddItem(PID_223_FMJ, 60);
+                    }
+                    else
+                    {
+                        player.AddItem(PID_AVENGER_MINIGUN, Random(1, 2));
+                        player.AddItem(PID_5MM_JHP, 120);
+                        player.AddItem(PID_5MM_AP, 120);
+                    }
+                }
+                // etc
+            }
+            else             // some random box?
+            {}
+
+            // _BoxStatus(item)=BOX_STATUS_OPENED;
+            DeleteItem(item);
+        }
+    }
+
+    return false;
+}

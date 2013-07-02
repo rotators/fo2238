@@ -1,0 +1,13 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// trader_h.fos
+//
+
+#define TRADER_UPDATE_TIME     (REAL_MINUTE(Random(180, 360)))       // 180 - 360 real minutes
+#define AVG_UPDATE_TIME        (REAL_MINUTE(270))
+#ifdef __DEBUG__
+# define TRADER_UPDATE_TIME    (REAL_SECOND(500))                    // Debug
+# define AVG_UPDATE_TIME       (REAL_SECOND(500))
+#endif

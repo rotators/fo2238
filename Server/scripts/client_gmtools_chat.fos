@@ -1,0 +1,199 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gmtools_chat.fos
+//
+
+// Game Master tools, in-game communication
+
+/* This file is included in client_gmtools.fos */
+
+// !! All access level checks should be done server-side
+
+#ifdef __CLIENT
+
+#include "client_interface_h.fos"
+
+import int GUI_GetActiveMainScreen() from "client_gui";
+
+class CGMTChat
+{
+    uint   tick;                        /**< time when message arrived to client */
+    uint   access;                      /**< access level of sender (0 if broadcast)*/
+    string text;                        /**< chat/broadcast message */
+    uint   color;                       /**< text color */
+
+    /**
+     * Constructor.
+     *
+     * @param access access level of sender
+     * @param text chat message
+     */
+    CGMTChat(uint access, string text)
+    {
+        this.tick       = GetTick();
+        this.access = access;
+        this.text       = text;
+        switch(this.access)
+        {
+        case ACCESS_TESTER:
+            this.color = GMT_COLOR_CHATTESTER;
+            break;
+        case ACCESS_MODER:
+            this.color = GMT_COLOR_CHATMODER;
+            break;
+        case ACCESS_ADMIN:
+            this.color = GMT_COLOR_CHATADMIN;
+            break;
+        case 1337:
+            this.color = GMT_COLOR_CHATDEV;
+            break;
+        default:
+            this.color = GMT_COLOR_CHATTESTER;
+            break;
+        }
+
+        this.onCreate();
+    }
+
+    void onCreate()
+    {
+        Message("|" + this.color + " " + this.text);
+    }
+};
+array<CGMTChat> GMTchat;
+
+/**
+ * send chat message to server
+ *
+ * @see question
+ */
+void GMToolsChat(string message)
+{
+    GMTDebugMessage("GMT->chat: send <" + message + ">");
+    if(message.length() > 0)
+        question(0, GMT_QUESTION_CHAT, 0, message);
+}
+
+/**
+ * Remove old chat messages, check
+ *
+ * @note called by @a @e loop() -> @a @e GMToolsProcess()
+ */
+void GMToolsProcessChat() // loop -> GMToolsProcess
+{
+    int max = ((__ScreenHeight / 2) - GMTconfig.ChatBorder - 175 - 45) / 10;
+    if(GMTchat.length() > uint(max))
+    {
+        // GMTDebugMessage( "GMT->chat: hit length limit" );
+        GMTchat.removeFirst();
+    }
+
+    if(GMTchat.length() > 0)
+    {
+        if(GetTick() > (GMTchat.first().tick + (GMTconfig.ChatDelay * 1000)))
+        {
+            // GMTDebugMessage( "GMT->chat: hit time limit" );
+            GMTchat.removeFirst();
+        }
+    }
+}
+
+/**
+ * Display chat messages to client.
+ *
+ * @note called by: @a @e render_iface() -> @a @e GMToolsDraw()
+ */
+void GMToolsDrawChat() // render_iface -> GMTools
+{
+    if(GMTchat.length() > 0)
+    {
+        array<int> background;
+        array<int> frame;
+        int        bcolor = int(COLOR_CHANGE_ALPHA(GMT_COLOR_CHAT, 150));
+        int        fcolor = int(GMT_COLOR_CHATFRAME);
+
+        int        left = GMTconfig.ChatBorder;
+        int        right = __ScreenWidth - left;
+
+        int        down = __ScreenHeight - GMTconfig.ChatBorder;
+
+        if(GUI_GetActiveMainScreen() == CLIENT_MAIN_SCREEN_GLOBAL_MAP)
+        {
+            left += 180;
+        }
+        else
+        {
+            if(IsInterfaceShown())
+                down -= 175;
+
+            if(__ConsoleActive)
+                down -= 45;
+        }
+        int up = down;
+
+        int unused = 0;
+        int lines = 0;
+        for(uint c = 0; c < GMTchat.length(); c++)
+        {
+            GetTextInfo(GMTchat[c].text, (right - 10) - (left + 10), 0, FONT_FALLOUT, 0, unused, unused, lines);
+            up -= lines * 10;
+        }
+
+        // left-up
+        background.insertLast(left);
+        background.insertLast(up - 5);
+        background.insertLast(bcolor);
+
+        frame.insertLast(left);
+        frame.insertLast(up - 5);
+        frame.insertLast(fcolor);
+
+        // left-down
+        background.insertLast(left);
+        background.insertLast(down);
+        background.insertLast(bcolor);
+
+        frame.insertLast(left);
+        frame.insertLast(down);
+        frame.insertLast(fcolor);
+
+        // right-down
+        background.insertLast(right);
+        background.insertLast(down);
+        background.insertLast(bcolor);
+
+        frame.insertLast(right);
+        frame.insertLast(down);
+        frame.insertLast(fcolor);
+
+        // right-up
+        background.insertLast(right);
+        background.insertLast(up - 5);
+        background.insertLast(bcolor);
+
+        frame.insertLast(right);
+        frame.insertLast(up - 5);
+        frame.insertLast(fcolor);
+
+        // left-up
+        frame.insertLast(left);
+        frame.insertLast(up - 5);
+        frame.insertLast(fcolor);
+
+        DrawPrimitive(DRAW_PRIMITIVE_TRIANGLEFAN, background);
+        DrawPrimitive(DRAW_PRIMITIVE_LINESTRIP, frame);
+
+        lines = 0;
+        for(uint c = 0, cLen = GMTchat.length(); c < cLen; c++)
+        {
+            int tw = 0;
+            int tlines = 0;
+            GetTextInfo(GMTchat[c].text, (right - 10) - (left + 10), 0, FONT_FALLOUT, 0, tw, unused, tlines);
+            DrawText(GMTchat[c].text, left + 10, up + (lines * 10), tw, tlines * 10, GMTchat[c].color, FONT_FALLOUT, 0);
+            lines += tlines;
+        }
+    }
+}
+#endif /* __CLIENT */

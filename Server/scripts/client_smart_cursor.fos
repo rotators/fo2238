@@ -1,0 +1,179 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_smart_cursor.fos
+//
+
+#ifndef __CLIENT_SMART_CURSOR__
+#define __CLIENT_SMART_CURSOR__
+
+#include "_macros.fos"
+#include "_client_defines.fos"
+#include "client_smart_cursor_h.fos"
+#include "_colors.fos"
+#include "MsgStr.h"
+
+
+uint ValidToolForTarget(ItemCl@ tool, ItemCl@ target)
+{
+    if(valid(tool) && valid(target) && FLAG(target.Flags, ITEM_CAN_USE))
+    {
+        switch(target.Proto.ProtoId)
+        {
+
+        case PID_PLANT_FIBER:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_KNIFE || pid == PID_COMBAT_KNIFE || pid == PID_THROWING_KNIFE || pid == PID_SWITCHBLADE || pid == PID_WAKIZASHI_BLADE || pid == PID_LIL_JESUS_WEAPON)
+            {
+                return SMART_EXTRACT_FIBRES;
+            }
+            return SMART_NULL;
+        }
+
+        case PID_BRAHMIN_SHIT_1:     // Should be merged into one pid...
+        case PID_BRAHMIN_SHIT_2:
+        case PID_BRAHMIN_SHIT_3:
+        case PID_BRAHMIN_SHIT_4:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_OLD_SHOVEL || pid == PID_SHOVEL)
+            {
+                return SMART_SHOVEL_DUNG;
+            }
+            return SMART_NULL;
+        }
+
+        case PID_TREE1_FIREWOOD:     // Should be merged into one pid...
+        case PID_TREE2_FIREWOOD:
+        case PID_TREE3_FIREWOOD:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_PRIMITIVE_TOOL || pid == PID_AXE)
+            {
+                return SMART_CHOP_WOOD;
+            }
+            return SMART_NULL;
+        }
+
+        case PID_VEIN_IRON:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_PRIMITIVE_TOOL || pid == PID_SLEDGEHAMMER || pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_ORE;
+            }
+            return SMART_NULL;
+        }
+        case PID_VEIN_MINERALS:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_PRIMITIVE_TOOL || pid == PID_SLEDGEHAMMER || pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_MINERALS;
+            }
+            return SMART_NULL;
+        }
+        case PID_VEIN_IRON2:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_SLEDGEHAMMER || pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_ORE2;
+            }
+            return SMART_NULL;
+        }
+        case PID_VEIN_MINERALS2:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_MINERALS2;
+            }
+            return SMART_NULL;
+        }
+        case PID_VEIN_URANIUM:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_URANIUM;
+            }
+            return SMART_NULL;
+        }
+        case PID_VEIN_GOLD:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_SUPER_SLEDGE)
+            {
+                return SMART_EXTRACT_GOLD;
+            }
+            return SMART_NULL;
+        }
+
+        case PID_GRAVESITE_V:     // Should be merged into one pid with different Dir...
+        case PID_GRAVESITE_H:
+        {
+            uint16 pid = tool.Proto.ProtoId;
+            if(pid == PID_OLD_SHOVEL || pid == PID_SHOVEL)
+            {
+                if(_LockerIsClose(target))
+                    return SMART_DIG_GRAVE;
+            }
+            return SMART_NULL;
+        }
+
+        }
+    }
+    return SMART_NULL;
+}
+
+
+
+bool TryUseSmartCursor(int click)
+{
+    if(GetCurrentCursor() != CURSOR_DEFAULT || click != MOUSE_CLICK_LEFT)
+        return false;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return false;
+
+    array<ItemCl@> handItem;
+    chosen.GetItems(SLOT_HAND1, handItem);
+    if(handItem.length() > 0)
+    {
+        ItemCl@ target = GetMonitorItem(__MouseX, __MouseY, false);
+        if(ValidToolForTarget(handItem[0], target) != SMART_NULL)
+        {
+            uint[] action = { CHOSEN_USE_ITEM, handItem[0].Id, handItem[0].Proto.ProtoId, TARGET_ITEM, target.Id, ITEM_MODE_USE, 0 };
+            SetChosenActions(action);
+            return true;
+        }
+    }
+    return false;
+}
+
+void TryDrawSmartCursor()
+{
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+    if(GetCurrentCursor() == CURSOR_DEFAULT)
+    {
+        array<ItemCl@> handItems;
+        chosen.GetItems(SLOT_HAND1, handItems);
+        if(handItems.length() == 0)
+            return;
+
+        ItemCl@ target = GetMonitorItem(__MouseX, __MouseY, false);
+
+        uint    smartResult = ValidToolForTarget(handItems[0], target);
+        if(smartResult != SMART_NULL)
+        {
+            DrawText(GetMsgStr(TEXTMSG_TEXT, 1800 + smartResult), __MouseX + 2, __MouseY - 12, __ScreenWidth, 20, COLOR_TEXT, FONT_FALLOUT, FT_ALIGN | FT_BORDERED);
+        }
+    }
+}
+#endif // __CLIENT_SMART_CURSOR__

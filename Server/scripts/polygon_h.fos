@@ -1,0 +1,38 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// polygon_h.fos
+//
+
+#ifndef __POLYGON_H__
+#define __POLYGON_H__
+
+shared interface IPolygon
+{
+    IPolygon@ AddVertex(uint16 x, uint16 y);
+    IPolygon@ AddVertices(array<uint16>& hexes);
+    #ifndef __SERVER
+    void GetTriangulation(array<uint16>& triangles);
+    #endif
+    #ifdef __SERVER
+    bool IsWithin(Critter& cr);
+    bool IsWithin(Item& item);
+    #endif
+    bool IsWithin(uint16 x, uint16 y);
+};
+
+
+#ifndef __POLYGON_MODULE__
+import IPolygon@ NewPolygon() from "polygon";
+
+# ifdef __SERVER
+import IPolygon@ LoadShapeFromEntires(Map& map, uint first, uint last) from "polygon";
+# endif // __SERVER
+
+# ifdef __CLIENT
+import void GetDrawHexAreaData(array<uint16>& area, bool triangles, int color, array<int>& data) from "polygon";
+import void DrawHexArea(array<uint16>& area, bool triangles, int color) from "polygon";
+# endif // __CLIENT
+#endif  // __POLYGON_MODULE__
+#endif  // __POLYGON_H__

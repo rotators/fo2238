@@ -1,0 +1,106 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_ncr_downtown.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+#include "_entires.fos"
+#include "polygon_h.fos"
+
+import void StartFirstTentQuest(Critter& player) from "quest_first_tent";
+
+//
+// map.Data:
+// 2 - Bank ID, for more information check _economy.fos
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_CritterOut");
+
+    if(firstTime)
+    {
+        map.SetData(MAP_DATA_BANK, BANK_NCR);         // This map contains the NCR bank
+    }
+    // init produuuction
+    if(firstTime)
+    {
+        uint[] maxes = { 40, 30 };
+        SetAlertMap(map, maxes);
+    }
+    InitWestinRanch(map);
+}
+
+
+void _CritterOut(Map& map, Critter& cr)
+{
+    if(cr.IsPlayer() && _IsOnline(cr) && GetLocalVar(LVAR_q_first_tent, cr.Id) == 0 && cr.Param[ST_LEVEL] > 1)
+    {
+        StartFirstTentQuest(cr);
+    }
+}
+
+
+bool s_Westin_WaterPump(Critter& player, Scenery& table, int skill, Item@ item)
+{
+    if(!valid(item))
+    {
+        if(skill == SK_REPAIR)
+        {
+            player.Say(SAY_NETMSG, "You don't think it can be done without some tools");
+            return true;
+        }
+        return false;
+    }
+
+    int bonus = 0;
+    if(item.GetProtoId() == PID_MULTI_TOOL)
+        bonus = 25;
+    else if(item.GetProtoId() == PID_SUPER_TOOL_KIT)
+        bonus = 50;
+    else
+        return false;
+
+    GameVar@ var = GetLocalVar(LVAR_q_ncr_westin_wpump, player.Id);
+    if(!valid(var))
+        return false;
+
+    if(var.GetValue() == 1)
+    {
+        player.Say(SAY_NETMSG, "The pump tubes are cleaned up already.");
+        return false;
+    }
+
+    int chance = CLAMP(player.Skill[SK_REPAIR] + bonus, 5, 95);
+    if(chance > Random(0, 65))
+    {
+        var = 1;
+        player.Say(SAY_NETMSG, "You have cleaned up the pump tubes.");
+        player.StatBase[ST_EXPERIENCE] += 250;
+    }
+    else
+    {
+        var = 0;
+        player.Say(SAY_NETMSG, "Your expertise about this machine is fairly low. You haven't been able to clean up the tubes.");
+    }
+    return true;
+}
+
+IPolygon@ WestinRanchPolygon = null;
+
+void InitWestinRanch(Map& map)
+{
+    if(!valid(WestinRanchPolygon))
+        @WestinRanchPolygon = ::LoadShapeFromEntires(map, ENTIRE_NCR_WESTIN_CORNER1, ENTIRE_NCR_WESTIN_CORNER4);
+}
+
+bool d_InsideWestinRanch(Critter& cr, Critter@ npc)
+{
+    return WestinRanchPolygon.IsWithin(cr);
+}

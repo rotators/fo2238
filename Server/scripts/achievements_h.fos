@@ -1,0 +1,33 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// achievements_h.fos
+//
+
+#ifndef __ACHIEVEMENTS_H__
+#define __ACHIEVEMENTS_H__
+
+#define ACHIEVEMENT_MSG             (20000)
+#define ACHIEVEMENT_MSG_TITLE       # (num)     (ACHIEVEMENT_MSG + (num * 10))
+#define ACHIEVEMENT_MSG_DESCR       # (num)     (ACHIEVEMENT_MSG_TITLE(num) + 1)
+#define ACHIEVEMENT_MSG_PIC         # (num)       (ACHIEVEMENT_MSG_TITLE(num) + 2)
+
+#define ACHIEVEMENT_MIN             (0)
+#define ACHIEVEMENT_MAX             (254)
+
+#define ACHIEVEMENT_MAN_OF_STEEL    (0)
+#define ACHIEVEMENT_GM_ABUSE        (254)     // special handling, see AddAchievement()
+
+#ifndef __ACHIEVEMENTS__
+
+# ifdef __SERVER
+import bool AddAchievement(Critter& cr, uint8 achievement) from "achievements";
+import bool HaveAchievement(Critter& cr, uint8 achievement) from "achievements";
+# endif
+
+# ifdef __CLIENT
+import bool HaveAchievement(uint8 achievement) from "achievements";
+# endif
+#endif // __ACHIEVEMENTS__
+#endif /* __ACHIEVEMENTS_H__ */

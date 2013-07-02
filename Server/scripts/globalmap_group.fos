@@ -1,0 +1,705 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// globalmap_group.fos
+//
+
+#include "_macros.fos"
+#include "follower_h.fos"
+#include "logging_h.fos"
+#include "MSGSTR.h"
+#include "npc_common_h.fos"
+#include "tracking.fos"
+#include "worldmap_h.fos"
+
+import uint            GetGlobalMapRelief(uint x, uint y) from "worldmap";
+import void            FindEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& encounterDescriptor, bool& waitForAnswer, bool empty) from "worldmap";
+import void            InviteToEncounter(array<Critter@>& group, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir) from "worldmap";
+import array<Critter@> WorldmapGetPlayers(uint zx, uint zy) from "worldmap_players";
+import void            WorldmapUpdateGroup(array<Critter@>& group) from "worldmap_players";
+import void            WorldmapUpdatePlayer(Critter@ player) from "worldmap_players";
+import void            WorldmapRemovePlayer(Critter@ player) from "worldmap_players";
+import void            CarMessage(Critter@ cr, Item@ car, int msg) from "car";
+
+import void WMIdle(Critter& cr) from "sleepiness";
+import void WMEnterIdle(Critter& cr) from "sleepiness";
+import void WMNotIdle(Critter& cr) from "sleepiness";
+import void DecumulateSleepiness(Critter& cr) from "sleepiness";
+import void SendCombatZones(Critter& cr) from "sleepiness";
+
+
+funcdef void FGlobalProcessFunc(int processType, Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed, uint& encounterDescriptor, bool& waitForAnswer);
+
+array<FGlobalProcessFunc@> GlobalProcessFunctions =
+{
+    GlobalProcessMove,
+    GlobalProcessEnter,
+    GlobalProcessStartFast,
+    GlobalProcessStart,
+    GlobalProcessSetMove,
+    GlobalProcessStopped,
+    GlobalProcessNpcIdle,
+    GlobalProcessKick,
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Output:
+//  Critter& cr - who called this function, in most times is leader of group;
+//  x,y - current position;
+//  toX, toY - destination position;
+//  speed - speed of group, must set in GLOBAL_PROCESS_SET_MOVE; also you can type -1 to stop group;
+//  if encounterDescriptor != 0 than global_invite calls;
+//  if waitForAnswer == false than global_invite calls after this function, else call after leader confirm invite;
+// Call types see in Global map events in _defines.fos
+void global_process(int processType, Critter& cr, Item@ car,
+                    float& curX, float& curY, float& toX, float& toY, float& speed,
+                    uint& encounterDescriptor, bool& waitForAnswer)
+{
+    // Main processing is done here
+    FGlobalProcessFunc@ func = GlobalProcessFunctions[processType];
+    func(processType, cr, car, curX, curY, toX, toY, speed, encounterDescriptor, waitForAnswer);
+
+    // Process sleepiness
+    switch(processType)
+    {
+    case GLOBAL_PROCESS_MOVE:
+	case GLOBAL_PROCESS_SET_MOVE:
+    {
+        if(speed != 0)
+            WMNotIdle(cr);
+        break;
+    }
+    case GLOBAL_PROCESS_ENTER:
+    {
+        WMNotIdle(cr);
+        break;
+    }
+    case GLOBAL_PROCESS_START_FAST:
+    {
+        WMEnterIdle(cr);
+        break;
+    }
+    case GLOBAL_PROCESS_STOPPED:
+	case GLOBAL_PROCESS_KICK:
+    {
+        WMIdle(cr);
+        break;
+    }
+    case GLOBAL_PROCESS_NPC_IDLE:
+    {
+        DecumulateSleepiness(cr);
+        break;
+    }
+	default:
+    }
+}
+
+
+void GlobalProcessMove(int processType, Critter& cr, Item@ car,
+                       float& curX, float& curY, float& toX, float& toY, float& speed,
+                       uint& encounterDescriptor, bool& waitForAnswer)
+{
+    MoveGlobalGroup(cr, car, curX, curY, toX, toY, speed);
+    int curXi = int(curX);
+    int curYi = int(curY);
+    int oldXi = curXi;
+    int oldYi = curYi;
+
+    if(++cr.GlobalMapMoveCounter % (__EncounterTime / __GlobalMapMoveTime) == 0)
+    {
+        array<Critter@>@ group = cr.GetGlobalGroup();
+        Critter@ leader = group[0];
+        int      groupIgnore = 0;
+        for(uint c = 1, g = group.length(); c < g; c++)
+        {
+            if(group[c].IsPlayer() && group[c].GetAccess() >= ACCESS_TESTER)
+                groupIgnore++;
+        }
+
+        // Validate charisma
+        if(speed > 0.1f && (group.length() - groupIgnore) > (leader.Stat[ST_CHARISMA] + leader.Perk[PE_MAGNETIC_PERSONALITY]))
+        {
+            leader.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_CRIT_BAD_CHARISMA);
+            speed = 0.0f;             // Stop
+            return;
+        }
+
+        // admin info
+        if(leader.IsPlayer() && leader.GetAccess() == ACCESS_ADMIN)
+            leader.Say(SAY_NETMSG, "Players in zone: " + WorldmapGetPlayers(oldXi / ZONE_LENGTH, oldYi / ZONE_LENGTH).length());
+
+        // update zone players information
+        WorldmapUpdateGroup(group);
+
+        if(GetGlobalMapRelief(curXi, curYi) != 0 /* && GetVisibleLocations(curXi, curYi, 0, cr, null) == 0*/)
+        {
+            FindEncounter(group, car, curXi, curYi, encounterDescriptor, waitForAnswer, false);
+            #ifdef __DEBUG__
+            FLog(LOG_WMLOCATIONS, "TICK " + curXi + " " + curYi);
+            #endif
+        }
+    }
+
+    SendCombatZones(cr);
+
+}
+
+void GlobalProcessEnter(int processType, Critter& cr, Item@ car,
+                        float& curX, float& curY, float& toX, float& toY, float& speed,
+                        uint& encounterDescriptor, bool& waitForAnswer)
+{
+    array<Critter@>@ group = cr.GetGlobalGroup();
+    int movementType = (valid(car) ? car.Proto.Car_MovementType : GM_WALK_GROUND);
+    int curXi = int(curX);
+    int curYi = int(curY);
+
+    if(movementType == GM_WALK_WATER && GetGlobalMapRelief(curXi, curYi) == 0)
+    {
+        // Find land
+        bool      landFounded = false;
+        const int maxx = __GlobalMapWidth * __GlobalMapZoneLength;
+        const int maxy = __GlobalMapHeight * __GlobalMapZoneLength;
+        for(int ox = -1; ox <= 1; ox++)
+        {
+            for(int oy = -1; oy <= 1; oy++)
+            {
+                int xx = curXi + ox;
+                int yy = curYi + oy;
+                if(xx >= 0 && xx < maxx && yy >= 0 && yy < maxy && GetGlobalMapRelief(xx, yy) != 0)
+                {
+                    FindEncounter(cr.GetGlobalGroup(), car, xx, yy, encounterDescriptor, waitForAnswer, true);
+                    ox = oy = 2;                     // Exit from loop
+                    landFounded = true;
+                }
+            }
+        }
+
+        if(!landFounded)
+            FindEncounter(cr.GetGlobalGroup(), car, curXi, curYi, encounterDescriptor, waitForAnswer, true);
+    }
+    else
+    {
+        FindEncounter(cr.GetGlobalGroup(), car, curXi, curYi, encounterDescriptor, waitForAnswer, true);
+    }
+}
+
+void GlobalProcessStartFast(int processType, Critter& cr, Item@ car,
+                            float& curX, float& curY, float& toX, float& toY, float& speed,
+                            uint& encounterDescriptor, bool& waitForAnswer)
+{
+    array<Critter@>@ group = cr.GetGlobalGroup();
+
+    int curZoneX = int(curX) / __GlobalMapZoneLength;
+    int curZoneY = int(curY) / __GlobalMapZoneLength;
+    ScanZone(group, curZoneX, curZoneY);
+
+    // update zone players information
+    WorldmapUpdateGroup(group);
+}
+
+void GlobalProcessStart(int processType, Critter& cr, Item@ car,
+                        float& curX, float& curY, float& toX, float& toY, float& speed,
+                        uint& encounterDescriptor, bool& waitForAnswer)
+{}
+
+void GlobalProcessSetMove(int processType, Critter& cr, Item@ car,
+                          float& curX, float& curY, float& toX, float& toY, float& speed,
+                          uint& encounterDescriptor, bool& waitForAnswer)
+{
+    array<Critter@>@ group = cr.GetGlobalGroup();
+    Critter@ leader = group[0];
+    int      curXi = int(curX);
+    int      curYi = int(curY);
+    int      toXi = int(toX);
+    int      toYi = int(toY);
+
+    // admin info
+    if(leader.IsPlayer() && leader.GetAccess() == ACCESS_ADMIN)
+        leader.Say(SAY_NETMSG, "Players in target zone: " + WorldmapGetPlayers(toXi / ZONE_LENGTH, toYi / ZONE_LENGTH).length());
+
+    // automatically cancel tracking
+    LooseTrack(leader, true);
+
+    if(int(group.length()) > leader.Stat[ST_CHARISMA] + leader.Perk[PE_MAGNETIC_PERSONALITY])
+    {
+        leader.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_CRIT_BAD_CHARISMA);
+        return;
+    }
+
+    speed = GLOBAL_MAP_BASE_SPEED;
+    if(valid(car))
+    {
+        uint strNum = 0;
+        if(group.length() > car.Proto.Car_CrittersCapacity)
+            strNum = STR_CAR_CRIT_OVERLOAD;
+        else if(car.Charge == 0)
+            strNum = STR_CAR_FUEL_EMPTY;
+        else if(car.Deterioration >= _CarGetMaxDeterioration(car))
+            strNum = STR_CAR_BROKEN;
+        if(strNum != 0)
+        {
+            // if(GetLvar(cr, LVAR_wm_idle)==0)
+            CarMessage(leader, car, strNum);
+            speed = 0;
+            return;
+        }
+
+        speed = car.Proto.Car_Speed * GLOBAL_MAP_BASE_SPEED / 10.0f;
+
+        // Find near water for boats
+        // In radius of one zone (left, top, right, bottom)
+        if(car.Proto.Car_MovementType == GM_WALK_WATER)
+        {
+            if(GetGlobalMapRelief(curXi, curYi) != 0)
+            {
+                const int   maxx = __GlobalMapWidth * __GlobalMapZoneLength;
+                const int   maxy = __GlobalMapHeight * __GlobalMapZoneLength;
+                const int[] ox = { -1,  0, 1, 0 };
+                const int[] oy = { 0, -1, 0, 1 };
+                for(int i = 1, ii = __GlobalMapZoneLength; i <= ii; i++)
+                {
+                    for(int j = 0; j < 4; j++)
+                    {
+                        int xx = curXi + ox[j] * i;
+                        int yy = curYi + oy[j] * i;
+                        if(xx >= 0 && xx < maxx && yy >= 0 && yy < maxy && GetGlobalMapRelief(xx, yy) == 0)
+                        {
+                            curX = float(xx);
+                            curY = float(yy);
+                            // Exit from loop
+                            j = 4;
+                            i = ii;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        // Pathfinder perk bonus
+        speed = (speed * (100 + cr.Perk[PE_PATHFINDER] * 15)) / 100;
+        if(cr.IsPlayer() && cr.GetAccess() >= ACCESS_TESTER)
+            speed += float(GetLvar(cr, LVAR_extra_speed)) / 1000.0f;
+        speed += float(cr.Skill[SK_OUTDOORSMAN]) / 100.f;     // up to 50% bonus
+    }
+}
+
+void GlobalProcessStopped(int processType, Critter& cr, Item@ car,
+                          float& curX, float& curY, float& toX, float& toY, float& speed,
+                          uint& encounterDescriptor, bool& waitForAnswer)
+{
+    array<Critter@>@ group = cr.GetGlobalGroup();
+    Critter@ leader = group[0];
+
+    // update zone players information
+    WorldmapUpdateGroup(group);
+
+    toX = curX;
+    toY = curY;
+    speed = -1;
+}
+
+void GlobalProcessNpcIdle(int processType, Critter& cr, Item@ car,
+                          float& curX, float& curY, float& toX, float& toY, float& speed,
+                          uint& encounterDescriptor, bool& waitForAnswer)
+{
+    // Critter& cr - is npc who call idle
+    // Process npc group on global map
+
+    if(curX == toX && curY == toY)     // Stopped
+    {
+        if(_IsFollower(cr))
+        {
+            if(ELAPSED_TIME - uint(cr.FollowerVar[FV_WM_NEXT_TRY]) > REAL_SECOND(10))
+                cr.FollowerVarBase[FV_WM_NEXT_TRY] = ELAPSED_TIME;
+            else
+                return;
+
+            if(cr.FollowerVarBase[FV_WM_IDLE] == 0)
+                cr.FollowerVarBase[FV_WM_IDLE] = ELAPSED_TIME;
+
+            if((ELAPSED_TIME - uint(cr.FollowerVar[FV_WM_IDLE])) > FOLLOWER_WM_GARBAGE_TIME)
+            {
+                Log("Garbaging follower " + cr.Id + ", PID=" + cr.GetProtoId() + ", master:" + cr.FollowerVar[FV_MASTER]);
+                FLog(LOG_FOLLOWER, "Garbaging follower " + cr.Id + ", PID=" + cr.GetProtoId() + ", master:" + cr.FollowerVar[FV_MASTER]);
+                DeleteNpc(cr);
+            }
+
+            if(valid(cr.GetGlobalGroup()))
+            {
+                array<Critter@> members;
+                members = cr.GetGlobalGroup();
+                for(uint i = 0; i < members.length(); i++)
+                    if(int(members[i].Id) == cr.FollowerVar[FV_MASTER])
+                    {
+                        return;
+                    }
+                RejoinMaster(cr, true);
+            }
+            else
+                RejoinMaster(cr, true);
+
+        }
+        // if you want enter to location under group than type
+        // encounterDescriptor=uint(-1);
+        // waitForAnswer=false;
+    }
+}
+
+void GlobalProcessKick(int processType, Critter& cr, Item@ car,
+                       float& curX, float& curY, float& toX, float& toY, float& speed,
+                       uint& encounterDescriptor, bool& waitForAnswer)
+{
+    int curXi = int(curX);
+    int curYi = int(curY);
+    if(GetGlobalMapRelief(curXi, curYi) == 0)
+    {
+        // Say to leader
+        array<Critter@>@ group = cr.GetGlobalGroup();
+        group[0].SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_CANT_KICK_ON_WATER);
+        return;
+    }
+
+    cr.LeaveGlobalGroup();
+}
+
+
+
+void RejoinMaster(Critter& cr, bool TeleportToMap)
+{
+    Critter@ master = GetCritter(cr.FollowerVar[FV_MASTER]);
+    if(valid(master))
+    {
+        if(master.GetMapId() == 0)
+        {
+            cr.LeaveGlobalGroup();
+            TransferToNPCMap(cr);                 // Because otherwise: FOServer::SScriptFunc::Crit_TransitToGlobalGroup : Script error: Critter already on global.
+            cr.TransitToGlobalGroup(master.Id);   // ... when calling this function
+            cr.FollowerVarBase[FV_WM_IDLE] = 0;
+            UNSETFLAG(cr.FollowerVarBase[FV_FLAGS], FV_FLAG_FLED_BATTLE);
+        }
+        else if(TeleportToMap && !FLAG(cr.FollowerVarBase[FV_FLAGS], FV_FLAG_FLED_BATTLE))
+        {
+            cr.TransitToMap(master.GetMapId(), master.HexX, master.HexY, cr.Dir);
+            cr.FollowerVarBase[FV_WM_IDLE] = 0;
+        }
+    }
+}
+
+//
+// Asks player that just enter global if he wants to track nearby available groups
+//
+uint e_AskAboutAvailable(array<uint>@ values)
+{
+    Critter@ leader = GetCritter(values[0]);
+    if(valid(leader))
+        AskAboutAvailable(leader);
+    // never ask again
+    return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on invite to encaunter.
+// If mapId != 0 than group enter to it.
+void global_invite(Critter& leader, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir)
+{
+    array<Critter@>@ group = leader.GetGlobalGroup();
+    // manage coordinates of trackers and tracked
+    SetTrackingCoords(group, group[0].WorldX, group[0].WorldY);
+    // cancel tracking mode (because of encounter)
+    LooseTrack(group[0], false);
+
+    if(encounterDescriptor == uint(-1))
+    {
+        array<Location@> locations;
+        if(GetLocations(leader.WorldX, leader.WorldY, 0, locations) != 0)
+        {
+            Location@ loc = locations[0];
+            Map@      map = loc.GetMapByIndex(0);
+            if(valid(map) && map.GetEntireCoords(0, 0, hexX, hexY))
+            {
+                mapId = map.Id;
+                dir = 0xFF;
+            }
+        }
+        return;
+    }
+
+    InviteToEncounter(group, car, encounterDescriptor, combatMode, mapId, hexX, hexY, dir);
+}
+
+void ScanZone(array<Critter@>& group, int zx, int zy)
+{
+    array<uint> locIds1, locIds2;
+    bool        locIds2Founded = false;
+
+    GetZoneLocationIds(zx, zy, 1, locIds1);
+
+    for(uint i = 0; i < group.length(); i++)
+    {
+        Critter@ cr = group[i];
+        if(!cr.IsPlayer())
+            continue;
+
+        int lookLen = cr.PerkBase[PE_SCOUT] != 0 ? 2 : 1;
+
+        if(lookLen == 2 && !locIds2Founded)
+        {
+            GetZoneLocationIds(zx, zy, 2, locIds2);
+            locIds2Founded = true;
+        }
+
+        // Open fog
+        int mapw = __GlobalMapWidth;
+        int maph = __GlobalMapHeight;
+        for(int x = -lookLen; x <= lookLen; x++)
+        {
+            for(int y = -lookLen; y <= lookLen; y++)
+            {
+                int zx_ = zx + x;
+                int zy_ = zy + y;
+                if(zx_ >= 0 && zx_ < mapw && zy_ >= 0 && zy_ < maph)
+                {
+                    int fog = (zx == zx_ && zy == zy_ ? FOG_NONE : FOG_HALF);
+                    if(cr.GetFog(zx_, zy_) < fog)
+                        cr.SetFog(zx_, zy_, fog);
+                }
+            }
+        }
+
+        // Find new locations
+        array<uint>@ locIds = lookLen == 1 ? locIds1 : locIds2;
+        for(uint j = 0; j < locIds.length(); j++)
+        {
+            uint locId = locIds[j];
+            if(!cr.IsKnownLoc(true, locId))
+            {
+                Location@ loc = GetLocation(locId);
+                if(valid(loc))
+                    cr.SetKnownLoc(true, locId);
+            }
+        }
+    }
+}
+
+void MoveGlobalGroup(Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed)   // export
+{
+    int   movementType = (valid(car) ? car.Proto.Car_MovementType : GM_WALK_GROUND);
+
+    int   curXi = int(curX);
+    int   curYi = int(curY);
+    // Save current distantion to compare in the end
+    float lastDist = DISTANCE(curX, curY, toX, toY);
+
+    // Calcuate speed
+    float speedPix = speed * float(__GlobalMapMoveTime) / 1000.0f;
+    float speedAngle = atan2(toY - curY, toX - curX);
+    float speedX = cos(speedAngle) * speedPix;
+    float speedY = sin(speedAngle) * speedPix;
+
+    float speedMod = 1.0f;
+    if(movementType == GM_WALK_GROUND)
+    {
+        // Speed modifiers
+        //  F   E   D   C   B   A   9    8   7    6   5    4   3    2   1    0
+        // 1.5 1.4 1.3 1.2 1.1 1.0 0.95 0.9 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.0
+        switch(GetGlobalMapRelief(curXi, curYi))
+        {
+        case 0x0:
+            speedMod = 1.00f;
+            break;
+        case 0x1:
+            speedMod = 0.55f;
+            break;
+        case 0x2:
+            speedMod = 0.60f;
+            break;
+        case 0x3:
+            speedMod = 0.65f;
+            break;
+        case 0x4:
+            speedMod = 0.70f;
+            break;
+        case 0x5:
+            speedMod = 0.75f;
+            break;
+        case 0x6:
+            speedMod = 0.80f;
+            break;
+        case 0x7:
+            speedMod = 0.85f;
+            break;
+        case 0x8:
+            speedMod = 0.90f;
+            break;
+        case 0x9:
+            speedMod = 0.95f;
+            break;
+        case 0xA:
+            speedMod = 1.00f;
+            break;
+        case 0xB:
+            speedMod = 1.10f;
+            break;
+        case 0xC:
+            speedMod = 1.20f;
+            break;
+        case 0xD:
+            speedMod = 1.30f;
+            break;
+        case 0xE:
+            speedMod = 1.40f;
+            break;
+        case 0xF:
+            speedMod = 1.50f;
+            break;
+        default:
+            break;
+        }
+        if(speedMod < 1.0f && cr.Perk[PE_EXPLORER] != 0)
+            speedMod = speedMod / 2.0f + 0.5f;
+    }
+
+    if(valid(car) && speedMod != 1.0f)
+    {
+        float pass = float(car.Proto.Car_Passability);
+        if(pass > 100.0f && speedMod < 1.0f)
+            speedMod += (1.0f - speedMod) * (pass - 100.0f) / 100.0f;
+        else if(pass > 100.0f && speedMod > 1.0f)
+            speedMod -= (speedMod - 1.0f) * (pass - 100.0f) / 100.0f;
+        else if(pass < 100.0f && speedMod < 1.0f)
+            speedMod -= (1.0f - speedMod) * (100.0f - pass) / 100.0f;
+        else if(pass < 100.0f && speedMod > 1.0f)
+            speedMod += (speedMod - 1.0f) * (100.0f - pass) / 100.0f;
+    }
+
+    // Apply step
+    curX += speedX * speedMod;
+    curY += speedY * speedMod;
+
+    int oldXi = curXi;
+    int oldYi = curYi;
+    curXi = int(curX);     // Round
+    curYi = int(curY);     // Round
+
+
+    // Check new position
+    if(oldXi != curXi || oldYi != curYi)
+    {
+        // Check borders
+        int gmWidth = __GlobalMapWidth * __GlobalMapZoneLength;
+        int gmHeight = __GlobalMapHeight * __GlobalMapZoneLength;
+        if(curXi < 0 || curYi < 0 || curXi >= gmWidth || curYi >= gmHeight)
+        {
+            if(curXi < 0)
+                curXi = 0;
+            if(curXi >= gmWidth)
+                curXi = gmWidth - 1;
+            if(curYi < 0)
+                curYi = 0;
+            if(curYi >= gmHeight)
+                curYi = gmHeight - 1;
+
+            // Stop group
+            curX = float(curXi);
+            curY = float(curYi);
+            speed = 0.0f;
+            return;
+        }
+
+        // Move from old to new and find last correct position
+        int relief = GetGlobalMapRelief(oldXi, oldYi);
+        int steps = MAX(ABS(curXi - oldXi), ABS(curYi - oldYi));
+        int newXi = oldXi;
+        int newYi = oldYi;
+        if(steps > 0)
+        {
+            float xx = float(oldXi);
+            float yy = float(oldYi);
+            float oxx = float(curXi - oldXi) / float(steps);
+            float oyy = float(curYi - oldYi) / float(steps);
+
+            for(int i = 0; i < steps; i++)
+            {
+                xx += oxx;
+                yy += oyy;
+                int  xxi = int(xx >= 0.0f ? xx + 0.5f : xx - 0.5f);
+                int  yyi = int(yy >= 0.0f ? yy + 0.5f : yy - 0.5f);
+
+                uint relief_ = GetGlobalMapRelief(xxi, yyi);
+                if(movementType == GM_WALK_GROUND && relief != 0 && relief_ == 0)
+                    break;
+                if(movementType == GM_WALK_WATER && relief_ != 0)
+                    break;
+
+                newXi = xxi;
+                newYi = yyi;
+            }
+        }
+
+        if(newXi != curXi || newYi != curYi)
+        {
+            // Stop group
+            curX = float(newXi);
+            curY = float(newYi);
+            speed = 0.0f;
+            return;
+        }
+
+        // Zone
+        int oldZoneX = oldXi / __GlobalMapZoneLength;
+        int oldZoneY = oldYi / __GlobalMapZoneLength;
+        int curZoneX = curXi / __GlobalMapZoneLength;
+        int curZoneY = curYi / __GlobalMapZoneLength;
+
+        // Change zone
+        if(oldZoneX != curZoneX || oldZoneY != curZoneY)
+        {
+            array<Critter@>@ group = cr.GetGlobalGroup();
+            ScanZone(group, curZoneX, curZoneY);
+        }
+
+        // Check for complete travelling
+        float curDist = DISTANCE(curX, curY, toX, toY);
+        if(curDist <= 0.01f || curDist > lastDist)
+        {
+            curX = toX;
+            curY = toY;
+            speed = 0.0f;
+            return;
+        }
+    }
+
+    // Car processing
+    if(valid(car) && GetLvar(cr, LVAR_wm_idle) == 0)
+    {
+        int fuel = car.Charge;
+        int deterioration = car.Deterioration;
+
+        if(fuel == 0 || deterioration >= int(car.Proto.Car_MaxDeterioration))
+        {
+            uint strNum = (fuel <= 0 ? STR_CAR_FUEL_EMPTY : STR_CAR_BROKEN);
+            CarMessage(cr, car, strNum);
+            speed = 0.0f;
+            SetLvar(cr, LVAR_wm_idle, 1);
+            return;
+        }
+
+        // Car values created for the call every 500 ms
+        fuel -= car.Proto.Car_FuelConsumption * __GlobalMapMoveTime / 500;
+        deterioration += car.Proto.Car_DeteriorationRate * __GlobalMapMoveTime / 500;
+        if(fuel < 0)
+            fuel = 0;
+        if(deterioration > int(car.Proto.Car_MaxDeterioration))
+            deterioration = int(car.Proto.Car_MaxDeterioration);
+
+        if(fuel != int(car.Charge) || deterioration != int(car.Deterioration))
+        {
+            car.Charge = fuel;
+            car.Deterioration = deterioration;
+            car.Update();
+        }
+    }
+}

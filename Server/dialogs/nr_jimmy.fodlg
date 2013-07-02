@@ -1,0 +1,286 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+18 1010 D _param p ST_INTELLECT < 4 #
+17 1020 D _var n name_mem_npc_player = 1 #
+2 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+3 2020 #
+3 2030 @
+3 3000 None 0 #
+4 3010 #
+4 3020 @
+4 4000 None 0 #
+5 4010 #
+5 4020 @
+5 5000 None 0 #
+6 5010 #
+6 5020 @
+6 6000 None 0 #
+48 6010 #
+19 6020 D _var n acquaintance = 0 D _var p q_mordinos_joining_quest = 1 #
+65506 6030 #
+7 6040 #
+15 6050 #
+14 6060 #
+0 6070 @
+7 7000 None 0 #
+8 7010 #
+8 7020 #
+17 7030 #
+65506 7040 #
+0 7050 @
+8 8000 None 0 #
+9 8010 #
+9 8020 @
+9 9000 None 0 #
+10 9010 #
+11 9020 #
+17 9030 #
+65506 9040 #
+0 9050 @
+10 10000 None 0 #
+65506 10010 #
+17 10020 #
+0 10030 #
+0 10040 @
+11 11000 None 0 #
+12 11010 #
+17 11020 #
+0 11030 @
+12 12000 None 0 #
+13 12010 #
+17 12020 #
+0 12030 @
+13 13000 None 0 #
+65506 13010 #
+17 13020 #
+0 13030 @
+14 14000 None 0 #
+16 14010 #
+17 14020 #
+0 14030 @
+15 15000 None 0 #
+17 15010 #
+0 15020 @
+16 16000 None 0 #
+65506 16010 #
+17 16020 #
+0 16030 @
+17 17000 None 0 #
+48 17010 #
+19 17020 D _var n acquaintance = 0 D _var p q_mordinos_joining_quest = 1 R _var n acquaintance = 1 #
+65506 17030 #
+7 17040 #
+15 17050 #
+16 17060 #
+0 17070 @
+18 18000 None 0 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+22 21010 #
+24 21020 #
+25 21030 @
+22 22000 None 0 #
+23 22010 R _var p q_mordinos_induction_doctor + 150 R _var p acquaintance = 1 @
+23 23000 None 0 #
+0 23010 #
+0 23020 @
+24 24000 None 0 #
+22 24010 #
+25 24020 @
+25 25000 None 0 #
+26 25010 D _item p PID_MORDINOS_CASE } 1 R _param p ST_EXPERIENCE + 1000 R _var p q_mordinos_joining_quest = 3 R _param p REPUTATION_MORDINOS - 900 R _item p PID_MORDINOS_CASE - 1 R _var p acquaintance = 1 R _script dialog@r_AddMoney 1 2000 #
+22 25020 @
+26 26000 None 0 #
+0 26010 @
+48 27000 None 0 #
+50 27010 D _var p q_nr_corsican_execution = 1 #
+0 27020 @
+49 28000 None 0 @
+50 29000 None 0 #
+60 29010 R _script dialog@r_StatRoll 2 Charisma 51 #
+0 29020 @
+51 30000 None 0 #
+52 30010 #
+0 30020 @
+52 31000 None 0 #
+53 31010 #
+0 31020 @
+53 32000 None 0 #
+54 32010 #
+0 32020 @
+54 33000 None 0 #
+55 33010 #
+0 33020 @
+55 34000 None 0 #
+56 34010 #
+0 34020 @
+56 35000 None 0 #
+57 35010 R _script quest_corsican_brothers@r_QuestVarRandom 3 7302 10 17 #
+0 35020 @
+57 36000 None 0 #
+58 36010 #
+0 36020 @
+58 37000 None 0 #
+59 37010 #
+0 37020 @
+59 38000 None 0 #
+0 38010 @
+60 39000 None 0 #
+61 39010 R _script quest_corsican_brothers@r_QuestVarRandom 3 7302 10 17 @
+61 40000 None 0 &
+
+[engl]
+{100}{}{Jimmy}
+{200}{}{You see Jimmy J.}
+{210}{}{You see a shifty-looking man. He has a jagged scar running down the side of his face, and a slight facial tic.}
+{210}{}{You see Jagged Jimmy J. It looks like he's waiting for a customer.}
+{210}{}{You see Jagged Jimmy J. He nods as he catches sight of you.}
+{210}{}{You see Jagged Jimmy J. He catches your eye and waves at you to come over.}
+{1000}{}{Predialogue installations}
+{1010}{}{Idiot}
+{1020}{}{Known}
+{1030}{}{Unknown}
+{2000}{}{(This man has a slight facial tic and a scar down one of his cheeks. The scar looks like a knife wound.) I had my eye on you since you walked down the street. You know what I see?}
+{2010}{}{What do you see?}
+{2020}{}{Cut the chatter, you stupid--}
+{2030}{}{Sorry, not interest --}
+{3000}{}{I see a pilot. I see someone who wants to FLY. You just need a little help, a little…JET.}
+{3010}{}{Jet, huh? I had some quest--}
+{3020}{}{Look, I'm not -}
+{4000}{}{And my pilot friend, when it comes to Jet, Jagged Jimmy J's your MAN. I got the best shit in New Reno, pure Jet, straight Jet, the SAFEST Jet.}
+{4010}{}{Jagged Jimmy J, huh? Say, I had some quest--}
+{4020}{}{Look, I'm not  interest --}
+{5000}{}{OTHER dealers, they don't care about quality, but me, I like KEEPING my customer base and keeping 'em HAPPY, know what I'm saying? It's just my way…the Jimmy J way.}
+{5010}{}{Hey, the, uh, "Jimmy J way" sounds great and all, and that's why I had some quest--}
+{5020}{}{No, I don't think so -}
+{6000}{}{So what do you SAY? What can Jagged Jimmy J do for you today?}
+{6010}{}{How about you answer some questions?}
+{6020}{}{Other way round, my man. I can do something for you. I have a veritable shitload of jet in this briefcase. Want to buy some?}
+{6030}{}{You got Jet? Well then, let's deal….friend.}
+{6040}{}{How did you get that scar, Jimmy?}
+{6050}{}{Where do you get your Jet, Jimmy?}
+{6060}{}{You said before your Jet was the "safest." There isn't any bad Jet floating around, is there?}
+{6070}{}{Nothing today, thanks, Jimmy.}
+{7000}{}{Jagged Jimmy J's got a lot of love, my pilot friend, but the world don't always love Jagged Jimmy J back, see?}
+{7010}{}{I hear you. I hear you.}
+{7020}{}{Don't I know it. Sometimes the world's a cruel place.}
+{7030}{}{That's a GREAT story. Say, Jimmy, I had some other questions…}
+{7040}{}{Good story. Now you got some Jet, I got some chips…we gonna deal?}
+{7050}{}{Good story. I got to go though, Jimmy.}
+{8000}{}{(Points at his scar.) I got this while I was stopping this one big UGLY son of a bitch from hitting this chick cuz she don't like the way he was touching her, right?}
+{8010}{}{Really? What happened?}
+{8020}{}{Serious? Guys who beat up women deserve to be laid low.}
+{9000}{}{(Gets into fighting stance.) So's I step in, right, and he pulls a KNIFE on ol' JJ! I ain't got nothing on me but my bare hands, right? So he gets in a lucky cut before I…*BAM!* Canceled his ass!}
+{9010}{}{Oh, really? Jules says you were 'flying' on Jet and sliced up your face trying to shave with your combat knife.}
+{9020}{}{No shit? I don't think I'd have had the iron to step in like that. Hell, that man coulda KILLED you.}
+{9030}{}{GREAT story. Hey, I had some other questions…}
+{9040}{}{Yeah...look, I got some chips…we gonna deal?}
+{9050}{}{Good story...so good I have to leave.}
+{10000}{}{Wha...? Well, Jules can kiss my natural black ass, and it'd be the only ass in town he AIN'T kissed yet. He don't know SHIT. He don't even have the balls to talk shit to my face. YOU decide who's telling the truth.}
+{10010}{}{Yeah, yeah…. Look, you got some Jet, I got some chips…we gonna deal?}
+{10020}{}{Yeah, yeah….say, Jimmy, I had some other questions…}
+{10030}{}{Well, I've heard enough, Jimmy. You watch yourself shaving, hear?}
+{10040}{}{All right then. Catch you later, Jimmy.}
+{11000}{}{He almost did, too! Y'know, when I got into it, I wasn't thinking like 'I'm gonna be mister brave man' an' all, but…}
+{11010}{}{You just did what was natural to you, right?}
+{11020}{}{Uh-huh. Look, I had some other questions…}
+{11030}{}{I have to be going. Catch you later, Jimmy.}
+{12000}{}{Yeah…yeah…I just saw something wrong, and I had to do SOMETHING, right? No way could I let something like that go on
+ while I was on the scene, y'know?}
+{12010}{}{You got BALLS to do what you did, Jimmy. Most people would've just hung their heads, walked away.}
+{12020}{}{I understand. Say, I had some other questions…}
+{12030}{}{Gotta go, bye Jimmy.}
+{13000}{}{I LIKE people, and I AIN'T like it when somebody messes with somebody else just cause they can. That shit's just WRONG.}
+{13010}{}{You're a brave man, Jimmy, a brave man. Wear your scar with pride. Say, can I see what you have in stock?}
+{13020}{}{You're right about that. Say, I had some other questions…}
+{13030}{}{Thanks for the story, Jimmy, bye.}
+{14000}{}{Glad you asked, my pilot friend, glad you asked. See, all them OTHER dealers, right, they get their shit second hand, watered down, diluted with all sorts o' shit.}
+{14010}{}{But your Jet, on the other hand…}
+{14020}{}{Actually, forget I asked. I had some other questions…}
+{14030}{}{Thanks for the warning, Jimmy. Bye.}
+{15000}{}{I used to get it from the god himself, Myron, see, but he up and left...or got aced. Now I mostly peddle straight from the Mordino Family.}
+{15010}{}{Interesting. I had some other questions…}
+{15020}{}{I gotta go, Jimmy. Bye.}
+{16000}{}{Hell, all's I'M sayin' is Jimmy likes his buyers happy and ALIVE. Draw yer own conclusions, my pilot friend. Is breathin' more important to you than shaving a few chips off your next Jet purchase?}
+{16010}{}{Understood. We gonna deal?}
+{16020}{}{I had some other questions…}
+{16030}{}{Good point, bye Jimmy.}
+{17000}{}{What can Jagged Jimmy J do for you today?}
+{17010}{}{How about you answer some questions?}
+{17020}{}{Other way round, my man. I can do something for you. I have a veritable shitload of jet in this briefcase. Want to buy some?}
+{17030}{}{You got Jet? Well then, let's deal….friend.}
+{17040}{}{How you get that scar, Jimmy?}
+{17050}{}{Where do you get your Jet, Jimmy?}
+{17060}{}{You said before your Jet was the "safest." There isn't any bad Jet floating around, is there?}
+{17070}{}{Nothing today, thanks, Jimmy.}
+{18000}{}{Get out of here. Jimmy ain't got time for no retards.}
+{19000}{}{You wholesaling a package right here?}
+{19010}{}{You know it!}
+{20000}{}{How much are we talking here?}
+{20010}{}{This whole case is full of the best jet in the wastes.}
+{21000}{}{That's a lot...say...how about you just give me that case, I give you 2,000 caps, and we both win?}
+{21010}{}{You think I'm stupid? I know who I work for. Now you want to pay me straight up or what?}
+{21020}{}{2000 chips and the Mordinos on my ass for the rest of my life? Doesn't sound so hot, Jimmy.}
+{21030}{}{Haha, you know what, fuck it, I can do that if I want!}
+{22000}{}{Tch, fine. Guess you don't know a good deal when you see one. If that's how it's gonna play, I'll just take 150.}
+{22010}{}{Yeah. I don't fuck about with business. [Make the deal for 150 vials.]}
+{23000}{}{Yeah yeah, thanks for the trade.}
+{23010}{}{Thank me for not mentioning this shit to the Mordinos either you rat fuck.}
+{23020}{}{Right.}
+{24000}{}{You a wimp or som'th'? Can't hide from the Mordinos?}
+{24010}{}{Yeah I'm a wimp, alright. Or smart, as I like to call it. Now are you going to trade for real or keep offering me this disloyal shit?}
+{24020}{}{Whoaaa I'm not a fucking wimp! I can handle some fucking Mordino punks!}
+{25000}{}{Yeah that's right! You a big boy and you can make decisions on your own! Come on, I got the two thou right here. Trade it for the case and let's go our seperate ways.}
+{25010}{}{[Trade Jimmy the case full of jet for 2,000 caps,]}
+{25020}{}{Uh, yeah, I'm still not going to give you this case for that. I'll sell you some like anybody else, no bullshit.}
+{26000}{}{Heh heh, what a deal! Later friend.}
+{26010}{}{Money in my pocket.}
+{27000}{}{What kind of questions? I don't like quest--}
+{27010}{}{Where is Old Man McGee?}
+{27020}{}{Nothing today, Jimmy, nothing at all.}
+{28000}{}{- - - - - - - - - - - - - - - - - - - - CORSICAN BROTHERS QUEST #3 - - - - - - - - - - - - - - - - - - - -}
+{29000}{}{Old Crap Mac-What-the--}
+{29010}{}{You know, you better spout it right away... if you know anything about him, that is.}
+{29020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{30000}{}{Look, pal, I have no id--}
+{30010}{}{But, of course! Nobody has idea where he could be. Do you think I'd be visiting you if someone else knew the right answer?}
+{30020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{31000}{}{What? This visit is nothing more than a harass--}
+{31010}{}{I just hope you'll remember the right answer and spit it out as soon as I count to five...}
+{31020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{32000}{}{You sure don't want to fuck with--}
+{32010}{}{One...}
+{32020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{33000}{}{I'm under protection by all New Reno Fam--}
+{33010}{}{Three...}
+{33020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{34000}{}{Wait, where was two--}
+{34010}{}{Four... [You raise your fist]}
+{34020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{35000}{}{Whoa, easy there! Wait, wait! Maybe I heard something the other day, something you could find interesting.}
+{35010}{}{I'm all ears...}
+{35020}{}{You don't know jack shit, I'm just loosing my time with you. Get lost!}
+{36000}{}{The word is he spent a lot of time with hookers, in the casinos and bars, he was even hanging around the Ray's place for a while! He put his mitts in almost every business in New Reno, everybody knows him. Just ask around.}
+{36010}{}{Poor try to prolong your misery, insect!}
+{36020}{}{I might do that. Now, get lost!}
+{37000}{}{No, no, wait! What I'm trying to say is that he screwed almost everyone in this town. Just talk to people, I'm sure someone will point you into the right direction...}
+{37010}{}{Someone? Who exactly?}
+{37020}{}{I might do that. Now, get lost!}
+{38000}{}{@sex@|Man||Woman|, his head is worth shit and people know he's broke. Nobody expects him to pay his debts anymore, most of the townsfolk would be glad to see him hanging down the streetlight. I would try talking to hookers, pimps, shopowners, casino bouncers... Just don't ask about him in the Shark Club. I heard he's still clean there, you'll probably just be loosing your time with them.}
+{38010}{}{Good. But if I don't find him soon, you'll be greeting people from a stake up the hill. Now beat it.}
+{39000}{}{And who the hell are you, thug? I ain't got no time for you wannabe-cowboys! You're barkin' up the wrong tree, ya hear me? This is New Reno, you better pick up a hooker or something... now step aside -- I've got job to do and mouth to feed!}
+{39010}{}{I'll be back, be sure about it.}
+{40000}{}{Always bothering me with their stupid questions, those brickheads...}
+

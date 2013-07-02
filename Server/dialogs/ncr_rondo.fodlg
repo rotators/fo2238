@@ -1,0 +1,131 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _script dialog@d_IsNotMember 0  #
+4 1030 D _var n name_mem_npc_player = 0 #
+6 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+90 2020 D _var n name_mem_npc_player = 1 D _param p PE_PROFESSION_ARMORER < 2 #
+0 2030 #
+20 2040 @
+3 3000 None 0 #
+90 3010 D _param p PE_PROFESSION_ARMORER < 2 #
+0 3020 #
+20 3030 @
+4 4000 None 0 #
+5 4010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+80 6010 D _param p PE_PROFESSION_GUNSMITH_S < 3 #
+90 6020 D _param p PE_PROFESSION_ARMORER < 2 #
+0 6030 #
+20 6040 @
+20 7000 None 0 #
+0 7010 #
+21 7020 D _item p PID_BOTTLE_CAPS > 1999 R _script dialog@r_RemoveMoney 1 2000 R _item p PID_SUPER_TOOL_KIT + 1 @
+21 8000 None 0 #
+0 8010 @
+50 9000 None 0 @
+80 10000 None 0 #
+81 10010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithS0 1 0 #
+82 10020 D _script dialog@d_CheckGunsmithS1 1 0 #
+0 10030 @
+81 11000 None 0 #
+84 11010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_GUNSMITH_S = 1 #
+0 11020 @
+82 12000 None 0 #
+84 12010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_GUNSMITH_S = 2 #
+0 12020 @
+83 13000 None 0 #
+84 13010 D _item p PID_BOTTLE_CAPS > 4499 R _script dialog@r_RemoveMoney 1 4500 R _param p PE_PROFESSION_GUNSMITH_S = 3 #
+0 13020 @
+84 14000 None 0 #
+0 14010 @
+90 15000 None 0 #
+91 15010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckArmorer0 1 0 #
+92 15020 D _script dialog@d_CheckArmorer1 1 0 #
+0 15030 @
+91 16000 None 0 #
+93 16010 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_ARMORER = 1 #
+0 16020 @
+92 17000 None 0 #
+93 17010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_ARMORER = 2 #
+0 17020 @
+93 18000 None 0 #
+0 18010 &
+
+[engl]
+{100}{}{Rondo}
+{200}{}{You see a man in grease-stained clothes, probably a mechanic.}
+{210}{}{It's Rondo, owner of this joint.}
+{210}{}{You think he's a mechanic, but he is wearing a sidearm which does seem a little odd.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Not NCR member}
+{1030}{}{NCR member unknown}
+{1040}{}{NCR member known}
+{2000}{}{What the hell are you doing here?}
+{2010}{}{What is this place?}
+{2020}{}{Say, you don't happen to be working with armors here do you?}
+{2030}{}{Nothing, I was just leaving.}
+{2040}{}{I'm looking for a tool, something better than the usual stuff you see. Do you have anything like that?}
+{3000}{}{This is my workshop. You wanted something or what?}
+{3010}{}{Say, you don't happen to be working with armors here, do you?}
+{3020}{}{Nothing right now.}
+{3030}{}{I'm looking for a tool, something better than the usual stuff you see. Do you have anything like that?}
+{4000}{}{Welcome to my humble workshop, ranger. What can ol' Rondo do for ya?}
+{4010}{}{Workshop?}
+{4020}{}{Maybe some other time.}
+{5000}{}{Yah, we're cutting all kinda technical stuff to pieces and then put it together. This place can't afford it to itself to let all this junk just get rotten, it can still be used for something.}
+{5010}{}{I see. Let me ask you something else then.}
+{5020}{}{Yes, true... I think I'll be going now.}
+{6000}{}{Yes?}
+{6010}{}{Do you work with guns in this workshop?}
+{6020}{}{Say, you don't happen to be working with armor in this workshop, do you?}
+{6030}{}{Nothing right now.}
+{6040}{}{I'm looking for a tool, something better than the usual stuff you see. Do you have anything like that?}
+{7000}{}{I have this Super Tool Kit, you can have it for $2000, if you're interested}
+{7010}{}{Sorry, I don't have that kind of money.}
+{7020}{}{Sure, I'm interested, here's your money}
+{8000}{}{Pleasure doing business, See you.}
+{8010}{}{Bye}
+{9000}{}{I think you took the wrong turn, pal.@@Nothing for you here.@@You should be outside, playing with kids.@@I really wonder how did you end up here.@@This is private property. Do you mind?@@Just get outta my sight.@@Do I have to repeat myself, buddy?}
+{10000}{}{We work with all kinds of junk, including guns.}
+{10010}{}{I want to learn how to make a gun... Nothing special, just the basics.}
+{10020}{}{Say, maybe you could show me how to make some good guns? I'm willing to learn.}
+{10030}{}{I'm not quite sure what I wanted to ask you... Maybe I should get ready for this first. Thanks anyway!}
+{11000}{}{Wanna blow off your fingers, huh? Okay, just don't say I didn't warn you. I guess I can teach you something useful, but it has its price. Let's say $1500. For that price I can give you this magazine as well; you could need it later.}
+{11010}{}{To hell with the money! Knowledge is precious! [You give him $1500]}
+{11020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{12000}{}{Well, ain'tcha the next wasteland's top gunsmith! I guess I could show you a few more pointers for a mere sum of 3000 caps. Whaddya say?}
+{12010}{}{If the preaching justifies the price, then let's start with it, ol' man! [Give him $1800]}
+{12020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{13000}{}{[OBSOLETE] Look, I'm not showing this to everyone, okay? The council ordered me to keep this for the rangers only... I can let you in on it, but be ready to pay good for it -- 4500 caps.}
+{13010}{}{It's not cheap, but I bet it's worth it. [You give him $4500]}
+{13020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{14000}{}{Good investement @sex@|buddy||beauty|, I guarantee. Now... [Rondo shows you everything you wanted to know]}
+{14010}{}{Well... Thanks for that, Rondo. I must go now, see you later.}
+{15000}{}{Armors? Yes, we work with all kind of junk here, and they can be considered junk as well, I guess. What about them?}
+{15010}{}{Can you show me how to make some basic armors?}
+{15020}{}{I am interested in making sturdier armors... And any other tricks you can show me, really.}
+{15030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{16000}{}{Sure, I can show ya... If ya show me fifteen hundred caps first!}
+{16010}{}{Okay, sounds fair. [Give him $1500]}
+{16020}{}{Sorry, that's too much for me. I might be back later, though.}
+{17000}{}{Yeah, and I'm interested in caps. How about three grand for the show, huh?}
+{17010}{}{Not a problem. [Give him $3000]}
+{17020}{}{Sorry, that's too much for me. I might be back later, though.}
+{18000}{}{Nice doin' business with ya... [Rondo shows you everything you wanted to know]}
+{18010}{}{Thanks Rondo, I really appreciate your help. See you around!}
+

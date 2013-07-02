@@ -1,0 +1,390 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _param p ST_CHARISMA > 99 #
+10 1020 D _var n name_mem_npc_player = 0 D _param p SK_SMALL_GUNS { 65 D _param p SK_BIG_GUNS { 65 D _param p SK_ENERGY_WEAPONS { 65 #
+6 1030 D _param p SK_SMALL_GUNS < 50 D _param p SK_BIG_GUNS < 50 D _param p SK_ENERGY_WEAPONS < 50 #
+2 1040 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 999 #
+13 2020 D _param p ST_INTELLECT > 10 #
+5 2030 #
+14 2040 D _param p ST_LEVEL < 15 D _var p q_la_gunrunners_caravan = 0 #
+15 2050 D _param p ST_LEVEL } 15 D _var p q_la_gunrunners_caravan = 0 #
+23 2060 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_box = 0 D _var p q_la_gunrunners_caravan ! 7 #
+75 2070 D _var p q_la_gunr_courier > 0 #
+30 2080 D _var p q_hub_gunrunner_supplies > 0 D _var p q_hub_gunrunner_supplies < 5 #
+50 2090 D _param p REPUTATION_GUNRUNNERS } 900 D _var p q_la_gunrunners_facility_access = 0 R _var p q_la_gunrunners_facility_access = 1 #
+51 2100 D _param p REPUTATION_GUNRUNNERS < 900 D _var p q_la_gunrunners_facility_access = 0 #
+0 2110 @
+3 3000 None 0 #
+2 3010 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+60 5010 D _param p REPUTATION_GUNRUNNERS { -100 D _var p q_la_gunr_courier = 0 #
+61 5020 D _param p REPUTATION_GUNRUNNERS < 0 D _param p REPUTATION_GUNRUNNERS > -100 D _var p q_la_gunr_courier = 0 #
+62 5030 D _param p ST_LEVEL < 5 D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 0 #
+63 5040 D _param p ST_LEVEL } 5 D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 0 #
+2 5050 @
+6 6000 None 0 @
+9 7000 None 0 @
+10 8000 None 0 #
+11 8010 @
+11 9000 None 0 #
+12 9010 R _var n name_mem_npc_player = 1 R _item p PID_10MM_PISTOL + 1 R _item p PID_10MM_JHP + 35 R _param p SK_SMALL_GUNS + 15 @
+12 10000 None 0 @
+13 11000 None 0 @
+14 12000 None 0 #
+2 12010 @
+15 13000 None 0 #
+16 13010 @
+16 14000 None 0 #
+17 14010 #
+0 14020 @
+17 15000 None 0 #
+18 15010 @
+18 16000 None 0 #
+19 16010 #
+0 16020 R _var p q_la_gunrunners_caravan = 1 #
+20 16030 D _script npc_common@d_HasNumPlayersInParty 1 3 R _var p q_la_gunrunners_team = 1 @
+19 17000 None 0 #
+0 17010 R _var p q_la_gunrunners_caravan = 1 #
+20 17020 D _script npc_common@d_HasNumPlayersInParty 1 3 R _var p q_la_gunrunners_team = 1 @
+20 18000 None 0 #
+21 18010 #
+22 18020 @
+21 19000 None 0 #
+22 19010 @
+22 20000 None 0 #
+0 20010 R _var p q_la_gunrunners_caravan = 2 R _script quest_la_gunr_caravan@r_SpawnLocation 0  @
+23 21000 None 0 #
+20 21010 D _script npc_common@d_HasNumPlayersInParty 1 3 D _var p q_la_gunrunners_team = 0 R _var p q_la_gunrunners_team = 1 #
+26 21020 D _item p PID_Q_GUNRUNNER_BOX > 0 R _item p PID_Q_GUNRUNNER_BOX - 1 R _var p q_la_gunrunners_box = 1 R _var p q_la_gunrunners_caravan = 3 R _param p REPUTATION_GUNRUNNERS + 500 R _param p ST_EXPERIENCE + 250 R _script quest_la_gunr_caravan@r_DeleteLocation 0  #
+24 21030 D _var p q_la_gunrunners_caravan > 1 D _var p q_la_gunrunners_box = 0 #
+0 21040 @
+24 22000 None 0 #
+26 22010 D _item p PID_Q_GUNRUNNER_BOX > 0 R _item p PID_Q_GUNRUNNER_BOX - 1 R _var p q_la_gunrunners_box = 1 R _var p q_la_gunrunners_caravan = 3 R _param p ST_EXPERIENCE + 300 R _param p REPUTATION_GUNRUNNERS + 250 R _script quest_la_gunr_caravan@r_DeleteLocation 0  #
+25 22020 D _var p q_la_gunrunners_caravan ! 3 D or D _var p q_la_gunrunners_caravan ! 4 D or D _var p q_la_gunrunners_caravan ! 5 R _var p q_la_gunrunners_caravan = 7 R _param p ST_EXPERIENCE + 250 R _param p REPUTATION_GUNRUNNERS - 250 R _script quest_la_gunr_caravan@r_DeleteLocation 0  #
+25 22030 D _var p q_la_gunrunners_caravan = 4 D or D _var p q_la_gunrunners_caravan = 5 R _var p q_la_gunrunners_box = 1 R _param p ST_EXPERIENCE + 250 R _param p REPUTATION_GUNRUNNERS - 250 R _script quest_la_gunr_caravan@r_DeleteLocation 0  @
+25 23000 None 0 @
+26 24000 None 0 #
+0 24010 @
+30 25000 None 1 #
+31 25010 D _var p q_hub_gunrunner_supplies = 1 #
+35 25020 D _var p q_hub_gunrunner_supplies = 3 R _var p q_hub_gunrunner_supplies_parts = 0 #
+40 25030 D _var p q_hub_gunrunner_supplies_parts = 1 D _var p q_hub_gunrunner_supplies = 3 #
+0 25040 @
+31 26000 None 1 #
+32 26010 R _script dialog@r_SkillRoll 3 Barter -90 33 #
+0 26020 R _var p q_hub_gunrunner_supplies = 2 @
+32 27000 None 1 #
+0 27010 R _var p q_hub_gunrunner_supplies = 2 @
+33 28000 None 1 #
+0 28010 R _var p q_hub_gunrunner_supplies = 2 #
+34 28020 @
+34 29000 None 1 #
+0 29010 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 4 R _param p REPUTATION_GUNRUNNERS + 5 @
+35 30000 None 1 #
+36 30010 @
+36 31000 None 1 #
+38 31010 D _param p SK_BIG_GUNS = 666 R _script dialog@r_SkillRoll 3 Science -60 37 #
+41 31020 R _script dialog@r_SkillRoll 3 Barter -5 40 #
+0 31030 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 2 @
+37 32000 None 1 #
+39 32010 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 3 R _param p REPUTATION_GUNRUNNERS + 30 @
+38 33000 None 1 #
+0 33010 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 2 @
+39 34000 None 1 #
+0 34010 @
+40 35000 None 1 #
+0 35010 R _var p q_hub_gunrunner_supplies_parts = 1 #
+39 35020 R _var p q_hub_gunrunner_supplies = 5 R _param p REPUTATION_GUNRUNNERS + 15 R _var p q_hub_gunrunner_supplies_deal = 2 #
+42 35030 D _var p q_hub_gunrunner_supplies = 1 D _item p PID_METAL_PARTS } 10 D _item p PID_GUNPOWDER } 12 R _var p q_hub_gunrunner_supplies_parts = 2 R _item p PID_METAL_PARTS - 10 R _item p PID_GUNPOWDER - 12 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 3 R _param p REPUTATION_GUNRUNNERS + 25 @
+41 36000 None 1 #
+0 36010 R _var p q_hub_gunrunner_supplies = 5 R _var p q_hub_gunrunner_supplies_deal = 2 @
+42 37000 None 1 #
+0 37010 @
+50 38000 None 0 #
+0 38010 @
+51 39000 None 0 #
+0 39010 @
+60 40000 None 0 #
+2 40010 #
+0 40020 @
+61 41000 None 0 #
+2 41010 #
+0 41020 @
+62 42000 None 0 #
+2 42010 #
+0 42020 @
+63 43000 None 0 #
+64 43010 @
+64 44000 None 0 #
+66 44010 #
+65 44020 @
+65 45000 None 0 #
+2 45010 #
+0 45020 @
+66 46000 None 0 #
+67 46010 #
+68 46020 #
+69 46030 #
+70 46040 #
+71 46050 #
+72 46060 @
+67 47000 None 0 #
+73 47010 R _var p q_la_gunr_courier = 1 R _var p q_la_gunr_courier_reward = 1 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  R _script dialog@r_ShowLocation 1 26 #
+66 47020 #
+65 47030 @
+68 48000 None 0 #
+73 48010 R _var p q_la_gunr_courier = 2 R _var p q_la_gunr_courier_reward = 2 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  R _script dialog@r_ShowLocation 1 25 #
+66 48020 #
+65 48030 @
+69 49000 None 0 #
+73 49010 R _var p q_la_gunr_courier = 3 R _var p q_la_gunr_courier_reward = 3 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  R _script dialog@r_ShowLocation 1 14 #
+66 49020 #
+65 49030 @
+70 50000 None 0 #
+73 50010 R _var p q_la_gunr_courier = 4 R _var p q_la_gunr_courier_reward = 4 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  R _script dialog@r_ShowLocation 1 7 #
+66 50020 #
+65 50030 @
+71 51000 None 0 #
+73 51010 R _var p q_la_gunr_courier = 5 R _var p q_la_gunr_courier_reward = 5 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  R _script dialog@r_ShowLocation 1 10 #
+66 51020 #
+65 51030 @
+72 52000 None 0 #
+73 52010 R _var p q_la_gunr_courier = 6 R _var p q_la_gunr_courier_reward = 6 R _script dialog@r_ShowLocation 1 17 R _script quest_courier_boxes@r_GiveGunRunnerCourierBox 0  #
+66 52020 #
+65 52030 @
+73 53000 None 0 #
+74 53010 #
+0 53020 @
+74 54000 None 0 #
+0 54010 @
+75 55000 None 0 #
+76 55010 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 1 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 50 1000 R _script dialog@r_AddMoney 1 50 #
+76 55020 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 2 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 75 1000 R _script dialog@r_AddMoney 1 75 #
+76 55030 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 3 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 150 1000 R _script dialog@r_AddMoney 1 250 #
+76 55040 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 4 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 120 1000 R _script dialog@r_AddMoney 1 200 #
+76 55050 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 5 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 120 1000 R _script dialog@r_AddMoney 1 250 #
+76 55060 D _var p q_la_gunr_courier = 7 D _var p q_la_gunr_courier_reward = 6 R _var p q_la_gunr_courier = 8 R _script dialog@r_QuestTimeout 1 20 R _script dialog@r_AddReputation 2 100 1000 R _script dialog@r_AddMoney 1 75 #
+78 55070 D _var p q_la_gunr_courier } 1 D _var p q_la_gunr_courier { 6 R _var p q_la_gunr_courier = 9 R _script dialog@r_QuestTimeout 1 100 R _script dialog@r_AddReputation 2 -50 1000 #
+66 55080 D _script dialog@d_QuestTimeoutReady 0  D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 8 #
+77 55090 D _script dialog@d_QuestTimeoutNotReady 0  D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 8 D or D _script dialog@d_QuestTimeoutNotReady 0  D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 9 #
+79 55100 D _script dialog@d_QuestTimeoutReady 0  D _param p REPUTATION_GUNRUNNERS } 0 D _var p q_la_gunr_courier = 9 #
+61 55110 D _param p REPUTATION_GUNRUNNERS < 0 D _var p q_la_gunr_courier = 8 D or D _param p REPUTATION_GUNRUNNERS < 0 D _var p q_la_gunr_courier = 9 #
+0 55120 @
+76 56000 None 0 #
+77 56010 #
+0 56020 @
+77 57000 None 0 #
+2 57010 #
+0 57020 @
+78 58000 None 0 #
+0 58010 @
+79 59000 None 0 #
+80 59010 #
+0 59020 @
+80 60000 None 0 #
+66 60010 &
+
+[engl]
+{100}{}{Marshal}
+{200}{}{You see a large well armed man.}
+{210}{}{You see Marshal of the Gun Runners.}
+{1000}{}{Predialogue installations}
+{1010}{}{No charisma}
+{1020}{}{All gun skills <= 65, not trained by Marshal yet.}
+{1030}{}{All gun skills < 50, Marshal won't talk with such person.}
+{1040}{}{Catch all}
+{2000}{}{How can I help you?}
+{2010}{}{Can you tell Ralph to give me a discount? *DEV NOTE: Deactivated for now.*}
+{2020}{}{I'd like to join the Gun Runners. *DEV NOTE: Deactivated for now.*}
+{2030}{}{What do the Gun Runners actually do?}
+{2040}{}{Do you offer any job opportunities on mercenary level?}
+{2050}{}{Do you offer any job opportunities on mercenary level?}
+{2060}{}{About your stolen manufacturing plans...}
+{2070}{}{About the courier job...}
+{2080}{}{I'm coming from Jacob, the gun trader from the Hub.}
+{2090}{}{Can you grant me access to your factory?}
+{2100}{}{Can you grant me access to your factory?}
+{2110}{}{Goodbye.}
+{3000}{}{I'm sorry but I'm not interested, come back in the future and you may have better luck.}
+{3010}{}{...I see.}
+{4000}{}{Why the hell would I give you a discount? Stop dreaming.}
+{4010}{}{Yea...}
+{5000}{}{We mainly manufacture weapons and ammunition in our facility. Then the finished products are sold. We are the biggest supplier of firearms in most parts of California and the biggest supplier of firearms to the NCR military forces.}
+{5010}{}{Do you hire new personnel?}
+{5020}{}{Do you hire new personnel?}
+{5030}{}{Do you hire new personnel?}
+{5040}{}{Do you hire new personnel?}
+{5050}{}{I have some more questions.}
+{6000}{}{I've shown you everything I'm going to, but you're still pretty unskilled. Stop wasting time here and go practice.}
+{7000}{}{I don't like your kind around here. You should better go now.}
+{8000}{}{[He looks you up and down] You can't use a gun for shit, can you? }
+{8010}{}{No, not really...}
+{9000}{}{You're in the boneyard and you can't use a weapon? Here, hold this and... [He runs you through some of the basics of small guns.]}
+{9010}{}{Thanks for the help.}
+{10000}{}{No problem, go get some practice in and we'll talk another time. And yes, you can keep the gun.}
+{11000}{}{Sorry but no. Maybe in the future.}
+{12000}{}{A mercenary? That's useful, but you don't seem to be tough enough to be of any use for us, sorry.}
+{12010}{}{I have some more questions.}
+{13000}{}{A mercenary? That's useful and you even seem to be capable...}
+{13010}{}{What do you have in mind?}
+{14000}{}{Can I even trust you? Well, that's a tricky one. Why the hell... seems like we don't have a choice anyway.}
+{14010}{}{Just tell me what the job is about.}
+{14020}{}{You are talking too much. See you later...}
+{15000}{}{Few days ago, a super mutant remnants group attacked one of our caravans and stole the goods. Not that I care much about the weapons, they are rigged with explosives. What I care about are the manufacturing plans in the shipment.}
+{15010}{}{What do you want me to do?}
+{16000}{}{We got the position of their hideout from various sources confirmed, but we can't deal with them on our own. If you can get yourself a team together, we could make a deal. Bring back our weapon manufacturing plans and you can choose some equipment from our arsenal.}
+{16010}{}{How big should the team be?}
+{16020}{}{I'll be back when I have the squad together.}
+{16030}{}{I've got the squad and we are ready to go.}
+{17000}{}{Can't say for sure, but I'd say be at least four, if you want to stand a chance against the super mutants. They are tough fighters with lots of military experience and heavy weaponry.}
+{17010}{}{I'll be back when I have the squad together.}
+{17020}{}{I've got the squad and we are ready to go.}
+{18000}{}{You want to take it up then, I see. [He marks a location on a map that's hanging on the wall.] Our sources confirm that this is the approximate position of the mutants base. Bring back our weapon manufacturing plans by any means necessary. Ah, and yes... don't open the box, it's rigged with explosives too. Touch it and it goes boom!}
+{18010}{}{What happens if I … uhm... lose the box?}
+{18020}{}{That's all I need to know. We are back later.}
+{19000}{}{Don't lose it. Don't let the Brotherhood of Steel get their hands on it and don't let it get the Khans either, nor anyone else. Are we clear?}
+{19010}{}{Clear.}
+{20000}{}{Don't even think about doing anything funny. You will only get your reward if I can hold the damn box in my own hands.}
+{20010}{}{[End]}
+{21000}{}{You've got any news?}
+{21010}{}{I've got my squad together and we are ready for the job.}
+{21020}{}{Here is the box, still locked.}
+{21030}{}{We lost the package, I am sorry.}
+{21040}{}{Nothing new yet. Goodbye.}
+{22000}{}{That's... I can't believe it. You lost the god damn weapon manufacturing plans? [From the look of his face, he seems to explode in a second.]}
+{22010}{}{Calm down, that was just a joke! Here is the box, still locked.}
+{22020}{}{There is nothing we could have done against it. *DEV NOTE: Lost for sure*}
+{22030}{}{There is nothing we could have done against it. *DEV NOTE: Box given to someone else.*}
+{23000}{}{Get out of my sight. Can't believe this stupid shit...}
+{24000}{}{Fantastic! Let me just check if everything is alright... [You can't really see what he is doing with the box, but it seems like he is deactivating the explosive trap to open the box. It doesn't take long until you can hear a *clack* and the metal box is open.] ... Yes, looks like everything is still there. Very good. Go, talk to Ralph. He will give you whatever you want... }
+{24010}{}{[End]}
+{25000}{}{I remember him. What do you want?@@What do you want?@@What is it this time?@@So?}
+{25010}{}{Jacob needs more ammunition and weapons for the next delivery.}
+{25020}{}{Jacob will pay more money, but in exchange you have to send out the next delivery faster.}
+{25030}{}{Tell me, what materials do you need again?}
+{25040}{}{Goodbye.@@See you later.@@Nothing, bye.}
+{26000}{}{That's what he wants, eh? And I say fuck it, if he doesn't pay more. After all, he got a pretty good deal already.}
+{26010}{}{It's doubtful that it would hurt the Gun Runners, if you give him a better deal. In fact, it would even strengthen your gun trade more towards the northern area.}
+{26020}{}{I will talk to him about this. See you later.}
+{27000}{}{We aren't the good samaritan from the neighbourhood. He wants more weapons and ammo -- He has to pay more.}
+{27010}{}{I will talk to him about this. See you later.}
+{28000}{}{This might be true and wouldn't hurt us in our position, but giving a better-than-usual-deal to one of our customer will make other customers unhappy.}
+{28010}{}{I will talk about this with Jacob. Guess he will have to pay more then.}
+{28020}{}{With Jacob as connection in the Hub, it should really be worth it.}
+{29000}{}{Okay, you've convinced me. Tell Jacob, we'll guarantee a better price for the next delivery and give extra ammunition on top of that. Though, we cannot send it out any faster. I hope... he is happy now.}
+{29010}{}{Will do.}
+{30000}{}{What's next? Flying the shit to him in a plane? We can't get it done any faster than it goes already now. }
+{30010}{}{What's the problem?}
+{31000}{}{The problem is, we have to rely on our own supplier for scrap metal and gun powder. We can not produce anything without the materials.}
+{31010}{}{some fancy science skill roll *DEV NOTE: Taken out for now! Maybe readding later...*}
+{31020}{}{What if I bring you the materia you need?}
+{31030}{}{Going to tell that Jacob then. Goodbye.}
+{32000}{}{fancy science skill roll win *DEV NOTE: Not used*}
+{32010}{}{That's a pretty good deal.}
+{33000}{}{fancy science skill roll fail *DEV NOTE: Not used*}
+{33010}{}{Going to tell that Jacob then. See you.}
+{34000}{}{For you or for me? Ah, whatever. Don't even try to answer that...}
+{34010}{}{[End]}
+{35000}{}{For the supplies that Jacob wants to have, we need at least 10 metal parts and 12 boxes of gun powder. You think you can get that? }
+{35010}{}{Sure, I'll back when I got everything.}
+{35020}{}{I don't think so. I'm going back to Jacob to tell him about the current status. It's not a that bad deal, after all.}
+{35030}{}{I have everything you need with me. [You give him 10 metal parts and 12 boxes of gun powder.]}
+{36000}{}{It won't get finished any faster anyway, so don't even try.}
+{36010}{}{Going to tell that to Jacob then. Goodbye.}
+{37000}{}{That's good. Now we can produce Jacob's request faster and therefore he can have his delivery faster.}
+{37010}{}{Good to hear. I am going to tell him about it.}
+{38000}{}{You have proven yourself to be trustful and loyal and the other Gun Runners don't seem to mind you as well, so... Yes, I think I can allow you to work for us in the facility. The bridge guard should let you into the inside ring now.}
+{38010}{}{Thanks, that's really great! See you later.}
+{39000}{}{We can't even trust you and we don't even know if you are loyal to the Gun Runners, so... No, I can't allow you access to our manufacturing facility.}
+{39010}{}{Whatever. See you later.}
+{40000}{}{Are you joking? We should kick your ass out of here, right now!}
+{40010}{}{Whatever, I have some more questions.}
+{40020}{}{Goodbye.}
+{41000}{}{Are you joking? We don't need anyone like you!}
+{41010}{}{Whatever, I have some more questions.}
+{41020}{}{Goodbye.}
+{42000}{}{Someone like you? You don't seem to have the needed experience yet to be of any use for us.}
+{42010}{}{Oh well, I have some more questions then.}
+{42020}{}{Goodbye.}
+{43000}{}{[He keeps looking at you for a few seconds, then nods.] Always wanted to work for the Gun Runners? Well, here is your chance!}
+{43010}{}{Tell me more.}
+{44000}{}{It's no fancy work in our facility, but we currently have a shortage of couriers for our special deliveries. So, if you are up to it...}
+{44010}{}{Sign me up!}
+{44020}{}{Maybe later. }
+{45000}{}{Well, come back to me, if you decide otherwise.}
+{45010}{}{I have some more questions then.}
+{45020}{}{Goodbye.}
+{46000}{}{We've got delieveries to New Adytum, Hub, San Francisco, New Reno, Junktown and the NCR. What's your pick of it?}
+{46010}{}{New Adytum.}
+{46020}{}{Hub.}
+{46030}{}{San Francisco.}
+{46040}{}{New Reno.}
+{46050}{}{NCR.}
+{46060}{}{Junktown.}
+{47000}{}{New Adytum is the shortest route. Your pay will be ... if you come back to me and the package has been delivered. You will bring the delivery to the local gunsmith, called Jargo whatever... Adytum isn't very big, you shouldn't have problems with finding him.}
+{47010}{}{Give me the package and I'll be on my way.}
+{47020}{}{I'll better take a different route.}
+{47030}{}{I've changed my mind. You'll better find someone else.}
+{48000}{}{The Hub is straight to the north, along the Long 15. Your pay will be ... if you come back to me and the package has been delivered. Bring the delivery to Jacob, the arms dealer in Oldtown.}
+{48010}{}{Give me the package and I'll be on my way.}
+{48020}{}{I'll better take a different route.}
+{48030}{}{I've changed my mind. You'll better find someone else.}
+{49000}{}{Can't miss San Francisco, if you follow the Highway 5 up to the north west. It's a long and dangerous ride, so your pay will be ... once you came back to me and the package has been delivered. Check the Red 888 Guns shop for Mai Da Chiang, he is your target.}
+{49010}{}{Give me the package and I'll be on my way.}
+{49020}{}{I'll better take a different route.}
+{49030}{}{I've changed my mind. You'll better find someone else.}
+{50000}{}{To reach New Reno, you probably have to pass through the northern mountains. It's a long and dangerous ride, so your pay will be ... once you came back to me and the package has been delivered. Your contact person is a guy named Eldridge at the New Reno Arms in West Side.}
+{50010}{}{Give me the package and I'll be on my way.}
+{50020}{}{I'll better take a different route.}
+{50030}{}{I've changed my mind. You'll better find someone else.}
+{51000}{}{Stick to the rails and you will'll be able to find the NCRs capital. The route is long, but not as dangerous as San Francisco ride. Your pay will be ... once you come back to me and the package has been delivered. In the NCR, you have to go to the Bazaar, Buster, the local arms dealer is your contact person.}
+{51010}{}{Give me the package and I'll be on my way.}
+{51020}{}{I'll better take a different route.}
+{51030}{}{I've changed my mind. You'll better find someone else.}
+{52000}{}{Not as close as the Hub, but you can't miss Junktown if you are heading up north, following the old tracks and abandoned cars. The pay will be ... once you come back to me and the package has been delivered. This one goes to Jeremiah Darkwater. I've been told, his shop is at the center of the town. Can't miss it.}
+{52010}{}{Give me the package and I'll be on my way.}
+{52020}{}{I'll better take a different route.}
+{52030}{}{I've changed my mind. You'll better find someone else.}
+{53000}{}{Very well. [He hands you over a heavy looking metal case.] Don't even try to open it-- It's rigged with explosives and it will explode.}
+{53010}{}{What if I lose the package?}
+{53020}{}{I am on my way.}
+{54000}{}{You do not lose the package!}
+{54010}{}{Okay. I am on my way.}
+{55000}{}{I'm all ears.}
+{55010}{}{The package has reached its target in Adytum.}
+{55020}{}{The package has reached its target in the Hub.}
+{55030}{}{The package has reached its target in San Francisco.}
+{55040}{}{The package has reached its target in Redding.}
+{55050}{}{The package has reached its target the NCR.}
+{55060}{}{The package has reached its target in Junktown.}
+{55070}{}{I have lost the package.}
+{55080}{}{Do you have any new package to deliver?}
+{55090}{}{Do you have any new package to deliver?}
+{55100}{}{Do you have any new package to deliver?}
+{55110}{}{Do you have any new package to deliver?}
+{55120}{}{Goodbye.}
+{56000}{}{Good. Here is your reward for the tour. [Marshal hands you over a small bag of bottle caps.]}
+{56010}{}{When do you need a courier the next time?}
+{56020}{}{Goodbye.}
+{57000}{}{Not right now. Shouldn't take too long, come back to me in a few days.}
+{57010}{}{I have a few other, more generic questions.}
+{57020}{}{Goodbye.}
+{58000}{}{You have... what? Do you even know how exensive the content has been? God damnit, get the fuck out of here and don't even dare to ask for your payment!}
+{58010}{}{Goodbye.}
+{59000}{}{You have lost the package the last time. How the hell should I be sure you wouldn't lose it again?}
+{59010}{}{I will perform better this time. After all, I am still here and you haven't kicked me out, so it can't be *that* bad, can it?}
+{59020}{}{Probably not at all. Goodbye.}
+{60000}{}{You may be right... And we need couriers. Call this your lucky day, but don't expect me to behave like that all the time!}
+{60010}{}{[Continue]}
+

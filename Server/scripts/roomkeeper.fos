@@ -1,0 +1,105 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// roomkeeper.fos
+//
+
+//
+// Generic roomkeeper script
+// similar to trader script, as most of the roomkeepers are traders also
+//
+
+#include "_macros.fos"
+#include "npc_roles_h.fos"
+
+import void AddHotel(Critter& npc, array<uint>& locks, uint price, uint rentTime) from "rooms";
+import void InitHotel(Critter@ npc) from "rooms";
+
+
+void DefaultRoomkeeperInit(Critter& npc, bool firstTime)
+{
+    _CritSetMode(npc, MODE_NO_STEAL);
+    _CritUnsetMode(npc, MODE_NO_BARTER);
+    npc.SetEvent(CRITTER_EVENT_BARTER, "trader@_OnBarter");
+    CreateTimeEvent(ELAPSED_TIME, "e_Init", npc.Id, false);
+}
+
+// npc role is hotel id
+
+void _KlamathSajag(Critter& npc, bool firstTime)
+{
+    // roomkeeper, locks with id 1,2,3 are in golden gecko
+    uint[] locks = { 1, 2, 3 };
+    AddHotel(npc, locks, 100, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_KLAM_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _HubFalcon(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 1, 2, 3, 4, 5, 6 };
+    AddHotel(npc, locks, 200, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_HUB_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _NCRResidence(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    AddHotel(npc, locks, 750, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_NCR_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _JunktCrashHouse(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 10, 11, 12, 13, 14, 15 };
+    AddHotel(npc, locks, 200, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_JNK_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _ReddingMalamute(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 16, 17, 18, 19 };
+    AddHotel(npc, locks, 100, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_REDD_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _ModocRose(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 1, 2, 3, 4, 5, 6 };
+    AddHotel(npc, locks, 100, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_MODOC_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _FriscoDocks(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 1, 2, 3, 4 };
+    AddHotel(npc, locks, 100, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_SF_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+void _BrokenRooms(Critter& npc, bool firstTime)
+{
+    uint[] locks = { 1, 2, 3 };
+    AddHotel(npc, locks, 100, 3);
+    npc.StatBase[ST_NPC_ROLE] = ROLE_BH_ROOMKEEPER;
+    DefaultRoomkeeperInit(npc, firstTime);
+}
+
+uint e_Init(array<uint>@ values)
+{
+    Critter@ npc = GetCritter(values[0]);
+    if(!valid(npc))
+    {
+        Log("ERR: Couldn't obtain hotel owner.");
+        return 0;
+    }
+    InitHotel(npc);
+    return 0;
+}

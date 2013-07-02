@@ -1,0 +1,100 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// counters.fos
+//
+
+// Performance counters
+
+#include "_macros.fos"
+
+#define __COUNTERS_MODULE__
+#include "counters_h.fos"
+
+#pragma bindfunc "uint64 getticks() -> Utils.dll getticks"
+
+array<int64> Counters(COUNTER_MAX);     // cumulative
+int64 Start = 0;
+
+array<uint64> Currs(COUNTER_MAX);       // last invocation
+array<uint64> Mins(COUNTER_MAX);        // minimums
+array<uint64> Maxs(COUNTER_MAX);        // maximums
+
+const string[] CountersNames =
+{
+    "critter_idle",
+    "main_loop",
+    "global_process",
+    "global_invite",
+    "critter_attack",
+    "critter_attacked",
+    "npc_plane_end",
+    "npc_plane_run",
+    "check_look",
+    "trace_wall",
+    "check_occluder",
+    "map_encounter@map_init",
+    "global_process:npc_idle",
+    "global_process:enter",
+    "global_process:move",
+    "global_process:start",
+    "global_process:start_fast",
+    "global_process:set_move",
+    "global_process:stopped"
+};
+
+void StartCounters()
+{
+    for(uint i = 0, j = Counters.length(); i < j; i++)
+    {
+        Counters[i] = 0;
+        Currs[i] = Maxs[i] = 0;
+        Mins[i] = uint64(-1);
+    }
+    Start = getticks();
+}
+
+void CounterStart(uint counter)
+{
+    uint64 tick = getticks();
+    Counters[counter] -= tick;
+    Currs[counter] = tick;
+}
+void CounterEnd(uint counter)
+{
+    uint64 tick = getticks();
+    Counters[counter] += tick;
+    if(Currs[counter] > 0)
+    {
+        Currs[counter] = tick - Currs[counter];
+        if(Mins[counter] > Currs[counter])
+            Mins[counter] = Currs[counter];
+        if(Maxs[counter] < Currs[counter])
+            Maxs[counter] = Currs[counter];
+    }
+    Currs[counter] = 0;
+}
+
+float GetCounter(uint counter)
+{
+    return float(Counters[counter]) / float(getticks() - Start);
+}
+
+void get(Critter& cr, int p0, int p1, int p2)
+{
+    if(Start == 0)     // in case of script reload
+        StartCounters();
+    cr.Say(SAY_NETMSG, "Counter " + p0 + ": " + GetCounter(p0) * 100 + "%");
+}
+void log(Critter& cr, int p0, int p1, int p2)
+{
+    if(Start == 0)     // in case of script reload
+        StartCounters();
+    for(uint i = 0, j = CountersNames.length(); i < j; i++)
+        cr.Say(SAY_NETMSG, CountersNames[i] + ": " + GetCounter(i) * 100 + "%; " + Mins[i] + "/" + Maxs[i]);
+}
+void start(Critter& cr, int, int, int)
+{
+    StartCounters();
+}

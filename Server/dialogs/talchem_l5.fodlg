@@ -1,0 +1,61 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _var p talchem_l5 = 0 #
+5 2020 D _var p talchem_l5 = 1 #
+0 2030 @
+3 3000 None 0 #
+0 3010 R _script talchem@r_HackDoorOpen 1 20 #
+0 3020 @
+5 4000 None 0 #
+6 4010 #
+7 4020 D _param p SK_SCIENCE } 120 #
+9 4030 D _param p SK_SCIENCE < 120 #
+0 4040 @
+6 5000 None 0 #
+5 5010 @
+7 6000 None 0 #
+2 6010 R _var p talchem_l5 = 0 @
+9 7000 None 0 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{ }
+{2000}{}{Talchem laboratories 5,6 control - emergency control
+!!!warning radiation alert!!!
+!!!warning biological alert!!!
+!!!warning entire level  quarantine lockdown!!!
+}
+{2010}{}{access laboratory 5 door control}
+{2020}{}{access laboratory 5 door control}
+{2030}{}{exit}
+{3000}{}{Laboratory 5
+status: !!!warning radiation alert!!!
+           !!!warning biological alert!!!}
+{3010}{}{open Laboratory 5 access door}
+{3020}{}{exit}
+{4000}{}{Laboratory 5
+status: !!!warning radiation alert!!!
+           !!!warning biological alert!!!
+           !!!warning local quarantine lockdown!!!}
+{4010}{}{open Laboratory 5 access door}
+{4020}{}{Attempt to hack into Laboratory 5 security control}
+{4030}{}{Attempt to hack into Laboratory 5 security control}
+{4040}{}{exit}
+{5000}{}{Laboratory 5 under local quarantine lockdown.
+Access Denied}
+{5010}{}{back}
+{6000}{}{Laboratory 5 security control
+status: Laboratory 5 under local quarantine lockdown.}
+{6010}{}{Deactivate Laboratory 5 quarantine}
+{7000}{}{Unauthorized access.}
+

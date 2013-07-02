@@ -1,0 +1,150 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_railgang.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_roles_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+#define HORATIUS_KILLED    (3)
+#define DIPLOMAT           (4)
+#define ALL_KILLED         (5)
+
+void r_SpawnCamp(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_RailLineGang, 1886, 1293, crits);
+    if(loc == 0)
+        return;
+
+    GameVar@  varLocId = GetLocalVar(LVAR_q_ncr_rail_gang_locid, player.Id);
+    varLocId = loc;
+    Location@ location = GetLocation(loc);
+
+    Map@      map = location.GetMapByIndex(0);
+    map.SetData(MAP_DATA_RAILGANG_OWNER, player.Id);
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnEnterCamp");
+
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_ncr_rail_gang, 12);
+}
+
+void r_DeleteCamp(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_ncr_rail_gang_locid, player.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_RAILGANG_OWNER));
+}
+
+uint GetOwnerId(Map& map)
+{
+    return map.GetData(MAP_DATA_RAILGANG_OWNER);
+}
+
+// Init Horatius, Gang leader
+void _Horatius(Critter& cr, bool firstTime)
+{
+    _Thug(cr, firstTime);
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_HoratiusDead");
+}
+
+// Init Thugs
+void _Thug(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 0;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_ThugDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    if(firstTime)
+    {
+        cr.SetHomePos(cr.HexX, cr.HexY, cr.Dir);
+        Map @map = cr.GetMap();
+        map.SetData(MAP_DATA_RAILGANG_THUGS, map.GetData(MAP_DATA_RAILGANG_THUGS) + 1);
+    }
+}
+
+void _HoratiusDead(Critter& cr, Critter@ killer)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_ncr_rail_gang, GetOwnerId(cr.GetMap()));
+    var = HORATIUS_KILLED;
+    _ThugDead(cr, killer);
+}
+
+void _ThugDead(Critter& cr, Critter@ killer)
+{
+    Map @map = cr.GetMap();
+    map.SetData(MAP_DATA_RAILGANG_THUGS, map.GetData(MAP_DATA_RAILGANG_THUGS) - 1);
+    if(map.GetData(MAP_DATA_RAILGANG_THUGS) == 0)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_ncr_rail_gang, GetOwnerId(map));
+        if(var.GetValue() == HORATIUS_KILLED)
+        {
+            var = ALL_KILLED;
+        }
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(cr.IsDead())
+        return;
+    if(message == MSG_IM_ATTACKED)
+    {
+        // Thugs hate critters attacking them or other thugs
+        GameVar@ varReputation = GetUnicumVar(UVAR_reputation, value, cr.Id);
+        varReputation = __ReputationHated;
+        AddAttackPlane(cr, 0, value);
+    }
+}
+
+// Check if any thug hates the critter entering the camp (UVAR_reputation <= __ReputationHated)
+void _OnEnterCamp(Map& map, Critter& crit)
+{
+    // Find all alive thugs
+    uint thugNum = map.GetNpcCount(ROLE_RAILGANG_THUG, FIND_LIFE);
+    for(uint i = 0; i < thugNum; i++)
+    {
+        Critter@ thug = map.GetNpc(ROLE_RAILGANG_THUG, FIND_LIFE, i);
+        if(valid(thug))
+        {
+            // Check if a thug hates the critter and alarm the camp if he does
+            GameVar@ varReputation = GetUnicumVar(UVAR_reputation, crit.Id, thug.Id);
+            if(varReputation <= __ReputationHated)
+            {
+                thug.SendMessage(MSG_IM_ATTACKED, crit.Id, MESSAGE_TO_ALL_ON_MAP);
+                return;
+            }
+        }
+    }
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_RAILGANG_OWNER)));
+}
+void CheckThugs(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Thugs dead: " + cr.GetMap().GetData(MAP_DATA_RAILGANG_THUGS));
+}

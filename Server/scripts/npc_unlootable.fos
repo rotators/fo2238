@@ -1,0 +1,15 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_unlootable.fos
+//
+
+#include "_macros.fos"
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    _CritSetMode(guard, MODE_NO_LOOT);
+    _CritSetMode(guard, MODE_NO_STEAL);
+    _CritSetMode(guard, MODE_NO_DROP);
+}

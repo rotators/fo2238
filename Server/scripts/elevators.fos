@@ -1,0 +1,108 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// elevators.fos
+//
+
+//
+// Script for elevators, that interconnects Entire objects with triggers to be used
+// as elevators on multi-level maps
+//
+
+#define __ELEVATORS_MODULE__
+#include "elevators_h.fos"
+#include "MsgStr.h"
+
+// list of elevators
+array<IElevator@> Elevators;
+
+//
+// Retrieves elevator player is in
+//
+IElevator@ GetElevator(Critter& player)
+{
+    DLog("Looking for elevators: " + Elevators.length());
+    for(uint i = 0; i < Elevators.length(); i++)
+    {
+        if(Elevators[i].IsInside(player))
+            return Elevators[i];
+    }
+    return null;
+}
+
+void AddElevator(IElevator@ elevator)
+{
+    Elevators.insertLast(elevator);
+}
+
+//
+// Helper function for elevator triggers
+//
+void HandleElevator(IElevator@ elevator, Critter& critter, bool entered)
+{
+    if(critter.IsNpc())
+        return;
+    if(entered)
+    {
+        if(critter.Timeout[TO_BATTLE] > 0)
+        {
+            critter.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT);
+            return;
+        }
+        uint       current_level = elevator.GetCurrentLevel(critter);
+        // remove from previous elevator (if not removed already)
+        IElevator@ prev = GetElevator(critter);
+        if(valid(prev))
+            prev.RemovePlayer(critter);
+        // add to this elevator
+        elevator.AddPlayer(critter);
+
+        // show window
+        critter.RunClientScript("ShowElevator", elevator.Type, current_level, 0, null, null);
+    }
+    else
+        elevator.RemovePlayer(critter);
+}
+
+
+//
+// Elevator window handler (for ShowScreen, deprecated)
+//
+void answer_Elevator(Critter& player, uint floor, string& answerS)
+{
+    IElevator@ elevator = GetElevator(player);
+    // transit player to other floor
+    if(valid(elevator))
+        elevator.Transit(player, floor);
+}
+// handler for RunServerScriptUnsafe
+void unsafe_Transit(Critter& player, int floor, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    IElevator@ elevator = GetElevator(player);
+    // transit player to other floor
+    if(valid(elevator))
+        elevator.Transit(player, floor);
+}
+// plays elevator start sound in the map where it was used
+void unsafe_PlayStartSound(Critter& player, int p0, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    player.GetMap().PlaySound("elevato1.acm", player.HexX, player.HexY, 5);
+}
+// plays elevator sound on level it actually passess by
+void unsafe_PlayArrivingSound(Critter& player, int floor, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    IElevator@ elevator = GetElevator(player);
+    if(valid(elevator))
+        elevator.PlaySound(player, floor);
+}
+// debug info
+void debug_elevators(Critter& player, int p0, int p1, int p2)
+{
+    for(uint i = 0; i < Elevators.length(); i++)
+    {
+        Elevators[i].Debug(player);
+    }
+}
+
+//  MODULE

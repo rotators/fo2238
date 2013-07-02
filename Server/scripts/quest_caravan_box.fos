@@ -1,0 +1,142 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_caravan_box.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "_entires.fos"
+#include "npc_roles_h.fos"
+
+#include "entire.fos"
+#include "reputations_h.fos"
+#include "backend_h.fos"
+
+#define BOX_STATUS_NONE       (0)
+#define BOX_STATUS_ONGOING    (1)
+
+Critter@ GetCaravanOfficer(Map@ map)
+{
+    Critter@ npc = map.GetNpc(ROLE_CARAVAN_BOX, FIND_ALL | FIND_ONLY_NPC, 0);
+    if(!valid(npc))
+    {
+        DLog("Can't find quest npc.");
+        return null;
+    }
+    return npc;
+}
+
+bool d_IsOngoing(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_box_unload_status, npc.Id, player.Id) == BOX_STATUS_ONGOING);
+}
+
+bool d_NotStarted(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_box_unload_status, npc.Id, player.Id) == BOX_STATUS_NONE);
+}
+
+bool d_IsDone(Critter& player, Critter@ npc)
+{
+    if(GetUvar(UVAR_q_box_unload_status, npc.Id, player.Id) != BOX_STATUS_ONGOING)
+        return false;
+
+    return(GetUvar(UVAR_q_box_unload_count, npc.Id, player.Id) == 0);
+}
+
+void r_StartQuest(Critter& player, Critter@ npc)
+{
+    SetUvar(UVAR_q_box_unload_status, npc.Id, player.Id, BOX_STATUS_ONGOING);
+    SetUvar(UVAR_q_box_unload_count, npc.Id, player.Id, 10);
+}
+
+void r_CompleteQuest(Critter& player, Critter@ npc)
+{
+    player.AddItem(PID_BOTTLE_CAPS, 100);
+    player.StatBase[ST_EXPERIENCE] += 50;
+    LogQuestExperience(player, 50, "caravan_box");
+    AddReputation(player, ReputationIndex(player.GetMap().GetLocation().GetProtoId()), Random(0, 10), REP_CARAVAN_BOX_CAP);
+    SetUvar(UVAR_q_box_unload_status, npc.Id, player.Id, BOX_STATUS_NONE);
+}
+
+void _OnDropBox(Item& item, Critter& cr)
+{
+    Map@     map = cr.GetMap();
+
+    Critter@ npc = GetCaravanOfficer(map);
+    if(!valid(npc))
+    {
+        DeleteItem(item);
+        return;
+    }
+
+    array<Entire> entires;
+    ParseEntires(map, entires, ENTIRE_CARAVAN_DROP_ZONE);
+    for(uint i = 0; i < entires.length(); i++)
+    {
+        if((entires[i].HexX == item.HexX) && (entires[i].HexY == item.HexY))
+        {
+            GameVar@ var = GetUnicumVar(UVAR_q_box_unload_count, npc.Id, cr.Id);
+            if(valid(var))
+                var -= 1;
+            if(var < 0)
+                var = 0;
+
+            DLog("Box collected!");
+            DeleteItem(item);
+            return;
+        }
+    }
+    if(cr.GetMapId() == npc.GetMapId())
+    {
+        npc.Say(SAY_SHOUT_ON_HEAD, "You idiot, you can't drop it there!");
+    }
+    DeleteItem(item);
+}
+
+void _BoxInit(Item& box, bool firstTime)
+{
+    box.SetEvent(ITEM_EVENT_DROP, "quest_caravan_box@_OnDropBox");
+}
+
+bool _OnUseCaravan(Critter& cr, Scenery& scen, int skill, Item@ item)
+{
+    if(skill != -1)
+        return false;
+
+    if(valid(cr))
+    {
+        Critter@ npc = cr.GetMap().GetNpc(ROLE_CARAVAN_BOX, FIND_ALL | FIND_ONLY_NPC, 0);
+
+        if(valid(npc) && GetUvar(UVAR_q_box_unload_status, npc.Id, cr.Id) == BOX_STATUS_ONGOING)
+        {
+            if(GetUvar(UVAR_q_box_unload_count, npc.Id, cr.Id) == 0)
+            {
+                cr.Say(SAY_NETMSG, "You've completed the task assigned, speak to the caravan packer.");
+                return false;
+            }
+
+            if(cr.CountItem(PID_CARAVAN_BOX) > 0)
+            {
+                cr.Say(SAY_NETMSG, "You've already picked up a box, you can't carry two.");
+                return false;
+            }
+
+            cr.Say(SAY_NETMSG, "You've picked up a box from the caravan cart");
+            Item@ item = cr.AddItem(PID_CARAVAN_BOX, 1);
+            if(valid(item))
+                item.SetEvent(ITEM_EVENT_DROP, "quest_caravan_box@_OnDropBox");
+        }
+        else
+        {
+            if(valid(npc))
+                npc.Say(SAY_SHOUT_ON_HEAD, "Don't touch that!");
+            else
+                cr.Say(SAY_NETMSG, "Don't touch that!");
+            return false;
+        }
+    }
+    return true;
+}

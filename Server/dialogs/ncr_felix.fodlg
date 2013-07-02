@@ -1,0 +1,63 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_ncr_westin_inside = 0 D or D _var p q_ncr_westin_quest1_billboard = 0 #
+5 1020 D _var p name_mem_npc_player = 1 #
+2 1030 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+8 2010 D _var p q_ncr_westin_quest1_billboard ! 0 D _var p q_ncr_westin_quest1 = 0 #
+6 2020 D _var p q_ncr_westin_quest1 = 1 #
+4 2030 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+6 5010 D _var p q_ncr_westin_quest1 = 1 #
+7 5020 D _var p q_ncr_westin_quest1 = 2 D or D _var p q_ncr_westin_quest1 = 3 D or D _var p q_ncr_westin_quest1 = 4 #
+4 5030 @
+6 6000 None 0 #
+0 6010 R _script quest_ncr_brahmin@r_SpawnMap 0  R _var p q_ncr_westin_quest1 = 2 R _var p q_ncr_westin_inside = 0 #
+0 6020 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Felix}
+{200}{}{You see a man wearing leathers and packing heat.}
+{210}{}{It's Felix, the ranch foreman.}
+{210}{}{He looks like a cooler, tougher customer than the rest of the lot hanging around here.}
+{1000}{}{Predialogue installations}
+{1010}{}{everything else}
+{1020}{}{known}
+{1030}{}{unkown}
+{2000}{}{What can I do for you, stranger?}
+{2010}{}{I am here because of the job from the notice board.}
+{2020}{}{Mr. Westin told me, you will guide me to the brahmin willow.}
+{2030}{}{Just looking around.}
+{3000}{}{We ain't hiring hands.@@Mister Westin doesn't want any visitors.@@Get lost, pal.@@Sorry, we're not interested in whatever crap you're selling.}
+{4000}{}{Well then, get on out of here.}
+{4010}{}{Goodbye.}
+{5000}{}{You again?}
+{5010}{}{Mr. Westin told me, you will guide me to the brahmin willow.}
+{5020}{}{I am back to talk with Mr. Westin about his brahmin.}
+{5030}{}{Just looking around.}
+{6000}{}{Fine, I'll take you out there and you do whatever you have to do.}
+{6010}{}{[Continue to the willow.] }
+{6020}{}{Later, I have to do something else first.}
+{7000}{}{What are you waiting for then? Go on in.}
+{7010}{}{Goodbye.}
+{8000}{}{Great, another idiot. I suppose you want to see the boss?}
+{8010}{}{Uh-huh.}
+{9000}{}{Fine. Go on in.}
+{9010}{}{[End]}
+

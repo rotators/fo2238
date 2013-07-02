@@ -1,0 +1,112 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+21 1010 D _var p q_bunker_base > 20 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 R _param p ST_EXPERIENCE + 150 #
+2 1020 D _var p name_mem_npc_player = 1 D _var p q_bunker_base > 20 #
+20 1030 @
+2 2000 None 0 #
+6 2010 D _script factions_player@d_HasRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+30 2020 D _script factions_player@d_HasNotRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+6 2030 D _script dialog@d_IsLeader 0  #
+0 2040 @
+3 3000 factions_player@dlg_EnterNameOfFaction 0 #
+0 3010 @
+4 4000 factions_player@dlg_CreateFactionBase 0 #
+0 4010 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+15 6010 #
+7 6020 @
+7 7000 None 0 #
+0 7010 #
+0 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+3 9010 #
+0 9020 @
+10 10000 None 0 #
+3 10010 #
+0 10020 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+0 12010 @
+15 13000 None 0 #
+17 13010 #
+7 13020 @
+17 14000 None 0 #
+3 14010 D _script factions_player@d_HasMoneyForBunker 0  R _script factions_player@r_ChooseBunker 0  R _param p REPUTATION_NECROPOLIS + 25 #
+0 14020 @
+20 15000 None 0 @
+21 16000 None 0 #
+22 16010 @
+22 17000 None 0 #
+23 17010 @
+23 18000 None 0 #
+2 18010 @
+30 19000 None 0 #
+0 19010 &
+
+[engl]
+{100}{}{Wally}
+{200}{}{You see an old, stinky ghoul.}
+{210}{}{You see an old and stinky ghoul. God, he is loosing his limbs.}
+{210}{}{You see a gecko hunter. He has a limp in his left leg.}
+{1000}{}{Predialogue installations}
+{1010}{}{You know Wally!}
+{1020}{}{Talked to wally already.}
+{1030}{}{You don't know Wally!}
+{2000}{}{So, Smoothskin. What can the 'ol Wally do for you?}
+{2010}{}{Y'see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you? I mean, while you have wandered across the wasteland or so...}
+{2020}{}{Y'see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you? I mean, while you have wandered across the wasteland or so...}
+{2030}{}{So... yeah, we are now looking for a new hideout, do you think you'd have something for us?}
+{2040}{}{Nothing. I'm outta here.}
+{3000}{}{And... uhh... Smoothskin, what is it you guys call yourselves... not that I want to know... i'm just curious, you know? [Make sure that everyone in your group is following you right now, otherwise they won't count as members]}
+{3010}{}{Nevermind.}
+{4000}{}{Good, good, uhh... Smoothskin. Your people'll be thrilled. Let me just mark it on your map...how will you this hole?}
+{4010}{}{Nevermind.}
+{5000}{}{Never heard of you guys, Smoothskin. Sorry. Don't think I can help you. Nothing personal.}
+{5010}{}{Ooops, I think I mispoke, let me repeat myself...}
+{5020}{}{I'm wasting my time here.}
+{6000}{}{Sure I can help you, but it ain't gonna be cheap. I happen to know a couple suitable locations, but some are a little more, how should I put it... impressive, than others.}
+{6010}{}{Do you know of anything useful in the surrounding area?}
+{6020}{}{Screw you, I changed my mind.}
+{7000}{}{Good, good. Your loss, buddy.}
+{7010}{}{I guess...}
+{7020}{}{I'll be back}
+{8000}{}{Uhh...ok, done.}
+{8010}{}{Thanks!}
+{9000}{}{Eh, there's already a group of people going around calling themselves that and I don't think thats you, buddy. You better pick something different, buddy.}
+{9010}{}{Alright, how about...}
+{9020}{}{Nevermind.}
+{10000}{}{Hmm, there is something wrong with my brain. Do you want try again?}
+{10010}{}{Ok, I will tell you again, maybe you understand this time.}
+{10020}{}{Nevermind}
+{11000}{}{Sorry, so many damn groups have came to me, I don't know of any more places. Sorry. Try finding one that's already out there.}
+{11010}{}{Okay...}
+{12000}{}{Ekhm, and where are the caps? Are you trying to fool me out? Shove off!}
+{12010}{}{Uhm, but...}
+{13000}{}{Uhm... Smoothskin... Here? It's just a shitty old town, full with ghouls and other lost people.}
+{13010}{}{Yeh. Ok, but what about a area that is a bit... more away. You know, even if it is far away... [You paint some irrecognizable image with your hands in the air.]}
+{13020}{}{That's too much for me. Screw it.}
+{14000}{}{Uhh... Maybe... yes. It could be possible that I saw something a while ago... but it costs you 500.000 caps to fresh up my mind, Smoothskin...}
+{14010}{}{Okay. Here, take the 500.000 caps and show me the way. I hope it's worth it.}
+{14020}{}{Damn, I don't have enough money right now. I will come back later.}
+{15000}{}{What do you want, Smoothskin?@@Leave me alone, Smoothskin.@@What? Uh!@@Hi.@@Arrrr!@@Grrrrr!@@Uungh.@@Uhh.@@Hey, did you hear that? No?@@Ever since the mutants left, it's been better.@@Hello Smoothskin.}
+{16000}{}{You better get outa here, buddy. }
+{16010}{}{Slow down, man. Are you Wally? I was searching for you. Damn, you look old as hell.}
+{17000}{}{Yeah buddy, how do you know my name?}
+{17010}{}{I've heard stories about you and that you have been a kind of outdoor master.}
+{18000}{}{Ah... uh... this... this is already a long time ago. I am not like that anymore.}
+{18010}{}{You know, I have some questions to you...}
+{19000}{}{Hmm, I must be getting blind, I don't see any sufficiently large group around here, hm?}
+{19010}{}{Hm, but...where have they gone?}
+

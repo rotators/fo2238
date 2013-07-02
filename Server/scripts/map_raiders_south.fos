@@ -1,0 +1,19 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_raiders_south.fos
+//
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_RAIDERS);
+    }
+}

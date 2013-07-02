@@ -1,0 +1,71 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+40 1010 D _script dialog@d_CheckNight 0  #
+50 1020 D _param p ST_INTELLECT < 4 #
+20 1030 D _var p factions_player_faction = 6 #
+2 1040 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+4 2020 D _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+65506 4010 #
+0 4020 #
+0 4030 @
+20 5000 None 0 #
+21 5010 R _var n name_mem_npc_player = 1 #
+65506 5020 D _var n name_mem_npc_player = 1 #
+0 5030 @
+21 6000 None 0 #
+65506 6010 #
+0 6020 @
+40 7000 None 0 @
+50 8000 None 0 #
+51 8010 #
+0 8020 @
+51 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Darrow}
+{200}{}{You see a citizen in blue jumpsuit without any number on the back.}
+{210}{}{You see Sub-Amenities Officer Darrow.}
+{1000}{}{Predialogue installations}
+{1010}{}{night}
+{1020}{}{dumb}
+{1030}{}{citizen}
+{1040}{}{non-citizen}
+{2000}{}{I'm sorry, can I help you with something?}
+{2010}{}{What is this place?}
+{2020}{}{Can I see what you have in stock?}
+{2030}{}{Nothing today, thanks.}
+{3000}{}{This is the Sub-Amenities Office A... we handle tools and repair equipment for the city. You sure this was the place you were looking for?}
+{3010}{}{Yes, this is the place. Can I see what you have in stock?}
+{3020}{}{Nothing today, thanks.}
+{4000}{}{Say, just so you know, there's a general store in the Courtyard outside. You might want to try shopping there... I hear his selection is almost as good as ours.}
+{4010}{}{Uh, thanks. Now, let us do some business.}
+{4020}{}{I'll shop where I want to, got it?}
+{4030}{}{Thanks for the information. Goodbye.}
+{5000}{}{Anything I could help you with, Citizen?}
+{5010}{}{What is this place?}
+{5020}{}{Can I see what you have in stock?}
+{5030}{}{Nothing today, thanks.}
+{6000}{}{Sub-Amenities Office A. I'm in charge of general supply needs, like tools and repair equipment. The name's Darrow... Sub-Amenities Officer Darrow. See anything you need?}
+{6010}{}{Can I see what you have in stock?}
+{6020}{}{That's all for today, thank you.}
+{7000}{}{The Sub-Amenities Office is closed for the night... come back in the morning.@@Right now I'm taking stock. Come back when we open in the morning.@@We're closed. You might try the general store outside if you really need something.}
+{8000}{}{I'm sorry, can I help you with something?}
+{8010}{}{Sumfin? Doodle-doodle doooooo}
+{8020}{}{[Shamble off]}
+{9000}{}{Say, just so you know, there's a general store in the Courtyard outside. You might want to try shopping there... I hear his selection is almost as good as ours.}
+{9010}{}{Okeee-dokeeee}
+

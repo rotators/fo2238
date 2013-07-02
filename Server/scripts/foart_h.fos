@@ -1,0 +1,113 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_h.fos
+//
+
+#ifndef __FOART_H__
+#define __FOART_H__
+
+#include "buffer_h.fos"
+
+/// Name of this module
+#define FOART_MODULE           "foart"
+
+/// Time (in ms) between processing loaded FOArts
+#define FOART_PROCESS_DELAY    (100)
+
+#ifdef __CLIENT
+#endif // __CLIENT
+
+#ifdef __MAPPER
+#endif // __MAPPER
+
+#ifdef __SERVER
+
+funcdef void FOART_AddonPreSpawn(Buffer&, uint16, uint16, uint16);
+funcdef void FOART_AddonPostSpawn(Buffer&, Item&);
+#endif // __SERVER
+
+shared interface FOArt
+{
+    uint8 Version();
+
+// load/save
+    bool Load(array<uint8>  data);
+    bool Save(Buffer& buff);
+    bool Save(array<uint8>& data);
+
+// hexes
+    bool Relative();
+    void Relative(bool hexes_relative);
+
+// definitions
+    bool             AddDefinition(FOArtDefinition@ definition);
+    FOArtDefinition@ GetDefinition(uint index);
+    uint             GetDefinitions(array<FOArtDefinition@>& output);
+    uint             GetDefinitionsCount();
+
+    #ifdef __SERVER
+    int Spawn(Map& map, uint16 centerX, uint16 centerY);
+    #endif
+
+};
+
+shared interface FOArtDefinition
+{
+    uint16 ItemPid { get; }
+
+// load/save
+    void Load(Buffer& buff);
+    void Save(Buffer& buff);
+
+// hexes functions
+    void AddHex(int16 hex_x, int16 hex_y);
+    bool GetHex(uint index, int16& hex_x, int16& hex_y);
+    uint GetHexes(array<int16>& hexes);
+    uint GetHexesCount();
+    bool RemoveHex(int16 hex_x, int16 hex_y);
+    void RemoveHexes();
+
+// addon data
+    void SetAddonData(uint8 addon_id, Buffer& buff);
+    void RemoveAddonData(uint8 addon_id);
+
+// spawning
+    #ifdef __SERVER
+    int  Spawn(Map& map, bool relative, uint16 centerX, uint16 centerY);
+    uint Spawn(Map& map, uint16 hexX, uint16 hexY);
+    #endif
+};
+
+shared interface FOArtAddon
+{
+    uint8 ID();
+
+    void Enable();
+    void Disable();
+    bool Enabled();
+    bool Disabled();
+
+    #ifdef __SERVER
+    void SetPreSpawn(FOART_AddonPreSpawn@ callback);
+    void SetPostSpawn(FOART_AddonPostSpawn@ callback);
+
+    void PreSpawn(Buffer& data, uint16 pid, uint16 hexX, uint16 hexY);
+    void PostSpawn(Buffer& data, Item@ item);
+    #endif
+};
+
+#ifndef __FOART__
+
+import FOArt@ NewFOArt(uint8 version, uint16 map_pid, bool hexes_relative) from FOART_MODULE;
+
+import FOArtDefinition@ NewFOArtDefinition(uint16 pid) from FOART_MODULE;
+
+import FOArtAddon@ NewFOArtAddon(uint8 id) from FOART_MODULE;
+import FOArtAddon@ GetFOArtAddon(uint8 id) from FOART_MODULE;
+
+import FOArt@ LoadFOArtFile(string& filename) from FOART_MODULE;
+import bool   SaveFOArtFile(FOArt& art, string& filename) from FOART_MODULE;
+#endif // __FOART__
+#endif // __FOART_H__ //

@@ -1,0 +1,120 @@
+[comment]
+For now this dilaog is only for bounty purposes.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _script bounties@d_HasInfo 1 0 #
+2 1020 D _var p name_mem_npc_player = 1 #
+5 1030 D _param p ST_INTELLECT < 4 #
+6 1040 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 #
+100 2020 D _param p ST_INTELLECT > 1000 #
+110 2030 D _param p ST_INTELLECT > 1000 R _script bounties@r_ShowFirstBounty 1 111 #
+120 2040 D _script bounties@d_HasProof 1 0 D _param p ST_INTELLECT > 1000 R _script bounties@r_CheckBounty 1 121 #
+0 2050 @
+3 3000 bounties@dlg_ShowHunter 0 #
+2 3010 #
+0 3020 @
+4 4000 None 0 #
+7 4010 #
+8 4020 #
+0 4030 @
+5 5000 None 0 @
+6 6000 None 0 #
+4 6010 #
+100 6020 D _param p ST_INTELLECT > 1000 #
+110 6030 D _param p ST_INTELLECT > 1000 R _script bounties@r_ShowFirstBounty 1 111 #
+120 6040 D _script bounties@d_HasProof 1 0 D _param p ST_INTELLECT > 1000 R _script bounties@r_CheckBounty 1 121 #
+0 6050 @
+100 7000 bounties@dlg_ChoosePlayer 0 #
+101 7010 R _script bounties@r_PlayerChosen 1 100 #
+0 7020 @
+101 8000 None 0 #
+102 8010 D _item p PID_BOTTLE_CAPS > 999 R _script bounties@r_SetBounty 1 1000 R _script dialog@r_RemoveMoney 1 1000 #
+102 8020 D _item p PID_BOTTLE_CAPS > 4999 R _script bounties@r_SetBounty 1 5000 R _script dialog@r_RemoveMoney 1 5000 #
+102 8030 D _item p PID_BOTTLE_CAPS > 9999 R _script bounties@r_SetBounty 1 10000 R _script dialog@r_RemoveMoney 1 10000 #
+0 8040 @
+102 9000 None 0 #
+0 9010 @
+110 10000 bounties@dlg_ShowBounty 0 #
+110 10010 R _script bounties@r_ShowNextBounty 1 111 #
+0 10020 @
+111 11000 None 0 #
+0 11010 @
+120 12000 None 0 #
+0 12010 R _script bounties@r_FetchBounty 1 1 @
+121 13000 None 0 #
+0 13010 @
+7 14000 None 0 #
+65505 14010 #
+0 14020 @
+8 15000 None 0 #
+9 15010 #
+65505 15020 #
+0 15030 @
+9 16000 None 0 #
+0 16010 &
+
+[engl]
+{100}{}{Sheriff Hayden}
+{200}{}{You see Sheriff Andrew Hayden.}
+{210}{}{You see a powerfully built man looking at you intently.}
+{1000}{}{Predialogue installations}
+{1010}{}{info}
+{1020}{}{default}
+{1030}{}{Idiot}
+{1040}{}{New}
+{2000}{}{@sex@|Hello again, sir. What can I do for you today?||Hello again, ma'am. What can I do for you today?|}
+{2010}{}{I just had a couple questions, Sheriff.}
+{2020}{}{I want to place a bounty on someone's head. Think you can set me up? *DEV NOTE: Deactivated for now*}
+{2030}{}{What bounties are currently on offer? *DEV NOTE: Deactivated for now*}
+{2040}{}{I'm here to claim a bounty, Sheriff. *DEV NOTE: Deactivated for now*}
+{2050}{}{I won't make any trouble. I was just leaving. Goodbye.@@Nothing, sorry.}
+{3000}{}{Hi there, I've got some good news for you. The bounty you set on @lex bountee@ was claimed by @lex hunter@. Poor bastard is six feet under by now. Or less; bounty hunters don't dig deep graves.}
+{3010}{}{Glad they got what was coming to them. I've got a few other questions.}
+{3020}{}{Great, I gotta go}
+{4000}{}{Go on but don't waste my time!}
+{4010}{}{Do you have any work to offer?}
+{4020}{}{Is there anything I should watch out for around here?}
+{4030}{}{Ah.. nevermind. I'll come back later. Bye.}
+{5000}{}{You're about a taco short of a combination plate.@@No hand-outs here. Now git!@@Move along, little doggy.@@Move along.}
+{6000}{}{@sex@|Hello sir! The name's Andrew Hayden. I'm the sheriff of this fine city. Is there something I can do for you this fine day?||Hello ma'am! The name's Andrew Hayden. I'm the sheriff of this fine city. Is there something I can do for you this fine day?|}
+{6010}{}{I just had a couple questions, Sheriff.}
+{6020}{}{I want to place a bounty on someone's head. Think you can set me up? *DEV NOTE: Deactivated for now*}
+{6030}{}{What bounties are currently on offer? *DEV NOTE: Deactivated for now*}
+{6040}{}{I'm here to claim a bounty, Sheriff. *DEV NOTE: Deactivated for now*}
+{6050}{}{I won't make any trouble. I was just leaving. Goodbye.@@Nothing, sorry.}
+{7000}{}{You bet we can. Who's the poor corpse-to-be?}
+{7010}{}{[continue]}
+{7020}{}{[Leave] I've changed my mind}
+{8000}{}{And how much are you willing to pay to put this person in the ground?}
+{8010}{}{$1,000.}
+{8020}{}{$5,000.}
+{8030}{}{$10,000.}
+{8040}{}{Nevermind.}
+{9000}{}{Okay, just hand me the cash, and... (he fills out some forms). Yep, that's all set up. Check back later, I'll tell you if someone's claimed it by then.}
+{9010}{}{Farewell.}
+{10000}{}{There's $@lex bounty@ for @lex player@.}
+{10010}{}{[More]}
+{10020}{}{Thanks for the info.}
+{11000}{}{Sorry pal, there aren't any bounties set now.}
+{11010}{}{Dang.}
+{12000}{}{Good work, you're a natural. Here's the cash.}
+{12010}{}{It was a pleasure.}
+{13000}{}{Sorry, there's no bounty for 'em. I can't pay you. Maybe someone already claimed it.}
+{13010}{}{Argh!}
+{14000}{}{Just bounties. We're not in the business of giving uniforms and guns to hoodlums from the wastes.}
+{14010}{}{How rude. Can I ask you something else?}
+{14020}{}{Fair enough I suppose. Thanks for your help anyway. Good bye.}
+{15000}{}{We get quite a few raiders out here, Khans mostly. They don't come too near the town because of us, but if you take a walk in to the wastes you could end up dead or worse.}
+{15010}{}{Worse?}
+{15020}{}{I'll keep a look out for them. Can I ask you something else?}
+{15030}{}{I'll keep a look out for them. }
+{16000}{}{You hear stories, bad ones, and you find some poor soul with their mind half gone out in the wastes sometimes.}
+{16010}{}{I'll make sure that doesn't happen to me, thanks.}
+

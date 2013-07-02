@@ -1,0 +1,19 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_holodisk.fos
+//
+
+#include "_macros.fos"
+
+void item_init(Item& item, bool firstTime)
+{
+    if(!firstTime || !FLAG(item.Flags, ITEM_HOLODISK))
+        return;
+    if(item.Val0 != 0)
+    {
+        item.HolodiskNumber = item.Val0;
+        item.Update();
+    }
+}

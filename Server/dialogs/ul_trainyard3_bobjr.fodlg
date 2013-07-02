@@ -1,0 +1,134 @@
+[comment]
+7070 q_iguana_pete_message:
+1 = Recieved Quest
+2 = Spoken to NCR Miky
+3 = Spoken to NCR Mutant Lenny
+4 = Spoken to Bob Jr.
+5 = Visited Golgotha and discovered corpse
+
+ENDS
+
+6 = Found bob jr.
+7 = Told pete his son is dead
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+3 1010 D _var p name_mem_npc_player = 0 D _var p q_iguana_pete_message = 5 #
+3 1020 D _var p name_mem_npc_player = 0 D _var p q_iguana_pete_message = 3 #
+8 1030 D _var p q_iguana_pete_message = 6 D _var p name_mem_npc_player = 1 #
+2 1040 D _var p name_mem_npc_player = 0 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+4 3020 @
+4 4000 None 0 #
+5 4010 #
+7 4020 @
+5 5000 None 0 #
+6 5010 R _item p PID_DESERT_EAGLE + 1 R _item p PID_44_MAGNUM_JHP + 20 R _param p ST_EXPERIENCE + 500 R _var p q_iguana_pete_message = 6 R _var p name_mem_npc_player = 1 R _script dialog@r_AddMoney 1 300 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+5 7010 @
+8 8000 None 0 #
+0 8010 #
+9 8020 @
+9 9000 None 0 #
+10 9010 #
+11 9020 #
+0 9030 @
+10 10000 None 0 #
+0 10010 #
+11 10020 @
+11 11000 None 0 #
+0 11010 #
+12 11020 @
+12 12000 None 0 #
+18 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 #
+0 13020 #
+17 13030 @
+14 14000 None 0 #
+20 14010 #
+0 14020 @
+20 15000 None 0 #
+15 15010 @
+15 16000 None 0 #
+16 16010 #
+0 16020 @
+16 17000 None 0 #
+0 17010 @
+17 18000 None 0 #
+14 18010 #
+19 18020 @
+18 19000 None 0 #
+13 19010 @
+19 20000 None 0 #
+14 20010 &
+
+[engl]
+{100}{}{Ranger Captain}
+{200}{}{You see Bob Jr.}
+{210}{}{You see a decorated officer of the NCR Rangers.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Answer text}
+{1030}{}{Answer text}
+{1040}{}{Answer text}
+{2000}{}{Move along.@@Nothing to see here.@@Why are you still here?@@Keep moving.@@What do you want?}
+{3000}{}{What is it wastelander?}
+{3010}{}{I'm looking for the son of a man named Pete that sells iguanas in the Hub. Have you overheard anything from your men that might help me?}
+{3020}{}{Are you Iguana Pete's son?}
+{4000}{}{Why do you want to know?}
+{4010}{}{This guy from the hub went all weepy on me when he heard his son might be alive. The trail led me here and I honestly don't care, I just want to get some caps out of it.}
+{4020}{}{Just trying to re-unite a couple lost lovers. This big green mutant was blubbering into his drink about losing his special friend, and right before he puked, he said he might be here.}
+{5000}{}{Dad misses me? He told me he never wanted to see me again. Thank you stranger.}
+{5010}{}{Hey I haven't delivered the message... he says...}
+{6000}{}{It doesn't matter I'll leave tonight,  just have to hand in my badge... Hey, why don't you take my sidearm as payment? It'll be worth more than whatever dad can scrounge up.}
+{6010}{}{Sounds like a plan, adventure man. Put that sidearm in my hand. Oorah!}
+{7000}{}{Lenny misses me? That rotten bastard kept me prisoner for 3 years.  If I ever see him again, I'll kill him. Where is he?!}
+{7010}{}{Whoah, that's not why I'm here. Your father did actually send me. What happened between you and the mutant, can stay between you and the mutant.}
+{8000}{}{Yes?}
+{8010}{}{Nothing, bye...}
+{8020}{}{How did you end up here? Where did that cart come from? I gotta know.}
+{9000}{}{You helped me out so I'll make some time. You want the long story or the short one?}
+{9010}{}{Short, I don't have all day.}
+{9020}{}{I got some time, let's here the long version.}
+{9030}{}{Nevermind...}
+{10000}{}{Short answer is, I set up an iguana shop in the wrong place, and spent 3 years as a super mutant's bitch. I escaped and, well, I ended up here.}
+{10010}{}{harsh.... see you later}
+{10020}{}{Mutant bitch? Don't leave out the good stuff, let's hear some details.}
+{11000}{}{When I was sixteen, my dad told me he was retiring and giving me the family business. I was young and stupid, I wanted to see more of the wasteland...  Wanted to go 'adventuring' like Crognak from the comic book...}
+{11010}{}{I just remembered I have to go watch some paint dry, later...}
+{11020}{}{Go on.}
+{12000}{}{Well, as soon as I left the Hub, I headed north. I walked for days, hiding from all kinds of creatures at night, I would have gone home then but I was hopelessly lost. One night I saw lights on the horizon and was so excited.  I didn't care what it was, I just started running...}
+{12010}{}{The suspense is killing me.}
+{12020}{}{Hey look at the time, I best be heading out.. see you around}
+{13000}{}{I was making as much as a jet dealer, I mean, they have to factor in the chemicals and the families' cuts, but I didn't have to pay anyone a cent,  Iguanas and sticks are the one free thing in this goddamn wasteland. So I set up a stand closer to town...}
+{13010}{}{The families saw you, and they wanted a cut?}
+{13020}{}{You know what? I just don't care... goodbye Bob}
+{13030}{}{I've never even seen an iguana, how the hell do you hunt them?}
+{14000}{}{... No... much worse... that's when Lenny  came to town. Golden globes ran a casting call for a new film they were making "It 'came' from Mariposa!" They wanted to do some real kinky shit, with a super mutant and a lady, Miria Modoc, or something..}
+{14010}{}{It 'came' from Mariposa? I would have called it something better... Was it good?}
+{14020}{}{Woah, a bit too much information there. See you later.}
+{15000}{}{..I never saw it.. Look I haven't told this to anybody,  so pay some goddamn respect, kid. Lenny came by the stand everyday they were filming, he loved those iguanas man. I joked about what he was gonna do without me when the filming was over.. I should have known what was going through that retard's thick skull, as soon as they were done filming he dragged me out of town along with my iguanas...}
+{15010}{}{Oh no...}
+{16000}{}{The moron had me setting up the stand all over the desert just for him, pretending like he never left reno or some shit... and at night.. fuck.. do you know what a ball gag is?}
+{16010}{}{Then you escaped and came here?}
+{16020}{}{I do know, and that's funny as hell. Later gimp.}
+{17000}{}{Exactly. After three years with the retard, I escaped and ran south. I was looking for the Hub but I found NCR. Got recruited by the Rangers and that's that.}
+{17010}{}{And soon you'll be an iguana seller again, history has a funny way of repeating itself. Goodbye sir, your secrets safe with me... kind of... Goodbye.}
+{18000}{}{There are ways and means, but if I told you, dad would kill me. His monopoly on iguanas is the only thing that kept him in business all these years.}
+{18010}{}{Rrright... so anyway, that's when the Mordino's decided to cash in on your little operation huh?}
+{18020}{}{While we're off topic, your father's name is Pete but your stand says Son of Bob, why is that? And what the hell is your name?}
+{19000}{}{..I had found New Reno, and boy the wasteland was a lot different than I expected.  I moved in with a group of jet heads in an abandoned factory,  just outside of town.  I never touched the stuff mind you, I saw what it did to those guys. I just did what my dad taught me; catching and cooking iguanas. No matter how much those fools wanted jet,  they still had to eat right?}
+{19010}{}{Right.}
+{20000}{}{Well my name is Bob, and back then I thought that was how you spelled Pete. Don't look at me like that, I was young, I know better now. Anyway, not many people can read these days, so I'm surprised you noticed.}
+{20010}{}{It's a strange world we live in. Back to the story Bob. You were at the part where you're about to get a beaten up by the Mordinos.}
+

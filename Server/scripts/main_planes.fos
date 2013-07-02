@@ -1,0 +1,1509 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// main_planes.fos
+//
+
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "_vals.fos"
+#include "groups_h.fos"
+#include "linetracer_h.fos"
+#include "npc_ai.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+#include "traps_h.fos"
+
+
+import int  RawToHit(Critter& cr, Critter& target, ProtoItem@ weapon, uint8 weaponUse, ProtoItem@ ammo) from "combat";
+import uint GetKeyId(Critter& cr, uint lockerId) from "lockers";
+import bool IsKeyAviable(Critter& cr, uint lockerId) from "lockers";
+import bool critter_use_skill(Critter& cr, int skill, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen) from "main";   // ugly
+import void MilitiaMoveToFreeHex(Critter& cr) from "town_militia";
+import void SetWear(Item& item, int wearProcent) from "repair";
+
+#ifdef __TEST__
+string plane2str(uint plane)
+{
+    switch(plane)
+    {
+    case AI_PLANE_ATTACK:
+        return "AI_PLANE_ATTACK";
+    case AI_PLANE_MISC:
+        return "AI_PLANE_MISC";
+    case AI_PLANE_PICK:
+        return "AI_PLANE_PICK";
+    case AI_PLANE_WALK:
+        return "AI_PLANE_WALK";
+    default:
+    }
+    return "unknown";
+}
+
+string reason2str(uint reason)
+{
+    switch(reason)
+    {
+    case REASON_GO_HOME:
+        return "REASON_GO_HOME";
+    case REASON_FOUND_IN_ENEMY_STACK:
+        return "REASON_FOUND_IN_ENEMY_STACK";
+    case REASON_FROM_DIALOG:
+        return "REASON_FROM_DIALOG";
+    case REASON_FROM_SCRIPT:
+        return "REASON_FROM_SCRIPT";
+    case REASON_RUN_AWAY:
+        return "REASON_RUN_AWAY";
+    case REASON_SUCCESS:
+        return "REASON_SUCCESS";
+    case REASON_HEX_TOO_FAR:
+        return "REASON_HEX_TOO_FAR";
+    case REASON_HEX_BUSY:
+        return "REASON_HEX_BUSY";
+    case REASON_HEX_BUSY_RING:
+        return "REASON_HEX_BUSY_RING";
+    case REASON_DEADLOCK:
+        return "REASON_DEADLOCK";
+    case REASON_TRACE_FAIL:
+        return "REASON_TRACE_FAIL";
+    case REASON_POSITION_NOT_FOUND:
+        return "REASON_POSITION_NOT_FOUND";
+    case REASON_FIND_PATH_ERROR:
+        return "REASON_FIND_PATH_ERROR";
+    case REASON_CANT_WALK:
+        return "REASON_CANT_WALK";
+    case REASON_TARGET_DISAPPEARED:
+        return "REASON_TARGET_DISAPPEARED";
+    case REASON_USE_ITEM_NOT_FOUND:
+        return "REASON_USE_ITEM_NOT_FOUND";
+    case REASON_GAG_CRITTER:
+        return "REASON_GAG_CRITTER";
+    case REASON_GAG_ITEM:
+        return "REASON_GAG_ITEM";
+    case REASON_NO_UNARMED:
+        return "REASON_NO_UNARMED";
+    case REASON_ATTACK_WEAPON:
+        return "REASON_ATTACK_WEAPON";
+    case REASON_ATTACK_DISTANTION:
+        return "REASON_ATTACK_DISTANTION";
+    case REASON_ATTACK_USE_AIM:
+        return "REASON_ATTACK_USE_AIM";
+    default:
+    }
+    return "unknown";
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on some plane added.
+// Return true to allow plane, false to disallow.
+// REASON_GO_HOME
+// REASON_FOUND_IN_ENEMY_STACK   someCr as Enemy
+// REASON_FROM_DIALOG            someCr as Player
+// REASON_FROM_SCRIPT
+// REASON_RUN_AWAY
+bool npc_plane_begin(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    #ifdef __TEST__
+    npc.Say(SAY_NORM, "npc_plane_begin: " + plane2str(plane.Type) + ", " + reason2str(reason));
+    #endif
+    if(plane.Type == AI_PLANE_ATTACK)
+    {
+        Critter@ target = GetCritter(plane.Attack_TargId);
+        if(!valid(target))
+            return false;
+
+        if(_CritHasExtMode(npc, MODE_EXT_NO_ATTACK_AUTH))
+        {
+            if(target.GetAccess() > ACCESS_CLIENT)
+                return false;
+        }
+
+        if(_CritHasExtMode(npc, MODE_EXT_FOLLOWER) && target.IsPlayer() && (target.GetAccess() > ACCESS_CLIENT))
+            return false;
+
+        if((_CritHasExtMode(target, MODE_EXT_TC_LEADER)) || _CritHasExtMode(npc, MODE_EXT_TC_LEADER))
+            return false;
+
+        if((_CritHasExtMode(target, MODE_EXT_MILITIA) && !_IsFollower(npc)))
+            return false;
+        if((_CritHasExtMode(npc, MODE_EXT_MILITIA) && target.IsNpc() && !_IsFollower(target)))
+            return false;
+
+        if((npc.FollowerVar[FV_MASTER] > 0) && ((npc.FollowerVar[FV_MASTER] == target.FollowerVar[FV_MASTER]) || (uint(npc.FollowerVar[FV_MASTER]) == target.Id)))
+            return false;
+
+        // safeties
+        if(_IsTrueNpc(npc) && _IsTrueNpc(target))
+        {
+            if(_GroupIndex(npc) > FACTION_NONE && _GroupIndex(npc) == _GroupIndex(target))
+                return false;
+        }
+    }
+
+    /*if(plane.Type==AI_PLANE_ATTACK)
+       {
+            if(reason==REASON_CALL_ALIAS || reason==REASON_GAG_CRITTER)
+            {
+                    Critter@ target=GetCritter(plane.Attack_TargId);
+                    if(valid(target) && target.IsNpc()) return false;
+            }
+            else if(reason==REASON_ATTACKED)
+            {
+                    Critter@ target=GetCritter(plane.Attack_TargId);
+                    //if(valid(target) && _GroupIndex(target)==_GroupIndex(npc)) return false;
+
+                    if (_IsTrader(npc) && valid(target) && target.IsPlayer())
+                    return true;
+
+                    if (!CheckTeams(npc, plane, childIndex, reason))
+                    return false;
+
+                    if (valid(target))
+                    {
+                            if (IsTown(npc.GetMap()) && target.IsNpc() && !_IsFollower(npc) && !_IsFollower(target))
+                            return false;
+                    }
+            }
+            // else if(plane.Attack_MinHp<0) npc.AddEnemyInStack(plane.Attack_TargId);
+       }*/
+    return true;
+}
+
+bool UseSkillOn(Critter& npc, uint crId, NpcPlane& plane)
+{
+    Critter@ cr = ::GetCritter(crId);
+    if(!valid(cr))
+        return true;
+
+    if(npc.GetMapId() != cr.GetMapId())
+        return true;
+
+    bool firstAid = plane.Identifier == PLANE_HEAL_CRITTER;
+    bool doctor =   plane.Identifier == PLANE_DOCTOR_CRITTER;
+    if(firstAid || doctor)
+        if(npc.Timeout[firstAid ? TO_SK_FIRST_AID : TO_SK_DOCTOR] > 0)
+            return true;
+
+    if(GetCrittersDistantion(npc, cr) < 2)
+    {
+        if(npc.Stat[ST_CURRENT_AP] < int(__RtApCostUseSkill))
+        {
+            npc.Wait(1000);             // TODO check the ap replenishment formula
+            if(firstAid)
+                AddHealCritterPlane(npc, plane.Priority, cr, true);
+            else if(doctor)
+                AddDoctorCritterPlane(npc, plane.Priority, cr, true);
+            else
+                return false;                 // AddPushCritterPlane(npc, plane.Priority, cr, true);
+            return true;
+        }
+        if(npc.Id != cr.Id)
+            npc.SetDir(GetDirection(npc.HexX, npc.HexY, cr.HexX, cr.HexY));
+        _CritAnimateUse(npc);
+        npc.StatBase[ST_CURRENT_AP] -= 100 * __RtApCostUseSkill;
+        if(firstAid)
+            critter_use_skill(npc, SK_FIRST_AID, cr, null, null);
+        else if(doctor)
+            critter_use_skill(npc, SK_DOCTOR, cr, null, null);
+        else
+            critter_use_skill(npc, SKILL_PUSH_CRITTER, cr, null, null);
+        // npc.Wait(__Breaktime); // TODO force waiting until end of animation
+        if(firstAid || doctor)
+            npc.Action(ACTION_PICK_CRITTER, 1, null);                        // TODO is this correct?
+        return true;
+    }
+    else
+    {
+        if(firstAid)
+            AddHealCritterPlane(npc, plane.Priority, cr, true);
+        else
+            AddDoctorCritterPlane(npc, plane.Priority, cr, true);
+
+        return true;
+    }
+}
+
+/**
+ * Critter tries to forcefuly ram into another critter if it's standing next to it.
+ * It can cause KD and damage but doesn't trigger combat.
+ * The outcome depends on statistics of both critters and a bit of luck.
+ */
+void RamIntoCritter(Critter& npc, uint targetId, bool returnHome)
+{
+    Critter@ target = GetCritter(targetId);
+    if(valid(target))
+    {
+        if(GetDistantion(npc.HexX, npc.HexY, target.HexX, target.HexY) > 1)
+            return;
+
+        uint dir = GetDirection(target.HexX, target.HexY, npc.HexX, npc.HexY);
+        npc.SetDir(_TurnAround(dir));
+        _CritAnimatePunch(npc);
+
+        int ramForce = Random(-2, 2) + npc.StatBase[ST_MELEE_DAMAGE] + npc.StatBase[ST_STRENGTH] - target.StatBase[ST_STRENGTH];
+        if(ramForce < -2)
+            npc.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0, 1) == 0), 4, npc.HexX, npc.HexY);
+        if(ramForce > -4)
+            target.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0, 1) == 0), 8, target.HexX, target.HexY);
+        if(ramForce > 0)
+            target.StatBase[ST_CURRENT_HP] -= ramForce;
+
+        if(returnHome)
+        {
+            uint   hMap;
+            uint16 hX = 0, hY = 0;
+            uint8  hDir = 0;
+            npc.GetHomePos(hMap, hX, hY, hDir);
+            AddWalkPlane(npc, AI_PLANE_WALK_PRIORITY, hX, hY, hDir, false, 0);
+            npc.Wait(Random(500, 1000));
+        }
+    }
+}
+
+
+
+/**
+ * Sends alert about an armed explosive.
+ * All NPCs near the explosive will try to run to a safe distance and wait there until the bomb explodes.
+ *
+ * @param caller        The critter who warned others about the explosive.
+ * @param armedBomb     The item which is about to explode.
+ * @param dangerDist    Distance from the bomb which is considered dangerous by NPCs.
+ */
+void FireInTheHole(Critter& caller, Item& armedBomb, uint16 dangerDist)
+{
+    // Lock explosion event and get the time of the explosion
+    uint        eventTime = 0;
+    array<uint> eventValues;
+    if(GetTimeEvent(_ExplodeGetNumEvent(armedBomb), eventTime, eventValues))
+    {
+        // Get explosive item coordinates
+        uint   bombMapID = 0;
+        uint16 bombX = 0, bombY = 0;
+        if(!GetItemCoordinates(armedBomb, bombMapID, bombX, bombY))
+            return;
+
+
+        if(dangerDist == 0)
+            dangerDist = 5;             // Default distance that NPCs will consider dangerous
+        uint waitTime = eventTime * 60; // Convert the time to wait for explosion
+
+        // Get all critters in the dangerous distance
+        Map@            map = GetMap(bombMapID);
+        array<Critter@> crits;
+        uint            critsNum = map.GetCrittersHex(bombX, bombY, dangerDist, FIND_LIFE | FIND_ONLY_NPC, crits);
+
+        uint16          safeDist = dangerDist + 3;   // Distance which is considered safe
+
+        for(uint i = 0; i < critsNum; i += 1)
+        {
+            if(HasIntelligentBrain(crits[i]))
+            {
+                uint16 x = crits[i].HexX;
+                uint16 y = crits[i].HexY;
+                uint   dir  = GetDirection(bombX, bombY, x, y);
+                uint   dist = GetDistantion(bombX, bombY, x, y);
+
+                map.MoveHexByDir(x, y, dir, safeDist - dist);   // Move to the safe distance
+                map.MoveHexByDir(x, y, Random(0, 5), 2);        // Spread a bit
+                if(FindFirstFreeHex(map, x, y, dir, 6))         // Try to find a free hex while moving away from the bomb
+                {
+                    AddWalkPlane(crits[i], AI_PLANE_ATTACK_PRIORITY + 20, PLANE_FIRE_IN_THE_HOLE, waitTime, x, y, _TurnAround(dir), true, 0);
+                    if(IsEncounterMap(map))                     // Don't go back to the original formation if it's encounter
+                        crits[i].SetHomePos(x + Random(-2, 2), y + Random(-2, 2), Random(0, 5));
+                    if(@crits[i] != @caller)
+                        switch(Random(0, 13))
+                        {
+                        case 0:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Fuck.");
+                            break;
+                        case 1:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Oh shit...");
+                            break;
+                        case 2:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Mommy!");
+                            break;
+                        case 3:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Help!!!");
+                            break;
+                        case 4:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Not again.");
+                            break;
+                        case 5:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Hide!");
+                            break;
+                        case 6:
+                            crits[i].Say(SAY_NORM_ON_HEAD, "Aaaaah!");
+                            break;
+                        }
+                }
+            }
+        }
+
+        // Unlock the explosion event
+        SetTimeEvent(armedBomb.Val1, eventTime, eventValues);
+    }
+}
+
+
+
+
+bool LootCritter(Critter& npc, uint crId, bool lootEx, uint16 hexX, uint16 hexY)
+{
+    Map@         map = npc.GetMap();
+    Critter@     cr = ::GetCritter(crId);
+    array<Item@> items;
+    uint         num = 0;
+    if(valid(cr) && cr.IsDead())
+    {
+        uint start = GetTick();
+
+        num += cr.GetItems(SLOT_INV, items);
+        num += cr.GetItems(SLOT_HAND1, items);
+        num += cr.GetItems(SLOT_HAND2, items);
+        num += map.GetItems(cr.HexX, cr.HexY, items);
+
+        for(uint i = 0; i < num; i++)
+        {
+            uint8 type = items[i].GetType();
+            if(type == ITEM_TYPE_ARMOR || type == ITEM_TYPE_DRUG || type == ITEM_TYPE_WEAPON || type == ITEM_TYPE_AMMO || type == ITEM_TYPE_MISC || type == ITEM_TYPE_KEY)
+            {
+                if(FLAG(items[i].Flags, ITEM_CAN_PICKUP))
+                {
+                    uint16 pid = items[i].GetProtoId();
+                    if(pid == PID_ACTIVE_DYNAMITE)
+                    {
+                        npc.Say(SAY_SHOUT, "There is a bomb here! Run!!!");
+                        FireInTheHole(npc, items[i], 0);
+                        return true; // stop looting
+                    }
+                    else
+                    {
+                        if(_CritHasExtMode(npc, MODE_EXT_GUARD) && (items[i].Proto.Weight > 0))
+                            DeleteItem(items[i]);
+                        else
+                        {
+                            MoveItem(items[i], 0, npc);
+                            npc.EventMoveItem(items[i], SLOT_GROUND);
+                        }
+                    }
+                }
+            }
+        }
+        items.resize(0);
+        if(cr.GetItems(SLOT_ARMOR, items) > 0)
+        {
+            if(cr.Timeout[TO_REPLICATION] > 0)
+            {
+                DPlayerLog(cr, "Wait for meee.");
+                npc.Wait(10000);
+                return false;
+            }
+        }
+        _CritAnimatePickup(npc);   // fixme
+        if(!lootEx)                // not PLANE_LOOT_EX
+        {
+            // look for other loot targets
+            array<Critter@> crits;
+            num = npc.GetCritters(false, FIND_DEAD, crits);
+            for(uint i = 0; i < num; i++)
+            {
+                if(_CritHasMode(crits[i], MODE_NO_LOOT))
+                    continue;
+                if(crits[i].IsPlayer() || (crits[i].IsNpc() && IsHumanoid(crits[i])))
+                {
+                    uint n = map.GetItems(crits[i].HexX, crits[i].HexY, items);
+                    if(crits[i].ItemsCount() > 0 || n > 0)
+                    {
+                        // check if really there are some useful items
+                        uint c = 0;
+                        for(uint i = 0; i < n; i++)
+                        {
+                            uint8 type = items[i].GetType();
+                            if(type == ITEM_TYPE_ARMOR || type == ITEM_TYPE_DRUG || type == ITEM_TYPE_WEAPON || type == ITEM_TYPE_AMMO || type == ITEM_TYPE_MISC || type == ITEM_TYPE_KEY)
+                            {
+                                c++;
+                                break;
+                            }
+                        }
+                        if(c > 0)
+                        {
+                            AddWalkPlane(npc, 0, PLANE_LOOT_EX, crits[i].Id, crits[i].HexX, crits[i].HexY, 6, true, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        uint t = GetTick() - start;
+        _AdminLog(cr, "Handled cr looting in: " + t + "ms.");
+    }
+    else                           // loot hex
+    {
+        _CritAnimatePickup(npc);   // fixme
+        num += map.GetItems(hexX, hexY, items);
+        if(IsTown(map))
+            DeleteItems(items);
+        else
+            for(uint i = 0; i < num; i++)
+            {
+                uint8 type = items[i].GetType();
+                if(type == ITEM_TYPE_ARMOR || type == ITEM_TYPE_DRUG || type == ITEM_TYPE_WEAPON || type == ITEM_TYPE_AMMO || type == ITEM_TYPE_MISC || type == ITEM_TYPE_KEY)
+                {
+                    if(FLAG(items[i].Flags, ITEM_CAN_PICKUP))
+                    {
+                        uint16 pid = items[i].GetProtoId();
+                        if(pid == PID_ACTIVE_DYNAMITE)
+                        {
+                            npc.Say(SAY_SHOUT, "There is a bomb here! Run!!!");
+                            FireInTheHole(npc, items[i], 0);
+                            return true; // stop looting
+                        }
+                        else
+                        {
+                            if(_CritHasExtMode(npc, MODE_EXT_GUARD) && (items[i].Proto.Weight > 0))
+                                DeleteItem(items[i]);
+                            else
+                            {
+                                MoveItem(items[i], 0, npc);
+                                npc.EventMoveItem(items[i], SLOT_GROUND);
+                            }
+                        }
+                    }
+                }
+            }
+    }
+    npc.Wait(__Breaktime);
+    return true;
+}
+
+bool PlaneEndSuccess(Critter& npc, NpcPlane& plane)
+{
+    if(plane.Identifier == PLANE_LOOT || plane.Identifier == PLANE_LOOT_EX)
+    {
+        return LootCritter(npc, plane.IdentifierExt, (plane.Identifier == PLANE_LOOT_EX), plane.Walk_HexX, plane.Walk_HexY);
+    }
+    else if(plane.Identifier == PLANE_HEAL_CRITTER || plane.Identifier == PLANE_DOCTOR_CRITTER || plane.Identifier == PLANE_PUSH_CRITTER)
+    {
+        return UseSkillOn(npc, plane.IdentifierExt, plane);
+    }
+    else if(plane.Identifier == PLANE_FIRE_IN_THE_HOLE)
+    {
+        npc.Wait(plane.IdentifierExt);   // Wait for explosion in the safe distance
+    }
+    else if(plane.Identifier == PLANE_RAM_INTO_CRITTER)
+    {
+        RamIntoCritter(npc, plane.IdentifierExt, true);
+    }
+    else if(plane.Identifier == PLANE_RETURN_WPN)
+    {
+        uint     ownerId = plane.IdentifierExt;
+        Critter@ wpnOwner = GetCritter(ownerId);
+        if(valid(wpnOwner) && wpnOwner.IsLife())
+        {
+            if(wpnOwner.HexX == plane.Walk_HexX && wpnOwner.HexY == plane.Walk_HexY)
+            {
+                npc.Say(SAY_NORM_ON_HEAD, "I think this is yours.");
+                array<Item@> items;
+                uint         cnt = npc.GetItems(-1, items);
+                for(uint i = 0; i < cnt; i++)
+                {
+                    if(wpnOwner.Id == uint(GetLvar(items[i].Id, LIVAR_npc_wpn_owner)))
+                        MoveItem(items[i], 0, wpnOwner);
+                }
+                if(wpnOwner.IsNpc())
+                    ArmBestWeapon(wpnOwner);
+            }
+            else
+            {
+                AddWalkPlane(npc, AI_PLANE_WALK_PRIORITY, PLANE_RETURN_WPN, ownerId, wpnOwner.HexX, wpnOwner.HexY, 0xFF, false, 1);
+            }
+        }
+    }
+    return true;
+}
+
+bool PlaneEndPositionIssue(Critter& npc, NpcPlane& plane)
+{
+    if(_CritHasExtMode(npc, MODE_EXT_MILITIA))
+    {
+        MilitiaMoveToFreeHex(npc);   // Find new position, not occupied
+        return true;
+    }
+    if(npc.GetMap().IsTurnBasedAvailability() && npc.Timeout[TO_BATTLE] > 0)
+    {
+        _EndTurn(npc);
+    }
+    return false;     // Wait
+}
+
+bool PlaneEndGagCritter(Critter& npc, Critter@ someCr, NpcPlane& plane)
+{
+    if(_CritHasExtMode(npc, MODE_EXT_MILITIA))
+    {
+        MilitiaMoveToFreeHex(npc);
+        return true;
+    }
+
+    if(valid(someCr) && someCr.IsPlayer() && npc.FollowerVar[FV_MASTER] != int(someCr.Id) && IsFlaggedAsIllegal(someCr))
+    {
+        NpcPlane@ child = CreatePlane();
+        child.Type = AI_PLANE_ATTACK;
+        child.Priority = 0;
+        child.Attack_TargId = someCr.Id;
+        child.Attack_MinHp = __DeadHitPoints;
+        child.Attack_IsGag = true;
+        child.Attack_GagHexX = someCr.HexX;
+        child.Attack_GagHexY = someCr.HexY;
+        child.Attack_LastHexX = someCr.HexX;
+        child.Attack_LastHexY = someCr.HexY;
+        child.Run = plane.Run;
+        plane.SetChild(child);
+    }
+    /*else
+       {
+            // cause of npc madness?
+            if(valid(someCr)) AddPushCritterPlane(npc, plane.Priority, someCr, true);
+       }*/
+    return false;     // Cancel deleting
+}
+
+bool PlaneEndGagItem(Critter& npc, Item@ someItem, NpcPlane& plane)
+{
+    if(valid(someItem))
+    {
+        if(someItem.GetType() == ITEM_TYPE_DOOR && AI_CAN_OPEN_DOORS(npc.Stat[ST_AI_ID]) &&
+           !FLAG(someItem.LockerCondition, LOCKER_ISOPEN) && IsKeyAviable(npc, someItem.LockerId) &&
+           (someItem.GetScriptId() == 0 || someItem.Val8 == SPECIAL_ITEM_DOOR_NPC_SCRIPT))
+        {
+            NpcPlane@ child = CreatePlane();
+            child.Type = AI_PLANE_PICK;
+            child.Priority = 0;
+            child.Pick_HexX = someItem.HexX;
+            child.Pick_HexY = someItem.HexY;
+            child.Pick_Pid = someItem.GetProtoId();
+            child.Pick_UseItemId = GetKeyId(npc, someItem.LockerId);
+            child.Pick_ToOpen = true;
+            child.Run = plane.Run;
+            plane.SetChild(child);
+            return false;             // Cancel deleting
+        }
+        else if(someItem.GetType() != ITEM_TYPE_DOOR)
+        {
+            NpcPlane@ child = CreatePlane();
+            child.Type = AI_PLANE_PICK;
+            child.Priority = 0;
+            child.Pick_HexX = someItem.HexX;
+            child.Pick_HexY = someItem.HexY;
+            child.Pick_Pid = someItem.GetProtoId();
+            child.Run = plane.Run;
+            plane.SetChild(child);
+            return false;             // Cancel deleting
+        }
+        else
+        {
+            // Skip turn in turn based mode if it's an attack plane and the NPC can't
+            // open the door (otherwise the NPC would wait 30 seconds while repeatedly
+            // adding and dropping the same plane, this happens a lot in some quests
+            // with animal enemies in closed rooms).
+            if(plane.Type == AI_PLANE_ATTACK)
+                _EndTurn(npc);
+        }
+    }
+    return true;
+}
+
+bool PlaneEndRunAway(Critter& npc, NpcPlane& plane)
+{
+    Map@     map = npc.GetMap();
+    Critter@ cr = GetCritter(plane.Attack_TargId);
+    if(valid(map) && valid(cr))
+    {
+        // add a few helpers
+        array<Critter@> crits;
+        // uint ncrits=map.GetCritters(0,FIND_LIFE|FIND_ONLY_NPC,crits);
+        uint            ncrits = map.GetCrittersHex(npc.HexX, npc.HexY, 15, FIND_LIFE | FIND_ONLY_NPC, crits);
+        uint            helpers = npc.Stat[ST_CHARISMA] + 2;
+        int             npcGroupIndex = _GroupIndex(npc);
+        bool            notAff = _GroupHasNoAffiliation(npcGroupIndex);
+        for(uint i = 0; i < ncrits && helpers > 0; i++)
+            if((_GroupIndex(crits[i]) == npcGroupIndex) && (notAff || _GroupMode(crits[i]) == FACTION_MODE_PASSIVE))       // only civillians or fellow mobs/neutrals
+            {
+                if(!WillFight(crits[i]))
+                    continue;                                                                                              // try to prevent chain reaction
+                helpers--;
+                AddAttackPlane(crits[i], 0, cr, 0);
+            }
+
+        int    awayDir = GetDirection(cr.HexX, cr.HexY, npc.HexX, npc.HexY);
+        uint   awayDist = Random(30, 50);    // Todo: resolve correct distantion
+        uint16 baseHx = npc.HexX;
+        uint16 baseHy = npc.HexY;
+        map.MoveHexByDir(baseHx, baseHy, awayDir, 1);
+
+        float angle = 0.0f;
+        uint  reverse = Random(0, 1);
+        for(uint i = 0; i < 5; i++)
+        {
+            uint16 hx = baseHx, hy = baseHy;
+            map.GetHexCoord(npc.HexX, npc.HexY, hx, hy, angle, awayDist);
+            if(GetDistantion(npc.HexX, npc.HexY, hx, hy) > 1)
+            {
+                // AddWalkPlane(npc,100,hx,hy,6,true,0);
+                AddWalkPlane(npc, 100, PLANE_WANDER, 0, hx, hy, 6, true, 0);
+                break;
+            }
+            angle += float(i + 1) * 45.0f * ((i % 2) == reverse ? 1.0f : -1.0f);
+        }
+        AI_TrySayCombatText(npc, COMBAT_TEXT_RUN_AWAY);
+    }
+    if(npc.Timeout[TO_BATTLE] < int(__TimeoutBattle))
+        npc.TimeoutBase[TO_BATTLE] = AFTER(__TimeoutBattle);
+
+    return true;
+}
+
+bool PlaneEndNoArmed(Critter& npc, NpcPlane& plane)
+{
+    // Repair first broken weapon
+    array<Item@> items;
+    uint         count = npc.GetItemsByType(ITEM_TYPE_WEAPON, items);
+    for(uint i = 0; i < count; i++)
+    {
+        Item@ item = items[i];
+        if(_ItemIsBroken(item))
+        {
+            SetWear(item, 0);
+            break;
+        }
+    }
+    npc.Wait(10000);
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on some plane added.
+// Return true to erase plane, false to wait (set this plane to next priority of planes sequence).
+// REASON_SUCCESS
+// REASON_HEX_TOO_FAR
+// REASON_HEX_BUSY
+// REASON_HEX_BUSY_RING
+// REASON_DEADLOCK
+// REASON_TRACE_FAIL
+// REASON_POSITION_NOT_FOUND
+// REASON_FIND_PATH_ERROR
+// REASON_CANT_WALK
+// REASON_TARGET_DISAPPEARED     someCr as Enemy
+// REASON_USE_ITEM_NOT_FOUND
+// REASON_GAG_CRITTER            someCr as Enemy
+// REASON_GAG_ITEM               someItem as Item
+// REASON_NO_UNARMED
+bool npc_plane_end(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    #ifdef __TEST__
+    npc.Say(SAY_NORM, "npc_plane_end: " + plane2str(plane.Type) + ", " + reason2str(reason));
+    #endif
+    if(plane.Identifier == PLANE_WANDER)
+    {
+        return true;
+    }
+    switch(reason)
+    {
+    case REASON_SUCCESS:
+        return PlaneEndSuccess(npc, plane);
+    case REASON_CANT_WALK:
+        if(npc.IsNoPlanes())
+            npc.Wait(Random(1000, 2000));
+        break;
+    case REASON_HEX_BUSY:
+    case REASON_HEX_BUSY_RING:
+    case REASON_POSITION_NOT_FOUND:
+        return PlaneEndPositionIssue(npc, plane);
+    case REASON_FIND_PATH_ERROR:
+    case REASON_HEX_TOO_FAR:
+        npc.Wait(20000);
+        break;
+    case REASON_GAG_CRITTER:
+        return PlaneEndGagCritter(npc, someCr, plane);
+    case REASON_GAG_ITEM:
+        return PlaneEndGagItem(npc, someItem, plane);
+    case REASON_RUN_AWAY:
+        if(npc.IsCanWalk())
+            return PlaneEndRunAway(npc, plane);
+        break;
+    case REASON_NO_UNARMED:
+        return PlaneEndNoArmed(npc, plane);
+    }
+
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Called on some plane runs, to manuality some steps.
+// REASON_ATTACK_WEAPON
+//  In: r0 target id, r1 0, r2 0
+//  Out: r0 weapon id, r1 use index, r2 proto id of unarmed attack (if r0==0)
+// REASON_ATTACK_DISTANTION
+//  In: r0 target id, r1 0, r2 0
+//  Out: r0 best dist, r1 min dist, r2 max dist (if == 0 than run away)
+// REASON_ATTACK_USE_AIM
+//  In: r0 target id, r1 0, r2 0
+//  Out: r0 use, r1 aim, r2 disable attack and wait this time (in ms)
+
+bool npc_plane_run(Critter& npc, NpcPlane& plane, int reason, uint& r0, uint& r1, uint& r2)
+{
+    #ifdef __TEST__
+    npc.Say(SAY_NORM, "npc_plane_run: " + plane2str(plane.Type) + ", " + reason2str(reason));
+    #endif
+    // Log("npc_plane_run");
+    if(reason == REASON_ATTACK_WEAPON)
+    {
+        uint   targetId = r0;
+        // Special weapons
+        uint16 npcPid = npc.GetProtoId();
+        if(npcPid == NPC_PID_FireGecko || npcPid == NPC_PID_ToughFireGecko)
+        {
+            Item@ weap = npc.GetItem(PID_FIRE_GECKO_FLAME_WEAPON, -1);
+            if(valid(weap) && weap.AmmoCount > 0)
+            {
+                r0 = weap.Id;
+                r1 = 0;
+                return true;
+            }
+        }
+        else if(npcPid == NPC_PID_SporePlant || npcPid == NPC_PID_SpecialGeckoCritter)
+        {
+            Critter@ target = GetCritter(targetId);
+            if(GetCrittersDistantion(npc, target) > 2)
+            {
+                Item@ weap = npc.GetItem(PID_PLANT_SPIKE, -1);
+                if(valid(weap))
+                {
+                    r0 = weap.Id;
+                    r1 = 0;
+                    return true;
+                }
+            }
+        }
+
+        // Default weapons
+        r0 = 0;       // Use unarmed by default
+        r1 = 0;
+        r2 = (Random(0, 4) == 0 ? 1000 : 1020);
+
+        // Damaged two arms
+        if(npc.Damage[DAMAGE_LEFT_ARM] != 0 && npc.Damage[DAMAGE_RIGHT_ARM] != 0)
+        {
+            return true;
+        }
+
+        // Special conditions for slaves/mercs
+        /*if (_IsFollower(npc))
+           {
+            r0=npc.Stat[ST_LAST_WEAPON_ID];
+            Item@ cur_weapon = _CritGetItemHand(npc);
+
+            if(valid(cur_weapon) && CheckBattleWeapon(npc,cur_weapon))
+            {
+                r0=cur_weapon.Id;
+            }
+            r1 = Random(0,2);
+
+           }*/
+
+        // No use weapon
+        uint aiId = npc.Stat[ST_AI_ID];
+        int  bestWeapon = AI_BEST_WEAPON(aiId);
+        if(bestWeapon == BW_Never)
+            return true;
+
+        /*
+                    // Get last battle weapon
+                    if(npc.Stat[ST_LAST_WEAPON_ID]==-1) // Previous seek not give result
+                    {
+                            r0=0;
+                            return true;
+                    }
+         */
+
+        r0 = npc.Stat[ST_LAST_WEAPON_ID];
+        r1 = npc.Stat[ST_LAST_WEAPON_USE];
+        Item@ weapon = null;
+        if(r0 != 0)
+            @weapon = npc.GetItemById(uint(r0));
+
+        if(valid(weapon) && CheckBattleWeapon(npc, weapon))
+            return true;
+
+        // Find new battle weapon
+        npc.StatBase[ST_LAST_WEAPON_ID] = 0;
+        npc.StatBase[ST_LAST_WEAPON_USE] = 0;
+        r0 = 0;
+        r1 = 0;
+
+        // Sort skills
+        int[] skillsNum = { SK_SMALL_GUNS, SK_BIG_GUNS, SK_ENERGY_WEAPONS, SK_UNARMED, SK_MELEE_WEAPONS, SK_THROWING };
+        uint skillsCount = skillsNum.length();
+        SkillsSort(npc, skillsNum, 0, skillsCount);
+
+        // Advanced sort
+        switch(bestWeapon)
+        {
+        case BW_NoPref:
+            break;
+        case BW_Random:
+            for(uint i = 0; i < skillsCount; i++)
+            {
+                int i0 = Random(0, skillsCount - 1);
+                int i1 = Random(0, skillsCount - 1);
+                if(i0 != i1)
+                {
+                    int tmp = skillsNum[i0];
+                    skillsNum[i0] = skillsNum[i1];
+                    skillsNum[i1] = tmp;
+                }
+            }
+            break;
+        case BW_Unarmed:
+            SkillToBegin(skillsNum, SK_UNARMED);
+            break;
+        case BW_RangedOvMelee:
+            SkillToBegin(skillsNum, SK_UNARMED);          // 5
+            SkillToBegin(skillsNum, SK_MELEE_WEAPONS);    // 4
+            SkillToBegin(skillsNum, SK_THROWING);         // 3
+            SkillToBegin(skillsNum, SK_ENERGY_WEAPONS);   // 2
+            SkillToBegin(skillsNum, SK_BIG_GUNS);         // 1
+            SkillToBegin(skillsNum, SK_SMALL_GUNS);       // 0
+            SkillsSort(npc, skillsNum, 0, 4);             // Sort 0, 1, 2, 3
+            SkillsSort(npc, skillsNum, 4, 2);             // Sort 4, 5
+            break;
+        case BW_MeleeOvRanged:
+            SkillToBegin(skillsNum, SK_THROWING);         // 5
+            SkillToBegin(skillsNum, SK_ENERGY_WEAPONS);   // 4
+            SkillToBegin(skillsNum, SK_BIG_GUNS);         // 3
+            SkillToBegin(skillsNum, SK_SMALL_GUNS);       // 2
+            SkillToBegin(skillsNum, SK_UNARMED);          // 1
+            SkillToBegin(skillsNum, SK_MELEE_WEAPONS);    // 0
+            SkillsSort(npc, skillsNum, 0, 2);             // Sort 0, 1
+            SkillsSort(npc, skillsNum, 2, 4);             // Sort 2, 3, 4, 5
+            break;
+        case BW_UnarmOvThrown:
+            SkillToBegin(skillsNum, SK_THROWING);         // 1
+            SkillToBegin(skillsNum, SK_UNARMED);          // 0
+            break;
+        default:
+            break;
+        }
+
+        // Get all weapons and check it
+        array<Item@> allWeapons;
+        npc.GetItemsByType(ITEM_TYPE_WEAPON, allWeapons);
+        for(uint i = 0, j = allWeapons.length(); i < j; i++)
+            if(!CheckBattleWeapon(npc, allWeapons[i]))
+                @allWeapons[i] = null;
+
+        // Choose one weapon
+        for(uint i = 0; i < skillsCount; i++)
+        {
+            int skill = skillsNum[i];
+
+            for(uint k = 0, l = allWeapons.length(); k < l; k++)
+            {
+                @weapon = allWeapons[k];
+                if(!valid(weapon))
+                    continue;
+
+                for(int u = 0; u < 3; u++)
+                {
+                    if((u == 0 && !_WeaponIsPrimaryAviable(weapon.Proto)) ||
+                       (u == 1 && !_WeaponIsSecondaryAviable(weapon.Proto)) ||
+                       (u == 2 && !_WeaponIsThirdAviable(weapon.Proto)))
+                        continue;
+
+                    if(_WeaponSkill(weapon.Proto, u) == skill)
+                    {
+                        npc.StatBase[ST_LAST_WEAPON_ID] = weapon.Id;
+                        npc.StatBase[ST_LAST_WEAPON_USE] = u;
+                        r0 = weapon.Id;
+                        r1 = u;
+                        return true;                         // Done, weapon founded
+                    }
+                }
+            }
+        }
+
+        // Not found, hands used
+        return true;
+    }
+    else if(reason == REASON_ATTACK_DISTANTION)
+    {
+        Critter@   target = GetCritter(r0);
+        uint8      mode = 0;
+        ProtoItem@ weapon = npc.GetSlotProto(SLOT_HAND1, mode);
+        int        use = _WeaponModeUse(mode);
+        ProtoItem@ ammo = (weapon.Weapon_MaxAmmoCount > 0 && weapon.Weapon_Caliber != 0 ? GetProtoItem(_CritGetItemHand(npc).AmmoPid) : null);
+        int        wpnDist = _WeaponMaxDist(weapon, use);
+        int        multihex = npc.GetMultihex() + target.GetMultihex();
+
+        if(!npc.IsCanWalk())
+        {
+            int dist = GetDistantion(npc.HexX, npc.HexY, target.HexX, target.HexY);
+            if(wpnDist < dist)
+                dist = wpnDist;
+            dist += multihex;
+            r0 = r1 = r2 = dist;
+            return true;
+        }
+
+        // non-ranged weapons:
+        int skill = _WeaponSkill(weapon, use);
+        if(skill == SK_UNARMED || skill == SK_MELEE_WEAPONS)
+        {
+            int base =
+                npc.Skill[skill] -
+                MAX(0, target.GetAC(false) + (valid(ammo) ? ammo.Ammo_AcMod : 0)) +
+                (target.IsKnockout() ? 40 : 0) -
+                (_CritDamaged(npc, DAMAGE_EYE) ? 25 : 0);
+
+            if(!weapon.Weapon_IsUnarmed)
+            {
+                base += (weapon.Weapon_Perk == WEAPON_PERK_ACCURATE ? 20 : 0);
+                int strength = npc.Stat[ST_STRENGTH] + (_CritHasPerk(npc, PE_WEAPON_HANDLING) ? 2 : 0);
+                if(strength < weapon.Weapon_MinStrength)
+                    base -= 20 * (weapon.Weapon_MinStrength - strength);
+                if(npc.Trait[TRAIT_ONE_HANDER] > 0)
+                    base += (FLAG(weapon.Flags, ITEM_TWO_HANDS) ? -40 : 20);
+            }
+            int ai_min = AI_MIN_TO_HIT(npc.Stat[ST_AI_ID]);
+            if(base < ai_min)
+            {
+                r1 = 0;
+                r0 = 0;
+                r2 = 0;
+            }
+            else
+            {
+                r0 = 1 + multihex;
+                r1 = 1 + multihex;
+                r2 = (wpnDist > 1 ? 2 : 1) + multihex;
+            }
+            return true;
+        }
+        else
+        // ranged weapons:
+        {
+            if(skill == SK_THROWING)
+                if(npc.Stat[ST_STRENGTH] * 3 < wpnDist)
+                    wpnDist = npc.Stat[ST_STRENGTH] * 3;
+            // set the minimum safe distance, 3 for grenades, 4 for rockets:
+            r1 = 1;
+            if(skill == SK_THROWING)
+            {
+                uint dmgType = _WeaponDmgType(weapon, use);
+                ;
+                if(dmgType == DAMAGE_PLASMA || dmgType == DAMAGE_EMP || dmgType == DAMAGE_EXPLODE)
+                {
+                    if(weapon.ProtoId != PID_DYNACORD)
+                        r1 = 3;
+                    else
+                        r1 = 5;
+                }
+            }
+            else if(valid(ammo))
+            {
+                switch(ammo.ProtoId)
+                {
+                case PID_EXPLOSIVE_ROCKET:
+                case PID_ROCKET_AP:
+                case PID_ROBO_ROCKET_AMMO:
+                    r1 = 4;
+                default:
+                    break;
+                }
+            }
+
+            if((weapon.Weapon_Perk == WEAPON_PERK_SCOPE_RANGE) && (r1 < 8))
+                r1 = 8;
+
+            if(int(r1) > wpnDist)
+            {
+                r1 = 0;
+                r0 = 0;
+                r2 = 0;
+                return true;
+            }
+
+            int base = npc.Skill[skill] -
+                       MAX(0, target.GetAC(false) + (valid(ammo) ? ammo.Ammo_AcMod : 0)) +
+                       (target.IsKnockout() ? 40 : 0) -
+                       (_CritDamaged(npc, DAMAGE_EYE) ? 25 : 0) + (weapon.Weapon_Perk == WEAPON_PERK_ACCURATE ? 20 : 0);
+
+            int strength = npc.Stat[ST_STRENGTH] + (_CritHasPerk(npc, PE_WEAPON_HANDLING) ? 2 : 0);
+            if(strength < weapon.Weapon_MinStrength)
+                base -= 20 * (weapon.Weapon_MinStrength - strength);
+            if(npc.Trait[TRAIT_ONE_HANDER] > 0)
+                base += (FLAG(weapon.Flags, ITEM_TWO_HANDS) ? -40 : 20);
+
+            int ai_min = AI_MIN_TO_HIT(npc.Stat[ST_AI_ID]);
+            int perception = npc.Stat[ST_PERCEPTION];
+            int sharpshooter = 8 * _CritGetPerk(npc, PE_SHARPSHOOTER);
+
+            int mod = (weapon.Weapon_Perk == WEAPON_PERK_SCOPE_RANGE ? 5 : (weapon.Weapon_Perk == WEAPON_PERK_LONG_RANGE ? 4 : 2));
+
+            if(base + 8 * perception + sharpshooter < 95)
+            {
+                if(base + 8 * perception + sharpshooter < ai_min)
+                {
+                    r1 = 0;
+                    r0 = 0;
+                    r2 = 0;
+                    return true;
+                }
+                else
+                    r0 = (mod - 2) * perception;
+            }
+            else
+            {
+                if(base < 95)
+                    r0 = (base + sharpshooter + 4 * mod * perception - 95) / 4;
+                else
+                {
+                    if(_CritDamaged(npc, DAMAGE_EYE))
+                        r0 = (base + 3 * sharpshooter + 12 * mod * perception - 95) / 12;
+                    else
+                        r0 = (base + sharpshooter + 4 * mod * perception - 95) / 4;
+                }
+            }
+
+            if(base < ai_min)
+                r2 = (base + sharpshooter + 4 * mod * perception - ai_min) / 4;
+            else
+            {
+                if(_CritDamaged(npc, DAMAGE_EYE))
+                    r2 = (base + 3 * sharpshooter + 12 * mod * perception - ai_min) / 12;
+                else
+                    r2 = (base + sharpshooter + 4 * mod * perception - ai_min) / 4;
+            }
+
+            if(npc.IsCanAim())
+            {
+                if(weapon.Weapon_Aim_0)
+                {
+                    uint reduction = (r0 * 3 * npc.Stat[ST_INTELLECT]) / 100;
+                    reduction = MIN(15, reduction);
+                    r0 -= reduction;
+                }
+            }
+
+            // left clamp:
+            if(r0 < r1)
+                r0 = r1;
+            if(r2 < r0)
+                r2 = r0;                  // this can be deleted under assumption that ai_min is always <= 95, which should be true
+
+            // right clamp
+            if(wpnDist < int(r2))
+            {
+                r2 = _WeaponMaxDist(weapon, use);
+                if(r0 > r2)
+                    r0 = r2;
+            }
+
+            // Multihex
+            r0 += multihex;
+            r1 += multihex;
+            r2 += multihex;
+            return true;
+        }
+    }
+    else if(reason == REASON_ATTACK_USE_AIM)
+    {
+        if(!CogitateFiring(npc, r0, r1))
+        {
+            r0 = 0;     // Primary attack
+            r1 = (npc.IsCanAim() && Random(0, 5) == 0 ? Random(HIT_LOCATION_HEAD, HIT_LOCATION_GROIN) : 0);
+        }
+        ;
+        uint8      mode = 0;
+        ProtoItem@ weapon = npc.GetSlotProto(SLOT_HAND1, mode);
+
+        // Temporary spear fix
+        if(weapon.ProtoId == PID_SPEAR || weapon.ProtoId == PID_SHARP_SPEAR || weapon.ProtoId == PID_SHARPENED_POLE)
+            r0 = mode;
+
+        int ap = valid(weapon) ? _WeaponApCost(weapon, r0) : 3;
+        switch(r1)
+        {
+        case HIT_LOCATION_EYES:
+            ap += __ApCostAimEyes;
+            break;
+        case HIT_LOCATION_GROIN:
+            ap += __ApCostAimGroin;
+            break;
+        case HIT_LOCATION_HEAD:
+            ap += __ApCostAimHead;
+            break;
+        case HIT_LOCATION_LEFT_ARM:
+        case HIT_LOCATION_RIGHT_ARM:
+            ap += __ApCostAimArms;
+            break;
+        case HIT_LOCATION_LEFT_LEG:
+        case HIT_LOCATION_RIGHT_LEG:
+            ap += __ApCostAimLegs;
+            break;
+        default:
+        }
+        if(ap > npc.Stat[ST_ACTION_POINTS])
+            r1 = 0;
+        else
+        {
+            ap -= npc.Stat[ST_CURRENT_AP];
+            if(ap > 0)
+                r2 = (ap * __ApRegeneration) / npc.Stat[ST_ACTION_POINTS] + 50;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+// TODO more general version, this will cover all our weapons though
+bool CogitateFiring(Critter& cr, uint& mode, uint& aim)   // in: targetId, 0; out: mode, aim
+{
+    if(Random(1, 10) > cr.Stat[ST_INTELLECT])
+        return false;                                     // too stupid to think about this
+
+    Critter@ target = GetCritter(mode);
+    if(!valid(target))
+        return false;
+    Item@ weapon = cr.GetItem(0, SLOT_HAND1);
+
+    if(!valid(weapon))      // true unarmed
+    {
+        mode = 0;
+        if(cr.IsCanAim())
+            aim = ChooseAim(cr, target, null, 0, null);
+        else
+            aim = 0;
+
+        return true;
+    }
+
+    if(weapon.GetType() != ITEM_TYPE_WEAPON)
+        return false;
+    ProtoItem@ protoWeapon = GetProtoItem(weapon.GetProtoId());
+    ProtoItem@ protoAmmo = null;
+    if(weapon.AmmoPid != 0)
+        @protoAmmo = GetProtoItem(weapon.AmmoPid);
+    if(protoWeapon.Weapon_Skill_0 == SK_UNARMED || protoWeapon.Weapon_Skill_0 == SK_MELEE_WEAPONS)     // assuming all modes melee
+    {
+        mode = 0;
+        if(cr.IsCanAim())
+            aim = ChooseAim(cr, target, protoWeapon, mode, protoAmmo);
+        else
+            aim = 0;
+
+        return true;
+    }
+    else // assuming all modes ranged
+    {
+        bool forceBurst = false;
+        if(protoWeapon.Weapon_Round_0 > 1)
+        {
+            // cr.Say(SAY_NORM, "Burst is the only mode");
+            forceBurst = true;
+            mode = 0;
+        }
+        else
+        {
+            if(protoWeapon.Weapon_DmgType_1 == DAMAGE_UNCALLED)
+            {
+                // cr.Say(SAY_NORM, "Single shot is the only mode");
+                mode = 0;
+            }
+            else
+            {
+                // cr.Say(SAY_NORM, "Second mode available");
+                if(ValidateBurst(cr, target, protoWeapon, mode))
+                {
+                    // cr.Say(SAY_NORM, "Burst forced by check");
+                    forceBurst = true;
+                    mode = 1;
+                }
+                else
+                {
+                    // cr.Say(SAY_NORM, "Single shot forced by check");
+                    mode = 0;
+                }
+            }
+        }
+
+        if(forceBurst)
+        {
+            aim = 0;
+            return true;
+        }
+
+        if(!cr.IsCanAim() || !_WeaponAim(protoWeapon, mode))
+        {
+            aim = 0;
+            return true;
+        }
+        aim = ChooseAim(cr, target, protoWeapon, mode, protoAmmo);
+        return true;
+    }
+}
+
+int ChooseAim(Critter& cr, Critter& target, ProtoItem@ weapon, uint8 mode, ProtoItem@ ammo)
+{
+    int tohit = RawToHit(cr, target, weapon, mode, ammo);
+    // cr.Say(SAY_NORM, "choose aim, tohit="+tohit+", ap: "+cr.Stat[ST_CURRENT_AP]+" of "+cr.Stat[ST_ACTION_POINTS]);
+    if(tohit < 26)
+        return 0;
+
+    int  ap = valid(weapon) ? _WeaponApCost(weapon, mode) : 3;
+    uint skill = valid(weapon) ? _WeaponSkill(weapon, mode) : 0;
+    int  pendiv = valid(weapon) ? (skill == SK_MELEE_WEAPONS || skill == SK_UNARMED ? 2 : 1) : 2;
+    bool isTB = cr.GetMap().IsTurnBasedAvailability();
+    int  maxap = isTB ? cr.Stat[ST_CURRENT_AP] : cr.Stat[ST_ACTION_POINTS];
+
+    array<int> val(6);     // none, eyes, groin, head, arms, legs
+
+    int th = tohit;
+    int aps = ap;
+    val[0] = 1000 * CLAMP(th, 5, 95);
+    if(!isTB)
+        val[0] /= aps;
+
+    aps = ap + __ApCostAimEyes;
+    th = tohit - __HitAimEyes / pendiv;
+    val[1] = aps <= maxap && ((cr.Dir + 3) % 6 == target.Dir) ? 2500 * CLAMP(th, 5, 95) : 0;
+    if(!isTB)
+        val[1] /= aps;
+
+    th = tohit - __HitAimGroin / pendiv;
+    aps = ap + __ApCostAimGroin;
+    val[2] = aps <= maxap ? 2000 * CLAMP(th, 5, 95) : 0;
+    if(!isTB)
+        val[2] /= aps;
+
+    th = tohit - __HitAimHead / pendiv;
+    aps = ap + __ApCostAimHead;
+    val[3] = aps  <= maxap ? 2000 * CLAMP(th, 5, 95) : 0;
+    if(!isTB)
+        val[3] /= aps;
+
+    th = tohit - __HitAimArms / pendiv;
+    aps = ap + __ApCostAimArms;
+    val[4] = aps <= maxap ? 1600 * CLAMP(th, 5, 95) : 0;
+    if(!isTB)
+        val[4] /= aps;
+
+    th = tohit - __HitAimLegs / pendiv;
+    aps = ap + __ApCostAimLegs;
+    val[5] = aps  <= maxap ? 1300 * CLAMP(th, 5, 95) : 0;
+    if(!isTB)
+        val[5] /= aps;
+
+    // find best shot, with 1/3 chance for taking second-best shot
+    int max = 0, next = 0;
+    for(int i = 1; i < 6; i++)
+        if(val[i] >= val[max])
+            max = i;
+    for(int i = 1; i < 6; i++)
+        if(val[i] >= val[next] && val[next] < val[max])
+            next = i;
+    if(Random(0, 2) == 2)
+        max = next;
+
+    // cr.Say(SAY_NORM, "Aimed shot: "+max);
+
+    switch(max)
+    {
+    case 1:
+        return HIT_LOCATION_EYES;
+    case 2:
+        return HIT_LOCATION_GROIN;
+    case 3:
+        return HIT_LOCATION_HEAD;
+    case 4:
+        if(Random(0, 1) == 1)
+            return HIT_LOCATION_LEFT_ARM;
+        else
+            return HIT_LOCATION_RIGHT_ARM;
+    case 5:
+        if(Random(0, 1) == 1)
+            return HIT_LOCATION_LEFT_LEG;
+        else
+            return HIT_LOCATION_RIGHT_LEG;
+    case 0:
+    default:
+    }
+    ;
+    return HIT_LOCATION_UNCALLED;
+}
+
+class CTraceFirstCritter : ITraceContext
+{
+    Critter@ Cr;
+    uint     Mindist;
+    uint16   Gx;
+    uint16   Gy;
+    CTraceFirstCritter(uint16 gx, uint16 gy, uint16 mindist)
+    {
+        this.Gx = gx;
+        this.Gy = gy;
+        @this.Cr = null;
+        this.Mindist = mindist;
+    }
+    bool Exec(Map& map, uint16 hx, uint16 hy)
+    {
+        if(!map.IsHexRaked(hx, hy))
+            return true;
+        @Cr = map.GetCritter(hx, hy);
+        return valid(Cr) && Cr.Cond == COND_LIFE && GetDistantion(Gx, Gy, Cr.HexX, Cr.HexY) >= Mindist;
+    }
+};
+
+Critter@ TraceFirstCritter(uint16 hx, uint16 hy, uint16 tx, uint16 ty, Map& map, int dist, uint16 gx, uint16 gy, uint mindist)
+{
+    CTraceFirstCritter Tracer(gx, gy, mindist);
+    LineTracerHex(hx, hy, tx, ty, map, dist, Tracer);
+    return Tracer.Cr;
+}
+
+bool ValidateBurst(Critter& cr, Critter& target, ProtoItem@ weapon, uint mode)
+{
+    // cr.Say(SAY_NORM, "validating burst, ap: "+cr.Stat[ST_CURRENT_AP]+" of "+cr.Stat[ST_ACTION_POINTS]+", needed "+weapon.Weapon_ApCost);
+    if(Random(0, 2) == 0)
+        return false;                 // force normal shot, for a little diversity
+    Map@ map = cr.GetMap();
+    if(uint(map.IsTurnBasedAvailability() ? cr.Stat[ST_CURRENT_AP] : cr.Stat[ST_ACTION_POINTS]) < _WeaponApCost(weapon, mode))
+        return false;
+
+    uint     maxDist = _WeaponMaxDist(weapon, mode);
+
+    uint16   hx = cr.HexX;
+    uint16   hy = cr.HexY;
+    uint16   tx = target.HexX;
+    uint16   ty = target.HexY;
+    Critter@ blocker = TraceFirstCritter(hx, hy, tx, ty, map, maxDist, hx, hy, 0);
+    if(valid(blocker) && !IsCurrentEnemy(cr, blocker.Id))
+    {
+        /*blocker.Say(SAY_NORM, "I blocked the burst check");*/
+        return false;
+    }
+
+    uint16 sx = hx;
+    uint16 sy = hy;
+    uint16 ex = tx;
+    uint16 ey = hy;
+    uint8  dir = GetOffsetDir(hx, hy, tx, ty, 89.0f);
+    map.MoveHexByDir(sx, sy, dir, 1);
+    map.MoveHexByDir(ex, ey, dir, 1);
+    @blocker = TraceFirstCritter(sx, sy, ex, ey, map, maxDist, hx, hy, 3);
+    if(valid(blocker) && !IsCurrentEnemy(cr, blocker.Id))
+    {
+        /*blocker.Say(SAY_NORM, "I blocked the burst check");*/
+        return false;
+    }
+
+    sx = hx;
+    sy = hy;
+    ex = tx;
+    ey = hy;
+    dir = GetOffsetDir(hx, hy, tx, ty, -89.0f);
+    map.MoveHexByDir(sx, sy, dir, 1);
+    map.MoveHexByDir(ex, ey, dir, 1);
+    @blocker = TraceFirstCritter(sx, sy, ex, ey, map, maxDist, hx, hy, 3);
+    if(valid(blocker) && !IsCurrentEnemy(cr, blocker.Id))
+    {
+        /*blocker.Say(SAY_NORM, "I blocked the burst check");*/
+        return false;
+    }
+
+    return true;
+}
+
+void SkillsSort(Critter& npc, array<int>& skills, uint first, uint count)
+{
+    for(uint i = first, j = first + count; i < j; i++)
+    {
+        uint max = i;
+        for(int k = i + 1, l = first + count; k < l; k++)
+        {
+            if(npc.Skill[skills[k]] > npc.Skill[skills[max]])
+                max = k;
+        }
+        if(max != i)
+        {
+            int tmp = skills[max];
+            skills[max] = skills[i];
+            skills[i] = tmp;
+        }
+    }
+}
+
+void SkillToBegin(array<int>& skills, int skill)
+{
+    for(uint i = 1, j = skills.length(); i < j; i++)
+    {
+        if(skills[i] == skill)
+        {
+            for(uint k = i; k > 0; k--)
+                skills[k] = skills[k - 1];
+            skills[0] = skill;
+            break;
+        }
+    }
+}
+
+bool CheckBattleWeapon(Critter& npc, Item& weapon)
+{
+    if(weapon.GetType() != ITEM_TYPE_WEAPON)
+        return false;
+    if(!npc.IsAnim1(weapon.Proto.Weapon_Anim1))
+        return false;
+    if(_ItemIsBroken(weapon))
+        return false;
+    if(FLAG(weapon.Flags, ITEM_TWO_HANDS) && (npc.Damage[DAMAGE_LEFT_ARM] != 0 || npc.Damage[DAMAGE_RIGHT_ARM] != 0))
+        return false;
+    if(npc.Mode[MODE_UNLIMITED_AMMO] == 0 && weapon.Proto.Weapon_MaxAmmoCount > 0 && weapon.AmmoCount == 0 && !IsAmmoForWeapon(npc, weapon))
+        return false;
+    return true;
+}
+
+bool IsAmmoForWeapon(Critter& npc, Item& weapon)
+{
+    if(npc.CountItem(weapon.AmmoPid) > 0)
+        return true;
+    if(npc.CountItem(weapon.Proto.Weapon_DefaultAmmoPid) > 0)
+        return true;
+    array<Item@> ammo;
+    for(uint i = 0, j = npc.GetItemsByType(ITEM_TYPE_AMMO, ammo); i < j; i++)
+    {
+        Item@ a = ammo[i];
+        if(a.Proto.Ammo_Caliber == weapon.Proto.Weapon_Caliber)
+            return true;
+    }
+    return false;
+}
+
+bool WillFight(Critter@ cr)
+{
+    uint htm0 = AI_HURT_TO_MUCH_0(cr.Stat[ST_AI_ID]);
+    uint htm1 = AI_HURT_TO_MUCH_1(cr.Stat[ST_AI_ID]);
+    if((htm0 == HTM_Blind || htm1 == HTM_Blind) && cr.Damage[DAMAGE_EYE] != 0)
+        return false;
+    if((htm0 == HTM_Crippled || htm1 == HTM_Crippled) &&
+       (cr.Damage[DAMAGE_LEFT_ARM] != 0 || cr.Damage[DAMAGE_RIGHT_ARM] != 0 || cr.Damage[DAMAGE_LEFT_LEG] != 0 || cr.Damage[DAMAGE_RIGHT_LEG] != 0))
+        return false;
+    if((htm0 == HTM_CripArms || htm1 == HTM_CripArms) && (cr.Damage[DAMAGE_LEFT_ARM] != 0 || cr.Damage[DAMAGE_RIGHT_ARM] != 0))
+        return false;
+    return true;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////

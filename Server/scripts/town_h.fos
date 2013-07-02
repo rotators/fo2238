@@ -1,0 +1,137 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// town_h.fos
+//
+
+// Original Town Control (TC)
+
+#ifndef __TOWN_H__
+#define __TOWN_H__
+
+#include "_macros.fos"
+#include "_town.fos"
+#include "polygon_h.fos"
+
+#ifndef __TOWNS__
+import ITown@ GetTownByIndex(uint index) from "towns";
+import ITown@ GetTown(uint id) from "towns";
+import uint   GetTownCount() from "towns";
+import uint   GetTowns(array<ITown@>@ towns) from "towns";
+#endif
+
+#ifndef __TOWN__
+import bool   AddMilitia(Map@ map) from "town";
+import void   InitMilitia() from "town";
+import bool   IsTCTown(Map@ map) from "town";
+import uint   RetrieveTownId(Map@ map) from "town";
+import uint   RetrieveTownId(Critter& critter) from "town";
+import ITown@ RetrieveTown(Critter& critter) from "town";
+import bool   ValidTown(ITown@ town) from "town";
+import void   GainControl(Critter& player) from "town";
+import uint   GetNearMembers(Critter& player) from "town";
+import bool   IsPolicy(Critter& player, uint policy) from "town";
+import bool   IsControllingTown(Critter& player) from "town";
+import bool   AlertMilitia(Critter& cr) from "town";
+import int    SelectBag(uint crpid) from "town";
+import void   SpawnInitMilitia(Map@ map) from "town";
+import int    CountMilitia(Map@ map) from "town";
+import void   ClearInfluenceBuffer(Critter& cr) from "town";
+#endif
+
+
+class PresenceStruct
+{
+    uint factionId;
+    uint count;
+    PresenceStruct(uint factionId)
+    {
+        this.factionId = factionId;
+        this.count = 1;
+    }
+};
+
+shared interface ITown
+{
+    ITown@ SetMapID(uint id);
+    ITown@ SetTownID(uint id);
+    ITown@ SetBaseRewardValue(uint value);
+    ITown@ SetInfluenceMemberRequirement(uint number);
+    ITown@ SetNearbyMemberRequirement(uint number);
+    ITown@ SetTotalMemberRequirement(uint number);
+    ITown@ SetLimboContainer(Item@ container);
+    ITown@ SetRewardContainer(Item@ container);
+    ITown@ SetTownLeader(Critter@ leader);
+    ITown@ SetSpeechModifier(int modifier);
+    ITown@ SetHour(uint hour);
+    ITown@ SetCaptureArea(IPolygon@ capturearea);
+    ITown@ SetMilitiaEnabled();
+    ITown@ SetRewardStartCaps(uint caps);
+    ITown@ SetVersion(uint version);
+
+    uint GetVersion();
+
+    uint        GetTownID();
+    string      GetTownName();
+    bool        LoadData();
+    bool        SaveData();
+    bool        IsMilitiaEnabled();
+    bool        IsFriendlyFaction(uint factionid);
+    bool        IsFriend(Critter& cr);
+    bool        IsValidCaptor(Critter& cr);
+    bool        IsWithinCaptureArea(Critter& cr);
+    void        AreaCheck();
+    bool        AddFriendlyFaction(uint factionid);
+    bool        RemoveFriendlyFaction(uint factionid);
+    array<uint> GetFriendlyFactions();
+    float       GetControllingInfluence();
+    uint        GetMilitiaMax();
+    uint        GetControllingFaction();
+    uint        GetNumberOfKilledNPCs();
+    uint        GetControlCycles();
+    uint        GetStatus();
+    void        SetStatus(uint status);
+    void        SetScore();
+    void        SetPreviousFaction(uint previous);
+    uint        GetlastSecond();
+    void        SetlastSecond(uint sec);
+    uint        GetAreaCount();
+    uint        GetCountdown();
+    void        SetCountdownStatus(bool enabled);
+    bool        GetCountdownStatus();
+    void        SendCountdownTime(Critter& player);
+    uint        GetMemberNearbyRequirement();
+    uint        GetMemberTotalRequirement();
+    Item@       GetLimboContainer();
+    Item@       GetRewardContainer();
+    uint        GetTownLeaderId();
+    uint        GetMapID();
+    int         GetSpeechModifier();
+    bool        GainControl(Critter& player);
+    void        IncreaseNPCDeath(uint num);
+    void        ModifyInfluence(uint factionId, float value);
+    void        SetInfluence(uint factionId, float value);
+    void        ResetStats();
+    void        ResetControl();
+    void        RevertControl();
+    void        ClearRewardContainer();
+    void        ClearLimboContainer();
+    void        ClearContainers();
+    void        Update(uint hour, uint minute);
+    void        UpdateCountdown();
+    void        UpdateTick();
+    void        TownCheck();
+
+    bool IsLaw(uint law);
+    void SetLaw(uint law, bool enabled);
+
+    void AddMoney(int money);
+    int  GetMoney();
+
+    // version 3
+    float GetInfluence(uint faction);
+
+    Location@ GetLocation();
+};
+#endif

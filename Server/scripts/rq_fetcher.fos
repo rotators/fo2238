@@ -1,0 +1,135 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// rq_fetcher.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "reputations_h.fos"
+#include "backend_h.fos"
+
+#define FETCH_STATUS_NONE       (0)
+#define FETCH_STATUS_BRIEFED    (1)
+#define FETCH_STATUS_ONGOING    (2)
+// #define FETCH_STATUS_COMPLETED  (3)
+// single item
+int[] fetch_pids_s = { PID_CATS_PAW, PID_BIG_BOOK_OF_SCIENCE, PID_LIGHTER, PID_GREEN_CONDOM };
+int[] fetch_nodes_s = { 4, 5, 6, 7 };
+// multiples
+int[] fetch_pids_m = { PID_SCORPION_TAIL, PID_NUKA_COLA, PID_BEER, PID_ROT_GUT, PID_CIGARETTES, PID_FLOWER };
+int[] fetch_nodes_m = { 8, 9, 10, 11, 12, 13 };
+
+int[] reward_bags = { 80, 90, 100, 110, 430, 431, 432 };
+
+bool d_None(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id) == FETCH_STATUS_NONE);
+}
+
+bool d_CanAsk(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id) > 0);
+}
+
+bool d_Briefed(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id) == FETCH_STATUS_BRIEFED);
+}
+
+bool d_OnGoing(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id) == FETCH_STATUS_ONGOING);
+}
+
+bool d_HasStuff(Critter& player, Critter@ npc)
+{
+    if(GetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id) != FETCH_STATUS_ONGOING)
+        return false;
+
+    uint pid = GetUvar(UVAR_q_rq_fetcher_pid, npc.Id, player.Id);
+    uint count = GetUvar(UVAR_q_rq_fetcher_count, npc.Id, player.Id);
+
+    return(_CritCountItem(player, pid) >= count);
+}
+
+void r_CompleteQuest(Critter& player, Critter@ npc)
+{
+    SetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id, FETCH_STATUS_NONE);
+
+    uint pid = GetUvar(UVAR_q_rq_fetcher_pid, npc.Id, player.Id);
+    uint count = GetUvar(UVAR_q_rq_fetcher_count, npc.Id, player.Id);
+
+    player.DeleteItem(pid, count);
+    if(count == 1)
+    {
+        player.AddItem(PID_BOTTLE_CAPS, Random(100, 300));
+        player.StatBase[ST_EXPERIENCE] += 100;
+        LogQuestExperience(player, 100, "rq_fetcher");
+    }
+    else
+    {
+        player.AddItem(PID_BOTTLE_CAPS, Random(50, 100) * count);
+        player.StatBase[ST_EXPERIENCE] += (75 * count);
+        LogQuestExperience(player, 75 * count, "rq_fetcher");
+    }
+    AddReputation(player, ReputationIndex(player.GetMap().GetLocation().GetProtoId()), Random(5, 50), REP_FETCHER_QUEST_CAP);
+    GiveBag(random_from_array(reward_bags), player);
+}
+
+void r_AcceptQuest(Critter& player, Critter@ npc)
+{
+    SetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id, FETCH_STATUS_ONGOING);
+}
+
+void dlg_ShowNum(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    uint count = GetUvar(UVAR_q_rq_fetcher_count, npc.Id, player.Id);
+    text = "$num" + count;
+}
+
+uint r_ShowQuest(Critter& player, Critter@ npc)
+{
+    uint8 count = GetUvar(UVAR_q_rq_fetcher_count, npc.Id, player.Id);
+    if(count == 1)
+        return fetch_nodes_s[GetUvar(UVAR_q_rq_fetcher_node, npc.Id, player.Id)];
+    return fetch_nodes_m[GetUvar(UVAR_q_rq_fetcher_node, npc.Id, player.Id)];
+}
+
+// Generate and show fetch quest
+uint r_GenerateFetchQuest(Critter& player, Critter@ npc)
+{
+    int   force = 0;
+    uint  pid = 0;
+    uint8 count = 0;
+
+    uint8 type = Random(0, 1);
+    uint  node = 0;
+
+    if(type == 0)
+    {
+        node = Random(0, fetch_pids_s.length() - 1);
+        pid = fetch_pids_s[node];
+        count = 1;
+        force = fetch_nodes_s[node];
+    }
+    else
+    {
+        node = Random(0, fetch_pids_m.length() - 1);
+        pid = fetch_pids_m[node];
+        if(pid == PID_SCORPION_TAIL)
+            count = Random(2, 3);
+        else
+            count = Random(2, 10);
+        force = fetch_nodes_m[node];
+    }
+
+    SetUvar(UVAR_q_rq_fetcher_status, npc.Id, player.Id, FETCH_STATUS_BRIEFED);
+    SetUvar(UVAR_q_rq_fetcher_pid, npc.Id, player.Id, pid);
+    SetUvar(UVAR_q_rq_fetcher_count, npc.Id, player.Id, count);
+    SetUvar(UVAR_q_rq_fetcher_node, npc.Id, player.Id, node);
+    return force;
+}

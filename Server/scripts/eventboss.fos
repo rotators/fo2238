@@ -1,0 +1,720 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// eventboss.fos
+//
+
+#include "_macros.fos"
+#include "_animation.fos"
+#include "combat_msg.fos"
+#include "eventboss_h.fos"
+#define HF_KNOCKOUT    (0x00000001)
+
+import bool WrathOfTheGod(Critter& di) from "cheats";
+
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+bool isMod(Critter& crit)
+{
+    return(crit.IsPlayer() && crit.GetAccess() > ACCESS_TESTER || WrathOfTheGod(crit));
+}
+
+bool isSameTeam(Critter& crit1, Critter& crit2)
+{
+    return crit1.Param[ST_TEAM_ID] == crit2.Param[ST_TEAM_ID];
+}
+
+bool isMerc(Critter& crit)
+{
+    return(crit.IsNpc() && (crit.Param[FV_MERCID] != 0 || crit.Param[FV_TYPE] != 0 || crit.Param[FV_MASTER] != 0));
+}
+
+void spawnMelchior(Critter& player, int x, int y, int p2)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    if(player.GetAccess() < ACCESS_ADMIN)
+    {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+    }
+
+
+
+    Map@ map = player.GetMap();
+    if(valid(map))
+    {
+        CBoss@ melch = MelchiorBoss(map, x, y, bosses.length(), p2);
+        AddBoss(melch);
+        melch.MakeAgressive();
+    }
+}
+
+void spawnGhost(Critter& player, int x, int y, int p2)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    if(player.GetAccess() < ACCESS_ADMIN)
+    {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+    }
+
+    Map@ map = player.GetMap();
+    if(valid(map))
+    {
+        CBoss@ ghost = GhostBoss(map, x, y, bosses.length(), p2);
+        AddBoss(ghost);
+        ghost.MakeAgressive();
+    }
+}
+
+
+
+array<CBoss@> bosses = {};
+
+void AddBoss(CBoss@ boss)
+{
+    bosses.insertLast(boss);
+}
+
+CBoss@ GetBoss(uint id)
+{
+    return bosses[id];
+}
+
+
+
+/*interface IEnemyScanner
+   {
+        void FindTargets(CBoss@);
+   }
+
+   class basicScanner : IEnemyScanner
+   {
+        void FindTargets(CBoss@)
+        {
+
+        }
+   }*/
+
+
+
+
+
+
+
+
+#include "traps_h.fos"
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+class DynamiteThrow : IAttack
+{
+    MelchiorBoss@ boss;
+    array<uint>   dynamites;
+    uint          dynamiteI;
+    uint          timer;
+    DynamiteThrow(MelchiorBoss@ boss, uint timer)
+    {
+        @this.boss = @boss;
+        this.timer = timer;
+        dynamites.resize(255);
+        dynamiteI = 0;
+    }
+    void AttackPrepareStart()
+    {
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        // melch.Say(SAY_SHOUT,"Trololo Low");
+    }
+
+    void AttackCommence()
+    {
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        if(valid(melch))
+        {
+
+            melch.Say(SAY_NORM, "Catch!");
+            melch.Wait(100);
+            melch.Animate(ANIM1_UNARMED, ANIM2_THROW, null, true, true);
+            melch.ModeBase[MODE_NO_WALK] = 1;
+            Map@ map = melch.GetMap();
+            if(valid(map))
+            {
+
+                array<Critter@> crits;
+                uint            searchFlags = FIND_LIFE_AND_KO;
+                //			if(boss.targetType==0)searchFlags|=FIND_ONLY_PLAYERS;
+//				else
+                if(boss.targetType == 1)
+                    searchFlags |= FIND_ONLY_NPC;
+                uint   cnt = map.GetCritters(0, searchFlags, crits);
+                uint   rnd1 = Random(0, 4);
+                uint   rnd2 = Random(0, 4);
+                Item@  dynamite;
+                uint16 x;
+                uint16 y;
+                for(uint i = 0; i < cnt && dynamiteI < 249; i++)
+                {
+                    if(isMod(crits[i]) || isSameTeam(melch, crits[i]) || (boss.targetType == 0 && (!isMerc(crits[i]) && !crits[i].IsPlayer())) || (boss.targetType == 1 && isMerc(crits[i])))
+                        continue;
+                    x = crits[i].HexX - 2 + ((rnd1 + i) % 5);
+                    y = crits[i].HexY - 2 + ((rnd2 + i) % 5);
+                    if(GetDistantion(melch.HexX, melch.HexY, x, y) > 3)
+                    {
+                        @dynamite = MakeDynamite(melch, timer);
+                        if(valid(dynamite))
+                        {
+                            dynamites[dynamiteI++] = dynamite.Id;
+                            MoveItem(dynamite, 1, map, x, y);
+                        }
+                    }
+                }
+
+                for(uint i = 0; i < 6; i++)
+                {
+                    x = melch.HexX;
+                    y = melch.HexY;
+                    map.MoveHexByDir(x, y, i, 5);
+                    @dynamite = MakeDynamite(melch, timer);
+
+                    if(valid(dynamite))
+                    {
+                        dynamites[dynamiteI++] = dynamite.Id;
+                        MoveItem(dynamite, 1, map, x, y);
+                    }
+                }
+            }
+        }
+    }
+
+    Item@ MakeDynamite(Critter@ cr, uint timer)
+    {
+        Item@ activateExpl = cr.AddItem(PID_ACTIVE_DYNAMITE, 1);
+        if(!valid(activateExpl))
+            return null;
+        // timer=timer*Random(95,105)/100;
+        // uint numEvent=CreateTimeEvent(AFTER(timer),"explode@e_Explode",activateExpl.Id,false);
+
+        SETFLAG(activateExpl.Flags, ITEM_TRAP);
+        // _ExplodeSetNumEvent(activateExpl,numEvent);
+        _ExplodeSetOwner(activateExpl, cr.Id);
+        activateExpl.TrapValue = TRAPS_HIDE(200);
+        _Complexity(activateExpl) = 5000;
+        _ExplodeSetBonusDamage(activateExpl, 200);
+        _ExplodeSetBonusRadius(activateExpl, 1);
+        activateExpl.Update();
+        return activateExpl;
+    }
+
+
+    void AttackRecuperationEnd()
+    {
+        for(uint i = 0; i < dynamiteI; i++)
+        {
+            CreateTimeEvent(0, "explode@e_Explode", dynamites[i], false);
+        }
+        dynamiteI = 0;
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        if(valid(melch))
+            melch.Say(SAY_SHOUT, "MUHAHAHAAAA!!!");
+        melch.ModeBase[MODE_NO_WALK] = 0;
+        melch.Wait(100);
+    }
+};
+
+class ImbaPunch : IAttack
+{
+    MelchiorBoss@ boss;
+    ImbaPunch(MelchiorBoss@ boss)
+    {
+        @this.boss = @boss;
+    }
+    void AttackPrepareStart()
+    {
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        // melch.Say(SAY_SHOUT,"Trololo Low");
+    }
+
+    void AttackCommence()
+    {
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        if(valid(melch))
+        {
+            bool hit = false;
+            Map@ map = melch.GetMap();
+            if(valid(map))
+            {
+
+                array<Critter@> crits;
+                uint            searchFlags = FIND_LIFE_AND_KO;
+                // if(boss.targetType==0)searchFlags|=FIND_ONLY_PLAYERS;
+                // else
+                if(boss.targetType == 1)
+                    searchFlags |= FIND_ONLY_NPC;
+                uint cnt = map.GetCritters(0, searchFlags, crits);
+                for(uint i = 0; i < cnt; i++)
+                {
+                    if(isMod(crits[i]) || isSameTeam(melch, crits[i]) || (boss.targetType == 0 && (!isMerc(crits[i]) && !crits[i].IsPlayer())) ||  (boss.targetType == 1 && isMerc(crits[i])))
+                        continue;
+                    if(GetDistantion(melch.HexX, melch.HexY, crits[i].HexX, crits[i].HexY) < 4)
+                    {
+                        hit = true;
+                        InjureCritter(crits[i], Random(100, 200), DAMAGE_EXPLODE, GetDirection(melch.HexX, melch.HexY, crits[i].HexX, crits[i].HexY), melch.Id);
+                        int    knockDist = 20;
+                        uint16 knockHx = melch.HexX;
+                        uint16 knockHy = melch.HexY;
+                        map.GetHexCoordWall(crits[i].HexX, crits[i].HexY, knockHx, knockHy, 180.0f, knockDist);
+                        crits[i].ToKnockout(KNOCKOUT_ANIM2_DEFAULT(true), crits[i].Param[ST_ACTION_POINTS] * 4, knockHx, knockHy);
+
+                        if(Random(0, 3) == 0)
+                            crits[i].DamageBase[DAMAGE_LEFT_LEG] = 1;
+                        if(Random(0, 3) == 0)
+                            crits[i].DamageBase[DAMAGE_RIGHT_LEG] = 1;
+                        if(Random(0, 3) == 0)
+                            crits[i].DamageBase[DAMAGE_LEFT_ARM] = 1;
+                        if(Random(0, 3) == 0)
+                            crits[i].DamageBase[DAMAGE_RIGHT_ARM] = 1;
+                    }
+                }
+
+
+            }
+            if(hit)
+            {
+                melch.Animate(ANIM1_UNARMED, ANIM2_PUNCH_RIGHT, null, true, true);
+                melch.Wait(200);
+                map.RunEffect(PID_EXPLODE_FIRE_BIG, melch.HexX, melch.HexY, 2);
+            }
+        }
+    }
+
+
+    void AttackRecuperationEnd()
+    {
+        Critter@ melch = GetCritter(boss.critterList[0]);
+        // if(valid(melch))melch.Say(SAY_SHOUT,"MUHAHAHAAAA!!!");
+    }
+};
+
+class MelchiorBoss : CBoss
+{
+    int targetType;
+    MelchiorBoss(Map & map, uint x, uint y, uint id, int targetType)
+    {
+        this.id = id;
+        this.targetType = targetType;
+        Critter@ melchior = map.AddNpc(161, x, y, 3, null, null, "_BossMelchiorInit");
+        if(valid(melchior))
+            AddCritter(melchior);
+        patern = false;
+        AddAttack(DynamiteThrow(this, REAL_SECOND(4)), 1, REAL_SECOND(10), REAL_SECOND(4));
+        AddAttack(ImbaPunch(this), 1, REAL_SECOND(5), REAL_SECOND(5));
+    }
+
+    void aggressionStart()
+    {
+        if(critterList.length() < 1)
+        {
+            Log("No critter boss error.");
+            return;
+        }
+        Critter@ boss = GetCritter(critterList[0]);
+        if(!valid(boss))
+        {
+            Log("No critter boss error.");
+            return;
+        }
+
+        Map@ map = boss.GetMap();
+        if(!valid(map))
+        {
+            Log("Boss not on map.");
+            return;
+        }
+
+        array<Critter@> crits;
+        uint            searchFlags = FIND_LIFE_AND_KO;
+        // if(targetType==0)searchFlags|=FIND_ONLY_PLAYERS;
+        // else
+        if(targetType == 1)
+            searchFlags |= FIND_ONLY_NPC;
+
+        map.GetCritters(0, searchFlags, crits);
+        for(uint i = 0; i < crits.length(); i++)
+        {
+            if((targetType == 0 && (!isMerc(crits[i]) && !crits[i].IsPlayer())) || (targetType == 1 && isMerc(crits[i])) || isMod(crits[i]) || isSameTeam(boss, crits[i]))
+                continue;
+            boss.AddEnemyInStack(crits[i].Id);
+            AddAttackPlane(boss, 180, crits[i], true);
+        }
+    }
+
+    void bossSee(Critter& cr, Critter& shownCr)
+    {
+        if(!cr.CheckEnemyInStack(shownCr.Id) && !isSameTeam(cr, shownCr) && !isMod(shownCr) &&
+           (targetType > 1 || (shownCr.IsPlayer() && targetType == 0) ||
+            (targetType == 0 && isMerc(shownCr)) || (shownCr.IsNpc() && !isMerc(shownCr) && targetType == 1)))
+        {
+            cr.AddEnemyInStack(shownCr.Id);
+            AddAttackPlane(cr, 180, shownCr, true);
+        }
+    }
+
+    bool bossAttacked(Critter& cr, Critter& attacker)
+    {
+        if(!cr.CheckEnemyInStack(attacker.Id))
+        {
+            cr.AddEnemyInStack(attacker.Id);
+            AddAttackPlane(cr, 180, attacker, true);
+        }
+
+        return true;
+    }
+
+    void bossHit(Critter& cr, Critter@ attacker, int dmg)
+    {
+        if(dmg < 5 && Random(0, 9) < 1)
+        {
+            cr.Say(SAY_NORM_ON_HEAD, "You'll have to try harder than that.");
+        }
+    }
+
+    void bossKilled(Critter& cr, Critter@ attacker)
+    {
+        if(timeEvent != 0)
+            EraseTimeEvent(timeEvent);
+        timeEvent = 0;
+        if(valid(attacker))
+            attacker.Say(SAY_SHOUT_ON_HEAD, "Got Him!");
+    }
+
+    void bossFinish(Critter& cr, bool deleted)
+    {
+        if(timeEvent != 0)
+            EraseTimeEvent(timeEvent);
+        timeEvent = 0;
+    }
+};
+
+void _BossMelchiorInit(Critter& boss, bool firstTime)
+{
+    boss.ParamBase[ST_MAX_LIFE] = 10000;
+    if(firstTime)
+        boss.ParamBase[72] = 10000;
+    boss.StatBase[ST_HEALING_RATE] = 10;
+    boss.ParamBase[PE_SHARPSHOOTER] = 20;
+    boss.ParamBase[MODE_NEGATE_CRIT_EFF] = int(0xFFFFFFFF);
+    boss.ParamBase[MODE_UNLIMITED_AMMO] = 1;
+    boss.AddItem(PID_LIGHT_SUPPORT_WEAPON, 1);
+    boss.ParamBase[ST_TEAM_ID] = 17;
+}
+
+
+class SilentKill : IAttack
+{
+    GhostBoss@ boss;
+    uint       timer;
+    SilentKill(GhostBoss@ boss, uint timer)
+    {
+        @this.boss = @boss;
+        this.timer = timer;
+    }
+    void AttackPrepareStart()
+    {
+        Critter@ ghost = GetCritter(boss.critterList[0]);
+        // melch.Say(SAY_SHOUT,"Trololo Low");
+    }
+
+    void AttackCommence()
+    {
+        Critter@ ghost = GetCritter(boss.critterList[0]);
+        if(valid(ghost))
+        {
+            bool alone = false;
+            boss.victimId = 0;
+            ghost.ParamBase[MODE_HIDE] = 1;
+            Map@ map = ghost.GetMap();
+            if(valid(map))
+            {
+                array<Critter@> crits;
+                uint            searchFlags = FIND_LIFE_AND_KO;
+                // if(boss.targetType==0)searchFlags|=FIND_ONLY_PLAYERS;
+                // else
+                if(boss.targetType == 1)
+                    searchFlags |= FIND_ONLY_NPC;
+                uint cnt = map.GetCritters(0, searchFlags, crits);
+                // uint cnt=map.GetCritters(0,FIND_LIFE_AND_KO,crits);
+                uint foundInd = 0;
+
+                for(uint i = 0; i < cnt; i++)
+                {
+                    if(isSameTeam(ghost, crits[i]) || crits[i].Id == ghost.Id ||
+                       isMod(crits[i]) || (boss.targetType == 0 && (!isMerc(crits[i]) && !crits[i].IsPlayer())) || (boss.targetType == 1 && isMerc(crits[i])))
+                    {
+                        Critter@ sLH = crits[i];
+                        @crits[i] = crits[cnt - 1];
+                        @crits[cnt - 1] = sLH;
+                        cnt--;
+                        i--;
+                    }
+                }
+
+                if(cnt < 1)
+                    return;
+
+                /*for(uint i=0;i<cnt;i++)
+                   {
+                        if(crits[i].Id==ghost.Id) continue;
+                        alone=true;
+                        for(uint j=0;j<cnt;j++)
+                        {
+                                if(j==i) continue;
+                                if(crits[i].IsSeenBy(crits[j]))
+                                {
+                                        alone=false;
+                                        break;
+                                }
+                        }
+                        if(alone)
+                        {
+
+                                foundInd=i;
+                                break;
+                        }
+                   }*/
+
+                if(!alone)
+                {
+                    foundInd = Random(0, cnt - 1);
+                    if(foundInd >= cnt)
+                    {
+                        return;
+                    }
+                    if(crits[foundInd].Param[ST_TEAM_ID] == ghost.Param[ST_TEAM_ID])
+                    {
+                        return;
+                    }
+                    if(crits[foundInd].Id == ghost.Id)
+                        return;
+                }
+                if(foundInd < cnt)
+                {
+                    boss.wasHit = false;
+                    boss.victimId = crits[foundInd].Id;
+                    crits[foundInd].Wait(1000 * timer / REAL_SECOND(1) + 1000);
+                    ghost.Wait(1000 * timer / REAL_SECOND(1) + 1000);
+                    uint16 x = crits[foundInd].HexX;
+                    uint16 y = crits[foundInd].HexY;
+                    map.MoveHexByDir(x, y, (crits[foundInd].Dir + 3) % 6, 1);
+                    ghost.TransitToHex(x, y, crits[foundInd].Dir);
+                    ghost.Say(SAY_WHISP, "shhhh");
+                    ghost.Wait(1000 * timer / REAL_SECOND(1) + 1000);
+                    crits[foundInd].Say(SAY_NETMSG, "You can't move.");
+                }
+            }
+
+        }
+    }
+
+
+    void AttackRecuperationEnd()
+    {
+        if(boss.wasHit)
+            return;
+        Critter@ victim = GetCritter(boss.victimId);
+        Critter@ ghost = GetCritter(boss.critterList[0]);
+        if(valid(victim) && valid(ghost))
+        {
+            InjureCritter(victim, Random(3000, 4000), DAMAGE_LASER, (victim.Dir + 3) % 6, ghost.Id);
+            // ghost.Animate()
+            ghost.Animate(ANIM1_KNIFE, ANIM2_SWING_1H, ghost.GetItem(0, SLOT_HAND1), true, true);
+            ghost.TransitToHex(2, 2, 0);
+            boss.victimId = 0;
+            // Log("killed "+victim.Id);
+        }
+        // if(valid(melch))melch.Say(SAY_SHOUT,"MUHAHAHAAAA!!!");
+    }
+};
+
+class GhostBoss : CBoss
+{
+    bool wasHit;
+    int  targetType;
+    uint victimId;
+    GhostBoss(Map & map, uint x, uint y, uint id, int targetType)
+    {
+        this.id = id;
+        this.targetType = targetType;
+        Critter@ ghost = map.AddNpc(126, x, y, 3, null, null, "_BossGhostInit");
+        if(valid(ghost))
+            AddCritter(ghost);
+        patern = false;
+        AddAttack(SilentKill(this, REAL_SECOND(4)), 1, REAL_SECOND(16), REAL_SECOND(4));
+        // AddAttack(ImbaPunch(this), 1, REAL_SECOND(5),REAL_SECOND(5));
+        wasHit = false;
+        victimId = 0;
+    }
+
+    void aggressionStart()
+    {
+        if(critterList.length() < 1)
+        {
+            Log("No critter boss error.");
+            return;
+        }
+        Critter@ boss = GetCritter(critterList[0]);
+        if(!valid(boss))
+        {
+            Log("No critter boss error.");
+            return;
+        }
+
+        Map@ map = boss.GetMap();
+        if(!valid(map))
+        {
+            Log("Boss not on map.");
+            return;
+        }
+
+        uint searchFlags = FIND_LIFE_AND_KO;
+        // if(targetType==0)searchFlags|=FIND_ONLY_PLAYERS;
+        // else
+        if(targetType == 1)
+            searchFlags |= FIND_ONLY_NPC;
+
+        array<Critter@> crits;
+        map.GetCritters(0, searchFlags, crits);
+        for(uint i = 0; i < crits.length(); i++)
+        {
+            if((targetType == 0 && (!isMerc(crits[i]) && !crits[i].IsPlayer())) || (targetType == 1 && isMerc(crits[i])) || isMod(crits[i]) || isSameTeam(boss, crits[i]))
+                continue;
+            boss.AddEnemyInStack(crits[i].Id);
+            AddAttackPlane(boss, 180, crits[i], true);
+        }
+    }
+
+    void bossSee(Critter& cr, Critter& shownCr)
+    {
+        if(!cr.CheckEnemyInStack(shownCr.Id) && !isSameTeam(cr, shownCr) && !isMod(shownCr) &&
+           (targetType > 1 || (shownCr.IsPlayer() && targetType == 0) ||
+            (targetType == 0 && isMerc(shownCr)) || (shownCr.IsNpc() && !isMerc(shownCr) && targetType == 1)))
+        {
+            cr.AddEnemyInStack(shownCr.Id);
+            AddAttackPlane(cr, 180, shownCr, true);
+        }
+    }
+
+    bool bossAttacked(Critter& cr, Critter& attacker)
+    {
+        if(!cr.CheckEnemyInStack(attacker.Id))
+        {
+            cr.AddEnemyInStack(attacker.Id);
+            AddAttackPlane(cr, 180, attacker, true);
+        }
+
+        return true;
+    }
+
+    void bossHit(Critter& cr, Critter@ attacker, int dmg)
+    {
+        if(dmg < 11)
+        {
+            // cr.Say(SAY_NORM_ON_HEAD,"You'll have to try harder than that.");
+
+        }
+        else
+        {
+            cr.Say(SAY_NORM, "Damn!");
+            cr.TransitToHex(2, 2, 0);
+            wasHit = true;
+            if(victimId != 0)
+            {
+                Critter@ victim = GetCritter(victimId);
+                if(valid(victim))
+                    victim.Wait(0);
+                victimId = 0;
+            }
+        }
+    }
+
+    void bossKilled(Critter& cr, Critter@ attacker)
+    {
+        if(timeEvent != 0)
+            EraseTimeEvent(timeEvent);
+        timeEvent = 0;
+        if(valid(attacker))
+            attacker.Say(SAY_SHOUT_ON_HEAD, "Got Him!");
+        // Log("ghost is dead");
+    }
+
+    void bossFinish(Critter& cr, bool deleted)
+    {
+        if(timeEvent != 0)
+            EraseTimeEvent(timeEvent);
+        timeEvent = 0;
+    }
+};
+
+void _BossGhostInit(Critter& boss, bool firstTime)
+{
+    boss.ParamBase[ST_MAX_LIFE] = 985;
+    if(firstTime)
+        boss.ParamBase[72] = 1000;
+    boss.StatBase[ST_HEALING_RATE] = 5;
+    boss.ParamBase[PE_SHARPSHOOTER] = 20;
+    boss.ParamBase[SK_SNEAK] = 300;
+    boss.ParamBase[MODE_NEGATE_CRIT_EFF] = int(0xFFFFFFFF);
+    boss.ParamBase[MODE_UNLIMITED_AMMO] = 1;
+    boss.ParamBase[MODE_HIDE] = 1;
+    boss.ParamBase[PE_SILENT_RUNNING] = 1;
+    boss.AddItem(PID_RIPPER, 1);
+    boss.SetFavoriteItem(SLOT_HAND1, PID_RIPPER);
+    boss.ParamBase[ST_TEAM_ID] = 17;
+}
+
+
+
+
+
+
+
+
+class PatternBoss : CBoss
+{
+    PatternBoss()
+    {
+        // if false boss chooses attacks randomly depending on chance
+        // if true boss chooses attacks in the sequence they were added
+        patern = false;
+    }
+
+    // called after beggining of the fight
+    void aggressionStart()
+    {}
+
+    // called when any of bosses critter sees new critter
+    void bossSee(Critter& cr, Critter& shownCr)
+    {}
+
+    // called when bosses critter attacked
+    bool bossAttacked(Critter& cr, Critter& attacker)
+    {
+
+        // return value for disabling default attack event on critter like with normal attack event
+        return false;
+    }
+
+    // called after attack when damages have been done
+    void bossHit(Critter& cr, Critter@ attacker, int dmg)
+    {}
+
+    // called when any of bosses critters is killed
+    void bossKilled(Critter& cr, Critter@ attacker)
+    {}
+
+    void bossFinish(Critter& cr, bool deleted)
+    {}
+};

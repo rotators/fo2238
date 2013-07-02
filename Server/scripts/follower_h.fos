@@ -1,0 +1,91 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// follower_h.fos
+//
+
+#ifndef __FOLLOWER_INC__
+#define __FOLLOWER_INC__
+
+#define ATTACKPOLICY_NOONE                   (0)
+#define ATTACKPOLICY_ANY_PLAYER              (1)
+#define ATTACKPOLICY_ANY_NPC                 (2)
+#define ATTACKPOLICY_ANYONE                  (3)
+#define ATTACKPOLICY_FACTION_ENEMIES         (4)
+#define ATTACKPOLICY_FACTION_NONMEMBERS      (5)
+#define ATTACKPOLICY_FLEE                    (6)
+#define ATTACKPOLICY_TRESSPASERS             (7) // Attack non-friends visiting base or tent
+
+#define FOLLOWMODE_FOLLOW                    (0) // Follow the master around
+#define FOLLOWMODE_FOLLOW_CONTROL            (1) // Controlled by player manually via menu
+#define FOLLOWMODE_GUARD                     (2) // Stand around and wait
+#define FOLLOWMODE_MINE                      (3) // Mining, only available for slaves
+
+#define DISTANCE_SHORT                       (0)
+#define DISTANCE_MEDIUM                      (1)
+#define DISTANCE_LONG                        (2)
+
+// Respawn mechanics for companions
+#define FOLLOWER_RESPAWN_NONE                (0)    // Try find any replication, if none found, delete
+#define FOLLOWER_RESPAWN_TENT                (1)
+#define FOLLOWER_RESPAWN_HOTEL               (2)
+#define FOLLOWER_RESPAWN_FACTION_BASE        (3)
+
+// Companions only
+#define FOLLOWER_RESPAWN_TIME                (REPLICATION_MINUTE(10))
+
+#define FOLLOWER_SCRIPT_ID                   (9832)
+
+#define FOLLOWER_DLG                         (9310)
+#define FOLLOWER_DLG_DOG                     (9311)
+#define FOLLOWER_DLG_BRAHMIN                 (9312)
+#define FOLLOWER_DLG_SLAVE                   (9314)
+
+// Idle function call interval in ms
+#define FOLLOWER_WAIT_MASTER_OFFLINE         (15000) // Master is offline (null pointer)
+#define FOLLOWER_WAIT_MANUAL_MODE            (250)
+#define FOLLOWER_WAIT_NORMAL                 (75)
+
+// Types
+#define FOLLOWER_TYPE_COMPANION              (1) // All companions
+#define FOLLOWER_TYPE_SLAVE                  (2)
+#define FOLLOWER_TYPE_DOG                    (3)
+#define FOLLOWER_TYPE_BRAHMIN                (4)
+#define FOLLOWER_TYPE_MERC_HUMAN_UNARMED     (5)
+#define FOLLOWER_TYPE_MERC_HUMAN_MELEE       (6)
+#define FOLLOWER_TYPE_MERC_HUMAN_SG          (7)
+#define FOLLOWER_TYPE_MERC_HUMAN_BG          (8)
+#define FOLLOWER_TYPE_MERC_HUMAN_EW          (9)
+#define FOLLOWER_TYPE_MERC_MUTANT_UNARMED    (10)
+#define FOLLOWER_TYPE_MERC_MUTANT_BG         (11)
+#define FOLLOWER_TYPE_MERC_GHOUL_MELEE       (12)
+#define FOLLOWER_TYPE_MERC_GHOUL_SG          (13)
+#define FOLLOWER_TYPE_PIGRAT                 (14)
+#define FOLLOWER_TYPE_MOLERAT                (15)
+
+// Amount of time to wait before garbage collecting followers idling on WM
+#define FOLLOWER_WM_GARBAGE_TIME             (REAL_DAY(14))
+#ifndef __DEBUG__
+# define FOLLOWER_LOYALITY_INTERVAL          (REAL_DAY(1))
+#endif
+#ifdef __DEBUG__
+# define FOLLOWER_LOYALITY_INTERVAL          (REAL_MINUTE(5))
+#endif
+#define FOLLOWER_LOYALITY_DEATH_DROP         (Random(10, 20))     // Loyality % decrease after each respawn
+#define FOLLOWER_SLAVE_FLEE_THRESHOLD        (20)
+
+// flags for dialogs
+#define SLAVE_MALE0                          (0x00000001)
+#define SLAVE_MALE1                          (0x00000002)
+#define SLAVE_MALE2                          (0x00000004)
+#define SLAVE_FEMALE0                        (0x00000008)
+#define SLAVE_FEMALE1                        (0x00000010)
+#define SLAVE_FEMALE2                        (0x00000020)
+#define SLAVE_CHILD                          (0x00000040)
+#define SLAVE_GENERIC_MALE                   (0x00000080)
+#define SLAVE_GENERIC_FEMALE                 (0x00000100)
+
+#define FORCE_DIALOG_SLAVE_FLOATER           (14)
+#define FORCE_DIALOG_BRAHMIN_FLOATER         (8)
+#endif

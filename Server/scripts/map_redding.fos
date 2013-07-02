@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_redding.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "_town.fos"
+#include "mapdata_h.fos"
+#include "elevators_h.fos"
+
+import bool AddMilitia(Map@ map) from "town";
+import void SpawnInitMilitia(Map@ map) from "town";
+
+import void ReddingAddElevators() from "map_redding_mine";
+import void ReddingAddFloor(uint elev, uint mapid, uint entirenum) from "map_redding_mine";
+
+//
+// map.Data:
+// 2 - Bank ID, for more information check _economy.fos
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        map.SetData(MAP_DATA_BANK, BANK_REDDING);   // This map contains the Redding bank
+        map.SetData(MAP_DATA_TOWN, TOWN_REDDING);
+
+        SpawnInitMilitia(map);
+    }
+
+    ReddingAddElevators();
+    uint16 x = 0, y = 0;
+    if(map.GetEntireCoords(12, 0, x, y))
+        ReddingAddFloor(1, map.Id, 12);
+}

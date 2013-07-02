@@ -1,0 +1,189 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gui_barter.fos
+//
+
+#define __CLIENT
+
+#ifndef __CLIENT_GUI_BARTER__
+# define __CLIENT_GUI_BARTER__
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+# include "client_gui_h.fos"
+# include "client_gui_ex.fos"
+# include "sprite.fos"
+
+# define BARTER_FILTER_NONE      (-1)
+# define BARTER_FILTER_ARMOR     (0)
+# define BARTER_FILTER_WEAPON    (1)
+# define BARTER_FILTER_AMMO      (2)
+# define BARTER_FILTER_DRUG      (3)
+# define BARTER_FILTER_MISC      (4)
+
+# define BUTTON_SELECTED_NONE    (-1)
+
+// used in main body
+int   FiltersettingOwn = -1;
+int   FiltersettingOpp = -1;
+
+class ButtonGroup : Control
+{
+    // only a container
+    // child controls should implement "unclick me" on Update() by index comparison and call this.set_Selected() with own index on Click()
+    IGUIScreenOpt@ window;
+    int            selected;
+
+    ButtonGroup(IGUIScreenOpt@ window)
+    {
+        super(0, 0, 0, 0);         // This is mere a container
+        @this.window = window;
+        selected = BUTTON_SELECTED_NONE;
+    }
+
+    int Top()
+    {
+        return valid(window) ? window.GetPosY() : 0;
+    }
+
+    int Left()
+    {
+        return valid(window) ? window.GetPosX() : 0;
+    }
+};
+
+class FilterButton : Control
+{
+    ButtonGroup@ group; // parent container
+    int          index;
+    int          collection;
+    bool         selected;
+    bool         own;
+    Sprite       spriteUp;
+    Sprite       spriteDown;
+
+    FilterButton(int index, int collection, bool own, int left, int top, int right, int bottom, ButtonGroup@ group, string@ spriteup, string@ spritedown)
+    {
+        this.index = index;
+        this.collection = collection;
+        this.own = own;
+        @this.group = group;
+        super(left, top, right - left, bottom - top);
+        if(valid(spriteup) && !spriteUp.Load(spriteup, PT_ART_INTRFACE))
+            Message("Couldn't load sprite: " + spriteup);
+        if(valid(spritedown) && !spriteDown.Load(spritedown, PT_ART_INTRFACE))
+            Message("Couldn't load sprite: " + spritedown);
+        selected = false;
+    }
+
+    void Click()
+    {
+        if(!selected)
+        {
+            if(own)
+                FiltersettingOwn = index;
+            else
+                FiltersettingOpp = index;
+            // Message("clicked index "+index+" for collection "+collection);
+            group.selected = index;
+        }
+        else
+        {
+            if(own)
+                FiltersettingOwn = BARTER_FILTER_NONE;
+            else
+                FiltersettingOpp = BARTER_FILTER_NONE;
+            // Message("UNclicked index "+index+" for collection "+collection);
+            group.selected = BUTTON_SELECTED_NONE;
+        }
+        if(own)
+            SetScroll(SCROLL_BARTER, 0);
+        else
+            SetScroll(SCROLL_BARTER_OPPONENT, 0);
+        group.Update();
+        RefreshItemsCollection(collection);
+    }
+
+    void Update()
+    {
+        selected = (group.selected == index);
+    }
+
+    void Draw()
+    {
+        if(mousePressed || selected)
+        {
+            if(spriteDown.Id != 0)
+                DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+        }
+        else
+        {
+            if(spriteUp.Id != 0)
+                DrawSprite(spriteUp.Id, 0, Left(), Top(), 0);
+        }
+    }
+};
+
+class BarterShow : IGUIScreenCallbackShow
+{
+    void OnShow(int p0, int p1, int p2)
+    {
+        FiltersettingOwn = BARTER_FILTER_NONE;
+        FiltersettingOpp = BARTER_FILTER_NONE;
+        groupown.selected = BUTTON_SELECTED_NONE;
+        groupown.Update();
+        groupopp.selected = BUTTON_SELECTED_NONE;
+        groupopp.Update();
+    }
+};
+
+BarterShow@  bartershow;
+ButtonGroup@ groupown;
+ButtonGroup@ groupopp;
+
+void ParseFourInts(string& str, int& v0, int& v1, int& v2, int& v3)
+{
+    // Message("parsing four ints: "+str);
+    array<string@>@ ints = split(str, " ");
+    if(ints.length() < 4)
+        return;
+    StrToInt(ints[0], v0);
+    StrToInt(ints[1], v1);
+    StrToInt(ints[2], v2);
+    StrToInt(ints[3], v3);
+}
+
+void InitBarterFilters()
+{
+    IGUIScreenOpt@ screen = GUI_GetScreen(CLIENT_SCREEN_BARTER);
+    @groupown = ButtonGroup(screen);
+    for(uint i = 0; i < 5; i++)
+    {
+        int left = 0, top = 0, right = 0, bottom = 0;
+        // FilterButton@ button = FilterButton(i, ITEMS_BARTER, 48+28*i, 328, 70+28*i, 349, groupown, null, "pushed.png");
+        ParseFourInts(GetIfaceIniStr("BarterFilter" + i), left, top, right, bottom);
+        FilterButton@ button = FilterButton(i, ITEMS_BARTER, true, left, top, right, bottom, groupown, null, "barter_pushed" + i + ".png");
+        groupown.AddControl(button);
+    }
+
+    @groupopp = ButtonGroup(screen);
+    for(uint i = 0; i < 5; i++)
+    {
+        int left = 0, top = 0, right = 0, bottom = 0;
+        // FilterButton@ button = FilterButton(i, ITEMS_BARTER_OPPONENT, 455+28*i, 328, 477+28*i, 349, groupopp, null, "pushed.png");
+        ParseFourInts(GetIfaceIniStr("BarterFilter" + (i + 5)), left, top, right, bottom);
+        FilterButton@ button = FilterButton(i, ITEMS_BARTER_OPPONENT, false, left, top, right, bottom, groupopp, null, "barter_pushed" + i + ".png");
+        groupopp.AddControl(button);
+    }
+
+    @bartershow = @BarterShow();
+    Control@ control = @Control();
+    control.AddControl(groupown);
+    control.AddControl(groupopp);
+    screen.Control(control)
+    .SetCallbackShow(bartershow)
+    .Multiinstance(false);
+}
+#endif

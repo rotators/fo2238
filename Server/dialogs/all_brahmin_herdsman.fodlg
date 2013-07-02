@@ -1,0 +1,50 @@
+[comment]
+Generic brahmin herdsman for brahmin pens without brahmin trade:)
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 #
+6 2020 D _script brahmin_trader@d_CleanedSomeDung 0  #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+7 4010 #
+5 4020 D _item p PID_OLD_SHOVEL = 0 D _item p PID_SHOVEL = 0 D _script dialog@d_QuestTimeoutReady 0  #
+0 4030 @
+5 5000 None 0 #
+7 5010 R _item p PID_OLD_SHOVEL + 1 R _script dialog@r_QuestTimeout 1 24 @
+6 6000 None 0 #
+0 6010 R _script brahmin_trader@r_CleaningPayment 1 5 @
+7 7000 None 0 &
+
+[engl]
+{100}{}{Brahmin herdsman}
+{200}{}{You see a dirty herdsman.}
+{210}{}{You see a filthy man. Looks like he's had more experience with brahmin than most people.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Whaddya want? Can't you see I'm working here?@@No time for chit-chat, you wanted something or not?}
+{2010}{}{Hey there.}
+{2020}{}{I've shovelled some of your shit. Break out the caps.}
+{2030}{}{[Leave]}
+{3000}{}{Hey there... what?}
+{3010}{}{I've noticed that there's a lot of, uh, shit around. Do you want me to help you out with that?}
+{3020}{}{Nothing, just passing through.}
+{4000}{}{Shovel my shit? I, uh... I guess you could. Don't know why you'd want to, though. I s'pose I could make it worth your while.}
+{4010}{}{Sure thing, let's get started.}
+{4020}{}{If you think I'm going into that field and grabbing fistfuls of brahmin shit, you have another thing coming.}
+{4030}{}{I think I'll pass...}
+{5000}{}{Oh! A shovel. Right. Okay, here you go. Come back to me when you're done, and I'll sort out your payment.}
+{5010}{}{Great. Time to turn my life around.}
+{6000}{}{Well, you made that damn pen sparkle. Here's your caps, stranger.}
+{6010}{}{Thanks. See you later. I love my life.}
+{7000}{}{Be careful inside the pen, the brahmin are domesticated but they are still unpredictable animals.}
+

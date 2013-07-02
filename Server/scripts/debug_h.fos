@@ -1,0 +1,36 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// debug_h.fos
+//
+
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
+
+// debug.fos distinguishes __DEBUG__ and non-__DEBUG__ mode
+// messages with level DEBUG_ERROR or above may be broadcasted
+// in __DEBUG__, broadcasting is done for all logged players, otherwise only for authenticated
+
+// macros and some "hardcoded" behaviours
+
+//      macro                   __DEBUG__ behaviour               non-__DEBUG__ behaviour
+
+#define DEBUG_MESSAGE     0  //                                    never show
+#define DEBUG_WARNING     10 //  always show
+#define DEBUG_ERROR       20 //  always show* and broadcast        always show*
+#define DEBUG_CRITICAL    30 //  always show* and broadcast        always show* and broadcast
+#define DEBUG_FATAL       40 //  always show* and broadcast        always show* and broadcast
+
+// * - callstack is printed in the log
+// for a level between the macroized ones, the behaviour is the same as for
+// the highest macroized not greater than the level
+
+/////////////////////////////////////
+
+#ifndef __DEBUG_MODULE__
+import void WLog(string& type, string& message) from "debug";   // level = DEBUG_MESSAGE
+import void WLog(string& type, string& message, int level) from "debug";
+import void InitDebug() from "debug";
+#endif // __DEBUG_MODULE__
+#endif // __DEBUG_H__

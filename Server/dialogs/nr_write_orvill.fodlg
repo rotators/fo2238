@@ -1,0 +1,115 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _param p ST_CHARISMA > 99 #
+12 1020 D _var p nr_wright_boozequest > 0 #
+8 1030 #
+2 1040 D _var p name_mem_npc_player = 0 @
+2 2000 None 0 #
+7 2010 D _script dialog@d_QuestTimeoutReady 0  R _var p name_mem_npc_player = 1 #
+5 2020 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+65507 4010 #
+65507 4020 @
+5 5000 None 0 #
+4 5010 #
+0 5020 @
+6 6000 None 0 #
+65507 6010 #
+65507 6020 @
+7 7000 None 0 #
+9 7010 @
+8 8000 None 0 #
+9 8010 D _script dialog@d_QuestTimeoutReady 0  #
+17 8020 D _script dialog@d_QuestTimeoutNotReady 0  #
+0 8030 @
+9 9000 None 0 #
+10 9010 R _var p nr_wright_boozequest = 1 R _script dialog@r_QuestTimeout 1 20 #
+0 9020 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+13 12010 D _var p nr_wright_boozequest = 4 #
+0 12020 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+15 14010 @
+15 15000 None 0 #
+16 15010 R _var p nr_wright_boozequest = 0 R _script dialog@r_QuestTimeout 1 168 @
+16 16000 None 0 #
+0 16010 D _param p ST_CHARISMA > 8 D _item p PID_SAWED_OFF_SHOTGUN < 1 R _item p PID_SAWED_OFF_SHOTGUN + 1 R _item p PID_SHOTGUN_SHELLS + 12 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 #
+0 16020 D _param p ST_CHARISMA < 9 D _param p ST_CHARISMA > 5 D _item p PID_10MM_PISTOL < 1 R _item p PID_10MM_PISTOL + 1 R _item p PID_10MM_JHP + 24 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 #
+0 16030 D _param p ST_CHARISMA < 6 D _item p PID_9MM_MAUSER < 1 R _item p PID_9MM_AMMO + 10 R _item p PID_9MM_MAUSER + 1 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 #
+2 16040 D _param p ST_CHARISMA > 8 D _item p PID_SAWED_OFF_SHOTGUN > 0 R _item p PID_SHOTGUN_SHELLS + 12 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 #
+2 16050 D _param p ST_CHARISMA < 9 D _param p ST_CHARISMA > 5 D _item p PID_10MM_PISTOL > 0 R _item p PID_10MM_JHP + 24 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 #
+2 16060 D _param p ST_CHARISMA < 6 D _item p PID_9MM_MAUSER > 0 R _item p PID_9MM_AMMO + 10 R _param p ST_EXPERIENCE + 400 R _script dialog@r_AddMoney 1 95 @
+17 17000 None 0 &
+
+[engl]
+{100}{}{Orville Wright}
+{200}{}{You see Orville Wright.}
+{210}{}{You see a well-dressed gentleman. He looks perpetually pissed off. That's probably why his brown hair is graying around the edges.}
+{210}{}{You see a grumbling Orville Wright. He looks like he is about to pull out what remains of his hair.}
+{210}{}{You see a grumbling Orville Wright. He looks upset and is sighing a lot.}
+{1000}{}{Predialogue installations}
+{1010}{}{Ugly}
+{1020}{}{Quest assigned }
+{1030}{}{Known}
+{1040}{}{2}
+{2000}{}{(Wrinkles cover this old man's face...it looks like any expression other than a scowl is foreign to him. Only a few brown hairs are left in his thick gray hair.) Start talking. Who are you, and what do you want?}
+{2010}{}{I'm a simple traveler…looking for work.}
+{2020}{}{Actually, I seem to have entered the wrong room. I'll be leaving now.}
+{3000}{}{(Scowls.) Get the fuck out of here, y'ugly circus freak. Your disgusting ass comes back here and scares my family like that again, I'll have you shot, you hear me?}
+{3010}{}{[Shamble off]}
+{4000}{}{(Mr. Wright's face breaks into a snarl and he starts shouting.) Boys! We got a visitor lookin' for a plot of land in Golgotha! Get in here!}
+{4010}{}{Whoa, now hold on…!}
+{4020}{}{They won't get in here in time to save your life...}
+{5000}{}{Yeah, maybe you BETTER leave, and quickly. If you're still here in five seconds, I'll have you shot, you hear me?}
+{5010}{}{Fuck you, old man.}
+{5020}{}{I'm going.}
+{6000}{}{(When he sees you, Mr. Wright's face breaks into a snarl and he starts shouting.) Boys! We got a visitor lookin' for a plot of land in Golgotha! Get in here!}
+{6010}{}{You'll be dead before your little boys can get here.}
+{6020}{}{Excuse me. Me and the exit have an appointment.}
+{7000}{}{No SHIT? (Sneers.) Well, pleased to meet you, "simple traveler." Glad you stopped by, damn neighborly of you. (Sneer crumbles into a frown as he scopes you out.) Looking for work in family Wright, huh?}
+{7010}{}{Yes, I --}
+{8000}{}{You again? What do you want?}
+{8010}{}{Got any work for me?}
+{8020}{}{Got any work for me?}
+{8030}{}{Nothing, Mister Wright. Goodbye.}
+{9000}{}{(Studies you for a moment.) All right. (Scowl fades.) I got one job. You just got to talk to some of my clients. You up to it?}
+{9010}{}{Sure thing.}
+{9020}{}{Forget it. Find another messenger.}
+{10000}{}{(Nods, smiles.) Now we're talkin'. Need you to keep an eye on business. Go round all the local watering holes, check my contacts, find out how business is doing. I want to know how much to charge those bastards.}
+{10010}{}{Contacts? Like who?}
+{11000}{}{Bill down at the Shark Club, Pretty Boy LLoyd over at the Salvatore place... heck, Kitty at the Cat's Paw can always use a little for her customers. I figure that should do it. That's the Shark, the Salvatore, and the 'Paw. IN THAT ORDER, y'hear. I got a good system, and I don't want you screwing it up. Think you can handle that?}
+{11010}{}{Bill at the Shark, Lloyd at the Salvatore's, Kitty at the 'Paw. In that order. Got it.}
+{12000}{}{(Looks up) Well? How'd it go? What'd they say?}
+{12010}{}{Well, Bill sends his regards. Says the Shark's been having trouble keeping up with demand.}
+{12020}{}{Well, sorry, I didn't get around to it just yet. I'd better be going.}
+{13000}{}{(Grins) He did? Hah! That old bastard. Perfect. Perfect. Well, how's ol' Lloyd doing? He have any info for ya?}
+{13010}{}{He says the Salvatores ain't doing any better than usual.}
+{14000}{}{(Grin fades into a scowl) Figures. Folks don't like drinkin' in no mobster bar, and I don't blame 'em one bit. Could've used the chips, though. What about Kitty? You better have some damn good news for me.}
+{14010}{}{Kitty, uh..}
+{15000}{}{(Orville glares so hard it feels like he's searing a hole in your face)}
+{15010}{}{She, uh... Kitty said she only wanted a couple bottles. For, uh, personal use.}
+{16000}{}{(He crumbles) Shit. I was hoping business would pick up. (Sighs) We'll live. The Wrights have made it through harder times. Let's settle accounts. Here's a little something for your trouble. Come back anytime, I always need someone to keep an eye on those bastards.}
+{16010}{}{Thank you, Mister Wright. You're a gentleman.}
+{16020}{}{Thank you, Mister Wright.}
+{16030}{}{Hey, thanks.}
+{16040}{}{Thank you, Mister Wright. You're a gentleman.}
+{16050}{}{Thank you, Mister Wright.}
+{16060}{}{Hey, thanks.}
+{17000}{}{Always willing to do some errand, aren't you? Not this time, shove off.}
+{100000004}{}{I have the best Iguana in the WHOOOOOLE Hub! }
+

@@ -1,0 +1,165 @@
+[comment]
+PROJECT: The Wise Old Man's Teachings.
+
+NPC: Henry, the worried farmer.
+AVATAR: A poor farmer.
+LOCATION: The Hub.
+
+SUBQUEST: Henry's decision: The good farmer Henry witness a crime, the murderers were some 
+people related to the FLC Co.They notice his presence and later  killed his 17 yo son as a 
+warranty to prevent him to talk about what he saw. They used a gun that belonged to Henry 
+to kill his son, and because of that the local police is going to jail him leaving the rest 
+of his family unprotected. 
+By taking one of Christopher's Karma Quests, the player will have 4 choices to make, but
+ only 1 is the right one per quest. 
+
+NOTE: By assuming Henry's uncommited crime, the player will be hated in several towns
+his town reputations will globaly decrease a lot to make this effect happend. This is maybe a
+risky trick, the player will have to return to speak with Chistopher while being vilified all way long.
+Thats the lesson, to accept the drawbacks of helping to became a more complete good guy.
+Then Christopher restore his reputation if he show the old man that he learned the lesson.
+If you guys think this is to risky, to easy for bad karma seekers to obtain what they wan't,
+we could add a warranty, we could add a result action that will really penalize the player until he 
+came back to Chistopher.Its up to you to decide. 
+
+Variable: q_hub_henry_quest
+Values:
+(-2): Player tried to murder him 
+(-1):Player made him suicide
+(0): Quest not picked up yet
+(1): Player took his guilt (assumed the crime)  (THIS COMPLETES THE GOOD KARMA QUEST)
+(2): Player encouraged him avenge his son, causing several deaths, and leaving his family
+ unprotected. (THIS COMPLETES THE BAD KARMA QUEST)
+
+TO DO:
+Recheck quests logic.
+Recheck spelling.
+Set a propper avatar for the NPC.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+620 1010 D _var p name_mem_npc_player < 0 #
+620 1020 D _param p ST_INTELLECT < 4 #
+620 1030 D _param p ST_CHARISMA > 99 #
+10 1040 D _var p name_mem_npc_player = 0 D _var p q_redd_christopher_good_karma = 1 D _item p PID_10MM_PISTOL > 0 #
+10 1050 D _var p name_mem_npc_player = 0 D _var p q_redd_christopher_bad_karma = 1 D _item p PID_10MM_PISTOL > 0 #
+30 1060 D _var p q_redd_christopher_good_karma = 1 D _var p q_hub_henry_quest = 0 D _item p PID_10MM_PISTOL > 0 #
+30 1070 D _var p q_redd_christopher_bad_karma = 1 D _var p q_hub_henry_quest = 0 D _item p PID_10MM_PISTOL > 0 #
+310 1080 D _var p q_hub_henry_quest = 2 #
+210 1090 D _var p q_hub_henry_quest = 1 #
+410 1100 D _var p q_hub_henry_quest = -1 #
+510 1110 D _var p q_hub_henry_quest = -2 #
+620 1120 @
+10 2000 None 0 #
+620 2010 #
+20 2020 R _var p name_mem_npc_player = 1 #
+620 2030 #
+65507 2040 R _var p name_mem_npc_player = -1 #
+0 2050 @
+20 3000 None 0 #
+30 3010 #
+65507 3020 R _var p name_mem_npc_player = -1 #
+0 3030 @
+30 4000 None 0 #
+40 4010 #
+0 4020 @
+40 5000 None 0 #
+100 5010 #
+0 5020 @
+100 6000 None 0 #
+200 6010 #
+300 6020 #
+400 6030 #
+500 6040 #
+0 6050 @
+199 7000 None 0 @
+200 8000 None 0 #
+0 8010 R _var p q_hub_henry_quest = 1 R _param p REPUTATION_NCR - 2500 R _param p REPUTATION_VAULT_CITY - 2500 R _param p REPUTATION_NCR_RANGERS - 2500 R _param p REPUTATION_REGULATORS - 2500 R _param p REPUTATION_CHILDREN - 2500 R _param p REPUTATION_KLAMATH - 2500 R _param p REPUTATION_MODOC - 2500 R _param p REPUTATION_GECKO - 2500 R _param p REPUTATION_JUNKTOWN - 2500 R _param p REPUTATION_HUB - 2500 R _param p REPUTATION_LA - 2500 #
+500 8020 @
+210 9000 None 0 @
+299 10000 None 0 @
+300 11000 None 0 #
+0 11010 D _item p PID_10MM_PISTOL } 1 R _var p q_hub_henry_quest = 2 R _item p PID_10MM_PISTOL - 1 #
+0 11020 @
+310 12000 None 0 @
+399 13000 None 0 @
+400 14000 None 0 #
+0 14010 D _item p PID_10MM_PISTOL } 1 R _var p q_hub_henry_quest = -1 R _item p PID_10MM_PISTOL - 1 #
+0 14020 @
+410 15000 None 0 @
+499 16000 None 0 @
+500 17000 None 0 #
+65507 17010 R _var p q_hub_henry_quest = -2 #
+0 17020 @
+510 18000 None 0 @
+600 19000 None 0 @
+610 20000 None 0 @
+620 21000 None 0 &
+
+[engl]
+{100}{}{Henry}
+{200}{}{You see a worried farmer.}
+{210}{}{You're looking at Henry, a very worried farmer.}
+{1000}{}{Predialogue installations}
+{1010}{}{Rejected}
+{1020}{}{Not Intelligent}
+{1030}{}{Not charsimatic}
+{1040}{}{Unknown ( GOOD_KARMA_QUEST picked)}
+{1050}{}{Unknown ( BAD_KARMA_QUEST picked)}
+{1060}{}{No option chosed ( GOOD_KARMA_QUEST picked)}
+{1070}{}{No option chosed ( BAD_KARMA_QUEST picked)}
+{1080}{}{Option chosed: MakeHimAvenge}
+{1090}{}{Option chosed: TakeHisGuilt}
+{1100}{}{Option chosed: MakeHimSuicide}
+{1110}{}{Option chosed: TryMurderHim}
+{1120}{}{Default}
+{2000}{}{I have my own problems, can't you see? I can't talk now, Leave me alone!}
+{2010}{}{I just want to ask you about the weather in this town.}
+{2020}{}{Right, you can't... Unless this means something to you. [You show him the 10mm pistol.]}
+{2030}{}{Wait, I just want to barter with you.}
+{2040}{}{There is a practical way deal with your troubles... [You reach for your weapon.]}
+{2050}{}{I'm sorry, I must go now. }
+{3000}{}{It is very bold of you to come here making jokes, two days after you killed him... [He starts to shout]] You know what THAT means? Now you're DEAD! Son of a ...}
+{3010}{}{Waaaiiit! What people? Who was killed? I was sent here, without knowing the situation. Now I suppose the gun was given to me to get your attention. Please wait!}
+{3020}{}{Hm... Yeah, yeah! We killed him and... uh... and now we've come for you! YOU are dead! [You start to fight.]}
+{3030}{}{I'm sorry, I must go now. }
+{4000}{}{They sent you? What do they want from me now? I swore to them I wouldn't say a word about what I witnessed that day!  They didn't believe me, so they figured my sons life would serve them as a guarantee. He was only seventeen years old, for christ's sake!}
+{4010}{}{I'm not quite sure why they sent me right now. Why did you react that way when I showed you the gun? What did you see that day?}
+{4020}{}{I'm sorry, I must go now. }
+{5000}{}{He said "You don't show us respect, you get hurt" then he... [Henry trails off]. All I'm going to tell you about, is that the "Friendly Lending Company" is not as friendly as it may seem. The gun...well, it was a gift from my father, and now is the weapon they used to murder my son.}
+{5010}{}{You said you're in trouble...what's happening now, Henry? What's wrong?}
+{5020}{}{Im sorry, I must go now. }
+{6000}{}{My gun, my guilt. The police charged me for my son's murder, and I told them that I don't have the gun. They gave me a few days to "find it" otherwise they would jail me. Who is going to feed the rest of my family now? Tell me! [He begins to cry.]}
+{6010}{}{You will. I have a plan. "My gun, my guilt", remember? You will say to them "the truth". That I killed him, they will hunt me because I can handle it. From now on, your family will need you more than ever, don't deny this to them. They deserve something better.}
+{6020}{}{ Incredible. Your son should be cursing you from his grave, You never loved him, did you? His death didn't hurt you enough, otherwise you would be planning vengeance instead of crying like a baby.}
+{6030}{}{Mmm[ you think a bit]... Nobody works for us and quits that easy. He led us to you, the nosy witness. What does it feels being deceived by your own blood? You are still on time Henry. Why don't you kill yourself, before the cops catch you.}
+{6040}{}{Dont worry, I'm sure they will somehow manage without you. [You take the pistol and aim at him.]  Better to die free, than live imprisoned the rest of a pitiful life, don't you think?}
+{6050}{}{Im sorry, I must go now. }
+{7000}{}{----------------------------------------------[ OPTION:TakeHisGuilt ]----------------------------------------------}
+{8000}{}{Maybe this is my only way out, thank you. Be aware you are now going to be wanted in many towns. My family and I will always remember you, and what you've done here. Keep the gun, my son would like it that way. Hide yourself, and be safe.}
+{8010}{}{Thank you, I will be fine. Take care Henry.}
+{8020}{}{No, forget it Henry. I can't do it. I must go. Bye}
+{9000}{}{Run my friend!@@They are coming!@@Thank you@@We really appreciate what you did.@@We will never forget you. }
+{10000}{}{----------------------------------------------[ OPTION:MakeHimAvenge ]----------------------------------------------}
+{11000}{}{I always loved him, he was my first son! You are right, they deserve to die as he did. My family will be safer without them stalking around... They must pay for what they did to us!}
+{11010}{}{"As your son did" you say? [You give him the gun] Avenge him, using the same gun with which he was murdered. Go Henry, make them pay, go!}
+{11020}{}{No, forget it. I cannot do this, I must leave.}
+{12000}{}{As my son did...@@They will pay, you'll see.@@Soon my friend, soon...@@Blood for his blood.@@With the same gun...the same gun...@@Ill kill them all!@@Dieeee cowards! Dieeeeee!}
+{13000}{}{----------------------------------------------[ OPTION:MakeHimSuicide ]----------------------------------------------}
+{14000}{}{I taught my children to be good, honest men. I never thought Robert would work for scum like you. Robert... My older son... How could he! [He starts to cry] This is terrible! How can a man stand such a betrayal... Nothing matters now. [He cries more and more]}
+{14010}{}{You are still on time Henry, take the gun... c'mon... take it... [You slowly give him the gun] You wont regret it. As you said...Nothing matters now...nothing. [You leave him, he might commit suicide soon.]}
+{14020}{}{No, forget it. I can't do this, see ya.}
+{15000}{}{Nothing matters now...nothing...@@I cant stand it...@@Too much troubles, I must rest...@@Yes...give it to me...yes...@@I will do it, I will@@I'm still on time...}
+{16000}{}{----------------------------------------------[ OPTION:TryMurderHim ]----------------------------------------------}
+{17000}{}{No! No wait, you're wrong! You can't do this to me! Don't...}
+{17010}{}{I'm helping you. Can't you see this is the only way? [You look at the pistol.] The gun that met the son, now will meet the father. [He tries to resist, and you attack him.] }
+{17020}{}{No, forget it. I cannot do this. I must go now.}
+{18000}{}{Don't do it!@@Please don't@@Don't hurt me again!@@Drop the gun!@@Leave me in peace!@@Don't hurt me any more!}
+{19000}{}{----------------------------------------------[ REJECTIONS ]----------------------------------------------}
+{20000}{}{Oh my god!@@What am I gonna do now!@@Why is this happening to me?@@Can you hear me God?@@Why, my son?@@What Im supposed to do now?}
+{21000}{}{Bye!@@Leave me alone!@@Piss off!@@Can't you see I'm in trouble!@@Why him?..Why?@@I'm so sad.@@He was an innocent child!@@You can't help me...}
+

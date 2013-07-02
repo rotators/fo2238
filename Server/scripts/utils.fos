@@ -1,0 +1,3283 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// utils.fos
+//
+
+// module containing _utils functions
+
+#include "_basetypes.fos"
+#include "_colors.fos"
+#include "_defines.fos"
+#include "_scripts.fos"
+#include "buffer_h.fos"
+#include "debug_h.fos"
+#include "entire.fos"
+#include "lexems_h.fos"
+#include "logging_h.fos"
+#include "mapdata_h.fos"
+#include "npc_common_h.fos"
+#include "utils_for_array.fos"
+
+import void     LogCommand(Critter&, const string&) from "backend";
+import void     DriveToGlobal(Critter& cr, Item& car, bool requestGroup) from "car";
+import int      stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+import void     DropDrugEffects(Critter& cr) from "drugs";
+import Critter@ GetMaster(Critter& follower) from "follower";
+import void     DropRadiation(Critter& cr) from "radiation";
+import uint     GetDaysInMonth(uint16 year, uint16 month) from "time";
+
+#define __UTILS_MODULE__
+#include "utils_h.fos"
+
+/**
+ * \~english @defgroup Utils Utils
+ * Various utility functions to make life easier when working with FO2238.
+ * Include utils_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+
+/*@{*/
+
+/**
+ * \~english @name Critter related
+ *
+ * A list of functions that are more or less related to manipulating critters.
+ *
+ * \~ @weight 500
+ */
+// @{
+
+/**
+ * AddNpc that is backwards compatible with old AddNpc function.
+ *
+ * @param map Map handle where NPC should be spawned.
+ * @param pid PID of NPC to spawn.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param dir direction of NPC, see direction defines in _defines.fos
+ * @param dialogId dialog id, see dialogs.lst or _dialogs.fos
+ * @param script script module and init function to use, for example: "guard@critter_init", means use the function critter_init in script guard.fos
+ * @param aiPack AI pack to assign to NPC. See _ai.fos
+ * @param bagId Bag to assign to NPC. See BAGS.txt
+ * @param teamId Assign Faction/Team.
+ * @param isMob Deprecated parameter, used only in some really old code. Set it to false.
+ * @param level Level of spawned NPC.
+ * @return Handle to the spawned NPC, if AddNpc failed, it's null.
+ */
+Critter@ AddNpc(Map@ map, uint16 pid, uint16 x, uint16 y, uint8 dir, uint dialogId, string& script, uint aiPack, uint bagId, uint teamId, bool isMob, uint level)
+{
+    #define PUSHIFNZ    # (_var, _param) if((_var) != 0) { params.insertLast(_param); params.insertLast(_var); }
+    if(!valid(map))
+    {
+        Log("Can't add NPC, map is invalid.");
+        return null;
+    }
+
+    array<int> params;
+    PUSHIFNZ(level, ST_LEVEL);
+    PUSHIFNZ(dialogId, ST_DIALOG_ID);
+    PUSHIFNZ(aiPack, ST_AI_ID);
+    PUSHIFNZ(bagId, ST_BAG_ID);
+    PUSHIFNZ(teamId, ST_TEAM_ID);
+
+    Critter@ npc = map.AddNpc(pid, x, y, dir, params, null, script);
+    if(valid(npc))
+        return npc;
+    return null;
+}
+
+/**
+ * AddNpc that is backwards compatible with old AddNpc function and provide additional faction info setting.
+ *
+ * @param map Map handle where NPC should be spawned.
+ * @param pid PID of NPC to spawn.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param dir direction of NPC, see direction defines in _defines.fos
+ * @param dialogId dialog id, see dialogs.lst or _dialogs.fos
+ * @param script script module and init function to use, for example: "guard@critter_init", means use the function critter_init in script guard.fos
+ * @param aiPack AI pack to assign to NPC. See _ai.fos
+ * @param bagId Bag to assign to NPC. See BAGS.txt
+ * @param teamId Assign Faction/Team.
+ * @param factionRank Assign Faction/Team rank.
+ * @param factionMode Assign Faction/Team mode.
+ * @param isMob Deprecated parameter, used only in some really old code. Set it to false.
+ * @param level Level of spawned NPC.
+ * @return Handle to the spawned NPC, if AddNpc failed, it's null.
+ */
+Critter@ AddNpc(Map@ map, uint16 pid, uint16 x, uint16 y, uint8 dir, uint dialogId, string& script, uint aiPack, uint bagId, uint teamId, uint factionRank, uint factionMode, bool isMob, uint level)
+{
+    if(!valid(map))
+    {
+        Log("Can't add NPC, map is invalid.");
+        return null;
+    }
+
+    array<int> params;
+    PUSHIFNZ(level, ST_LEVEL);
+    PUSHIFNZ(dialogId, ST_DIALOG_ID);
+    PUSHIFNZ(aiPack, ST_AI_ID);
+    PUSHIFNZ(bagId, ST_BAG_ID);
+    PUSHIFNZ(teamId, ST_TEAM_ID);
+    PUSHIFNZ(factionRank, ST_FACTION_RANK);
+    PUSHIFNZ(factionMode, ST_FACTION_MODE);
+
+    Critter@ npc = map.AddNpc(pid, x, y, dir, params, null, script);
+    if(valid(npc))
+        return npc;
+    return null;
+}
+
+/**
+ * AddNpc that is backwards compatible with old AddNpc function and override default parameters.
+ *
+ * @param map Map handle where NPC should be spawned.
+ * @param pid PID of NPC to spawn.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param dir direction of NPC, see direction defines in _defines.fos
+ * @param params override for default parameters
+ * @param dialogId dialog id, see dialogs.lst or _dialogs.fos
+ * @param script script module and init function to use, for example: "guard@critter_init", means use the function critter_init in script guard.fos
+ * @param aiPack AI pack to assign to NPC. See _ai.fos
+ * @param bagId Bag to assign to NPC. See BAGS.txt
+ * @param teamId Assign Faction/Team.
+ * @param isMob Deprecated parameter, used only in some really old code. Set it to false.
+ * @param level Level of spawned NPC.
+ * @return Handle to the spawned NPC, if AddNpc failed, it's null.
+ */
+Critter@ AddNpc(Map@ map, uint16 pid, uint16 x, uint16 y, uint8 dir, array<int> params, uint dialogId, string& script, uint aiPack, uint bagId, uint teamId, bool isMob, uint level)
+{
+    if(!valid(map))
+    {
+        Log("Can't add NPC, map is invalid.");
+        return null;
+    }
+
+    PUSHIFNZ(level, ST_LEVEL);
+    PUSHIFNZ(dialogId, ST_DIALOG_ID);
+    PUSHIFNZ(aiPack, ST_AI_ID);
+    PUSHIFNZ(bagId, ST_BAG_ID);
+    PUSHIFNZ(teamId, ST_TEAM_ID);
+
+    Critter@ npc = map.AddNpc(pid, x, y, dir, params, null, script);
+    if(valid(npc))
+        return npc;
+
+    Log("AddNpc fail: pid=" + pid + ", x=" + x + ", y=" + y + ", dir=" + dir + ", dialogId=" + dialogId + ", script=" + script);   // dump some info when AddNpc fails.
+    return null;
+}
+
+/**
+ * AddNpc that is backwards compatible with old AddNpc function with additional faction data and override default parameters.
+ *
+ * @param map Map handle where NPC should be spawned.
+ * @param pid PID of NPC to spawn.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param dir direction of NPC, see direction defines in _defines.fos
+ * @param params override for default parameters
+ * @param dialogId dialog id, see dialogs.lst or _dialogs.fos
+ * @param script script module and init function to use, for example: "guard@critter_init", means use the function critter_init in script guard.fos
+ * @param aiPack AI pack to assign to NPC. See _ai.fos
+ * @param bagId Bag to assign to NPC. See BAGS.txt
+ * @param teamId Assign Faction/Team.
+ * @param isMob Deprecated parameter, used only in some really old code. Set it to false.
+ * @param level Level of spawned NPC.
+ * @return Handle to the spawned NPC, if AddNpc failed, it's null.
+ */
+Critter@ AddNpc(Map@ map, uint16 pid, uint16 x, uint16 y, uint8 dir, array<int> params, uint dialogId, string& script, uint aiPack, uint bagId, uint teamId, uint factionRank, uint factionMode, bool isMob, uint level)
+{
+    if(!valid(map))
+    {
+        Log("Can't add NPC, map is invalid.");
+        return null;
+    }
+
+    PUSHIFNZ(level, ST_LEVEL);
+    PUSHIFNZ(dialogId, ST_DIALOG_ID);
+    PUSHIFNZ(aiPack, ST_AI_ID);
+    PUSHIFNZ(bagId, ST_BAG_ID);
+    PUSHIFNZ(teamId, ST_TEAM_ID);
+    PUSHIFNZ(factionRank, ST_FACTION_RANK);
+    PUSHIFNZ(factionMode, ST_FACTION_MODE);
+
+    Critter@ npc = map.AddNpc(pid, x, y, dir, params, null, script);
+    if(valid(npc))
+        return npc;
+
+    Log("AddNpc fail: pid=" + pid + ", x=" + x + ", y=" + y + ", dir=" + dir + ", dialogId=" + dialogId + ", script=" + script);   // dump some info when AddNpc fails.
+    return null;
+}
+
+/**
+ * Retrieve string with some critter information. Suitable for usage in logging.
+ */
+string GetCritterInfo(Critter& cr)
+{
+    return cr.Name + "(" + cr.Id + ")" + "(" + cr.GetMapId() + ")" + ((cr.IsPlayer() && cr.GetAccess() > ACCESS_CLIENT) ? ("(" + GetAuthString(cr) + ")") : "");
+}
+
+/**
+ * Add score to a critter
+ * @param cr Critter handle.
+ * @param score Score index.
+ * @param points How many points to add.
+ */
+void AddScore(Critter@ cr, uint score, uint points)
+{
+    if(cr.IsPlayer() && cr.GetAccess() == ACCESS_CLIENT)
+        cr.AddScore(score, points);
+}
+
+bool ReloadWeapon(Critter& cr)
+{
+    Item@ weapon = _CritGetItemHand(cr);
+    if(!valid(weapon) || weapon.GetType() != ITEM_TYPE_WEAPON)
+        return false;
+
+    int skillNum = GetProtoItem(weapon.GetProtoId()).Weapon_Skill_0;
+    if(skillNum == SK_THROWING)
+        return false;
+
+    Item@ ammo = cr.GetItem(weapon.AmmoPid, -1);
+    if(!valid(ammo))
+        return false;
+
+    uint count = MIN(ammo.GetCount(), weapon.Proto.Weapon_MaxAmmoCount - weapon.AmmoCount);
+    if(count > 0)
+    {
+        weapon.AmmoCount += count;
+        weapon.AmmoPid = ammo.GetProtoId();
+        _SubItem(ammo, count);
+        cr.Action(ACTION_RELOAD_WEAPON, 3, weapon);
+        weapon.Update();
+    }
+    return true;
+}
+
+/**
+ * Retrieve radio that critter wears in a slot.
+ * @param cr Critter handle.
+ * @return Item handle to found radio, or null if none is carried in slots.
+ */
+Item@ GetRadio(Critter& cr)
+{
+    return GetEquippedItem(cr, PID_RADIO);
+}
+
+/**
+ * Retrieve tool that critter wears in a slot.
+ * @param cr Critter handle.
+ * @return Item handle to found tool, or null if none is carried in slots.
+ */
+Item@ GetRepairTool(Critter& cr)
+{
+    uint[] Pids = { PID_MULTI_TOOL, PID_SUPER_TOOL_KIT };
+    return GetEquippedItem(cr, Pids);
+}
+
+/**
+ * Retrieve an item of specified type (any weapon for example) that critter wears in a slot.
+ * @param cr Critter handle.
+ * @param ItemType Item type to search for.
+ * @return Item handle to found item, or null if none is carried in slots.
+ */
+Item@ GetEquippedItemByType(Critter& cr, uint ItemType)
+{
+    Item@ hand1 = _CritGetItemHand(cr);
+    Item@ hand2 = _CritGetItemHandExt(cr);
+    if(valid(hand1) && (hand1.GetType() == ItemType))
+        return hand1;
+    if(valid(hand2) && (hand2.GetType() == ItemType))
+        return hand2;
+    return null;
+}
+
+/**
+ * Retrieve a specific item that critter wears in a slot.
+ * @param cr Critter handle.
+ * @param Pid Item PID to search for.
+ * @return Item handle to found item, or null if none is carried in slots.
+ */
+Item@ GetEquippedItem(Critter& cr, uint Pid)
+{
+    Item@ hand1 = _CritGetItemHand(cr);
+    Item@ hand2 = _CritGetItemHandExt(cr);
+    if(valid(hand1) && (hand1.GetProtoId() == Pid))
+        return hand1;
+    if(valid(hand2) && (hand2.GetProtoId() == Pid))
+        return hand2;
+    return null;
+}
+
+/**
+ * Retrieve any item in list that critter wears in a slot.
+ * @param cr Critter handle.
+ * @param Pids List of item PIDs to search for.
+ * @return Item handle to found item, or null if none is carried in slots.
+ */
+Item@ GetEquippedItem(Critter& cr, array<uint>& Pids)
+{
+    Item@ hand1 = _CritGetItemHand(cr);
+    Item@ hand2 = _CritGetItemHandExt(cr);
+    if(valid(hand1))
+    {
+        for(uint i = 0; i < Pids.length(); i++)
+            if(hand1.GetProtoId() == Pids[i])
+                return hand1;
+    }
+    if(valid(hand2))
+    {
+        for(uint i = 0; i < Pids.length(); i++)
+            if(hand2.GetProtoId() == Pids[i])
+                return hand2;
+    }
+    return null;
+}
+
+/**
+ * Gives string of player condition.
+ * @param cr Handle to critter.
+ * @return If not valid critter or condition couldn't be converted, returns "", else it returns condition in string form.
+ */
+string GetConditionOfCritter(Critter@ cr)
+{
+    if(!valid(cr))
+        return "";
+
+    switch(cr.Cond)
+    {
+    case COND_LIFE:
+        return "COND_LIFE";
+    case COND_KNOCKOUT:
+        return "COND_KNOCKOUT";
+    case COND_DEAD:
+        return "COND_DEAD";
+    case COND_NOT_IN_GAME:
+        return "COND_NOT_IN_GAME";
+    }
+    return "";
+}
+
+/**
+ * Does a skill roll.
+ * @param cr Handle to critter.
+ * @param skill Skill number
+ * @param bonus Skill bonus
+ * @return True is passed, false otherwise
+ */
+bool SkillRoll(Critter@ cr, int skill, int bonus)
+{
+    if(!valid(cr))
+        return false;
+    int sk = cr.Skill[skill] + bonus;
+    sk = CLAMP(sk, 5, 95);
+    return Random(1, 100) <= sk;
+}
+
+/**
+ * Useful wrapper for making checks if a proper skill or item was applied in a given context.
+ * @param cr Critter reference.
+ * @param skill Skill number to be checked
+ * @param skillused Skill that is supposed to be used - if used item implied skill or used skill do not match, the function fails
+ * @param item Item handle, might imply used skill, e.g. Lockpicks imply SK_LOCKPICK
+ * @param bonus Skill bonus
+ * @return SKILL_CHECK_DOES_NOTHING if the skill used and wanted/implied by item do not match. Otherwise, result of the skill roll, either SKILL_CHECK_FAILURE or SKILL_CHECK_SUCCESS
+ */
+int SkillCheck(Critter& cr, int skill, int skillused, Item@ item, int bonus)
+{
+    if(!valid(cr))
+        return SKILL_CHECK_DOES_NOTHING;
+    if(skill < int(SKILL_BEGIN) || skill > int(SKILL_END))
+        return SKILL_CHECK_DOES_NOTHING;
+
+    if(valid(item))
+    {
+        // todo: check custom item proto fields instead
+        skillused = item.Proto.Misc_ToolSkillNum;
+        bonus += item.Proto.Misc_ToolSkillBonus;
+    }
+
+    if(skill != skillused)
+        return SKILL_CHECK_DOES_NOTHING;
+    // todo: if consumable, remove one shot or delete
+    int sk = cr.Skill[skill] + bonus;
+    sk = CLAMP(sk, 5, 95);
+    int margin = sk - Random(1, 100);
+    if(margin >= 0)
+        return Random(1, 100) <= margin / 10 + cr.Stat[ST_CRITICAL_CHANCE] ? SKILL_CHECK_CRITICAL_SUCCESS : SKILL_CHECK_SUCCESS;
+    else
+        return Random(1, 100) <= (-margin) / 10 ? SKILL_CHECK_CRITICAL_FAILURE : SKILL_CHECK_FAILURE;
+}
+
+string SkillName(uint8 skill)
+{
+    string result = "";
+
+    if(skill < SK_SMALL_GUNS || skill > SK_OUTDOORSMAN)
+        return(result);
+
+    switch(skill)
+    {
+    case SK_SMALL_GUNS:
+        result = "Small Guns";
+        break;
+    case SK_BIG_GUNS:
+        result = "Big Guns";
+        break;
+    case SK_ENERGY_WEAPONS:
+        result = "Energy Weapons";
+        break;
+    case SK_UNARMED:
+        result = "Unarmed";
+        break;
+    case SK_MELEE_WEAPONS:
+        result = "Melee Weapons";
+        break;
+    case SK_THROWING:
+        result = "Throwing";
+        break;
+    case SK_FIRST_AID:
+        result = "First Aid";
+        break;
+    case SK_DOCTOR:
+        result = "Doctor";
+        break;
+    case SK_SNEAK:
+        result = "Sneak";
+        break;
+    case SK_LOCKPICK:
+        result = "Lockpick";
+        break;
+    case SK_STEAL:
+        result = "Steal";
+        break;
+    case SK_TRAPS:
+        result = "Traps";
+        break;
+    case SK_SCIENCE:
+        result = "Science";
+        break;
+    case SK_REPAIR:
+        result = "Repair";
+        break;
+    case SK_SPEECH:
+        result = "Speech";
+        break;
+    case SK_BARTER:
+        result = "Barter";
+        break;
+    case SK_GAMBLING:
+        result = "Gambling";
+        break;
+    case SK_OUTDOORSMAN:
+        result = "Outdoorsman";
+        break;
+    }
+
+    return(result);
+}
+
+/**
+ * Gives string of extended player condition (animation).
+ * @param cr Handle to critter.
+ * @return If not valid critter or condition couldn't be converted, returns "", else it returns condition in string form.
+ * @remarks This will only work if condition of critter is either COND_KNOCKOUT or COND_DEAD as only those use ExtCondition.
+ */
+string GetExtConditionOfCritter(Critter@ cr)
+{
+    if(!valid(cr))
+        return "";
+    if(cr.Cond == COND_KNOCKOUT)
+    {
+        switch(cr.Anim2Knockout)
+        {
+        case ANIM2_KNOCK_FRONT:
+            return "ANIM2_KNOCK_FRONT";
+        case ANIM2_KNOCK_BACK:
+            return "ANIM2_KNOCK_BACK";
+        }
+    }
+    else if(cr.Cond == COND_DEAD)
+    {
+        switch(cr.Anim2Dead)
+        {
+        case ANIM2_DEAD_FRONT:
+            return "ANIM2_DEAD_FRONT";
+        case ANIM2_DEAD_BACK:
+            return "ANIM2_DEAD_BACK";
+        case ANIM2_DEAD_PRONE_FRONT:
+            return "ANIM2_DEAD_PRONE_FRONT";
+        case ANIM2_DEAD_PRONE_BACK:
+            return "ANIM2_DEAD_PRONE_BACK";
+        case ANIM2_DEAD_BLOODY_SINGLE:
+            return "ANIM2_DEAD_BLOODY_SINGLE";
+        case ANIM2_DEAD_BLOODY_BURST:
+            return "ANIM2_DEAD_BLOODY_BURST";
+        case ANIM2_DEAD_BURST:
+            return "ANIM2_DEAD_BURST";
+        case ANIM2_DEAD_PULSE:
+            return "ANIM2_DEAD_PULSE";
+        case ANIM2_DEAD_PULSE_DUST:
+            return "ANIM2_DEAD_PULSE_DUST";
+        case ANIM2_DEAD_LASER:
+            return "ANIM2_DEAD_LASER";
+        case ANIM2_DEAD_FUSED:
+            return "ANIM2_DEAD_FUSED";
+        case ANIM2_DEAD_EXPLODE:
+            return "ANIM2_DEAD_EXPLODE";
+        case ANIM2_DEAD_BURN:
+            return "ANIM2_DEAD_BURN";
+        case ANIM2_DEAD_BURN_RUN:
+            return "ANIM2_DEAD_BURN_RUN";
+        }
+    }
+    return "";
+}
+
+/**
+ * Function to add xp divided equally among all members of a "team".
+ * @param critter Handle to one member of a team.
+ * @param xp Amount of total XP points to add.
+ * @remarks A team is currently defined as everyone that has arrowed the leader. If leader is invalid, all the xp will be added to the specified critter.
+ * @return If leader is valid, true, otherwise false.
+ */
+bool AddExpTeam(Critter& critter, int xp)
+{
+    Critter@ leader = critter.GetFollowLeader();
+    if(valid(leader))
+    {
+        array<Critter@> followers;
+        int             num = leader.GetFollowGroup(FIND_ALL, followers);
+        int             val = xp / num;
+        for(int i = 0; i < num; i++)
+            followers[i].StatBase[ST_EXPERIENCE] += val;
+        return true;
+    }
+    else
+    {
+        critter.StatBase[ST_EXPERIENCE] += xp;
+        return false;
+    }
+}
+
+/**
+ * Drop all timeouts of target critter
+ * @param cr Critter handle.
+ */
+void DropTimeouts(Critter& cr)
+{
+    for(uint i = TIMEOUT_BEGIN; i <= TIMEOUT_END; i++)
+        cr.TimeoutBase[i] = ELAPSED_TIME;
+}
+
+
+/**
+ * Clears all current critter events
+ * @param cr Critter handle.
+ */
+void ClearEvents(Critter& cr)
+{
+    for(uint i = 0; i < CRITTER_EVENT_MAX; i++)
+        cr.SetEvent(i, null);
+}
+
+/**
+ * Create bag and add items to critter
+ * @param cr Critter handle.
+ * @param bag Bag Id to give.
+ */
+void GiveBag(uint bag, Critter@ cr)
+{
+    if(!valid(cr))
+        return;
+
+    array<uint>   mincounts, maxcounts;
+    array<int>    slots;
+    array<uint16> pids;
+    uint          num = GetBagItems(bag, pids, mincounts, maxcounts, slots);
+    for(uint i = 0; i < num; i++)
+    {
+        uint count = Random(mincounts[i], maxcounts[i]);
+        if(count == 0)
+            continue;
+        Item@ item = cr.AddItem(pids[i], count);
+        if(!valid(item))
+            continue;
+        cr.MoveItem(item.Id, count, slots[i]);
+    }
+}
+
+bool HasItem(Critter@ cr, uint pid)
+{
+    Item@ item = cr.GetItem(pid, -1);
+    return valid(item);
+}
+
+/**
+ * Has a weapon in inventory or equipped.
+ */
+bool HasSomeWeapon(Critter@ cr)
+{
+    array<Item@> items;
+    uint         num = cr.GetItems(-1, items);
+    for(uint i = 0; i < num; i++)
+    {
+        if((items[i].GetType() == ITEM_TYPE_WEAPON) || items[i].GetType() == ITEM_TRAP)
+            return true;
+    }
+    return false;
+}
+
+/**
+ * Gets the best weapon skill that a critter has.
+ * @param cr Handle to critter.
+ * @return The best weapon skill the critter has. See _defines.fos and the SK_* entries for relevant skills.
+ */
+uint GetBestWeaponSkill(Critter@ cr)
+{
+    int skill = -1;
+    int highest = 0;
+    for(int i = SK_SMALL_GUNS; i <= SK_THROWING + 1; i++)
+    {
+        if(cr.Skill[i] > highest)
+        {
+            highest = cr.Skill[i];
+            skill = i;
+        }
+    }
+    return skill;
+}
+
+/**
+ * Add player to array of all online players.
+ * @param cr Handle to critter.
+ */
+void AddOnlinePlayer(Critter& cr)
+{
+    OnlinePlayers.insertLast(cr.Id);
+}
+
+/**
+ * Remove player from array of all online players.
+ * @param cr Handle to critter.
+ */
+void RemoveOnlinePlayer(Critter& cr)
+{
+    for(uint i = 0, j = OnlinePlayers.length(); i < j; i++)
+    {
+        if(OnlinePlayers[i] == cr.Id)
+        {
+            OnlinePlayers.removeAt(i);
+            break;
+        }
+    }
+}
+
+/**
+ * Retrieve all players that are online.
+ * @param players Array to store player handles in.
+ * @return Number of players online.
+ */
+uint GetAllOnlinePlayers(array<Critter@>& out players)
+{
+    for(uint i = 0, j = OnlinePlayers.length(); i < j; i++)
+    {
+        Critter@ cr = GetCritter(OnlinePlayers[i]);
+        players.insertLast(cr);
+    }
+
+    return OnlinePlayers.length();
+}
+
+/**
+ * Check how many players are online.
+ * @return Number of players online.
+ */
+uint GetNumberOfPlayersOnline()
+{
+    return OnlinePlayers.length();
+}
+
+/**
+ * Retrieve all authenticated players that are online.
+ * @param players Array to store player handles in.
+ * @remarks Some admins may be hidden and won't show up here.
+ * @return Number of authenticated players.
+ */
+
+uint GetAuthenticatedPlayers(array<Critter@>& out players)
+{
+    return(GetAuthenticatedPlayers(players, false));
+}
+
+uint GetAuthenticatedPlayers(array<Critter@>& out players, bool ignorePriviledges)
+{
+    uint num = 0;
+
+    for(int i = 0, j = OnlinePlayers.length(); i < j; i++)
+    {
+        Critter@ player = GetCritter(OnlinePlayers[i]);
+        if(!valid(player))
+            continue;
+
+        if(player.GetAccess() == ACCESS_CLIENT)
+            continue;
+
+        if(!ignorePriviledges)
+        {
+            if(player.GetAccess() == ACCESS_ADMIN && _CritGetPerk(player, PE_TERMINATOR) == 1337)
+                continue;
+        }
+
+        players.insertLast(player);
+        num += 1;
+    }
+    return num;
+}
+
+/**
+ * Gets critter that is best at some skill in the group.
+ * @param group A group of critters.
+ * @param skill Which skill. See _defines.fos for a list of skills. (SK_*)
+ * @return Handle to most skilled critter.
+ */
+Critter@ GetMostSkilled(array<Critter@>@ group, int skill)
+{
+    uint     temp = 0;
+    Critter@ best;
+    for(uint i = 0, j = group.length(); i < j; i++)
+    {
+        uint sk = group[i].Skill[skill];
+        if(sk > temp)
+        {
+            @best = @group[i];
+            temp = sk;
+        }
+    }
+    return best;
+}
+
+/**
+ * Retrieve a string showing target players access level.
+ * @param player Target player.
+ * @return A string showing target players access level.
+ * @remarks Possible results are: "Client", "Tester", "GM" and "Admin"
+ */
+string GetAuthString(Critter& player)
+{
+    return GetAuthString(player.GetAccess());
+}
+
+/**
+ * Retrieve a string showing target players access level.
+ * @param accesslevel Access number.
+ * @return A string showing target players access level.
+ * @remarks Possible results are: "Client", "Tester", "GM" and "Admin"
+ */
+string GetAuthString(int accesslevel)
+{
+    if(accesslevel == ACCESS_CLIENT)
+        return "Client";
+    if(accesslevel == ACCESS_TESTER)
+        return "Tester";
+    else if(accesslevel == ACCESS_MODER)
+        return "GM";
+    else if(accesslevel == ACCESS_ADMIN)
+        return "Admin";
+    else
+        return "Unknown";
+}
+
+/**
+ * Check if target player can use +requesthelp
+ * @param player Target player.
+ */
+bool CanRequestHelp(Critter& player)
+{
+    return(GetLvar(player, LVAR_gm_help_timeout) == 0);
+}
+
+/**
+ * Disables the ability to use +requesthelp for some time.
+ * @param player Target player.
+ */
+void SetRequestedHelp(Critter& player)
+{
+    SetLvar(player, LVAR_gm_help_timeout, 1);
+    CreateTimeEvent(AFTER(REAL_MINUTE(15)), "e_UnsetRequestedHelp", player.Id, true);
+}
+
+void SetRequestedHelp(Critter& player, int minutes)
+{
+    SetLvar(player, LVAR_gm_help_timeout, 1);
+    CreateTimeEvent(AFTER(REAL_MINUTE(minutes)), "e_UnsetRequestedHelp", player.Id, true);
+}
+
+/**
+ * Retrieve a random GM. If none is found, any authenticated (Admin) is picked.
+ * @return Handle of found GM/admin. Null if none is online.
+ */
+Critter@ GetOnlineGM()
+{
+    array<Critter@> authenticated;
+    uint            num = GetAuthenticatedPlayers(authenticated);
+
+    // No one online.
+    if(num == 0)
+        return null;
+
+    shuffle_ptrarray(authenticated, Critter@);
+    // Try find some GM
+    for(uint i = 0; i < num; i++)
+    {
+        for(uint x = 0; x < authenticated.length(); x++)
+        {
+            if(!valid(authenticated[i]))
+                continue;
+
+            if(authenticated[i].GetAccess() < ACCESS_ADMIN)
+                return authenticated[i];
+        }
+    }
+
+    // Pick random authenticated
+    return authenticated[Random(0, num - 1)];
+}
+
+bool IsHumanoid(Critter@ cr)
+{
+    return(BT_MEN <= cr.Stat[ST_BODY_TYPE] && cr.Stat[ST_BODY_TYPE] <= BT_GHOUL);
+}
+
+/**
+ * Clear EnemyStack of target NPC.
+ * @param critter Target NPC.
+ * @remarks The EnemyStack is an array/memory filled with ids of hostile critters.
+ */
+void ClearEnemyStack(Critter& critter)
+{
+    critter.ErasePlane(AI_PLANE_ATTACK, true);
+    critter.ClearEnemyStack();
+}
+
+/**
+ * Clear all EnemyStacks of all NPCs on specified map.
+ * @param map Target Map.
+ * @remarks The EnemyStack is an array/memory filled with ids of hostile critters.
+ */
+void ClearEnemyStacksOnMap(Map@ map)
+{
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+        ClearEnemyStack(crits[i]);
+}
+
+/**
+ * Checks if a target with given id is the critter's enemy, based on the enemy stack and attack planes
+ */
+bool IsCurrentEnemy(Critter& cr, uint targetId)
+{
+    if(cr.CheckEnemyInStack(targetId))
+        return true;
+    array<NpcPlane@> plans;
+    cr.GetPlanes(plans);     // cr.GetPlanesByType(AI_PLANE_ATTACK, plans);
+    for(uint i = 0, j = plans.length(); i < j; i++)
+        if(plans[i].Type == AI_PLANE_ATTACK && plans[i].Attack_TargId == targetId)
+            return true;
+    return false;
+}
+
+string@ GetSafePlayerName(uint id)
+{
+    string@ name = GetPlayerName(id);
+    if(valid(name))
+        return name;
+    return @ "[player not found]";
+}
+
+string GetSafePlayerName(uint id, string& onSuccess, string& onError)
+{
+    string@ name = GetPlayerName(id);
+    if(valid(name))
+        return(name + onSuccess);
+
+    return("[" + onError + "]");
+}
+/////////////////
+// Fetching/altering data stored in team id
+/////////////////
+
+uint GetGroupIndex(Critter& cr)
+{
+    return _GroupIndex(cr);
+}
+uint GetGroupIndex(int st)
+{
+    return st / 100;
+}
+/**
+ * Modifies data responsible for holding faction/group index.
+ */
+void SetGroupIndex(Critter& cr, uint val)
+{
+    cr.StatBase[ST_TEAM_ID] = val;
+}
+uint GetGroupRank(Critter& cr)
+{
+    return _GroupRank(cr);
+}
+void SetGroupRank(Critter& cr, uint val)
+{
+    cr.StatBase[ST_FACTION_RANK] = val;
+}
+uint GetGroupMode(Critter& cr)
+{
+    return _GroupMode(cr);
+}
+void SetGroupMode(Critter& cr, uint val)
+{
+    cr.StatBase[ST_FACTION_MODE] = val;
+}
+void SetGroupInfo(Critter& cr, uint faction, uint rank, uint mode)
+{
+    cr.StatBase[ST_TEAM_ID] = faction;
+    cr.StatBase[ST_FACTION_RANK] = rank;
+    cr.StatBase[ST_FACTION_MODE] = mode;
+}
+void SetGroupInfoPack(Critter& cr, uint packInfo)
+{
+    cr.StatBase[ST_TEAM_ID] = packInfo / 100;
+    cr.StatBase[ST_FACTION_RANK] = (packInfo / 10) % 10;
+    cr.StatBase[ST_FACTION_MODE] = packInfo % 10;
+}
+// @}
+
+/**
+ * \~english @name File handling and I/O
+ *
+ * A list of functions that are related to reading/writing data from files.
+ *
+ * \~ @weight 490
+ */
+// @{
+
+/**
+ * Reads ITEMPID.H into supplied array.
+ * @param pids Array to store read pids in.
+ * @param removeinvalid Remove PIDs not used in the game.
+ * @return If file is found and parsed successfully, true, else false.
+ */
+bool ReadPids(array<int>& out pids, bool removeinvalid)
+{
+    file f;
+    Log("Reading PIDs");
+    // Open the file in 'read' mode
+    if(f.open("scripts/ITEMPID.H", "r") >= 0)
+    {
+        // Read the whole file into the string buffer
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+        // now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        Log("Read " + lines.length() + " lines");
+        // process #define lines
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            // in this case it doesn't even contain #define
+            if(lines[i].length() < 7)
+                continue;
+            if(substring(lines[i], 0, 7) == "#define")
+            {
+                string spid = "";
+                int    id = 0;
+                if(ParseDefine(lines[i], spid, id))
+                {
+                    if(removeinvalid)
+                    {
+                        ProtoItem@ proto = GetProtoItem(id);
+                        if(!valid(proto))
+                            continue;
+
+                        if(proto.Cost == 0)
+                            continue;
+                    }
+                    pids.insertLast(id);
+                }
+            }
+        }
+    }
+    else
+        return false;
+    return true;
+}
+
+/**
+ * Read values defined in the given file.
+ * @param fileName Name of the file to read defines from. Relative path from the server application can be used.
+ * @param items A dictionary to which the defines will be read into, the key is in string format, while the dictionary value is the #define value.
+ * @param defines A string array to which the defines will be read into.
+ */
+void ReadDefines(string@ fileName, dictionary& items, array<string>@ defines)
+{
+    file f;
+    Log("Reading defines");
+    // Open the file in 'read' mode
+    if(f.open(fileName, "r") >= 0)
+    {
+        // Read the whole file into the string buffer
+        string str;
+        int    l = f.readString(f.getSize(), str);
+        f.close();
+
+        // now we need to process that whole string
+        array<string@>@ lines = split(str, "\n");
+        Log("Read " + lines.length() + " lines");
+        // process #define lines
+        for(uint i = 0; i < lines.length(); i++)
+        {
+            // in this case it doesn't even contain #define
+            if(lines[i].length() < 7)
+                continue;
+            if(substring(lines[i], 0, 7) == "#define")
+            {
+                string spid = "";
+                int    id = 0;
+                if(ParseDefine(lines[i], spid, id))
+                {
+                    // we remove "PID_" prefix..it's useless for us <- actually, no longer.
+                    // cause we use it also for other #defines
+                    // spid = substring(spid, 4, spid.length()-4);
+                    // Log(spid + " is equal to " + id);
+                    items.set(spid, id);
+                    if(valid(defines))
+                        defines.insertLast(spid);
+                }
+            }
+        }
+    }
+}
+// @}
+
+/**
+ * \~english @name String handling
+ *
+ * A list of useful functions that are related to manipulating strings in various ways.
+ *
+ * \~ @weight 480
+ */
+// @{
+
+/** Gets info from line like this:
+ * #define ITEM_PID	number
+ * @param line A define line, example: "#define PID_ROCK (19)".
+ * @param spid The parsed string will be stored in this variable.
+ * @param id The parsed number will be stored in this variable.
+ * @return True when succeeded, false otherwise
+ */
+bool ParseDefine(const string& in line, string& out spid, int& out id)
+{
+    // positions where pid string starts/ends in line
+    uint spid_start = SkipWhitespaces(line, 7);
+    uint spid_end = SkipNonWhitespaces(line, spid_start);
+    // position where pid number starts/ends in line
+    uint id_start = SkipWhitespaces(line, spid_end);
+    uint id_end = SkipNonWhitespaces(line, id_start);
+    // Log("id_start " + id_start);
+    // Log("id_end " + id_end);
+    // in the case of #define header
+    if(id_start == id_end)
+        return false;
+    //
+    //// finally, get the strings
+    spid = substring(line, spid_start, spid_end - spid_start);
+    //// without ( )
+    string sid = substring(line, id_start + 1, id_end - id_start - 2);
+    if(!StrToInt(sid, id))
+        return false;
+
+    return true;
+}
+
+/**
+ * skips all whitespaces in string starting at start position
+ * @param str The string used.
+ * @param start The position in the string to start at.
+ * @return index of first non-whitespace character from start.
+ */
+int SkipWhitespaces(const string& in str, int start)
+{
+    uint i;
+    for(i = start; i < str.length(); i++)
+    {
+        // skip whitespaces
+        if(str[i] == ' ' || str[i] == '\t')
+            continue;
+        else
+            break;
+    }
+    return i;
+}
+
+/**
+ * skips all non-whitespaces in string starting at start position
+ * @param str The string used.
+ * @param start The position in the string to start at.
+ * @return index of first whitespace character
+ */
+int SkipNonWhitespaces(const string& in str, int start)
+{
+    uint i;
+    for(i = start; i < str.length(); i++)
+    {
+        // skip non-whitespaces
+        if(str[i] != ' ' && str[i] != '\t')
+            continue;
+        else
+            break;
+    }
+    if(i == str.length())
+        return i - 1;
+    else
+        return i;
+}
+
+/**
+ * Checks if a string containers a parameter tag. Example: "-dir 0"
+ * @param str The string used.
+ * @return True if it contains any of the possible tags that can be used, false if not.
+ * @remarks The following tags are valid:"-dir", "-full", "-dist" ,"-role" , "-min" ,"-max", "-v1" ,"-v2" ,"-v3" ,"-v4" ,"-v5", "-script" ,"-dmg" ,"-pid". Besides these, any character combined with - can be used, for example: "-b".
+ */
+bool IsParameterTag(string& str)
+{
+    // This is pretty bad, but will have to do for now
+    if(str.length() == 2 && str[0] == '-')
+        return true;
+    if(str == "-legit" || str == "-dir" || str == "-full" || str == "-dist" || str == "-role" || str == "-min" || str == "-max" ||   // hm, this already starts covering some players name.."mad -max" anyone?
+       str == "-v0" || str == "-v1" || str == "-v2" || str == "-v3" || str == "-v4" || str == "-v5" || str == "-v6" || str == "-v7" || str == "-v8" ||
+       str == "-script" || str == "-dmg" || str == "-pid" || str == "-skin" || str == "-map" || str == "-tx" || str == "-ty" || str == "-it")
+        return true;
+
+    return false;
+}
+
+
+/** Gets the string of a named parameter in an array of strings.
+ * @param arr An array of strings (a sentance for example).
+ * @param parameter The parameter tag to use. See IsParameterTag for more information.
+ * @return A string with the parameter tag's information. Example: `whisper -p Lord Cektop -m Prepare to die! The parameter "-m" would in this case return "Prepare to die!"
+ */
+string GetParameterString(array<string@>@ arr, string& parameter)
+{
+    string retstr = "";
+    bool   saving = false;
+
+    for(uint i = 0; i < arr.length(); i++)
+    {
+        if(IsParameterTag(arr[i]))
+        {
+            if(parameter == arr[i] && (!saving))
+                saving = true;
+            else
+            {
+                if(saving == true)
+                    return retstr;
+            }
+        }
+
+        if((saving == true) && (!IsParameterTag(arr[i])))
+        {
+            if(retstr == "")
+                retstr += arr[i];
+            else
+                retstr += " " + arr[i];
+        }
+    }
+    return retstr;
+}
+
+/**
+ * Returns the index of a string in an array of strings.
+ * @param arr The array of strings to search.
+ * @param str The string to look for.
+ * @return If not found, it returns -1, else it returns the index of the string in the array.
+ */
+int GetIndexOfString(array<string@>@ arr, string& str)
+{
+    if(!valid(arr))
+        return -1;
+    for(uint i = 0; i < arr.length(); i++)
+    {
+        if(valid(arr[i]) && arr[i] == str)
+            return i;
+    }
+    return -1;
+}
+
+/**
+ * Concatenates the specified indexes of an array of strings to a string and returns it
+ * @param startindex Which index in the array to start at.
+ * @param stopindex Which index in the array to stop at, if stopindex = -1 it means that it will run until the end of the array.
+ * @return The concatenated string.
+ */
+string GetConcatenatedString(array<string@>@ arr, uint startindex, int stopindex)
+{
+    string concat;
+    if(stopindex == -1)
+        stopindex = arr.length();
+
+    if(int(startindex) > stopindex)
+        stopindex = startindex + 1;
+
+    concat = arr[startindex];
+
+    for(int i = startindex + 1; i < stopindex; i++)
+    {
+        concat += " " + arr[i];
+    }
+    return concat;
+}
+// @}
+
+string GetMsgStr(int textMsg, uint strNum)
+{
+    return("@msg " + textMsg + " " + strNum + "@");
+}
+
+/**
+ * \~english @name Locations and maps
+ *
+ * A list of functions that are related to locations and maps.
+ *
+ * \~ @weight 470
+ */
+// @{
+
+/**
+ * Sets turn based mode for all maps within the location
+ * @param loc Location handle.
+ */
+void SetTurnBasedAvailability(Location@ loc)
+{
+    for(uint i = 0, j = loc.GetMapCount(); i < j; i++)
+        loc.GetMapByIndex(i).SetTurnBasedAvailability(true);
+}
+
+/**
+ * Checks if map is an encounter map.
+ * @param map Map handle.
+ * @return True if map is an encounter map, otherwise false.
+ */
+bool IsEncounterMap(Map@ map)
+{
+    if(!valid(map))
+        return false;
+    return map.GetLocation().IsEncounter();
+}
+
+/**
+ * Checks if map is a town map.
+ * @param map Map handle.
+ * @return True if map is a town map, otherwise false.
+ */
+bool IsTown(Map@ map)
+{
+    if(!valid(map))
+        return false;
+
+    return map.GetLocation().IsTown();
+}
+
+/*
+   Map@ GetTentMap(uint CritterId)
+   {
+        Critter@ cr = GetCritter(CritterId);
+        if(!valid(cr))
+                return null;
+        int locId = GetLvar(cr, LVAR_tent_id);
+        Location@ loc = GetLocation(locId);
+        if(!valid(loc))
+                return null;
+        return loc.GetMapByIndex(0);
+   }
+ */
+
+/**
+ * Gets the type of a map.
+ * @param map Map handle.
+ * @return Type of the map, see utils_h.fos for a list of different types.
+ */
+uint GetMapType(Map@ map)
+{
+    uint pid = map.GetProtoId();
+
+    // This is actually wrong, special encounters have different pids
+    // if (_IsWithinRange(pid,150,157))
+    //    return MAP_TYPE_SPECIAL_ENCOUNTER;
+
+    if(_IsWithinRange(pid, 160, 169) || _IsWithinRange(pid, 345, 348)  || _IsWithinRange(pid, 500, 504) || _IsWithinRange(pid, 511, 513))
+        return MAP_TYPE_DESERT_ENCOUNTER;
+    else if(_IsWithinRange(pid, 170, 184))
+        return MAP_TYPE_MOUNTAIN_ENCOUNTER;
+    else if(_IsWithinRange(pid, 185, 189))
+        return MAP_TYPE_CAVE_ENCOUNTER;
+    else if(_IsWithinRange(pid, 190, 199) || _IsWithinRange(pid, 217, 218))
+        return MAP_TYPE_CITY_ENCOUNTER;
+    else if(_IsWithinRange(pid, 214, 216))
+        return MAP_TYPE_CITYCOAST_ENCOUNTER;
+    // I deleted the sewers a while ago. We don't have any city sewers anymore. I will add some later again... maybe.
+    // else if ((map.GetProtoId() > 194) && (map.GetProtoId() < 199))
+    //    return MAP_TYPE_SEWER_ENCOUNTER;
+    else if(_IsWithinRange(pid, 200, 204))
+        return MAP_TYPE_COAST_ENCOUNTER;
+    else if(_IsWithinRange(pid, 205, 211))
+        return MAP_TYPE_SKYSCRAPER_ENCOUNTER;
+    else
+        return MAP_TYPE_UNKNOWN;
+}
+
+/**
+ * Retrieve current location of a critter
+ * @param critter Critter handle.
+ * @return Handle to the critter's location, null will be returned if the critter is on the worldmap or if there's some error.
+ */
+Location@ GetLocationOf(Critter& critter)
+{
+    Map@ map = critter.GetMap();
+    if(!valid(map))
+        return null;
+    return map.GetLocation();
+}
+
+string GetLocationName(uint locId)
+{
+    Location@ loc = GetLocation(locId);
+    if(valid(loc))
+        return(GetLocationName(loc));
+
+    return("");
+}
+
+string GetLocationName(Location@ loc)
+{
+    string result = "<location " + loc.Id + ">";
+    loc.ProtoName(result);
+    return(result);
+}
+
+// @}
+
+/**
+ * \~english @name General functions
+ *
+ * A list of functions that do various things.
+ *
+ * \~ @weight 460
+ */
+// @{
+
+/**
+ * Sets the time and event to garbage the location, setting a given variable to given value when the location was present on event execution
+ *
+ * @param time Time to garbage, in real minutes, if 0 then default is taken
+ * @param playerid Id of the player, the location owner
+ * @param locid Id of the location
+ * @param var Variable number to be set
+ * @param val Value for the variable
+ *
+ */
+void SetQuestGarbager(uint time, uint playerid, uint locid, uint var, uint val)   // time in real minutes
+{
+    uint[] values = { playerid, locid, var, val };
+    CreateTimeEvent(AFTER(REAL_MINUTE(time == 0 ? __QuestGarbagerTime : time)), "utils@e_DeleteQuestLoc", values, true);
+}
+
+/**
+ * Lock a door.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param map Map handle.
+ * @param complexity Lock complexity.
+ * @param lockid Id of the lock to use. The Id corresponds to the key that is needed to open the door.
+ */
+void LockDoor(uint x, uint y, Map@ map, uint complexity, uint lockid)
+{
+    if(!valid(map))
+    {
+        Log("Map not valid");
+        return;
+    }
+
+    Item@ door = map.GetDoor(x, y);
+
+    if(!valid(door))
+    {
+        Log("Door not valid");
+        return;
+    }
+
+    door.LockerId = lockid;
+    door.LockerComplexity = complexity;
+    _LockerIsClose(door);
+}
+
+/**
+ * Unlock a door.
+ * @param x X-position on map.
+ * @param y Y-position on map.
+ * @param map Map handle.
+ */
+void UnlockDoor(uint x, uint y, Map@ map)
+{
+    if(!valid(map))
+    {
+        Log("Map not valid");
+        return;
+    }
+
+    Item@ door = map.GetDoor(x, y);
+
+    if(!valid(door))
+    {
+        Log("Door not valid");
+        return;
+    }
+
+    door.LockerId = 0;
+    door.LockerComplexity = 0;
+}
+
+int gcd(int a, int b)
+{
+    int c;
+    while(a != 0)
+    {
+        c = a;
+        a = b % a;
+        b = c;
+    }
+    return b;
+}
+
+array<int> knapsack(array<int> weights, int W)
+{
+    int len = weights.length();
+    int div = W;
+    for(int i = 0; (i < len) && (div != 1); i++)
+        div = gcd(div, weights[i]);
+
+    if(div > 1)
+    {
+        W /= div;
+        for(int i = 0; i < len; i++)
+            weights[i] /= div;
+    }
+
+    int min = weights[0];
+    for(int i = 1; i < len; i++)
+        if(weights[i] < min)
+            min = weights[i];
+
+    array<int> tab(W + 1);
+    array<int> max(W + 1);
+    array<int> perm(len);
+
+    for(int i = 0; i < len; i++)
+        perm[i] = i;
+
+    for(int i = 0; i <= W; i++)
+    {
+        tab[i] = 0;
+        max[i] = 0;
+    }
+
+    int best = -1;
+    int lmax = 0;
+
+    for(int i = min; i <= W; i++)
+    {
+        best = 0;
+        lmax = 0;
+
+        // permute
+        for(int k = 0; k < len; k++)
+        {
+            int rm = Random(k, len - 1);
+            int temp = perm[rm];
+            perm[rm] = perm[k];
+            perm[k] = temp;
+        }
+        for(int j = 0; j < len; j++)
+        {
+            if(weights[perm[j]] > i)
+                continue;
+            if(weights[perm[j]] + max[i - weights[perm[j]]] > lmax)
+            {
+                lmax = weights[perm[j]] + max[i - weights[perm[j]]];
+                best = perm[j];
+            }
+        }
+
+        max[i] = weights[best] + max[i - weights[best]];
+        tab[i] = best;
+
+        // printf("at level %d pack %d, max %d\n",i,best,max[i]);
+    }
+    int        w = W;
+    array<int> ret;
+    ret.resize(0);
+    while(w >= min)
+    {
+        // printf("%d ",tab[w]);
+        ret.insertLast(tab[w]);
+        w -= weights[tab[w]];
+    }
+    return ret;
+}
+
+// @}
+
+/**
+ * \~english @name Time and dates
+ *
+ * A list of functions related to time and dates.
+ *
+ * \~ @weight 450
+ */
+// @{
+
+IDateTime@ GetCurrentDateTime()
+{
+    DateTime dt;
+
+    GetTime(dt.year, dt.month, dt.day, dt.dayOfWeek, dt.hour, dt.minute, dt.second, dt.milliseconds);
+
+    return dt;
+}
+
+
+/**
+ * Gets a DateTime string which displays both date and time.
+ * @param map Target Map.
+ * @return Current DateTime string which displays both date and time.
+ */
+// Default, show both date/time
+string GetCurrentDateTimeString()
+{
+    return GetCurrentDateTimeString(true, true);
+}
+
+/**
+ * Gets a DateTime string which displays date or/and time.
+ * @param date Display date.
+ * @param time Display time.
+ * @return Current DateTime string with specified options.
+ */
+string GetCurrentDateTimeString(bool date, bool time)
+{
+    IDateTime@ dt = GetCurrentDateTime();
+    string     timestr = "";
+    if(date)
+        timestr = dt.Day + "/" + dt.Month + "/" + dt.Year;
+
+    if(time)
+    {
+        if(date)
+            timestr = timestr + " ";
+        timestr = timestr + (dt.Hour < 10 ? "0" : "") + dt.Hour + ":" + (dt.Minute < 10 ? "0" : "") + dt.Minute + ":" + (dt.Second < 10 ? "0" : "") + dt.Second;
+    }
+    return timestr;
+}
+// @}
+
+/**
+ * \~english @name Containers
+ *
+ * A list of functions related to working with containers.
+ *
+ * \~ @weight 440
+ */
+// @{
+
+/**
+ * Retrieve container from a map, with Entire.
+ * @param map Map handle.
+ * @param contpid Itempid of the container to retrieve.
+ * @param entire Which Entire to use for coordinates of the container (Entire has to be placed on the same hex as container in mapper)
+ * @return Item handle of the found container. If map is invalid or container not found, null.
+ */
+Item@ GetContainer(Map@ map, uint contpid, uint entire)
+{
+    if(!valid(map))
+        return null;
+
+    uint16 HexX, HexY;
+    HexX = 0;
+    HexY = 0;
+
+    GetNearEntire(map, entire, HexX, HexY);
+    return map.GetItem(HexX, HexY, contpid);
+}
+
+/**
+ * Teleport a car to some other map.
+ * @return False if no free spot for the vehicle is found
+ */
+bool TeleportCar(Item@ Car, uint MapId)
+{
+    Map@ map = GetMap(MapId);
+    if(!valid(map))
+        return false;
+    uint16 x = 0;
+    uint16 y = 0;
+    if(!GetEntireFreeHex(map, ENTIRE_CAR, x, y))
+        return false;
+
+    // Workaround, because bag is not easily (or at all?) movable.
+    Critter@ dummy = map.AddNpc(1, 0, 0, 0, null, null, "");
+    DriveToGlobal(dummy, Car, false);
+    dummy.TransitToMap(map.Id, 0);
+    DeleteNpc(dummy);
+    return true;
+}
+
+/**
+ * Transfer some items from target critter to a container on a specific map via Entire.
+ * @param map Map handle.
+ * @param cr Critter handle.
+ * @param contpid Itempid of the container to transfer to.
+ * @param entid Which Entire to use for coordinates of the container (Entire has to be placed on the same hex as container in mapper)
+ * @param itemtypes Type of items to transfer from critter. ITEMTRANSFER_ALL or ITEMTRANSFER_WEAPONS is valid.
+ */
+void TransferItemsToContOnMap(Critter& cr, Map@ map, int entid, int contpid, int itemtypes)
+{
+    Item@ cont = GetContainer(map, contpid, entid);
+    if(!valid(cont))
+        return;
+    array<Item@> items;
+    uint         n;
+    if(itemtypes == ITEMTRANSFER_ALL)
+        n = cr.GetItems(-1, items);
+    else if(itemtypes == ITEMTRANSFER_WEAPONS)
+        n = cr.GetItemsByType(ITEM_TYPE_WEAPON, items);
+
+    for(uint i = 0; i < n; i++)
+        MoveItem(items[i], items[i].GetCount(), cont, cr.Id);
+}
+/**
+ * Transfer items from a container to a critter
+ * @param map Map handle.
+ * @param cr Critter handle.
+ * @param contpid Itempid of the container to transfer from.
+ * @param entid Which Entire to use for coordinates of the container (Entire has to be placed on the same hex as container in mapper)
+ */
+void TransferItemsFromContOnMap(Critter& cr, Map@ map, int entid, int contpid)
+{
+    Item@ cont = GetContainer(map, contpid, entid);
+    if(!valid(cont))
+        return;
+    array<Item@> items;
+    cont.GetItems(cr.Id, items);
+    MoveItems(items, cr);
+}
+
+/**
+ * Deletes all items in specified container.
+ * @param container Handle to target container.
+ */
+void ClearContainer(Item@ container)
+{
+    array<Item@> items;
+    uint         itemCount = container.GetItems(0, items);
+    for(uint i = 0; i < itemCount; i++)
+        DeleteItem(items[i]);
+}
+
+/**
+ * Move all items from a critter to a subcontainer of a container.
+ * @param crFrom The critter which items are moved from.
+ * @param contTo Target container.
+ * @param specid Special Id of subcontainer, if 0, critter's Id is used.
+ */
+void MoveItemsCritterToCont(Critter& crFrom, Item& contTo, uint specid)
+{
+    array<Item@> items;
+    uint         itemCount = crFrom.GetItems(SLOT_INV, items);
+    if(specid == 0)
+        specid = crFrom.Id;
+    MoveItems(items, contTo, specid);
+}
+// @}
+
+/**
+ * \~english @name Variables
+ *
+ * A list of functions related to working with game variables.
+ *
+ * \~ @weight 430
+ */
+// @{
+
+
+/**
+ * Wrapper function for retrieving the value of a GVAR (Global variable).
+ * @param gvar Target GVAR.
+ * @return Value of the specified GVAR.
+ */
+int GetGvar(uint gvar)
+{
+    GameVar@ var = GetGlobalVar(gvar);
+    if(valid(var))
+        return var.GetValue();
+    else
+        Log("GVar " + gvar + " not valid");
+    return -1;
+}
+
+/**
+ * Wrapper function for setting the value of a GVAR (Global variable).
+ * @param gvar Target GVAR.
+ * @param value Value to set.
+ */
+void SetGvar(uint gvar, uint value)
+{
+    GameVar@ var = GetGlobalVar(gvar);
+    if(valid(var))
+        var = value;
+    else
+        Log("GVar " + gvar + " not valid");
+}
+
+int GetLLvar(Location& location, uint llvar)
+{
+    return(GetLLvar(location.Id, llvar));
+}
+
+int GetLLvar(uint locationId, uint llvar)
+{
+    return(GetLvar(locationId, llvar, "LLVAR"));
+}
+
+void SetLLvar(Location& location, uint llvar, uint value)
+{
+    SetLvar(location.Id, llvar, value, "LLVAR", "location");
+}
+
+int GetLMvar(Map& map, uint lmvar)
+{
+    return(GetLLvar(map.Id, lmvar));
+}
+
+int GetLMvar(uint mapId, uint lmvar)
+{
+    return(GetLvar(mapId, lmvar, "LMVAR"));
+}
+
+void SetLMvar(Map& map, uint lmvar, uint value)
+{
+    SetLvar(map.Id, lmvar, value, "LMVAR", "map");
+}
+
+int GetLIvar(Item& item, uint livar)
+{
+    return(GetLIvar(item.Id, livar));
+}
+
+int GetLIvar(uint itemId, uint livar)
+{
+    return(GetLvar(itemId, livar, "LIVAR"));
+}
+
+void SetLIvar(Item& item, uint livar, uint value)
+{
+    SetLvar(item.Id, livar, value, "LIVAR", "item");
+}
+
+/**
+ * Wrapper function for retrieving the value of an LVAR (Local variable) from a critter.
+ * @param critter Critter handle.
+ * @param lvar LVAR to check.
+ * @return Value of the specified LVAR.
+ */
+int GetLvar(Critter& critter, uint lvar)
+{
+    return GetLvar(critter.Id, lvar);
+}
+
+/**
+ * Wrapper function for retrieving the value of an LVAR (Local variable) from a critter.
+ * @param id Critter Id.
+ * @param lvar LVAR to check.
+ * @return Value of the specified LVAR.
+ */
+int GetLvar(uint id, uint lvar)
+{
+    return(GetLvar(id, lvar, "LVAR"));
+}
+
+int GetLvar(uint id, uint lvar, string& typeShort)
+{
+    GameVar@ var = GetLocalVar(lvar, id);
+    if(valid(var))
+        return var.GetValue();
+    else
+        Log(typeShort + " " + lvar + " with id " + id + " not valid");
+    return -1;
+}
+
+/**
+ * Wrapper function for setting the value of an LVAR (Local variable).
+ * @param critter Critter handle.
+ * @param lvar Target LVAR.
+ * @param value Value to set.
+ */
+void SetLvar(Critter& critter, uint lvar, uint value)
+{
+    SetLvar(critter.Id, lvar, value, "LVAR", "critter");
+}
+
+/**
+ * Wrapper function for setting the value of an LVAR (Local variable).
+ * @param id Critter Id.
+ * @param lvar Target LVAR.
+ * @param value Value to set.
+ */
+void SetLvar(uint id, uint lvar, uint value)
+{
+    SetLvar(id, lvar, value, "LVAR", "critter");
+}
+
+void SetLvar(uint id, uint lvar, uint value, string& typeShort, string& typeLong)
+{
+    GameVar@ var = GetLocalVar(lvar, id);
+    if(valid(var))
+        var = value;
+    else
+        Log(typeShort + " " + lvar + " for " + typeLong + " with id " + id + " not valid");
+}
+
+/**
+ * Wrapper function for retrieving the value of an UVAR ("Unicum" variable).
+ * @param uvar Target UVAR.
+ * @param masterid MasterId corresponding to some critter.
+ * @param slaveid SlaveId corresponding to another critter.
+ * @return Value of the UVAR.
+ */
+int GetUvar(uint uvar, uint masterid, uint slaveid)
+{
+    GameVar@ var = GetUnicumVar(uvar, masterid, slaveid);
+    if(valid(var))
+        return var.GetValue();
+    else
+        Log("UVar " + uvar + " with masterid " + masterid + " not valid");
+    return -1;
+}
+
+/**
+ * Wrapper function for setting the value of an UVAR ("Unicum" variable).
+ * @param uvar Target UVAR.
+ * @param masterid MasterId corresponding to some critter.
+ * @param slaveid SlaveId corresponding to another critter.
+ * @param value Value of the UVAR to set.
+ */
+void SetUvar(uint uvar, uint masterid, uint slaveid, uint value)
+{
+    GameVar@ var = GetUnicumVar(uvar, masterid, slaveid);
+    if(valid(var))
+        var = value;
+    else
+    {
+        Log("UVar " + uvar + " with masterid " + masterid + " not valid");
+    }
+}
+// @}
+
+class DateTime : IDateTime
+{
+    uint16 year;
+    uint16 month;
+    uint16 dayOfWeek;
+    uint16 day;
+    uint16 hour;
+    uint16 minute;
+    uint16 second;
+    uint16 milliseconds;
+
+    DateTime()
+    {
+        year = 0;
+        month = 0;
+        dayOfWeek = 0;
+        day = 0;
+        hour = 0;
+        minute = 0;
+        second = 0;
+        milliseconds = 0;
+    }
+
+    uint16 get_Year()         { return year; }
+    uint16 get_Month()        { return month; }
+    uint16 get_DayOfWeek()    { return dayOfWeek; }
+    uint16 get_Day()          { return day; }
+    uint16 get_Hour()         { return hour; }
+    uint16 get_Minute()       { return minute; }
+    uint16 get_Second()       { return second; }
+    uint16 get_Milliseconds() { return milliseconds; }
+
+    string@ ToString()
+    {
+        return "" + hour + ":" + minute + " " + year + "/" + month + "/" + day;
+    }
+};
+
+/**
+ * \~english @name Item Value
+ *
+ * A list of functions related to retrieving the value of various items.
+ *
+ * \~ @weight 420
+ */
+// @{
+
+/**
+ * Uses BaseItemValue to deduce value of all items in a container
+ * @param container Target container.
+ * @return value Total value of all items in the container.
+ */
+uint GetContainerValue(Item@ container)
+{
+    uint         value = 0;
+    array<Item@> items;
+    uint         itemCount = container.GetItems(0, items);
+    for(uint i = 0; i < itemCount; i++)
+        value += BaseItemValue(items[i]);
+
+    return value;
+}
+/**
+ * base value of an spawned item with this pid (with 0% deterioration, unbroken)
+ * @param pid Pid of an item.
+ * @param ammo Is it ammo?
+ * @return Base value of the item.
+ */
+uint BaseItemValue(uint pid, bool ammo)
+{
+    return BaseItemValue(pid, 0, 0, ammo);
+}
+
+/**
+ * base value of an spawned item with this pid (with det% deterioration, broken times broken)
+ * @param pid Pid of an item.
+ * @param ammo Is it ammo?
+ * @param broken How many times the item was broken.
+ * @param det % deterioration.
+ * @return Base value of the item.
+ */
+uint BaseItemValue(uint pid, uint broken, uint det, bool ammo)
+{
+    ProtoItem@ proto = GetProtoItem(pid);
+
+    if(!valid(proto))
+        return 0;
+    uint cost = proto.Cost;
+
+    if(proto.Deteriorable)
+    {
+        cost = (cost * (MAX_BROKENS - broken)) / MAX_BROKENS;         // ha, can't be with *=
+        // cost = (cost*(100-det))/100; // deterioration effect is disabled!
+    }
+
+    if(ammo)
+    {
+        if(proto.Type == ITEM_TYPE_WEAPON && proto.Weapon_DefaultAmmoPid != 0)
+        {
+            ProtoItem@ ammoproto = GetProtoItem(proto.Weapon_DefaultAmmoPid);
+            if(valid(ammoproto))
+                cost += proto.Weapon_MaxAmmoCount * ammoproto.Cost;
+        }
+    }
+    return cost;
+}
+
+/**
+ * Full base value of an item, count included
+ * @param item Item handle.
+ * @return Base value of the item.
+ */
+uint BaseItemValue(Item@ item)
+{
+    return BaseItemValue(item, 100);
+}
+
+/**
+ * proc% of base value of an item (ammo value is always 100%), count included
+ * @param item Item handle.
+ * @param proc Percentage of base value.
+ * @return Calculated value.
+ */
+uint BaseItemValue(Item@ item, uint proc)
+{
+    uint cost = item.Proto.Cost;
+    if(item.IsDeteriorable())
+    {
+        // cost = (cost*(MAX_BROKENS - item.BrokenCount)) / MAX_BROKENS;
+        cost = (cost * (MAX_DETERIORATION - item.Deterioration)) / MAX_DETERIORATION;
+    }
+    cost *= proc;
+    cost /= 100;
+    if(item.GetType() == ITEM_TYPE_WEAPON)
+        if(item.AmmoPid != 0)
+        {
+            ProtoItem@ ammoproto = GetProtoItem(item.AmmoPid);
+            if(valid(ammoproto))
+                cost += item.AmmoCount * ammoproto.Cost;
+        }
+
+    return cost * MAX(1, item.GetCount());
+}
+
+// same for a single item in stack
+
+/**
+ * full base value of an item, count NOT included.
+ * @param item Item handle.
+ * @return Base value of item.
+ */
+uint BaseSingleItemValue(Item@ item)
+{
+    return BaseSingleItemValue(item, 100);
+}
+
+/**
+ * proc% of base value of an item (ammo value is always 100%), count NOT included
+ * @param item Item handle.
+ * @param proc Percentage of value.
+ * @return Calculated value of item.
+ */
+uint BaseSingleItemValue(Item@ item, uint proc)
+{
+    uint cost = item.Proto.Cost;
+    if(item.IsDeteriorable())
+    {
+        cost = (cost * (MAX_BROKENS - item.BrokenCount)) / MAX_BROKENS;   // ha, can't be with *=
+        // cost = (cost*(MAX_DETERIORATION - item.Deterioration))/MAX_DETERIORATION; // deterioration effect is disabled now
+    }
+    cost *= proc;
+    cost /= 100;
+    if(item.GetType() == ITEM_TYPE_WEAPON)
+    {
+        ProtoItem@ ammoproto = GetProtoItem(item.AmmoPid);
+        if(valid(ammoproto))
+        {
+            cost += item.AmmoCount * ammoproto.Cost;
+        }
+    }
+    return cost;
+}
+
+bool Pickable(Item@ item)
+{
+    if(item.GetType() > ITEM_TYPE_KEY || FLAG(item.Flags, ITEM_CAN_USE))
+        return false;
+    if(item.Accessory != ACCESSORY_HEX)
+        return false;
+    if(item.Proto.Weight > 124575)
+        return false;
+    uint pid = item.GetProtoId();
+    if(PID_BARREL_JUNK <= pid && pid <= PID_PROD_FLINT)
+        return false;  // production
+    switch(pid)        // special cases
+    {
+    case PID_WATERPIPE:
+    case PID_WAYPOINT:
+    case PID_RESPAWN_POINT:
+    case PID_TREASURE3:
+        return false;
+    default:
+    }
+    return true;
+}
+
+
+// @}
+
+/*@}*/
+
+// These functions/variables will not appear in documentation because they aren't meant to be used from the outside.
+array<uint> OnlinePlayers;
+
+uint e_DeleteQuestLoc(array<uint>@ values)     // playerid, locid, var, val
+{
+    Location@ loc = GetLocation(values[1]);
+    if(!valid(loc))
+        return 0;
+    DeleteLocation(values[1]);
+    if(values[0] == 0 || values[2] == 0)
+        return REAL_HOUR(1);
+    GameVar@ var = GetLocalVar(values[2], values[0]);
+    var = values[3];
+    return REAL_HOUR(1);
+}
+
+// Player can once again request gm help.
+uint e_UnsetRequestedHelp(array<uint>@ values)
+{
+    SetLvar(values[0], LVAR_gm_help_timeout, 0);
+    return 0;
+}
+
+// :>
+void Preprocess(Critter& player, string& commandString)
+{
+    LogCommandUsage(player, commandString);
+}
+
+void LogCommandUsage(Critter& player, string& commandString)
+{
+    FLog(LOG_COMMANDS, GetCritterInfo(player) +  commandString);
+    GMLog(player, GetCritterInfo(player) + commandString);
+    LogCommand(player, GetCritterInfo(player) + commandString);
+}
+
+void SetSpectator(Critter& cr, bool on)
+{
+    if(!valid(cr) || !cr.IsPlayer())
+        return;
+    // DLog("SetSpectator: " +(on?"On":"Off"));
+
+    if(on)
+    {
+        _CritSetExtMode(cr, MODE_EXT_LOOK_ADMIN);
+        _CritSetExtMode(cr, MODE_EXT_LOOK_INVISIBLE);
+        _CritSetMode(cr, MODE_NO_PVP);
+        cr.StatBase[ST_BASE_CRTYPE] = CRTYPE_EGG;
+        cr.ChangeCrType(cr.StatBase[ST_BASE_CRTYPE]);
+    }
+    else
+    {
+        _CritUnsetExtMode(cr, MODE_EXT_LOOK_INVISIBLE);
+        _CritUnsetExtMode(cr, MODE_EXT_LOOK_ADMIN);
+        _CritUnsetMode(cr, MODE_NO_PVP);
+        if(cr.Stat[ST_BASE_CRTYPE] == CRTYPE_EGG)
+        {
+            cr.StatBase[ST_BASE_CRTYPE] = (cr.Stat[ST_GENDER] == GENDER_MALE ? CRTYPE_MALE_DEFAULT : CRTYPE_FEMALE_DEFAULT);
+            cr.ChangeCrType(cr.StatBase[ST_BASE_CRTYPE]);
+        }
+    }
+}
+
+void SetSpectator(Critter& cr, bool on, bool egg)
+{
+    if(egg)
+    {
+        SetSpectator(cr, on);
+        return;
+    }
+
+    DLog("SetSpectator: " + (on ? "On" : "Off"));
+    if(!valid(cr) || !cr.IsPlayer())
+        return;
+}
+
+string[] blood = { "?", "0+", "0-", "A+", "A-", "B+", "B-", "AB+", "AB-" };
+
+void SetBloodType(Critter@ cr)
+{
+    if(!valid(cr))
+        return;
+
+    if(Random(1, 1000) == 1)
+        SetLvar(cr, LVAR_blood_type, 0);
+    else
+        SetLvar(cr, LVAR_blood_type, Random(1, blood.length() - 1));
+}
+
+string GetBloodType(Critter@ cr)
+{
+    if(!valid(cr))
+        return(blood[0]);
+
+    int idx = GetLvar(cr, LVAR_blood_type);
+    if(idx < 0 || idx >= int(blood.length()))
+        return(blood[0]);
+    else
+        return(blood[idx]);
+}
+
+string GetBloodRandom()
+{
+    if(Random(1, 1000) == 1)
+        return(blood[0]);
+    else
+        return(blood[Random(1, blood.length() - 1)]);
+}
+
+string IpToString(uint ip)
+{
+    if(ip > 0)
+    {
+        string result = "";
+
+        for(uint i = 0; i < 4; i++)
+            result += (i == 0 ? "" : ".") + ((ip >> (i * 8)) & 0xFF);
+
+        return(result);
+    }
+    else
+        return("0.0.0.0");
+}
+
+string GetCritterName(Critter& cr)
+{
+    string crName = cr.Name;
+
+    if(IsLexem(cr, "$name"))
+        crName = GetLexem(cr, "$name");
+
+    if(cr.IsNpc() && !IsLexem(cr, "$name"))
+    {
+        crName = "|dlgName" + cr.Id + "|";     // parsed by client_messages@in_message
+    }
+
+    return(crName);
+}
+
+void SayEx(uint8 type, Critter& target, string& text)
+{
+    if(type >= SAYEX_MAX)
+    {
+        Log("Invalid type<" + type + ">");
+        return;
+    }
+
+    array<Critter@> players;
+    Map@            map = target.GetMap();
+    if(valid(map))
+    {
+        Critter@[] target_ = { target };
+        map.GetCrittersSeeing(target_, true, FIND_ALL | FIND_ONLY_PLAYERS, players);
+    }
+    else
+        players = target.GetGlobalGroup();
+
+    uint count = players.length();
+    if(count == 0)
+        return;
+
+    for(uint p = 0; p < count; p++)
+    {
+        if(players[p].IsPlayer())
+            players[p].RunClientScript("client_messages@sayEx", type, target.Id, 0, text, null);
+    }
+}
+
+void MapMessageEx(uint8 type, uint8 mode, Critter& target, string& text, uint16 hexX, uint16 hexY, uint8 delay = 150, uint color = 0, bool fade = true, int8 fromX = 0, int8 toX = 0, int8 fromY = 0, int8 toY = 0)
+{
+    if(type >= FLOAT_MAX)
+    {
+        Log("Invalid type<" + type + ">");
+        return;
+    }
+
+    if(mode >= FLOAT_MODE_MAX)
+    {
+        Log("Invalid mode<" + mode + "> (check #1)");
+        return;
+    }
+
+    if(text.length() == 0)
+    {
+        DLog("Empty text");
+        return;
+    }
+
+    Map@ map = target.GetMap();
+    if(!valid(map))
+        return;
+
+    if(hexX == 0 || hexY == 0)
+    {
+        Log("Invalid hex hexX<" + hexX + "> hexY<" + hexY + ">");
+        PrintCallstack();
+        return;
+    }
+
+    array<Critter@> players;
+
+    switch(mode)
+    {
+    case FLOAT_MODE_SINGLE:
+        if(target.IsPlayer())
+            players.insertLast(target);
+        else if(target.IsNpc() && _IsFollower(target))
+        {
+            Critter@ master = GetMaster(target);
+            if(valid(master) && master.GetMapId() == target.GetMapId())
+                players.insertLast(master);
+        }
+        else
+            return;
+        break;
+
+    case FLOAT_MODE_ALL:
+    case FLOAT_MODE_AROUND:
+    {
+        Critter@[] target_ = { target };
+        map.GetCrittersSeeing(target_, true, FIND_ALL | FIND_ONLY_PLAYERS, players);
+
+        if(mode == FLOAT_MODE_AROUND)
+        {
+            for(uint c = 0, cLen = players.length(); c < cLen; c++)
+            {
+                if(players[c].Id == target.Id)
+                {
+                    players.removeAt(c);
+                    break;
+                }
+            }
+        }
+    };
+        break;
+
+    default:
+        Log("Invalid mode<" + mode + "> (check #2)");
+    }
+
+    if(!valid(players))
+        return;
+
+    uint count = players.length();
+    if(count == 0)
+        return;
+
+    Buffer@ buff = NewBuffer();
+    buff << delay << color << fade << fromX << toX << fromY << toY;
+
+    array<int32> data = buff.AsInt32();
+
+    for(uint p = 0; p < count; p++)
+    {
+        if(players[p].IsPlayer())
+            players[p].RunClientScript("client_messages@map", type, hexX, hexY, text, data);
+    }
+}
+
+void VerboseAction(Critter& cr, string& text)   // Export, love it, use it
+{
+    if(text.length() > 0)
+    {
+        stringReplaceText(text, "CRITTER", GetCritterName(cr));
+
+        // uint color = COLOR_RGB( 58, 137, 133 );
+        // cr.Say( SAY_VERBOSE_ACTION, "|"+color+" **"+text+"**" );
+
+        text = "**" + text + "**";
+
+        MapMessageEx(FLOAT_VERBOSE_ACTION, FLOAT_MODE_ALL, cr, text, cr.HexX, cr.HexY, 150, COLOR_RGB(58, 137, 133), true, -20, 20, -20, -20);
+        SayEx(SAYEX_VERBOSE_ACTION, cr, text);
+    }
+}
+
+void VerboseAction(Critter& cr, Critter& target, string& text)
+{
+    if(text.length() > 0)
+    {
+        stringReplaceText(text, "TARGET",  GetCritterName(target));
+        VerboseAction(cr, text);
+    }
+}
+
+void VerboseExperience(Critter& cr, int xpDiff, int levelDiff)
+{
+    if(xpDiff == 0 && levelDiff == 0)
+        return;
+
+    string floater = "";
+    if(xpDiff != 0)
+        floater += (xpDiff > 0 ? "+" : "") + xpDiff + " experience";
+
+    if(levelDiff != 0)
+        floater += (floater.length() > 0 ? "\n" : "") + (levelDiff > 0 ? "+" : "") + levelDiff + " level" + (levelDiff > 1 ? "s" : "");
+
+    MapMessageEx(FLOAT_EXPERIENCE, FLOAT_MODE_SINGLE, cr, floater, cr.HexX, cr.HexY, 150, COLOR_RGB(0, 200, 0), true, -20, 20, -20, -30);
+}
+
+/**
+ * Creates new location for the given player, his player and non-player followers.
+ */
+uint CreateLocationForGroup(Critter& player, uint16 pid, uint16 worldX, uint16 worldY, array<Critter@>& group)
+{
+    player.GetFollowGroup(FIND_ALL, group);
+
+    array<Critter@> crits;
+    uint            n = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < n; i++)
+        if(_IsFollower(crits[i]))
+            group.insertLast(crits[i]);
+
+    group.insertLast(player);
+
+    return CreateLocation(pid, worldX, worldY, group);
+}
+
+void ChangeCrTypeSafe(Critter& cr, uint8 crType)
+{
+    Item@ armor = cr.GetItem(0, SLOT_ARMOR);
+
+    if(valid(armor))
+        cr.MoveItem(armor.Id, 0, SLOT_INV);
+
+    if(cr.ChangeCrType(crType))
+        cr.ParamBase[ST_BASE_CRTYPE] = crType;
+
+    if(valid(armor))
+        cr.MoveItem(armor.Id, 0, SLOT_ARMOR);
+}
+
+void SetChosenActions(Critter& cr, array<int>& actions)
+{
+    cr.RunClientScript("_SetChosenActions", 0, 0, 0, null, actions);
+}
+
+void PrintCallstack()
+{
+    PrintCallstack(1);
+}
+
+void PrintCallstack(int level)
+{
+    level++;
+    array<string@> modules;
+    array<string@> names;
+    array<uint>    lines;
+    array<uint>    columns;
+    uint           n = GetCallstack(modules, names, lines, columns);
+    for(uint i = level; i < n; i++)
+        Log("  " + (n - i - 1) + ") " + modules[i] + " : " + names[i] + " : " + lines[i] + "," + columns[i]);
+}
+
+#define DRUG_FIX_VERSION    (1)
+void FixDrugs(Critter& cr)   // use only in global critter_init, at the beginning
+{
+    GameVar@ var = GetLocalVar(LVAR_drug_fix, cr.Id);
+    if(var.GetValue() == DRUG_FIX_VERSION)
+        return;
+    DropDrugEffects(cr);
+    DropRadiation(cr);
+    for(int i = ST_STRENGTH_EXT; i <= ST_POISON_RESISTANCE_EXT; i++)
+        cr.StatBase[i] = 0;
+    var = DRUG_FIX_VERSION;
+}
+
+
+
+/**
+ * Finds the first free hex in a given dir, starting from x, y.
+ * @return True if a free hex was found, false otherwise. Hex coordinates are returned by reference.
+ */
+bool FindFirstFreeHex(Map@ map, uint16& x, uint16& y, uint8 dir, uint16 maxSteps)
+{
+    for(uint i = 0; i < maxSteps; i++)
+    {
+        map.MoveHexByDir(x, y, dir, 1);
+        if(map.IsHexPassed(x, y))
+            return true;
+    }
+    return false;
+}
+
+
+/**
+ * Finds the nearest free hex within given radius.
+ * @return True if a free hex was found, false otherwise. Hex coordinates are returned by reference.
+ */
+bool FindNearestFreeHex(Map& map, uint16& x, uint16& y, uint radius)
+{
+    if(map.IsHexPassed(x, y))
+    {
+        return true;
+    }
+    for(uint r = 1; r <= radius; r++)
+    {
+        map.MoveHexByDir(x, y, 4, 1);
+        for(uint side = 0; side < 6; side++)
+        {
+            for(uint step = 0; step < r; step++)
+            {
+                map.MoveHexByDir(x, y, side, 1);
+                if(map.IsHexPassed(x, y))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+/**
+ * Gets true coordinates of the item via reference
+ * Returns false if unable to get the coordinates (for whatever reason).
+ */
+bool GetItemCoordinates(Item& item, uint& mapID, uint16& x, uint16& y)
+{
+    if(!valid(item))
+        return false;
+
+    if(item.Accessory == ACCESSORY_HEX)
+    {
+        Map@ map = GetMap(item.MapId);
+        if(!valid(map))
+            return false;
+        mapID = item.MapId;
+        x = item.HexX;
+        y = item.HexY;
+        return true;
+    }
+    else if(item.Accessory == ACCESSORY_CRITTER)
+    {
+        Critter@ critter = GetCritter(item.CritId);
+        if(!valid(critter))
+            return false;
+        mapID = critter.GetMapId();
+        x = critter.HexX;
+        y = critter.HexY;
+        return true;
+    }
+    else if(item.Accessory == ACCESSORY_CONTAINER)
+    {
+        Item@ container = GetItem(item.ContainerId);
+        if(!valid(container))
+            return false;
+        mapID = container.MapId;
+        x = container.HexX;
+        y = container.HexY;
+        return true;
+    }
+    else
+        return false;
+}
+
+
+/**
+ * Returns true if there is an item with specific prototypeId on the hex.
+ */
+bool ItemOnHex(uint16 pid, Map@ map, uint16 x, uint16 y)
+{
+    if(!valid(map))
+        return false;
+    Item@ item = map.GetItem(x, y, pid);
+    if(!valid(item))
+        return false;
+    return true;
+}
+
+
+
+
+
+/**
+ * Simple geometric shapes returned as list of x, y coordinates
+ */
+#define _HexPoint    # (_x, _y) do { if(_x >= 0 && _y >= 0) { xList.insertLast(_x); yList.insertLast(_y); } } while(false)
+
+void HexLine(uint16 x0, uint16 y0, uint16 x1, uint16 y1, array<uint16>@ xList, array<uint16>@ yList)
+{
+    // Bresenham's line algorithm
+    int w = x1 - x0;
+    int h = y1 - y0;
+    int dx0 = 0, dy0 = 0, dx1 = 0, dy1 = 0;
+
+    if(w < 0)
+        dx0 = -1;
+    else if(w > 0)
+        dx0 = 1;
+    if(h < 0)
+        dy0 = -1;
+    else if(h > 0)
+        dy0 = 1;
+    if(w < 0)
+        dx1 = -1;
+    else if(w > 0)
+        dx1 = 1;
+
+    int longest = abs(w);
+    int shortest = abs(h);
+    if(!(longest > shortest))
+    {
+        longest = abs(h);
+        shortest = abs(w);
+        if(h < 0)
+            dy1 = -1;
+        else if(h > 0)
+            dy1 = 1;
+        dx1 = 0;
+    }
+
+    int numerator = longest >> 1;
+    for(int i = 0; i <= longest; i++)
+    {
+        _HexPoint(x0, y0);
+        numerator += shortest;
+        if(!(numerator < longest))
+        {
+            numerator -= longest;
+            x0 += dx0;
+            y0 += dy0;
+        }
+        else
+        {
+            x0 += dx1;
+            y0 += dy1;
+        }
+    }
+}
+
+void HexCircle(uint16 x0, uint16 y0, uint16 radius, array<uint16>@ xList, array<uint16>@ yList)
+{
+    // Midpoint circle algorithm
+    int f = 1 - radius;
+    int ddF_x = 1;
+    int ddF_y = -2 * int(radius);
+    int x = 0;
+    int y = radius;
+    _HexPoint(x0, y0 + radius);
+    _HexPoint(x0, y0 - radius);
+    _HexPoint(x0 + radius, y0);
+    _HexPoint(x0 - radius, y0);
+    while(x < y)
+    {
+        if(f >= 0)
+        {
+            y--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x++;
+        ddF_x += 2;
+        f += ddF_x;
+        _HexPoint(x0 + x, y0 + y);
+        _HexPoint(x0 - x, y0 + y);
+        _HexPoint(x0 + x, y0 - y);
+        _HexPoint(x0 - x, y0 - y);
+        _HexPoint(x0 + y, y0 + x);
+        _HexPoint(x0 - y, y0 + x);
+        _HexPoint(x0 + y, y0 - x);
+        _HexPoint(x0 - y, y0 - x);
+    }
+}
+
+//
+// PData
+// Personal data attached to specific Location / Map / Critter / Item
+
+// used internally, do NOT change enum name
+enum PDataType
+{
+    PDataLoc,
+    PDataMap,
+    PDataCr,
+    PDataIt
+};
+
+string PDataString(PDataType type)
+{
+    string result = "";
+
+    if(EnumContains("PDataType", type))
+    {
+        array<string@> names;
+        array<int>     values;
+        uint           count = GetEnum("PDataType", names, values);
+        for(uint e = 0; e < count; e++)
+        {
+            if(values[e] == type)
+                return(names[e]);
+        }
+    }
+
+    return("");
+};
+
+//
+// *PData() - *AnyData() wrappers
+// none of them should be exported, ever
+//
+bool IsPData(PDataType type, uint id)
+{
+    string prefix = PDataString(type);
+    if(prefix.length() == 0 || id == 0)
+        return(false);
+
+    return(IsAnyData(prefix + ":" + id));
+}
+
+bool GetPData(PDataType type, uint id, array<uint8>& raw)
+{
+    string prefix = PDataString(type);
+    if(prefix.length() == 0 || id == 0)
+        return(false);
+
+    return(GetAnyData(prefix + ":" + id, raw));
+}
+
+bool SetPData(PDataType type, uint id, array<uint8>& raw)
+{
+    string prefix = PDataString(type);
+    if(prefix.length() == 0 || id == 0)
+        return(false);
+
+    if(SetAnyData(prefix + ":" + id, raw))
+    {
+        array<uint> list;
+        bool        add = true;
+        if(IsAnyData(prefix) && GetAnyData(prefix, list))
+        {
+            if(list.find(id) >= 0)
+                add = false;
+        }
+
+        if(add)
+        {
+            list.insertLast(id);
+            list.sortAsc();
+        }
+
+        SetAnyData(prefix, list);
+
+        return(true);
+    }
+
+    return(false);
+}
+
+bool UnsetPData(PDataType type, uint id)
+{
+    string prefix = PDataString(type);
+    if(prefix.length() == 0 || id == 0)
+        return(false);
+
+    EraseAnyData(prefix + ":" + id);
+
+    array<uint> list;
+    if(IsAnyData(prefix) && GetAnyData(prefix, list))
+    {
+        int idx = -1;
+        if((idx = list.find(id)) >= 0)
+            list.removeAt(idx);
+    }
+
+    if(list.length() > 0)
+        SetAnyData(prefix, list);
+    else
+        EraseAnyData(prefix);
+
+    return(true);
+}
+
+void StartPersonalDataCleanup()
+{
+    CreateTimeEvent(AFTER(REAL_SECOND(1)), "utils@e_CleanupPData", false);
+}
+
+uint e_CleanupPData(array<uint>@)
+{
+    array<string>  pdataName;
+    array<int>     pdataType;
+
+    array<string@> names;
+    array<int>     values;
+    uint           count = GetEnum("PDataType", names, values);
+    for(uint e = 0; e < count; e++)
+    {
+        if(IsAnyData(names[e]))
+        {
+            pdataName.insertLast(names[e]);
+            pdataType.insertLast(values[e]);
+        }
+    }
+
+    for(uint d = 0, dLen = pdataName.length(); d < dLen; d++)
+    {
+        array<uint> list;
+        if(IsAnyData(pdataName[d]) && GetAnyData(pdataName[d], list))
+        {
+            for(uint l = 0, len = list.length(); l < len; l++)
+            {
+                bool   exists = true;
+                string what = "something";
+
+                switch(pdataType[d])
+                {
+                case PDataLoc:
+                    exists = valid(GetLocation(list[l]));
+                    what = "location";
+                    break;
+                case PDataMap:
+                    exists = valid(GetMap(list[l]));
+                    what = "map";
+                    break;
+                case PDataCr:
+                    if(list[l] >= NPC_BASE_ID)
+                    {
+                        exists = valid(GetCritter(list[l]));
+                        what = "npc";
+                    }
+                    else
+                    {
+                        exists = valid(GetPlayerName(list[l]));
+                        what = "player";
+                    }
+                    break;
+                case PDataIt:
+                    exists = valid(GetItem(list[l]));
+                    what = "item";
+                }
+
+                if(!exists)
+                {
+                    Log("Removing personal data for " + what + "<" + list[l] + ">");
+                    UnsetPData(PDataType(pdataType[d]), list[l]);
+                }
+            }
+        }
+    }
+
+    #ifdef __DEBUG__
+    return(REAL_MINUTE(1));
+    #endif
+    #ifndef __DEBUG__
+    return(REAL_MINUTE(10));
+    #endif
+}
+
+bool IsPersonalData(PDataType type, uint id, string& name)
+{
+    array<uint8> dataRaw;
+
+    if(IsPData(type, id) && GetPData(type, id, dataRaw))
+    {
+        array<string> dataNames;
+
+        Buffer@       buffer = NewBuffer(dataRaw);
+        buffer >> dataNames;
+
+        if(dataNames.length() == 0)
+            return(false);
+
+        for(uint d = 0, dLen = dataNames.length(); d < dLen; d++)
+        {
+            if(dataNames[d] == name)
+                return(true);
+        }
+    }
+
+    return(false);
+}
+
+bool GetPersonalData(PDataType type, uint id, string& name, array<uint8>& data)
+{
+    array<uint8> dataRaw;
+
+    if(IsPData(type, id) && GetPData(type, id, dataRaw))
+    {
+        array<string>        dataNames;
+        array<array<uint8> > dataValues;
+
+        Buffer@              buffer = NewBuffer(dataRaw);
+        buffer >> dataNames >> dataValues;
+
+        if(dataNames.length() == 0 || dataValues.length() == 0)
+            return(false);
+        if(dataNames.length() != dataValues.length())
+            return(false);
+
+        for(uint d = 0, dLen = dataNames.length(); d < dLen; d++)
+        {
+            if(dataNames[d] == name)
+            {
+                data = dataValues[d];
+                return(true);
+            }
+        }
+    }
+
+    return(false);
+}
+
+uint GetPersonalData(PDataType type, uint id, array<string>& outNames, array<array<uint8> >& outValues)
+{
+    uint         count = 0;
+    array<uint8> dataRaw;
+
+    if(IsPData(type, id) && GetPData(type, id, dataRaw))
+    {
+        array<string>        dataNames;
+        array<array<uint8> > dataValues;
+
+        Buffer@              buffer = NewBuffer(dataRaw);
+        buffer >> dataNames >> dataValues;
+
+        if(dataNames.length() == 0 || dataValues.length() == 0)
+            return(0);
+        if(dataNames.length() != dataValues.length())
+            return(0);
+
+        for(uint d = 0, dLen = dataNames.length(); d < dLen; d++)
+        {
+            outNames.insertLast(dataNames[d]);
+            outValues.insertLast(dataValues[d]);
+            count++;
+        }
+    }
+
+    return(count);
+}
+
+bool SetPersonalData(PDataType type, uint id, string& name, array<uint8>& value)
+{
+    array<uint8>         dataRaw;
+    array<string>        dataNames;
+    array<array<uint8> > dataValues;
+
+    Buffer@              buffer = null;
+
+    bool                 added = false;
+
+    if(IsPData(type, id) && GetPData(type, id, dataRaw))
+    {
+        @buffer = NewBuffer(dataRaw);
+        buffer >> dataNames >> dataValues;
+
+        if(dataNames.length() == 0 || dataValues.length() == 0)
+            return(false);
+        if(dataNames.length() != dataValues.length())
+            return(false);
+
+        for(uint d = 0, dLen = dataNames.length(); d < dLen; d++)
+        {
+            if(dataNames[d] == name)
+            {
+                dataValues[d] = value;
+                added = true;
+                break;
+            }
+        }
+    }
+
+    if(!added)
+    {
+        dataNames.insertLast(name);
+        dataValues.insertLast(value);
+    }
+
+    @buffer = NewBuffer();
+    buffer << dataNames << dataValues;
+
+    return(SetPData(type, id, buffer.AsUint8()));
+}
+
+bool UnsetPersonalData(PDataType type, uint id, string& name)
+{
+    array<uint8> dataRaw;
+
+    if(IsPData(type, id) && GetPData(type, id, dataRaw))
+    {
+        array<string>        dataNames;
+        array<array<uint8> > dataValues;
+
+        Buffer@              buffer = NewBuffer(dataRaw);
+        buffer >> dataNames >> dataValues;
+
+        if(dataNames.length() == 0 || dataValues.length() == 0)
+            return(false);
+        if(dataNames.length() != dataValues.length())
+            return(false);
+
+        for(uint d = 0, dLen = dataNames.length(); d < dLen; d++)
+        {
+            if(dataNames[d] == name)
+            {
+                dataNames.removeAt(d);
+                dataValues.removeAt(d);
+                break;
+            }
+        }
+
+        if(dataNames.length() == 0 || dataValues.length() == 0)
+        {
+            UnsetPData(type, id);
+
+            return(true);
+        }
+
+        @buffer = NewBuffer();
+        buffer << dataNames << dataValues;
+
+        return(SetPData(type, id, buffer.AsUint8()));
+    }
+
+    return(false);
+}
+
+bool PersonalDataAllowed(Item& item)
+{
+    if(item.IsStackable())
+    {
+        WLog("utils", "[PersonalData] Stackable items not supported", DEBUG_WARNING);
+        PrintCallstack();
+        return(false);
+    }
+
+    return(true);
+}
+
+bool IsPersonalData(Location& location, string& name)
+{
+    return(IsPersonalData(PDataLoc, location.Id, name));
+}
+
+bool GetPersonalData(Location& location, string& name, array<uint8>& value)
+{
+    return(GetPersonalData(PDataLoc, location.Id, name, value));
+}
+
+uint GetPersonalData(Location& location, array<string>& names, array<array<uint8> >& values)
+{
+    return(GetPersonalData(PDataLoc, location.Id, names, values));
+}
+
+bool SetPersonalData(Location& location, string& name, array<uint8>& value)
+{
+    return(SetPersonalData(PDataLoc, location.Id, name, value));
+}
+
+bool UnsetPersonalData(Location& location, string& name)
+{
+    return(UnsetPersonalData(PDataLoc, location.Id, name));
+}
+
+bool IsPersonalData(Map& map, string& name)
+{
+    return(IsPersonalData(PDataMap, map.Id, name));
+}
+
+bool GetPersonalData(Map& map, string& name, array<uint8>& value)
+{
+    return(GetPersonalData(PDataMap, map.Id, name, value));
+}
+
+uint GetPersonalData(Map& map, array<string>& names, array<array<uint8> >& values)
+{
+    return(GetPersonalData(PDataMap, map.Id, names, values));
+}
+
+bool SetPersonalData(Map& map, string& name, array<uint8>& value)
+{
+    return(SetPersonalData(PDataMap, map.Id, name, value));
+}
+
+bool UnsetPersonalData(Map& map, string& name)
+{
+    return(UnsetPersonalData(PDataMap, map.Id, name));
+}
+
+bool IsPersonalData(Critter& critter, string& name)
+{
+    return(IsPersonalData(PDataCr, critter.Id, name));
+}
+
+bool GetPersonalData(Critter& critter, string& name, array<uint8>& value)
+{
+    return(GetPersonalData(PDataCr, critter.Id, name, value));
+}
+
+uint GetPersonalData(Critter& critter, array<string>& names, array<array<uint8> >& values)
+{
+    return(GetPersonalData(PDataCr, critter.Id, names, values));
+}
+
+bool SetPersonalData(Critter& critter, string& name, array<uint8>& value)
+{
+    return(SetPersonalData(PDataCr, critter.Id, name, value));
+}
+
+bool UnsetPersonalData(Critter& critter, string& name)
+{
+    return(UnsetPersonalData(PDataCr, critter.Id, name));
+}
+
+bool IsPersonalData(Item& item, string& name)
+{
+    if(!PersonalDataAllowed(item))
+        return(false);
+
+    return(IsPersonalData(PDataIt, item.Id, name));
+}
+
+bool GetPersonalData(Item& item, string& name, array<uint8>& value)
+{
+    if(!PersonalDataAllowed(item))
+        return(false);
+
+    return(GetPersonalData(PDataIt, item.Id, name, value));
+}
+
+uint GetPersonalData(Item& item, array<string>& names, array<array<uint8> >& values)
+{
+    if(!PersonalDataAllowed(item))
+        return(0);
+
+    return(GetPersonalData(PDataIt, item.Id, names, values));
+}
+
+bool SetPersonalData(Item& item, string& name, array<uint8>& value)
+{
+    if(!PersonalDataAllowed(item))
+        return(false);
+
+    return(SetPersonalData(PDataIt, item.Id, name, value));
+}
+
+bool UnsetPersonalData(Item& item, string& name)
+{
+    if(!PersonalDataAllowed(item))
+        return(false);
+
+    return(UnsetPersonalData(PDataIt, item.Id, name));
+}
+
+bool FindPreferredGridApprox(Map& map, uint16& hx, uint16& hy)
+{
+    if(map.FindNearestGridApprox(hx, hy, true))
+        return true;
+    return map.FindNearestGridApprox(hx, hy, false);
+}
+
+#ifdef __DEBUG__
+void pdata_item(Critter& cr, int, int pid, int count)
+{
+    Item@ item = cr.AddItem(pid, count);
+    if(valid(item))
+    {
+        Buffer@ buffer = NewBuffer();
+        buffer << cr.Name;
+        if(SetPersonalData(item, "owner", buffer.AsUint8()))
+        {
+            if(IsPersonalData(item, "owner"))
+            {
+                array<uint8> raw;
+                if(GetPersonalData(item, "owner", raw))
+                {
+                    string owner = "unknown";
+                    @buffer = NewBuffer(raw);
+                    buffer >> owner;
+                    cr.Say(SAY_NETMSG, "Owner of item <" + item.Id + "> is <" + owner + ">");
+                }
+                else
+                    cr.Say(SAY_NETMSG, "GetPersonalData fail");
+            }
+            else
+                cr.Say(SAY_NETMSG, "IsPersonalData fail");
+        }
+        else
+            cr.Say(SAY_NETMSG, "SetPersonalData fail");
+    }
+    else
+        cr.Say(SAY_NETMSG, "item invalid");
+}
+#endif
+
+
+//
+// Location utils
+//
+
+// Returns true if there is at least one Critter of given type inside Location.
+//
+bool LocationHasCritters(Location& loc, uint findType)
+{
+    array<Map@>     maps;
+    uint            num = loc.GetMaps(maps);
+    array<Critter@> critters;
+    for(uint i = 0; i < num; i++)
+    {
+        if(maps[i].GetCritters(0, findType, critters) > 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Gets all Critters of given type inside Location.
+//
+uint LocationGetCritters(Location& loc, uint findType, array<Critter@>@ critters)
+{
+    array<Map@> maps;
+    uint        num = loc.GetMaps(maps);
+    for(uint i = 0; i < num; i++)
+    {
+        maps[i].GetCritters(0, findType, critters);
+    }
+    return critters.length();
+}
+
+// Returns true if there is at least one Item with given protoId inside Location.
+//
+bool LocationHasItems(Location& loc, uint16 protoId)
+{
+    array<Map@>  maps;
+    uint         num = loc.GetMaps(maps);
+    array<Item@> items;
+    for(uint i = 0; i < num; i++)
+    {
+        if(maps[i].GetItems(protoId, items) > 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Gets all items with given protoId inside Location.
+//
+uint LocationGetItems(Location& loc, uint16 protoId, array<Item@>@ items)
+{
+    array<Map@> maps;
+    uint        num = loc.GetMaps(maps);
+    for(uint i = 0; i < num; i++)
+    {
+        maps[i].GetItems(protoId, items);
+    }
+    return items.length();
+}
+
+// Deletes all items with given protoId inside Location.
+//
+void LocationDeleteItems(Location& loc, uint16 protoId)
+{
+    array<Item@> items;
+    LocationGetItems(loc, protoId, items);
+    DeleteItems(items);
+}
+
+
+
+
+// Returns true if location is an encounter, has no geck items and no players.
+//
+bool IsDisposableEncounter(Location@ loc)
+{
+    if(valid(loc) && loc.IsEncounter() && loc.GeckCount == 0)
+    {
+        return(!LocationHasCritters(loc, FIND_ONLY_PLAYERS | FIND_ALL));
+    }
+    return false;
+}

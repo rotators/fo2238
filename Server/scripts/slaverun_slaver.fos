@@ -1,0 +1,65 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_slaver.fos
+//
+
+// This is the script with slave runs' slavers event handlers.
+// See slaverun.fos for the list of all involved files.
+
+#include "_macros.fos"
+#include "slaverun_h.fos"
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_DEAD, "_SlaverOnDead");
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    npc.KarmaBase[KARMA_SLAVER] = 1;
+}
+
+void _SlaverOnDead(Critter& crit, Critter@ killer)
+{
+    uint     id = crit.GetMap().GetData(MAP_DATA_SLAVERUN_PLAYER);
+    GameVar@ slavers_killed = GetLocalVar(LVAR_slaverun_slavers_killed, id);
+    slavers_killed += 1;
+    // Log("Slaver killed, # = "+slavers_killed.GetValue());
+    GameVar@ slavers = GetLocalVar(LVAR_slaverun_slavers, id);
+    GameVar@ status = GetLocalVar(LVAR_slaverun_status, id);
+    Critter@ player = GetCritter(id);
+
+    uint     ustatus = status.GetValue();
+
+    if(FLAG(ustatus, SLAVERUN_BOTCHED))
+        return;
+
+    if(2 * (slavers - slavers_killed) < slavers)
+    {
+        if(valid(player))
+            player.Say(SAY_NETMSG, "Too many of your fellow slavers have died. You've failed at your task.");
+        SETFLAG(ustatus, SLAVERUN_BOTCHED);
+    }
+    else
+    {
+        if(FLAG(ustatus, SLAVERUN_SLAVES_KILLED))
+        {
+            if(valid(player))
+                player.Say(SAY_NETMSG, "You've killed too many of the tame stock and let your fellow slavers die. You've failed at your task.");
+            SETFLAG(ustatus, SLAVERUN_BOTCHED);
+        }
+        else
+        {
+            if(valid(player))
+                player.Say(SAY_NETMSG, "Many of your fellow slavers died.");
+            SETFLAG(ustatus, SLAVERUN_SLAVERS_KILLED);
+        }
+    }
+    status = ustatus;
+}
+
+void _Idle(Critter& npc)
+{
+    if(Random(0, 5) == 0)
+        npc.MoveRandom();
+    npc.Wait(Random(2000, 10000));
+}

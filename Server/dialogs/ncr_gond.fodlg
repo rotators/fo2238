@@ -1,0 +1,89 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _script dialog@d_IsNotMember 0  #
+3 1030 D _var n name_mem_npc_player = 0 #
+7 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 R _var n name_mem_npc_player = 1 #
+5 3020 R _var n name_mem_npc_player = 1 #
+0 3030 @
+4 4000 None 0 #
+6 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+4 6010 #
+5 6020 #
+80 6030 D _param p PE_PROFESSION_GUNSMITH_B < 3 #
+0 6040 @
+7 7000 None 0 #
+6 7010 #
+0 7020 @
+50 8000 None 0 @
+80 9000 None 0 #
+81 9010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithB0 1 0 #
+82 9020 D _script dialog@d_CheckGunsmithB1 1 0 #
+0 9030 @
+81 10000 None 0 #
+84 10010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_B = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 10020 @
+82 11000 None 0 #
+84 11010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_B = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 11020 @
+84 12000 None 0 #
+0 12010 &
+
+[engl]
+{100}{}{Gond}
+{200}{}{It's a big super-mutant.}
+{210}{}{It's Gond, the super-mutant.}
+{210}{}{It's big, it's green, and it's no brighter looking than the rest of its kind.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Not NCR}
+{1030}{}{NCR unknown}
+{1040}{}{NCR known}
+{2000}{}{Hey, did Elise say you could be here?@@Are you a Ranger, too?@@You ain't supposed to be here.}
+{3000}{}{Hi there. You must be one of the new rangers, I guess. Welcome to our small place. It's not much, but I hope you'll find it useful.}
+{3010}{}{What are you doing here?}
+{3020}{}{What is this place?}
+{3030}{}{I must've been mistaken, excuse me.}
+{4000}{}{I help these fine people try to keep order out in the wastes... Used to, at least. recently I'm spending more time fixing stuff around here. Back in the workshop, you know?}
+{4010}{}{Got it. Another question...}
+{4020}{}{Thanks for that, but I have to go now.}
+{5000}{}{This is the Ranger House. The NCR Rangers are using it for their needs, be it repairing their stuff, hoarding their ammo or using the terminal... It can be called "home", I guess. I don't have another one.}
+{5010}{}{Good to hear you feel yourself like at home here. One more thing...}
+{5020}{}{Thanks for that, but I have to go now.}
+{6000}{}{So, what did you wanna know?}
+{6010}{}{What are you doing here?}
+{6020}{}{What is this place?}
+{6030}{}{I was wondering, you carrying that big gun around and all... Maybe you could show me a few tricks about big guns.}
+{6040}{}{I think I'll leave you to your work now.}
+{7000}{}{Hello again. Glad to see you in one piece.}
+{7010}{}{Gond, I had some questions for you...}
+{7020}{}{Yeah, it's not that easy to get a piece of me. See you around, Gond!}
+{8000}{}{And they call you *normals*. Heh.@@I had a friend just like you. He didn't make it.@@I think it's not the best idea to hang around here.}
+{9000}{}{What's on your mind?}
+{9010}{}{I'd like to know how they work, what they're made of... technical stuff.}
+{9020}{}{I thought you could clarify some things about the construction and usage of big guns to me.}
+{9030}{}{Erhm... Actually, nothing right now. I better be going.}
+{10000}{}{I really hope you know what you're talking about, otherwise it'll be a waste of time. And I need something in return. I'm always short on caps, maybe you could bring me... Let's say $1500. For that amount, I'll even give you a magazine about weapons and ammo. Deal?}
+{10010}{}{Okay, I think I've got fifteen hundred right here. Why don't you take it, so we can start right away? [Give him $1500]}
+{10020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{11000}{}{Yeah, I see you're already skilled with those, so this shouldn't take long. But, as you may already know, the caps shortage is going to kill me one day. How about you get me $3000, and I show you everything I know?}
+{11010}{}{It wasn't easy to find that many caps... It better be worth it! [Give him $3000]}
+{11020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{12000}{}{Very well, it's a deal then. [Gond explains you everything you ever wanted to know about big guns.]}
+{12010}{}{Thanks Gond, that was really something new for me. I have to go now, bye.}
+

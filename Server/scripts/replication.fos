@@ -1,0 +1,589 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// replication.fos
+//
+
+#include "_macros.fos"
+#include "_basetypes.fos"
+#include "follower_h.fos"
+#include "factions_bases_h.fos"
+#include "npc_common_h.fos"
+#include "follower_common_h.fos"
+#include "world_common_h.fos"
+#include "entire.fos"
+#include "logging_h.fos"
+#include "map_tent_h.fos"
+#include "minigames_h.fos"
+#include "npc_roles_h.fos"
+#include "utils_h.fos"
+#include "MsgStr.h"
+
+import void DropDrugEffects(Critter& cr) from "drugs";
+import void DropPoison(Critter& cr) from "poison";
+// import void DropRadiation(Critter& cr) from "radiation";
+import void CapRadiation(Critter& cr) from "radiation";
+import Map@ GetRoomPosition(uint PlayerId, uint16& out hx, uint16& out hy) from "rooms";
+import bool IsInsideArena(Critter&) from "arena";
+import void OnTeleportToLobby(Critter&) from "arena";
+import void ClearInfluenceBuffer(Critter& cr) from "town";
+
+
+// const uint16 HellMapPid=MAP_replication_hell;
+const uint16[] Hospitals =
+{
+    LOCATION_Replication1,
+    LOCATION_Replication2,
+    LOCATION_Replication3,
+    LOCATION_Replication4,
+    LOCATION_Replication5,
+    LOCATION_Replication6,
+    LOCATION_Replication7,
+    LOCATION_Replication8
+};
+
+// starting towns
+const uint16[] Towns =
+{
+    // LOCATION_Den,
+    // LOCATION_Klamath,
+    // LOCATION_Modoc,
+    // LOCATION_BrokenHills,
+    // LOCATION_NewReno,
+    LOCATION_NCR,
+    // LOCATION_Redding,
+    LOCATION_SanFrancisco,
+    LOCATION_Junktown,
+    LOCATION_Hub,
+    LOCATION_Boneyard
+};
+
+//
+// Gets nearest replication map
+//
+Map@ GetNearestReplicatorMap(Critter& player)
+{
+    Location@ loc;
+    Location@ nearest;
+    uint      dist = 999999;
+    uint      tmp = 0;
+
+    for(uint i = 0, j = Hospitals.length(); i < j; i++)
+    {
+        @loc = GetLocationByPid(Hospitals[i], 0);
+        if(!valid(loc))
+        {
+            Log("Invalid hospital location, looking further...");
+            continue;
+        }
+        tmp = DIST(loc.WorldX, loc.WorldY, player.WorldX, player.WorldY);
+        #ifdef __DEBUG__
+        player.Say(SAY_NETMSG, "Loc (" + loc.WorldX + ", " + loc.WorldY + "), Me (" + player.WorldX + ", " + player.WorldY + "), dist: " + tmp);
+        #endif
+        DLog("" + tmp + " ?< " + dist);
+        if(tmp < dist)
+        {
+            dist = tmp;
+            @nearest = @loc;
+        }
+    }
+    if(!valid(nearest))
+    {
+        Log("Couldn't obtain nearest hospital");
+        return null;
+    }
+    // get first map
+    return nearest.GetMapByIndex(0);
+}
+Map@ GetRandomReplicatorMap(Critter& player)
+{
+    return GetLocationByPid(random_from_array(Hospitals), 0).GetMapByIndex(0);
+}
+
+//
+// Chose one of the towns to start
+//
+Map@ GetStartingMap(Critter& player)
+{
+    uint      idx = Random(0, Towns.length() - 1);
+    Location@ loc = GetLocation(Towns[idx]);
+
+    return loc.GetMapByIndex(0);
+}
+
+void SetStartLocation(Critter& cr)   // Export
+{
+    /*Map@ map=GetStartingMap(cr);
+       if(not valid(map))
+            return;*/
+
+    // Spawn player in instanced starter location
+    uint x, y = 0;
+    uint startloc = Random(LOCATION_Spawnpoint1, LOCATION_Spawnpoint3);
+    switch(startloc)
+    {
+    case LOCATION_Spawnpoint1:
+        x = 1522;
+        y = 2028;
+        break;
+    case LOCATION_Spawnpoint2:
+        x = 1712;
+        y = 1438;
+        break;
+    case LOCATION_Spawnpoint3:
+        x = 1482;
+        y = 290;
+        break;
+    default:
+        Log("Wrong location pid!");
+        break;
+    }
+
+    uint      locId = CreateLocation(startloc, x, y, null);
+    Location@ loc = GetLocation(locId);
+    Map@      map = loc.GetMapByIndex(0);
+    if(!valid(map))
+        return;
+
+    // Hidden fog on default player position
+    uint zoneX = cr.WorldX / __GlobalMapZoneLength;
+    uint zoneY = cr.WorldY / __GlobalMapZoneLength;
+    cr.SetFog(zoneX, zoneY, FOG_FULL);
+    cr.SetFog(zoneX - 1, zoneY - 1, FOG_FULL);
+    cr.SetFog(zoneX, zoneY - 1, FOG_FULL);
+    cr.SetFog(zoneX + 1, zoneY - 1, FOG_FULL);
+    cr.SetFog(zoneX - 1, zoneY, FOG_FULL);
+    cr.SetFog(zoneX + 1, zoneY, FOG_FULL);
+    cr.SetFog(zoneX - 1, zoneY + 1, FOG_FULL);
+    cr.SetFog(zoneX, zoneY + 1, FOG_FULL);
+    cr.SetFog(zoneX + 1, zoneY + 1, FOG_FULL);
+
+    cr.TransitToMap(map.Id, 0);
+
+    zoneX = cr.WorldX / __GlobalMapZoneLength;
+    zoneY = cr.WorldY / __GlobalMapZoneLength;
+    cr.SetFog(zoneX, zoneY, FOG_NONE);
+    cr.SetFog(zoneX - 1, zoneY - 1, FOG_HALF);
+    cr.SetFog(zoneX, zoneY - 1, FOG_HALF);
+    cr.SetFog(zoneX + 1, zoneY - 1, FOG_HALF);
+    cr.SetFog(zoneX - 1, zoneY, FOG_HALF);
+    cr.SetFog(zoneX + 1, zoneY, FOG_HALF);
+    cr.SetFog(zoneX - 1, zoneY + 1, FOG_HALF);
+    cr.SetFog(zoneX, zoneY + 1, FOG_HALF);
+    cr.SetFog(zoneX + 1, zoneY + 1, FOG_HALF);
+}
+
+void SetReplicationTime(Critter& cr)   // Export
+{
+    Map@ map = cr.GetMap();
+    // encounter mob corpses not removed
+    if(_IsTrueNpc(cr) && IsEncounterMap(map) && cr.Param[ST_NPC_ROLE] != ROLE_MOB_WAVE)
+        cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+
+    // DLog("Setting replication time");
+    int replTime = cr.Stat[ST_REPLICATION_TIME];
+
+    if(replTime == REPLICATION_NEVER)
+        return;
+
+    if(replTime < 0)
+    {
+        // No respawn, set corpse removal timeout
+        // DLog("No respawn, set corpse removal timeout");
+        if(replTime == REPLICATION_DELETE_FAST)
+            replTime = 1;
+        else
+            replTime = 10;
+    }
+    else if(replTime == 0)     // Take default values
+    {
+        // DLog("Take default values");
+        if(cr.IsPlayer())
+            replTime = REAL_SECOND(20);
+        else
+            replTime = REAL_MINUTE(10);
+    }
+    else
+        replTime = REAL_SECOND(replTime);
+    _SetTimeout(cr, TO_REPLICATION, replTime);
+}
+
+void DropItems(Critter& cr)
+{
+    Map@         dropMap = cr.GetMap();
+    array<Item@> items;
+
+    // Don't drop trophies
+    cr.GetItems(SLOT_TROPHY, items);
+    if(items.length() > 0)
+    {
+        DeleteItems(items);
+        items.resize(0);
+    }
+
+    // Disable drop of hidden items and delete containers
+    cr.GetItems(-1, items);
+    for(uint i = 0, j = items.length(); i < j; i++)
+    {
+        if(items[i].GetType() == ITEM_TYPE_CONTAINER)
+        {
+            DeleteItem(items[i]);
+            @items[i] = null;
+        }
+        else if(FLAG(items[i].Flags, ITEM_HIDDEN))
+            @items[i] = null;
+    }
+    if(valid(dropMap))
+        MoveItems(items, dropMap, cr.HexX, cr.HexY);
+    else
+        DeleteItems(items);
+}
+
+Map@ TryFindCompanionRespawn(Critter& cr, uint16& hx, uint16& hy, bool TryAny)
+{
+    Map@ map = null;
+    if(!valid(map) && (TryAny || (cr.FollowerVar[FV_RESPAWN_PLACE] == FOLLOWER_RESPAWN_TENT)))
+    {
+        /*@map=GetTentMap(cr.FollowerVar[FV_MASTER]);
+           if(!valid(map))
+                DLog("Companion attempting to respawn in tent, but no tent found.")
+           else
+           {
+                DLog("Companion attempting to respawn in tent, at "+hx+","+hy);
+                if (GetEntireFreeHex(map,ENTIRE_REPLICATION,hx,hy))
+                        return map;
+                else
+                {
+                        FLog(LOG_FOLLOWER, "Companion "+cr.Id+": Found valid tent map for replication on pid " + map.GetProtoId() + " but no free replication entires");
+                        @map=null;
+                }
+           }
+         */
+
+        Location@ loc = GetNearestTentLocation(cr.FollowerVar[FV_MASTER], cr.WorldX, cr.WorldY);
+        if(valid(loc))
+        {
+            array<Map@> maps;
+            uint        count = loc.GetMaps(maps);
+            for(uint m = 0; m < count; m++)
+            {
+                if(GetEntireFreeHex(maps[m], ENTIRE_REPLICATION, hx, hy))
+                    return(maps[m]);
+            }
+
+            FLog(LOG_FOLLOWER, "Companion " + cr.Id + ": Found valid tent location for replication on pid " + loc.GetProtoId() + " but no free replication entires");
+        }
+        else
+            DLog("Companion attempting to respawn in tent, but no tent found.");
+    }
+    if(!valid(map) && (TryAny || (cr.FollowerVar[FV_RESPAWN_PLACE] == FOLLOWER_RESPAWN_HOTEL)))
+    {
+        @map = GetRoomPosition(cr.FollowerVar[FV_MASTER], hx, hy);
+        if(!valid(map))
+            DLog("Companion attempting to respawn in hotel, but room not found.");
+        // DLog("Companion attempting to respawn in hotel, at "+hx+","+hy);
+    }
+    if(!valid(map) && (TryAny || (cr.FollowerVar[FV_RESPAWN_PLACE] == FOLLOWER_RESPAWN_FACTION_BASE)))
+    {
+        DLog("Companion attempting to respawn at base.");
+        uint      locId = cr.FollowerVar[FV_RESPAWN_BASE_ID];
+        Location@ loc;
+        if(locId != 0)
+            @loc = GetLocation(locId);
+
+        if(!valid(loc))
+        {
+            array<IFactionBase@> bases;
+            if(GetFactionBases(cr.FollowerVar[FV_FACTION], bases) != 0)
+            {
+                @loc = GetLocation(bases[0].LocationId);                 // Try first base if other one is invalid
+                cr.FollowerVarBase[FV_RESPAWN_BASE_ID] = bases[0].LocationId;
+            }
+        }
+
+        if(valid(loc))
+        {
+            DLog("Loc found: " + locId);
+            @map = loc.GetMapByIndex(0);
+            if(map.GetProtoId() == 236 || map.GetProtoId() == 238)         // hq_cave1out, hq_vault1out, so need to pick the inner map in location...
+                @map = loc.GetMapByIndex(1);
+            if(GetEntireFreeHex(map, ENTIRE_REPLICATION, hx, hy))
+                return map;
+            else
+            {
+                FLog(LOG_FOLLOWER, "Companion " + cr.Id + ": Found valid base map for replication on pid " + map.GetProtoId() + " but no free replication entires");
+                @map = null;
+            }
+        }
+
+    }
+    if(!valid(map) && !TryAny)
+        return TryFindCompanionRespawn(cr, hx, hy, true);         // Recursion, yay!
+
+    if(!valid(map))
+        FLog(LOG_FOLLOWER, "Companion " + cr.Id + ": Searched trough all options, no valid map found or no free replication entires found on possible maps.");
+    return map;
+}
+
+void ReplicateCritter(Critter& cr)   // Export
+{
+    if(cr.IsNpc() && cr.Stat[ST_REPLICATION_TIME] == REPLICATION_NEVER)
+        return;
+
+    // Delete some critters instead
+    if(cr.IsNpc() &&
+       (cr.Stat[ST_REPLICATION_TIME] == REPLICATION_DELETE ||
+        cr.Stat[ST_REPLICATION_TIME] == REPLICATION_DELETE_FAST))
+    {
+        // DLog("Removing");
+        if(_CritCanDropItemsOnDead(cr) && _IsFollower(cr) &&
+           cr.FollowerVar[FV_TYPE] == FOLLOWER_TYPE_SLAVE ||
+           cr.FollowerVar[FV_TYPE] == FOLLOWER_TYPE_COMPANION ||
+           cr.FollowerVar[FV_TYPE] == FOLLOWER_TYPE_BRAHMIN ||
+           cr.FollowerVar[FV_TYPE] == FOLLOWER_TYPE_DOG)
+        {
+            Item@ item = cr.GetItem(0, SLOT_ARMOR);
+            if(valid(item))
+                cr.MoveItem(item.Id, item.GetCount(), SLOT_INV);
+            DropItems(cr);
+        }
+
+        DeleteNpc(cr);
+        return;
+    }
+    /*if (_IsFollower(cr) || cr.CrType == CT_BRAHMIN)
+       {
+       DeleteNpc(cr);
+       return;
+       }*/
+
+    if(_IsRealPlayer(cr) && GetLvar(cr, LVAR_killer_admin) > 0)
+    {
+        if(cr.ToLife())
+        {
+            cr.StatBase[ST_CURRENT_HP] = GetLvar(cr, LVAR_killer_admin);
+            SetLvar(cr, LVAR_killer_admin, 0);
+            _CritUnsetMode(cr, MODE_NO_LOOT);
+            _CritUnsetMode(cr, MODE_NO_STEAL);
+        }
+        else
+        {
+            _SetTimeout(cr, TO_REPLICATION, REAL_SECOND(10));
+        }
+        return;
+    }
+    if(IsFlaggedAsIllegal(cr) && cr.GetMapId() != 0)
+        UnsetCritterIllegalFlag(cr);
+
+    ClearInfluenceBuffer(cr);
+    GameVar@ casinovar = GetLocalVar(LVAR_newr_incasino, cr.Id);     // entered a casino in new reno
+    if(valid(casinovar))
+        casinovar = 0;
+
+    cr.StatBase[ST_TURN_BASED_AC] = 0;
+
+    Map@   map = null;
+    uint16 hx = 0, hy = 0;
+    bool   room = false;
+    if(cr.IsPlayer())
+    {
+        Map@ deathMap = cr.GetMap();
+
+        if(valid(deathMap) && (IsJail(deathMap) || IsWarzone(deathMap)))
+        {
+            @map = deathMap;
+            array<Entire> entires;
+            ParseEntires(map, entires, 0);
+            if(entires.length() > 0)
+            {
+                int i = Random(0, entires.length() - 1);
+                hx = entires[i].HexX;
+                hy = entires[i].HexY;
+            }
+        }
+        else if(valid(deathMap) && deathMap.GetLocation().GetProtoId() == LOCATION_Hinkley && IsInsideArena(cr))
+        {
+            @map = deathMap;
+            array<Entire> entires;
+            ParseEntires(map, entires, 242);
+            if(entires.length() > 0)
+            {
+                int i = Random(0, entires.length() - 1);
+                hx = entires[i].HexX;
+                hy = entires[i].HexY;
+            }
+        }
+        else
+        {
+            // Try dynamic respawn points.
+            if(valid(deathMap))
+            {
+                Item@ dynRespawn = GetDSpawn(deathMap, cr.Param[ST_MINIGAME_DATA]);
+                if(valid(dynRespawn))
+                {
+                    @map = GetMap(dynRespawn.MapId);
+                    hx = dynRespawn.HexX;
+                    hy = dynRespawn.HexY;
+                }
+            }
+
+            if(!valid(map))
+            {
+                // try hotel
+                @map = GetRoomPosition(cr.Id, hx, hy);
+                if(!valid(map))
+                {
+                    @map = GetNearestReplicatorMap(cr);                    // GetNearestReplicatorMap(cr);
+                    GetEntireFreeHex(map, ENTIRE_REPLICATION, hx, hy);
+                }
+                else
+                    room = true;
+            }
+        }
+
+        if(!valid(map) || (hx == 0 && hy == 0))
+        {
+            // Continue dead
+            _SetTimeout(cr, TO_REPLICATION, REAL_MINUTE(1));
+            return;
+        }
+
+        if(_CritCanDropItemsOnDead(cr))
+        {
+            if(!(map.GetLocation().GetProtoId() == LOCATION_Hinkley && IsInsideArena(cr)))
+                DropItems(cr);
+        }
+    }
+    else
+    {
+        cr.DropPlanes();
+        cr.ClearEnemyStackNpc();
+        bool Tried = false;
+        if(cr.FollowerVar[FV_TYPE] == FOLLOWER_TYPE_COMPANION)
+        {
+            @map = TryFindCompanionRespawn(cr, hx, hy, false);
+            if(!valid(map))
+            {
+                DLog("Didn't find respawn for companion, deleting ");
+                DeleteNpc(cr);
+            }
+            if(valid(cr))
+                cr.FollowerVarBase[FV_LOYALITY] = CLAMP(cr.FollowerVar[FV_LOYALITY] - FOLLOWER_LOYALITY_DEATH_DROP, 0, 100);
+        }
+        else
+        {
+            cr.StatBase[ST_LAST_WEAPON_ID] = 0;
+            @map = cr.GetMap();
+            if(!valid(map))               // On global, delete
+            {
+                DeleteNpc(cr);
+                return;
+            }
+            hx = cr.HexX;
+            hy = cr.HexY;
+
+            if(cr.Stat[ST_DEAD_BLOCKER_ID] != 0)
+            {
+                Item@ block = ::GetItem(cr.Stat[ST_DEAD_BLOCKER_ID]);
+                if(valid(block))
+                    DeleteItem(block);
+                cr.StatBase[ST_DEAD_BLOCKER_ID] = 0;
+            }
+
+            if(!map.IsHexPassed(hx, hy))
+            {
+                bool founded = false;
+                for(int x = -1; x <= 1; x++)
+                {
+                    for(int y = -1; y <= 1; y++)
+                    {
+                        if(x == 0 && y == 0)
+                            continue;                                      // Skip direct position
+                        if(__MapHexagonal)
+                        {
+                            if((hx % 2) == 1 && ((x == -1 && y == 1) || (x == 1 && y == 1)))
+                                continue;
+                            if((hx % 2) == 0 && ((x == -1 && y == -1) || (x == 1 && y == -1)))
+                                continue;
+                        }
+
+                        if(map.IsHexPassed(hx + x, hy + y))
+                        {
+                            hx += x;
+                            hy += y;
+                            founded = true;
+                            break;
+                        }
+                    }
+                    if(founded)
+                        break;
+                }
+
+                if(!founded)
+                {
+                    // Continue dead
+                    _SetTimeout(cr, TO_REPLICATION, REAL_MINUTE(1));
+                    return;
+                }
+            }
+        }
+    }
+
+    if(!valid(map))
+    {
+        Log("Cannot find replication map, critter " + cr.Id);
+        return;
+    }
+
+
+    if(map.GetLocation().GetProtoId() == LOCATION_Hinkley && IsInsideArena(cr))
+    {
+        cr.TransitToMap(map.Id, hx, hy, Random(0, 5));
+        OnTeleportToLobby(cr);
+    }
+    else
+    {
+        cr.TransitToMap(map.Id, hx, hy, Random(0, 5));
+        cr.DamageBase[DAMAGE_EYE] = 0;
+        cr.DamageBase[DAMAGE_RIGHT_ARM] = 0;
+        cr.DamageBase[DAMAGE_LEFT_ARM] = 0;
+        cr.DamageBase[DAMAGE_RIGHT_LEG] = 0;
+        cr.DamageBase[DAMAGE_LEFT_LEG] = 0;
+
+        cr.StatBase[ST_CURRENT_HP] = 10;
+        if(cr.IsNpc())
+            cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE];
+
+        if(IsWarzone(map))     // Full life on warzone
+            cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE];
+        else
+            _SetTimeout(cr, TO_WEAKENED, WEAKENED_TIMEOUT(cr));
+    }
+
+
+
+    cr.ToLife();
+    if(room)
+        cr.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_TEXT, STR_ROOM_REPLICATION);
+
+    SetLvar(cr, LVAR_event_outfitted, 0);
+    cr.StatBase[ST_CURRENT_AP] = cr.Stat[ST_ACTION_POINTS] * 100;
+
+    if(_IsRealPlayer(cr))
+        _CritUnsetMode(cr, MODE_NO_LOOT);
+
+    DropPoison(cr);
+    CapRadiation(cr);
+    // DropRadiation(cr);
+    // DropDrugEffects(cr);
+    cr.DropTimers();
+    // ClearIllegalFlags(cr); // Clear illegal flags in all towns
+    uint toVote = cr.Timeout[TO_KARMA_VOTING];
+    // cr.DropTimeouts();
+    _SetTimeout(cr, TO_KARMA_VOTING, toVote);
+
+    #ifdef __TEST__
+    cr.AddItem(PID_RADIO, 1);
+    #endif
+}

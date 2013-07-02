@@ -1,0 +1,409 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_spawn_npc.fos
+//
+
+// window for npc spawning
+
+#include "_macros.fos"
+#include "cfg_file.fos"
+#include "client_gui_ex.fos"
+
+// TODO: some of this should be extracted to some kind of "perk" window,
+// once there will be need to reuse
+
+//
+// Spawns critter with given params
+//
+class CSpawnNpcOKButton : CSmallButton
+{
+    // critter params
+    uint             pid;
+    uint16           hexX;
+    uint16           hexY;
+    uint8            dir;
+    uint             dialog;
+    string           script;
+    uint             ai;
+    uint             bag;
+    uint             team;
+    uint             mob;
+    uint             level;
+
+    CSpawnNpcWindow@ window;
+    CSpawnNpcOKButton(int left, int top, CSpawnNpcWindow@ window)
+    {
+        super(left, top);
+        @this.window = @window;
+    }
+
+    // sets params for critter to be spawned
+    void SetParams(uint pid, uint16 hexX, uint16 hexY, uint8 dir, uint dialog, string script, uint ai, uint bag, uint team, uint mob, uint level)
+    {
+        this.pid = pid;
+        this.hexX = hexX;
+        this.hexY = hexY;
+        this.dir = dir;
+        this.dialog = dialog;
+        this.script = script;
+        this.ai = ai;
+        this.bag = bag;
+        this.team = team;
+        this.mob = mob;
+        this.level = level;
+    }
+    void Click()
+    {
+        window.HideWindow();
+        window.UpdateParams();
+        // param4: { pid, x, y, dir, dialog, script, ai, bag, team, mob, level }
+        int[] params = { pid, hexX, hexY, dir, dialog, 0, ai, bag, team, mob, level };
+        RunServerScript("dev_menu@SpawnCritter", 0, 0, 0, script, params);
+    }
+};
+//
+// Closes window
+//
+class CSpawnNpcCancelButton : CSmallButton
+{
+    CSpawnNpcWindow@ window;
+    CSpawnNpcCancelButton(int left, int top, CSpawnNpcWindow@ window)
+    {
+        super(left, top);
+        @this.window = @window;
+    }
+
+    void Click() { window.HideWindow(); }
+};
+
+class CSpawnNpcList : CListBox
+{
+    CSpawnNpcWindow@ window;
+
+    CSpawnNpcList(CSpawnNpcWindow@ window)
+    {
+        super(42, 36, 195, 140);
+        // Message("Text height: " + textHeight);
+        @this.window = window;
+    }
+
+    void Click()
+    {
+        CListBox::Click();
+
+        window.SetCritter(elements[GetIndex()]);
+    }
+};
+
+//
+// List scrolling
+//
+class CSpawnNpcScrollDown : CSmallArrowDown
+{
+    CListBox@ list;
+
+    CSpawnNpcScrollDown(int left, int top, CListBox@ list)
+    {
+        super(left, top);
+        @this.list = @list;
+    }
+
+    void Click() { list.Scroll(1); }
+};
+class CSpawnNpcScrollUp : CSmallArrowDown
+{
+    CListBox@ list;
+
+    CSpawnNpcScrollUp(int left, int top, CListBox@ list)
+    {
+        super(left, top);
+        @this.list = @list;
+    }
+
+    void Click() { list.Scroll(-1); }
+};
+
+//
+// Properties editing
+//
+/*class CSpawnNpcPid : CTextBox
+   {
+        CSpawnNpcPid(int left, int right, int top, int width)
+        {
+                super(left, right, top, width);
+                SetColor(0xff000000);
+                SetFormat(0);
+        }
+
+   }*/
+
+class CSpawnNpcWindow : Window
+{
+    uint     crId;
+    CConfig@ crits;
+    // spawn params
+    uint     pid;
+    uint16   hexX;
+    uint16   hexY;
+    uint8    dir;
+    uint     dialog;
+    uint     script;
+    uint     ai;
+    uint     team;
+    uint     bag;
+    uint     mob;
+    uint     level;
+
+    // name (for cfg file) of the critter that'll be spawned
+    string@                crName;
+
+    CSpawnNpcOKButton@     ok;
+    CSpawnNpcCancelButton@ cancel;
+    CListBox@              list;
+    CSpawnNpcScrollDown    @down;
+    CSpawnNpcScrollUp      @up;
+    CLabel@                desc;
+
+    CTextBox@              pidTxt;
+    CTextBox@              dialogTxt;
+    CTextBox@              scriptTxt;
+    CTextBox@              aiTxt;
+    CTextBox@              teamTxt;
+    CTextBox@              bagTxt;
+    CTextBox@              mobTxt;
+    CTextBox@              levelTxt;
+
+    CSpawnNpcWindow()
+    {
+        crId = pid = hexX = hexY = dir = dialog = script = ai = team = bag = mob = level = 0;
+    }
+
+    void Init()
+    {
+        int w = 573;
+        int h = 230;
+        // super(__ScreenWidth/2 - w/2, __ScreenHeight/2 - h/2, w, h, "perk.png");
+        @list = CSpawnNpcList(this);
+        AddControl(@list);
+
+        @up = CSpawnNpcScrollUp(26, 44, @list);
+        @down = CSpawnNpcScrollDown(26, 58, @list);
+        AddControl(down);
+        AddControl(up);
+
+        @ok = CSpawnNpcOKButton(49, 187, this);
+        AddControl(@ok);
+        @cancel = CSpawnNpcCancelButton(154, 186, this);
+        AddControl(@cancel);
+        AddControl(CLabel(80, 183, 40, 20, "OK", FONT_FAT));
+        AddControl(CLabel(172, 183, 60, 20, "CANCEL", FONT_FAT));
+        CLabel@ temp = CLabel(278, 25, 100, 15, "Description:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(temp);
+        @desc = CLabel(278, 40, 200, 50, "desc");
+        desc.SetColor(0xff000000);
+        desc.SetFormat(0);
+        AddControl(@desc);
+
+        @temp = CLabel(278, 90, 50, 15, "ProtoId:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @pidTxt = CTextBox(330, 90, 50, 15, "");
+        pidTxt.SetColor(0xff000000);
+        pidTxt.SetFormat(0);
+        AddControl(@pidTxt);
+
+        @temp = CLabel(278, 105, 50, 15, "Dialog:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @dialogTxt = CTextBox(330, 105, 50, 15, "");
+        dialogTxt.SetColor(0xff000000);
+        dialogTxt.SetFormat(0);
+        AddControl(@dialogTxt);
+
+        @temp = CLabel(278, 120, 50, 15, "Script:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @scriptTxt = CTextBox(330, 120, 50, 15, "");
+        scriptTxt.SetColor(0xff000000);
+        scriptTxt.SetFormat(0);
+        AddControl(@scriptTxt);
+
+        @temp = CLabel(278, 135, 50, 15, "AiPack:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @aiTxt = CTextBox(330, 135, 50, 15, "");
+        aiTxt.SetColor(0xff000000);
+        aiTxt.SetFormat(0);
+        AddControl(@aiTxt);
+
+        @temp = CLabel(278, 150, 50, 15, "TeamId:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @teamTxt = CTextBox(330, 150, 50, 15, "");
+        teamTxt.SetColor(0xff000000);
+        teamTxt.SetFormat(0);
+        AddControl(@teamTxt);
+
+        @temp = CLabel(278, 165, 50, 15, "Bag:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @bagTxt = CTextBox(330, 165, 50, 15, "");
+        bagTxt.SetColor(0xff000000);
+        bagTxt.SetFormat(0);
+        AddControl(@bagTxt);
+
+        @temp = CLabel(278, 180, 50, 15, "Level:");
+        temp.SetColor(0xff000000);
+        temp.SetFormat(0);
+        AddControl(@temp);
+        @levelTxt = CTextBox(330, 180, 50, 15, "");
+        levelTxt.SetColor(0xff000000);
+        levelTxt.SetFormat(0);
+        AddControl(@levelTxt);
+
+        // parse critter data
+        @crits = CConfig("spawnnpc.cfg");
+        for(uint i = 0, j = crits.sections.length(); i < j; i++)
+        {
+            list.AddElement(crits.sections[i].name);
+        }
+        Window::Init();
+    }
+
+    //
+    // Sets hex coords for spawn
+    //
+    void SetHex(uint16 hexX, uint16 hexY)
+    {
+        this.hexX = hexX;
+        this.hexY = hexY;
+    }
+    //
+    // Sets config name of the critter that'll b spawned
+    //
+    void SetCritter(string@ name)
+    {
+        @this.crName = @name;
+        string@ val;
+
+        desc.SetCaption(crits.GetValue(name, "desc"));
+
+        pid = 0;
+        @val = @crits.GetValue(name, "pid");
+        if(valid(val))
+        {
+            pidTxt.SetText(@val);
+            StrToInt(val, pid);
+        }
+        else
+            pidTxt.SetText("");
+        dialog = 0;
+        @val = @crits.GetValue(name, "dialog");
+        if(valid(val))
+        {
+            dialogTxt.SetText(@val);
+            StrToInt(val, dialog);
+        }
+        else
+            dialogTxt.SetText("");
+        string script = "";
+        @val = @crits.GetValue(name, "script");
+        if(valid(val))
+        {
+            scriptTxt.SetText(@val);
+            script = val;            // StrToInt(val, script);
+        }
+        else
+            scriptTxt.SetText("");
+        ai = 0;
+        @val = @crits.GetValue(name, "ai");
+        if(valid(val))
+        {
+            aiTxt.SetText(@val);
+            StrToInt(val, ai);
+        }
+        else
+            aiTxt.SetText("");
+        bag = 0;
+        @val = @crits.GetValue(name, "bag");
+        if(valid(val))
+        {
+            bagTxt.SetText(@val);
+            StrToInt(val, bag);
+        }
+        else
+            bagTxt.SetText("");
+        team = 0;
+        @val = @crits.GetValue(name, "team");
+        if(valid(val))
+        {
+            teamTxt.SetText(@val);
+            StrToInt(val, team);
+        }
+        else
+            teamTxt.SetText("");
+        mob = 0;
+        @val = @crits.GetValue(name, "mob");
+        if(valid(val))
+        {
+            // mobTxt.SetText(@val);
+            StrToInt(val, mob);
+        }
+        // else
+        //	mobTxt.SetText("");
+        level = 0;
+        @val = @crits.GetValue(name, "level");
+        if(valid(val))
+        {
+            levelTxt.SetText(@val);
+            StrToInt(val, level);
+        }
+        else
+            levelTxt.SetText("");
+        // set params for ok button
+        ok.SetParams(pid, hexX, hexY, uint8(Random(0, 5)), dialog, script, ai, bag, team, mob, level);
+    }
+    //
+    // Update parameters from textboxes
+    //
+    void UpdateParams()
+    {
+        uint _pid = 0;
+        if(StrToInt(pidTxt.Text(), _pid))
+            pid = _pid;
+        uint _dialog = 0;
+        if(StrToInt(dialogTxt.Text(), _dialog))
+            dialog = _dialog;
+
+        uint _ai = 0;
+        if(StrToInt(aiTxt.Text(), _ai))
+            ai = _ai;
+        uint _team = 0;
+        if(StrToInt(teamTxt.Text(), _team))
+            team = _team;
+        uint _bag = 0;
+        if(StrToInt(bagTxt.Text(), _bag))
+            bag = _bag;
+        uint _level = 0;
+        if(StrToInt(levelTxt.Text(), _level))
+            level = _level;
+
+        ok.SetParams(pid, hexX, hexY, uint8(Random(0, 5)), dialog, scriptTxt.Text(), ai, bag, team, mob, level);
+    }
+
+    void Show()
+    {
+        if(Auto())
+            ok.Click();
+    }
+};

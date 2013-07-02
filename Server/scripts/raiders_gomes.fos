@@ -1,0 +1,58 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// raiders_gomes.fos
+//
+
+#include "_macros.fos"
+
+#include "npc_common_h.fos"
+#include "messages_h.fos"
+
+#define POS_INSIDE     (0)
+#define POS_OUTSIDE    (1)
+
+// Is it time to go out ?
+bool d_ScheduleTime()
+{
+    return(__Hour > 23 || __Hour < 6);  // 00.00 - 06.00
+}
+
+uint GetPos(Critter& critter)
+{
+    return critter.Stat[ST_VAR8];
+}
+
+void SetPos(Critter& critter, uint pos)
+{
+    critter.StatBase[ST_VAR8] = pos;
+}
+
+void critter_init(Critter& critter, bool firstTime)
+{
+    critter.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    critter.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+}
+
+void _OnMessage(Critter& npc, Critter& critter, int num, int val)
+{
+    if(num == MSG_ATTACK_ME)
+        AttackCritter(npc, critter);
+}
+
+void _Idle(Critter& critter)
+{
+    if(d_ScheduleTime() && (GetPos(critter) == POS_INSIDE))
+    {
+        DLog("I'm taking a fucking walk now, damn insomnia...");
+        SetPos(critter, POS_OUTSIDE);
+        MoveTo(critter, 71, 124, 3, false);
+    }
+    else if(!d_ScheduleTime() && (GetPos(critter) == POS_OUTSIDE))
+    {
+        DLog("I'm heading back");
+        SetPos(critter, POS_INSIDE);
+        // ReturnToPreviousPosition(critter);
+    }
+}

@@ -1,0 +1,136 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+200 1010 D _param p ST_INTELLECT < 4 #
+200 1020 D _script dialog@d_IsNotMember 0  #
+2 1030 D _script dialog@d_IsMember 0  D _var n name_mem_player_npc = 0 D _var p q_raiders_hernandez_sister = 0 #
+10 1040 D _script dialog@d_IsMember 0  D _var n name_mem_player_npc = 1 D _var p q_raiders_hernandez_sister = 0 #
+12 1050 D _var p q_raiders_hernandez_sister = 1 #
+13 1060 D _var p q_raiders_hernandez_sister = 2 D _var p acquaintance = 0 #
+13 1070 D _var p q_raiders_hernandez_sister = 3 D _var p acquaintance = 0 #
+201 1080 D _var n acquaintance = 1 @
+200 2000 None 0 @
+2 3000 None 0 #
+3 3010 #
+0 3020 @
+3 4000 None 0 #
+4 4010 R _var n name_mem_player_npc + 1 #
+5 4020 R _var n name_mem_player_npc + 1 #
+6 4030 R _var n name_mem_player_npc + 1 #
+7 4040 R _var n name_mem_player_npc + 1 #
+0 4050 R _var n name_mem_player_npc + 1 @
+4 5000 None 0 #
+8 5010 #
+7 5020 #
+0 5030 @
+5 6000 None 0 #
+8 6010 #
+0 6020 @
+6 7000 None 0 #
+8 7010 #
+0 7020 @
+7 8000 None 0 #
+0 8010 @
+8 9000 None 0 #
+9 9010 #
+0 9020 @
+9 10000 None 0 #
+0 10010 R _var p q_raiders_hernandez_sister + 1 #
+0 10020 @
+10 11000 None 0 #
+11 11010 #
+0 11020 @
+11 12000 None 0 #
+8 12010 #
+0 12020 @
+12 13000 None 0 #
+0 13010 @
+13 14000 None 0 #
+14 14010 #
+15 14020 @
+14 15000 None 0 #
+0 15010 R _param p ST_EXPERIENCE + 100 R _var p acquaintance + 1 R _var p q_raiders_hernandez_sister = 4 @
+15 16000 None 0 #
+0 16010 R _param p ST_EXPERIENCE + 500 R _var p acquaintance + 1 R _var p q_raiders_hernandez_sister = 4 @
+16 17000 None 0 #
+17 17010 @
+17 18000 None 0 #
+0 18010 R _param p ST_EXPERIENCE + 500 R _item p PID_BEER + 2 R _item p PID_JET + 5 R _var n acquaintance + 1 @
+201 19000 None 0 &
+
+[engl]
+{100}{}{Hernandez}
+{200}{}{You see Hernandez.}
+{210}{}{You see a younger raider. He doesn't look like he's been here that long, but the signs of the lifestyle are already apparent.}
+{240}{}{You see Hernandez's corpse.}
+{250}{}{You see Hernandez's lifeless body slumped on the floor.  Guess he never got to meet his sister again.  Poor guy.}
+{260}{}{You see Hernandez's corpse.}
+{270}{}{Wow, someone really did a number on Hernandez.  You can recognise a few anatomical features, but it's mostly a horrific mess.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb floats}
+{1020}{}{No raider}
+{1030}{}{Raider, first meeting}
+{1040}{}{Raider, second meeting, not started the quest}
+{1050}{}{Started quest, not met sister yet}
+{1060}{}{Finished quest, poor outcome}
+{1070}{}{Finished quest, good outcome}
+{1080}{}{Friendly floats}
+{2000}{}{Who the fuck are you?@@The fuck are you?@@What are you looking at?@@You look like a punk@@You look like a bitch@@You look like a wimp@@You look like a faggot@@Get the fuck outta here@@Gimme some jet or fuck off@@Look at me again and I'll kick your head in, dick@@Go fuck yourself@@Fuck off@@Who the fuck is this guy?@@Look at what the cat dragged in...a shithead@@Who's this asshole?@@Fuck off, shithead@@Get lost, no dick@@Fuck yourself, asshole@@Wanna feel my foot in your face?@@Wanna feel my cock in your ass?@@Dickhead@@Asshole@@Shithead@@Why don't you dickheads walk all the way home?}
+{3000}{}{Hm?  Watchu want, man?}
+{3010}{}{I got nothin goin on, let's chew the fat.}
+{3020}{}{Nuthin.}
+{4000}{}{Alright, I guess.  New guy, right?  How'd you take the switch from everyday sucker to bad ass motherfucker?}
+{4010}{}{I don't know.  Shit's different now, but fuck it, right?}
+{4020}{}{I was born for this!}
+{4030}{}{I think I'm having some second thoughts.}
+{4040}{}{You don't look like a bad ass motherfucker,}
+{4050}{}{Uh, yeah sure it was ok.  I gotta go, though, Later.}
+{5000}{}{Yeah, it's a big change alright, but you gotta roll with it and accept the consequences.  Turns out I wasn't prepared for one of mine, though.}
+{5010}{}{Yeah? What happened?}
+{5020}{}{Maybe you made the wrong decision joining up.}
+{5030}{}{This is a great story but I'm bored out of my fucking mind.  Bye.}
+{6000}{}{Don't get too confident.  Sure, a lot of people became raiders because they had nothing to lose, and we capture a lot of kids who grow up into raiders, but some of us leave
+things behind...}
+{6010}{}{And you're one of those people?}
+{6020}{}{I suppose that's true.  I gotta be some place though.  Bye.}
+{7000}{}{Yeah, that's common.  It's a big change.  Cut yourself off from the rest of the world pretty much.  Most of us probably look like we don't give a fuck, but I wish I could go
+back and sort out one last thing.}
+{7010}{}{Yeah?  Me too I guess.  What did you leave unsettled?}
+{7020}{}{Should have thought that through before you signed up.  I have to split, though.}
+{8000}{}{Hey man fuck you.  Everyone carries it in different ways.  I've killed more fuckers than you could even dream of.  Get outta my face.}
+{8010}{}{Er, right.}
+{9000}{}{Well like, like most of these guys, I joined up cause I didn't have much else.  But I did have something.  A sister in Klamath.  Lucy. We weren't really close or nothin, but
+we didn't hate each other neither.  We were still family.  I lived in Modoc, so I only saw her on caravans once a month or somethin.  And then one day I'm just not there.  
+Never told her, dropped any hints or nothin.  Guess I'm wondering if she's okay.}
+{9010}{}{You know, I'm new.  I'm not known, and you can't clock me for a Raider like you can the other guys.  I could go to Klamath and see how she was for you.}
+{9020}{}{That's rough man.  Try not to let it hang over you though.  Good luck with that.  Later.}
+{10000}{}{You'd do that?  Just find her, talk to her, see if she's okay.  Don't tell her I'm a raider though, no way.  That would fuck it all up anyway.  Say I'm dead or something, or
+just don't mention me at all probably.  Make somethin up.  Fuck it, I don't know.  Just go talk to her and tell me how she is.}
+{10010}{}{All right, I can do that.  See you when I get back.}
+{10020}{}{I gotta take a raincheck on that.  I'll give you a shout later if I get a free minute.}
+{11000}{}{Hey man, how's it going?}
+{11010}{}{Yeah, you know.}
+{11020}{}{Alright.  I can't talk now though.}
+{12000}{}{Yeah I know how it goes.  Can't get this problem of mine out of my head though.}
+{12010}{}{Yeah? What problem?}
+{12020}{}{Tough break.  Take it easy bro.  Later.}
+{13000}{}{Hurry up and find her, man.  I can't have this hanging over me.}
+{13010}{}{I'll get to it.}
+{14000}{}{Hey, did you find her?  Tell me what happened.}
+{14010}{}{Not so hot.  Turns out she's dead.}
+{14020}{}{She's doing okay, man.  Don't sweat it.  She seems happy.}
+{15000}{}{[He takes a deep breath and is quiet for a moment.]  "Fuck, man.  I wasn't there to protect her.  That's my fault.  I have to think about what I've done.  Give me some room huh?}
+{15010}{}{No problem.}
+{16000}{}{Yeah?  That's a load off my mind man.  Maybe one day I'll be able to see her again.  Thanks for taking care of this dog, I owe you one.}
+{16010}{}{No problem.}
+{17000}{}{Hey, did you find her? Tell me what happened,}
+{17010}{}{Don't sweat it, she's doing good.  She knows that you can't come and see her, but I didn't tell her why.  She understands.  She says when you're ready, you should go visit her again.  She said she'll be waiting in Klamath for as long as it takes.}
+{18000}{}{That's good news, dogg.  A load off my mind.  I guess when I'm older, I can go see her again.  Hey, thanks a million bro, have a party on me.}
+{18010}{}{My pleasure.}
+{19000}{}{Anyone got a smoke?@@Those suckers didn't know what hit 'em@@Sheeeeeeiiit@@Modoc's a bunch of pussies if ya ask me@@I could go for some jet...@@Mordino's ain't shit!@@Man...@@I'm fucking bored@@Hey Miller, got any 10mm?@@What's our next target?@@Glad I'm not in Scully's crew@@Carter's a crazy motherfucker@@Gecko freaks me out@@I ran out of space for notches on my gun@@Ever eaten someone?@@I'm fucking starving@@I'm hungry@@We got any fucking food here or what?@@Man, I ain't even give a fuck@@Garcia's been givin' me too many watch shifts, he don't like me@@I need some new gear@@After the next big haul, I'm goin to the Cat's Paw@@We need some more Nuka Cola@@This place could really do with some rugs or drapes, a little natural light...@@I can bench twice as much as Stokes, easy@@I heard there's no kids in Vault City cause everyone in VC is gay@@College kids aint shit!@@That haircut makes you look like a jerk@@Today sucks@@I'm bored as shit@@When are we gonna do somethin?@@I want a new gun@@How come Garcia always gets first pick on the new shit?@@Man that new slave aint know shit about washing clothes, this shit is a disgrace@@Man, remember shaving?@@Too many new guys recently@@Wish I had a car, I'd take off east@@Yo, pass me a smoke@@This jet aint shit@@Fuck you, asshole@@Murphy shoots like a faggot@@Remember when we shot that guy in the groin?@@Anyone up for hold 'em?@@We need more jet@@Fuck Vault City@@Fuck Modoc@@Sometimes.....I get bored of raiding@@We need more slaves@@No, share a bunk with yourself, faggot@@What's the matter, you turning faggot?@@VC's a bunch of wimps@@No one talks trash about us@@Banks are for faggots}
+

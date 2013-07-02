@@ -1,0 +1,61 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// navarro_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "npc_roles_h.fos"
+#include "npc_common_h.fos"
+#include "messages_h.fos"
+#include "guard_h.fos"
+
+#define DIALOG_ID               (1505)
+
+#define STR_TRESPASSER          (0)
+#define STR_AREA_NOT_ALLOWED    (1)
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 26);
+        GuardPerks(guard);
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& critter, int num, int val)
+{
+    if(num == MSG_ATTACK_ME)
+    {
+        if((npc.Stat[ST_NPC_ROLE] == ROLE_NAV_GUARD) || (npc.Stat[ST_NPC_ROLE] == ROLE_NAV_TURRET))   // Only guards and turrets attack
+            AttackCritter(npc, critter);
+    }
+
+    if(num == MSG_NAV_AREA_NOT_ALLOWED && npc.Stat[ST_NPC_ROLE] == ROLE_NAV_GUARD)
+    {
+        npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, MSG_NAV_AREA_NOT_ALLOWED));
+        critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+
+    if(num == MSG_NAV_TRESPASSER && npc.Stat[ST_NPC_ROLE] == ROLE_NAV_GATEGUARD)
+    {
+        npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_TRESPASSER));      // Gate Guard warns you
+    }
+}
+
+void _OnShowCritter(Critter& guard, Critter& critter)
+{
+    GuardOnShowCritter(guard, critter);
+}

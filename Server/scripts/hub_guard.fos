@@ -1,0 +1,105 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// hub_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "guard_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "patrolling.fos"
+
+import void InitBountyRecord(Critter& npc) from "bounties";
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_SHERRIF)
+        InitBountyRecord(guard);
+
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+    guard.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 26);
+        GuardPerks(guard);
+    }
+}
+
+bool IsPatrolling(Critter& guard)
+{
+    return(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE1 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE2 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE3 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE4 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_BRAHMIN1  ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_METROGUARD_1 ||
+           guard.Stat[ST_NPC_ROLE] == ROLE_HUB_METROGUARD_2);
+}
+
+void _Idle(Critter& guard)
+{
+    GuardOnIdle(guard);
+
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE1)
+    {
+        _GetNextNode(guard, 3)         // Route 3 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE2)
+    {
+        _GetNextNode(guard, 4)         // Route 4 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE3)
+    {
+        _GetNextNode(guard, 5)         // Route 5 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_ENTRANCE4)
+    {
+        _GetNextNode(guard, 6)         // Route 6 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_GUARD_BRAHMIN1)
+    {
+        _GetNextNode(guard, 7)         // Route 7 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_METROGUARD_1)
+    {
+        _GetNextNode(guard, 8)         // Route 8 as defined in patrolroutes.fos
+    }
+    else if(guard.Stat[ST_NPC_ROLE] == ROLE_HUB_METROGUARD_2)
+    {
+        _GetNextNode(guard, 9)         // Route 9 as defined in patrolroutes.fos
+    }
+
+    if(IsPatrolling(guard))
+    {
+        AddWalkPlane(guard, 0, node.GetX(), node.GetY(), node.GetDir(), false, 0);
+        AddWaitPlan(guard, node.GetWait());
+    }
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+}
+
+
+void _OnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    GuardOnSomeoneSteal(guard, target, thief, success, item, count);
+}
+
+void _OnShowCritter(Critter& guard, Critter& player)
+{
+    GuardOnShowCritter(guard, player);
+}

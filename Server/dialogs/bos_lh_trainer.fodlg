@@ -1,0 +1,60 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _script dialog@d_IsNotMemberOf 1 FACTION_BOS #
+2 1020 D _param p ST_CHARISMA < 4 #
+6 1030 D _var p q_bos_initiatequest_start } 1 D _var p q_bos_initiatequest_start { 10 #
+8 1040 D _var p q_bos_initiatequest_start } 11 #
+3 1050 R _var p q_bos_initiatequest_start = 0 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+5 3020 @
+4 4000 None 0 #
+5 4010 #
+6 4020 @
+5 5000 None 0 @
+6 6000 None 0 @
+7 7000 None 0 @
+8 8000 None 0 @
+9 9000 Attack 0 @
+10 10000 None 0 #
+7 10010 D _var p q_bos_initiatequest_start = 11 R _param p REPUTATION_BOS + 300 R _param p ST_EXPERIENCE + 300 #
+11 10020 D _var p q_bos_initiatequest_start < 11 @
+11 11000 None 0 &
+
+[engl]
+{100}{}{Paladin}
+{200}{}{You see a Brotherhood Paladin.}
+{210}{}{You see a Paladin of the Brotherhood of Steel.}
+{240}{}{You see a dead Brotherhood Paladin.}
+{260}{}{You see a slain Brotherhood Paladin.}
+{1000}{}{Predialogue installations}
+{1010}{}{Not BoS member.}
+{1020}{}{Answer text}
+{1030}{}{Not ugly. Quest in progress.}
+{1040}{}{Not ugly. Quest completed.}
+{1050}{}{Not ugly. Quest not started.}
+{2000}{}{There's no way in hell we initiated anyone as ugly as you. Get out of here.}
+{3000}{}{You interested in helping out the Brotherhood @sex@|boy||girl|?}
+{3010}{}{Yes sir! Here to serve the Brotherhood.}
+{3020}{}{Nope. I'm just here for the title.}
+{4000}{}{For a grunt like you, you get exactly what you deserve, grunt work. And you gotta be one lucky @sex@|son of a bitch||whining bitch| today! You know why?}
+{4010}{}{May I guess, sir?}
+{4020}{}{No, sir!}
+{5000}{}{Why do we keep scum like you around? Get the hell out of my sight!}
+{6000}{}{Because there's no work that dirty that I may assign to such a worthless rat like you! Get out!}
+{7000}{}{** OLD ** Good job. There's still work to be done so quit standing around!}
+{8000}{}{** OLD ** I don't have anything for you to do. Quit bothering me.}
+{9000}{}{How did you get in here? Brothers, kill this spy!}
+{10000}{}{** OLD ** Well?}
+{10010}{}{I'm finished, sir!}
+{10020}{}{I'll get back to work...}
+{11000}{}{** OLD ** Can't even finish the whole thing....Damn right you're getting back to work. And stop being so useless!}
+

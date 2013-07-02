@@ -1,0 +1,1371 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_tent.fos
+//
+
+#ifndef __MAP_TENT__
+#define __MAP_TENT__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_vars.fos"
+#include "MsgStr.h"
+#include "_colors.fos"
+
+#include "buffer_h.fos"
+#include "debug_h.fos"
+#include "follower_common_h.fos"
+#include "item_dynamic_h.fos"
+#include "item_misc_h.fos"
+#include "lexems_h.fos"
+#include "logging_h.fos"
+#include "mapdata_h.fos"
+#include "prod_ingredients_h.fos"
+#include "recycler_h.fos"
+#include "utils_h.fos"
+
+#include "map_tent_h.fos"
+
+import void MoveCars(Map& from, Map& to) from "car";
+
+#define GARBAGE_TIMEOUT           (REAL_DAY(7))
+
+#define CAMPFIRE_LIGHT_UPDATED    # (_item)  _item.Val5
+//
+#define TENT_VERSION              (1)
+
+#define _WLog                     # (text, type)WLog("tents", text, type)
+
+uint[] TentVars =
+{
+    LVAR_tent_id,     // WIPENIGHT: old tent lvar
+    LVAR_tent_id2,
+    LVAR_tent_id3,
+    LVAR_tent_id4,
+    LVAR_tent_id5,
+    LVAR_tent_id6,
+    LVAR_tent_id7,
+    LVAR_tent_id8,
+    LVAR_tent_id9,
+    LVAR_tent_id10
+};
+
+uint[][][] tentTable =
+{
+    // MAP_TYPE_UNKNOWN
+    {
+        // don't use
+    },
+    // MAP_TYPE_SPECIAL_ENCOUNTER
+    {
+        // don't use
+    },
+    // MAP_TYPE_DESERT_ENCOUNTER
+    {
+        // shelters
+        { LOCATION_TentDesert1 },
+        // houses
+        { LOCATION_Tent2Desert1 }
+    },
+    // MAP_TYPE_MOUNTAIN_ENCOUNTER
+    {
+        // shelters
+        { LOCATION_TentMountain1 },
+        // houses
+        { LOCATION_Tent2Mountain1 }
+    },
+    // MAP_TYPE_CAVE_ENCOUNTER
+    {
+        // shelters
+        {},
+        // houses
+        {}
+    },
+    // MAP_TYPE_CITY_ENCOUNTER
+    {
+        // shelters
+        { LOCATION_TentCity1 },
+        // houses
+        { LOCATION_Tent2City1 }
+    },
+    // MAP_TYPE_SEWER_ENCOUNTER
+    {
+        // shelters
+        {},
+        // houses
+        {}
+    },
+    // MAP_TYPE_COAST_ENCOUNTER
+    {
+        // shelters
+        { LOCATION_TentCoast1 },
+        // houses
+        { LOCATION_Tent2Coast1 }
+    },
+    // MAP_TYPE_SKYSCRAPER_ENCOUNTER
+    {
+        // shelters
+        {},
+        // houses
+        {}
+    },
+    // MAP_TYPE_CITYCOAST_ENCOUNTER
+    {
+        // shelters
+        {},
+        // houses
+        {}
+    }
+};
+
+// filled on init
+array<uint> allTents;
+array<uint> allShelters;
+array<uint> allHouses;
+
+void InitTents()
+{
+    for(uint t = 0, tLen = tentTable.length(); t < tLen; t++)
+    {
+        // maptype
+
+        for(uint c = 0, cLen = tentTable[t].length(); c < cLen; c++)
+        {
+            // category
+
+            for(uint p = 0, pLen = tentTable[t][c].length(); p < pLen; p++)
+            {
+                // pid
+
+                if(c == 0)                   // shelter
+                    allShelters.insertLast(tentTable[t][c][p]);
+                else if(c == 1)              // house
+                    allHouses.insertLast(tentTable[t][c][p]);
+                else
+                    _WLog("Unknown category<" + c + "> of location<" + tentTable[t][c][p] + ">", DEBUG_ERROR);
+
+                allTents.insertLast(tentTable[t][c][p]);
+            }
+        }
+    }
+
+    remove_duplicates_from_array(allTents, array<uint>);
+    remove_duplicates_from_array(allShelters, array<uint>);
+    remove_duplicates_from_array(allHouses, array<uint>);
+
+    allTents.sortAsc();
+    allShelters.sortAsc();
+    allHouses.sortAsc();
+
+    _WLog("Available locations: " + allTents.length() + " (" + allShelters.length() + "shelter" + (allShelters.length() != 1 ? "s" : "") + ", " + allHouses.length() + " house" + (allHouses.length() != 1 ? "s" : ""), DEBUG_MESSAGE);
+}
+
+uint GetTentLocationPid(uint mapType, bool house)
+{
+    /*
+       switch( mapType )
+       {
+            case MAP_TYPE_COAST_ENCOUNTER:
+                    return( house ? LOCATION_Tent2Coast1 : LOCATION_TentCoast1 );
+            case MAP_TYPE_DESERT_ENCOUNTER:
+                    return( house ? LOCATION_Tent2Desert1 : LOCATION_TentDesert1 );
+            case MAP_TYPE_MOUNTAIN_ENCOUNTER:
+                    return( house ? LOCATION_Tent2Mountain1 : LOCATION_TentMountain1 );
+            case MAP_TYPE_CITY_ENCOUNTER:
+                    return( house ? LOCATION_Tent2City1 : LOCATION_TentCity1 );
+       }
+     */
+
+    if(mapType >= tentTable.length())
+    {
+        _WLog("Invalid mapType<" + mapType + ">", DEBUG_ERROR);
+        return(0);
+    }
+
+    if(tentTable[mapType].length() >= 2)
+    {
+        array<uint> list;
+        if(house)
+            list = tentTable[mapType][1];
+        else
+            list = tentTable[mapType][0];
+
+        uint pid = 0;
+        if(list.length() > 0)
+            pid = list[Random(0, list.length() - 1)];
+
+        #ifdef __DEBUG__
+        string all = "";
+        for(uint l = 0, len = list.length(); l < len; l++)
+        {
+            if(l > 0)
+                all += ", ";
+            all += "" + list[l];
+        }
+        _WLog("MapType<" + mapType + "> house<" + house + "> locations<" + all + ">, using<" + pid + ">", DEBUG_MESSAGE);
+        #endif
+
+        return(pid);
+    }
+    else
+        _WLog("Invalid category length<" + tentTable[mapType].length() + ">for mapType<" + mapType + ">", DEBUG_WARNING);
+
+    return(0);
+}
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_CritterIn");
+
+    map.SetEvent(MAP_EVENT_LOOP_4, "_TentEnviroment");
+    #ifndef __DEBUG__
+    map.SetLoopTime(4, 60000);
+    #endif
+    #ifdef __DEBUG__
+    map.SetLoopTime(4, 5000);
+    #endif
+}
+
+void _CritterIn(Map& map, Critter& cr)
+{
+    // if(cr.IsPlayer())
+    //	SetGarbageTimer(map.GetLocation(), GARBAGE_TIMEOUT);
+}
+
+void _TentEnviroment(Map& map)
+{
+    array<Item@> items;
+    uint         itemsCount = 0;
+
+    itemsCount = map.GetItems(PID_CAMPFIRE, items);
+    for(uint i = 0; i < itemsCount; i++)
+    {
+        if(items[i].LightIntensity > 50 &&
+           #ifndef __DEBUG__
+           ELAPSED_TIME >= uint(CAMPFIRE_LIGHT_UPDATED(items[i]) + REAL_HOUR(1))
+           #endif
+           #ifdef __DEBUG__
+           ELAPSED_TIME >= uint(CAMPFIRE_LIGHT_UPDATED(items[i]) + REAL_SECOND(15))
+           #endif
+           )
+        {
+            items[i].LightIntensity--;
+            items[i].LightDistance = (items[i].LightIntensity / 10) - 1;
+            if(items[i].LightIntensity > 50)
+                CAMPFIRE_LIGHT_UPDATED(items[i]) = ELAPSED_TIME;
+            else
+                CAMPFIRE_LIGHT_UPDATED(items[i]) = 0;
+            items[i].Update();
+            #ifdef __DEBUG__
+            map.SetText(items[i].HexX, items[i].HexY, 0, "intensity=" + items[i].LightIntensity + " distance=" + items[i].LightDistance);
+            #endif
+        }
+    }
+}
+
+/// GLOBAL ///
+
+uint GetTentVarsCount()
+{
+    return(TentVars.length());
+}
+
+uint GetTentVars(array<uint>& vars)
+{
+    uint count = 0;
+
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        vars.insertLast(TentVars[v]);
+        count++;
+    }
+
+    return(count);
+}
+
+bool GetFreeTentVar(Critter& cr, uint& var)
+{
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        if(GetLvar(cr, TentVars[v]) == 0)
+        {
+            var = TentVars[v];
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+uint GetFreeTentVars(Critter& cr, array<uint>& vars)
+{
+    uint count = 0;
+
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        if(GetLvar(cr, TentVars[v]) == 0)
+        {
+            vars.insertLast(TentVars[v]);
+            count++;
+        }
+    }
+
+    return(count);
+}
+
+uint GetTakenTentVars(Critter& cr, array<uint>& vars)
+{
+    return(GetTakenTentVars(cr.Id, vars));
+}
+
+uint GetTakenTentVars(uint crId, array<uint>& vars)
+{
+    uint count = 0;
+
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        if(GetLvar(crId, TentVars[v]) > 0)
+        {
+            vars.insertLast(TentVars[v]);
+            count++;
+        }
+    }
+
+    return(count);
+}
+
+uint GetAllTents(array<Location@>& locations)
+{
+    uint result = 0;
+
+    for(uint t = 0, tLen = allTents.length(); t < tLen; t++)
+    {
+        result += GetAllLocations(allTents[t], locations);
+    }
+
+    return(result);
+}
+
+uint GetAllShelters(array<Location@>& locations)
+{
+    uint result = 0;
+
+    for(uint s = 0, sLen = allShelters.length(); s < sLen; s++)
+    {
+        result += GetAllLocations(allShelters[s], locations);
+    }
+
+    return(result);
+}
+
+uint GetAllHouses(array<Location@>& locations)
+{
+    uint result = 0;
+
+    for(uint h = 0, hLen = allHouses.length(); h < hLen; h++)
+    {
+        result += GetAllLocations(allHouses[h], locations);
+    }
+
+    return(result);
+}
+
+uint GetTentLocations(Critter& tentOwner, array<Location@>& locations)
+{
+    return(GetTentLocations(tentOwner.Id, locations));
+}
+
+uint GetTentLocations(uint tentOwnerId, array<Location@>& locations)
+{
+    uint        result = 0;
+
+    array<uint> vars;
+    uint        varsCount = GetTakenTentVars(tentOwnerId, vars);
+    for(uint v = 0; v < varsCount; v++)
+    {
+        int locId = GetLvar(tentOwnerId, vars[v]);
+        if(locId > 0)
+        {
+            Location@ loc = GetLocation(locId);
+            if(valid(loc) && IsTentOwner(loc, tentOwnerId))                  // JIC
+            {
+                locations.insertLast(loc);
+                result++;
+            }
+        }
+    }
+
+    return(result);
+}
+
+Location@ GetNearestTentLocation(Critter& tentOwner, uint16 wx, uint16 wy)
+{
+    return(GetNearestTentLocation(tentOwner.Id, wx, wy));
+}
+
+Location@ GetNearestTentLocation(uint tentOwnerId, uint16 wx, uint16 wy)
+{
+    Location@        loc;
+    Location@        nearest;
+    uint             dist = uint(-1);
+
+    array<Location@> tents;
+    uint             tLen = GetTentLocations(tentOwnerId, tents);
+
+    for(uint t = 0; t < tLen; t++)
+    {
+        if(!valid(tents[t]) || tents[t].IsNotValid)
+        {
+            Log("Invalid tent location, looking further...");
+            continue;
+        }
+
+        uint tmp = DIST(tents[t].WorldX, tents[t].WorldY, wx, wy);
+
+        DLog("Tent (" + tents[t].WorldX + ", " + tents[t].WorldY + "), Me (" + wx + ", " + wy + "), dist: " + tmp);
+        DLog(tmp + " ?< " + dist);
+
+        if(tmp < dist)
+        {
+            dist = tmp;
+            @nearest = @tents[t];
+        }
+    }
+
+    if(!valid(nearest))
+        Log("Couldn't obtain nearest tent of critter<" + tentOwnerId + ">");
+
+    return(nearest);
+}
+
+bool CreateTent(Critter& leader, uint var, uint& out id, uint locationpid, bool easterEgg)
+{
+    array<Critter@> group;
+    uint            locId = CreateLocationForGroup(leader, locationpid, leader.WorldX, leader.WorldY, group);
+
+    if(locId == 0)
+    {
+        Log("Failed to create a tent base location on map with id " + leader.GetMapId() + " and PID " + locationpid);
+        leader.Say(SAY_NETMSG, "Failed to create tent camp. Try on another map.");
+        return false;
+    }
+
+    RemoveTentByVar(leader, var, true);
+    SetLvar(leader, var, locId);
+
+    Log("Tent base location created with the id " + locId + " and PID " + locationpid);
+
+    Location@ loc = GetLocation(locId);
+    Map@      map = loc.GetMapByIndex(0);
+
+    FLog(LOG_WMLOCATIONS, "TENT " + loc.Id + " " + loc.GetProtoId() + " " + loc.WorldX + " " + loc.WorldY);
+
+    if(valid(map))
+    {
+        Map@ encountermap = leader.GetMap();
+
+        MoveCars(encountermap, map);
+
+        for(uint i = 0; i < group.length(); i++)
+        {
+            group[i].TransitToMap(map.Id, 0);
+        }
+
+        SetLLvar(loc, LLVAR_tent_owner, leader.Id);
+        SetLLvar(loc, LLVAR_tent_version, TENT_VERSION);
+
+        // we set script/mapdata for all maps, in case of future locations changes
+        for(uint m = 0, mLen = loc.GetMapCount(); m < mLen; m++)
+        {
+            Map@ lmap = loc.GetMapByIndex(m);
+            if(valid(lmap))
+            {
+                map.SetScript("map_tent@map_init");
+                DSay(leader, "map " + lmap.Id + " owner = " + leader.Id);
+                lmap.SetData(MAP_DATA_TENT_OWNER, leader.Id);
+
+                if(locationpid == LOCATION_TentDesert1 && easterEgg && m == 0)
+                {
+                    Item@ tree = map.AddItem(73, 58, 820, 1);
+                    if(valid(tree))
+                    {
+                        tree.Flags = ITEM_ALWAYS_VIEW | ITEM_NO_HIGHLIGHT | ITEM_CAN_LOOK;
+                        tree.PicMap = tree.PicInv = GetStrHash("art\\scenery\\newtree2.fofrm");
+                        SetLexem(tree, "$-", "Tree");
+                        SetLexem(tree, "$~", "It is just an old tree, what more do you expect of it?");
+                        tree.Update();
+                    }
+                }
+            }
+        }
+
+        loc.Color = COLOR_RGBA(46, 111, 146, 120);
+        loc.Update();
+
+        string tentName = "Yet Another Tent";
+        if(!valid(GetNearestTentLocation(leader, leader.WorldX, leader.WorldY)))
+            tentName = "Home Sweet Home";
+
+        Buffer@ buffer = NewBuffer();
+        buffer << tentName;
+        if(!SetPersonalData(loc, "tentName", buffer.AsUint8()))
+            leader.Say(SAY_NETMSG, "WARN: Couldn't change tent name.");
+    }
+    else
+    {
+        leader.Say(SAY_NETMSG, "ERR: No map in location");
+        Log("ERR: No map in location with ID " + locId);
+    }
+
+    return true;
+}
+
+void TryCreateTent(Critter& cr)
+{
+    uint var = 0;
+    if(GetFreeTentVar(cr, var) && var > 0)
+    {
+        TryCreateTent(cr, var);
+    }
+    else
+    {
+        array<uint> vars;
+        uint        vLen = GetTentVars(vars);
+        cr.ShowScreen(SCREEN_DIALOGBOX, vLen, "answer_TryCreateTent");
+        cr.Say(SAY_DIALOGBOX_TEXT, "You have too many tents to remember positions of all of them. Pick a one which you won't need anymore.");
+        for(uint v = 0; v < vLen; v++)
+        {
+            string    tentName = "Tent #" + (v + 1);
+            Location@ location = GetLocation(GetLvar(cr, vars[v]));
+            if(valid(location))
+            {
+                array<uint8> raw;
+                if(IsPersonalData(location, "tentName") &&
+                   GetPersonalData(location, "tentName", raw))
+                {
+                    string  name = "";
+                    Buffer@ buffer = NewBuffer(raw);
+                    buffer >> name;
+                    if(name.length() > 0)
+                    {
+                        tentName = name;
+                    }
+                }
+            }
+
+            cr.Say(SAY_DIALOGBOX_BUTTON(v), "|" + COLOR_RGB(0, 150, 0) + " " + tentName);
+        }
+    }
+}
+
+void TryCreateTent(Critter& cr, uint var)
+{
+    if(cr.Cond == COND_NOT_IN_GAME)         // is it actually possible?
+    {
+        cr.Say(SAY_NETMSG, "You see dead people... it's better to don't show them where you gonna stay.");
+        return;
+    }
+    else if(cr.Cond == COND_DEAD)
+    {
+        // "You don't think this is possible right now... Considering your situation and all..."
+        cr.Say(SAY_NETMSG, "Creating a tent now may be a difficult task... You're not sure if your hands are still connected to your torso.");
+        return;
+    }
+    else if(cr.Cond == COND_KNOCKOUT)
+    {
+        cr.Say(SAY_NETMSG, "You decided to lay down for a little bit...");
+        return;
+    }
+
+    Map@ map = cr.GetMap();
+
+    if(!valid(map))
+    {
+        cr.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    if(!CanCreateTent(map))
+    {
+        cr.Say(SAY_NETMSG, "You need to be on a valid map to build a camp.");
+        return;
+    }
+
+    array<Critter@> crits;
+    uint            num = map.GetCritters(0, FIND_LIFE_AND_KO, crits);
+    for(uint c = 0; c < num; c++)
+    {
+        if(crits[c].Id == cr.Id)
+            continue;
+        else if(IsOwnersFollower(cr, crits[c]) && IsFollowing(crits[c]))
+            continue;
+        else
+        {
+            cr.Say(SAY_NETMSG, "There are other critters nearby, you need to be alone.");
+            return;
+        }
+    }
+
+    if(cr.Timeout[TO_TRANSFER] > 0)
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_TRANSFER_WAIT);
+    else if(cr.Timeout[TO_BATTLE] > 0 || map.IsTurnBased())
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_TIMEOUT_BATTLE_WAIT);
+
+    uint      pid = 0;
+    bool      easterEgg = false;
+    Location@ location = map.GetLocation();
+    if(valid(location) && location.GetProtoId() == LOCATION_Q_FirstTent && map.GetProtoId() == MAP_QFirstTent2)
+    {
+        easterEgg = true;
+        pid = LOCATION_TentDesert1;
+    }
+    else
+    {
+        pid = GetTentLocationPid(GetMapType(map), cr.Perk[PE_RANGER] > 0);
+        if(pid == 0)
+        {
+            cr.Say(SAY_NETMSG, "This is not a suitable place to build a camp, look for a better place.");
+            return;
+        }
+    }
+
+    uint id = 0;
+    if(!CreateTent(cr, var, id, pid, easterEgg))
+    {
+        cr.Say(SAY_NETMSG, "Something went wrong when building the camp.");
+        return;
+    }
+
+    cr.Say(SAY_NETMSG, "You found a good place to build the tent camp.");
+
+    cr.DeleteItem(PID_TENT, 1);
+}
+
+void answer_TryCreateTent(Critter& cr, uint tentVarIdx, string&)
+{
+    Map@ map = cr.GetMap();
+
+    if(!valid(map))
+    {
+        cr.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    if(tentVarIdx >= GetTentVarsCount())
+    {
+        cr.Say(SAY_NETMSG, "INTERNAL ERROR: varIndex>=varLength : " + tentVarIdx + ">=" + GetTentVarsCount() + " : please report");
+        return;
+    }
+
+    TryCreateTent(cr, TentVars[tentVarIdx]);
+}
+
+bool CanCreateTent(Map& map)
+{
+    Location@ location = map.GetLocation();
+
+    if(valid(location) && location.GetProtoId() == LOCATION_Q_FirstTent && map.GetProtoId() == MAP_QFirstTent2)
+        return(true);
+
+    if(!IsEncounterMap(map))
+        return(false);
+
+    return(true);
+}
+
+bool RemoveTent(Critter& cr, Location& tent, bool recycle)
+{
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        if(uint(GetLvar(cr, TentVars[v])) == tent.Id)
+        {
+            return(RemoveTentByVar(cr, TentVars[v], recycle));
+        }
+    }
+
+    return(false);
+}
+
+bool RemoveTentByVar(Critter& cr, uint var, bool recycle)
+{
+    int tentLocId = GetLvar(cr, var);
+    if(tentLocId != 0)
+    {
+        Location@ tent = GetLocation(tentLocId);
+        if(valid(tent))
+        {
+            cr.UnsetKnownLoc(true, tent.Id);
+            SetLvar(cr, var, 0);
+            if(recycle)
+                RecycleTent(tent);
+            DeleteLocation(tentLocId);
+
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+void RemoveAllTents(Critter& cr, bool recycle)
+{
+    for(uint v = 0, vLen = TentVars.length(); v < vLen; v++)
+    {
+        RemoveTentByVar(cr, TentVars[v], recycle);
+    }
+}
+
+#ifdef __DEBUG__
+void removeall(Critter& cr, int, int, int recycle)
+{
+    RemoveAllTents(cr, recycle > 0);
+}
+#endif
+
+uint GetTentVersion(Location& tent)
+{
+    int version = GetLLvar(tent, LLVAR_tent_version);
+
+    return(version);
+}
+
+uint GetTentVersion(Map& tent)
+{
+    Location@ location = tent.GetLocation();
+    if(valid(location))
+        return(GetTentVersion(location));
+
+    return(0);
+}
+
+bool IsTentOwner(Location& tent, Critter& cr)
+{
+    return(IsTentOwner(tent, cr.Id));
+}
+
+bool IsTentOwner(Location& tent, uint crId)
+{
+    return(uint(GetLLvar(tent, LLVAR_tent_owner)) == crId);
+}
+
+bool IsTentOwner(Map& tent, Critter& cr)
+{
+    uint version = GetTentVersion(tent);
+
+    if(version == 0)
+        return(uint(tent.GetData(MAP_DATA_TENT_OWNER)) == cr.Id);
+
+    else if(version == 1)
+    {
+        Location@ location = tent.GetLocation();
+        if(valid(location))
+            return(IsTentOwner(location, cr));
+    }
+
+    else
+        cr.Say(SAY_NETMSG, "ERR: invalid ver<" + version + "> please report");
+
+    return(false);
+}
+
+/// REGEN ITEM ///
+
+void _RegenItem(Item& item, bool firstTime)
+{
+    item.PicMap = GetStrHash("art\\items\\ground_tent.png");
+    item.Flags = ITEM_LIGHT_THRU | ITEM_SHOOT_THRU | ITEM_ALWAYS_VIEW | ITEM_NO_HIGHLIGHT | ITEM_BAD_ITEM | ITEM_CAN_LOOK | ITEM_CAN_USE;
+    for(int e = 0; e < ITEM_EVENT_MAX; e++)
+    {
+        item.SetEvent(e, "");
+    }
+    item.SetEvent(ITEM_EVENT_SKILL, "_RegenItemSkill");
+    SetLexem(item, "$-", "Special Tent Item");
+    SetLexem(item, "$~", "You see Special Tent Item.");
+    item.Update();
+}
+
+bool _RegenItemSkill(Item& item, Critter& player, int skill)
+{
+    Map@ map = GetMap(item.MapId);
+    if(valid(map) && IsTentOwner(map, player))
+    {
+        player.StatBase[ST_VAR0] = item.Id;
+        player.StatBase[ST_VAR9] = 1;
+        if(IsTentOwner(map, player))
+            RunDialog(player, DIALOG_tents_campfire, item.HexX, item.HexY, false);
+    }
+
+    return(true);
+}
+
+/// CAMPFIRE ///
+
+#define MSG_CAMPFIRE_MORE_WOOD    (3065)
+#define MSG_CAMPFIRE_READY        (3066)
+
+void SetCampfireLight(Item& campfire, uint8 value)
+{
+    campfire.LightIntensity = CLAMP(value, 50, 90);
+    campfire.LightDistance = (campfire.LightIntensity / 10) - 1;
+    CAMPFIRE_LIGHT_UPDATED(campfire);
+    campfire.Update();
+
+    #ifdef __DEBUG__
+    Map@ map = GetMap(campfire.MapId);
+    if(valid(map))
+        map.SetText(campfire.HexX, campfire.HexY, 0, "intensity=" + campfire.LightIntensity + " distance=" + campfire.LightDistance);
+    #endif
+}
+
+void MakeCampfireUsuable(Item& campfire)
+{
+    campfire.PicMap = GetStrHash("art\\items\\fireplace.frm");
+    if(campfire.LightIntensity < 50)
+        SetCampfireLight(campfire, 50);
+    campfire.LightColor = 99975000;
+    SETFLAG(campfire.Flags, ITEM_LIGHT | ITEM_CAN_USE);
+    campfire.Update();
+}
+
+void MakeCampfireUnusuable(Item& campfire)
+{
+    campfire.PicMap = GetStrHash("art\\scenery\\woodfire.frm");
+    campfire.LightIntensity = 0;
+    campfire.LightDistance = 0;
+    campfire.LightColor = 0;
+    UNSETFLAG(campfire.Flags, ITEM_LIGHT | ITEM_CAN_USE);
+    campfire.Update();
+}
+
+void _Campfire(Item& item, bool firstTime)
+{
+    // set events
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillCampfire");
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemCampfire");
+    item.SetEvent(ITEM_EVENT_DROP, "_Drop");
+
+    if(firstTime)
+        MakeCampfireUnusuable(item);
+}
+
+bool _UseItemCampfire(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(FLAG(item.Flags, ITEM_CAN_USE))     // already activated
+        return false;
+    if(usedItem.GetProtoId() == PID_FIREWOOD)
+    {
+        if(usedItem.GetCount() < 3)
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_CAMPFIRE_MORE_WOOD);
+        else
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, MSG_CAMPFIRE_READY);
+            cr.DeleteItem(PID_FIREWOOD, 3);
+            MakeCampfireUsuable(item);
+        }
+        return true;
+    }
+    else
+        return false;
+}
+
+// Using campfire
+bool _UseSkillCampfire(Item& item, Critter& player, int skill)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return(true);
+
+    // use it
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        player.StatBase[ST_VAR0] = item.Id;
+        player.StatBase[ST_VAR9] = 0;
+        RunDialog(player, DIALOG_tents_campfire, item.HexX, item.HexY, false);
+    }
+
+    return(true);
+}
+
+void _Drop(Item& item, Critter& cr)
+{
+    DeleteItem(item);
+}
+
+/// CAMPFIRE DIALOG - public section ///
+
+Item@ GetCampfire(Critter& player)
+{
+    return(GetItem(player.Stat[ST_VAR0]));
+}
+
+uint r_ThrowSomething(Critter& player, Critter@)
+{
+    player.ShowScreen(SCREEN_CLOSE, 0, "");
+    player.ShowScreen(SCREEN_BAG, 0, "answer_ThrowSomething");
+    return(DIALOG_END);
+}
+
+void answer_ThrowSomething(Critter& cr, uint itemId, string&)
+{
+    Map@  map = cr.GetMap();
+    Item@ item = GetItem(itemId);
+    Item@ campfire = GetCampfire(cr);
+    if(valid(item) && valid(campfire))
+    {
+        uint16 pid = item.Proto.ProtoId;
+
+        if(HaveIngredient(item, INGREDIENT_WOOD))
+        {
+            uint count = CLAMP(item.GetCount(), 0, uint(9 - (campfire.LightIntensity / 10)));
+            DSay(cr, "count:" + count);
+            if(count > 0)
+            {
+                uint ret = GetIngredientReturnItem(item, INGREDIENT_WATER);
+
+                cr.Say(SAY_NETMSG, "You've thrown firewood into the campfire.");
+                _CritAnimatePickup(cr);
+                _SubItem(item, count);
+                if(ret > 0)
+                    cr.AddItem(ret, count);
+                SetCampfireLight(campfire, campfire.LightIntensity + (count * 10));
+            }
+            else
+                cr.Say(SAY_NETMSG, "There's already wood for hours.");
+        }
+        else if(HaveIngredient(item, INGREDIENT_WATER))
+        {
+            uint count = CLAMP(item.GetCount(), 0, uint((campfire.LightIntensity / 10) - 5));
+            DSay(cr, "count:" + count);
+            if(count > 0)
+            {
+                uint ret = GetIngredientReturnItem(item, INGREDIENT_WATER);
+
+                cr.Say(SAY_NETMSG, "You've poured water on the campfire.");
+                _CritAnimatePickup(cr);
+                _SubItem(item, count);
+                if(ret > 0)
+                    cr.AddItem(ret, count);
+                SetCampfireLight(campfire, campfire.LightIntensity - (count * 10));
+            }
+            else
+                cr.Say(SAY_NETMSG, "On second thought, you've decided to leave the campfire alone.");
+        }
+        else
+        {
+            cr.Say(SAY_NETMSG, "You've thrown something into the campfire.");
+            _CritAnimatePickup(cr);
+
+            if(pid == PID_MOLOTOV_COCKTAIL || pid == PID_FRAG_GRENADE ||
+               pid == PID_PLASMA_GRENADE || pid == PID_PULSE_GRENADE ||
+               pid == PID_DYNACORD || pid == PID_HOLY_HAND_GRENADE ||
+               pid == PID_FLAMETHROWER_FUEL || pid == PID_FLAMETHROWER_FUEL_MK_II ||
+               pid == PID_EXPLOSIVE_ROCKET || pid == PID_ROCKET_AP ||
+               pid == PID_DYNAMITE || pid == PID_ACTIVE_DYNAMITE ||
+               pid == PID_PLASTIC_EXPLOSIVES)
+            {
+                if(pid == PID_EXPLOSIVE_ROCKET || pid == PID_ROCKET_AP)
+                    pid = PID_ROCKET_LAUNCHER;
+                if(pid == PID_FLAMETHROWER_FUEL || pid == PID_FLAMETHROWER_FUEL_MK_II)
+                    pid = PID_MOLOTOV_COCKTAIL;
+                if(pid == PID_DYNAMITE || pid == PID_ACTIVE_DYNAMITE || pid == PID_PLASTIC_EXPLOSIVES)
+                    pid = PID_FRAG_GRENADE;
+
+                uint clamp = Random(10, 25);
+                uint strength = CLAMP(item.GetCount(), 0, clamp);
+                if(strength > 0 && valid(map))
+                {
+                    for(uint s = 0; s < strength; s++)
+                    {
+                        uint min = REAL_SECOND(5);
+                        uint max = REAL_SECOND(10 + s);
+
+                        if(pid == PID_MOLOTOV_COCKTAIL || pid == PID_DYNACORD)
+                        {
+                            if(pid == PID_DYNACORD)
+                                min = REAL_SECOND(2);
+                            else
+                                min = REAL_SECOND(1);
+                            max = REAL_SECOND(5);
+                        }
+
+                        if(cr.Stat[ST_LUCK] <= 2 && Random(0, 100) <= 10)
+                            min = max = REAL_SECOND(1);
+
+                        uint[] values =
+                        {
+                            campfire.Id,
+                            map.Id,
+                            Random(campfire.HexX - 1, campfire.HexX + 1),
+                            Random(campfire.HexY - 1, campfire.HexY + 1),
+                            pid,
+                            cr.Id
+                        };
+
+                        CreateTimeEvent(AFTER(Random(min, max)), "e_ThrowingExplode", values, true);
+                    }
+                }
+            }
+
+            if(Random(1, 100) <= 23)
+            {
+                Item@ recycler = GetRecycler(TENT_RECYCLER);
+                if(valid(recycler))
+                    MoveItem(item, Random(1, item.GetCount()), recycler, 0);
+            }
+
+            DeleteItem(item);
+        }
+    }
+}
+
+uint e_ThrowingExplode(array<uint>@ values)
+{
+    if(valid(values) && values.length() >= 1)
+    {
+        Item@ campfire = GetItem(values[0]);
+        values.removeAt(0);
+        CreateTimeEvent(AFTER(1), "throwing@e_Explode", values, false);
+        if(valid(campfire) && FLAG(campfire.Flags, ITEM_CAN_USE))
+            MakeCampfireUnusuable(campfire);
+    }
+
+    return(0);
+}
+
+/// CAMPFIRE DIALOG - management section ///
+
+bool d_IsTentOwner(Critter& player, Critter@)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+        return(false);
+
+    return(IsTentOwner(map, player));
+}
+
+uint r_TentName(Critter& player, Critter@)
+{
+    player.ShowScreen(SCREEN_SAY, 0, "answer_TentName");
+    return(DIALOG_END);
+}
+
+void answer_TentName(Critter& player, uint, string& name)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    if(!IsTentOwner(map, player))
+    {
+        player.Say(SAY_NETMSG, "It's not your tent.");
+        return;
+    }
+
+    Location@ location = map.GetLocation();
+    if(!valid(location))
+    {
+        player.Say(SAY_NETMSG, "Invalid location.");
+        return;
+    }
+
+    Buffer@ buffer = NewBuffer();
+    buffer << name;
+    if(SetPersonalData(location, "tentName", buffer.AsUint8()))
+        player.Say(SAY_NETMSG, "Tent name changed to: " + name);
+    else
+        player.Say(SAY_NETMSG, "ERR: Couldn't change tent name.");
+}
+
+uint r_CreateMap(Critter& player, Critter@)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return(DIALOG_END);
+    }
+
+    if(!IsTentOwner(map, player))
+    {
+        player.Say(SAY_NETMSG, "It's not your tent.");
+        return(DIALOG_END);
+    }
+
+    Location@ location = map.GetLocation();
+    if(!valid(location))
+    {
+        player.Say(SAY_NETMSG, "Invalid location.");
+        return(DIALOG_END);
+    }
+
+    string       lex = player.Name + "'s tent";
+
+    array<uint8> raw;
+    if(IsPersonalData(location, "tentName") && GetPersonalData(location, "tentName", raw))
+    {
+        string  name = "";
+        Buffer@ buffer = NewBuffer(raw);
+        buffer >> name;
+        if(name.length() > 0)
+            lex += " (" + name + ")";
+    }
+
+    Item@ mapItem = CreateMapTo(player, location, 0, lex);
+
+    if(valid(mapItem))
+    {
+        player.Say(SAY_NETMSG, "You've created a map to this location.");
+    }
+
+    return(0);
+}
+
+uint r_AbandonTent(Critter& player, Critter@)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return(DIALOG_END);
+    }
+
+    if(!IsTentOwner(map, player))
+    {
+        player.Say(SAY_NETMSG, "It's not your tent.");
+        return(DIALOG_END);
+    }
+
+    Location@ location = map.GetLocation();
+    if(!valid(location))
+    {
+        player.Say(SAY_NETMSG, "Invalid location.");
+        return(DIALOG_END);
+    }
+
+    player.ShowScreen(SCREEN_DIALOGBOX, 1, "answer_AbandonTent");
+    player.Say(SAY_DIALOGBOX_TEXT, "Are you REALLY sure you want to abandon this location? All items (including vehicles) left will be lost.");
+    player.Say(SAY_DIALOGBOX_BUTTON(0), "YES");
+
+    return(DIALOG_END);
+}
+
+void answer_AbandonTent(Critter& player, uint, string&)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+    {
+        player.Say(SAY_NETMSG, "Invalid map.");
+        return;
+    }
+
+    if(!IsTentOwner(map, player))
+    {
+        player.Say(SAY_NETMSG, "It's not your tent.");
+        return;
+    }
+
+    Location@ location = map.GetLocation();
+    if(!valid(location))
+    {
+        player.Say(SAY_NETMSG, "Invalid location.");
+        return;
+    }
+
+    array<Critter@> critters;
+    uint            count = LocationGetCritters(location, FIND_ALL, critters);
+    for(uint c = 0; c < count; c++)
+    {
+        critters[c].TransitToGlobal(false);
+    }
+    player.AddItem(PID_TENT, 1);
+
+    if(!RemoveTent(player, location, true))
+        DeleteLocation(location.Id);
+
+    return;
+}
+
+bool d_IsUpgradeAvailable(Critter& player, Critter@, int pid)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+        return(false);
+
+    if(!IsTentOwner(map, player))
+        return(false);
+
+    Location@ location = map.GetLocation();
+
+    if(!valid(location))
+        return(false);
+
+    return(ContainsDynamicItems(location, pid));
+}
+
+uint r_InstallUpgrade(Critter& player, Critter@, int pid)
+{
+    Map@ map = player.GetMap();
+
+    if(!valid(map))
+        return(0);
+
+    if(!IsTentOwner(map, player))
+        return(0);
+
+    Location@ location = map.GetLocation();
+
+    if(!valid(location))
+        return(0);
+
+
+    if(ContainsDynamicItems(location, pid))
+    {
+        uint found = 0, shown = 0;
+        ShowAllDynamicItems(location, pid, found, shown);
+
+        if(found != shown)
+            player.Say(SAY_NETMSG, "WARNING: not all items has been created");
+    }
+
+    return(0);
+}
+
+/// ~myinfo ///
+
+void myinfo_tent(Critter& player)
+{
+    string      red = "|" + COLOR_RGB(255, 0, 0) + " ";
+    string      green = "|" + COLOR_RGB(0, 255, 0) + " ";
+
+    array<uint> vars;
+    GetTakenTentVars(player, vars);
+    uint        varsLen = vars.length();
+
+    if(varsLen > 0)
+    {
+        player.Say(SAY_NETMSG, "Tent" + (varsLen > 1 ? "s" : "") + " position" + (varsLen > 1 ? "s" : "") + ":");
+
+        for(uint v = 0; v < varsLen; v++)
+        {
+            int locId = GetLvar(player, vars[v]);
+            if(locId > 0)
+            {
+                Location@ loc = GetLocation(locId);
+                if(valid(loc))
+                {
+                    string       tentName = "Tent #" + (v + 1);
+
+                    array<uint8> raw;
+                    if(IsPersonalData(loc, "tentName") &&
+                       GetPersonalData(loc, "tentName", raw))
+                    {
+                        string  name = "";
+                        Buffer@ buffer = NewBuffer(raw);
+                        buffer >> name;
+                        if(name.length() > 0)
+                            tentName = name;
+                    }
+                    player.Say(SAY_NETMSG, " " + (v + 1) + ") " + tentName + ": " + red + loc.WorldX + green + "," + red + loc.WorldY);
+                }
+                else
+                {
+                    string err = "Cannot find tent location<" + locId + "> for player <" + player.Id + ">";
+                    Log(err);
+                    player.Say(SAY_NETMSG, err + ", please report.");
+                }
+            }
+        }
+    }
+}
+
+#ifdef __DEBUG__
+void oldsimul_spawn(Critter& leader, int, int, int)
+{
+    Map@ xmap = leader.GetMap();
+    if(!valid(xmap))
+    {
+        DSay(leader, "not on wm");
+        return;
+    }
+
+    DSay(leader, "removing all tents");
+    RemoveAllTents(leader, false);
+
+    uint16          locationpid = LOCATION_TentDesert1;
+
+    array<Critter@> group;
+    uint            locId = CreateLocationForGroup(leader, locationpid, leader.WorldX, leader.WorldY, group);
+
+    if(locId == 0)
+    {
+        DSay(leader, "Failed to create a tent base location on map with id " + leader.GetMapId() + " and PID " + locationpid);
+        DSay(leader, "Failed to create tent camp. Try on another map.");
+        return;
+    }
+
+    SetLvar(leader, TentVars[0], locId);
+    DSay(leader, "Tent base location created with the id " + locId + " and PID " + locationpid);
+    Location@ loc = GetLocation(locId);
+    Map@      map = loc.GetMapByIndex(0);
+    DSay(leader, "(FLog) TENT " + loc.Id + " " + loc.GetProtoId() + " " + loc.WorldX + " " + loc.WorldY);
+    if(valid(map))
+    {
+        Map@ encountermap = leader.GetMap();
+        MoveCars(encountermap, map);
+        DSay(leader, "(skipped) map.SetScript(\"map_tent@map_init\");");
+        for(uint i = 0; i < group.length(); i++)
+        {
+            group[i].TransitToMap(map.Id, 0);
+        }
+        map.SetData(MAP_DATA_TENT_OWNER, leader.Id);
+
+        array<Item@> campfires;
+        uint         count = map.GetItems(PID_CAMPFIRE, campfires);
+        for(uint c = 0; c < count; c++)
+        {
+            DSay(leader, "campfire<" + campfires[c].Id + "> hack1");
+            MakeCampfireUsuable(campfires[c]);
+            campfires[c].SetScript("workbench@item_init");
+        }
+    }
+    else
+    {
+        leader.Say(SAY_NETMSG, "ERR: No map in location");
+        DSay(leader, "ERR: No map in location with ID " + locId);
+    }
+
+    DSay(leader, "old tent spawn simulated");
+    return;
+}
+
+void oldsimul_update(Critter& cr, int, int, int)
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map) || map.GetLocation().GetProtoId() != LOCATION_TentDesert1)
+    {
+        cr.Say(SAY_NETMSG, "must be on (any) tent map");
+        return;
+    }
+
+    array<Item@> campfires;
+    uint         count = map.GetItems(PID_CAMPFIRE, campfires);
+    for(uint c = 0; c < count; c++)
+    {
+        DSay(cr, "campfire<" + campfires[c].Id + "> hack2");
+        campfires[c].SetScript("map_tent@_RegenItem");
+    }
+    DSay(cr, "old tent update simulated");
+}
+#endif
+#endif // __MAP_TENT__ //

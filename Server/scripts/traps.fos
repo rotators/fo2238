@@ -1,0 +1,316 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// traps.fos
+//
+
+// Guess what
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "groups_h.fos"
+#include "entire.fos"
+#include "npc_common_h.fos"
+#define __TRAPS_MODULE__
+#include "traps_h.fos"
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+/**
+ * \~english @defgroup TrapsGroup Traps
+ * Various functions that turn regular items into trap markers.
+ * Consult traps.fos for the list of item Val parameters.
+ * Include traps_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+ /*@{*/
+
+// item init functions
+// void _SpearTrap(Item& item, bool firstTime) // vals: 1 - spear count; 3 - complexity
+// void _GenericShot(Item& item, bool firstTime) // vals: 1 - pid, 2 - min, 3 - complexity
+// void _BearTrapInit(Item& item, bool firstTime) // vals: 3 - complexity; 4 - bonus damage
+// void _AlarmTrapInit(Item& item, bool firstTime) // 1 - pid, min, max (16, 8, 8 bits); 3 - complexity; 4 - bag, level, entire (16, 8, 8 bits)
+
+// script functions
+// void MakeSpearTrap(Item& trap, uint complexity, uint hideSkill, uint spearcount)
+// void MakeGenericShotTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint dmgmin, uint dmgmax)
+// void MakeBearTrap(Item& trap, uint complexity, uint hideSkill, uint bonusDamage)
+// void MakeAlarmTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint8 min, uint8 max, uint16 bag, uint8 level, uint8 entire)
+
+/**
+ * Sets the spear trap script for the item and assigns its parameters
+ * @param     trap			The item to become a spear trap
+ * @param     complexity       Complexity level for disarming the trap
+ * @param     hideSkill		Value of traps skill used to hide the item, 0 to disable
+ * @param     spearcount       Number of spear ammunition
+ */
+void MakeSpearTrap(Item& trap, uint complexity, uint hideSkill, uint spearcount)   // export
+{
+    if(hideSkill > 0)
+        trap.TrapValue = TRAPS_HIDE(hideSkill);
+    trap.SetScript("_SpearTrap");
+    if(spearcount > 0)
+        _SpearCount(trap) = spearcount;
+    _Complexity(trap) = complexity;
+}
+
+// shoots spear if player walks on it. Val1 denotes number of shots it can do
+void _SpearTrap(Item& item, bool firstTime)
+{
+    if(firstTime)
+    {
+        SETFLAG(item.Flags, ITEM_TRAP);
+        _SpearCount(item) = 1;
+        if(_Complexity(item) == 0)
+            _Complexity(item) = 150;
+    }
+    item.SetEvent(ITEM_EVENT_WALK, "_SpearTrapWalk");
+    item.SetEvent(ITEM_EVENT_SKILL, "_TrapUse");
+}
+
+void _SpearTrapWalk(Item& trap, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered && cr.Stat[ST_LOCOMOTION_TYPE] != LOCOMOTION_FLY && (cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0))
+    {
+        ShootSpear(trap, cr);
+    }
+}
+
+void ShootSpear(Item& trap, Critter& cr)
+{
+    if(_SpearCount(trap) == 0)
+        return;
+    _SpearCount(trap) -= 1;
+
+    // play animation
+    Map@   map = cr.GetMap();
+    uint16 fx = cr.HexX;
+    uint16 fy = cr.HexY;
+    uint16 dir = Random(0, 5);
+    map.MoveHexByDir(fx, fy, dir, Random(5, 15));
+    map.RunFlyEffect(PID_SPEAR, null, null, fx, fy, cr.HexX, cr.HexY);
+    // hurt player
+    InjureCritter(cr, Random(5, 20) + _BonusDamage(trap), DAMAGE_NORMAL, (dir + 3) % 6, 0);
+    // spawn spear
+    map.AddItem(cr.HexX, cr.HexY, PID_SPEAR, 1);
+    return;
+}
+
+/**
+ * Sets the generic shot trap script for the item and assigns its parameters
+ * @param     trap     The item to become a generic shot trap
+ * @param     complexity       Complexity level for disarming the trap
+ * @param     hideSkill     Value of traps skill used to hide the item, 0 to disable
+ * @param     pid       Proto id for object to be shot
+ * @param     dmgmin       Minimum amount of damage dealt
+ * @param     dmgmax       Maximum amount of damage dealt
+ */
+void MakeGenericShotTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint dmgmin, uint dmgmax)   // export
+{
+    if(hideSkill > 0)
+        trap.TrapValue = TRAPS_HIDE(hideSkill);
+    _Complexity(trap) = complexity;
+    trap.SetScript("_GenericShot");
+    _Pid(trap) = pid;
+    _DmgMin(trap) = dmgmin;
+    _DmgMax(trap) = dmgmax;
+}
+
+void _GenericShot(Item& item, bool firstTime)
+{
+    if(firstTime)
+        SETFLAG(item.Flags, ITEM_TRAP);
+    item.SetEvent(ITEM_EVENT_WALK, "_GenericShotWalk");
+    item.SetEvent(ITEM_EVENT_SKILL, "_TrapUse");
+}
+void _GenericShotWalk(Item& trap, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered && cr.Stat[ST_LOCOMOTION_TYPE] != LOCOMOTION_FLY && (cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0))
+    {
+        ShootGeneric(trap, cr);
+        DeleteItem(trap);
+    }
+}
+void ShootGeneric(Item& trap, Critter& cr)
+{
+    // play animation
+    Map@   map = cr.GetMap();
+    uint16 fx = cr.HexX;
+    uint16 fy = cr.HexY;
+    uint16 dir = Random(0, 5);
+    map.MoveHexByDir(fx, fy, dir, Random(5, 15));
+    map.RunFlyEffect(_Pid(trap), null, null, fx, fy, cr.HexX, cr.HexY);
+    // hurt player
+    InjureCritter(cr, Random(_DmgMin(trap), _DmgMax(trap)), DAMAGE_NORMAL, (dir + 3) % 6, 0);
+    map.AddItem(cr.HexX, cr.HexY, _Pid(trap), 1);
+    return;
+}
+
+bool _TrapUse(Item& trap, Critter& cr, int skill)
+{
+    int result = SkillCheck(cr, SK_TRAPS, skill, null, -_Complexity(trap));
+
+    if(result == SKILL_CHECK_SUCCESS)
+    {
+        cr.Say(SAY_NETMSG, "You've successfully disarmed the trap.");
+        cr.StatBase[ST_EXPERIENCE] += TRAP_CLEAR_EXPERIENCE(trap);
+        DeleteItem(trap);
+    }
+    else
+    {
+        cr.Say(SAY_NETMSG, "You've accidentally triggered the trap.");
+        trap.EventWalk(cr, true, cr.Dir);
+    }
+    return true;
+}
+
+/**
+ * Sets the bear trap script for the item and assigns its parameters
+ * @param     trap     The item to become a bear trap
+ * @param     complexity       Complexity level for disarming the trap
+ * @param     hideSkill     Value of traps skill used to hide the item, 0 to disable
+ * @param     bonusDamage       Bonus damage dealt upon the trap activation
+ */
+void MakeBearTrap(Item& trap, uint complexity, uint hideSkill, uint bonusDamage)   // export
+{
+    if(hideSkill > 0)
+        trap.TrapValue = TRAPS_HIDE(hideSkill);
+    _BonusDamage(trap) = bonusDamage;
+    _Complexity(trap) = complexity;
+    trap.SetScript("_BearTrapInit");
+}
+
+void _BearTrapInit(Item& item, bool firstTime)
+{
+    if(firstTime)
+        SETFLAG(item.Flags, ITEM_TRAP);
+    item.SetEvent(ITEM_EVENT_WALK, "_BearTrapWalk");
+    item.SetEvent(ITEM_EVENT_SKILL, "_TrapUse");
+}
+
+void _BearTrapWalk(Item& item, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered && cr.Stat[ST_LOCOMOTION_TYPE] != LOCOMOTION_FLY && (cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0))
+    {
+        array<uint> data = { item.Id, cr.Id };
+        if(cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0)
+            CreateTimeEvent(ELAPSED_TIME, "e_Clamp", data, false);
+    }
+}
+
+uint e_Clamp(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+
+    Critter@ cr = GetCritter(values[1]);
+    if(!valid(cr))
+        return 0;
+    InjureCritter(cr, Random(5, 15) + _BonusDamage(item), DAMAGE_NORMAL, cr.Dir, 0);
+    if(Random(0, 2) == 0)
+        cr.DamageBase[DAMAGE_LEFT_LEG] = 1;
+    if(Random(0, 2) == 0)
+        cr.DamageBase[DAMAGE_RIGHT_LEG] = 1;
+
+    if(item.Accessory == ACCESSORY_HEX)
+    {
+        uint16 hx = 0;
+        uint16 hy = 0;
+        cr.PlaySound("beartrap.ogg", true);
+    }
+    DeleteItem(item);
+    return 0;
+}
+
+/**
+ * Sets the alarm (critter summoning) trap script for the item and assigns its parameters
+ * @param     trap     The item to become an alarm trap
+ * @param     complexity       Complexity level for disarming the trap
+ * @param     hideSkill     Value of traps skill used to hide the item, 0 to disable
+ * @param     pid       Proto id for critters spawned on trap activation
+ * @param     min       Minimum number of critters to spawn
+ * @param     max       Maximum number of critters to spawn
+ * @param     bag       Bag used by the spawned critter
+ * @param     level     Level of the spawned critters
+ * @param     entire    Entire number around which the critters will be spawned
+ */
+void MakeAlarmTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint8 min, uint8 max, uint16 bag, uint8 level, uint8 entire)   // export
+{
+    if(hideSkill > 0)
+        trap.TrapValue = TRAPS_HIDE(hideSkill);
+    _SetPidNum(trap, pid, min, max);
+    _SetData(trap, bag, level, entire);
+    _Complexity(trap) = complexity;
+    trap.SetScript("_AlertTrapInit");
+}
+
+void _AlarmTrapInit(Item& item, bool firstTime)
+{
+    if(firstTime)
+        SETFLAG(item.Flags, ITEM_TRAP);
+    item.SetEvent(ITEM_EVENT_WALK, "_AlarmTrapWalk");
+    item.SetEvent(ITEM_EVENT_SKILL, "_TrapUse");
+}
+
+void _AlarmTrapWalk(Item& item, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered && cr.Stat[ST_LOCOMOTION_TYPE] != LOCOMOTION_FLY && (cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0))
+    {
+        array<uint> data = { item.Id, cr.Id };
+        if(cr.Perk[PE_LIGHT_STEP] == 0 || Random(0, 1) == 0)
+            CreateTimeEvent(ELAPSED_TIME, "e_SummonEnemies", data, false);
+    }
+}
+
+uint e_SummonEnemies(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    if(item.Accessory != ACCESSORY_HEX)
+        return 0;
+
+    // todo: make some noise (replace graphics, play sound)?
+    ClearWalkTrap(item);
+
+    Map@     map = GetMap(item.MapId);
+
+    Critter@ cr = GetCritter(values[1]);
+    if(!valid(cr))
+        return 0;
+    uint8         entirenum = _GetEntire(item);
+    array<Entire> entires;
+    ParseEntires(map, entires, entirenum);
+    if(entires.length() == 0)
+        return 0;
+    Entire@ ent = random_from_array(entires);
+    uint16  pid = _GetPid(item);
+    uint8   num = Random(_GetMin(item), _GetMax(item));
+    uint16  bag = _GetBag(item);
+    uint8   level = _GetLevel(item);
+    uint8   dir = GetDirection(ent.HexX, ent.HexY, cr.HexX, cr.HexY);
+    for(uint8 i = 0; i < num; i++)
+    {
+        Critter@ npc = AddNpc(map, pid, ent.HexX, ent.HexY, dir, 0 /*dialogId*/, "mob@critter_init", 0 /*aiPack*/, bag, TEAM_Mob, true, level);
+        if(!valid(npc))
+            continue;
+        AttackCritter(npc, cr);
+    }
+    return 0;
+}
+
+/**
+ * Clears the script of walk-in type trap, such as mines or bear traps.
+ * @param     item     The item to be cleared
+ */
+void ClearWalkTrap(Item& item)   // export
+{
+    item.SetScript(null);
+    item.SetEvent(ITEM_EVENT_WALK, null);
+
+    // clear disarming event
+    item.SetEvent(ITEM_EVENT_SKILL, null);
+}
+
+/*@}*/

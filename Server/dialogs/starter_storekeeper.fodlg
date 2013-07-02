@@ -1,0 +1,114 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+9 1020 D _var p starter_bookquest = 1 #
+13 1030 D _var p loyality = 5 #
+2 1040 D _param p ST_CHARISMA < 4 @
+2 2000 None 0 #
+3 2010 D _var p starter_bookquest = 0 #
+4 2020 #
+17 2030 D _var p starter_greg_quests = 1 #
+3 2040 #
+0 2050 @
+3 3000 None 0 #
+11 3010 R _var p starter_bookquest = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 #
+8 7020 #
+0 7030 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 D _item p PID_BECKY_BOOK = 1 R _item p PID_BECKY_BOOK - 1 R _var p starter_bookquest = 2 R _param p ST_EXPERIENCE + 150 R _script dialog@r_AddMoney 1 15 #
+0 9020 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+0 11010 R _var p starter_bookquest = 1 #
+12 11020 R _var p loyality - 5 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 @
+14 14000 None 0 #
+15 14010 #
+0 14020 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+2 17010 R _item p PID_CIGARETTES + 1 #
+0 17020 R _item p PID_CIGARETTES + 1 &
+
+[engl]
+{100}{}{Loarria}
+{200}{}{You see Loarria.}
+{210}{}{You see a prematurely aged young woman, with a faded smile.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Quest assigned}
+{1030}{}{Hated}
+{1040}{}{Low Charisma}
+{2000}{}{What can I do for you, sweetie?}
+{2010}{}{Got any work for me?}
+{2020}{}{What can you tell me about this place?}
+{2030}{}{Greg sent me over, you got any packs of cigarettes?}
+{2040}{}{Got any more work for me?}
+{2050}{}{Nothing, bye.}
+{3000}{}{Well, I figure I might have something for ya. I lost a book a couple weeks back, 'The Lavender Flower'. If you can find it, there's a couple caps in it for ya.}
+{3010}{}{Sure thing. Where did you last see it?}
+{3020}{}{Forget it, nevermind.}
+{4000}{}{Not a lot, lived here all my life. I know the whole town's a little edgy about the rest of the wasteland, though. S'why we worked so hard to become self sufficient. Why you asking, anyhow?}
+{4010}{}{I was thinking of heading out into the wastes.}
+{4020}{}{No reason. Goodbye.}
+{5000}{}{Willikers! I sure hope you said your goodbyes, it'll be a shame to see you go. It'd be nice if you could drop by, but hey, you know the rules.}
+{5010}{}{The rules? Wait, what are you talking about?}
+{5020}{}{Yeah, goodbye.}
+{6000}{}{Huh? Everybody knows we don't let anybody come back into town when they're gone. Heck, I wouldn't be surprised if they dumped a sack on your head so you didn't know the way back.}
+{6010}{}{You're kidding, right?}
+{7000}{}{Shoot, no. Who knows what the hell kind of trouble you'd bring back with you? No sir, we can't take those kind of risks.}
+{7010}{}{That's ridiculous.}
+{7020}{}{Why's that?}
+{7030}{}{I've heard enough. Goodbye.}
+{8000}{}{We got ourselves a good thing here. I've heard stories about what it's like out there. We're happy just the way we are, thanks.}
+{8010}{}{Sure you are. Bye.}
+{9000}{}{Hey there, you find my book?}
+{9010}{}{Yeah, here it is.}
+{9020}{}{Sorry, no. Not yet.}
+{10000}{}{Thankee kindly. Here's 15 caps. Go buy yourself a nice hot meal.}
+{10010}{}{Thanks, bye.}
+{11000}{}{Uh, well, I actually think I mighta thrown it out a few days ago. I don't want to make you sift through trash, but... fifteen caps is a lot of money. I'd look for it myself but I can't leave the place unattended.}
+{11010}{}{Fine, I'll do it.}
+{11020}{}{Fuck you, I'm not looking through garbage.}
+{12000}{}{You better learn to watch your mouth. Yes sirree, that big yap o' yours is gonna get you in all sorts of trouble, let me tell ya.}
+{12010}{}{Whatever.}
+{13000}{}{Sorry, can't talk right now.@@Not interested.@@Let me get on with my work.@@Maybe you should try a touch of civility next time.}
+{14000}{}{Oh, Christ, it's you. What is it this time?}
+{14010}{}{I w-was just wondrin' if...}
+{14020}{}{N-nuthin'. S-sorry.}
+{15000}{}{What?! Wondering what, exactly?}
+{15010}{}{If y-you might h-have any work fer me?}
+{15020}{}{Nuh-nuh-n-nuthin'. S-sorry.}
+{16000}{}{(She folds her arms) No. No I don't. Get your ass outta here, you're scarin' the customers.}
+{16010}{}{S-sorry. Ah-hhhm goin'.}
+{17000}{}{Greg sent you, huh? I figure I might have a pack left for him. Here, it's on the house.}
+{17010}{}{Thanks, say, I had some questions.}
+{17020}{}{Thanks, I'll go pass these on to him. Bye.}
+

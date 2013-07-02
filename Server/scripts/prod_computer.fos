@@ -1,0 +1,56 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_computer.fos
+//
+
+// OBSOLETE
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define TEXT_PARTS         (3070)
+#define TEXT_LOW_SKILLS    (3071)
+#define TEXT_USE_REPAIR    (3072)
+#define TEXT_TIMEOUTED     (3073)
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_Skill");
+}
+
+bool _Skill(Item& item, Critter& crit, int skill)
+{
+    Log("Obsolete script used");
+    crit.Say(SAY_NETMSG, "Obsolete script, please report this issue. Thanks.");
+    return true;
+/*
+        if(skill == -1)
+        {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, TEXT_USE_REPAIR);
+                return true;
+        }
+        else if(skill == SK_REPAIR)
+    {
+        if(crit.Timeout[TO_GATHERING]>TIMEOUT_CUMULATIVE)
+        {
+            crit.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_WEARINESS);
+            return true;
+        }
+        else if(IsOverweighted(crit))
+        {
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+            return true;
+        }
+        else //if(CheckTimeout(item))
+        {
+            crit.AddItem(PID_ELECTRONIC_PARTS, __ElectronicPartsBatch);
+            SET_TIMEOUT(crit, __ElectronicPartsTimeout);
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, TEXT_PARTS);
+        }
+        //else
+        //    crit.Say(SAY_NETMSG, TEXT_TIMEOUTED);
+        return true;
+    }
+    return false;*/
+}

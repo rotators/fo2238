@@ -1,0 +1,181 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+15 1010 D _var p crimson_caravan_job > 0 #
+22 1020 D _var n name_mem_npc_player = 2 #
+2 1030 D _var n name_mem_npc_player = 0 #
+3 1040 D _var n name_mem_npc_player = 1 #
+14 1050 @
+2 2000 None 0 #
+26 2010 D _param p ST_INTELLECT > 3 D _script dialog@d_IsAddict 0  #
+21 2020 D _param p ST_STRENGTH < 5 D _param p ST_INTELLECT > 3 D _script dialog@d_IsNotAddict 0  R _var n name_mem_npc_player = 1 #
+4 2030 D _param p ST_STRENGTH = 5 D _param p ST_INTELLECT > 3 D _script dialog@d_IsNotAddict 0  R _var n name_mem_npc_player = 1 #
+6 2040 D _param p ST_STRENGTH = 6 D _param p ST_INTELLECT > 3 D _script dialog@d_IsNotAddict 0  R _var n name_mem_npc_player = 1 #
+5 2050 D _param p ST_STRENGTH > 6 D _param p ST_INTELLECT > 3 D _script dialog@d_IsNotAddict 0  R _var n name_mem_npc_player = 1 #
+0 2060 D _param p ST_INTELLECT > 3 R _var n name_mem_npc_player = 1 #
+22 2070 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+26 3010 D _script dialog@d_IsAddict 0  D _param p ST_INTELLECT > 3 D _script dialog@d_IsAddict 0  #
+21 3020 D _param p ST_INTELLECT > 3 D _param p ST_STRENGTH < 5 D _script dialog@d_IsNotAddict 0  #
+4 3030 D _param p ST_INTELLECT > 3 D _param p ST_STRENGTH = 5 D _script dialog@d_IsNotAddict 0  #
+6 3040 D _param p ST_INTELLECT > 3 D _param p ST_STRENGTH = 6 D _script dialog@d_IsNotAddict 0  #
+5 3050 D _param p ST_INTELLECT > 3 D _param p ST_STRENGTH > 6 D _script dialog@d_IsNotAddict 0  #
+0 3060 D _param p ST_INTELLECT > 3 #
+22 3070 D _param p ST_INTELLECT < 4 @
+4 4000 None 0 #
+7 4010 @
+5 5000 None 0 #
+7 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+19 7010 #
+8 7020 #
+8 7030 #
+16 7040 D _var p give_grenade = 0 R _var p give_grenade = 1 #
+9 7050 D _var p give_grenade = 1 #
+11 7060 @
+8 8000 None 0 #
+0 8010 R _var p crimson_caravan_job = 1 @
+9 9000 None 0 #
+20 9010 #
+7 9020 @
+10 10000 None 0 @
+11 11000 None 0 #
+12 11010 #
+20 11020 @
+12 12000 None 0 #
+0 12010 R _var p crimson_caravan_job = 1 @
+13 13000 None 0 #
+17 13010 #
+18 13020 #
+0 13030 R _var p crimson_caravan_job = 1 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 #
+0 15010 @
+16 16000 None 0 #
+0 16010 R _item p PID_FRAG_GRENADE + 1 #
+7 16020 R _item p PID_FRAG_GRENADE + 1 @
+17 17000 None 0 #
+7 17010 #
+0 17020 R _var p crimson_caravan_job = 1 @
+18 18000 None 0 #
+12 18010 #
+23 18020 @
+19 19000 None 0 #
+25 19010 #
+12 19020 #
+20 19030 @
+20 20000 None 0 #
+0 20010 @
+21 21000 None 0 #
+0 21010 @
+22 22000 None 0 #
+0 22010 @
+23 23000 Attack 0 #
+0 23010 @
+24 24000 Attack 0 #
+0 24010 R _var n name_mem_npc_player = 2 #
+0 24020 @
+25 25000 Attack 0 #
+12 25010 #
+20 25020 @
+26 26000 Attack 0 #
+0 26010 &
+
+[engl]
+{100}{}{Keri}
+{200}{}{You see Keri McLafferty.}
+{210}{}{You see Keri McLafferty, the owner and operator of the Crimson Caravan Company}
+{240}{}{You see a dead police officer.}
+{260}{}{You see a slain Ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{Player got the job, need to talk to Ailis.}
+{1020}{}{Fucked up with Keri}
+{1030}{}{I dont know you}
+{1040}{}{I know you}
+{1050}{}{Player killed guards of the caravan}
+{2000}{}{Hey there! How are you doin'? The name's Keri, Keri McLafferty, head of the best damn caravan in the wastes. Are you lookin' for a job?}
+{2010}{}{I want a job.}
+{2020}{}{I am here because I want a job.}
+{2030}{}{I am here because I want a job.}
+{2040}{}{I am here because I want a job.}
+{2050}{}{I am here because I want a job.}
+{2060}{}{Sorry, wrong door... need to go.@@Nevermind, I come back later... maybe.}
+{2070}{}{Ugh?@@Blah!}
+{3000}{}{Hey there! How are you doin'?}
+{3010}{}{I want a job.}
+{3020}{}{I am here because I want a job.}
+{3030}{}{I am here because I want a job.}
+{3040}{}{I am here because I want a job.}
+{3050}{}{I am here because I want a job.}
+{3060}{}{Sorry, wrong door... need to go.@@Nevermind, I come back later... maybe.}
+{3070}{}{Ugh?@@Blah!}
+{4000}{}{Hmmm, you don't look very strong at all, but... you MUST be great with guns then to have survived the outside! Hell, you're probably one mean fighter when the time comes!}
+{4010}{}{My gun skills are all what sells! So, how much does that job pay?}
+{5000}{}{That's just what we're lookin' for! You like the thrill and excitement of battle don't you?!  Bullets flying everywhere, whippin' by your head, blowin' your enemy in two, seein' the fear in their eyes! Ahhhh, that's the life! You look like the kind of person that could serve us well, and we pay well!  Oh yes, we do! We've just had a few new openin's, if you are interested; but of course you are, right?!}
+{5010}{}{I know that I am cool. Well, what's it pay?@@I know that I am cool. So, how much does that job pay?}
+{6000}{}{Hmm, you look pretty fit. That's just what we're lookin' for! You like the thrill and excitement of battle don't you?!  Bullets flying everywhere, whippin' by your head, blowin' your enemy in two, seein' the fear in their eyes! Ahhhh, that's the life! You look like the kind of person that could serve us well, and we pay well!  Oh yes, we do! We've just had a few new openin's, if you are interested; but of course you are, right?!}
+{6010}{}{Well, what's it pay?@@So, how much does that job pay?}
+{7000}{}{We pay 600 hub bucks a job! That's each way! Hell, people say we take all the dangerous routes but I say they're the most excitin'! You need a little excitement in your life, am I right? Of course I am!}
+{7010}{}{What about your routes and cargo?}
+{7020}{}{Count me in. What do I have to do?}
+{7030}{}{Hell, I think that's just what I'm lookin' for!}
+{7040}{}{Okay, thanks, but no.}
+{7050}{}{Okay, thanks, but no.}
+{7060}{}{Is a job as caravan guard dangerous?}
+{8000}{}{Damn straight it is! Just go talk to Ailis in the next room, she'll let you know when the next caravan is leavin'.}
+{8010}{}{Okay.@@On my way.}
+{9000}{}{What, are you afraid of loud noises or somethin'? Anyway, we don't have any use of you then.}
+{9010}{}{No, but my ears were getting a little sore.}
+{9020}{}{Only at night -- Still, I'll changed my mind. What was the pay again?}
+{10000}{}{Ha! Maybe both! Well, go talk to Keri in the next room if you do want a job.}
+{11000}{}{Of course it's dangerous -- why else would I fork out 600 bucks?}
+{11010}{}{Yeh, maybe you are right. I'll take the job. }
+{11020}{}{I don't know and I don't care that much.}
+{12000}{}{Of course you will! Go talk to Ailis in the next room, she works the schedules.}
+{12010}{}{Okay.@@On my way.}
+{13000}{}{Yeah! I like you! You're hired! Go talk to my daughter Ailis in the next room, she'll assign you to a caravan.}
+{13010}{}{Your daughter?}
+{13020}{}{That ugly thing is your daughter?  That explains a lot!}
+{13030}{}{Okay.}
+{14000}{}{[if player comes back and killed guards, etc.] Hey! What do you think your doin'? We've heard the storys 'bout you and the caravans -- get your fuckin ass out of here or we kick you out of these universe!}
+{14010}{}{Whatever...@@Fine...@@You guys suck anyway...}
+{15000}{}{I've told you already. Talk to Ailis in the next room if you want the job.}
+{15010}{}{Okay.@@On my way.}
+{16000}{}{Damn! You're missing out on some good action! I'm sure there are lots of people, creatures, and things waiting to attack the caravans! Nothing beats a good fire fight! Here - take this, it'll give you something to play with until the next caravan is ready to go. [She hands you a frag grenade.]}
+{16010}{}{Eh... thanks... anyway.}
+{16020}{}{Heh, what was the pay again..?}
+{17000}{}{Yes, she's my pride and joy! Isn't she beautiful? Just talk to her when you want another job. Some day . . . hopefully soon, I'll be able to retire and she'll take over for me.}
+{17010}{}{She look's hot. I'd hit her.}
+{17020}{}{Yeh, maybe. I'll talk to her because of that job...}
+{18000}{}{Say this again and I tell ya: 'Get out of here before I rip your head off and shove it up your ass!' And now take the job or leave it.}
+{18010}{}{Good, I will take the job. }
+{18020}{}{So... that ugly thing is your daughter?  That explains a lot! [You think, saying this will make her not happy.]}
+{19000}{}{(We drive to x and y and later here comes some more text!) Hell, we go to more dangerous places than the Far Go Traders do and our cargo is better too!}
+{19010}{}{How is your cargo better?}
+{19020}{}{Good, I will take the job. }
+{19030}{}{Seems like this is not my cup of tea.}
+{20000}{}{Hell, that's disappointin', but oh well.}
+{20010}{}{[Exit]}
+{21000}{}{Sorry, but we're paid good money to be sure the job gets done! We'll only hire the best! We've got to have reliable men and women on those caravans!}
+{21010}{}{Whatever. I have no time anyway...}
+{22000}{}{You're wastin' your time here!}
+{22010}{}{Whatever...}
+{23000}{}{Ha! That's a funny one! Well, if you think you can brave the darkness, come see me.}
+{23010}{}{[Exit]}
+{24000}{}{@sex@|Shut your whore mouse, boy! She's not anything for guys like you.|Shut your whore mouse, lady! She's not anything for girls like you.|}
+{24010}{}{Whatever, I am doing what I want anyway.}
+{24020}{}{Sorry Miss McLafferty. I think... maybe... I should go now... or so.}
+{25000}{}{Well, okay -- maybe it's not better but we do carry a larger variety than them.}
+{25010}{}{Okay, I will take the job. }
+{25020}{}{Seems like this is not my cup of tea.}
+{26000}{}{Hell, I don't hire drug addicts! If you want a job you better sober up!}
+{26010}{}{I'm no drug add . . . I mean . . . Arg!}
+

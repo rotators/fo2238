@@ -1,0 +1,102 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_travel_h.fos
+//
+
+#ifndef __NPC_TRAVEL_H__
+#define __NPC_TRAVEL_H__
+
+funcdef void TravellerCallback(ITravellerCallback@ callback, bool isWorldmap, int critterEvent, Critter& npc);
+
+// default callbacks added on critter init
+#define TRAVEL_CALLBACK_CHECKEQUIPMENT      (0)
+#define TRAVEL_CALLBACK_CHECKHEALTH         (1)     // only map
+#define TRAVEL_CALLBACK_CHECKDESTINATION    (2)     // only worldmap
+
+#define TRAVEL_PRIORITY_LOW                 (0)
+#define TRAVEL_PRIORITY_REGULAR             (10)
+#define TRAVEL_PRIORITY_IMPORTANT           (50)
+#define TRAVEL_PRIORITY_CRITICAL            (100)
+
+interface ITravellerCallback
+{
+    uint GetType();
+
+    int  GetPriority();
+    void SetPriority(int priority);
+
+    void TryRun(Critter& npc, int event);
+};
+
+interface ITraveller
+{
+    /*
+       void		Load();
+       void		Save();
+     */
+    uint Id { get; }
+    bool IgnoreEncounters { get; set; }
+
+    // core
+    Critter@ GetCritter();
+    Map@     GetMap();
+
+    // group
+    bool             HaveGroup { get; }
+    ITravellerGroup@ Group { get; set; }
+
+    // memory
+    void AddLastVisited(uint id);
+    void RemoveLastVisited(uint id);
+    bool IsLastVisited(uint id);
+    bool IsReallyLastVisited(uint id);
+    uint LastVisitedCount();
+
+    // brain
+    bool OnMap { get; }
+    bool OnWorldmap { get; }
+
+    bool Find_Destination(int type, Item@ car, float& inout x, float& inout y, float& inout toX, float& inout toY, float& inout speed, uint& inout encounterDescriptor, bool& inout waitForAnswer);
+    bool Find_SupportPerk(Location@& /*!1*/ resultWorldmap);
+    bool Goto_ExitGrid(bool run = false);
+    bool Enter_Location(Location& location);
+
+    // world
+    uint DestinationSearchRadius();                // changes on every GLOBAL_PROCESS_START_FAST
+    void SetDestinationSearchRadius(uint radius);
+    bool HavePrimaryDestination();
+    bool IsPrimaryDestination(uint id);
+
+    uint GetCurrentDestination();
+    void SetCurrentDestination(uint id);
+    bool IsCurrentDestination(uint id);
+
+    // debug
+    void Report(string& message);
+
+    // callback
+    void AddCallback(uint type, ITravellerCallback@);
+    void RemoveCallback(uint type);
+    void RunEvent(int event);
+};
+
+interface ITravellerGroup
+{
+    uint               Id { get; }
+    ITraveller@        Leader { get; }
+    array<ITraveller@> Members { get; }
+
+    // bool		IsLeader( ITraveller@ maybeLeader );
+    bool IsMember(ITraveller@ member);
+    void Invite(ITraveller@ newMember);
+    void Kick(ITraveller@ member);
+};
+
+#ifndef __NPC_TRAVEL__
+
+import ITraveller@ GetTraveller(uint crId) from "npc_travel";
+import uint        GetTravellers(array<ITraveller@>) from "npc_travel";
+#endif // __NPC_TRAVEL__
+#endif // __NPC_TRAVEL_H__ //

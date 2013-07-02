@@ -1,0 +1,103 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+12 1020 D _var n name_mem_npc_player = 1 #
+15 1030 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 D _item p PID_BOTTLE_CAPS > 59 R _script dialog@r_RemoveMoney 1 60 #
+0 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+5 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 #
+9 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 D _item p PID_BOTTLE_CAPS > 199 R _script dialog@r_RemoveMoney 1 200 #
+0 7020 @
+8 8000 None 0 #
+10 8010 #
+0 8020 @
+9 9000 None 0 #
+7 9010 @
+10 10000 None 0 #
+0 10010 @
+12 11000 None 0 #
+13 11010 #
+20 11020 D _item p PID_BOTTLE_CAPS > 59 R _script dialog@r_RemoveMoney 1 60 #
+0 11030 #
+0 11040 @
+13 12000 None 0 #
+14 12010 #
+0 12020 @
+14 13000 None 0 #
+8 13010 D _item p PID_BOTTLE_CAPS > 149 R _script dialog@r_RemoveMoney 1 150 #
+0 13020 @
+15 14000 None 0 @
+20 15000 None 0 #
+0 15010 &
+
+[engl]
+{100}{}{Fannie Mae}
+{200}{}{You see a rather worn-looking woman.}
+{210}{}{You see Fannie Mae, one of the hostesses at the Malamute Saloon.}
+{210}{}{You see a woman who shows more wear from mileage than from years.}
+{1000}{}{Predialogue installations}
+{1010}{}{Stranger}
+{1020}{}{Known}
+{1030}{}{Idiot}
+{2000}{}{Hey there, sailor. Come here often? You come here to visit with Fannie Mae?}
+{2010}{}{Uh, yeah. I'm here to visit you.}
+{2020}{}{Uh, I was just looking around. Goodbye.}
+{3000}{}{Well, aren't you sweet. Acting so bashful and all. It's going to cost you $60 for a visit with me, sugah.}
+{3010}{}{$60, huh? Sounds like a good price to me. Here's my money.}
+{3020}{}{Thanks for the offer, but maybe another time would be better. Goodbye.}
+{3030}{}{$60? I don't think I want to visit you if it's going to cost that much. Goodbye.}
+{4000}{}{You've been so nice to me. I felt that you really meant something when you did that. (sob) I sure wish it was like that all the time.}
+{4010}{}{Well, when you're with me, it is.}
+{4020}{}{You sure know how to talk the talk.}
+{5000}{}{I don't want to do this anymore. Me an my fella' are going to get away from here and live life straight. Just as soon as I can pay off Lou.}
+{5010}{}{Pay off Lou?}
+{6000}{}{Yeah, well...I owe Lou some money and I can't leave until I pay her off. But as soon as I do (sniff) I'm going to take my beau and get myself as far away from this life as I can. If I could only raise a little extra dough.}
+{6010}{}{How much extra money do you need to pay off Lou?}
+{6020}{}{Can't your boyfriend help you out of debt?}
+{6030}{}{That's a sad story, but you should have the money you need soon enough. As long as you keep your back to the mattress, that is. Goodbye.}
+{7000}{}{All I need now is $200 and I'm in the clear. My man and I are out of here clean and free. No more strange, grubby, people pawing at me all day and night. Uh, I didn't mean no offense.}
+{7010}{}{None taken. I don't really paw, do I? Anyhow, I could pay your way out of here. Here's $200.}
+{7020}{}{Sounds sad, alright. Well, I guess you'd better get busy then. Goodbye.}
+{8000}{}{Oh thank you,thank you. I didn't think that there was anyone this kind outside of my dreams. You're the best. Thanks again. Hey, want a freebie? On the house?}
+{8010}{}{Why sure, Fannie. I think I'll take you up on that offer.}
+{8020}{}{That's not really necessary, Fannie. Just use the money to get yourself out of this life. Goodbye.}
+{9000}{}{He really wants to, but he's just barely getting by as a miner. We keep hoping he'll make a big strike but that hasn't happened yet. And last week a beam fell on him and broke his leg, so he can't work. Now I have to give him what little money I can spare 'til he gets better.}
+{9010}{}{Sounds as though you two have had some bad luck. How much did you say you need?}
+{10000}{}{Thanks again. I can't wait to tell my guy. We'll be out of here as soon as his leg heals up.}
+{10010}{}{It'll be a loss to the PE_PROFESSION to see you go, Fannie. Goodbye.}
+{11000}{}{Hey there. You want to spend some time with Fannie?}
+{11010}{}{Didn't I give you some money so you could stop doing this?}
+{11020}{}{Sure, sounds good to me.}
+{11030}{}{Sorry, haven't got the cash. Bye.}
+{11040}{}{With you? Not on your life. I've got to go.}
+{12000}{}{Well, yes...but it turns out that I owe Lou more than I thought.}
+{12010}{}{How much more?}
+{12020}{}{I've heard enough of this. Goodbye.}
+{13000}{}{That's okay, baby. You've already helped enough. (sniff) I only need another $150, though.}
+{13010}{}{Well, I guess if that's all you need. But this is it. I mean it.}
+{13020}{}{I've heard enough. Find another sucker, Fannie.}
+{14000}{}{Ain't you a sight.@@Fannie don't flop for no morons.@@Come back with some money and maybe Fannie can learn you something.@@You're not the sharpest tool in the shed, are ya?@@You're 'bout as smart as bait. Ain't ya?}
+{15000}{}{You've been so nice to me. I felt that you really meant something when you did that. (sob) I sure wish it was like that all the time.}
+{15010}{}{Well, when you're with me, it is.}
+

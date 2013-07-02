@@ -1,0 +1,440 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// buffer_lazy.fos
+//
+
+#ifndef __BUFFER_LAZY__
+#define __BUFFER_LAZY__
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+#include "buffer_h.fos"
+#include "buffer_lazy_h.fos"
+
+// #define BUFFERLAZY_DEBUG
+
+#ifdef BUFFERLAZY_DEBUG
+// #include "buffer_lazy_test.fos" // not ready yet
+#endif
+
+#ifdef __CLIENT
+# define NormalLog               # (text) { Log("BufferLazy: " + text); Message("BufferLazy: " + text); }
+#endif
+#ifdef __SERVER
+# define NormalLog               # (text) { Log("BufferLazy: " + text); }
+#endif
+
+#ifdef BUFFERLAZY_DEBUG
+# define DebugLog                # (text) NormalLog(text);
+#endif
+#ifndef BUFFERLAZY_DEBUG
+# define DebugLog                # (text) {}
+#endif
+
+#ifdef __CLIENT
+# pragma bindfunc "bool IsLocalScript(string&) -> client_parameters.dll Global_IsLocalScript"
+# pragma bindfunc "void RunLocalScript(string&,int,int,int,string@+,int[]@+) -> client_parameters.dll Global_RunLocalScript"
+
+# define RunTargetScript         # (_cr, _name, _p0, _p1, _p2, _p3, _p4)RunServerScriptUnsafe(BUFFERLAZY_MODULE + "@unsafe_" + _name, _p0, _p1, _p2, _p3, _p4)
+#endif
+#ifdef __SERVER
+# pragma bindfunc "bool IsLocalScript(string&) -> Utils.dll Global_IsLocalScript"
+# pragma bindfunc "void Critter::RunLocalScript(string&,int,int,int,string@+,int[]@+) -> Utils.dll Critter_RunLocalScript"
+
+# define RunTargetScript         # (_cr, _name, _p0, _p1, _p2, _p3, _p4)_cr.RunClientScript(BUFFERLAZY_MODULE + "@" + _name, _p0, _p1, _p2, _p3, _p4)
+#endif
+
+// handshake
+#define BL_HANDSHAKE_QUESTION    (0)
+
+#define BL_HANDSHAKE_OK          (1)
+#define BL_HANDSHAKE_UNKNOWN     (253)
+#define BL_HANDSHAKE_INVALID     (254)
+#define BL_HANDSHAKE_DENIED      (255)
+
+#ifdef __MAPPER
+# error This is NOT a mapper module
+#endif
+
+class CBufferLazy
+{
+    uint       id_source;
+    uint       id_target;
+
+    string     funcName;
+
+    int        p0;
+    int        p1;
+    int        p2;
+    string@    p3;
+    array<int> p4;
+
+    // used on source side
+    CBufferLazy(string & funcName, array<int> p4)
+    {
+        this.id_source = CreateBufferLazyId();
+        this.funcName  = funcName;
+
+        this.p4        = p4;
+    }
+
+    // used on target side
+    CBufferLazy(string & funcName, int p0, int p1, int p2, string@ p3)
+    {
+        this.id_source = CreateBufferLazyId();
+        this.funcName  = funcName;
+
+        this.p0        = p0;
+        this.p1        = p1;
+        this.p2        = p2;
+        @this.p3       = p3;
+        this.p4.resize(0);
+    }
+};
+array<CBufferLazy@> LazyBuffers;
+
+// Create internal id, used during sending/receiving data
+uint CreateBufferLazyId()
+{
+    uint result = GetTick();
+    while(valid(GetBufferLazy(result)))
+    {
+        result = GetTick() + Random(-100000, 100000);
+    }
+
+    return(result);
+}
+
+// Retrieve BufferLazy with given id
+CBufferLazy@ GetBufferLazy(uint id)
+{
+    for(uint lazy = 0, lazyLen = LazyBuffers.length(); lazy < lazyLen; lazy++)
+    {
+        if(LazyBuffers[lazy].id_source == id)
+            return(@LazyBuffers[lazy]);
+    }
+
+    return(null);
+}
+
+// Remove BufferLazy with given id
+bool RemoveBufferLazy(uint id)
+{
+    for(uint lazy = 0, lazyLen = LazyBuffers.length(); lazy < lazyLen; lazy++)
+    {
+        if(LazyBuffers[lazy].id_source == id)
+        {
+            LazyBuffers.removeAt(lazy);
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+// ----------------------------------------------------------------------------//
+
+#ifdef __CLIENT
+void RunLazyScript(string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4)
+{
+    RunLazyScriptGeneric(funcName, p0, p1, p2, p3, p4, false);
+}
+
+void RunLazyScriptUnsafe(string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4)
+{
+    RunLazyScriptGeneric(funcName, p0, p1, p2, p3, p4, true);
+}
+
+void RunLazyScriptGeneric(string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4, bool unsafe)
+#endif
+#ifdef __SERVER
+void RunLazyScript(Critter& player, string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4)
+#endif
+{
+    if(!valid(p4) || p4.length() == 0)
+    {
+        // we don't need special sending here
+
+        DebugLog("sending using core functions");
+
+        #ifdef __CLIENT
+        if(!unsafe)
+            RunServerScript(funcName, p0, p1, p2, p3, p4);
+        else
+            RunServerScriptUnsafe(funcName, p0, p1, p2, p3, p4);
+        #endif
+        #ifdef __SERVER
+        player.RunClientScript(funcName, p0, p1, p2, p3, p4);
+        #endif
+
+        return;
+    }
+
+    array<int32> data;
+    Buffer@      buff = NewBuffer();
+
+    // create source-side function buffer
+    // p0-p3 not needed, as these are sent during handshake
+    LazyBuffers.insertLast(CBufferLazy(funcName, p4));
+
+    buff << uint8(BL_HANDSHAKE_QUESTION);
+    buff << LazyBuffers.last().id_source;
+    ;
+    buff << funcName;
+    #ifdef __CLIENT
+    buff << unsafe;
+    #endif
+    buff >> >= data;
+
+    RunTargetScript(player, "handshake", p0, p1, p2, p3, data);
+}
+
+// pseudo-protocol //
+
+#ifdef __CLIENT
+void handshake_result(uint8 result, int id_source, int id_target = -1)
+#endif
+#ifdef __SERVER
+void handshake_result(Critter& player, uint8 result, int id_source, int id_target = -1)
+#endif
+{
+    array<int32> data;
+    Buffer@      buff = NewBuffer();
+
+    buff << result;
+    buff << id_source;
+    if(id_target >= 0)
+        buff << id_target;
+    buff >> >= data;
+    RunTargetScript(player, "handshake", int(0), int(0), int(0), @ " ", data);
+
+    #ifdef __SERVER
+    if(result == BL_HANDSHAKE_DENIED)
+    {
+        player.Say(SAY_NETMSG, "Access denied. Disconnect.");
+        player.Disconnect();
+    }
+    #endif
+}
+
+#ifdef __CLIENT
+void handshake(int p0, int p1, int p2, string@ p3, array<int>@ p4)
+#endif
+#ifdef __SERVER
+void unsafe_handshake(Critter& player, int p0, int p1, int p2, string@ p3, array<int>@ p4)
+#endif
+{
+    if(!valid(p4) || p4.length() == 0)
+    {
+        NormalLog("empty data, ignoring");
+        return;
+    }
+
+    Buffer@ buff = NewBuffer(p4);
+    uint8   handshake = 0;
+    uint32  id_source = 0;
+
+    buff >> handshake;
+    buff >> id_source;
+
+    if(handshake == BL_HANDSHAKE_QUESTION)
+    {
+        string funcName = "";
+        buff >> funcName;
+
+        array<string@>@ nameSplit = split(funcName, "@");
+        if(!valid(nameSplit) || nameSplit.length() != 2)
+        {
+            NormalLog(
+                #ifdef __SERVER
+                player.Name + "<" + player.Id + "> " +
+                #endif
+                "trying to use invalid function name<" + funcName + ">");
+
+            handshake_result(
+                #ifdef __SERVER
+                player,
+                #endif
+                BL_HANDSHAKE_INVALID, id_source);
+
+            return;
+        }
+
+        #ifdef __SERVER
+        // simulate engine behaviour
+
+        bool unsafe = true;
+        buff >> unsafe;
+
+        // unsafe functions must be prefixed with "unsafe_"
+        if(unsafe && (nameSplit[1].length() <= 7 || substring(nameSplit[1], 0, 7) != "unsafe_"))
+        {
+            NormalLog(player.Name + "<" + player.Id + "> trying to use unsafe function<" + funcName + "> without required prefix");
+            handshake_result(player, BL_HANDSHAKE_DENIED, id_source);
+
+            return;
+        }
+
+        // safe functions require minimum access level specified
+        // we will spam log if it's set too low, but proceed with execution
+        if(BUFFERLAZY_SAFE_ACCESS <= ACCESS_CLIENT)
+            NormalLog("WARNING ! BUFFERLAZY_SAFE_ACCESS <= ACCESS_CLIENT");
+
+        if(!unsafe && player.GetAccess() < BUFFERLAZY_SAFE_ACCESS)
+        {
+            NormalLog(player.Name + "<" + player.Id + "> trying to use safe function<" + funcName + "> without required access");
+            handshake_result(player, BL_HANDSHAKE_DENIED, id_source);
+
+            return;
+        }
+        #endif // __SERVER
+
+        ~buff;
+
+        if(!IsLocalScript(funcName))
+        {
+            NormalLog(
+                #ifdef __SERVER
+                player.Name + "<" + player.Id + "> " +
+                #endif
+                "trying to use unknown function<" + funcName + ">");
+
+            handshake_result(
+                #ifdef __SERVER
+                player,
+                #endif
+                BL_HANDSHAKE_UNKNOWN, id_source);
+            return;
+        }
+
+        // create target-side function buffer
+        LazyBuffers.insertLast(CBufferLazy(funcName, p0, p1, p2, p3));
+        uint32 id_target = LazyBuffers.last().id_source;
+
+        DebugLog("Function<" + funcName + "> accepted, finishing handshake");
+
+        // send result back to source
+        handshake_result(
+            #ifdef __SERVER
+            player,
+            #endif
+            BL_HANDSHAKE_OK, id_source, id_target);
+
+        return;
+    }
+    else
+    {
+        switch(handshake)
+        {
+        case BL_HANDSHAKE_OK:
+        {
+            // target allows to send data, start the Run*Script chain
+            uint32 id_target = 0;
+            buff >> id_target;
+
+            #ifdef __CLIENT
+            request(
+            #endif
+            #ifdef __SERVER
+            unsafe_request(player,
+            #endif
+            id_source, id_target, int(0), @ " ", null);
+
+        };
+            break;
+
+        case BL_HANDSHAKE_UNKNOWN:
+        case BL_HANDSHAKE_INVALID:
+        case BL_HANDSHAKE_DENIED:
+            RemoveBufferLazy(id_source);
+            break;
+
+        default:
+            NormalLog("unknown handshake result <" + handshake + ">, ignoring");
+            return;
+        }
+    }
+}
+
+#ifdef __CLIENT
+void request(int id_source, int id_target, int position, string@, array<int>@)
+#endif
+#ifdef __SERVER
+void unsafe_request(Critter& player, int id_source, int id_target, int position, string@, array<int>@)
+#endif
+{
+    array<int>   data;
+    bool         dataEnd = false;
+
+    CBufferLazy@ bufflazy = GetBufferLazy(id_source);
+    if(!valid(bufflazy))
+    {
+        DebugLog("Requesting unknown BufferLazy<" + id_source + ">");
+        return;
+    }
+
+    uint size = 16 + bufflazy.funcName.length();
+    int  positionMax = bufflazy.p4.length();
+    while(size + 4 < __FloodSize - 32)
+    {
+        data.insertLast(bufflazy.p4[position++]);
+        if(position == positionMax)
+        {
+            dataEnd = true;
+            break;
+        }
+        size += 4;
+    }
+    DebugLog("size " + size + " position " + position + " positionMax " + positionMax);
+
+    RunTargetScript(player, "receive", id_source, id_target, position,
+                    (dataEnd == true ? "-" : "+"), data);
+}
+
+#ifdef __CLIENT
+void receive(int id_source, int id_target, int position, string@ dataEnd, array<int>@ data)
+#endif
+#ifdef __SERVER
+void unsafe_receive(Critter& player, int id_source, int id_target, int position, string@ dataEnd, array<int>@ data)
+#endif
+{
+    CBufferLazy@ lazy = GetBufferLazy(id_target);
+    if(!valid(lazy))
+    {
+        DebugLog("Received unknown BufferLazy<" + id_target + ">");
+        return;
+    }
+
+    for(uint d = 0, dLen = data.length(); d < dLen; d++)
+    {
+        lazy.p4.insertLast(data[d]);
+    }
+
+    if(dataEnd == "-")
+    {
+        DebugLog("RunLocalScript(" + lazy.funcName + "," + lazy.p0 + "," + lazy.p1 + "," + lazy.p2 + "," + lazy.p3 + ",len:" + lazy.p4.length());
+
+        #ifdef __CLIENT
+        RunLocalScript(
+        #endif
+        #ifdef __SERVER
+        player.RunLocalScript(
+        #endif
+        lazy.funcName, lazy.p0, lazy.p1, lazy.p2, lazy.p3, lazy.p4);
+
+        for(uint l = 0, lLen = LazyBuffers.length(); l < lLen; l++)
+        {
+            if(LazyBuffers[l].id_target == lazy.id_target)
+            {
+                LazyBuffers.removeAt(l);
+                break;
+            }
+        }
+    }
+    else
+        RunTargetScript(player, "request", id_source, id_target, position, "+", null);
+}
+#endif // __BUFFER_LAZY__ //

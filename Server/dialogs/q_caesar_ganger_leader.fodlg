@@ -1,0 +1,75 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+10 2010 #
+3 2020 D _param p ST_INTELLECT > 3 #
+4 2030 D _param p ST_INTELLECT > 3 #
+2 2040 D _param p ST_INTELLECT > 3 #
+10 2050 D _param p ST_INTELLECT < 4 #
+5 2060 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+10 3010 #
+4 3020 @
+4 4000 None 0 #
+5 4010 #
+6 4020 D _param p SK_BARTER > 79 #
+7 4030 D _param p SK_BARTER < 80 #
+10 4040 @
+5 5000 None 0 #
+12 5010 D _item p PID_BOTTLE_CAPS > 999 D _param p ST_INTELLECT > 3 R _script dialog@r_RemoveMoney 1 1000 R _var p q_la_train_caesar_ambush = 3 #
+10 5020 D _param p ST_INTELLECT > 3 #
+12 5030 D _param p ST_INTELLECT < 4 D _item p PID_BOTTLE_CAPS > 999 R _var p q_la_train_caesar_ambush = 3 R _script dialog@r_RemoveMoney 1 1000 #
+10 5040 D _param p ST_INTELLECT < 4 @
+6 6000 None 0 #
+12 6010 D _item p PID_BOTTLE_CAPS > 499 R _script dialog@r_RemoveMoney 1 500 R _var p q_la_train_caesar_ambush = 3 #
+10 6020 @
+7 7000 None 0 #
+5 7010 #
+10 7020 @
+10 8000 Attack 0 @
+12 9000 None 0 &
+
+[engl]
+{100}{}{Ganger Leader}
+{200}{}{You see the leader of the ganger.}
+{210}{}{He has a slaver tattoo on the face, but doesn't seem to be a slaver.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Hey, shithead. Hammilton says hello... [He aims his weapon at you.]}
+{2010}{}{[Attack]}
+{2020}{}{Wait! I can explain everything!}
+{2030}{}{Wait! I have money!}
+{2040}{}{Hey now, hold on. Can't we discuss this like nice responsible adults?}
+{2050}{}{Me keel you!}
+{2060}{}{Me pay you lots of bottles! I give you 1000 bottles!}
+{3000}{}{We're not here to listen to explanations. You pissed off the guy who signs our cheques pretty hard, and now you get to deal with the consequences.}
+{3010}{}{Okay, let's dance... [Attack]}
+{3020}{}{Wait! I have money!}
+{4000}{}{We're not interested in your money, shitbird.}
+{4010}{}{I'll give you 1000 caps!}
+{4020}{}{I'll give you 500 caps!}
+{4030}{}{I'll give you 500 caps!}
+{4040}{}{Well that's a shame. I guess now I have to kill you. [Attack]}
+{5000}{}{...that might work. Okay. Hand over the 1000 caps and we let you run.}
+{5010}{}{Here! [You give him the 1000 caps.]}
+{5020}{}{Oh damn, actually I don't have so much money...}
+{5030}{}{[You give him 1000 bottlecaps.]}
+{5040}{}{Oh no, me not has many bottles.}
+{6000}{}{...that might work. Okay. Hand over 500 caps and we'll let you fuck off.}
+{6010}{}{Here! [You give him the 500 caps.]}
+{6020}{}{Oh damn, actually I don't have so much money...}
+{7000}{}{Are you trying to be funny? We're not some little shit-eating junkies.}
+{7010}{}{I'll give you 1000 caps!}
+{7020}{}{Enough with this farce. Let's fight like real men!}
+{8000}{}{Get him, boys!}
+{9000}{}{Very nice. Boys, let's go. That prick isn't worth the work anyway.}
+{100000001}{}{Get him, boys!}
+

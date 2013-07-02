@@ -1,0 +1,79 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script follower@d_IsOwner 1 1 R _script follower@r_SetFaction 0  #
+7 1020 D _script follower@d_IsClaimable 1 1 #
+8 1030 @
+2 2000 None 0 #
+6 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_CanStay 0  R _script follower@r_FollowMode 1 2 #
+5 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_CanLeadMoreFollowers 0  D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+8 2030 R _script npc_common@r_MoveRandom 1 0 #
+3 2040 #
+65506 2050 #
+9 2060 #
+0 2070 @
+3 3000 None 0 #
+2 3010 R _script follower@r_Distance 1 0 #
+2 3020 R _script follower@r_Distance 1 1 #
+2 3030 R _script follower@r_Distance 1 2 @
+4 4000 None 0 #
+2 4010 R _script follower@r_AttackPolicy 1 0 #
+2 4020 R _script follower@r_AttackPolicy 1 2 #
+2 4030 R _script follower@r_AttackPolicy 1 3 #
+2 4040 R _script follower@r_AttackPolicy 1 4 #
+2 4050 R _script follower@r_AttackPolicy 1 5 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+2 7010 R _script follower@r_ClaimFollower 1 0 #
+0 7020 @
+8 8000 None 0 @
+9 9000 follower@dlg_GiveFollower 0 #
+2 9010 &
+
+[engl]
+{100}{}{Brahmin}
+{200}{}{You see a Brahmin. It's a domesticated animal.}
+{210}{}{There is nothing natural about these cows. The second head can only be the result of some strange mutation.}
+{1000}{}{Predialogue installations}
+{1010}{}{Is Owner}
+{1020}{}{Claimable}
+{1030}{}{Floaters}
+{2000}{}{Moo-moo!}
+{2010}{}{Stay here and wait for me!}
+{2020}{}{Ok, let's get going. Come here, cow.}
+{2030}{}{I need you to move, you're blocking my way.}
+{2040}{}{Good cow, let's change our distance a bit!}
+{2050}{}{You need to carry something for me, cow...}
+{2060}{}{I'm gonna leave you with someone else for a while...}
+{2070}{}{Nevermind.}
+{3000}{}{Moo!@@Moo.@@Moo-ooo@@Mmmmmmmmoooooooooooo!}
+{3010}{}{Stay close to me.}
+{3020}{}{Stick at medium range.}
+{3030}{}{Keep your distance and watch my back.}
+{4000}{}{Moo-ooooooo?@@Moo.@@Moo-moo?@@Moo-moo!}
+{4010}{}{Don't attack anyone until somebody attacks you.}
+{4020}{}{Attack any NPC you see.}
+{4030}{}{Attack everyone, but don't touch me or my friends.}
+{4040}{}{Attack only enemies of our faction!}
+{4050}{}{Attack anyone who isn't a member of our faction, okay cow?}
+{5000}{}{Moo!@@Moo-moo!@@Mmmoooooooo!}
+{5010}{}{Alright.}
+{6000}{}{Moo.}
+{6010}{}{Good cow.}
+{7000}{}{Moo-moo!}
+{7010}{}{You are mine now.}
+{7020}{}{Go away you stupid cow.}
+{8000}{}{Moo!@@Moo.@@Moo-ooo@@Mmmmmmmmoooooooooooo!}
+{9000}{}{Moo! [Input name of new owner]}
+{9010}{}{Nevermind}
+{100000001}{}{Moo!@@Mooo!@@Mo-Mo-Mooo!}
+

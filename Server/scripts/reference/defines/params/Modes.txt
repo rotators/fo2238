@@ -1,0 +1,128 @@
+/**
+ * \~russian @defgroup Modes Специальные параметры
+ * \~english @defgroup Modes Modes
+ * \~ @ingroup Params
+ */
+/*@{*/
+
+/** @name Modes */
+//@{
+/** \~russian Состояние скрытности. */
+#define MODE_HIDE                   (510) // Used in engine
+
+/** \~russian Режим, запрещающий воровство у криттера. */
+#define MODE_NO_STEAL               (511) // Used in engine
+
+/** \~russian Режим, при котором невозможна торговля. */
+#define MODE_NO_BARTER              (512) // Used in engine
+
+/** \~russian Режим, при включении которого NPC не запоминает игроков. */
+#define MODE_NO_ENEMY_STACK         (513) // Used in engine
+
+/** \~russian Режим, запрещающий PvP для игрока. */
+#define MODE_NO_PVP                 (514) // Used in engine
+
+/** \~russian Согласен ли игрок закончить пошаговый бой. */
+#define MODE_END_COMBAT             (515) // Used in engine
+
+/** \~russian Режим боя по-умолчанию. */
+#define MODE_DEFAULT_COMBAT         (516) // Used in engine
+
+/** \~russian Режим, при включении которого NPC не будет возвращаться в домашнюю позицию автоматически. */
+#define MODE_NO_HOME                (517) // Used in engine
+
+/** \~russian Режим, который позволяет предотвратить удаление локации, на которой находится NPC. */
+#define MODE_GECK                   (518) // Used in engine
+
+/** \~russian Режим установки предметов по-умолчанию.
+ *
+ * \~
+ * @see Critter::GetFavoriteItem
+ * @see Critter::SetFavoriteItem
+ */
+#define MODE_NO_FAVORITE_ITEM       (519) // Used in engine
+
+/** \~russian Позволяет отключить механизм автоматической продажи негруппируемых предметов.
+ *
+ * Продажа происходит следующим образом: если количество негруппируемых предметов больше,
+ * чем <code>Random(2, 4)</code>, тогда избыток удаляется, а количество денег увеличивается
+ * на стоимость, прописанную в прототипе.
+ *
+ * Продажа совершается в момент обновления сумки (см. #__BagRefreshTime).
+ *
+ */
+#define MODE_NO_ITEM_GARBAGER       (520) // Used in engine
+
+/** \~russian Возможно торговать при активном скрипте на диалоге. */
+#define MODE_DLG_SCRIPT_BARTER      (521) // Used in engine
+
+/** \~russian Бесконечные патроны. */
+#define MODE_UNLIMITED_AMMO         (522) // Used in engine
+
+/** \~russian Невозможность сбрасывать предметы. */
+#define MODE_NO_DROP                (523)
+
+/** \~russian Невозможность терять конечности. */
+#define MODE_NO_LOOSE_LIMBS         (524)
+
+/** \~russian Мёртвое тело не исчезает. */
+#define MODE_DEAD_AGES              (525)
+
+/** \~russian Очки жизней не восстанавливаются с течением времени. */
+#define MODE_NO_HEAL                (526) // Used in engine
+
+/** \~russian Режим неуязвимости. */
+#define MODE_INVULNERABLE           (527) // Used in engine
+
+/** \~russian Не помещать труп на задний план после смерти. */
+#define MODE_NO_FLATTEN             (528) // Used in engine
+
+/** \~russian Есть особый вид смерти. */
+#define MODE_SPECIAL_DEAD           (529)
+
+/** \~russian Возможна рукопашная атака на расстоянии. */
+#define MODE_RANGE_HTH              (530) // Used in engine
+
+/** \~russian Не может быть сбит с ног. */
+#define MODE_NO_KNOCK               (531)
+
+/** \~russian Режим, запрещающий обыск при смерти криттера. */
+#define MODE_NO_LOOT                (532) // Used in engine
+
+#define MODE_TRADER_ITEM_LEVELS		  (533)
+#define MODE_EXT					          (534)
+#define MODE_KILLER_ADMIN			      (535)
+
+/** \~russian Не быть оттолкнут. */
+#define MODE_NO_PUSH                (536) // Used in engine
+
+/** \~russian Не имеет безоружных атак. */
+
+//@}
+/** @name Ext mode flags */
+//@{
+#define MODE_NO_UNARMED             (537) // Used in engine
+#define MODE_NO_AIM                 (538) // Critter can't do aim attacks                           Hardcoded
+#define MODE_NO_WALK                (539) // Critter can't walk                                     Hardcoded
+#define MODE_NO_RUN                 (540) // Critter can't run                                      Hardcoded
+
+
+#define MODE_EXT_NO_SLAVE         (0x00000001)
+#define MODE_EXT_NO_WALL_CHECK    (0x00000002) // applies only when sneaking
+#define MODE_EXT_MOB              (0x00000004)
+#define MODE_EXT_GUARD            (0x00000008)
+#define MODE_EXT_TRADER           (0x00000010)
+#define MODE_EXT_FOLLOWER         (0x00000020)
+#define MODE_EXT_PEN_BRAHMIN      (0x00000040)
+#define MODE_EXT_SLAVE_HOSTILE    (0x00000080)
+#define MODE_EXT_SLAVE_NORMAL     (0x00000100)
+#define MODE_EXT_NO_DETERIORATION (0x00000200)
+#define MODE_EXT_EVENT            (0x00000400) // Part of event
+#define MODE_EXT_NO_ATTACK_AUTH   (0x00000800) // Don't attack authenticated players
+#define MODE_EXT_MILITIA          (0x00001000) // TC Militia
+#define MODE_EXT_TC_LEADER        (0x00002000) // TC Leader
+#define MODE_EXT_SLAVE			  (0x00004000) // to diferentiate slaves within other followers
+#define MODE_EXT_LOOK_ADMIN       (0x00008000)
+#define MODE_EXT_LOOK_INVISIBLE   (0x00010000)
+//@}
+/*@}*/

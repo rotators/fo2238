@@ -1,0 +1,354 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_bases.fos
+//
+
+// this module maintains a list of factions bases locations
+// which we can fetch by the key composed of faction id and base name assigned during creation
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#define __FACTIONS_BASES_MODULE__
+#include "factions_bases_h.fos"
+#include "serializator.fos"
+#include "mapdata_h.fos"
+
+// global list
+array<IFactionBase@> Bases;   // doesn't resize on removal. removed element is nulled out
+// various indices dictionaries
+dictionary           Indices;
+dictionary           ByLocId;
+dictionary           ById;
+// per faction lists
+array<array<uint> >  PerFactionIndices;
+dictionary           ByFaction;
+
+// key for indices dictionary
+#define KEY    # (fid, fname)("" + fid + "_" + fname)
+
+class FactionBase : IFactionBase
+{
+    uint   factionId;
+    uint   locationId;
+    string name;
+
+    // new factionbase object for location that is already base
+    FactionBase(uint location_id)
+    {
+        // read name of the base
+        Serializator serialiser;
+        if(serialiser.Load("FactionBase: " + location_id))
+        {
+            serialiser.Get(this.name);
+            // we could read faction id from anydata as well, but we're using mapdata since long time...
+            this.locationId = location_id;
+            this.factionId = GetLocation(location_id).GetMapByIndex(0).GetData(MAP_DATA_FACTION);
+        }
+        else
+        {
+            Log("Location is not faction base: " + location_id);
+        }
+    }
+    // new factionbase object for location that is to be turned into faction base
+    FactionBase(uint faction_id, const string &name, uint location_id)
+    {
+        Serializator serialiser;
+        serialiser.Set(name);
+        if(!serialiser.Save("FactionBase: " + location_id))
+        {
+            Log("Unable to store faction base info for location: " + location_id);
+            return;
+        }
+
+        this.factionId = faction_id;
+        this.locationId = location_id;
+        this.name = name;
+    }
+    uint          get_FactionId() const  { return this.factionId; }
+    const string& get_Name() const       { return this.name; }
+    uint          get_LocationId() const { return this.locationId; }
+    // unique id
+    uint get_Id() const
+    {
+        return this.locationId;
+    }
+    // shows the base location to player
+    void Show(Critter& cr) const
+    {
+        if(!cr.IsKnownLoc(true, this.locationId))
+            cr.SetKnownLoc(true, this.locationId);
+    }
+    // hides the base location from player
+    void Hide(Critter& cr) const
+    {
+        if(cr.IsKnownLoc(true, this.locationId))
+            cr.UnsetKnownLoc(true, this.locationId);
+    }
+    // checks whether given rank (from owning faction) has access to the base
+    bool IsRankAllowed(int rank) const
+    {
+        GameVar@ var = GetLocalVar(LLVAR_faction_base_rank_allowed, this.locationId);
+        return (rank == RANK_LEADER) || (var.GetValue() & (1 << rank) != 0);
+    }
+    // sets whether given rank can access the base
+    void AllowRank(int rank, bool allow)
+    {
+        GameVar@ var = GetLocalVar(LLVAR_faction_base_rank_allowed, this.locationId);
+        if(allow)
+            var = var.GetValue() | (1 << rank);
+        else
+            var = var.GetValue() & ~(1 << rank);
+    }
+    bool IsStatusAllowed(int status) const
+    {
+        GameVar@ var = GetLocalVar(LLVAR_faction_base_status_allowed, this.locationId);
+        return var.GetValue() & (1 << status) != 0;
+    }
+    void AllowStatus(int status, bool allow)
+    {
+        GameVar@ var = GetLocalVar(LLVAR_faction_base_status_allowed, this.locationId);
+        if(allow)
+            var = var.GetValue() | (1 << status);
+        else
+            var = var.GetValue() & ~(1 << status);
+    }
+
+    void Remove()
+    {
+        EraseAnyData("FactionBase: " + this.locationId);
+        RemoveFactionBase(this);
+    }
+};
+
+/**
+ * Retrieves IFactionBase object for a named base belonging to given faction.
+ */
+IFactionBase@ GetFactionBase(uint faction_id, const string& name)
+{
+    int idx;
+    if(Indices.get(KEY(faction_id, name), idx))
+        return Bases[idx];
+    return null;
+}
+/**
+ * Retrieves IFactionBase object for a base with given id.
+ */
+IFactionBase@ GetFactionBase(uint id)
+{
+    uint idx;
+    if(ById.get("" + id, idx))
+        return Bases[idx];
+    return null;
+}
+/**
+ * Retrieves IFactionBase object for a base with location with given id.
+ */
+IFactionBase@ GetFactionBaseByLocId(uint id)
+{
+    uint idx;
+    if(ByLocId.get("" + id, idx))
+        return Bases[idx];
+    return null;
+}
+/**
+ * Retrieves list of IFactionBase objects representing all bases belonging to given faction.
+ * @return Number of bases retrieved.
+ */
+uint GetFactionBases(uint faction_id, array<IFactionBase@>@ bases)
+{
+    uint pfidx;
+    if(ByFaction.get("" + faction_id, pfidx))
+    {
+        // Log("Found ByFaction index");
+        uint num = 0;
+        for(uint i = 0, iend = PerFactionIndices[pfidx].length(); i < iend; i++)
+        {
+            uint idx = PerFactionIndices[pfidx][i];
+            if(valid(Bases[idx]))
+                bases.insertLast(Bases[idx]);
+        }
+        return bases.length();
+    }
+    // Log("Nothing found");
+    return 0;
+}
+/**
+ * Adds IFactionBase object to the internal list of bases.
+ */
+bool AddFactionBase(IFactionBase& base)
+{
+    if(Indices.exists(KEY(base.FactionId, base.Name)))
+        return false;
+    Bases.insertLast(base);
+    uint idx = Bases.length() - 1;
+    Indices.set(KEY(base.FactionId, base.Name), idx);
+    ByLocId.set("" + base.LocationId, idx);
+    ById.set("" + base.Id, idx);   // actually, it's locid as of now
+    uint pfidx = 0;
+    if(ByFaction.get("" + base.FactionId, pfidx))
+    {
+        PerFactionIndices[pfidx].insertLast(idx);
+    }
+    else
+    {
+        pfidx = PerFactionIndices.length();
+        ByFaction.set("" + base.FactionId, pfidx);
+        PerFactionIndices.insertLast(array<uint>());
+        PerFactionIndices[pfidx].insertLast(idx);
+    }
+    return true;
+}
+/**
+ * Adds IFactionBase object created basing on the id of the existing location.
+ */
+void AddFactionBase(uint location_id)
+{
+    FactionBase@ base = FactionBase(location_id);
+    AddFactionBase(base);
+}
+/**
+ * Creates new faction base object for existing location.
+ * @return Interface to newly created object.
+ */
+IFactionBase@ CreateFactionBase(uint faction_id, const string& name, uint location_id)
+{
+    return FactionBase(faction_id, name, location_id);
+}
+/**
+ * Removes IFactionBase object representing a faction base with given name.
+ */
+void RemoveFactionBase(uint faction_id, const string& name)
+{
+    int idx;
+    if(Indices.get(KEY(faction_id, name), idx))
+    {
+        ByLocId.delete("" + Bases[idx].LocationId);
+        ById.delete("" + Bases[idx].Id);
+        @Bases[idx] = null;
+        Indices.delete(KEY(faction_id, name));
+    }
+    else
+        Log("Unable to get FactionBase object to remove: " + KEY(faction_id, name));
+}
+void RemoveFactionBase(IFactionBase& base)
+{
+    RemoveFactionBase(base.FactionId, base.Name);
+}
+void createbase(Critter& player, int s, int, int)
+{
+    string        name = "base" + s;
+    IFactionBase@ base = CreateFactionBase(player.Stat[ST_TEAM_ID], name, player.GetMap().GetLocation().Id);
+    AddFactionBase(base);
+}
+
+void listfactionbases(Critter& cr, int, int, int)
+{
+    array<IFactionBase@> bases;
+    uint                 num = GetFactionBases(cr.Stat[ST_TEAM_ID], bases);
+    cr.Say(SAY_NETMSG, "" + num + " bases found.");
+    for(uint i = 0; i < num; i++)
+        cr.Say(SAY_NETMSG, "" + bases[i].Name + ": " + bases[i].Id + ", " + bases[i].LocationId);
+}
+void list(Critter& cr, int, int, int)
+{
+    for(uint i = 0, j = Bases.length(); i < j; i++)
+        cr.Say(SAY_NETMSG, Bases[i].Name + ": " + Bases[i].Id + ", " + Bases[i].LocationId);
+}
+void test_bases()
+{
+    Log("Test bases:");
+    AddFactionBase(FactionBase(1, "Dacha", 1));
+    AddFactionBase(FactionBase(1, "House", 3));
+    AddFactionBase(FactionBase(2, "Base", 4));
+    AddFactionBase(FactionBase(1, "HQ", 5));
+    IFactionBase@ base;
+
+    @base = GetFactionBase(1, "House");
+    Log(base.LocationId == 3 ? "ok" : "nok");
+    @base = GetFactionBase(base.Id);
+    Log(base.LocationId == 3 ? "ok" : "nok");
+    @base = GetFactionBaseByLocId(base.LocationId);
+    Log(base.Name == "House" ? "ok" : "nok");
+    @base = GetFactionBase(2, "Base");
+    Log(base.LocationId == 4 ? "ok" : "nok");
+    @base = GetFactionBase(base.Id);
+    Log(base.LocationId == 4 ? "ok" : "nok");
+    @base = GetFactionBaseByLocId(base.LocationId);
+    Log(base.Name == "Base" ? "ok" : "nok");
+
+    array<IFactionBase@> bases;
+    for(uint i = 0, j = GetFactionBases(1, bases); i < j; i++)
+    {
+        IFactionBase@ base = bases[i];
+        Log("" + base.FactionId + ": " + base.Name + "@" + base.LocationId);
+    }
+    Log(bases.length() == 3 ? "ok" : "nok");
+    bases.resize(0);
+    for(uint i = 0, j = GetFactionBases(2, bases); i < j; i++)
+    {
+        IFactionBase@ base = bases[i];
+        Log("" + base.FactionId + ": " + base.Name + "@" + base.LocationId);
+    }
+    Log(bases.length() == 1 ? "ok" : "nok");
+
+    RemoveFactionBase(1, "House");
+    @base = GetFactionBase(1, "House");
+    Log(valid(base) ? "nok" : "ok");
+    @base = GetFactionBase(3);
+    Log(valid(base) ? "nok" : "ok");
+    @base = GetFactionBaseByLocId(3);
+    Log(valid(base) ? "nok" : "ok");
+
+    @base = GetFactionBase(2, "Base");
+    Log(base.LocationId == 4 ? "ok" : "nok");
+    @base = GetFactionBase(base.Id);
+    Log(base.LocationId == 4 ? "ok" : "nok");
+    @base = GetFactionBaseByLocId(base.LocationId);
+    Log(base.Name == "Base" ? "ok" : "nok");
+
+    bases.resize(0);
+    for(uint i = 0, j = GetFactionBases(1, bases); i < j; i++)
+    {
+        IFactionBase@ base = bases[i];
+        Log("" + base.FactionId + ": " + base.Name + "@" + base.LocationId);
+    }
+    Log(bases.length() == 2 ? "ok" : "nok");
+    bases.resize(0);
+    for(uint i = 0, j = GetFactionBases(2, bases); i < j; i++)
+    {
+        IFactionBase@ base = bases[i];
+        Log("" + base.FactionId + ": " + base.Name + "@" + base.LocationId);
+    }
+    Log(bases.length() == 1 ? "ok" : "nok");
+    RemoveFactionBase(2, "Base");
+    bases.resize(0);
+    for(uint i = 0, j = GetFactionBases(2, bases); i < j; i++)
+    {
+        IFactionBase@ base = bases[i];
+        Log("" + base.FactionId + ": " + base.Name + "@" + base.LocationId);
+    }
+    Log(bases.length() == 0 ? "ok" : "nok");
+}
+
+void test_bases_visibility()
+{
+    Log("Test bases visibility:");
+    AddFactionBase(FactionBase(201, "Dacha", 1));
+    AddFactionBase(FactionBase(201, "House", 3));
+    AddFactionBase(FactionBase(202, "Base", 4));
+    AddFactionBase(FactionBase(201, "HQ", 5));
+    IFactionBase@ base;
+
+    @base = GetFactionBase(3);
+    Log(base.IsRankAllowed(RANK_ACCEPTED) ? "nok" : "ok");
+    base.AllowRank(RANK_ACCEPTED, true);
+    Log(base.IsRankAllowed(RANK_ACCEPTED) ? "ok" : "nok");
+
+    array<IFactionBase@> bases;
+    uint                 num = GetFactionBases(0, bases);
+    for(uint i = 0; i < num; i++)
+        Log("" + bases[i].FactionId + ", " + bases[i].Name);
+
+}

@@ -1,0 +1,106 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+101 1010 D _script dialog@d_IsMemberOf 1 FACTION_BOS #
+201 1020 D _script dialog@d_IsDisguised 0  #
+2 1030 D _script dialog@d_IsNotMemberOf 1 FACTION_BOS D _script dialog@d_BigFactionMember 0  #
+3 1040 @
+2 2000 None 0 #
+50 2010 D _var p q_la_gunrunners_caravan > 0 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+0 2020 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_caravan < 3 @
+3 3000 None 0 #
+11 3010 D _var p name_mem_npc_player = 1 D _item p PID_5MM_AP } 200 R _item p PID_5MM_AP - 200 R _script dialog@r_AddMember 0  #
+5 3020 D _var p acquaintance = 0 #
+90 3030 #
+50 3040 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+0 3050 @
+5 4000 None 0 #
+6 4010 D _param p SK_DOCTOR } 100 D or D _param p SK_FIRST_AID } 120 #
+7 4020 D _param p SK_SMALL_GUNS } 125 #
+7 4030 D _param p SK_BIG_GUNS } 125 #
+8 4040 D _param p SK_SPEECH } 100 #
+7 4050 D _param p SK_ENERGY_WEAPONS } 125 #
+10 4060 @
+6 5000 None 0 #
+99 5010 R _script dialog@r_AddMember 0  R _var p acquaintance + 1 @
+7 6000 None 0 #
+99 6010 R _script dialog@r_AddMember 0  R _var p acquaintance + 1 @
+8 7000 None 0 #
+99 7010 R _script dialog@r_AddMember 0  R _var p acquaintance + 1 @
+10 8000 None 0 #
+11 8010 D _item p PID_5MM_AP } 200 R _item p PID_5MM_AP - 200 R _script dialog@r_AddMember 0  R _var p acquaintance + 1 #
+0 8020 R _var p name_mem_npc_player = 1 @
+11 9000 None 0 #
+99 9010 R _var p acquaintance + 1 R _script dialog@r_AddMember 0  @
+99 10000 None 0 #
+0 10010 @
+101 11000 None 0 #
+50 11010 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+0 11020 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_caravan < 3 D _item p PID_Q_GUNRUNNER_BOX > 0 @
+90 12000 None 0 #
+0 12010 @
+50 13000 None 0 #
+51 13010 #
+0 13020 @
+51 14000 None 0 #
+0 14010 D _item p PID_Q_GUNRUNNER_BOX > 0 R _item p PID_Q_GUNRUNNER_BOX - 1 R _var p q_la_gunrunners_caravan = 4 R _param p REPUTATION_BOS + 300 R _param p REPUTATION_GUNRUNNERS - 50 R _item p PID_BLUEPRINT_MINIGUN + 1 R _item p PID_BLUEPRINT_SUPER_SLEDGE + 1 R _item p PID_BLUEPRINT_ASSAULT_RIFLE + 1 @
+201 15000 None 0 &
+
+[engl]
+{100}{}{BoS Guard}
+{200}{}{You see a Brotherhood guard.}
+{210}{}{You see a man fully dressed in Brotherhood of Steel gear who appears to be guarding a bunker.}
+{1000}{}{Predialogue installations}
+{1010}{}{BoS member}
+{1020}{}{disguised}
+{1030}{}{Not BoS.}
+{1040}{}{No faction}
+{2000}{}{You have no business here. Leave now.}
+{2010}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{2020}{}{Goodbye.}
+{3000}{}{The Brotherhood of Steel maintains the highest security at its facilities. State your business immediately or leave.}
+{3010}{}{I've brought back the 5mm ammuntion you requested.}
+{3020}{}{I'd like to apply for membership in the Brotherhood of Steel.}
+{3030}{}{Could you tell me more about the Brotherhood of Steel?}
+{3040}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{3050}{}{I'll be going now.}
+{4000}{}{Well, despite what you may think, we do not accept everyone willing to come to us. We have stringent requirements for membership. Applicants must prove that they are able to contribute to our cause in some way.}
+{4010}{}{I have had extensive training in the medical sciences. I can create a split for nearly any broken bone, am trained in the effects and use of nearly all chems and meds, and, if one is available, am able to properly use an Auto-Doc.}
+{4020}{}{Trained from an early age, I consider myself one of the top marksmen in all of the NCR. Pistols, rifles, shotguns, smgs, you name it, I can hit a target with it. }
+{4030}{}{There isn't a gun I can't carry. Or use properly. I'm partial to miniguns and flamethrowers, but I'll take whatever you have. The bigger, the better. Just don't send me out there with a damn pea shooter and I'll get things done.}
+{4040}{}{While I may not be the best at handling a weapon, I know how to handle people. Not to sound cocky, but I could sell a ketchup popsicle to a woman in white gloves. I've heard of what you do here, and while I'm not criticizing the operation, I feel that a little more diplomacy would help the Brotherhood out immensely. }
+{4050}{}{Ever since I got my first plasma pistol, I've been fascinated with energy weapons. Their complexity makes them far more interesting than traditional weapons, and their destructive capabilities are astounding. You won't find anyone who knows plasma and laser weapons better than I do.}
+{4060}{}{Any suggestions as to how I can do that?}
+{5000}{}{I am quite impressed. Individuals with medical expertise of your caliber are few and far between. Consider yourself a Recruit. Holding the lowest rank in the Brotherhood, you have no say in any operations we conduct, and are here simply to follow orders. Is this clear?}
+{5010}{}{Absolutely, sir.}
+{6000}{}{Despite already having enough men on the front lines, you seem to know what you're talking about. And if you're lying to me, you won't make it a day out in the field. Consider yourself a Recruit. Holding the lowest rank in the Brotherhood, you have no say in any operations we conduct, and are here simply to follow orders. Is this clear?
+}
+{6010}{}{Absolutely, sir.}
+{7000}{}{You can stop there. I believe you. The Brotherhood needs more individuals who can handle aspects of our business peacefully. It makes some interactions just flow a little more smoothly. Consider yourself a Recruit. Holding the lowest rank in the Brotherhood, you have no say in any operations we conduct, and are here simply to follow orders. Is this clear?
+}
+{7010}{}{Absolutely, sir.}
+{8000}{}{Due to our extensive operations, we are always in need of ammunition. Specifically, we need 5mm armor piercing rounds. Bring back 200 of them, and we'll consider your admission. }
+{8010}{}{I have them right here.}
+{8020}{}{Expect me back soon.}
+{9000}{}{Well done. Consider yourself a Recruit. Holding the lowest rank in the Brotherhood, you have no say in any operations we conduct, and are here simply to follow orders. Is this clear?}
+{9010}{}{Absolutely, sir.}
+{10000}{}{Excellent. This facility, like others in major towns, is comprised of only a few members and very basic equipment. Think of this place as a location to reach new members while at the same time keep an eye on the wasteland. Enter through those doors and speak with our Recruit trainer inside.}
+{10010}{}{Thank you, sir.}
+{11000}{}{Welcome back, brother.}
+{11010}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{11020}{}{Goodbye.}
+{12000}{}{The Brotherhood of Steel collects and maintains pre-war technology. That is all I am able to tell you at this time.}
+{12010}{}{[Exit]Thank you.}
+{13000}{}{You have... what? From where did you got these? Hand them over and I'll guarantee you fair paiment.}
+{13010}{}{Here it is. [You give him the metal box.]}
+{13020}{}{No! I changed my mind. Goodbye.}
+{14000}{}{As far as I know, the Gun Runners are rigging their packages with explosives... Our scribes should be able to take care of that. About your reward... This should be enough to compensate your costs. [He gives you a batch of weapon blueprints in exchange for the Gun Runners box.]}
+{14010}{}{Thanks and goodbye.}
+{15000}{}{Welcome back, brother.}
+

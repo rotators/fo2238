@@ -1,0 +1,1273 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gmtools.fos
+//
+
+// Game Master tools
+// Compile with -client switch
+
+/* TODO:
+        lockscreen
+        full GMT_DATAFLAG support
+        level up tab detecting
+ */
+
+#ifndef __CLIENT_GMTOOLS__
+#define __CLIENT_GMTOOLS__
+
+#define __CLIENT
+#include "gmtools_h.fos"
+#include "client_utils_h.fos"
+
+#ifndef GMTOOLS_CONFIG_ENABLED
+void GMToolsProcess()                                { return; };
+void GMToolsDraw(uint layer, int mouseX, int mouseY) { return; };
+bool GMToolsAccess()                                 { return(false); };
+int  GMToolsCommand(string& message)                 { return(2); };
+bool GMToolsMenu()                                   { return(false); };
+void GMToolsLoadConfig()                             {};
+int  GMToolsPossess()                                { return(0); };
+void GMToolsUnPossess()                              {};
+#endif /* GMTOOLS_CONFIG_ENABLED */
+
+#ifdef GMTOOLS_CONFIG_ENABLED
+
+# include "_defines.fos"
+# include "_client_defines.fos"
+# include "_macros.fos"
+# include "_colors.fos"
+# include "_animation.fos"
+
+# include "MsgStr.h"
+
+# include "config_file_h.fos"
+
+# include "gmtools_csc.fos"
+# include "client_gmtools_macro.fos"
+# include "client_gmtools_chat.fos"
+
+# define TOGGLEFLAG    # (where, what)((where) ^= (what))
+# define SAYBOOL       # (info, what)Message("GMT: " + info + ": " + (what ? "on" : "off"))
+# define SAYFLAG       # (info, where, what)Message("GMT: " + info + ": " + (FLAG(GMTconfig.where, what) ? "on" : "off"))
+
+import bool IsGMTEnabled() from "client_main";
+
+import int  GUI_GetActiveScreen() from "client_gui";
+import bool GUI_IsKeyPressed(uint8 key) from "client_gui";
+
+import bool GMToolsLoadMenu() from "client_gmtools_menu";
+import bool GMToolsLoadMenu(string filename) from "client_gmtools_menu";
+
+import string@ GetTimeString(const string& format, uint fullMinute) from "time";
+
+class CGMTConfig
+{
+    bool   Enabled;
+    uint   Access;                      /**< access level (send by server) */
+    uint   AccessCheck;                 /**< time of next access level check */
+    uint   OSD;                         /**< on-screen display settings */
+    bool   Draw;                        /**< draw critters/items */
+    bool   Menu;                        /**< use GMT menu */
+    string Motto;                       /**< text displayed for authenticated chars */
+    uint   ChatX;
+    uint   ChatY;
+    uint   ChatDelay;
+    uint   ChatBorder;
+    string ButtonsFile;                 /**< config file for menu */
+
+    uint   CritterInfo;
+    uint   ItemInfo;
+    uint   MapInfo;
+    uint   LocationInfo;
+
+    int    LastMapPid;                          /**< last visited @e Map PID */
+    int    LastLocationPid;                     /**< last visited @e Location PID */
+
+    uint   Possess;                             /**< possessed critter ID */
+
+    // internal
+    bool CSCdebug;                              /**< turn on CSC debug messages */
+
+
+    /** Constuctor */
+    CGMTConfig()
+    {
+        this.Enabled            = false;
+        this.Access                     = ACCESS_CLIENT;
+        this.OSD                        = 0;
+        SETFLAG(this.OSD, GMT_OSD_INFO | GMT_OSD_INFOEX);
+        this.Draw                       = true;
+        this.Menu                       = true;
+        this.Motto                      = "There is nothing as demotivating as the players.";
+        this.ChatDelay          = 30;
+        this.ChatBorder         = 5;
+
+        this.CritterInfo        = 0;
+        this.ItemInfo           = 0;
+        this.MapInfo            = 0;
+        this.LocationInfo       = 0;
+
+        this.CSCdebug           = false;
+        # ifdef __DEBUG__
+        this.CSCdebug           = true;
+        # endif
+
+        this.LastMapPid         = -1;
+        this.LastLocationPid = -1;
+        this.AccessCheck        = 0;
+        this.Possess            = 0;
+    }
+};
+CGMTConfig GMTconfig;
+
+void GMToolsLoadConfig()
+{
+    IConfigSection@ section = GetConfigSection(CONFIG_FILE, "GMT");
+
+    if(valid(section))
+    {
+        GMTDebugMessage("GMT:");
+        array<string> vars;
+        section.GetVars(vars);
+
+        if(vars.length() == 0)
+            return;
+
+        for(uint v = 0; v < vars.length(); v++)
+        {
+            IConfigVar@ var = section.GetVar(vars[v]);
+            if(!valid(var))
+                continue;
+
+            if(var.GetName() == "ButtonsFile")
+                GMTconfig.ButtonsFile == var.GetValue();
+            else if(var.GetName() == "Enabled")
+                GMTconfig.Enabled = string2bool(var.GetValue());
+            else if(var.GetName() == "Draw")
+                GMTconfig.Draw = string2bool(var.GetValue());
+            else if(var.GetName() == "OSD")
+                GMTconfig.OSD = string2uint(var.GetValue());
+            else if(var.GetName() == "Menu")
+                GMTconfig.Menu = string2bool(var.GetValue());
+            else if(var.GetName() == "Motto")
+                GMTconfig.Motto = var.GetValue();
+            else if(var.GetName() == "ChatDelay")
+                GMTconfig.ChatDelay = string2uint(var.GetValue());
+            else if(var.GetName() == "ChatBorder")
+                GMTconfig.ChatBorder = string2uint(var.GetValue());
+            else if(var.GetName() == "CritterInfo")
+            {
+                array<string@>@ flags = split(var.GetValue(), ",");
+                for(uint f = 0; f < flags.length(); f++)
+                {
+                    if(flags[f] == "Extra")
+                        SETFLAG(GMTconfig.CritterInfo, GMT_DATAFLAG_CRITTER_EX);
+                }
+            }
+            else if(var.GetName() == "ItemInfo")
+            {
+                array<string@>@ flags = split(var.GetValue(), ",");
+                for(uint f = 0; f < flags.length(); f++)
+                {
+                    if(flags[f] == "Extra")
+                        SETFLAG(GMTconfig.ItemInfo, GMT_DATAFLAG_ITEM_EX);
+                }
+            }
+            else if(var.GetName() == "LocationInfo")
+            {
+                array<string@>@ flags = split(var.GetValue(), ",");
+                for(uint f = 0; f < flags.length(); f++)
+                {
+                    if(flags[f] == "Extra")
+                        SETFLAG(GMTconfig.ItemInfo, GMT_DATAFLAG_LOCATION_EX);
+                    else if(flags[f] == "Position")
+                        SETFLAG(GMTconfig.LocationInfo, GMT_DATAFLAG_LOCATION_POSITION);
+                    else if(flags[f] == "Type")
+                        SETFLAG(GMTconfig.LocationInfo, GMT_DATAFLAG_LOCATION_TYPE);
+                }
+            }
+            else if(var.GetName() == "MapInfo")
+            {
+                array<string@>@ flags = split(var.GetValue(), ",");
+                for(uint f = 0; f < flags.length(); f++)
+                {
+                    if(flags[f] == "Extra")
+                        SETFLAG(GMTconfig.MapInfo, GMT_DATAFLAG_MAP_EX);
+                    else if(flags[f] == "Faction")
+                        SETFLAG(GMTconfig.MapInfo, GMT_DATAFLAG_MAP_FACTION);
+                    else if(flags[f] == "Size")
+                        SETFLAG(GMTconfig.MapInfo, GMT_DATAFLAG_MAP_SIZE);
+                }
+            }
+            GMTDebugMessage("GMT <" + var.GetName() + "> <" + var.GetValue() + ">");
+        }
+    }
+    else
+    {
+        GMTDebugMessage("internal error 480053");
+    }
+
+}
+
+/**
+ * Process all sub-packages.
+ *
+ * @note called by: @a @e loop()
+ *
+ * @sa GMToolsProcessChat, GMToolsProcessMacros
+ * @sa GMToolsDraw
+ */
+void GMToolsProcess()
+{
+    check_timers();
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+
+    if(GMTconfig.AccessCheck > 0 && GetTick() >= GMTconfig.AccessCheck)
+    {
+        GMTDebugMessage("AccessCheck! Show your panties!");
+        int q = get_answer(GMT_GETACCESS);
+        if((q < 0) || ((q >= 0) && GMTquestion[q].old))
+        {
+            question(0, GMT_GETACCESS);
+            GMTconfig.AccessCheck = GetTick() + GMT_CHECKACCESS;
+        }
+    }
+
+    GMToolsProcessChat();
+    GMToolsProcessMacros();
+};
+
+bool GMToolsProcessKey(uint8 key)
+{
+    switch(key)
+    {
+    case DIK_ESCAPE:
+        if(IsGMTEnabled() && GMToolsPossess() > 0)
+        {
+            GMToolsUnPossess();
+            return(true);
+        }
+        break;
+    case DIK_COMMA:
+        if(IsGMTEnabled() && GMToolsPossess() > 0 && GUI_IsKeyPressed(DIK_LSHIFT))
+        {
+            GMToolsPossessRotate(false);
+            return(true);
+        }
+        break;
+    case DIK_PERIOD:
+        if(IsGMTEnabled() && GMToolsPossess() > 0 && GUI_IsKeyPressed(DIK_LSHIFT))
+        {
+            GMToolsPossessRotate(true);
+            return(true);
+        }
+        break;
+    }
+    return(false);
+}
+
+/**
+ * Call all sub-packages Draw* functions
+ *
+ * @param layer
+ * @param mouseX
+ * @param mouseY
+ *
+ * @note called by @a @e render_iface()
+ *
+ * @sa GMToolsDrawChat, GMToolsDrawMacros
+ * @sa GMToolsProcess
+ */
+void GMToolsDraw(uint layer, int mouseX, int mouseY)
+{
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+
+    GMToolsDrawChat();
+
+    if(GMTconfig.Access == ACCESS_CLIENT)
+        return;
+
+    if(GMToolsPossess() > 0)
+    {
+        CritterCl@ mob = GetCritter(GMToolsPossess());
+        if(!valid(mob))
+            GMToolsUnPossess();
+        else
+            DrawText("Possess mode on: " + mob.Name + " (" + mob.Id + ")", 0, 10, __ScreenWidth, 60, COLOR_LGREEN, FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+    }
+
+    // !!
+    int    x = GMT_OSD_X;
+    int    y = GMT_OSD_Y;
+
+    int    map_q = -1;
+
+    string text = "";
+
+    bool   Worldmap = (GetCurrentMapPid() == 0);
+
+    // fix position
+    if(Worldmap)
+    {
+        x = GMT_OSD_WM_X;
+        y = GMT_OSD_WM_Y;
+    }
+    else if(     // TODO: check for level up tab
+        chosen.Mode[MODE_HIDE] != 0 ||
+        chosen.IsOverweight() ||
+        chosen.IsInjured() ||
+        chosen.Damage[DAMAGE_POISONED] != 0 ||
+        chosen.Damage[DAMAGE_RADIATED] != 0 ||
+        chosen.Timeout[TO_TRANSFER] > 0 ||
+        chosen.IsAddicted() ||
+        IsTurnBased())
+    {
+        y = GMT_OSD_Y_TAB;
+    }
+    ;
+
+    # ifdef __DEBUG__
+    y = draw("<GM Tools>", x, y, 10, GMT_COLOR_DEBUG);
+    # endif
+
+    // hell yeah
+    if(GMTconfig.Access > ACCESS_CLIENT && GMTconfig.Motto.length() > 0)
+        DrawText(GMTconfig.Motto, 0, 20 + (Worldmap ? 5 : 0), __ScreenWidth, 60, COLOR_DRED, FONT_FALLOUT, FT_CENTERX | FT_BORDERED);
+
+    if(FLAG(GMTconfig.OSD, GMT_OSD_INFO))
+    {
+        // resolve address :)
+        text = __Host;
+        if(text == "94.23.237.127")
+            text = "paris.fonline2238.net";
+        else if(text == "176.9.105.171")
+            text = "berlin.fonline2238.net";
+
+        text = text + ":" + __Port;
+
+        if(!Worldmap)
+        {
+            switch(GMTconfig.Access)
+            {
+            case    ACCESS_TESTER:
+                text = text + " (Tester)";
+                break;
+            case    ACCESS_MODER:
+                text = text + " (Game Master)";
+                break;
+            case    ACCESS_ADMIN:
+                text = text + " (Administrator)";
+                break;
+            default:
+                text = text + " (!Unknown!)";
+                break;
+                // deprecated, left for historic reasons
+                // default:				text = " (Implementor)"; break; // Atom/cvet abuse
+            }
+        }
+
+
+        // don't use __Name here (we want real name, not given in login box)
+        y = draw(chosen.Name + "@" + text, x, y, 10);
+
+        text = "";
+        int q = -1;
+        if(Worldmap)
+        {
+            y = draw("Worldmap, " + __GlobalMapWidth + "x" + __GlobalMapHeight, x, y, 10);
+        }
+        else         // !Worldmap
+        {
+            // location info
+            int location_pid = -1;
+            q = get_answer(GMT_QUESTION_LOCATION);
+            if(q >= 0 && GMTquestion[q].old)
+            {
+                # define STR_GM_NAME    # (pid) ((pid + 100) * 1000 + 0)
+                location_pid = GetAnswerData(q, GMT_DATA_LOCATION_PID);
+                int location_id = GetAnswerData(q, GMT_DATA_LOCATION_ID);
+                int location_x = GetAnswerData(q, GMT_DATA_LOCATION_WORLDX);
+                int location_y = GetAnswerData(q, GMT_DATA_LOCATION_WORLDY);
+                int location_maps = GetAnswerData(q, GMT_DATA_LOCATION_MAPCOUNT);
+                text = "Location: " + GetMsgStr(TEXTMSG_GM, STR_GM_NAME(location_pid)) +
+                       " (" + location_id + ") <" + location_pid + ">" +
+                       (location_x > 0 && location_y > 0 ? " [" + location_x + "," + location_y + "]" : "") +
+                       ": " + location_maps + " map" + (location_maps == 1 ? "" : "s");
+
+                if(GetAnswerData(q, GMT_DATA_LOCATION_VISIBLE) > 0)
+                    text += ", visible";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_TOWN) > 0)
+                {
+                    if(GetAnswerData(q, GMT_DATA_LOCATION_TCTOWN) > 0)
+                        text += ", TC town";
+                    else
+                        text += ", town";
+                }
+                if(GetAnswerData(q, GMT_DATA_LOCATION_ENCOUNTER) > 0)
+                {
+                    if(GetAnswerData(q, GMT_DATA_LOCATION_CITYENCOUNTER) > 0)
+                        text += ", city encounter";
+                    else
+                        text += ", encounter";
+                }
+                if(GetAnswerData(q, GMT_DATA_LOCATION_INSTANCEDQUEST) > 0)
+                    text += ", quest";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_CAVE) > 0)
+                    text += ", cave";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_BASE) > 0)
+                    text += ", base";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_TENT) > 0)
+                    text += ", tent";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_MINE) > 0)
+                    text += ", mine";
+                if(GetAnswerData(q, GMT_DATA_LOCATION_REPLICATION) > 0)
+                    text += ", replication";
+
+                y = draw(text, x, y);
+            }
+
+            // map info
+            text = "";
+            q = get_answer(GMT_QUESTION_MAP);
+            int map_id = -1;
+            if(q >= 0 && GMTquestion[q].old)
+            {
+                int map_width = GetAnswerData(q, GMT_DATA_MAP_WIDTH);
+                int map_height = GetAnswerData(q, GMT_DATA_MAP_HEIGHT);
+
+                if((map_width > 0) && (map_height > 0))
+                    text += ", " + map_width + "x" + map_height;
+
+                map_id = GetAnswerData(q, GMT_DATA_MAP_ID);
+                if(map_id > 0)
+                    text += " (" + map_id + ")";
+            }
+
+            if((q < 0) || (q >= 0 && map_id >= 0 && GMTquestion[q].old && (GMTconfig.LastMapPid != int(GetCurrentMapPid()))))
+            {
+                question(0, GMT_QUESTION_LOCATION, GMTconfig.LocationInfo, "");
+                question(0, GMT_QUESTION_MAP, GMTconfig.MapInfo, "");
+            }
+
+            y = draw("Map: " + GetMsgStr(TEXTMSG_GM, (GetCurrentMapPid() + 1) * 10) + text + " <" + GetCurrentMapPid() + ">", x, y, 10);
+            if(q >= 0)
+            {
+                int map_faction = GetAnswerData(q, GMT_DATA_MAP_FACTION);
+                int map_fname = GetAnswerData(q, GMT_DATA_MAP_FACTIONAME);
+                int map_fmembers = GetAnswerData(q, GMT_DATA_MAP_FACTIONMEMBERS);
+                if((map_faction > 0) && (map_fname > 0))
+                {
+                    y = draw(
+                        (map_faction >= 200 ? "" : "NPC ") + "Faction:" +
+                        (map_fname >= 1000004 ? " " + GetMsgStr(TEXTMSG_TEXT, map_fname) : "") +
+                        " (" + map_faction + ")" +
+                        (map_fmembers == 0 ? "" : ": " + map_fmembers + " member" + (map_fmembers == 1 ? "" : "s")),
+                        x, y, 10);
+                }
+
+                int map_owner = GetAnswerData(q, GMT_DATA_MAP_OWNER);
+                if(map_owner > 0)
+                {
+                    CritterCl@ _owner = GetCritter(map_owner);
+                    string     owner = "";
+                    if(valid(_owner))
+                        owner = _owner.Name;
+                    else
+                        owner = "(" + map_owner + ")";
+                    y = draw("Owner: " + owner, x, y);
+                }
+
+                int map_created = GetAnswerData(q, GMT_DATA_MAP_CREATED);
+                if(map_created > 0)
+                {
+                    y = draw("Created: " + GetTimeString("%DAY% %MONTH-STR% %YEAR%, %HOUR%:%MINUTE%", map_created), x, y);
+                }
+            }             // q
+        }
+        GMTconfig.LastMapPid = GetCurrentMapPid();
+
+        // Hex: [HexX],[HexY]
+        uint16 hX = 0, hY = 0;
+        GetMonitorHex(mouseX, mouseY, hX, hY);
+        if((mouseX <= __ScreenWidth) && (mouseY <= __ScreenHeight) && (hX + hY > 0))
+            y = draw("Hex: " + hX + "," + hY + " Mouse: " + mouseX + "," + mouseY, x, y, 10);
+    }
+
+    if(!Worldmap)
+    {
+        CritterCl@      critter = GetMonitorCritter(mouseX, mouseY, false);
+        ItemCl@         item    = GetMonitorItem(mouseX, mouseY, false);
+
+        if(FLAG(GMTconfig.OSD, GMT_OSD_INFO))
+        {
+            if(valid(critter))
+                y = draw((critter.IsPlayer() == true ? "Player" : "NPC") + " " + critter.Id + (critter.IsNpc() == true ? " <" + critter.Pid + "> [" + critter.Param[ST_DIALOG_ID] + "]" : "") + " (" + critter.HexX + "," + critter.HexY + ")", x, y);
+            else if(valid(item))
+                y  = draw("Item " + item.Id + " <" + item.GetProtoId() + "> (" + item.HexX + "," + item.HexY + ")", x, y);
+
+            # ifdef __DEBUG__
+            y = draw("OSD Info processed", x, y, 10, GMT_COLOR_DEBUG);
+            # endif
+        }
+        if(FLAG(GMTconfig.OSD, GMT_OSD_INFOEX))
+        {
+            if(valid(critter))
+            {
+                y = draw("{\n\t" + critter.Name + (critter.Id == chosen.Id ? " (yes, it's you!)" : ""), x, y, 20);
+
+                if(GMTconfig.Draw)
+                {
+                    int _x1 = x + 20;
+                    int _y1 = y + 5;
+                    int _x2 = x + 120;
+                    int _y2 = y + 70;
+
+                    if(critter.IsAnim3d())
+                    {
+                        array<float> position;
+                        position.resize(14);
+                        position[0]  = _x1 + (_x2 - _x1) / 3;                   // position		x
+                        position[1]  = _y2 - 10;                                //				y
+                        position[2]  = 5.0f;                                    // rotate		y
+                        position[3]  = 115.f;                                   //				x
+                        position[4]  = 0.0f;                                    //				z
+                        position[5]  = 0.8f;                                    // scale		x
+                        position[6]  = 0.8f;                                    //				y
+                        position[7]  = 0.8f;                                    //				z
+                        position[8]  = 1.0f;                                    // speed
+                        position[9]  = 0.0f;                                    // reserved
+                        position[10] = _x1;                                     //
+                        position[11] = _y1;                                     //
+                        position[12] = _x2 - _x1;                               //
+                        position[13] = _y2 - _y1;                               //
+                        DrawCritter3d(1, critter.CrType, critter.GetAnim1(), ANIM2_IDLE, critter.Anim3dLayer,
+                                      position,
+                                      GMT_COLOR_DEFAULT);
+                    }
+                    else
+                    {
+                        DrawCritter2d(critter.CrType, critter.GetAnim1(), ANIM2_IDLE, 2,
+                                      _x1, _y1, _x2, _y2,
+                                      false, false, GMT_COLOR_DEFAULT);
+                    }
+                    y += 70;
+                }
+                else
+                {
+                    y += 10;
+                }
+
+                /*
+                   text="\tcondition: ";
+                   switch( critter.Cond )
+                   {
+                        case COND_LIFE:						text+="alive"; break;
+                        case COND_KNOCKOUT:                             text+="knockout";
+                        switch( critter.CondExt )
+                        {
+                                case COND_KNOCKOUT_FRONT:		text+=" (front)"; break;
+                                case COND_KNOCKOUT_BACK:		text+=" (back)"; break;
+                        }; break;
+                        case COND_DEAD:						text+="dead";
+                        switch( critter.CondExt )
+                        {
+                                case COND_DEAD_FRONT:			text+=" (front)"; break;
+                                case COND_DEAD_BACK:			text+=" (back)"; break;
+                                case COND_DEAD_BURST:			text+=" (burst)"; break;
+                                case COND_DEAD_BLOODY_SINGLE:	text+=" (bloody single)"; break;
+                                case COND_DEAD_BLOODY_BURST:	text+=" (bloody burst)"; break;
+                                case COND_DEAD_PULSE:			text+=" (pulse)"; break;
+                                case COND_DEAD_PULSE_DUST:		text+=" (pulse dust)"; break;
+                                case COND_DEAD_LASER:			text+=" (laser)"; break;
+                                case COND_DEAD_EXPLODE:			text+=" (explode)"; break;
+                                case COND_DEAD_FUSED:			text+=" (fused)"; break;
+                                case COND_DEAD_BURN:			text+=" (burn)"; break;
+                                case COND_DEAD_BURN2:			text+=" (burn2)"; break;
+                                case COND_DEAD_BURN_RUN:		text+=" (burn run)"; break;
+                        }; break;
+                        case COND_NOT_IN_GAME:				text+="not in game"; break;
+                   }
+                   y = draw( text, x, y );
+                 */
+
+                y = draw("\tcrtype: " + critter.CrType + ", alias: " + critter.CrTypeAlias, x, y);
+
+                // items: [ItemsCount] ([ItemsWeight]kg, volume: [ItemsVolume])
+                if(critter.ItemsCount() > 0)
+                    y = draw("\titems: " + critter.ItemsCount() + " (weight: " + critter.ItemsWeight() / 1000 + "kg, volume: " + critter.ItemsVolume() + ")", x, y);
+
+                if(critter.Lexems.length() > 0)
+                    y = draw("\tlexems: " + critter.Lexems, x, y);
+
+                y = draw("}", x, y);
+            }
+            else if(valid(item))
+            {
+                y = draw("{\n\t" + GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item)), x, y, 20);
+
+                if(GMTconfig.Draw)
+                {
+                    uint from;
+                    switch(item.GetType())
+                    {
+                    case ITEM_TYPE_CONTAINER:
+                    case ITEM_TYPE_DOOR:
+                    case ITEM_TYPE_GENERIC:
+                    case ITEM_TYPE_GRID:
+                    case ITEM_TYPE_WALL:
+                        from = item.Proto.PicMap;
+                        break;
+                    default:
+                        from = item.Proto.PicInv;
+                        break;
+                    }
+                    int sprite = LoadSprite(from, 0);
+                    DrawSprite(sprite, -1, x + 16, y + 3, int(GetSpriteWidth(sprite, -1) / 2), int(GetSpriteHeight(sprite, -1) / 2), false, false, GMT_COLOR_DEFAULT);
+                    y += int(GetSpriteHeight(sprite, 0) / 2) + 7;
+                    y += 10;
+                }
+
+
+                //	count: [x]
+                text = "";
+                switch(item.GetType())
+                {
+                case ITEM_TYPE_NONE:
+                    text = "tile";
+                    break;
+                case ITEM_TYPE_ARMOR:
+                    text = "armor";
+                    break;
+                case ITEM_TYPE_DRUG:
+                    text = "drug";
+                    break;
+                case ITEM_TYPE_WEAPON:
+                    text = "weapon";
+                    break;
+                case ITEM_TYPE_AMMO:
+                    text = "ammo";
+                    break;
+                case ITEM_TYPE_MISC:
+                    text = "misc";
+                    break;
+                case ITEM_TYPE_KEY:
+                    text = "key";
+                    break;
+                case ITEM_TYPE_CONTAINER:
+                    text = "container";
+                    break;
+                case ITEM_TYPE_DOOR:
+                    text = "door";
+                    break;
+                case ITEM_TYPE_GRID:
+                    text = "grid";
+                    break;
+                case ITEM_TYPE_GENERIC:
+                    text = "generic";
+                    break;
+                case ITEM_TYPE_WALL:
+                    text = "wall";
+                    break;
+                case ITEM_TYPE_CAR:
+                    text = "car";
+                    break;
+                case ITEM_TYPE_BLUEPRINT:
+                    text = "blueprint";
+                    break;
+                default:
+                    text = "unknown";
+                    break;
+                }
+                y = draw("\ttype: " + text, x, y);
+
+                switch(item.GetType())
+                {
+                case ITEM_TYPE_AMMO:
+                    y = draw("\tammo:" +
+                             " acmod " + item.Proto.Ammo_AcMod +
+                             ", caliber " + item.Proto.Ammo_Caliber +
+                             ", dmgdiv " + item.Proto.Ammo_DmgDiv +
+                             ", dmgmult " + item.Proto.Ammo_DmgMult +
+                             ", drmod " + item.Proto.Ammo_DrMod,
+                             x, y);
+                    break;
+                case ITEM_TYPE_ARMOR:
+                    y = draw("\tarmor:" +
+                             " ac " + item.Proto.Armor_AC +
+                             ", crtype " + item.Proto.Armor_CrTypeMale + "," + item.Proto.Armor_CrTypeFemale,
+                             x, y);
+                    y = draw("\tdr" +
+                             " normal:" + item.Proto.Armor_DRNormal +
+                             " laser:" + item.Proto.Armor_DRLaser +
+                             " fire:" + item.Proto.Armor_DRFire +
+                             " plasma:" + item.Proto.Armor_DRPlasma +
+                             " electr:" + item.Proto.Armor_DRElectr +
+                             " emp:" + item.Proto.Armor_DREmp +
+                             " explode:" + item.Proto.Armor_DRExplode,
+                             x, y);
+                    y = draw("\tdt" +
+                             " normal:" + item.Proto.Armor_DTNormal +
+                             " laser:" + item.Proto.Armor_DTLaser +
+                             " fire:" + item.Proto.Armor_DTFire +
+                             " plasma:" + item.Proto.Armor_DTPlasma +
+                             " electr:" + item.Proto.Armor_DTElectr +
+                             " emp:" + item.Proto.Armor_DTEmp +
+                             " explode:" + item.Proto.Armor_DTExplode,
+                             x, y);
+                    break;
+
+                }
+
+                if(item.GetCount() > 1)
+                    y = draw("\tcount: " + item.GetCount(), x, y);
+
+                if(item.Flags > 0)
+                {
+                    text = "";
+                    # define flag2text                            \
+                        # (flag, info) if(FLAG(item.Flags, flag)) \
+                            text += " " + info
+                    flag2text(ITEM_HIDDEN,                         "hidden");
+                    flag2text(ITEM_FLAT,                           "flat");
+                    flag2text(ITEM_NO_BLOCK,                       "no_block");
+                    flag2text(ITEM_SHOOT_THRU,                     "shoot_thru");
+                    flag2text(ITEM_LIGHT_THRU,                     "light_thru");
+                    flag2text(ITEM_MULTI_HEX,                      "multi_hex");
+                    flag2text(ITEM_WALL_TRANS_END,         "wall_trans_end");
+                    flag2text(ITEM_TWO_HANDS,                      "two_hands");
+                    flag2text(ITEM_BIG_GUN,                        "big_gun");
+                    flag2text(ITEM_ALWAYS_VIEW,            "always_view");
+                    flag2text(ITEM_HAS_TIMER,                      "has_timer");
+                    flag2text(ITEM_BAD_ITEM,                       "bad_item");
+                    flag2text(ITEM_NO_HIGHLIGHT,           "no_highlight");
+                    flag2text(ITEM_SHOW_ANIM,                      "show_anim");
+                    flag2text(ITEM_SHOW_ANIM_EXT,          "show_anim_ext");
+                    flag2text(ITEM_LIGHT,                          "light");
+                    flag2text(ITEM_GECK,                           "geck");
+                    flag2text(ITEM_TRAP,                           "trap");
+                    flag2text(ITEM_NO_LIGHT_INFLUENCE,     "no_light_influence");
+                    flag2text(ITEM_NO_LOOT,                        "no_loot");
+                    flag2text(ITEM_NO_STEAL,                       "no_steal");
+                    flag2text(ITEM_GAG,                            "gag");
+                    flag2text(ITEM_COLORIZE,                       "colorize");
+                    flag2text(ITEM_COLORIZE_INV,           "colorize_inv");
+                    flag2text(ITEM_CAN_USE_ON_SMTH,        "can_use_on_smth");
+                    flag2text(ITEM_CAN_LOOK,                       "can_look");
+                    flag2text(ITEM_CAN_TALK,                       "can_talk");
+                    flag2text(ITEM_CAN_PICKUP,                     "can_pickup");
+                    flag2text(ITEM_CAN_USE,                        "can_use");
+                    flag2text(ITEM_HOLODISK,                       "holodisk");
+                    flag2text(ITEM_RADIO,                          "radio");
+                    flag2text(ITEM_CACHED,                         "cached");
+                    y = draw("\tflags:" + text, x, y);
+                }
+
+                if(item.Info > 0)
+                    y = draw("\tinfo: " + item.Info, x, y);
+
+                if(item.Proto.Material > 0)
+                {
+                    text = "";
+                    switch(item.Proto.Material)
+                    {
+                    case 0:
+                        text = "glass";
+                        break;
+                    case 1:
+                        text = "metal";
+                        break;
+                    case 2:
+                        text = "plastic";
+                        break;
+                    case 3:
+                        text = "wood";
+                        break;
+                    case 4:
+                        text = "dirt";
+                        break;
+                    case 5:
+                        text = "stone";
+                        break;
+                    case 6:
+                        text = "cement";
+                        break;
+                    case 7:
+                        text = "leather";
+                        break;
+                    default:
+                        text = "unknown:" + item.Proto.Material;
+                        break;
+                    }
+                    y = draw("\tmaterial: " + text, x, y);
+                }
+
+                # ifdef __DEBUG__
+                y = draw("\tpic: map<" + item.Proto.PicMap + "> inv<" + item.Proto.PicInv + ">", x, y, 10);
+                # endif
+
+                if(item.GetScriptId() > 0)
+                    y = draw("\tscript: " + item.GetScriptId(), x, y);
+
+                if(item.SortValue > 0)
+                    y = draw("\tsortvalue: " + item.SortValue, x, y);
+
+                if((item.Val1 + item.Val2 + item.Val3 + item.Val4 + item.Val5) > 0)
+                    y = draw("\tvars: " + item.Val1 + " " + item.Val2 + " " + item.Val3 + " " + item.Val4 + " " + item.Val5, x, y);
+
+                if(item.Proto.Weight > 0)
+                {
+                    if(item.GetCount() > 1)
+                        y = draw("\tweight: " + item.Proto.Weight + "g (total: " + item.Proto.Weight * item.GetCount() + "g)", x, y);
+                    else
+                        y = draw("\tweight: " + item.Proto.Weight + "g", x, y);
+                }
+
+                if(item.Lexems.length() > 0)
+                    y = draw("\tlexems: " + item.Lexems, x, y);
+
+                y = draw("}", x, y);
+
+            }
+            # ifdef __DEBUG__
+            y = draw("OSD InfoEx processed", x, y, 10, GMT_COLOR_DEBUG);
+            # endif
+        }
+
+
+        if(valid(critter))
+        {
+            if(FLAG(GMTconfig.OSD, GMT_OSD_CRITTER))
+            {
+                draw_critterinfo_screen(critter);
+            }
+        }
+
+        # ifdef __DEBUG__
+        if(FLAG(GMTconfig.OSD, GMT_OSD_CRITTER))
+            y = draw("OSD Critter processed", x, y, 10, GMT_COLOR_DEBUG);
+        # endif
+    }
+
+    y = GMToolsDrawMacros(x, y);
+    # ifdef __DEBUG__
+    y = draw("</GM Tools>", x, y, 10, GMT_COLOR_DEBUG);
+    # endif
+}
+
+void check_timers()
+{
+    for(uint i = 0; i < GMTquestion.length(); i++)
+    {
+        if(!GMTconfig.Enabled && (GMTquestion[i].type != GMT_GETACCESS && GMTquestion[i].type != GMT_QUESTION_CHAT))
+        {
+            GMTquestion.removeAt(i);
+            if(GMTconfig.CSCdebug)
+                Message("GM Tools: question [" + i + "] deleted");
+            return;
+        }
+        if(GMTquestion[i].status != GMT_STATUS_SEND && !GMTquestion[i].old &&
+           (GetTick() > (uint(GMTquestion[i].tick + GMTquestion[i].timer))))
+        {
+            GMTquestion[i].old = true;
+            if(GMTconfig.CSCdebug)
+                Message("GM Tools: question [" + i + "]: marked as old");
+            return;
+        }
+    }
+}
+
+/**
+ * Draw @e text on monitor at position @e x,y using default color and size
+ *
+ * @param text	text to display
+ * @param x		X position
+ * @param y		Y position
+ *
+ * @return new Y position
+ */
+int draw(string& text, int x, int y)
+{
+    return(draw(text, x, y, 10, GMT_COLOR_DEFAULT));
+}
+
+int draw(string& text, int x, int y, int y_fix)
+{
+    return(draw(text, x, y, y_fix, GMT_COLOR_DEFAULT));
+}
+
+int draw(string& text, int x, int y, int y_fix, uint color)
+{
+    DrawText(text, x, y, __ScreenWidth, (y_fix > 10 ? y_fix : 10), color, FONT_FALLOUT, 0);
+
+    if(y_fix > 0)
+        return(y + y_fix);
+    else if(y_fix < 0)
+        return(y - y_fix);
+    else
+        return(y);
+}
+
+void draw_critterinfo_screen(CritterCl& critter)
+{
+    if(!valid(critter))
+    {
+        Message("GMT->DCI: critter not valid");
+        return;
+    }
+
+    int critter_x = 0;
+    int critter_y = 0;
+    if(GetHexPos(critter.HexX, critter.HexY, critter_x, critter_y))
+    {
+        if(critter_x >= __ScreenWidth || critter_y >= __ScreenHeight ||
+           critter_x < 0 || critter_y < 0)
+            return;
+
+        uint color = GMT_COLOR_DEFAULT;
+
+        if(critter.IsPlayer())
+            color = GMT_COLOR_PLAYER;
+        else if(critter.IsNpc())
+            color = GMT_COLOR_NPC;
+
+        critter_x -= 12;
+        critter_y += 6;
+
+        critter_y = draw(critter.Name + " (" + critter.Id + ")", critter_x, critter_y, 10, color);
+        critter_y = draw("HP: " + critter.Param[ST_CURRENT_HP] + "/" + critter.Param[ST_MAX_LIFE], critter_x, critter_y, 10, color);
+        // GetMsgStr(TEXTMSG_ITEM,STR_ITEM_INFO(item))
+        for(int i = SLOT_HAND1; i <= SLOT_ARMOR; i++)
+        {
+            uint8 mode = 0;
+            ProtoItem@ proto = critter.GetSlotProto(i, mode);
+
+            if((valid(proto)) &&
+               (proto.ProtoId > 0) &&
+               (proto.ProtoId < 1000) &&
+               (proto.ProtoId > 1032) &&
+               (proto.ProtoId != 1100))
+            {
+                string slotname = "";
+                switch(i)
+                {
+                case SLOT_HAND1:
+                    slotname = "Left hand";
+                    break;
+                case SLOT_HAND2:
+                    slotname = "Right hand";
+                    break;
+                case SLOT_ARMOR:
+                    slotname = "Armor";
+                    break;
+                default:
+                    slotname = "Slot" + i;
+                    break;
+                }
+                ItemCl@ item = critter.GetItem(proto.ProtoId, i);
+                if(valid(item))
+                    critter_y = draw(slotname + ": " + GetMsgStr(TEXTMSG_ITEM, STR_ITEM_INFO(item)) + " (" + item.GetCount() + ")", critter_x, critter_y, 10, color);
+                // +" ("+item.GetCount()+")", critter_x, critter_y, 10, GMT_COLOR_NPC );
+                else
+                    critter_y = draw(slotname + ": " + proto.ProtoId, critter_x, critter_y, 10, color);
+
+            }
+        }
+    }
+}
+
+/**
+ * Disable GM Tools, reset access, clean last visited map/location PIDs, etc.
+ */
+void DisableGMTools()
+{
+    GMToolsUnPossess();
+    GMTconfig.Enabled                       = false;
+    GMTconfig.Access                        = ACCESS_CLIENT;
+    GMTconfig.AccessCheck           = 0;
+    GMTconfig.LastMapPid            = -1;
+    GMTconfig.LastLocationPid       = -1;
+}
+
+/**
+ * @note called by @e out_message()
+ * @note grab messages starting with: @e "~gmtools" @e "~getaccess" @e "@"
+ */
+int GMToolsCommand(string& message)
+{
+    // return values: 0-2
+
+    if(GMToolsAccess() && substring(message, 0, 1) == "#")
+        message = "~gmtools macro " + substring(message, 1, message.length() - 1);
+
+    array<string@>@ options = split(message, " ");
+    if(message == "~gmtools" || (options[0] == "~gmtools" && options[1] == ""))
+    {
+        if(GMTconfig.Enabled)
+        {
+            DisableGMTools();
+            Message("GM Tools: " + (GMTconfig.Enabled ? "ON" : "OFF"));
+        }
+        else
+            question(0, GMT_GETACCESS);
+
+        return(0);
+    }
+
+    if(options[0] == "~gmtools")
+    {
+        // debug actions, available for everyone
+        if(options[1] == "__deleteQ")             // question
+        {
+            if(GMTquestion.length() > 0)
+                GMTquestion.removeAt(0);
+
+            Message("GMT Q: " + GMTquestion.length());
+            return(0);
+        }
+
+        if(!GMTconfig.Enabled)
+            return(0);
+
+        // debug info, available for authed chars
+        if(options[1] == "__deleteM")             // macro
+        {
+            if(GMTmacro.length() > 0)
+                GMTmacro.removeAt(0);
+
+            Message("GMT M: " + GMTmacro.length());
+            return(0);
+        }
+        else if(options[1] == "__deleteC")             // chat
+        {
+            if(GMTchat.length() > 0)
+                GMTchat.removeAt(0);
+
+            Message("GMT C: " + GMTchat.length());
+            return(0);
+        }
+        else if(options[1] == "__showA")             // access
+        {
+            Message("GMT a: " + GMT_ACCESS_ANY);
+            Message("GMT p: " + GMT_ACCESS_POSSESS);
+            Message("GMT c: " + GMT_ACCESS_COMMAND);
+            Message("GMT R: " + GMT_ACCESS_RUNSCRIPT);
+            Message("GMT r: " + GMT_ACCESS_RUNSCRIPT_UNSAFE);
+            Message("GMT C: " + GMT_ACCESS_CRITTER);
+            Message("GMT I: " + GMT_ACCESS_ITEM);
+            Message("GMT M: " + GMT_ACCESS_MAP);
+            Message("GMT L: " + GMT_ACCESS_LOCATION);
+            Message("GMT x: " + GMT_ACCESS_CHAT);
+
+            return(0);
+        }
+
+        if(options[1] == "csc")
+        {
+            if(options.length() > 2 && options[2].length() > 0)
+            {
+                if(options[2] == "debug")
+                {
+                    GMTconfig.CSCdebug = !GMTconfig.CSCdebug;
+                    SAYBOOL("CSC Debug", GMTconfig.CSCdebug);
+                }
+            }
+            return(0);
+        }
+        else if(options[1] == "lockscreen" && options.length() > 2)
+        {
+            int crid = 0;
+            if(options[2] == "off")
+            {}             // TODO
+            else
+            {
+                StrToInt(options[2], crid);
+                if(crid > 0)
+                {
+                    CritterCl@ critter = GetCritter(crid);
+                    if(valid(critter))
+                    {
+                        LockScreenScroll(critter);
+                        Message("GMT: screen locked on " + critter.Name);
+                    }
+                }
+            }
+            return(0);
+        }
+        else if(options[1] == "osd")
+        {
+            if(options.length() == 2 || options[2] == "")
+                Message("GMT: missing arguments");
+            else if(options[2] == "info")
+            {
+                TOGGLEFLAG(GMTconfig.OSD, GMT_OSD_INFO);
+                SAYFLAG("OSD->info", OSD, GMT_OSD_INFO);
+            }
+            else if(options[2] == "infoex")
+            {
+                TOGGLEFLAG(GMTconfig.OSD, GMT_OSD_INFOEX);
+                SAYFLAG("OSD->info->extended", OSD, GMT_OSD_INFOEX);
+            }
+            else if(options[2] == "critter")
+            {
+                TOGGLEFLAG(GMTconfig.OSD, GMT_OSD_CRITTER);
+                SAYFLAG("OSD->critter", OSD, GMT_OSD_CRITTER);
+            }
+            return(0);
+        }
+        else if(options[1] == "menu")
+        {
+            if(options.length() > 2 && options[2] != "")
+            {
+                if(options[2] == "load" && options.length() > 3 && options[3] != "")
+                {
+                    Message("GM Tools: loading menu (" + options[3] + ")");
+                    GMToolsLoadMenu(options[3]);
+                }
+                else if(options[2] == "reload")
+                {
+                    Message("GM Tools: reloading menu");
+                    GMToolsLoadMenu();
+                }
+            }
+            else
+            {
+                GMTconfig.Menu = !GMTconfig.Menu;
+                SAYBOOL("Menu", GMTconfig.Menu);
+            }
+            return(0);
+        }
+        else if(options[1] == "macro")
+        {
+            if(options[2] == "stop")
+            {
+                GMToolsStopMacros();
+            }
+            else
+            {
+                CritterCl@ critter = GetChosen();
+                GMToolsAddMacro(options[2], critter.Id, 0, critter.HexX, critter.HexY, true);
+            }
+            return(0);
+        }
+        else
+        {
+            Message("GMT: unknown switch");
+            return(0);
+        }
+    }     // ~gmtools
+
+    else if(options.length() >= 3 && options[0] == "~getaccess")
+    {
+        // detect all access level changes
+
+        if(options[1] == "client")
+        {
+            DisableGMTools();
+        }
+        else
+        {
+            GMTconfig.AccessCheck = GetTick();
+            GMTDebugMessage("AccessCheck = " + GMTconfig.AccessCheck);
+        }
+        return(2);
+    }     // ~getaccess
+
+    else if(GMToolsAccess() && message.length() >= 2 && substring(message, 0, 1) == "@")
+    {
+        GMToolsChat(substring(message, 1, message.length() - 1));
+        return(0);
+    }     // @...
+
+    // This aren't the words we're looking for. Move along.
+    return(2);
+}
+
+/**
+ * @return ID of currently possessed critter, or 0
+ */
+int GMToolsPossess()
+{
+    return(GMTconfig.Possess);
+}
+
+/**
+ * Possess given critter and save its ID.
+ *
+ * @param critter	ID of critter that should be possessed
+ *
+ * @return @e true:  success
+ * @return @e false: @a GetCritter() failed
+ */
+bool GMToolsPossess(int critter)
+{
+    // check for slowpoke GMs (possess button pressed after critter left the map/logged out/etc.)
+
+    CritterCl@ cr = GetCritter(critter);
+    if(valid(cr))
+    {
+        GMTconfig.Possess = critter;
+        return(true);
+    }
+    ;
+    return(false);
+}
+
+void GMToolsPossessRotate(bool a)
+{
+    CritterCl@ cr = GetCritter(GMToolsPossess());
+    if(valid(cr))
+    {
+        int dir = cr.Dir;
+        if(dir == 5 && a)
+            dir = 0;
+        else if(cr.Dir == 0 && !a)
+            dir = 5;
+        else if(a)
+            dir++;
+        else if(!a)
+            dir--;
+
+        if(dir != int(cr.Dir))
+            question(0, GMT_QUESTION_COMMAND, 0, "command rotate -p " + cr.Id + " -dir " + dir);
+    }
+}
+
+/**
+ * Unposses critter.
+ * @note for @e client_main.fos
+ */
+
+void GMToolsUnPossess() // Export
+{
+    GMTconfig.Possess = 0;
+};
+
+/**
+ * Check if client can use GMT
+ * @note for @e client_main.fos
+ */
+bool GMToolsAccess() // Export
+{
+    return((GMTconfig.Access > ACCESS_CLIENT));
+}
+
+/**
+ * Check if client can use GMT menu
+ * @note for @e client_main.fos
+ */
+bool GMToolsMenu() // Export
+{
+    if(!GMToolsAccess())
+        return(false);
+
+    return(GMTconfig.Menu);
+}
+#endif /* GMTOOLS_CONFIG_ENABLED */
+#endif /* __CLIENT_GMTOOLS__ */

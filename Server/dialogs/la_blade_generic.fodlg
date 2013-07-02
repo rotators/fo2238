@@ -1,0 +1,71 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_bunker_base > 0 D _var n name_mem_npc_player = 0 D _var p q_bunker_base < 5 R _var n name_mem_npc_player = 1 #
+2 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _var p q_bunker_base < 4 #
+5 3020 D _var p q_bunker_base = 4 #
+0 3030 @
+4 4000 None 0 #
+0 4010 R _var p q_bunker_base + 1 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 #
+9 7020 @
+8 8000 None 0 #
+9 8010 #
+12 8020 @
+9 9000 None 0 #
+10 9010 #
+11 9020 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+0 11010 R _var p q_bunker_base = 5 R _param p REPUTATION_SCAVENGERS + 25 R _param p ST_EXPERIENCE + 100 @
+12 12000 None 0 #
+9 12010 &
+
+[engl]
+{100}{}{Salvager}
+{200}{}{You see a salvager.}
+{210}{}{You see a salvager. He is very dirty, seems he fell into to some puddle, but he doesn't appear to be upset after all.}
+{1000}{}{Predialogue installations}
+{1010}{}{I know about trapper / bunker quest.}
+{1020}{}{normal}
+{2000}{}{Hello.@@Have a nice day.@@We don't get many outsiders here.@@Have you ever seen the rain glow?@@I wonder if it will rain.@@Have a nice day.}
+{3000}{}{What do you want from me?}
+{3010}{}{Hello, I am searching for someone. A trapper, pretty old man, with a big scar over his face. Someone told me that he was often here in the Boneyard.@@Hi there, I am searching for a trapper. A pretty old man, with a big scar over his face. Someone told me that he was often here in the Boneyard.}
+{3020}{}{Hello, I am searching for someone. A trapper, pretty old man, with a big scar over his face. Someone told me that he was often here in the Boneyard.@@Hi there, I am searching for a trapper. A pretty old man, with a big scar over his face. Someone told me that he was often here in the Boneyard.}
+{3030}{}{Nothing, need to go. Bye.@@Nothing, bye.@@Eh, sorry, wrong door.}
+{4000}{}{I don't know what you are talking about.@@Never heard about that.@@Leave me alone.@@I know nothing about this.}
+{4010}{}{Okay. Bye.@@Was worth a try.@@Well, bye then.@@Yeah, you look like that.}
+{5000}{}{Yeah, I remember someone like that. He was often in Adytum, but always only for a very short time. }
+{5010}{}{Do you know where he is or from where he came?}
+{6000}{}{I think he was often in the east of the Boneyard. The mountains, you know. Once I've heard him talking about a place where nobody can survive. }
+{6010}{}{A place where nobody can survive?}
+{7000}{}{Yes, it's called... The Glow. And I think he was there.}
+{7010}{}{Why do you think that he has been in the Glow?}
+{7020}{}{He seems to be some strange person. Do you know where he moved to now?}
+{8000}{}{Well, the last time, he showed up here, he didn't looked very good. Loosing his hair, scraggy body. Man, it was horrible. Nobody wanted to talk with him anymore, some people even wanted to kill him, hang him up, you know? Then he leaved and never came back.}
+{8010}{}{Do you have any idea where he could have been gone to?}
+{8020}{}{What do you think he might have searched there?}
+{9000}{}{I think, he moved to Necropolis.}
+{9010}{}{And what makes you so sure about that?}
+{9020}{}{So Necropolis will be my next target. Thanks for the informations.}
+{10000}{}{It's the most obvious place. I mean... you could see that he slowly degenerated because of all that radiation. And I tell you, it didn't looked nice. Anyway... you should check out Necropolis. That's all I can tell you.}
+{10010}{}{Okay, that's all what I wanted to know. Thanks man.}
+{11000}{}{Yeah, whatever. Good luck 'n shit.}
+{11010}{}{Bye.@@See ya.}
+{12000}{}{It's the Glow, man. People say that there is a lot old pre-war stuff. Technic you have never seen before and so on. But nobody really knows it because most of the people who went there have been found dead soon after.}
+{12010}{}{Ok then. Where do you think did he moved to?}
+

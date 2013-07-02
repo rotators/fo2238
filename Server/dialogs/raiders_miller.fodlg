@@ -1,0 +1,80 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+5 3020 R _var n name_mem_npc_player = 1 #
+80 3030 D _var n name_mem_npc_player = 1 D _param p PE_PROFESSION_GUNSMITH_S < 3 #
+0 3040 @
+4 4000 None 0 #
+65505 4010 #
+0 4020 @
+5 5000 None 0 #
+65505 5010 #
+80 5020 D _param p PE_PROFESSION_GUNSMITH_S < 3 #
+0 5030 @
+80 6000 None 0 #
+81 6010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithS0 1 0 #
+82 6020 D _script dialog@d_CheckGunsmithS1 1 0 #
+0 6030 @
+81 7000 None 0 #
+84 7010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_S = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 7020 @
+82 8000 None 0 #
+84 8010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_S = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 8020 @
+83 9000 None 0 #
+84 9010 D _item p PID_BOTTLE_CAPS > 4499 R _param p PE_PROFESSION_GUNSMITH_S = 3 R _script dialog@r_RemoveMoney 1 4500 #
+0 9020 @
+84 10000 None 0 #
+0 10010 &
+
+[engl]
+{100}{}{Miller}
+{200}{}{You see Miller.}
+{200}{}{You see Miller, the Khan quartermaster.}
+{210}{}{You see the Khan quartermaster. He looks like the only guy in the room who knows what that word means.}
+{210}{}{You see Miller the quartermaster. He's checking over a clipboard as he roots around in a box with his free hand.}
+{1000}{}{Predialogue installations}
+{1010}{}{Standard khan chatter}
+{2000}{}{Hey, what's up?}
+{2010}{}{Can I ask you something?}
+{2020}{}{Nothing.}
+{3000}{}{What do you want to know?}
+{3010}{}{What can you tell me about the Khans?}
+{3020}{}{What's your job here?}
+{3030}{}{I had a few questions about weaponry...}
+{3040}{}{Forget it.}
+{4000}{}{There's been raiders ever since the bombs dropped. Shit like that happens when every policeman within a thousand miles is dead all of a sudden. This outfit's fairly old, but we didn't hit the big time until we found these caves. It's a great spot - hard to find, harder to attack, and right in the middle of a bunch of juicy targets.  We've got no truck with fancy ideologies, dreams of the future, order in the wastes, any of that shit. Why work hard for scraps when you can get the best for nothin? What sets us apart from any shithead who grabs a gun and points it at someone? Brains, motherfucker.  We got some smart assholes in this crew - guys who know how to run shit, how to get things done. This outfit's on the up, and I've got myself a sweet cut of the action.}
+{4010}{}{I see. Can I ask something else?}
+{4020}{}{Thanks. I'll be back later.}
+{5000}{}{I'm the quartermaster. Fancy name for not a very fancy job. Turns out I know more about gear than anyone else here, so they put me in charge of it. Basically I keep track of how we are for food, water, ammunition, weaponry, armour, smokes, booze, jet, pornos...everything that the boys use.}
+{5010}{}{I see. Can I ask something else?}
+{5020}{}{Weaponry, you say? I had a few questions about that...}
+{5030}{}{Thanks. I'll be back later.}
+{6000}{}{And that would be..?}
+{6010}{}{I want to learn how to make a gun... Nothing special, just the basics.}
+{6020}{}{Say, maybe you could show me how to make some good guns? I'm willing to learn.}
+{6030}{}{Erhm... Actually, nothing right now. I better be going.}
+{7000}{}{Wanna blow off your fingers, huh? Okay, just don't say later I didn't warn you... I guess I can teach you something useful, but it has its price. Let's say $1500. For that price I can give you this magazine as well, Guns & Bullets. Might come in handy once in a while.}
+{7010}{}{To hell with the money, I wanna learn it! [You give him $1500]}
+{7020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{8000}{}{Well, ain'tcha the next wasteland's top gunsmith! I guess I could show you some more for a mere sum of 3000 caps. Whaddya say?}
+{8010}{}{If the preaching justifies the price, then let's start with it, ol' man! [Give him $3000]}
+{8020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{9000}{}{[OBSOLETE] Yeah. But I don't show it to every fuckin' jockey sniffin' around my place, got it? Since you're one of us and all, I guess I could show you my secrets, but it'll cost you. $4500, no more, no less.}
+{9010}{}{It's not cheap, but I bet it's worth it. [You give him $4500]}
+{9020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{10000}{}{You won't regret the money. Now... [Miller gives his best to teach you more about small guns]}
+{10010}{}{Thanks for your time, Miller. I think I'm gonna try it out by myself now, bye!}
+

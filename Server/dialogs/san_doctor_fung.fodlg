@@ -1,0 +1,169 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+12 1010 D _param p ST_CHARISMA > 99 #
+2 1020 @
+2 2000 None 0 #
+3 2010 D _script dialog@d_IsToHeal 0  #
+4 2020 #
+6 2030 #
+80 2040 D _param p PE_PROFESSION_DOCTOR < 2 #
+13 2050 #
+0 2060 @
+13 3000 None 0 #
+65506 3010 #
+22 3020 #
+21 3030 #
+30 3040 #
+500 3050 D _script perks@d_PerkCheck 1 308 #
+0 3060 @
+23 4000 None 0 #
+0 4010 @
+3 5000 dialog@dlg_ShowHealingPrice 0 #
+5 5010 D _script dialog@d_HealingMoney 0  #
+0 5020 @
+4 6000 None 0 #
+3 6010 D _script dialog@d_IsToHeal 0  #
+2 6020 #
+0 6030 @
+5 7000 None 0 #
+11 7010 R _script dialog@r_DocHeal 0  @
+6 8000 None 0 #
+8 8010 #
+7 8020 #
+2 8030 @
+7 9000 None 0 #
+8 9010 #
+2 9020 #
+0 9030 @
+8 10000 None 0 #
+9 10010 @
+9 11000 None 0 #
+10 11010 @
+10 12000 None 0 #
+2 12010 #
+0 12020 @
+11 13000 None 0 #
+0 13010 @
+80 14000 None 0 #
+81 14010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDoctor0 1 0 #
+81 14020 D _script dialog@d_CheckDoctor1 1 0 #
+0 14030 @
+81 15000 None 0 #
+82 15010 D _script dialog@d_CheckDoctor0 1 1 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_FIRST_AID_BOOK + 1 R _param p PE_PROFESSION_DOCTOR = 1 R _script dialog@r_RemoveMoney 1 1500 #
+83 15020 D _script dialog@d_CheckDoctor1 1 1 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_DOCTOR = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 15030 @
+82 16000 None 0 #
+0 16010 @
+83 17000 None 0 #
+0 17010 @
+12 18000 None 0 @
+21 19000 None 0 #
+0 19010 #
+23 19020 D _item p PID_BOTTLE_CAPS > 1999 R _item p PID_PARAMEDICS_BAG + 1 R _script dialog@r_RemoveMoney 1 2000 @
+22 20000 None 0 #
+0 20010 #
+23 20020 D _item p PID_BOTTLE_CAPS > 999 R _item p PID_DOCTORS_BAG + 1 R _script dialog@r_RemoveMoney 1 1000 @
+30 21000 None 0 #
+31 21010 D _item p PID_BOTTLE_CAPS > 24 R _item p PID_BIO_GEL + 1 R _script dialog@r_RemoveMoney 1 25 #
+31 21020 D _item p PID_BOTTLE_CAPS > 124 R _item p PID_BIO_GEL + 5 R _script dialog@r_RemoveMoney 1 125 #
+31 21030 D _item p PID_BOTTLE_CAPS > 499 R _item p PID_BIO_GEL + 20 R _script dialog@r_RemoveMoney 1 500 #
+0 21040 @
+31 22000 None 0 #
+0 22010 @
+500 23000 None 0 #
+501 23010 R _param p PE_FASTER_HEALING = 1 #
+0 23020 @
+501 24000 None 0 #
+13 24010 #
+0 24020 &
+
+[engl]
+{100}{}{Dr. Fung}
+{200}{}{You see a shrunken old man in a white robe.}
+{210}{}{This is Dr. Fung.}
+{210}{}{You see a wizened old man wearing a white smock.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{default}
+{2000}{}{Help you with something?}
+{2010}{}{Yeah - I'm hurt and it looks like you're a doctor.}
+{2020}{}{Who are you?}
+{2030}{}{What can you tell me about this place?}
+{2040}{}{I see you are a doctor, and since I am quite interested into medicine myself, I was hoping that you could share some of your knowledge and experience with me...}
+{2050}{}{I have a question.}
+{2060}{}{Bye.}
+{3000}{}{Yes?}
+{3010}{}{Do you have any stimpaks? I'd like to buy some.}
+{3020}{}{Do you sell Doctor's Bags?}
+{3030}{}{Do you sell Paramedic's Bags?}
+{3040}{}{Do you have any spare Bio Med Gel that I could buy from you?}
+{3050}{}{Do you know of any traditional methods that may help me recovery from injuries faster?}
+{3060}{}{Nothing. Bye.}
+{4000}{}{You're welcome, goodbye.}
+{4010}{}{Goodbye.}
+{5000}{}{Let me take a look at that. Hmm. Yes. I'll have to charge you, of course. @lex price@ should cover it.}
+{5010}{}{Here you go.}
+{5020}{}{Forget it.}
+{6000}{}{Who am I? I am Dr. Fung. I teach and heal.}
+{6010}{}{Pleased to meet you. I need healing.}
+{6020}{}{I wanted to ask you something,}
+{6030}{}{I see. Thanks. Bye.}
+{7000}{}{Now, please relax and let me do my work...}
+{7010}{}{[Wait]}
+{8000}{}{You have come to the right person. Would you like long history or short?}
+{8010}{}{Long.}
+{8020}{}{Short.}
+{8030}{}{Neither. I have other questions, though.}
+{9000}{}{Our people landed here on the submarine Shih-huang-ti, when the missiles exploded over the world. Stranded, we had nowhere to go. The only solution was to form the Central Comitee and rebuild this place, San Francisco. It is a commune now, we share everything equally. That is the short version.}
+{9010}{}{How about the long version?}
+{9020}{}{Thanks. I have more questions.}
+{9030}{}{Thanks.}
+{10000}{}{The long version is this: We are here because our people are the descendants of the crew of a nuclear submarine, called the Shih-huang-ti. When the missiles fell in the Great Deluge, the systems aboard the submarine failed and we drifted in the dark for many days.}
+{10010}{}{Then what?}
+{11000}{}{At last, we drifted ashore. We found ourselves near the ruins of San Francisco. Most of the city was devastated in the war. We had to recreate society based on the few survivors who had crept back to the city.}
+{11010}{}{So then?}
+{12000}{}{We rebuilt with what we could find, and we have scientists and technology the world must envy. This place is governed by the Central Committee now, which decided to organize it as a commune. It means that we share everything equally, as long as it is possible.}
+{12010}{}{I see. I have more questions.}
+{12020}{}{Thanks. Bye.}
+{13000}{}{That should do it. Take it easy, now.}
+{13010}{}{Thanks doc, you too.}
+{14000}{}{Oh, a colleague! It is not that I meet colleagues every day, you know... The reason more to say that I am very pleased to have you here. So, what did you want us to talk about then?}
+{14010}{}{I was hoping you can show me how to perform simple surgeries and... [You explain what you need]}
+{14020}{}{Well, I was interested in more complex methods of saving human lives, which would consider... [You explain him what you need]}
+{14030}{}{I, erhm... Not quite sure where to start from. Maybe I should drop by a little bit later. [Leave]}
+{15000}{}{Sure, sure... We can already arrange something, I guess. But I would like to have something in return, a kind of compensation for my time and work. It's not that I'm trying to earn something out of this, but a help from a colleague like you would be quite appreciated. I'll keep it short then -- I would need $1500 for a short lesson or $3000 for one with more details.}
+{15010}{}{You don't have to worry, my appreciated colleague, I have $1500 right here! [You give him $1500]}
+{15020}{}{You don't have to worry, my appreciated colleague, I have $3000 right here! [You give him $3000]}
+{15030}{}{Well, I should start gathering some healing herbs then. See you later, doctor Fung!}
+{16000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Fung starts to show you his healing and surgery methods. After the session, you get a book from him.]}
+{16010}{}{Thank you very much, Doctor Fung! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{17000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Fung starts to show you his healing and surgery methods]}
+{17010}{}{Thank you very much, Doctor Fung! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{18000}{}{I am sorry, my surgical ability can not help a person of your deformity.@@I am asking you politely to leave my home.@@I regret I can not help you, hideous one.}
+{19000}{}{Yes, they cost $2000}
+{19010}{}{Too expensive for me, sorry.}
+{19020}{}{I'll take one, here's the money.}
+{20000}{}{Yes, they cost $1000}
+{20010}{}{Too expensive for me, sorry.}
+{20020}{}{I'll take one, here's the money.}
+{21000}{}{Bio Gel, eh? Well, that doesn't grow on trees you know? I'd only be able to let some go for $25.}
+{21010}{}{OK, I'll take one. [Give him $25]}
+{21020}{}{Good, I'll take 5 of those then.}
+{21030}{}{Doc, I'm not your average costumer, you know? Give me 20!}
+{21040}{}{I don't have that on me right now. I'll be back later with the cash.}
+{22000}{}{And here is your Bio Gel. Goodbye.}
+{22010}{}{Goodbye.}
+{23000}{}{A-ha! But I sure do! Just between the two of us, I was having a small experiment on my own recently... Was trying to make a mixture of traditional herbs and weeds, some of which are used by the northern tribes to heal injuries or recover from trauma. I have several concotions here ready for use, but lately the lack of testing subjects has slowed down my research work. Maybe you could try one of these while I record some of your vital functions on the Auto-Doc over there. What do you say? It would mean much for my work, you know...}
+{23010}{}{Of course! Everything for the science, Doc! [Faster Healing]}
+{23020}{}{Doc, with all due respect, I think you're trying to scam me. I'm outta here!}
+{24000}{}{Okay... Fine. Let me switch to the topo review. Good... That's good. [After a while, Doctor Fung finishes evaluation of your vital functions]}
+{24010}{}{That was some crazy stuff right there, Doc! Let's talk about something else though.}
+{24020}{}{Dammit Doc, I feel better than ever! Thank you! [Shake his hand and leave]}
+

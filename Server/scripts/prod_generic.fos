@@ -1,0 +1,147 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_generic.fos
+//
+
+// generic 'take resource' from scenery-item obejct
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define TEXT_NONE_LEFT         (3052)
+
+#define TEXT_CHEMICALS         (3075)
+#define TEXT_CHEMICALS_HINT    (3076)
+#define TEXT_CHEMICALS2        (3091)
+#define TEXT_CHEMICALS2_HINT(3092)
+
+#define TEXT_COMPUTER          (3070)
+#define TEXT_COMPUTER_HINT     (3072)
+#define TEXT_COMPUTER2         (3089)
+#define TEXT_COMPUTER2_HINT    (3090)
+
+int ComputerCount = 0;
+int Computer2Count = 0;
+int ChemicalsCount = 0;
+int Chemicals2Count = 0;
+
+#define USE_SKILL                                                                   \
+    # (req_skill, pid, batch, text, hint)                                           \
+    {                                                                               \
+        if(skill == req_skill)                                                      \
+            return Gather(item, cr, null, pid, batch, text, TEXT_NONE_LEFT, null);  \
+        else                                                                        \
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, hint);                              \
+        return true;                                                                \
+    }
+
+void _Chemicals(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillChemicals");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishChemicals");
+    if(firstTime)
+        AMOUNT(item) = __ChemicalsCapacity;
+    ChemicalsCount++;
+    StartRegeneration(item, "e_RegenChemicals");
+}
+
+bool _SkillChemicals(Item& item, Critter& cr, int skill)
+USE_SKILL(SK_SCIENCE, PID_CHEMICALS, __ChemicalsBatch, TEXT_CHEMICALS, TEXT_CHEMICALS_HINT)
+
+void _FinishChemicals(Item& item, bool)
+{
+    ChemicalsCount--;
+    ReduceCounter(PID_CHEMICALS, COUNTER(item));
+}
+
+uint e_RegenChemicals(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_CHEMICALS, __ChemicalsCapacity, __ChemicalsRegen, ChemicalsCount);
+    return RegenerationInterval;
+}
+
+void _Chemicals2(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillChemicals2");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishChemicals2");
+    if(firstTime)
+        AMOUNT(item) = __Chemicals2Capacity;
+    Chemicals2Count++;
+    StartRegeneration(item, "e_RegenChemicals2");
+}
+
+bool _SkillChemicals2(Item& item, Critter& cr, int skill)
+USE_SKILL(SK_SCIENCE, PID_CHEMICALS2, __Chemicals2Batch, TEXT_CHEMICALS2, TEXT_CHEMICALS2_HINT)
+
+void _FinishChemicals2(Item& item, bool)
+{
+    Chemicals2Count--;
+    ReduceCounter(PID_CHEMICALS2, COUNTER(item));
+}
+
+uint e_RegenChemicals2(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_CHEMICALS2, __Chemicals2Capacity, __Chemicals2Regen, Chemicals2Count);
+    return RegenerationInterval;
+}
+
+void _Computer(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillComputer");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishComputer");
+    if(firstTime)
+        AMOUNT(item) = __ElectronicPartsCap;
+    ComputerCount++;
+    StartRegeneration(item, "e_RegenComputer");
+}
+
+bool _SkillComputer(Item& item, Critter& cr, int skill)
+USE_SKILL(SK_SCIENCE, PID_ELECTRONIC_PARTS, __ElectronicPartsBatch, TEXT_COMPUTER, TEXT_COMPUTER_HINT)
+
+void _FinishComputer(Item& item, bool)
+{
+    ComputerCount--;
+    ReduceCounter(PID_ELECTRONIC_PARTS, COUNTER(item));
+}
+uint e_RegenComputer(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_ELECTRONIC_PARTS, __ElectronicPartsCap, __ElectronicPartsRegen, ComputerCount);
+    return RegenerationInterval;
+}
+
+void _Computer2(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SkillComputer2");
+    item.SetEvent(ITEM_EVENT_FINISH, "_FinishComputer2");
+    if(firstTime)
+        AMOUNT(item) = __ElectronicParts2Cap;
+    Computer2Count++;
+    StartRegeneration(item, "e_RegenComputer2");
+}
+bool _SkillComputer2(Item& item, Critter& cr, int skill)
+USE_SKILL(SK_SCIENCE, PID_ELECTRONIC_PARTS2, __ElectronicParts2Batch, TEXT_COMPUTER2, TEXT_COMPUTER2_HINT)
+
+void _FinishComputer2(Item& item, bool)
+{
+    Computer2Count--;
+    ReduceCounter(PID_ELECTRONIC_PARTS2, COUNTER(item));
+}
+
+uint e_RegenComputer2(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_ELECTRONIC_PARTS2, __ElectronicParts2Cap, __ElectronicParts2Regen, Computer2Count);
+    return RegenerationInterval;
+}

@@ -1,0 +1,176 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+0 1010 D _var n q_rail_raider_status = 3 #
+19 1020 D _var n q_rail_raider_status = 4 #
+14 1030 D _var n q_rail_raider_money = 1 #
+2 1040 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+23 1050 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 #
+3 2020 D _param p ST_INTELLECT > 3 #
+5 2030 D _param p ST_INTELLECT < 4 @
+23 3000 Attack 0 #
+4 3010 D _param p ST_INTELLECT > 3 #
+3 3020 D _param p ST_INTELLECT > 3 #
+5 3030 D _param p ST_INTELLECT < 4 @
+3 4000 Attack 0 @
+4 5000 None 0 #
+6 5010 D _param p SK_BARTER < 40 #
+8 5020 D _param p SK_BARTER } 40 #
+7 5030 #
+6 5040 #
+24 5050 D _param p SK_SPEECH < 50 #
+15 5060 D _param p SK_SPEECH } 50 #
+3 5070 @
+5 6000 Attack 0 @
+6 7000 None 0 #
+6 7010 #
+5 7020 @
+7 8000 None 0 #
+6 8010 D _param p SK_BARTER < 40 #
+8 8020 D _param p SK_BARTER } 40 @
+8 9000 None 0 #
+9 9010 D _item p PID_BOTTLE_CAPS } 500 #
+9 9020 D _item p PID_BOTTLE_CAPS } 1000 D _param p SK_BARTER < 150 #
+10 9030 D _item p PID_BOTTLE_CAPS } 1000 D _param p SK_BARTER } 150 #
+9 9040 D _item p PID_BOTTLE_CAPS } 2000 D _param p SK_BARTER < 100 #
+11 9050 D _item p PID_BOTTLE_CAPS } 2000 D _param p SK_BARTER } 100 #
+9 9060 D _item p PID_BOTTLE_CAPS } 3000 #
+12 9070 D _item p PID_BOTTLE_CAPS } 3000 #
+13 9080 R _var n q_rail_raider_money = 1 @
+9 10000 None 0 @
+10 11000 None 0 #
+18 11010 R _var p q_rail_raider_status = 4 R _var n q_rail_raider_status = 4 #
+5 11020 @
+11 12000 None 0 #
+18 12010 R _var p q_rail_raider_status = 4 R _var n q_rail_raider_status = 4 #
+5 12020 @
+12 13000 None 0 #
+18 13010 R _var p q_rail_raider_status = 4 R _var n q_rail_raider_status = 4 #
+5 13020 @
+13 14000 None 0 @
+14 15000 None 0 #
+8 15010 #
+0 15020 @
+15 16000 None 0 #
+17 16010 D _param p REPUTATION_NCR_RANGERS } 500 D or D _script dialog@d_IsMemberOf 1 FACTION_NCR_RANGERS R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+17 16020 D _param p REPUTATION_BOS } 500 D or D _script dialog@d_IsMemberOf 1 FACTION_BOS R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+17 16030 D _script dialog@d_IsMemberOf 1 FACTION_VAULT_CITY R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+17 16040 D _param p REPUTATION_UNITY } 500 D or D _param p REPUTATION_BH_MUTANTS } 500 D or D _script dialog@d_IsMemberOf 1 FACTION_UNITY R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+17 16050 D _param p REPUTATION_ENCLAVE } 500 D or D _script dialog@d_IsMemberOf 1 FACTION_ENCLAVE R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+17 16060 D _param p REPUTATION_RAIDERS } 500 D or D _script dialog@d_IsMemberOf 1 FACTION_RAIDERS R _var p q_rail_raider_status = 3 R _var n q_rail_raider_status = 3 #
+16 16070 D _param p SK_BARTER < 45 #
+8 16080 D _param p SK_BARTER } 45 @
+16 17000 Attack 0 @
+17 18000 Attack 0 #
+0 18010 #
+20 18020 @
+18 19000 Attack 0 @
+19 20000 Attack 0 @
+20 21000 Attack 0 #
+21 21010 D _param p SK_BARTER < 50 #
+0 21020 D _param p SK_BARTER } 50 R _script dialog@r_AddMoney 1 1000 @
+21 22000 Attack 0 @
+22 23000 Attack 0 #
+0 23010 @
+24 24000 Attack 0 #
+3 24010 #
+6 24020 D _param p SK_BARTER < 45 #
+8 24030 D _param p SK_BARTER } 45 #
+7 24040 #
+6 24050 &
+
+[engl]
+{100}{}{Rail Raider Leader}
+{200}{}{You see a rail raider.}
+{210}{}{A dirty and shabby Rail Raider. He seems to be the leader of that group..}
+{240}{}{You see a rail raider.}
+{250}{}{Oh no, someone ruined his mulletted hair!}
+{1000}{}{Predialogue installations}
+{1010}{}{scared away}
+{1020}{}{paid money}
+{1030}{}{waiting for money.}
+{1040}{}{Answer text}
+{1050}{}{talked second time.}
+{2000}{}{[A man with shaggy mulletted hair shouts towards you.] ... HEY, Punk! Get ready to eat some load! [He looks back to his pals.]}
+{2010}{}{Wait, keep it slow and let's talk about this!}
+{2020}{}{HEY, Punk! You know what? Fuck you. [Combat]}
+{2030}{}{Uhm, uh...}
+{3000}{}{You decided to talk again? You are strong and brave, aren't you? Hey, PUNK! Better run away now or die like your friends!}
+{3010}{}{Wait, keep it slow and let's talk about this!}
+{3020}{}{HEY, Punk! You know what? Fuck you. [Combat]}
+{3030}{}{Uhm, uh...}
+{4000}{}{Kill 'em all, brothers!}
+{5000}{}{There's nothing to talk about, we want your stuff and we want everything that is not worthless out of the big iron machine!}
+{5010}{}{We can give you money!}
+{5020}{}{We can give you money!}
+{5030}{}{If you don't go now, we will ripp you into pieces. Trust me, you will not have some easy fun with me and the folks you see behind me. *DEV NOTE: FAIL if the level of all players is < x*}
+{5040}{}{If you don't go now, we will ripp you into pieces. Trust me, you will not have some easy fun with me and the folks you see behind me. *DEV NOTE: WIN Scared away, if the level of all players is > x*}
+{5050}{}{I have some friends and trust me, if you mess with us, you will regret it.}
+{5060}{}{I have some friends and trust me, if you mess with us, you will regret it.}
+{5070}{}{Yeah, maybe you are right. Prepare to DIE! [Combat]}
+{6000}{}{My god, are you really this stupid? Kill 'em all, brothers!}
+{7000}{}{And we will take it from your dead bodies.}
+{7010}{}{You are not easy to work with... How about you just move your ass away from here then? Look, you will not have some easy fun with me and the folks you see behind me. *WIN*}
+{7020}{}{You are not easy to work with... How about you just move your ass away from here then? Look, you will not have some easy fun with me and the folks you see behind me. *FAIL*}
+{8000}{}{As far as I can see, you ain't telling the truth, punk! }
+{8010}{}{Okay, well... then... We can give you money!}
+{8020}{}{Okay, well... then... We can give you money!}
+{9000}{}{So... money... [He looks at least a little bit interested.] ... Then tell me, what is your offer?}
+{9010}{}{I can give you 500 caps.}
+{9020}{}{I can give you 1000 caps.}
+{9030}{}{I can give you 1000 caps.}
+{9040}{}{I can give you 2000 caps.}
+{9050}{}{I can give you 2000 caps.}
+{9060}{}{I can give you 3000 caps!}
+{9070}{}{I can give you 3000 caps.}
+{9080}{}{I have to think about it for a moment.}
+{10000}{}{Hahaha! [He burts out into laughter.] ... That's a joke, punk, isn't it? Brothers, let's hang these fucks!}
+{11000}{}{Mhm ... [He is thinking a while about your offer.] ... Good, give it to me!}
+{11010}{}{Take it... [You give him 1000 caps.]}
+{11020}{}{I've changed my mind. I'll guess it's better for everyone to bury your dead corpse in the hot desert sand!}
+{12000}{}{Mhm ... [He is thinking a while about your offer.] ... Good, give it to me!}
+{12010}{}{Take it... [You give him 2000 caps.]}
+{12020}{}{I've changed my mind. I'll guess it's better for everyone to bury your dead corpse in the hot desert sand!}
+{13000}{}{Mhm ... [He is thinking a while about your offer.] ... Good, give it to me!}
+{13010}{}{Take it... [You give him 3000 caps.]}
+{13020}{}{I've changed my mind. I'll guess it's better for everyone to bury your dead corpse in the hot desert sand!}
+{14000}{}{Don't think about it for too long, punk!}
+{15000}{}{Where's the money, PUNK?}
+{15010}{}{I can offer you...}
+{15020}{}{Wait! I am back in a second!}
+{16000}{}{Hah! Let's give it a go, tell me who you friends are, maybe you can impress me...}
+{16010}{}{The NCR Rangers will hunt you and your *brothers* down, they are in my debt.}
+{16020}{}{The Brotherhood of Steel isn't going to make any prisoner. They will shred you and your *brothers* to pieces.}
+{16030}{}{I am a Vault City citizen. }
+{16040}{}{I have some super mutant friends who would love it to dance on your face.}
+{16050}{}{Did you ever heard of a group called "Enclave"? They will get in, guns blazing, ripping you and your friends into pieces.}
+{16060}{}{The New Khans will put your head and the heads of everyone in your group on a pole and use it as a deterrent to others not to fuck with anyone of them.}
+{16070}{}{Actually, I don't think this is a good idea now. Maybe guys you want some money instead?}
+{16080}{}{Actually, I don't think this is a good idea now. Maybe guys you want some money instead?}
+{17000}{}{You're making fun of me, don't you? Brothers, get 'em all down!}
+{18000}{}{[He is silent for a moment, then seems to be thinking.] ... Hey... You know... Maybe you are right. We shouldn't overreact here, shouldn't we? Me and my brothers, we have other more imporant things to do now anyway. So... [He notes back to his pals.]}
+{18010}{}{Bye and fuck off. *DEV NOTE: NPCS RUN AWAY NOW*}
+{18020}{}{Hey, not so fast!}
+{19000}{}{Fine! Fine! Fine! [He notes back to his pals, then looks back to you.] ... Adios, punk! You saved your groups life, good work! *DEV NOTE: NPCS RUN AWAY NOW*}
+{20000}{}{You saved your life, punk!}
+{21000}{}{What? What now? ... [He seems to be scared now.]}
+{21010}{}{How about *you* paying *us* some money now? *FAIL* *DEV NOTE: NPCS RUN AWAY NOW*}
+{21020}{}{How about *you* paying *us* some money now?}
+{22000}{}{We don't have any money! Fuck off! [He runs away.]}
+{23000}{}{Fine, fine, fine... Don't shit on me, punk, don't shit on me! [He grabs a small bag on his belt.] ... Here, take this. It's all I have. [A bag with 1000 caps is being thrown into your hands.]}
+{23010}{}{See you, someday...}
+{24000}{}{Who do you think I am, that I care about what scum you know? }
+{24010}{}{Yeah, maybe you are right. Prepare to DIE! [Combat]}
+{24020}{}{We can give you money instead!}
+{24030}{}{We can give you money instead!}
+{24040}{}{If you don't go now, we will ripp you into pieces. Trust me, you will not have some easy fun with me and the folks you see behind me. *DEV NOTE: FAIL if the level of all players is < x*}
+{24050}{}{If you don't go now, we will ripp you into pieces. Trust me, you will not have some easy fun with me and the folks you see behind me. *DEV NOTE: WIN Scared away, if the level of all players is > x*}
+

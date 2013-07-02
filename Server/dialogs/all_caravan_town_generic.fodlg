@@ -1,0 +1,110 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+13 1010 D _script caravans@d_CheckReputationTooLow 1 0 #
+3 1020 D _param p ST_LEVEL > 19 #
+2 1030 @
+2 2000 None 0 #
+5 2010 #
+0 2020 @
+3 3000 caravans@dlg_CaravanName 0 #
+4 3010 #
+5 3020 #
+0 3030 @
+4 4000 caravans@dlg_CaravanTime 0 #
+11 4010 D _script caravans@d_IsPreparing 0  #
+12 4020 D _script caravans@d_IsNotPreparing 0  #
+9 4030 #
+0 4040 @
+5 5000 caravans@dlg_CaravanName 0 #
+6 5010 D _param p ST_LEVEL { 9 #
+4 5020 D _param p ST_LEVEL > 9 #
+7 5030 #
+8 5040 #
+0 5050 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+6 7010 D _param p ST_LEVEL { 9 #
+4 7020 D _param p ST_LEVEL > 9 #
+8 7030 #
+0 7040 @
+8 8000 None 0 #
+6 8010 D _param p ST_LEVEL { 9 #
+4 8020 D _param p ST_LEVEL > 9 #
+0 8030 @
+9 9000 caravans@dlg_CaravanPayment 0 #
+11 9010 D _script caravans@d_IsPreparing 0  #
+12 9020 D _script caravans@d_IsNotPreparing 0  #
+10 9030 #
+0 9040 @
+10 10000 caravans@dlg_CaravanTime 0 #
+11 10010 D _script caravans@d_IsPreparing 0  #
+12 10020 D _script caravans@d_IsNotPreparing 0  #
+9 10030 #
+0 10040 @
+11 11000 None 0 #
+11 11010 R _script caravans@r_JoinCaravan 0  #
+0 11020 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 &
+
+[engl]
+{100}{}{Caravan Master}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{1030}{}{-}
+{2000}{}{Hey there,}
+{2010}{}{Who are you?}
+{2020}{}{Nevermind.}
+{3000}{}{Hey there, you look like someone who can take care of @sex@|himself||herself| looking for a job? Wanna ride with @lex caravan@?}
+{3010}{}{Sure I am.}
+{3020}{}{Who are you?}
+{3030}{}{I don't think so.}
+{4000}{}{Good. We're headed to @lex destination@ next and we're leaving at @lex time@. Your job will be protecting the caravan.}
+{4010}{}{OK, I take the job.}
+{4020}{}{OK, I take the job.}
+{4030}{}{What's the pay?}
+{4040}{}{I changed my mind.}
+{5000}{}{I am riding with @lex caravan@ and right now I'm hiring caravan guards.}
+{5010}{}{I need a job.}
+{5020}{}{I'm looking for a job.}
+{5030}{}{You're some kind of traveling traders?}
+{5040}{}{What are the caravan guards doing?}
+{5050}{}{Nice to meet you, but I gotta go.}
+{6000}{}{I don't think we could use someone like you. You don't look like you could survive with us for long.}
+{6010}{}{Nevermind then.}
+{7000}{}{Yeah, we travel from town to town. When we arrive somewhere, we do some trade, hire more guards if necessary and then continue to next town.}
+{7010}{}{I'm in.}
+{7020}{}{Count me in.}
+{7030}{}{What would be my job if I joined you as caravan guard?}
+{7040}{}{Not interested.}
+{8000}{}{Protecting the caravan of course.}
+{8010}{}{I'm in.}
+{8020}{}{Sounds like a job for me.}
+{8030}{}{Not interested.}
+{9000}{}{You get @lex money@, after we arrive at our destination.}
+{9010}{}{OK, I take the job.}
+{9020}{}{OK, I take the job.}
+{9030}{}{Where were we headed again.}
+{9040}{}{Not worth my time.}
+{10000}{}{We are headed to @lex destination@ next and we're leaving at @lex time@.}
+{10010}{}{OK, I take the job.}
+{10020}{}{OK, I take the job.}
+{10030}{}{What was the pay again?}
+{10040}{}{I changed my mind.}
+{11000}{}{Allright.}
+{11010}{}{[Follow him.]}
+{11020}{}{Hold on. I changed my mind.}
+{12000}{}{We usually start loading an hour before departure. So if you're really intrested get prepared and come back later.}
+{12010}{}{Allright.}
+{13000}{}{I don't talk with people like you.}
+

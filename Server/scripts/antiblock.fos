@@ -1,0 +1,125 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// antiblock.fos
+//
+
+#include "_basetypes.fos"
+#include "_macros.fos"
+#include "follower_common_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "world_common_h.fos"
+
+// trigger, and item-trigger that should prevent players from blocking certain hexes
+
+//
+// Item
+//
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_WALK, "_Walk");
+}
+
+void _Walk(Item& item, Critter& crit, bool entered, uint8 dir)
+{
+    if(entered)
+        StartDetection(crit);
+    // else
+    //	UnsetCritterIllegalFlag(crit);
+}
+
+//
+// Trigger
+//
+void t_Enter(Critter& crit, Scenery& trigger, bool entered, uint8 dir)
+{
+    // We check if brahmin is stepping on Pen Entrance and if it is Brahmin from a Pen
+    if(entered && _CritHasExtMode(crit, MODE_EXT_PEN_BRAHMIN))
+    {
+        crit.DropPlanes();
+
+        // Go home, brahmin
+        uint   bMap;
+        uint16 bX = 0, bY = 0;
+        uint8  bDir = 0;
+        crit.GetHomePos(bMap, bX, bY, bDir);
+        AddWalkPlane(crit, AI_PLANE_WALK_PRIORITY, bX, bY, bDir, false, 0);
+
+        // int movedir = (dir+3)%6;
+        // DLog("It's a brahmin, move away from the entrance");
+        // MoveByDir(crit, movedir, 1, false);
+        return;
+    }
+
+    if(entered && !_IsTrueNpc(crit))
+        StartDetection(crit);
+    // else
+    //	UnsetCritterIllegalFlag(crit);
+}
+
+//
+// Logic behind it
+//
+void StartDetection(Critter& cr)
+{
+    // critter, counter, hex
+    uint[] values = { cr.Id, 0, cr.HexX, cr.HexY };
+    CreateTimeEvent(AFTER(REAL_SECOND(2)), "e_Check", values, false);
+}
+
+uint e_Check(array<uint>@ values)
+{
+    Critter@ crit = GetCritter(values[0]);
+    if(!valid(crit))
+    {
+        return 0;
+    }
+
+    if(values[1] < 12)
+    {
+        if(crit.HexX == values[2] && crit.HexY == values[3])
+        {
+            // If some town NPC happen to get in the way by accident, move him instead of killing him.
+            if(crit.IsNpc() && !_IsFollower(crit) && IsTown(crit.GetMap()))
+            {
+                crit.MoveRandom();
+                return 0;
+            }
+
+            if(values[1] > 0)
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, values[1] < 5 ? 4300 : 4301);
+
+            if(values[1] > 4)
+            {
+                crit.SendMessage(MSG_IM_BLOCKING, MSG_PARAM_WARN, MESSAGE_TO_VISIBLE_ME);
+                SetCritterIllegalFlag(crit, ILLEGAL_FLAG_BLOCKING);
+            }
+            values[1] += 1;
+            #ifdef __DEBUG__
+            crit.Say(SAY_NETMSG, "Counter: " + values[1]);
+            #endif
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        if(crit.HexX == values[2] && crit.HexY == values[3])
+        {
+            // finish
+            // crit.Say(SAY_NETMSG, "Nice blocking here, buddy.");
+            // crit.ToDead(COND_DEAD_LASER, null);
+
+            // alert guards
+            crit.SendMessage(MSG_IM_BLOCKING, MSG_PARAM_PUNISH, MESSAGE_TO_VISIBLE_ME);
+        }
+        return 0;
+    }
+    // next tick
+    return REAL_SECOND(1);
+}

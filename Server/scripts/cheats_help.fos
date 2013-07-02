@@ -1,0 +1,747 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cheats_help.fos
+//
+
+#ifndef __CHEATS_HELP__
+#define __CHEATS_HELP__
+
+// inlined in cheats.fos
+
+//
+// !! Heavy WIP
+//
+
+#include "_macros.fos"
+
+#define HLP_UNKNOWN    (-1)
+#define HLP_NORMAL     (0)
+#define HLP_CLIENT     (1)
+#define HLP_LINK       (2)
+
+#define HLP_WIKI       "commands.txt"
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+class CCheatHelp
+{
+    string        command;
+    uint          type;
+    bool          scripted;
+    bool          disabled;
+    array<string> description;
+    array<string> see_also;
+
+    CCheatHelp(string command, int type)
+    {
+        this.command            = command;
+        this.type                       = type;
+        this.scripted           = false;
+        this.disabled           = false;
+        this.description.resize(0);
+        this.see_also.resize(0);
+    }
+
+    void Description(string line)
+    {
+        stringReplaceText(line, "%CMD%", this.command);
+        push_back(this.description, line);
+    }
+
+    void SeeAlso(string line)
+    {
+        push_back(this.see_also, line);
+    }
+};
+array<CCheatHelp> CheatHelp;
+
+bool IsCorrectCommand(string& command)
+{
+    if(command.length() < 2 ||
+       !(substring(command, 0, 1) == "`" || substring(command, 0, 1) == "~"  || substring(command, 0, 1) == "+"))
+    {
+        Log("CheatHelp : wrong prefix : " + command);
+        return(false);
+    }
+
+    if(substring(command, 0, 1) == "`" && !IsInArray(commandlist, substring(command, 1, command.length() - 1)))
+    {
+        Log("CheatHelp : unknown command (not on list) : " + command);
+        return(false);
+    }
+
+    return(true);
+}
+
+bool IsHelp(string& command)
+{
+    for(uint c = 0; c < CheatHelp.length(); c++)
+    {
+        if(CheatHelp[c].command == command)
+            return(true);
+    }
+    return(false);
+}
+
+int GetCommandType(string& command)
+{
+    if(substring(command, 0, 1) == "`")
+        return(HLP_NORMAL);
+    else if(substring(command, 0, 1) == "~" || substring(command, 0, 1) == "+")
+        return(HLP_CLIENT);
+    else
+    {
+        // should never happen
+        Log("CheatHelp: unknown prefix : " + substring(command, 0, 1));
+        return(HLP_UNKNOWN);
+    }
+}
+
+int AddCommand(string& command, uint type)
+{
+    if(!IsCorrectCommand(command))
+        return(-1);
+
+    push_back(CheatHelp, CCheatHelp(command, type));
+    return(CheatHelp.length() - 1);
+}
+
+int AddCommand(string& command, string& description)
+{
+    if(!IsCorrectCommand(command))
+        return(-1);
+
+    int type = GetCommandType(command);
+    if(type <= HLP_UNKNOWN)
+    {
+        Log("CheatHelp : unknown command type : command<" + command + "> gettype returns<" + type + ">");
+        return(-1);
+    }
+
+    int id = AddCommand(command, type);
+    CheatHelp[id].Description(description);
+    return(id);
+}
+
+int AddLink(string& command_short, string& command_long)
+{
+    if(!IsCorrectCommand(command_short) || !IsCorrectCommand(command_long))
+        return(-1);
+
+    push_back(CheatHelp, CCheatHelp(command_short, HLP_LINK));
+    uint id = CheatHelp.length() - 1;
+    CheatHelp[id].SeeAlso(command_long);
+    return(id);
+}
+
+bool CheatHelpInitialized = false;
+
+void InitHelp()
+{
+    CheatHelp.resize(0);
+
+    // helpers
+    uint cmd = 0;
+    #define LongCommand    # (name, text)cmd = AddCommand(name, text)
+    #define LongLink       # (sh, lo)cmd = AddLink(sh, lo)
+    #define LastCommand    # (text)                 CheatHelp[cmd].Description(text)
+    #define LastLink       # (text)                        CheatHelp[cmd].SeeAlso(text)
+    #define LastType       # (t)                           CheatHelp[cmd].type = t
+
+    string _DISABLED = "Disabled";
+
+    // client commands
+    //									size of msgbox (default interface)
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongLink("~additem",                             "`spawnitem");
+    LastCommand(_DISABLED);
+
+    LongLink("~additemself",                        "`give");
+    LastCommand(_DISABLED);
+
+    LongLink("~addnpc",                              "`addfollower");
+    LastLink("`addmob");
+    LastLink("`addnpc");
+    LastCommand(_DISABLED);
+
+    LongLink("~addloc",                              "`createlocation");
+    LastCommand(_DISABLED);
+
+    LongCommand("~awareness",                       "Enable/disable on-screen awareness info");
+
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("~ban",                                     "manage ban list");
+    LastCommand("WARNING: UID bans doesn't work");
+    LastCommand("NOTE: Use * instead of whitespace in name");
+    LastCommand("%CMD% list");
+    LastCommand("\tshow list of active bans");
+    LastCommand("%CMD% add [player name/id] [hours] [comment]");
+    LastCommand("\tadd new ban (character)");
+    LastCommand("%CMD% add+ [player name/id] [hours] [comment]");
+    LastCommand("\tadd new ban (character + IP)");
+    LastCommand("%CMD% delete [player name]");
+    LastCommand("\tremove ban");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("~changepassword",          "Change current character password");
+    LastCommand("NOTE: Use * instead of whitespace in password");
+    LastCommand("%CMD% [old password] [new password]");
+
+    AddCommand("~crash",                               "Does nothing... REALLY!");
+    AddCommand("~cuttheveins",                 "Perform suicide (works only when < 0hp)");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("~deleteself",                      "Delete current character after full logout");
+    LastCommand("NOTE: Use * instead of whitespace in password");
+    LastCommand("%CMD% [password]");
+
+    LongCommand("~disconnect",                      "Kicks character from game");
+    LastCommand("%CMD% [player name/id]");
+
+    AddCommand("~dropuid",                             "Disable anti-alt system for next login");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    AddCommand("~exit",                                "Logouts from game");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("~gameinfo",                        "Display specific info about server");
+    LastCommand("%CMD% [0-5]");
+    LastCommand("0 - memory");
+    LastCommand("1 - players");
+    LastCommand("2 - locations and maps");
+    LastCommand("3 - time events");
+    LastCommand("4 - AnyData");
+    LastCommand("5 - items count");
+
+    LongCommand("~getaccess",                       "Change access level");
+    LastCommand("%CMD% [level] [password]");
+    LastCommand("%CMD% client pass - reset priviledges");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("~log",                                     "Sends server log to your messagebox.");
+    LastCommand("%CMD% + attach");
+    LastCommand("%CMD% - detach");
+    LastCommand("%CMD% -- detach all");
+
+    AddCommand("~logautosave",                 "Saves all traffic to autosave.log");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    AddCommand("~names",                           "Refreshes name colours");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongLink("~param",                               "`param");
+    LastCommand(_DISABLED);
+
+    // server commands
+    //									size of msgbox (default interface)
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`addbankmoney",		"" );
+
+    LongCommand("`addfollower",                     "Spawn follower");
+    LastLink("`addmob");
+    LastLink("`addnpc");
+
+    LongCommand("`addmob",                          "Spawn aggresive NPC");
+    LastLink("`addfollower");
+    LastLink("`addnpc");
+
+    LongCommand("`addnpc",                          "Spawn NPC with specific id (see [[npc_list]])");
+    LastLink("`addfollower");
+    LastLink("`addmob");
+
+    LongCommand("`airstrike",                      "Send christmas gift to given critter");
+    LastCommand("%CMD% -p [player]");
+
+//	AddCommand( "`animate",				"" );
+
+    LongCommand("`antiblock",                      "Place an invisible antiblocker on current hex");
+    LastCommand("Guards will attack anyone standing for a long");
+    LastCommand("time here. If you use the command on an already");
+    LastCommand("created antiblock marker, it will get removed");
+
+//	AddCommand( "`append",				"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    AddLink("`bc",                                  "`broadcast");
+//	AddCommand( "`blockers",			"" );
+    AddCommand("`broadcast",                   "Send message to all characters");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    AddLink("`ces",                                 "`clearenemystacks");
+//	AddCommand( "`changefaction",		"" );
+//	AddCommand( "`changerank",			"" );
+//	AddCommand( "`checkbank",			"" );
+//	AddCommand( "`checkbankaccount",	"" );
+//	AddCommand( "`checkbankaccounts",	"" );
+//	AddCommand( "`checktown",			"" );
+    AddCommand("`cleanup",                             "Remove all dead NPCs in sight");
+//	AddCommand( "`clearallillegalflags","" );
+//	AddCommand( "`clearenemystack",		"" );
+//	AddCommand( "`clearenemystacks",	"" );
+//	AddCommand( "`clearinventory",		"" );
+//	AddCommand( "`clearillegalflags",	"" );
+//	AddCommand( "`cleartimeouts",		"" );
+//	AddCommand( "`condition",			"" );
+//	AddCommand( "`controlmobs",			"" );
+//	AddCommand( "`controlnpc",			"" );
+
+    LongCommand("`corecheats",                      "Enables core cheats");
+    LastCommand("%CMD% set [+-][flag1] (.. [+-]flagN)");
+    LastCommand("%CMD% reset");
+    LastCommand("Available flags:");
+    LastCommand("crit, fast, item, roof, scen, tile, wall,");
+    LastCommand("critid, npcnames");
+
+//	AddCommand( "`countitems",			"" );
+//	AddCommand( "`createlocation",		"" );
+//	AddCommand( "`criticalchance",		"" );
+
+    LongCommand("`critterinfo",                     "Shows various info about a critter. If critter");
+    LastCommand("is not online, shows current character info");
+    LastCommand("%CMD% (-p [player])");
+
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`damage",				"" );
+//	AddCommand( "`deathincarnate",		"" );
+//	AddCommand( "`deathmatch",			"" );
+//	AddCommand( "`deletelocation",		"" );
+//	AddCommand( "`devenable",			"" );
+//	AddCommand( "`dialog",				"" );
+//	AddCommand( "`disabletb",			"" );
+//	AddCommand( "`disguise",			"" );
+//	AddCommand( "`disguiseinfo",		"" );
+//	AddCommand( "`dismiss",				"" );
+//	AddCommand( "`dismissteam",			"" );
+//	AddCommand( "`dropalltimeouts",		"" );
+//	AddCommand( "`dropitems",			"" );
+//	AddCommand( "`dropdrugs",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`emote",                           "Force critter to emote given text");
+    LastCommand("%CMD% -m [text] (-p [player)");
+    LastLink("`emoteh");
+    LastLink("`say");
+    LastLink("`whisper");
+
+    LongCommand("`emoteh",                          "");
+    LastCommand("%CMD% -m [text] (-p [player)");
+    LastLink("`emote");
+
+//	AddCommand( "`explode",				"" );
+//	AddCommand( "`enabletb",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`factioninfo",			"" );
+//	AddCommand( "`factiononline",		"" );
+//	AddCommand( "`findchars",			"" );
+//	AddCommand( "`finditems",			"" );
+//	AddCommand( "`flash",				"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`gaintowncontrol",		"" );
+//	AddCommand( "`gameinfo",			"" );
+//	AddCommand( "`getcolor",			"" );
+//	AddCommand( "`getclaim",			"" );
+//	AddCommand( "`getclaimtime",		"" );
+//	AddCommand( "`getleader",			"" );
+//	AddCommand( "`getitems",			"" );
+//	AddCommand( "`getleadertime",		"" );
+//	AddCommand( "`getrequests",			"Display buffered +requesthelp messages" );
+//	AddCommand( "`getuvar",				"" );
+
+    LongCommand("`getvar",                          "Checks given var of critter");
+    LastCommand("%CMD% [var id/name] (-p [player])");
+    LastLink("`setvar");
+
+//	AddCommand( "`give",				"Creates item in character inventory" );
+//	AddCommand( "`givekey",				"" );
+//	AddCommand( "`goto",				"" );
+//	AddCommand( "`gototeam",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`heal",				"Heals critter (limbs, radiations, HP, poison)" );
+//	AddCommand( "`healall",				"Heals all players in sight" );
+
+    LongCommand("`help",                            "Help system");
+    LastCommand("`[command] -help");
+    LastCommand("`help [`~+][command]");
+    LastCommand("`help -missing");
+
+//	AddCommand( "`hideloc",				"" );
+//	AddCommand( "`hidemap",				"Hides current location for all players online" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`iddqd",				"" );
+//	AddCommand( "`idkfa",				"" );
+
+    LongCommand("`id2name",                         "Displays name assigned to given player id");
+    LastLink("~id");
+    //
+//	AddCommand( "`inspect",				"" );
+//	AddCommand( "`irradiate",			"" );
+//	AddCommand( "`itemflags",			"" );
+//	AddCommand( "`itemlight",			"" );
+//	AddCommand( "`itemproto",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`karma",				"" );
+//	AddCommand( "`karmateam",			"gives/takes karma from target and sends him a message " );
+//	AddCommand( "`kill",				"Kills critter in front of current character" );
+//	AddCommand( "`killeradmin",			"" );
+    AddCommand("`killmobs",                        "Kills all non-player characters in sight");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    AddLink("`la",                                  "`listauthenticated");
+//	AddCommand( "`lastspawned",			"" );
+    AddCommand("`listauthenticated",       "list of all authenticated characters");
+//	AddCommand( "`listcommands",		"" );
+//	AddCommand( "`listfactions",		"List all registered factions" );
+
+    LongCommand("`listfollowers",           "List critter followers");
+    LastCommand("%CMD% (-p [player])");
+
+    LongCommand("`listmaps",                        "List all maps with given PID");
+    LastCommand("%CMD% -pid [map pid]");
+
+    AddCommand("`listplayers",                     "List of players online");
+    AddCommand("`listtents",                       "List tent info for all players online");
+    AddCommand("`listtracked",                     "List of all currently tracked characters");
+//	AddCommand( "`lock",				"Lock door or container" );
+
+    LongCommand("`log",                            "Saves specified text in logfile (server-side)");
+    LastCommand("%CMD% -m [message]");
+
+    AddLink("`lp",                                  "`listplayers");
+    AddLink("`lt",                                  "`listtracked");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`mapinfo",				"" );
+
+    LongCommand("`massslap",                        "Slaps all critters in current location");
+    LastLink("`slap");
+
+//	AddCommand( "`modchar",				"" );
+//	AddCommand( "`move",				"" );
+    LongCommand("`name2id",                         "Displays player id");
+    LastCommand("%CMD% [player name]");
+    LastLink("`id2name");
+    LastLink("~id");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`netmsg",                          "Displays text in player message box");
+    LastCommand("%CMD% -m [message] (-p [player])");
+    //
+    LongCommand("`normaldeadly",            "Turns off deathincarnate");
+    LastLink("`deathincarnate");
+    //
+    AddCommand("`numplayers",                      "Shows number of players online");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`param",                          "Set various stats/informations about critter");
+    LastCommand("Powerful and dangerous, Use wisely.");
+    LastCommand("%CMD% 0 [param] [value] (-p [critter])");
+
+//	AddCommand( "`perkadjust",			"" );
+//	AddCommand( "`pickitems",			"" );
+//	AddCommand( "`phase",				"" );
+//	AddCommand( "`phaseteam",			"" );
+//	AddCommand( "`playerkarma",			"" );
+//	AddCommand( "`playmusic",			"" );
+//	AddCommand( "`playsound",			"" );
+//	AddCommand( "`profadjust",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`registerfaction",		"" );
+//	AddCommand( "`removebankmoney",		"" );
+//	AddCommand( "`removefaction",		"Remove faction from factions list" );
+//	AddCommand( "`removeitems",			"" );
+    AddCommand("`resetalldisguises",       "Restores default skin for all online players");
+//	AddCommand( "`resetprices",			"" );
+//	AddCommand( "`resetreputations",	"Reset all reputations for given critter" );
+//	AddCommand( "`resettown",			"" );
+//	AddCommand( "`resettowns",			"" );
+//	AddCommand( "`resetworldmap",		"" );
+    AddLink("`respawn",                             "`revive");
+    AddLink("`respawnall",                  "`reviveall");
+    AddLink("`respawnallplayers",   "`reviveall");
+//	AddCommand( "`revive",				"" );
+    AddCommand("`reviveall",                   "Gives another chance to dead critters in sight");
+    AddLink("`reviveallplayers",    "`reviveall");
+//	AddCommand( "`rotate",				"Rotates a critter" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`saferegen",                       "Regenerate current location, taking care about");
+    LastCommand("hotel rooms lockers");
+    LastLink("~regenmap");
+
+    LongCommand("`say",                                     "Force critter to say specified text");
+    LastCommand("%CMD% -m [text] (-p [player)");
+
+    LongCommand("`sayh",                           "Same as `say command, doesn't show up in msgbox");
+    LastLink("`say");
+    //
+//	AddCommand( "`setanim",				"" );
+//	AddCommand( "`masssetanim",			"" );
+//	AddCommand( "`setfaction",			"" );
+//	AddCommand( "`sethp",				"" );
+//	AddCommand( "`setperk",				"" );
+//	AddCommand( "`setmapdata",			"" );
+//	AddCommand( "`setlocvisibility",	"" );
+//	AddLink(	"`setrep",				"`setreputation" );
+//	AddCommand( "`setreputation",		"Sets player reputation for specific faction" );
+//	AddCommand( "`settimeout",			"" );
+//	AddCommand( "`setuvar",				"" );
+
+    LongCommand("`setvar",                          "Changes given player var");
+    LastCommand("%CMD% [var id/name] [value] (-p [player])");
+    LastLink("`getvar");
+
+//	AddCommand( "`shift",				"Shifts critter x amount of hexes directly forward from current current position" );
+//	AddCommand( "`shiftteam",			"" );
+//	AddCommand( "`shout",				"" );
+//	AddCommand( "`shouth",				"" );
+//	AddCommand( "`showhands",			"Shows items used by critter (armor and hands" );
+//	AddCommand( "`showloc",				"Shows a location to player" );
+//	AddCommand( "`showvars",			"" );
+//	AddCommand( "`slap",				"Slaps a critter" );
+//	AddCommand( "`spawnpoint",			"" );
+//	AddCommand( "`spawncar",			"Spawns a car " );
+//	AddCommand( "`spawnitem",			"Spawns a specified item on a specified hex" );
+//	AddCommand( "`startevent",			"" );
+//	AddCommand( "`stopevent",			"" );
+//	AddCommand( "`stoptrackplayer",		"" );
+    AddCommand("`suicide",                         "Don't do that at home, kids!");
+//	AddCommand( "`summon",				"Summons specified player to a nearby hex" );
+//	AddCommand( "`summonteam",			"Summons specified player and his/her team" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`tatoo",				"" );
+//	AddCommand(	"`teleport",			"Teleports you to specific target" );
+//	AddCommand( "`teleportteam",		"Teleports team to specific map" );
+
+    LongCommand("`tentinfo",                       "Shows ID of player tent location");
+    LastCommand("%CMD% -p [player]");
+
+    AddLink("`tp",                                 "`teleport");
+
+    LongCommand("`trackplayer",            "Track a player. When (s)he enter/leave any map,");
+    LastCommand("you will be informed.");
+    LastCommand("%CMD% -p [player]");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`usedammo",			"" );
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`whisper",                         "");
+    LastCommand("%CMD% -m [text] (-p [player)");
+    LastLink("`say");
+    LastLink("`shout");
+    LastLink("`whisperh");
+
+    LongCommand("`whisperh",                        "Same as `whisper, doesn't show up in msgbox");
+    LastLink("`whisper");
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`virtualmoney",		"" );
+
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    LongCommand("`xp",                                     "Gives xp to character and sends him a message");
+    LastCommand("%CMD% -a [amount] -m [message]");
+
+    LongCommand("`xpteam",                         "Gives xp to team and sends them a message");
+    LastCommand("%CMD% -a [amount] -m [message]");
+
+    //									"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+//	AddCommand( "`zeroext",				"" );
+//	AddCommand( "`zone",				"" );
+//	AddCommand( "`zoneplayers",			"" );
+}
+
+void CheatHelpShow(Critter& player, string& command)
+{
+    if(!CheatHelpInitialized)
+        InitHelp();
+
+    if(CheatHelp.length() > 0)
+    {
+        for(uint c = 0; c < CheatHelp.length(); c++)
+        {
+            if(CheatHelp[c].command == command)
+            {
+                player.Say(SAY_NETMSG, "Command: " + command);
+                if(CheatHelp[c].type == HLP_NORMAL)
+                {
+                    if(IsInArray(testercommandlist, substring(command, 1, command.length() - 1)))
+                        player.Say(SAY_NETMSG, "Access: tester");
+                    else if(IsInArray(gmcommandlist, substring(command, 1, command.length() - 1)))
+                        player.Say(SAY_NETMSG, "Access: moder");
+                    else if(IsInArray(commandlist, substring(command, 1, command.length() - 1)))
+                        player.Say(SAY_NETMSG, "Access: admin");
+                }
+
+                for(uint d = 0; d < CheatHelp[c].description.length(); d++)
+                {
+                    string line = CheatHelp[c].description[d];
+                    stringReplaceText(line, "[[", "");
+                    stringReplaceText(line, "]]", "");
+                    player.Say(SAY_NETMSG, " " + line);
+                }
+                if(CheatHelp[c].type == HLP_NORMAL || CheatHelp[c].type == HLP_CLIENT)
+                {
+                    if(CheatHelp[c].see_also.length() > 0)
+                    {
+                        if(CheatHelp[c].see_also.length() == 1)
+                            player.Say(SAY_NETMSG, " See also: " + CheatHelp[c].see_also[0]);
+                        else
+                        {
+                            player.Say(SAY_NETMSG, " See also:");
+                            for(uint s = 0; s < CheatHelp[c].see_also.length(); s++)
+                            {
+                                player.Say(SAY_NETMSG, "\t" + CheatHelp[c].see_also[s]);
+                            }
+                        }
+                    }
+                }
+                else if(CheatHelp[c].type == HLP_LINK)
+                {
+                    if(CheatHelp[c].see_also.length() == 0)
+                        player.Say(SAY_NETMSG, "<ERR: No HLP_LINK destination, blame random dev>");
+                    else if(CheatHelp[c].see_also.length() == 1)
+                        player.Say(SAY_NETMSG, " See: " + CheatHelp[c].see_also[0]);
+                    else
+                    {
+                        player.Say(SAY_NETMSG, " See:");
+                        for(uint s = 0; s < CheatHelp[c].see_also.length(); s++)
+                        {
+                            player.Say(SAY_NETMSG, "\t" + CheatHelp[c].see_also[s]);
+                        }
+                    }
+                }
+                return;
+            }
+        }
+    }
+    player.Say(SAY_NETMSG, " " + command + ": no help available");
+    return;
+}
+
+void ExecHelpCommand(array<string@>@ command, Critter@ player)
+{
+    if(command.length() >= 3 && command[2].length() > 0)
+    {
+        CheatHelpShow(player, command[2]);
+        return;
+    }
+    player.Say(SAY_NETMSG, "Syntax error.");
+    return;
+}
+
+void GMWikiCommands()
+{
+    file f;
+    if(f.open(HLP_WIKI, "w") >= 0)
+    {
+        bool          client = false;
+        bool          server = false;
+        array<string> parsed;
+        for(uint c = 0; c < CheatHelp.length(); c++)
+        {
+            push_back(parsed, substring(CheatHelp[c].command, 1, CheatHelp[c].command.length() - 1));
+            if(c == 0)
+            {}
+
+            if(!client && !server && CheatHelp[c].command[0] == '~')
+            {
+                f.writeString("^  CLIENT COMMANDS  ^^\n");
+                client = true;
+            }
+            else if(!server && CheatHelp[c].command[0] == '`')
+            {
+                f.writeString("\n^  SERVER COMMANDS  ^^^\n");
+                f.writeString("^  Command  ^  Access  ^  Description  ^\n");
+                client = false;
+                server = true;
+            }
+            f.writeString("^ " + CheatHelp[c].command + " | ");
+            bool tester = false;
+            bool moder = false;
+            bool admin = false;
+            if(IsInArray(testercommandlist, substring(CheatHelp[c].command, 1, CheatHelp[c].command.length() - 1)))
+                tester = true;
+            if(IsInArray(gmcommandlist, substring(CheatHelp[c].command, 1, CheatHelp[c].command.length() - 1)))
+                moder = true;
+            if(IsInArray(commandlist, substring(CheatHelp[c].command, 1, CheatHelp[c].command.length() - 1)))
+                admin = true;
+            if(server)
+            {
+                if(tester && moder && admin)
+                    f.writeString(" Tester+ ");
+                else if(!tester && moder && admin)
+                    f.writeString(" Moder+ ");
+                else if(!tester && !moder && admin)
+                    f.writeString(" Admin ");
+                else
+                    f.writeString((tester ? "Tester" : "") + (moder || admin ? "," : "") + " " + (moder ? "Moder" : "") + (admin ? "," : "") + " " + (admin ? "Admin" : "-"));
+                f.writeString(" | ");
+            }
+            for(uint d = 0; d < CheatHelp[c].description.length(); d++)
+            {
+                string line = CheatHelp[c].description[d];
+                // stringReplaceText( line, " ", "&nbsp;" );
+                f.writeString(line);
+                if(d != (CheatHelp[c].description.length() - 1))
+                    f.writeString("\\\\ ");
+            }
+            if(CheatHelp[c].see_also.length() > 0)
+            {
+                if(CheatHelp[c].description.length() > 0)
+                    f.writeString(" |\n| |" + (server ? "|" : "") + " ");
+                f.writeString("//See" + (CheatHelp[c].type == HLP_LINK ? "" : " also") + ":");
+                for(uint s = 0; s < CheatHelp[c].see_also.length(); s++)
+                {
+                    if(s != 0)
+                        f.writeString(",");
+                    f.writeString(" " + CheatHelp[c].see_also[s]);
+                }
+                f.writeString("// |\n");
+            }
+            else
+                f.writeString(" |\n");
+        }
+
+        bool   u = false;
+        string us = "\nUnlisted commands:\\\\\n";
+        for(uint c = 0; c < commandlist.length(); c++)
+        {
+            if(!IsInArray(parsed, commandlist[c]))
+            {
+                if(!u)
+                {
+                    u = true;
+                    f.writeString(us);
+                }
+                f.writeString(" " + commandlist[c]);
+                push_back(parsed, commandlist[c]);
+            }
+        }
+        for(uint c = 0; c < gmcommandlist.length(); c++)
+        {
+            if(!IsInArray(parsed, gmcommandlist[c]))
+            {
+                if(!u)
+                {
+                    u = true;
+                    f.writeString(us);
+                }
+                f.writeString(" " + gmcommandlist[c]);
+                push_back(parsed, gmcommandlist[c]);
+            }
+        }
+        for(uint c = 0; c < testercommandlist.length(); c++)
+        {
+            if(!IsInArray(parsed, testercommandlist[c]))
+            {
+                if(!u)
+                {
+                    u = true;
+                    f.writeString(us);
+                }
+                f.writeString(" " + testercommandlist[c]);
+                push_back(parsed, testercommandlist[c]);
+            }
+        }
+
+        f.close();
+    }
+    else
+    {
+        Log("Cannot create: " + HLP_WIKI);
+    }
+}
+
+void gmwiki(Critter&, int, int, int)
+{
+    if(!CheatHelpInitialized)
+        InitHelp();
+
+    Log("Dump commands list");
+    GMWikiCommands();
+}
+#endif /* __CHEATS_HELP__ */

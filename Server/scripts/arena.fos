@@ -1,0 +1,1494 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// arena.fos
+//
+
+/**
+ * \~english @defgroup ArenaGroup Arena
+ * This script is responsible for most everything related to the Hinkley arena.
+ * Some details (like deletion of items spawned in it) are handled in different scripts, see SPECIAL_ITEM_ARENA define.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+
+
+#include "_dialogs.fos"
+#include "_entires.fos"
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_vals.fos"
+#include "economy_h.fos"
+#include "entire.fos"
+#include "factions_h.fos"
+#include "minigames_h.fos"
+#include "polygon_h.fos"
+#include "reputations_h.fos"
+#include "utils_h.fos"
+
+// Scheduler dialog nodes
+#define NODE_HAS_PVP_CONTRACT         (3)
+#define NODE_HAS_FVF_CONTRACT         (4)
+#define NODE_SELECT_CONTRACT_TYPE     (5)
+#define NODE_SELECT_CONTRACT_ARENA    (6)
+#define NODE_SELECT_CONTRACT_RULES    (7)
+#define NODE_SIGNED_PVP               (12)
+#define NODE_SIGNED_FVF               (17)
+#define NODE_ARENA_TAKEN              (15)
+#define NODE_CONTRACT_TAKEN           (18)
+#define NODE_CONTRACT_CANCELLED       (19)
+#define NODE_YOUR_FACTION             (20)
+#define NODE_WRONG_ROOM               (21)
+#define NODE_ROOM_USED                (30)
+#define NODE_FATAL_ERROR              (100)
+
+// Match/contract stage
+#define STAGE_SET_TYPE                (0)
+#define STAGE_SET_ARENA               (1)
+#define STAGE_SET_RULES               (2)
+
+#define CONTRACT_MAX_SETTINGS         (10)
+
+#define RULES_WEAPONS                 (0)
+#define RULES_ARMOR                   (1)
+
+#define RULES_WEAPONS_ALL             (0)
+#define RULES_WEAPONS_UNARMED         (1)
+#define RULES_WEAPONS_MELEE           (2)
+/*#define RULES_WEAPONS_SMALL_GUNS   (3)
+#define RULES_WEAPONS_BIG_GUNS     (4)*/
+// add more....
+
+#define RULES_ARMOR_ALL               (0)
+#define RULES_ARMOR_LIGHT             (1)
+#define RULES_ARMOR_MEDIUM            (2)
+#define RULES_ARMOR_HEAVY             (3)
+
+#define TYPE_PVP                      (0)
+#define TYPE_FVF                      (1)
+
+#define ARENA_WARZONE                 (0)
+#define ARENA_PIT                     (1)
+#define ARENA_BARRELS                 (2)
+
+#define _GetRoom                      # (_player) (_player.Stat[ST_VAR9])
+#define _SetRoom                      # (_player, _room)_player.StatBase[ST_VAR9] = _room
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+import void SetMinWear(Item& item, int wearProcent) from "repair";
+import void CompleteRepair(Item& item) from "repair";
+import void SpawnArena(Map@ map, uint16 size_x, uint16 size_y, uint16 hx, uint16 hy, uint min_room_x, uint min_room_y, uint min_path) from "arena_generator";
+
+// Player ST_VAR* used:
+// 0-8   (in dialog) Ids of opponents - prepared by scripts
+// 9     (in dialog) Id of room from which the player is supposed to start combat
+// 6     (in combat) Number of the arena the player is in + 10000
+// 7, 8  (in combat) Pre-fight hps and crippling status, respectively
+// 9     (in combat) Team id
+
+// The class representing an arena
+class Arena
+{
+    string            Name;
+    array<Entire>     Team1Entires;   // Starting entires for the first team
+    array<Entire>     Team2Entires;   // Starting entires for the second team
+    private IPolygon@ poly = null;    // Polygon determining the area of the arena
+    private bool      locked = false; // Arena is marked for a fight (a contract is created)
+    private bool      combat = false; // true during fight
+    Arena(string & name)
+    {
+        Name = name;
+    }
+
+    void SetPolygon(IPolygon@ polygon)
+    {
+        @poly = polygon;
+    }
+    bool IsWithin(Critter& cr) { return poly.IsWithin(cr); }
+    bool IsWithin(Item& item)  { return poly.IsWithin(item); }
+
+    void Lock()
+    {
+        if(locked)
+            Log("arena fatal: locking locked arena!");
+        locked = true;
+    }
+
+    void Unlock()
+    {
+        if(!locked)
+            Log("arena fatal: unlocking unlocked arena!");
+        locked = false;
+    }
+
+    bool IsLocked() { return locked; }
+
+    void StartCombat()
+    {
+        if(combat)
+            Log("arena fatal: starting combat in arena with ongoing combat!");
+        combat = true;
+    }
+    void EndCombat()
+    {
+        if(!combat)
+            Log("arena fatal: ending combat in arena without ongoing combat!");
+        combat = false;
+    }
+
+    bool IsCombat() { return combat; }
+};
+
+// The class representing a match, with its settings and teams involved
+class Contract
+{
+    uint         Player1;    // Id of the player who began the contract
+    uint         Player2;    // Id of the player who picks up the contract
+    int          Type;       // Team pvp of faction match
+    uint         Stage;      // The stage of the contract
+    int          Arena;      // Arena id for the match
+    int          Faction1;   // Id of the first faction (in faction matches)
+    int          Faction2;   // Id of the other faction (in faction matches)
+    int          Room1;      // Id of room in which the first team is
+    int          Room2;      // Id of room in which the other team is
+    array<int>   Rules;      // replace with long list of wishes
+    private uint lastChange; // Time of the last change, used for garbaging
+    Contract(uint playerId, int room)
+    {
+        Player1 = playerId;
+        Player2 = 0;
+        Type = 0;
+        Stage = STAGE_SET_TYPE;
+        Arena = -1;
+        lastChange = ELAPSED_TIME;
+        Faction1 = 0;
+        Faction2 = 0;
+        Room1 = room;
+        Room2 = -1;
+        Rules.resize(CONTRACT_MAX_SETTINGS);
+        for(uint i = 0; i < CONTRACT_MAX_SETTINGS; i++)
+            Rules[i] = 0;
+    }
+    void Update()
+    {
+        lastChange = ELAPSED_TIME;
+    }
+
+    bool IsToDelete()
+    {
+        return lastChange + REAL_MINUTE(5) < ELAPSED_TIME;
+    }
+};
+
+// The class representing the staging area (where the teams and terminal are)
+class Room
+{
+    bool   locked;
+    uint16 x1;
+    uint16 y1;
+    uint16 x2;
+    uint16 y2;
+
+    Room(Map & map, uint north, uint south)
+    {
+        locked = false;
+        x1 = 0;
+        y1 = 0;
+        x2 = 0;
+        y2 = 0;
+        array<Entire> entires1;
+        array<Entire> entires2;
+        uint          ent1 = ParseEntires(map, entires1, north);
+        uint          ent2 = ParseEntires(map, entires2, south);
+
+        if(ent1 != 1 || ent2 != 1)
+        {
+            Log("ERR: invalid room entire numbers: " + ent1 + "," + ent2);
+            return;
+        }
+        x1 = entires1[0].HexX;
+        y1 = entires1[0].HexY;
+        x2 = entires2[0].HexX;
+        y2 = entires2[0].HexY;
+    }
+    void Lock()
+    {
+        if(locked)
+            Log("arena fatal: locking locked room!");
+        locked = true;
+    }
+    void Unlock()
+    {
+        if(!locked)
+            Log("arena fatal: unlocking unlocked room!");
+        locked = false;
+    }
+    bool IsLocked() { return locked; }
+};
+
+array<Arena@> Arenas;
+array<Room@>  Rooms;
+array<Entire> Lobby;
+
+// Id of the container where players' items are stored when entering arena
+uint             SafeContainerId;
+
+array<Contract@> Pending;     // Matches still discussed by first player/faction
+array<Contract@> Contracts;   // Ongoing matches
+
+uint             LastProcessTime = 0;
+uint             ArenasLen = 0;
+
+array<Entire> DoorIn(2);
+array<Entire> DoorOut(2);
+
+// Here we initialize all arena related data
+void InitArenas(Map& map)   // export
+{
+    Arenas.resize(0);
+    Rooms.resize(0);
+
+    Room@ room0 = @Room(map, ENTIRE_ARENA_ROOM0_NORTH, ENTIRE_ARENA_ROOM0_SOUTH);
+    Rooms.insertLast(room0);
+    Room@ room1 = @Room(map, ENTIRE_ARENA_ROOM1_NORTH, ENTIRE_ARENA_ROOM1_SOUTH);
+    Rooms.insertLast(room1);
+
+    Arena@ arena0 = @Arena("The Warzone");
+    arena0.SetPolygon(LoadShapeFromEntires(map, ENTIRE_ARENA_ARENA0_POLYGON_BEGIN, ENTIRE_ARENA_ARENA0_POLYGON_END));
+    if(ParseEntires(map, arena0.Team1Entires, ENTIRE_ARENA_ARENA0_TEAM_1) == 0)
+        Log("ERR: No entires for team 1, arena 0");
+    if(ParseEntires(map, arena0.Team2Entires, ENTIRE_ARENA_ARENA0_TEAM_2) == 0)
+        Log("ERR: No entires for team 2, arena 0");
+    Arenas.insertLast(arena0);
+
+    Arena@ arena1 = @Arena("The Pit");
+    arena0.SetPolygon(LoadShapeFromEntires(map, ENTIRE_ARENA_ARENA1_POLYGON_BEGIN, ENTIRE_ARENA_ARENA1_POLYGON_END));
+    if(ParseEntires(map, arena1.Team1Entires, ENTIRE_ARENA_ARENA1_TEAM_1) == 0)
+        Log("ERR: No entires for team 1, arena 1");
+    if(ParseEntires(map, arena1.Team2Entires, ENTIRE_ARENA_ARENA1_TEAM_2) == 0)
+        Log("ERR: No entires for team 2, arena 1");
+    Arenas.insertLast(arena1);
+
+    Arena@ arena2 = @Arena("Barrels O' Fun");
+    arena0.SetPolygon(LoadShapeFromEntires(map, ENTIRE_ARENA_ARENA2_POLYGON_BEGIN, ENTIRE_ARENA_ARENA2_POLYGON_END));
+    if(ParseEntires(map, arena2.Team1Entires, ENTIRE_ARENA_ARENA2_TEAM_1) == 0)
+        Log("ERR: No entires for team 1, arena 2");
+    if(ParseEntires(map, arena2.Team2Entires, ENTIRE_ARENA_ARENA2_TEAM_2) == 0)
+        Log("ERR: No entires for team 2, arena 2");
+    Arenas.insertLast(arena2);
+
+    array<Entire> entires;
+    if(ParseEntires(map, entires, ENTIRE_ARENA_CONTAINER) == 0)
+        Log("ERR: No container entire!");
+    Item@ SafeContainer = map.GetItem(entires[0].HexX, entires[0].HexY, PID_FRIDGE);
+    if(!valid(SafeContainer))
+        @SafeContainer = map.AddItem(entires[0].HexX, entires[0].HexY, PID_FRIDGE, 1);
+    if(!valid(SafeContainer))
+        Log("ERR: No container item (on existing entire)!");
+    SafeContainerId = SafeContainer.Id;
+
+    ArenasLen = Arenas.length();
+    if(ParseEntires(map, Lobby, 242) == 0)
+        Log("No entires for Lobby");
+
+    entires.resize(0);
+    if(ParseEntires(map, entires, ENTIRE_ARENA_DOOR0_IN) == 0)
+        Log("No entires for door0 in");
+    else
+        DoorIn[0] = entires[0];
+
+    entires.resize(0);
+    if(ParseEntires(map, entires, ENTIRE_ARENA_DOOR1_IN) == 0)
+        Log("No entires for door1 in");
+    else
+        DoorIn[1] = entires[0];
+
+    entires.resize(0);
+    if(ParseEntires(map, entires, ENTIRE_ARENA_DOOR0_OUT) == 0)
+        Log("No entires for door0 out");
+    else
+        DoorOut[0] = entires[0];
+
+    entires.resize(0);
+    if(ParseEntires(map, entires, ENTIRE_ARENA_DOOR1_OUT) == 0)
+        Log("No entires for door1 out");
+    else
+        DoorOut[1] = entires[0];
+
+    Log("Arenas init finish, arenas: " + ArenasLen + ", rooms: " + Rooms.length());
+}
+
+// Debug
+bool IsRoomReallyLocked(int room)
+{
+    for(uint i = 0, j = Pending.length(); i < j; i++)
+        if(Pending[i].Room1 == room || Pending[i].Room2 == room)
+            return true;
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Room1 == room || Contracts[i].Room2 == room)
+            return true;
+    return false;
+}
+
+// Debug
+bool IsArenaReallyLocked(int arena)
+{
+    for(uint i = 0, j = Pending.length(); i < j; i++)
+        if(Pending[i].Arena == arena)
+            return true;
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Arena == arena)
+            return true;
+    return false;
+}
+
+// Debug, check for possible inconsistencies (room is locked but no match locks it etc.)
+void CheckSynchro()
+{
+    for(uint i = 0, j = Pending.length(); i < j; i++)
+    {
+        if(Pending[i].Room1 >= 0 && !Rooms[Pending[i].Room1].IsLocked())
+            Log("SYNCHRO ERROR 1 " + i);
+        if(Pending[i].Room2 >= 0 && !Rooms[Pending[i].Room2].IsLocked())
+            Log("SYNCHRO ERROR 2 " + i);
+        if(Pending[i].Arena >= 0 && !Arenas[Pending[i].Arena].IsLocked())
+            Log("SYNCHRO ERROR 3 " + i);
+    }
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+    {
+        if(Contracts[i].Room1 >= 0 && !Rooms[Contracts[i].Room1].IsLocked())
+            Log("SYNCHRO ERROR 4 " + i);
+        if(Contracts[i].Room2 >= 0 && !Rooms[Contracts[i].Room2].IsLocked())
+            Log("SYNCHRO ERROR 5 " + i);
+        if(Contracts[i].Arena >= 0 && !Arenas[Contracts[i].Arena].IsLocked())
+            Log("SYNCHRO ERROR 6 " + i);
+    }
+    for(uint i = 0, j = Rooms.length(); i < j; i++)
+        if(Rooms[i].IsLocked() && !IsRoomReallyLocked(i))
+            Log("SYNCHRO ERROR 7 " + i);
+}
+
+// Called periodically, checks if all combatants in either team are dead and stops the combat if so
+void ProcessArena(Map& map)   // export
+{
+    if(LastProcessTime + REAL_SECOND(5) >= ELAPSED_TIME)
+        return;
+    LastProcessTime = ELAPSED_TIME;
+
+    for(uint i = 0, j = Pending.length(); i < j;)
+        if(Pending[i].IsToDelete())
+        {
+            UnlockRooms(Pending[i], true);
+            Pending.removeAt(i);
+            j--;
+        }
+        else
+            i++;
+    for(uint i = 0, j = Contracts.length(); i < j;)
+        if(Contracts[i].IsToDelete())
+        {
+            UnlockRooms(Contracts[i], true);
+            Contracts.removeAt(i);
+            j--;
+        }
+        else
+            i++;
+    CheckSynchro();
+    array<Critter@> critters;
+    bool            finish = true;
+    for(uint i = 0, j = ArenasLen; i < j; i++)
+        if(Arenas[i].IsCombat())
+        {
+            finish = false;
+            break;
+        }
+    if(finish)
+        return;
+    uint n = map.GetCritters(0, FIND_ONLY_PLAYERS | FIND_LIFE_AND_KO, critters);
+    bool team1num = false;
+    bool team2num = false;
+    for(uint i = 0, j = ArenasLen; i < j; i++)
+    {
+        Arena@ arena = Arenas[i];
+        if(!arena.IsCombat())
+            continue;
+        team1num = false;
+        team2num = false;
+        for(uint k = 0; k < n; k++)
+        {
+            Critter@ cr = critters[k];
+            DLog("processing player id " + cr.Id);
+            if(!arena.IsWithin(cr))
+                continue;
+            DLog("is inside!");
+            if(cr.Stat[ST_VAR9] != 1 && cr.Stat[ST_VAR9] != 2)
+            {
+                // cheater!
+                continue;
+            }
+            if(cr.Stat[ST_VAR9] == 1)
+                team1num = true;
+            else
+                team2num = true;
+            if(team1num && team2num)
+                break;
+        }
+        if(team1num && team2num)
+            continue;
+
+        // end combat
+        arena.EndCombat();
+        arena.Unlock();
+
+        // TODO: add victory event, feed extra arena data with some contract rules, number of players etc.
+        // teleport people back
+        TeleportToLobby(map, i);
+        CleanArena(map, i);
+    }
+}
+
+// Test if the team member has valid outfit, etc.
+bool ValidCritter(Critter@ cr, Contract@ contract, uint number)
+{
+    if(contract.Type == TYPE_PVP && ((number == 1 && contract.Player2 == cr.Id) || (number == 2 && contract.Player1 == cr.Id)))
+    {
+        cr.Say(SAY_NETMSG, "You were not transported inside the arena. You were staying in a wrong room.");
+        return false;
+    }
+
+    array<Item@> items;
+    uint         num = cr.GetItems(-1, items);
+
+    for(uint i = 0; i < num; i++)
+        if(items[i].GetType() == ITEM_TYPE_AMMO || items[i].GetType() == ITEM_TYPE_DRUG)
+        {
+            cr.Say(SAY_NETMSG, "You were not transported inside the arena. Drugs and real ammunition are not allowed.");
+            return false;
+        }
+
+    uint weapons = contract.Rules[RULES_WEAPONS];
+    uint armor = contract.Rules[RULES_ARMOR];
+
+    if(weapons == RULES_WEAPONS_UNARMED)
+        if(HasSomeWeapon(cr))
+        {
+            cr.Say(SAY_NETMSG, "You were not transported inside the arena. Match rules disallow having weapons.");
+            return false;
+        }
+        else if(weapons == RULES_WEAPONS_MELEE)
+        {
+            for(uint i = 0; i < num; i++)
+            {
+                if((items[i].GetType() == ITEM_TYPE_WEAPON))
+                    if(items[i].Proto.Weapon_Skill_0 != SK_MELEE_WEAPONS)
+                    {
+                        cr.Say(SAY_NETMSG, "You were not transported inside the arena. Match rules disallow having non-melee weapons.");
+                        return false;
+                    }
+            }
+        }
+
+    if(armor != RULES_ARMOR_ALL)
+    {
+        for(uint i = 0; i < num; i++)
+            if((items[i].GetType() == ITEM_TYPE_ARMOR))
+            {
+                if((ItemLevel(items[i]) > armor))
+                {
+                    cr.Say(SAY_NETMSG, "You were not transported inside the arena. Match rules disallow armor in this weight class.");
+                    return false;
+                }
+            }
+    }
+
+    if(contract.Type == TYPE_PVP)
+        return true;
+    if(_GroupIndex(cr) == (number == 1 ? contract.Faction1 : contract.Faction2))
+        return true;
+    cr.Say(SAY_NETMSG, "You do not belong to the faction assigned to this room.");
+    return false;
+}
+
+void TeleportTeam(Map& map, Contract@ contract, uint number, array<int>@ combatants)
+{
+    array<Critter@> critters;
+    array<Entire>   entires1;
+    array<Entire>   entires2;
+
+    uint            n = map.GetCritters(0, FIND_ONLY_PLAYERS | FIND_LIFE, critters);
+    Room@           room = Rooms[number == 1 ? contract.Room1 : contract.Room2];
+
+    Arena@          arena = Arenas[contract.Arena];
+
+    for(uint i = 0; i < n; i++)
+    {
+        Critter@ cr = critters[i];
+        if((room.x1 <= cr.HexX && cr.HexX <= room.x2 && room.y1 <= cr.HexY && cr.HexY <= room.y2) && ValidCritter(cr, contract, number))
+        {
+            if(number == 1)
+            {
+                uint idx = Random(0, arena.Team1Entires.length() - 1);
+                cr.TransitToHex(arena.Team1Entires[idx].HexX, arena.Team1Entires[idx].HexY, Random(0, 5));
+            }
+            else
+            {
+                uint idx = Random(0, arena.Team2Entires.length() - 1);
+                cr.TransitToHex(arena.Team2Entires[idx].HexX, arena.Team2Entires[idx].HexY, Random(0, 5));
+            }
+            OnTeleportToArena(cr);
+            combatants.insertLast(cr.Id);
+            cr.StatBase[ST_VAR6] = contract.Arena + 10000;
+            cr.StatBase[ST_VAR9] = number;
+        }
+    }
+}
+
+void TeleportToLobby(Map& map, uint number)
+{
+    array<Critter@> critters;
+    Arena@          arena = Arenas[number];
+    uint            n = map.GetCritters(0, FIND_ONLY_PLAYERS | FIND_ALL, critters);
+    // Log("teleporting to lobby: "+n);
+    for(uint i = 0; i < n; i++)
+    {
+        Critter@ cr = critters[i];
+        if(arena.IsWithin(cr))
+        {
+            // cr.Say(SAY_NETMSG,"inside");
+            uint idx = Random(0, Lobby.length() - 1);
+            cr.TransitToHex(Lobby[idx].HexX, Lobby[idx].HexY, Random(0, 5));
+            OnTeleportToLobby(cr);
+        }
+        // else cr.Say(SAY_NETMSG,"outside");
+    }
+}
+
+// Set colors of both teams
+void SetColors(int team_len, array<int>@ combatants)
+{
+    for(int i = 0; i < team_len; i++)
+    {
+        Critter@ cr = GetCritter(combatants[i]);
+        if(!valid(cr))
+            continue;
+        SetMinigame(cr, 1, 1, 0, 0);
+    }
+    for(int i = team_len, j = combatants.length(); i < j; i++)
+    {
+        Critter@ cr = GetCritter(combatants[i]);
+        if(!valid(cr))
+            continue;
+        SetMinigame(cr, 2, 1, 0, 0);
+    }
+}
+
+// Clean the arena of all dropped items
+void CleanArena(Map& map, uint number)
+{
+    array<Item@> items;
+    Arena@       arena = Arenas[number];
+    uint         n = map.GetItems(0, items);
+    for(uint i = 0; i < n; i++)
+        if(arena.IsWithin(items[i]))
+            DeleteItem(items[i]);
+}
+
+void UnlockRooms(Contract@ contract, bool arena_too)
+{
+    int room1 = contract.Room1;
+    int room2 = contract.Room2;
+    int arena = contract.Arena;
+    if(room1 != -1)
+    {
+        DLog("unlocking room " + room1);
+        Rooms[room1].Unlock();
+    }
+    if(room2 != -1)
+    {
+        DLog("unlocking room " + room2);
+        Rooms[room2].Unlock();
+    }
+    if(arena_too && arena != -1)
+    {
+        DLog("unlocking arena " + arena);
+        Arenas[arena].Unlock();
+    }
+}
+
+Contract@ FindContract(array<Contract@>& list, uint playerId)
+{
+    for(uint i = 0, j = list.length(); i < j; i++)
+        if(list[i].Player1 == playerId)
+            return @list[i];
+    return null;
+}
+
+Contract@ FindContractByType(array<Contract@>& list, uint id, int type)
+{
+    if(type == TYPE_PVP)
+        for(uint i = 0, j = list.length(); i < j; i++)
+            if(list[i].Player1 == id && list[i].Type == TYPE_PVP)
+                return @list[i];
+            else
+                for(uint i = 0, j = list.length(); i < j; i++)
+                    if(list[i].Faction1 == int(id) && list[i].Type == TYPE_FVF)
+                        return @list[i];
+    return null;
+}
+
+bool IsInsideArena(Critter& cr)   // export
+{
+    for(uint i = 0, j = ArenasLen; i < j; i++)
+        if(Arenas[i].IsWithin(cr))
+            return true;
+    return false;
+}
+
+uint16[] FakeItems =
+{
+    PID_FAKE_PLASMA_GRENADE, PID_FAKE_FRAG_GRENADE, PID_FAKE_SUPER_SLEDGE,
+    PID_FAKE_SPEAR, PID_FAKE_THROWING_KNIFE
+};
+// Checks if an item is one generated by the arena. Needed in other scripts.
+bool IsArenaItem(Item@ item)   // export
+{
+    if(item.Val8 == SPECIAL_ITEM_ARENA)
+        return true;
+    uint16 pid = item.GetProtoId();
+    return FakeItems.find(pid) >= 0;
+}
+
+bool IsArenaCombatant(Critter& cr)
+{
+    return(cr.GetMapProtoId() == MAP_Arena && IsInsideArena(cr));
+}
+
+void RemoveArenaItems(Critter& cr)   // export
+{
+    array<Item@> items;
+    uint         n = cr.GetItems(-1, items);
+    // uint deleted=0;
+    for(uint i = 0; i < n; i++)
+    {
+        if(IsArenaItem(items[i]))
+        {
+            DeleteItem(items[i]);
+            // deleted++;
+        }
+        else
+            // car is already in player inventory during _OnOutCritter(), check it
+            RemoveArenaItems(items[i]);
+    }
+    /*
+          if(deleted>0)
+          {
+                  cr.Say(SAY_NETMSG,"The equipment you've stolen from the Arena exploded stright in your face! Damned remotes.");
+                  InjureCritter(cr, Random(4*deleted,8*deleted), DAMAGE_EXPLODE, 0, 0);
+                  SubReputation(cr,FACTION_NCR,deleted*5);
+          }*/
+};
+
+void RemoveArenaItems(Item& item)
+{
+    array<Item@> items;
+    uint         count = 0;
+    if(item.GetType() == ITEM_TYPE_CAR)
+    {
+        for(uint i = 0; i < 3; i++)
+        {
+            Item@ trunk = item.GetChild(i);
+            if(valid(trunk))
+            {
+                count += trunk.GetItems(0, items);
+            }
+        }
+        for(uint i = 0; i < count; i++)
+        {
+            if(items[i].GetType() == ITEM_TYPE_CONTAINER)
+            {
+                RemoveArenaItems(items[i]);
+            }
+        }
+    }
+    else if(item.GetType() == ITEM_TYPE_CONTAINER)
+    {
+        count = item.GetItems(0, items);
+        for(uint i = 0; i < count; i++)
+        {
+            if(items[i].GetType() == ITEM_TYPE_CONTAINER)
+            {
+                RemoveArenaItems(items[i]);
+            }
+        }
+    }
+
+    for(uint i = 0; i < count; i++)
+    {
+        if(valid(items[i]) && !items[i].IsNotValid)
+        {
+            if(IsArenaItem(items[i]))
+            {
+                DeleteItem(items[i]);
+            }
+        }
+    }
+}
+
+// Destroy weapons and armor, remove ammo
+void MakeItemsUseless(Critter& cr)
+{
+    array<Item@> items;
+    uint         n = cr.GetItemsByType(ITEM_TYPE_WEAPON, items);
+    for(uint i = 0; i < n; i++)
+    {
+        Item@ item = items[i];
+        if(item.Val8 != SPECIAL_ITEM_ARENA)
+            continue;
+        if(item.IsDeteriorable())
+        {
+            SetMinWear(item, 100);
+        }
+        item.AmmoCount = 0;
+        item.Update();
+    }
+    items.resize(0);
+
+    n = cr.GetItemsByType(ITEM_TYPE_ARMOR, items);
+    for(uint i = 0; i < n; i++)
+    {
+        Item@ item = items[i];
+        if(item.Val8 != SPECIAL_ITEM_ARENA || !item.IsDeteriorable())
+            continue;
+
+        SetMinWear(item, 100);
+        item.Update();
+    }
+    items.resize(0);
+
+    n = cr.GetItemsByType(ITEM_TYPE_AMMO, items);
+    for(uint i = 0; i < n; i++)
+        DeleteItem(items[i]);
+}
+
+// The opposite of void MakeItemsUseless(Critter& cr)
+void MakeItemsUseful(Critter& cr)
+{
+    array<Item@> items;
+    uint         n = cr.GetItemsByType(ITEM_TYPE_WEAPON, items);
+    for(uint i = 0; i < n; i++)
+    {
+        Item@ item = items[i];
+        if(item.Val8 != SPECIAL_ITEM_ARENA)
+            continue;
+        if(item.IsDeteriorable())
+            CompleteRepair(item);
+
+        uint rounds = MAX(item.Proto.Weapon_Round_0, item.Proto.Weapon_Round_1);
+        item.AmmoCount = item.Proto.Weapon_MaxAmmoCount;
+        switch(item.Proto.Weapon_DefaultAmmoPid)
+        {
+        case 0:
+            break;
+        case PID_10MM_JHP:
+        {
+            Item@ it = cr.AddItem(PID_10MM_JHP, rounds * 20);
+            it.Val8 = SPECIAL_ITEM_ARENA;
+            @it = cr.AddItem(PID_10MM_AP, rounds * 20);
+            it.Val8 = SPECIAL_ITEM_ARENA;
+            break;
+        }
+        case PID_5MM_JHP:
+        {
+            Item@ it = cr.AddItem(PID_5MM_JHP, rounds * 25);
+            it.Val8 = SPECIAL_ITEM_ARENA;
+            @it = cr.AddItem(PID_5MM_AP, rounds * 25);
+            it.Val8 = SPECIAL_ITEM_ARENA;
+            break;
+        }
+        default:
+        {
+            Item@ it = cr.AddItem(item.Proto.Weapon_DefaultAmmoPid, rounds * 20);
+            it.Val8 = SPECIAL_ITEM_ARENA;
+            break;
+        }
+        }
+        item.Update();
+    }
+    items.resize(0);
+
+    n = cr.GetItemsByType(ITEM_TYPE_ARMOR, items);
+    for(uint i = 0; i < n; i++)
+    {
+        Item@ item = items[i];
+        if(item.Val8 != SPECIAL_ITEM_ARENA || !item.IsDeteriorable())
+            continue;
+
+        CompleteRepair(item);
+    }
+}
+
+void BackupItems(Critter& cr)
+{
+    array<Item@> items;
+    uint         num = cr.GetItems(-1, items);
+    for(uint i = 0; i < num; i++)
+    {
+        if(IsArenaItem(items[i]))
+            continue;
+        Item@ SafeContainer = GetItem(SafeContainerId);
+        MoveItem(items[i], items[i].GetCount(), SafeContainer, cr.Id);
+    }
+}
+
+void RestoreItems(Critter& cr)
+{
+    array<Item@> items;
+    Item@        SafeContainer = GetItem(SafeContainerId);
+    SafeContainer.GetItems(cr.Id, items);
+    MoveItems(items, cr);
+}
+
+bool HasIllegalItems(Critter& cr)
+{
+    if(HasSomeWeapon(cr))
+        return true;
+    if(HasItem(cr, PID_DYNAMITE))
+        return true;
+    if(HasItem(cr, PID_JET))
+        return true;
+    if(HasItem(cr, PID_BUFFOUT))
+        return true;
+    if(HasItem(cr, PID_PSYCHO))
+        return true;
+    if(HasItem(cr, PID_MENTATS))
+        return true;
+    if(HasItem(cr, PID_BEER))
+        return true;
+    if(HasItem(cr, PID_CIGARETTES))
+        return true;
+    return false;
+}
+
+////////////////////////////////////////////////
+// Dialog
+////////////////////////////////////////////////
+
+// demands
+bool d_HasContract(Critter& player, Critter@ npc)
+{
+    if(valid(FindContract(Pending, player.Id)) || valid(FindContract(Contracts, player.Id)))
+        return true;
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Player2 == player.Id)
+            return true;
+    return false;
+}
+
+bool d_IsRoomBusy(Critter& player, Critter@ npc)
+{
+    DLog("room to check: " + _GetRoom(player) + (Rooms[_GetRoom(player)].IsLocked() ? ": LOCKED" : ": UNLOCKED"));
+    return Rooms[_GetRoom(player)].IsLocked();
+}
+
+bool d_ClosedContractExists(Critter& player, Critter@ npc)
+{
+    return Contracts.length() > 0;
+}
+
+bool d_IsArenaFree(Critter& player, Critter@ npc, int number)   // 0/1/2/3
+{
+    if(uint(number) >= ArenasLen)
+        return false;
+    return !Arenas[number].IsLocked();
+}
+
+bool d_IsNoArenaFree(Critter& player, Critter@ npc)
+{
+    for(uint i = 0, j = ArenasLen; i < j; i++)
+        if(!Arenas[i].IsLocked())
+            return false;
+    return true;
+}
+
+bool d_ClosedContractExists(Critter& player, Critter@ npc, int type)   // 0/1, pvp or fvf
+{
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Type == type)
+            return true;
+    return false;
+}
+
+bool d_IsContract(Critter& player, Critter@ npc, int type, int number)   // 0,0/.../1,3
+{
+    return valid(FindContractByType(Contracts, player.Stat[ST_VAR0 + number], type));
+}
+
+bool d_IsContractSetRule(Critter& player, Critter@ npc, int option, int value)
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        Log("ERR: contract not found");
+        return false;
+    }
+
+    return contract.Rules[option] == value;
+}
+
+bool d_IsNotContractSetRule(Critter& player, Critter@ npc, int option, int value)
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        Log("ERR: contract not found");
+        return false;
+    }
+    return contract.Rules[option] != value;
+}
+
+bool d_HasTooMuchStuff(Critter& player, Critter@ npc)
+{
+    GameVar@ timeout = GetLocalVar(LVAR_arena_gear_timeout, player.Id);
+    if(timeout.GetValue() == 0)
+        return false;
+    int      decrement = (ELAPSED_TIME - timeout.GetValue()) / REAL_MINUTE(4);
+    GameVar@ count = GetLocalVar(LVAR_arena_gear_count, player.Id);
+    if(count < 6)
+        return false;
+    if(decrement > 0)
+    {
+        count -= decrement;
+        timeout = timeout.GetValue() + decrement * REAL_MINUTE(4);
+    }
+    if(count < 0)
+        count = 0;
+    return count > 5;
+}
+
+bool d_TryingToEnter(Critter& player, Critter@ npc)
+{
+    uint8 dir = player.Dir;
+    return dir == 5 || dir == 0 || dir == 1;
+}
+
+bool d_CanEnter(Critter& player, Critter@ npc)
+{
+    return !HasIllegalItems(player);
+}
+
+bool d_CanNotEnter(Critter& player, Critter@ npc)
+{
+    return HasIllegalItems(player);
+}
+
+// results
+uint r_DirectToContractNode(Critter& player, Critter@ npc)
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(valid(contract))
+    {
+        if(_GetRoom(player) != contract.Room1)
+        {
+            return NODE_WRONG_ROOM;
+        }
+        switch(contract.Stage)
+        {
+        case STAGE_SET_RULES:
+            return NODE_SELECT_CONTRACT_RULES;
+        case STAGE_SET_ARENA:
+            return NODE_SELECT_CONTRACT_ARENA;
+        case STAGE_SET_TYPE:
+        default:
+            return NODE_SELECT_CONTRACT_TYPE;
+        }
+    }
+
+    @contract = FindContract(Contracts, player.Id);
+    if(valid(contract))
+    {
+        if(_GetRoom(player) != contract.Room1)
+        {
+            return NODE_WRONG_ROOM;
+        }
+        switch(contract.Type)
+        {
+        case TYPE_PVP:
+            return NODE_HAS_PVP_CONTRACT;
+        case TYPE_FVF:
+        default:
+            return NODE_HAS_FVF_CONTRACT;
+        }
+    }
+
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Player2 == player.Id)
+        {
+            if(_GetRoom(player) != Contracts[i].Room2)
+            {
+                return NODE_WRONG_ROOM;
+            }
+
+            switch(Contracts[i].Type)
+            {
+            case TYPE_PVP:
+                return NODE_SIGNED_PVP;
+            case TYPE_FVF:
+            default:
+                return NODE_SIGNED_FVF;
+            }
+        }
+
+    return NODE_FATAL_ERROR;
+}
+
+uint r_ContractCreate(Critter& player, Critter@ npc)
+{
+    int room = _GetRoom(player);
+    if(Rooms[room].IsLocked())
+    {
+        return NODE_ROOM_USED;
+    }
+    Contract@ contract = @Contract(player.Id, room);
+    Pending.insertLast(contract);
+    DLog("locking room " + room);
+    Rooms[room].Lock();
+    return 0;
+}
+
+void r_ContractCancel(Critter& player, Critter@ npc)
+{
+    for(uint i = 0, j = Pending.length(); i < j; i++)
+        if(Pending[i].Player1 == player.Id)
+        {
+            UnlockRooms(Pending[i], true);
+            Pending.removeAt(i);
+            return;
+        }
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Player1 == player.Id)
+        {
+            UnlockRooms(Contracts[i], true);
+            Contracts.removeAt(i);
+            return;
+        }
+}
+
+uint r_ContractSetType(Critter& player, Critter@ npc, int type)   // 0/1
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        return NODE_CONTRACT_CANCELLED;
+    }
+    contract.Type = type;
+    if(type == TYPE_FVF)
+        contract.Faction1 = _GroupIndex(player);
+    contract.Stage = STAGE_SET_ARENA;
+    contract.Update();
+    return 0;
+}
+
+uint r_ContractSetArena(Critter& player, Critter@ npc, int number)   // 0/1/2/3
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        return NODE_CONTRACT_CANCELLED;
+    }
+
+    if(uint(number) >= ArenasLen)
+    {
+        return NODE_FATAL_ERROR;
+    }
+
+    if(Arenas[number].IsLocked())
+    {
+        return NODE_ARENA_TAKEN;
+    }
+
+    DLog("locking arena " + number);
+    Arenas[number].Lock();
+    contract.Arena = number;
+    contract.Stage = STAGE_SET_RULES;
+    contract.Update();
+    return 0;
+}
+
+uint r_ContractSetRule(Critter& player, Critter@ npc, int option, int value)
+{
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        return NODE_CONTRACT_CANCELLED;
+    }
+    contract.Rules[option] = value;
+    contract.Update();
+    return 0;
+}
+
+uint r_ContractClose(Critter& player, Critter@ npc)
+{
+    for(uint i = 0, j = Pending.length(); i < j; i++)
+        if(Pending[i].Player1 == player.Id)
+        {
+            Contracts.insertLast(Pending[i]);
+            Pending.removeAt(i);
+            return 0;
+        }
+    return NODE_CONTRACT_CANCELLED;
+}
+
+void r_PrepareContractList(Critter& player, Critter@ npc, int type)   // 0/1
+{
+    for(uint i = 0; i < 9; i++)
+        player.StatBase[ST_VAR0 + i] = 0;
+    uint k = 0;
+    if(type == TYPE_PVP)
+    {
+        for(uint i = 0, j = Contracts.length(); i < j; i++)
+            if(Contracts[i].Type == TYPE_PVP)
+                player.StatBase[ST_VAR0 + (k++)] = Contracts[i].Player1;
+    }
+    else
+    {
+        int ownfaction = _GroupIndex(player);
+        for(uint i = 0, j = Contracts.length(); i < j; i++)
+            if(Contracts[i].Type == TYPE_FVF && Contracts[i].Faction1 != ownfaction)
+                player.StatBase[ST_VAR0 + (k++)] = Contracts[i].Faction1;
+    }
+}
+
+uint r_ContractAccept(Critter& player, Critter@ npc, int type, int number)   // 0,0/.../1,3
+{
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Type == type && ((type == TYPE_PVP && int(Contracts[i].Player1) == player.Stat[ST_VAR0 + number]) || (type == TYPE_FVF && int(Contracts[i].Faction1) == player.Stat[ST_VAR0 + number])))
+        {
+            if(Contracts[i].Faction1 == _GroupIndex(player))
+            {
+                return NODE_YOUR_FACTION;
+            }
+            if(Contracts[i].Player2 > 0)
+            {
+                return NODE_CONTRACT_TAKEN;
+            }
+            int room = _GetRoom(player);
+            if(Contracts[i].Room1 == room)
+            {
+                return NODE_WRONG_ROOM;
+            }
+            Contracts[i].Player2 = player.Id;
+            Contracts[i].Room2 = room;
+            DLog("locking room " + room);
+            Rooms[room].Lock();
+            if(type == TYPE_FVF)
+                Contracts[i].Faction2 = _GroupIndex(player);
+            player.StatBase[ST_VAR1] = player.Stat[ST_VAR0 + number];
+            player.StatBase[ST_VAR0] = type;
+            DLog("saved settings: " + player.Stat[ST_VAR0] + "," + player.Stat[ST_VAR0]);
+            Contracts[i].Update();
+            return 0;
+        }
+    return NODE_CONTRACT_TAKEN;
+}
+
+uint r_StartCombat(Critter& player, Critter@ npc)
+{
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+        if(Contracts[i].Player2 == player.Id)
+        {
+            if(Contracts[i].Arena >= 0)
+            {
+                if(Contracts[i].Arena == ARENA_BARRELS)
+                    SpawnArena(player.GetMap(), 40, 40, 267, 262, Random(4, 6), Random(4, 6), Random(2, 4));
+                Arenas[Contracts[i].Arena].StartCombat();
+            }
+            array<int> combatants;
+            TeleportTeam(player.GetMap(), Contracts[i], 1, combatants);
+            int        team_len = combatants.length();
+            TeleportTeam(player.GetMap(), Contracts[i], 2, combatants);
+            SetColors(team_len, combatants);
+            UnlockRooms(Contracts[i], false);
+            Contracts.removeAt(i);
+            return 0;
+        }
+    return NODE_CONTRACT_CANCELLED;
+}
+
+void r_TransferItems(Critter& player, Critter@ npc)
+{
+    array<Item@> items;
+    uint         n = npc.GetItems(-1, items);
+    for(uint i = 0; i < items.length();)
+    {
+        if(FLAG(items[i].Flags, ITEM_NO_LOOT))
+        {
+            items.removeAt(i);
+            continue;
+        }
+        items[i].Val8 = SPECIAL_ITEM_ARENA;
+        items[i].SetScript("arena@_ArenaItemInit");
+        i++;
+    }
+    MakeItemsUseless(npc);
+    MoveItems(items, player);
+
+    GameVar@ timeout = GetLocalVar(LVAR_arena_gear_timeout, player.Id);
+    GameVar@ count = GetLocalVar(LVAR_arena_gear_count, player.Id);
+    if(count == 0)
+        timeout = ELAPSED_TIME;
+    count = count.GetValue() + 1;
+}
+
+void r_RestoreItems(Critter& player, Critter@ npc)
+{
+    RestoreItems(player);
+}
+
+void r_DoorTransport(Critter& player, Critter@ npc, int inside)
+{
+    if(inside != 0)
+    {
+        if(HasIllegalItems(player))
+            return;
+        player.TransitToHex(DoorIn[player.Stat[ST_VAR9]].HexX, DoorIn[player.Stat[ST_VAR9]].HexY, 3);
+    }
+    else
+    {
+        RemoveArenaItems(player);
+        player.TransitToHex(DoorOut[player.Stat[ST_VAR9]].HexX, DoorOut[player.Stat[ST_VAR9]].HexY, 3);
+    }
+}
+
+// formatters
+void dlg_ArenaName(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    for(uint i = 0; i < ArenasLen; i++)
+        text += ("$arena" + i + Arenas[i].Name);
+}
+
+void dlg_PvPName(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    for(uint i = 0; player.Stat[ST_VAR0 + i] != 0; i++)
+        text += ("$pvp" + i + GetSafePlayerName(player.Stat[ST_VAR0 + i]));
+}
+
+void dlg_FvFName(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    for(uint i = 0; player.Stat[ST_VAR0 + i] != 0; i++)
+    {
+        string name;
+        if(!GetFactionNameStr(player.Stat[ST_VAR0 + i], name))
+            name = "error: " + i + "," + player.Stat[ST_VAR0 + i];
+        text += ("$fvf" + i + name);
+    }
+}
+
+string GetWeaponRuleString(uint weaponrule)
+{
+    switch(weaponrule)
+    {
+    case RULES_WEAPONS_ALL:
+        return "All weapons";
+    case RULES_WEAPONS_MELEE:
+        return "Melee only";
+    case RULES_WEAPONS_UNARMED:
+        return "Unarmed only";
+    default:
+        return "Error";
+    }
+    return "Error";
+}
+
+string GetArmorRuleString(uint armorrule)
+{
+    switch(armorrule)
+    {
+    case RULES_ARMOR_ALL:
+        return "All weapons";
+    case RULES_ARMOR_LIGHT:
+        return "Light armor";
+    case RULES_ARMOR_MEDIUM:
+        return "Medium armor";
+    case RULES_ARMOR_HEAVY:
+        return "Heavy armor";
+    default:
+        return "Error";
+    }
+    return "Error";
+}
+
+uint dlg_ContractRule(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return 0;
+
+    Contract@ contract = FindContract(Pending, player.Id);
+    if(!valid(contract))
+    {
+        return NODE_CONTRACT_CANCELLED;
+    }
+    text += "$rules" + "Weapons: " + GetWeaponRuleString(contract.Rules[RULES_WEAPONS]) + " Allowed Armor: " + GetArmorRuleString(contract.Rules[RULES_ARMOR]);
+    text += "$rulesweapon" + GetWeaponRuleString(contract.Rules[RULES_WEAPONS]);
+    text += "$rulesarmor" + GetArmorRuleString(contract.Rules[RULES_ARMOR]);
+    text += "$arena" + Arenas[contract.Arena].Name;
+    return 0;
+}
+
+uint dlg_ContractRule2(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return 0;
+
+    Contract@ contract = null;
+    int       type = player.Stat[ST_VAR0];
+    uint      id = player.Stat[ST_VAR1];
+    // Log("finding "+type+","+id);
+    for(uint i = 0, j = Contracts.length(); i < j; i++)
+    {
+        DLog("contract " + i);
+        if(Contracts[i].Type != type)
+            continue;
+        DLog("correct type");
+        if(Contracts[i].Player1 == id)
+        {
+            @contract = Contracts[i];
+            break;
+        }
+    }
+
+    if(!valid(contract))
+    {
+        return NODE_CONTRACT_CANCELLED;
+    }
+    text += "$rules" + "Weapons: " + GetWeaponRuleString(contract.Rules[RULES_WEAPONS]) + " Allowed Armor: " + GetArmorRuleString(contract.Rules[RULES_ARMOR]);
+    text += "$rulesweapon" + GetWeaponRuleString(contract.Rules[RULES_WEAPONS]);
+    text += "$rulesarmor" + GetArmorRuleString(contract.Rules[RULES_ARMOR]);
+    text += "$arena" + Arenas[contract.Arena].Name;
+    return 0;
+}
+
+////////////////////////////////////////////////
+// Scenery
+////////////////////////////////////////////////
+
+bool s_Scheduler(Critter& player, Scenery& terminal, int skill, Item@ item, int room)
+{
+    if(valid(item) || skill != -1)
+        return false;
+    _SetRoom(player, room);
+    RunDialog(player, DIALOG_arena_scheduler, terminal.HexX, terminal.HexY, false);
+    return true;
+}
+
+
+////////////////////////////////////////////////
+// Critter events
+////////////////////////////////////////////////
+void _OnOutCritter(Map& map, Critter& cr)
+{
+    UnsetMinigame(cr);
+    RemoveArenaItems(cr);
+    cr.SetEvent(CRITTER_EVENT_ATTACK, null);
+}
+
+void _OnInCritter(Map& map, Critter& cr)
+{
+    cr.SetEvent(CRITTER_EVENT_ATTACK, "_OnAttack");
+}
+
+bool _OnAttack(Critter& cr, Critter& target)
+{
+    Item@ weapon = _CritGetItemHand(cr);
+    if(!valid(weapon))
+        return false;
+    if(cr.IsNpc() || !IsArenaItem(weapon))
+        return IsInsideArena(target);
+    // fake weapon case
+    int crarena = cr.Stat[ST_VAR6] - 10000;
+    int targetarena = target.Stat[ST_VAR6] - 10000;
+    if(crarena < 0 || crarena >= int(ArenasLen) || targetarena < 0 || targetarena >= int(ArenasLen) || crarena != targetarena)
+    {
+        cr.Say(SAY_NETMSG, "This weapon does not work here.");
+        return true;
+    }
+    if(!Arenas[crarena].IsWithin(cr) || !Arenas[targetarena].IsWithin(target))        // bleh
+    {
+        cr.Say(SAY_NETMSG, "This weapon does not work here.");
+        return true;
+    }
+    return false;
+}
+
+
+////////////////////////////////////////////////
+// Export events
+////////////////////////////////////////////////
+
+void OnTeleportToLobby(Critter& cr)   // export
+{
+    if(cr.IsDead())
+        cr.ToLife();
+    cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_VAR7];
+    int damages = cr.Stat[ST_VAR8];
+    if(damages & CRIPPLED_EYE != 0)
+        cr.DamageBase[DAMAGE_EYE] = 1;
+    else
+        cr.DamageBase[DAMAGE_EYE] = 0;
+    if(damages & CRIPPLED_RIGHT_ARM != 0)
+        cr.DamageBase[DAMAGE_RIGHT_ARM] = 1;
+    else
+        cr.DamageBase[DAMAGE_RIGHT_ARM] = 0;
+    if(damages & CRIPPLED_LEFT_ARM != 0)
+        cr.DamageBase[DAMAGE_LEFT_ARM] = 1;
+    else
+        cr.DamageBase[DAMAGE_LEFT_ARM] = 0;
+    if(damages & CRIPPLED_RIGHT_LEG != 0)
+        cr.DamageBase[DAMAGE_RIGHT_LEG] = 1;
+    else
+        cr.DamageBase[DAMAGE_RIGHT_LEG] = 0;
+    if(damages & CRIPPLED_LEFT_LEG != 0)
+        cr.DamageBase[DAMAGE_LEFT_LEG] = 1;
+    else
+        cr.DamageBase[DAMAGE_LEFT_LEG] = 0;
+    cr.StatBase[ST_VAR6] = 0;
+    if(cr.Timeout[TO_REPLICATION] > 0)
+        _SetTimeout(cr, TO_REPLICATION, 0);
+    MakeItemsUseless(cr);
+    RestoreItems(cr);
+    UnsetMinigame(cr);
+}
+
+void OnTeleportToArena(Critter& cr)   // export
+{
+    cr.StatBase[ST_VAR7] = cr.Stat[ST_CURRENT_HP];
+    int damages = 0;
+    if(cr.Damage[DAMAGE_EYE] != 0)
+        damages |= CRIPPLED_EYE;
+    if(cr.Damage[DAMAGE_RIGHT_ARM] != 0)
+        damages |= CRIPPLED_RIGHT_ARM;
+    if(cr.Damage[DAMAGE_LEFT_ARM] != 0)
+        damages |= CRIPPLED_LEFT_ARM;
+    if(cr.Damage[DAMAGE_RIGHT_LEG] != 0)
+        damages |= CRIPPLED_RIGHT_LEG;
+    if(cr.Damage[DAMAGE_LEFT_LEG] != 0)
+        damages |= CRIPPLED_LEFT_LEG;
+    cr.StatBase[ST_VAR8] = damages;
+    BackupItems(cr);
+    MakeItemsUseful(cr);
+}
+
+void _ArenaItemInit(Item& item, bool firstTime)
+{
+    if(!firstTime)
+        DeleteItem(item);
+}
+
+/*@}*/

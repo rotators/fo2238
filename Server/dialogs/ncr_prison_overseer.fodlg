@@ -1,0 +1,65 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _item p PID_MINERAL > 0 #
+4 2020 #
+7 2030 D _var p ncrcf_prison_points < 500 #
+8 2040 D _var p ncrcf_prison_points < 750 D _var p ncrcf_prison_points } 500 #
+9 2050 D _var p ncrcf_prison_points } 1000 D _var p ncrcf_prison_points } 750 #
+0 2060 @
+3 3000 None 0 #
+2 3010 D _item p PID_MINERAL > 0 R _item p PID_MINERAL - 1 R _var p ncrcf_prison_points + 15 #
+0 3020 R _item p PID_MINERAL - 1 R _var p ncrcf_prison_points + 15 @
+4 4000 None 0 #
+5 4010 #
+6 4020 @
+5 5000 None 0 #
+4 5010 #
+6 5020 @
+6 6000 None 0 @
+7 7000 None 0 #
+6 7010 @
+8 8000 None 0 #
+6 8010 @
+9 9000 None 0 #
+0 9010 R _var p ncrcf_prison_points = 0 #
+0 9020 &
+
+[engl]
+{100}{}{NCRCF Overseer}
+{200}{}{You see a NCRCF Overseer.}
+{210}{}{He is in charge of the prison yard.}
+{1000}{}{Predialogue installations}
+{1010}{}{2}
+{2000}{}{[He looks at you in a aggressive, deprecatingly way.] What do you want?@@What do you want?}
+{2010}{}{I've mined quarry stones.}
+{2020}{}{Is there any special work that needs to be done?}
+{2030}{}{What is my prisoner status?@@I want to know my current prisoner status.@@Can you tell me what my current prisoner status is?}
+{2040}{}{What is my prisoner status?@@I want to know my current prisoner status.@@Can you tell me what my current prisoner status is?}
+{2050}{}{What is my prisoner status?@@I want to know my current prisoner status.@@Can you tell me what my current prisoner status is?}
+{2060}{}{Nothing. Goodbye.}
+{3000}{}{[He points with his arm in a random direction and talks to you with a loud voice.] Drop them at the pit for further processing!}
+{3010}{}{[You drop the stones and walk back to the overseer.] [Back]}
+{3020}{}{[You drop the stones and go away.] [End]}
+{4000}{}{We need a few more workers at the rail lines. You think you can do that?}
+{4010}{}{Anything else?}
+{4020}{}{Now when I think about it, I have a gammy leg... see? ...}
+{5000}{}{Not for you, convict.}
+{5010}{}{[Back]}
+{5020}{}{Goodbye.}
+{6000}{}{Shove off!}
+{7000}{}{You still have a long way to go, convict! }
+{7010}{}{I see.}
+{8000}{}{You've made something good by now, but not yet enough!}
+{8010}{}{I see.}
+{9000}{}{As far as I can see, you've paid the bills and you are a free @sex@|man||woman| now!}
+{9010}{}{I see. Well, time for me to go! [Exist the correctional facility.] *DEV NOTE: Teleport to the outside of the NCR!*}
+{9020}{}{Great! I'll just go to fetch my stuff. I will be back...}
+

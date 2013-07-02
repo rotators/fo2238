@@ -1,0 +1,196 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1020 D _var n name_mem_npc_player = 1 #
+2 1030 @
+2 2000 dialog@dlg_ShowFaction 0 #
+5 2010 #
+5 2020 #
+120 2030 D _script town@d_IsControllingTown 1 1 #
+0 2040 #
+2 2050 D _script dialog@d_IsGangMember 0  D _script town@d_IsNotControllingTown 1 1 D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+50 2060 D _script town@d_CanRecruitMilitia 0  @
+4 3000 None 0 #
+0 3010 #
+0 3020 @
+3 4000 dialog@dlg_ShowFaction 0 #
+6 4010 #
+120 4020 D _script town@d_IsControllingTown 1 1 #
+0 4030 #
+2 4040 D _script dialog@d_IsGangMember 0  D _script town@d_IsNotControllingTown 1 1 D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+50 4050 D _script town@d_IsControllingTown 1 1 D _script town@d_CanRecruitMilitia 0  #
+500 4060 D _script town@d_CanChangeLaws 0  @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+8 6020 #
+12 6030 #
+13 6040 #
+0 6050 @
+7 7000 None 0 #
+6 7010 #
+0 7020 @
+8 8000 None 0 #
+6 8010 #
+9 8020 #
+0 8030 @
+9 9000 None 0 #
+10 9010 #
+6 9020 #
+0 9030 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+6 11010 @
+12 12000 None 0 #
+6 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+6 14010 #
+0 14020 @
+301 15000 dialog@dlg_ShowFaction 0 #
+0 15010 #
+130 15020 D _script town@d_PresentAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+302 16000 dialog@dlg_ShowFaction 0 #
+65507 16010 #
+0 16020 #
+130 16030 D _script town@d_MembersAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+130 17000 None 0 #
+0 17010 #
+65507 17020 @
+310 18000 None 0 #
+0 18010 D _script town@d_GainControl 1 1 @
+320 19000 None 0 #
+0 19010 D _script town@d_GainControl 1 1 @
+120 20000 None 0 #
+0 20010 @
+500 21000 town@dlg_ShowPolicies 0 #
+500 21010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 21020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 21030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 21040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 21050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 21060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+3 21070 @
+50 22000 town@dlg_ShowMilitiaCost 0 #
+50 22010 R _script town@r_RecruitMilitia 0  #
+2 22020 @
+410 23000 None 0 #
+0 23010 @
+420 24000 None 0 #
+0 24010 @
+430 25000 None 0 #
+0 25010 @
+440 26000 None 0 @
+450 27000 None 0 #
+0 27010 @
+330 28000 None 0 &
+
+[engl]
+{100}{}{Slim Picket}
+{200}{}{You see a very tall and lanky trapper.}
+{210}{}{You see Slim Picket, the head of Trapper Town.}
+{1000}{}{Predialogue installations}
+{1010}{}{unknown}
+{1020}{}{known}
+{1030}{}{Dumb}
+{2000}{}{Hello there, friend. Nice of you to visit all of us here. My name’s Slim Picket. I talk for Trapper Town.}
+{2010}{}{Hello there Slim. My name’s @pname@. What did you want to know about?}
+{2020}{}{@pname@. Why do you call this Trapper Town?}
+{2030}{}{What about our goods?}
+{2040}{}{Nice to meet you, Mr. Picket. I’m just looking around for now, though. Goodbye}
+{2050}{}{Not anymore you don't, Slim Faggot. @lex faction@ are going to talk for this piece of crap town from now on. Start paying your "protection money" before we get bored.}
+{2060}{}{We need some volunteers to secure the town.}
+{3000}{}{Say, your antenna don't pick up all the channels do it? Well, I tell you what. You get out of here and I'll make sure none of my pals give you any hassle. How's that?}
+{3010}{}{OK. Heh, heh, fwen. Heh, heh, heh.}
+{3020}{}{No! Man scaaarrrry! No. Me go now.}
+{4000}{}{What the heck do you want this time?}
+{4010}{}{I’ve got some questions that I wanted to ask you.}
+{4020}{}{What about our goods?}
+{4030}{}{I guess I don’t need anything. Goodbye.}
+{4040}{}{We @lex faction@ are going to talk for this piece of crap town from now on. Start paying your "protection money" before we get bored.}
+{4050}{}{We need some volunteers to secure the town.}
+{4060}{}{I want to change the laws around here.}
+{5000}{}{Well, this here part of town is where all of us trappers live when we’re not out trapping geckos. Only problem about the free digs are the rats on the north side. But we have most of the entrances to that part of the mall barricaded pretty good.}
+{5010}{}{Interesting, well I've got a few questions.}
+{5020}{}{North side, huh? Maybe I'll go check it out. Bye, Slim.}
+{6000}{}{What did you want to know about?}
+{6010}{}{Do you ever go to the north side?}
+{6020}{}{Tell me about geckos.}
+{6030}{}{You sure have a lot of cars here.}
+{6040}{}{Tell me more about rats.}
+{6050}{}{Thanks for the info. I don’t think I need to know about anything else. Goodbye}
+{7000}{}{Sure, a tribal from way back done cleared out the place. Came out, chest all puffed up, saying he killed some big ol' Rat God. Civilised folk don't believe in crap like that, but he sure as hell took the fight outta them rats.}
+{7010}{}{I guess tribals are good for something. For now, I got some questions.}
+{7020}{}{Hah, Rat God? Like anyone would believe that. See you around, Slim.}
+{8000}{}{You’re interested in trapping, huh? (He looks you up and down) I don’t think I’d try it if I were you. You might get your hands all dirty and callused. (heh, hee, hee) Anything else you want to know about?}
+{8010}{}{Well, I sure wouldn’t want to get my hands dirty. Tell me something else.}
+{8020}{}{I sure wish I was as skillful a trapper as you are. I bet you could teach me a lot.}
+{8030}{}{That’s all I need to know for now. Goodbye.}
+{9000}{}{Well, now you look like you could handle yourself. Geckos come in two types — regular or golden. The regular ones are easy to trap and hunt, but the golden ones are worth more money.}
+{9010}{}{Tell me more about the golden geckos.}
+{9020}{}{Interesting. Tell me something else.}
+{9030}{}{That’s all I need to know for now. Goodbye.}
+{10000}{}{The golden ones are sneaky and twice as vicious as the regular ones. Plus, once they bite you they’ll hold on and gnaw through to the bone. And that’s not even counting their poison. But their hides look real nice, and so they’re worth a lot more. Plus, you can make some more robust armour out of it, if you're that way inclined.}
+{10010}{}{Tell me more.}
+{11000}{}{Well, if you get yourself another regular gecko pelts, you can whip yourself up a pretty mean leather jacket. Get yourself enough golden ones, you can make yourself a pretty durable set of leather armour.}
+{11010}{}{Maybe I'll look into that, but now I got some more questions.}
+{12000}{}{We have a whole lot full of cars. All ready for their owners to come back from shopping. Thing is, they never did. Not a dang one of ‘em runs, though. There’s a real beauty of a Chrysalis Motors  Highwayman just east of here, but some fucking tribal already raided it for parts.}
+{12010}{}{A Highwayman? Interesting. Tell me about something else.}
+{12020}{}{That’s all I need to know for now. Goodbye.}
+{13000}{}{Well, they taste pretty good if you spit-roast ‘em with just a titch of herbs. But most of the time they can be a real nuisance, but they ain't as bad as they used to be. We once had to barricade the north part of the mall -- well, Trapper Town, that is.}
+{13010}{}{At home, mom just used to pan-fry them with a little butter. But, tell me more about the rats.}
+{14000}{}{They used to kill people, y'know? People used to disappear. Just them slow and sickly trappers, though. 'Course, rats don't stop to cook their food like us. They just gnaw it into a few bloody clumps of hair and rags. Least that's all we used to find in the morning. We figure that's what happened to Phil.}
+{14010}{}{Interesting. Tell me about something else.}
+{14020}{}{That’s all I need to know for now. Goodbye.}
+{15000}{}{Don't you think you need a bit more muscle to act like that? Where's the rest of @lex faction@?}
+{15010}{}{I'll be back with them in a minute. Don't move an inch.}
+{15020}{}{Got all the muscle I need right here. [flex your arms.] Believe me, all the gang bangers in Reno couldn't take me down.}
+{16000}{}{We don't appreciate that kind of attitude here, especially not from some shabby little outfit. Your tiny gang doesn't garner enough respect for that talk. Go on, get.}
+{16010}{}{"Ooh look at me! I'm Slim Picket! I don't appreciate your attitude!" Appreciate this, dickshit.}
+{16020}{}{Next time you see us, you wont be shrugging us off so easy.}
+{16030}{}{Shabby? Not enough respect? Looks to me like your lack of respect for @lex faction@ is your problem, not ours. Normally I'd kill someone who talked trash about us, but I'll give you one more chance to accept our offer.}
+{17000}{}{[Starts to clean what looks like bits of rat off his hands with a disgustingly filthy rag he has retrieved from his pocket.] You got a lot of growing to do, son. Both in here [points at his head.] and in terms of getting more friends. Come back when you're all grown up.}
+{17010}{}{I'll be back for you, Slim!}
+{17020}{}{Fuck your superior-ass holier-than-thou old-timer 'seen-it-all' bullshit attitude, and fuck you!}
+{18000}{}{I don't appreciate the attitude, but I appreciate the guns. Make us safe, and we'll make you rich. But if you mess up, there's not going to be a payday.}
+{18010}{}{If we mess up, you'll be dead. Let's get to work.}
+{19000}{}{Alright, okay okay. Make us safe, and we'll make you rich. But if you mess up, there's not going to be a payday.}
+{19010}{}{Good. Now let's get to work.}
+{20000}{}{Check the abandoned house in the northern part of the town. Your goods are stored in a footlocker there.}
+{20010}{}{Alright, then.}
+{21000}{}{Here's the current laws in Klamath:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{21010}{}{I want it to be legal to carry weapons openly.}
+{21020}{}{I want it to be illegal to carry weapons openly.}
+{21030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{21040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{21050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{21060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{21070}{}{Ok, looks good.}
+{22000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{22010}{}{Sounds good, here's @lex cost@ caps.}
+{22020}{}{Nah, I think we're doing fine as it is now.}
+{23000}{}{Alright, there you go.}
+{23010}{}{Right.}
+{24000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{24010}{}{Ok.}
+{25000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{25010}{}{Yeah, yeah...}
+{26000}{}{Error. Report this.}
+{27000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{27010}{}{Uh, sure!}
+{28000}{}{Guards, get those retards!}
+

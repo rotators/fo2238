@@ -1,0 +1,540 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// talchem.fos
+//
+
+#include "_macros.fos"
+#include "MsgStr.h"
+#include "_npc_pids.fos"
+#include "_animation.fos"
+
+// Imports
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+
+bool s_TerminalDial(Critter& player, Scenery& terminal, int skill, Item@ item, int dialNum)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+        RunDialog(player, dialNum, terminal.HexX, terminal.HexY, false);
+    return true;
+}
+
+uint innerGateEntire            = 10; // entire pod vnitrni branou
+uint outerLeftGateEntire        = 11; // entire pod vnejsi levou branou
+uint outerRightGateEntire       = 12; // entire pod vnejsi pravou branou
+
+// pripichnout k Acku
+bool s_InnerTerminalA(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    return s_TerminalAirlock(player, terminal, skill, item, 1);
+}
+
+// pripichnout k Bcku
+bool s_MiddleTerminalB(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    return s_TerminalAirlock(player, terminal, skill, item, 2);
+}
+
+// pripichnout k Ccku
+bool s_OuterTerminalC(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    return s_TerminalAirlock(player, terminal, skill, item, 3);
+}
+
+bool s_TerminalAirlock(Critter& player, Scenery& terminal, int skill, Item@ item, int whichTerm)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        Map @ map = player.GetMap();
+        uint16 x = 0, y = 0;
+
+        map.GetEntireCoords(innerGateEntire, 0, x, y);
+        Item@ innerDoor = map.GetDoor(x, y);
+
+        map.GetEntireCoords(outerLeftGateEntire, 0, x, y);
+        Item@ outerLeftDoor = map.GetDoor(x, y);
+
+
+        map.GetEntireCoords(outerRightGateEntire, 0, x, y);
+        Item@ outerRightDoor = map.GetDoor(x, y);
+
+        if(whichTerm == 1)
+        {
+            if(valid(innerDoor))
+                innerDoor.LockerOpen();
+            if(valid(outerRightDoor))
+                outerRightDoor.LockerClose();
+            if(valid(outerLeftDoor))
+                outerLeftDoor.LockerClose();
+        }
+        if(whichTerm == 2)
+        {
+            bool closeOuter = false;
+            if(valid(innerDoor))
+            {
+                closeOuter = !FLAG(innerDoor.LockerCondition, LOCKER_ISOPEN);
+                if(closeOuter)
+                    innerDoor.LockerOpen();
+                else
+                    innerDoor.LockerClose();
+            }
+            if(valid(outerRightDoor))
+            {
+                if(closeOuter)
+                    outerRightDoor.LockerClose();
+                else
+                    outerRightDoor.LockerOpen();
+            }
+            if(valid(outerLeftDoor))
+            {
+                if(closeOuter)
+                    outerLeftDoor.LockerClose();
+                else
+                    outerLeftDoor.LockerOpen();
+            }
+        }
+        if(whichTerm == 3)
+        {
+            if(valid(innerDoor))
+                innerDoor.LockerClose();
+            if(valid(outerRightDoor))
+                outerRightDoor.LockerOpen();
+            if(valid(outerLeftDoor))
+                outerLeftDoor.LockerOpen();
+        }
+
+        return true;
+    }
+    return false;
+}
+
+const uint32 doorCloseInterval = 5;                                       // za jak dlouho se to ma zavrit -v sekundach
+const uint32 chanceToJam = 20;                                            // sance na zaseknuti po zavreni dveri -v procentech
+const uint32 criticalFailChance = 5;                                      // sance na fail opravy i s uspesnym checkem -v procentech
+const uint32 repairCheckBottom = 80;                                      // dolni hranice skillu pri hodu na opravy
+const uint32 repairCheckTop = 150;                                        // horni hranice skillu pri hodu na opravy
+string       jammedMessage = "The door is jammed... electronically.";     // dvere jsou zasekly!
+string       doorOkMessage = "The door is working fine... for now.";      // oprava jiz opravenych dveri
+string       repairFailMessage = "You didn't manage to repair the door."; // oprava se nepovedla
+string       repairCritFailMessage = "You almost had it.";                // oprava se mela povyst ale kvuli kritickymu neuspechu se nezdarila
+string       repairSuccessMessage = "You successfully repair the door.";  // oprava se povedla
+
+void _AutoDoorInit(Item& door, bool firstTime)                            // pripichnout ke dverim
+{
+    door.SetEvent(ITEM_EVENT_SKILL, "_AutoDoorOpen");
+}
+
+bool _AutoDoorOpen(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        bool isOpen = FLAG(item.LockerCondition, LOCKER_ISOPEN);
+        if(item.Val1 != 0 && !isOpen)
+        {
+            crit.Say(SAY_NETMSG, jammedMessage);
+            return true;
+        }
+        array<uint> vals(2);
+        vals[0] = item.Id;
+        vals[1] = item.MapId;
+
+        if(isOpen)
+        {
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            Map@   map = item.GetMapPosition(hexX, hexY);
+            if(valid(map))
+            {
+                Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+                if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                    return false;
+            }
+        }
+
+        if(item.Val0 != 0)
+            EraseTimeEvent(item.Val0);
+        if(!isOpen)
+            item.Val0 = CreateTimeEvent(__FullSecond + REAL_SECOND(doorCloseInterval), "e_AutoCloseDoor", vals, false);
+        else
+        {
+            tryJamDoor(item);
+        }
+    }
+    else if(skill == SK_REPAIR)
+    {
+        if(item.Val1 == 0)
+            crit.Say(SAY_NETMSG, doorOkMessage);
+        else
+        {
+            if(crit.Timeout[TO_SK_REPAIR] > 0)
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                return true;
+            }
+
+            if(Random(repairCheckBottom, repairCheckTop) <= crit.Param[SK_REPAIR])
+            {
+                if(Random(1, 100) > criticalFailChance)
+                {
+                    item.Val1 = 0;
+                    crit.Say(SAY_NETMSG, repairSuccessMessage);
+                }
+                else
+                    crit.Say(SAY_NETMSG, repairCritFailMessage);
+            }
+            else
+                crit.Say(SAY_NETMSG, repairFailMessage);
+
+            crit.TimeoutBase[TO_SK_REPAIR] = REPAIR_TIMEOUT(crit);
+        }
+        return true;
+    }
+
+    return false;
+}
+
+uint e_AutoCloseDoor(array<uint>@ vals)
+{
+    Map@ map = GetMap(vals[1]);
+    if(valid(map))
+    {
+        Item@ door = map.GetItem(vals[0]);
+        if(valid(door))
+        {
+            uint16   hexX = 0;
+            uint16   hexY = 0;
+            door.GetMapPosition(hexX, hexY);
+            Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+            if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                return REAL_SECOND(doorCloseInterval);
+
+            door.LockerClose();
+            door.Val0 = 0;
+            tryJamDoor(door);
+        }
+    }
+    return 0;
+}
+
+void tryJamDoor(Item@ door)
+{
+    if(Random(1, 100) <= chanceToJam)
+    {
+        door.Val1 = 1;
+    }
+}
+
+
+
+
+
+const uint32 doorCloseInterval2 = 5;             // za jak dlouho se to ma zavrit -v sekundach
+const uint32 chanceToJam2 = 25;                  // sance na zaseknuti po zavreni dveri -v procentech
+const uint32 hackVarId  = 9210;                  // id promenne
+const uint32 dialogId   = 22120;                 // id dialogu
+void _HackDoorInit(Item& door, bool firstTime)   // pripichnout ke dverim
+{
+    door.SetEvent(ITEM_EVENT_SKILL, "_HackDoorOpen");
+}
+
+bool _HackDoorOpen(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        bool isOpen = FLAG(item.LockerCondition, LOCKER_ISOPEN);
+
+        if(isOpen)
+        {
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            Map@   map = item.GetMapPosition(hexX, hexY);
+            if(valid(map))
+            {
+                Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+                if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                    return false;
+            }
+        }
+
+        if(isOpen)
+        {
+            if(item.Val0 != 0)
+                EraseTimeEvent(item.Val0);
+            tryJamHackDoor();
+        }
+    }
+    return false;
+}
+
+uint e_HackCloseDoor(array<uint>@ vals)
+{
+    Map@ map = GetMap(vals[1]);
+    if(valid(map))
+    {
+        Item@ door = map.GetItem(vals[0]);
+        if(valid(door))
+        {
+            uint16   hexX = 0;
+            uint16   hexY = 0;
+            door.GetMapPosition(hexX, hexY);
+            Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+            if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                return REAL_SECOND(doorCloseInterval2);
+
+            door.LockerClose();
+            door.Val0 = 0;
+            tryJamHackDoor();
+        }
+    }
+    return 0;
+}
+
+void tryJamHackDoor()
+{
+    if(Random(1, 100) <= chanceToJam2)
+    {
+        GameVar@ hackVar = GetGlobalVar(hackVarId);
+        hackVar = 1;
+    }
+}
+
+bool s_HackDoorOpen(Critter& player, Scenery& terminal, int skill, Item@ item)   // pripichnout k terminalu //ParamCount = 0
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        RunDialog(player, dialogId, terminal.HexX, terminal.HexY, true);
+        return true;
+    }
+    return false;
+}
+
+void r_HackDoorOpen(Critter& player, Critter@ victim, int entireNum)   // todle je do toho dialogu //ParamCount = 1, Param0 = entire pod dverma
+{
+    uint16 hexX = 0;
+    uint16 hexY = 0;
+    Map@   map = player.GetMap();
+    map.GetEntireCoords(entireNum, 0, hexX, hexY);
+    Item@  door = map.GetDoor(hexX, hexY);
+    door.LockerOpen();
+
+    array<uint> vals(2);
+    vals[0] = door.Id;
+    vals[1] = door.MapId;
+    if(door.Val0 != 0)
+        EraseTimeEvent(door.Val0);
+    door.Val0 = CreateTimeEvent(__FullSecond + REAL_SECOND(doorCloseInterval2), "e_HackCloseDoor", vals, false);
+}
+
+const uint32 doorCloseInterval3 = 5;                                        // za jak dlouho se to ma zavrit -v sekundach
+const uint32 chanceToJam3 = 20;                                             // sance na zaseknuti po zavreni dveri -v procentech
+const uint32 criticalFailChance3 = 5;                                       // sance na fail lockpicku i s uspesnym checkem -v procentech
+const uint32 lockpickCheckBottom = 100;                                     // dolni hranice skillu pri hodu na lockpick
+const uint32 lockpickCheckTop = 150;                                        // horni hranice skillu pri hodu na lockpick
+string       jammedMessage3 = "The door is locked.";                        // dvere jsou zamceny
+string       doorOkMessage3 = "The door isn't locked.";                     // odemceni jiz odemcenych dveri
+string       lockpickFailMessage = "You didn't manage to unlock the door."; // lockpick fail
+string       lockpickCritFailMessage = "You almost had it.";                // oprava se mela povyst ale kvuli kritickymu neuspechu se nezdarila
+string       lockpickSuccessMessage = "You successfully unlock the door.";  // oprava se povedla
+
+void _AutoDoorInit3(Item& door, bool firstTime)                             // pripichnout ke dverim
+{
+    door.SetEvent(ITEM_EVENT_SKILL, "_AutoDoorOpen3");
+}
+
+bool _AutoDoorOpen3(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        bool isOpen = FLAG(item.LockerCondition, LOCKER_ISOPEN);
+        if(item.Val1 != 0 && !isOpen)
+        {
+            crit.Say(SAY_NETMSG, jammedMessage3);
+            return true;
+        }
+        array<uint> vals(2);
+        vals[0] = item.Id;
+        vals[1] = item.MapId;
+
+        if(isOpen)
+        {
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            Map@   map = item.GetMapPosition(hexX, hexY);
+            if(valid(map))
+            {
+                Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+                if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                    return false;
+            }
+        }
+
+        if(item.Val0 != 0)
+            EraseTimeEvent(item.Val0);
+        if(!isOpen)
+            item.Val0 = CreateTimeEvent(__FullSecond + REAL_SECOND(doorCloseInterval3), "e_AutoCloseDoor3", vals, false);
+        else
+        {
+            tryJamDoor3(item);
+        }
+    }
+    else if(skill == SK_LOCKPICK)
+    {
+        if(item.Val1 == 0)
+            crit.Say(SAY_NETMSG, doorOkMessage3);
+        else
+        {
+            if(crit.Timeout[TO_SK_LOCKPICK] > 0)
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                return true;
+            }
+
+            if(Random(lockpickCheckBottom, lockpickCheckTop) <= crit.Param[SK_LOCKPICK])
+            {
+                if(Random(1, 100) > criticalFailChance3)
+                {
+                    item.Val1 = 0;
+                    crit.Say(SAY_NETMSG, lockpickSuccessMessage);
+                }
+                else
+                    crit.Say(SAY_NETMSG, lockpickCritFailMessage);
+            }
+            else
+                crit.Say(SAY_NETMSG, lockpickFailMessage);
+
+            crit.TimeoutBase[TO_SK_LOCKPICK] = LOCKPICK_TIMEOUT(crit);
+        }
+        return true;
+    }
+
+    return false;
+}
+
+uint e_AutoCloseDoor3(array<uint>@ vals)
+{
+    Map@ map = GetMap(vals[1]);
+    if(valid(map))
+    {
+        Item@ door = map.GetItem(vals[0]);
+        if(valid(door))
+        {
+            uint16   hexX = 0;
+            uint16   hexY = 0;
+            door.GetMapPosition(hexX, hexY);
+            Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+            if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                return REAL_SECOND(doorCloseInterval3);
+
+            door.LockerClose();
+            door.Val0 = 0;
+            tryJamDoor3(door);
+        }
+    }
+    return 0;
+}
+
+void tryJamDoor3(Item@ door)
+{
+    if(Random(1, 100) <= chanceToJam3)
+    {
+        door.Val1 = 1;
+    }
+}
+
+const uint32 doorCloseInterval4 = 5;              // za jak dlouho se to ma zavrit -v sekundach
+const uint32 chanceToJam4 = 25;                   // sance na zaseknuti po zavreni dveri -v procentech
+const uint32 hackVarId1 = 9211;                   // id promenne
+const uint32 dialogId1  = 22121;                  // id dialogu
+void _HackDoorInit1(Item& door, bool firstTime)   // pripichnout ke dverim
+{
+    door.SetEvent(ITEM_EVENT_SKILL, "_HackDoorOpen");
+}
+
+bool _HackDoorOpen1(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        bool isOpen = FLAG(item.LockerCondition, LOCKER_ISOPEN);
+
+        if(isOpen)
+        {
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            Map@   map = item.GetMapPosition(hexX, hexY);
+            if(valid(map))
+            {
+                Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+                if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                    return false;
+            }
+        }
+
+        if(isOpen)
+        {
+            if(item.Val0 != 0)
+                EraseTimeEvent(item.Val0);
+            tryJamHackDoor1();
+        }
+    }
+    return false;
+}
+
+uint e_HackCloseDoor1(array<uint>@ vals)
+{
+    Map@ map = GetMap(vals[1]);
+    if(valid(map))
+    {
+        Item@ door = map.GetItem(vals[0]);
+        if(valid(door))
+        {
+            uint16   hexX = 0;
+            uint16   hexY = 0;
+            door.GetMapPosition(hexX, hexY);
+            Critter@ potentialBlocker = map.GetCritter(hexX, hexY);
+            if(valid(potentialBlocker) && potentialBlocker.IsLife())
+                return REAL_SECOND(doorCloseInterval4);
+
+            door.LockerClose();
+            door.Val0 = 0;
+            tryJamHackDoor1();
+        }
+    }
+    return 0;
+}
+
+void tryJamHackDoor1()
+{
+    if(Random(1, 100) <= chanceToJam4)
+    {
+        GameVar@ hackVar = GetGlobalVar(hackVarId1);
+        hackVar = 1;
+    }
+}
+
+bool s_HackDoorOpen1(Critter& player, Scenery& terminal, int skill, Item@ item)   // pripichnout k terminalu //ParamCount = 0
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        RunDialog(player, dialogId1, terminal.HexX, terminal.HexY, true);
+        return true;
+    }
+    return false;
+}
+
+void r_HackDoorOpen1(Critter& player, Critter@ victim, int entireNum)   // todle je do toho dialogu //ParamCount = 1, Param0 = entire pod dverma
+{
+    uint16 hexX = 0;
+    uint16 hexY = 0;
+    Map@   map = player.GetMap();
+    map.GetEntireCoords(entireNum, 0, hexX, hexY);
+    Item@  door = map.GetDoor(hexX, hexY);
+    door.LockerOpen();
+
+    array<uint> vals(2);
+    vals[0] = door.Id;
+    vals[1] = door.MapId;
+    if(door.Val0 != 0)
+        EraseTimeEvent(door.Val0);
+    door.Val0 = CreateTimeEvent(__FullSecond + REAL_SECOND(doorCloseInterval4), "e_HackCloseDoor1", vals, false);
+}

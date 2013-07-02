@@ -1,0 +1,24 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_klamath.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "_town.fos"
+
+import bool AddMilitia(Map@ map) from "town";
+import void SpawnInitMilitia(Map@ map) from "town";
+//
+// map.Data:
+// 2 - Bank ID, for more information check _economy.fos
+//
+void map_init(Map& map, bool firstTime)
+{
+    map.SetData(MAP_DATA_TOWN, TOWN_KLAMATH);
+    if(firstTime)
+        SpawnInitMilitia(map);
+}

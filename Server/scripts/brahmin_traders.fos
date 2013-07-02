@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_traders.fos
+//
+
+#include "_macros.fos"
+#include "brahmin_trader_h.fos"
+
+#define ADD_TRADER    # (name, properties) CBrahminTrader name(); name.properties; AddBrahminTrader(name)
+
+array<IBrahminTrader@> BrahminTraders;
+
+IBrahminTrader@ GetBrahminTrader(uint id)
+{
+    if(BrahminTraders.length() > id - 1)
+        return BrahminTraders[id - 1];
+    else
+        return null;
+}
+
+void AddBrahminTrader(CBrahminTrader@ trader)
+{
+    BrahminTraders.insertLast(trader);
+}
+
+void InitBrahminTraders()
+{
+    Log("Initializing brahmin traders");
+
+    ADD_TRADER(modoc_brahminman, SellPrice(800).BuyPrice(1100).Modifier(25).BrahminPen(1));
+    ADD_TRADER(hub_brahminman, SellPrice(375).BuyPrice(500).Modifier(25).BrahminPen(2));
+    ADD_TRADER(broken_brahminman, SellPrice(375).BuyPrice(700).Modifier(25).BrahminPen(3));
+    ADD_TRADER(ncr_brahminman, SellPrice(375).BuyPrice(600).Modifier(25).BrahminPen(4));
+    ADD_TRADER(frisco_brahminman, SellPrice(500).BuyPrice(700).Modifier(25).BrahminPen(5));
+
+    Log("Brahmin traders initialized successfully");
+}

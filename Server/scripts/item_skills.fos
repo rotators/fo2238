@@ -1,0 +1,157 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_skills.fos
+//
+
+// Script governing skill-boosting items. Use item_skills@_Init script and fill
+// Misc_ToolSkillNum and Misc_ToolSkillBonus in the ObjectEditor to mark the item as a skill-boosting one.
+// Use of the item will induce a behaviour identical to the use of skill, with that skill increased.
+// This script makes some use of DLL trickery to create a new AS context, so that interrupted execution
+// will not result in a permenent skill increase.
+#include "_macros.fos"
+#include "utils_h.fos"
+
+import bool critter_use_skill(Critter& cr, int skill, Critter@ targetCr, Item@ targetItem, Scenery@ targetScen) from "main";
+
+class ItemSkillUse : IObject
+{
+    uint     skill;
+    Critter@ cr;
+    Critter@ onCritter;
+    Item@    onItem;
+    Scenery@ onScenery;
+    ItemSkillUse(uint _skill, Critter@ _cr, Critter@ _onCritter, Item@ _onItem, Scenery@ _onScenery)
+    {
+        skill = _skill;
+        @cr = _cr;
+        @onCritter = _onCritter;
+        @onItem = _onItem;
+        @onScenery = _onScenery;
+    }
+};
+
+FuncBind EventsFunc;
+
+void _Init(Item& item, bool firstTime)
+{
+    GameVar@ var = ::GetLocalVar(LIVAR_tool_supplies_count, item.Id);
+    if(valid(var))
+        var = Random(10, 20);
+    item.SetEvent(ITEM_EVENT_USE, "_Use");
+}
+
+bool _Use(Item& item, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    const ProtoItem@ proto = item.Proto;
+    uint             skill = proto.Misc_ToolSkillNum;
+    if(skill < SKILL_BEGIN || skill > SKILL_END)
+        return false;
+
+    cr.SkillBase[skill] += proto.Misc_ToolSkillBonus;
+    cr.UsedToolItemId = item.Id;
+
+    ItemSkillUse use(skill, cr, onCritter, onItem, onScenery);
+    if(!EventsFunc.IsValid())
+        EventsFunc.SetFunction("CallEvents");
+
+    int ret = EventsFunc.Call(use);
+
+    cr.SkillBase[skill] -= proto.Misc_ToolSkillBonus;
+    cr.UsedToolItemId = 0;
+
+    if(ret == 1)
+    {
+        GameVar@ var = ::GetLocalVar(LIVAR_tool_supplies_count, item.Id);
+        if(valid(var))
+        {
+            // todo: skill check and message?
+            var = var - 1;
+            if(var.GetValue() == 0)
+            {
+                cr.Say(SAY_NETMSG, "The supplies in the @msg obj " + (item.GetProtoId() * 100) + "@ run out.");
+                DeleteItem(item);
+            }
+        }
+    }
+    else
+        cr.Say(SAY_NETMSG, "That does nothing.");
+
+    return true;
+}
+
+/*  this will conveniently run in a separate context
+        we emulate the following:
+
+        [critter] used [skill] on [target scenery]:
+         [target scenery]: s_ function
+         global: [critter] used [skill] on target object
+
+        [critter] used [skill] on [target item]:
+         [target item]: [critter] used [skill] on me // ITEM_EVENT_SKILL
+         [critter]: i used [skill] on target object // CRITTER_EVENT_USE_SKILL
+         global: [critter] used [skill] on target object
+
+        [critter] used [skill] on [target critter]:
+         [critter]: i used [skill] on target object // CRITTER_EVENT_USE_SKILL
+         [target critter]: [critter] used [skill] on me // CRITTER_EVENT_USE_SKILL_ON_ME
+         global: [critter] used [skill] on target object
+ */
+int CallEvents(IObject@ obj)
+{
+    ItemSkillUse@ use = cast<ItemSkillUse@>(obj);
+
+    if(valid(use.onScenery))
+    {
+        if(use.onScenery.CallSceneryFunction(use.cr, use.skill, null))
+            return 1;
+    }
+    else if(valid(use.onItem))
+    {
+        if(use.onItem.EventSkill(use.cr, use.skill))
+            return 1;
+        if(use.cr.EventUseSkill(use.skill, use.onCritter, use.onItem, use.onScenery))
+            return 1;
+    }
+    else if(valid(use.onCritter))
+    {
+        if(use.cr.EventUseSkill(use.skill, use.onCritter, use.onItem, use.onScenery))
+            return 1;
+        if(use.onCritter.EventUseSkillOnMe(use.cr, use.skill))
+            return 1;
+    }
+
+    if(critter_use_skill(use.cr, use.skill, use.onCritter, use.onItem, use.onScenery))
+        return 1;
+
+    return 0;
+}
+
+void ApplyToolTimeout(Critter& cr, int skill)
+{
+    switch(skill)
+    {
+    case SK_FIRST_AID:
+        _SetTimeout(cr, TO_SK_FIRST_AID, FIRST_AID_TIMEOUT(cr) / TOOL_TIMEOUT_DIV);
+        break;
+    case SK_DOCTOR:
+        _SetTimeout(cr, TO_SK_DOCTOR, DOCTOR_TIMEOUT(cr) / TOOL_TIMEOUT_DIV);
+        break;
+    case SK_REPAIR:
+        _SetTimeout(cr, TO_SK_REPAIR, REPAIR_TIMEOUT(cr) / TOOL_TIMEOUT_DIV);
+        break;
+    case SK_LOCKPICK:
+        _SetTimeout(cr, TO_SK_LOCKPICK, LOCKPICK_TIMEOUT(cr) / TOOL_TIMEOUT_DIV);
+        break;
+    default:
+        Log("Found a tool with an unrecognized skill " + skill);
+        break;
+    }
+}
+
+bool s_Test(Critter&, Scenery&, int, Item@)
+{
+    Log("called!");
+    return true;
+}

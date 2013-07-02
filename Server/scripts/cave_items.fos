@@ -1,0 +1,86 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave_items.fos
+//
+
+// Items that can appear in caves
+
+// Parameters:
+// Chance: 0 - 100
+// LuckRequirement is how much LU is required of the player(s) entering the cave to be able to find the item
+
+// AddCaveItem(PID, Chance, LuckRequirement)
+
+SetGroup(CAVE_ITEM_GROUP_JUNK);
+AddCaveItem(PID_ROCK, 95, 1);
+AddCaveItem(PID_ROPE, 75, 2);
+AddCaveItem(PID_BOTTLE_CAPS, 50, 1);
+AddCaveItem(PID_FLINT, 75, 1);
+AddCaveItem(PID_HYPODERMIC_NEEDLE, 5, 1);
+AddCaveItem(PID_EMPTY_JET, 10, 1);
+AddCaveItem(PID_SHOVEL, 25, 1);
+AddCaveItem(PID_LIGHTER, 10, 1);
+AddCaveItem(PID_RED_CONDOM, 10, 1);
+AddCaveItem(PID_GREEN_CONDOM, 10, 1);
+AddCaveItem(PID_BLUE_CONDOM, 10, 1);
+AddCaveItem(PID_FLOWER, 10, 1);
+
+SetGroup(CAVE_ITEM_GROUP_DRUGS);
+AddCaveItem(PID_STIMPAK, 85, 4);
+
+SetGroup(CAVE_ITEM_GROUP_MELEE);
+AddCaveItem(PID_KNIFE, 50, 2);
+AddCaveItem(PID_COMBAT_KNIFE, 40, 2);
+AddCaveItem(PID_SHIV, 60, 2);
+AddCaveItem(PID_SPEAR, 50, 2);
+AddCaveItem(PID_SHARPENED_POLE, 75, 1);
+AddCaveItem(PID_CLUB, 85, 2);
+AddCaveItem(PID_CROWBAR, 35, 2);
+AddCaveItem(PID_SLEDGEHAMMER, 25, 3);
+AddCaveItem(PID_SUPER_SLEDGE, 10, 4);
+AddCaveItem(PID_LOUISVILLE_SLUGGER, 5, 5);
+
+SetGroup(CAVE_ITEM_GROUP_PISTOLS);
+AddCaveItem(PID_ZIP_GUN, 30, 1);
+AddCaveItem(PID_9MM_MAUSER, 20, 3);
+AddCaveItem(PID_10MM_PISTOL, 30, 3);
+AddCaveItem(PID_14MM_PISTOL, 20, 3);
+AddCaveItem(PID_DESERT_EAGLE, 20, 3);
+AddCaveItem(PID_223_PISTOL, 20, 3);
+AddCaveItem(PID_44_MAGNUM_REVOLVER, 20, 3);
+AddCaveItem(PID_NEEDLER_PISTOL, 40, 2);
+
+SetGroup(CAVE_ITEM_GROUP_RIFLES);
+AddCaveItem(PID_HUNTING_RIFLE, 25, 3);
+AddCaveItem(PID_SCOPED_HUNTING_RIFLE, 25, 3);
+AddCaveItem(PID_SPRINGER_RIFLE, 25, 3);
+AddCaveItem(PID_ASSAULT_RIFLE, 25, 3);
+AddCaveItem(PID_SNIPER_RIFLE, 25, 3);
+
+SetGroup(CAVE_ITEM_GROUP_SHOTGUNS);
+AddCaveItem(PID_SHOTGUN, 25, 3);
+AddCaveItem(PID_SAWED_OFF_SHOTGUN, 25, 3);
+// AddCaveItem(PID_COMBAT_SHOTGUN, 15, 3);
+// AddCaveItem(PID_HK_CAWS, 15, 3);
+// AddCaveItem(PID_PANCOR_JACKHAMMER, 15, 3);
+// Pistol-machine gun
+AddCaveItem(PID_10MM_SMG, 15, 3);
+// AddCaveItem(PID_HK_P90C, 15, 3);
+AddCaveItem(PID_TOMMY_GUN, 15, 3);
+// AddCaveItem(PID_HK_G11, 15, 3);
+// AddCaveItem(PID_HK_G11E, 15, 3);
+AddCaveItem(PID_GREASE_GUN, 15, 3);
+
+SetGroup(CAVE_ITEM_GROUP_ARMOR);
+AddCaveItem(PID_LEATHER_JACKET, 30, 5);
+AddCaveItem(PID_LEATHER_ARMOR, 30, 6);
+AddCaveItem(PID_METAL_ARMOR, 30, 7);
+AddCaveItem(PID_COMBAT_ARMOR, 5, 8);
+AddCaveItem(PID_PURPLE_ROBE, 5, 10);
+
+SetGroup(CAVE_ITEM_GROUP_FUN);
+AddCaveItem(PID_ALIEN_SIDE, 1, 1);
+AddCaveItem(PID_ALIEN_FORWARD, 1, 1);
+AddCaveItem(PID_ACCESS_CARD, 1, 1);

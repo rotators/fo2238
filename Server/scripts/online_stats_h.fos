@@ -1,0 +1,52 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// online_stats_h.fos
+//
+
+#ifndef __ONLINE_STATS_H__
+#define __ONLINE_STATS_H__
+
+// LVAR_online_stats flags, VTDB
+#define OS_VTDB_ALL            (0x00000001)
+#define OS_VTDB_SPECIAL        (0x00000002)
+#define OS_VTDB_XP             (0x00000004)
+#define OS_VTDB_LIFE           (0x00000008)
+#define OS_VTDB_STATS          (0x00000010)
+#define OS_VTDB_SKILLS         (0x00000020)
+#define OS_VTDB_TRAITS         (0x00000040)
+#define OS_VTDB_PERKS          (0x00000080)
+#define OS_VTDB_PROFESSIONS    (0x00000100)
+#define OS_VTDB_KARMA          (0x00000200)
+#define OS_VTDB_ADDICTIONS     (0x00000400)
+#define OS_VTDB_REPUTATION     (0x00000800)
+#define OS_VTDB_KILLS          (0x00001000)
+#define OS_VTDB_POSITION       (0x00002000)                  // unused
+
+// LVAR_online_stats flags, XFire
+#define OS_XFIRE_ALL           (0x00004000)
+#define OS_XFIRE_CHARNAME      (0x00008000)
+#define OS_XFIRE_CHARLEVEL     (0x00010000)
+#define OS_XFIRE_LOCATION      (0x00020000)
+#define OS_XFIRE_AWARDS        (0x00040000)                  // unused
+
+// used by online_stats@XFireClient*, client_online_stats@_XFire
+#define XFIRE_GAMEID           (-2)
+#define XFIRE_CLEAR            (-1)
+#define XFIRE_UNSET            (0)
+#define XFIRE_SET              (1)
+#define XFIRE_MSG              (2)
+
+// global settings
+#define OS_COMMAND             "~online_stats"
+
+#define OS_CYCLE_TIME          (REAL_MINUTE(12))
+#define OS_MAX_MOD             (5)                          // no less than 1
+
+#ifndef __ONLINE_STATS_MODULE__
+# define __ONLINE_STATS_MODULE__
+import void OnlineStats_TrySave(Critter& target) from "online_stats";
+import void OnlineStats_SendSetup(Critter& target) from "online_stats";
+#endif
+#endif /* __ONLINE_STATS_H__ */

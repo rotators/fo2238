@@ -1,0 +1,169 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// time.fos
+//
+
+// Some stuff for work with time.
+
+// import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+// Result is greather than __FullSecond at least on one.
+
+// For client:
+// import string@ GetTimeString(const string& format, uint fullSecond) from "time";
+// import string@ GetTimeString(const string& format, int year, int month, int day, int dayOfWeek, int hour, int minute, int second) from "time";
+// Tags format:
+//  %YEAR% - year,
+//  %MONTH% - month,
+//  %DAY% - day,
+//  %DOW% - day of week,
+//  %HOUR% - hour,
+//  %MINUTE% - minute;
+//  %SECOND% - second;
+// To show names of values add "-STR" to format tag (%MONTH% -> %MONTH-STR%), supported by month and day of week.
+// Example: GetTimeString("%HOUR%:%MINUTE% %DAY% (%DOW-STR%) %MONTH-STR% %YEAR%",fullSecond) -> "14:05 23 (Sunday) November 2299"/"14:05 23 (Воскресенье) Ноябрь 2299".
+
+#include "_macros.fos"
+
+#define STR_MONTH          # (m)               (20 + (m))
+#define STR_DAY_OF_WEEK    # (dow)       (33 + (dow))
+
+
+uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second)
+{
+    int jump = 0;   // 1 - years, 2 - months, 3 - days
+    if(year == 0)
+    {
+        year = __Year;
+        jump = 1;
+    }
+    if(month == 0)
+    {
+        month = __Month;
+        jump = 2;
+    }
+    if(day == 0)
+    {
+        day = __Day;
+        jump = 3;
+    }
+
+    uint fullSecond = ::GetFullSecond(year, month, day, hour, minute, second);
+    while(fullSecond <= ELAPSED_TIME)
+    {
+        switch(jump)
+        {
+        case 0:
+            return ELAPSED_TIME + 1;           // Time expired, call faster
+        case 1:
+            year++;
+            break;
+        case 2:
+            month++;
+            if(month > 12)
+            {
+                month = 1;
+                year++;
+            }
+            break;
+        case 3:
+            day++;
+            if(day > 28 && day > GetDaysInMonth(year, month))
+            {
+                day = 1;
+                month++;
+                if(month > 12)
+                {
+                    month = 1;
+                    year++;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+
+        fullSecond = ::GetFullSecond(year, month, day, hour, minute, second);
+    }
+    return fullSecond;
+}
+
+uint GetDaysInMonth(uint16 year, uint16 month)
+{
+    switch(month)
+    {
+    case 1:
+    case 3:
+    case 5:
+    case 7:
+    case 8:
+    case 10:
+    case 12:    // 31
+        return 31;
+    case 2:     // 28-29
+        if(year % 400 == 0 || (year % 4 == 0 && year % 100 != 0))
+            return 29;
+        return 28;
+    default:     // 30
+        return 30;
+    }
+    return 0;
+}
+
+#ifdef __CLIENT
+string@ GetTimeString(const string& format, uint fullSecond)   // Export
+{
+    uint16 year = 0, month = 0, day = 0, dayOfWeek = 0, hour = 0, minute = 0, second = 0;
+    ::GetGameTime(fullSecond, year, month, day, dayOfWeek, hour, minute, second);
+    return GetTimeString(format, year, month, day, dayOfWeek, hour, minute, second);
+}
+
+string@ GetTimeString(const string& format, int year, int month, int day, int dayOfWeek, int hour, int minute, int second)   // Export
+{
+    string result = format;
+
+    if(year != -1)
+        result = ReplaceText(result, "%YEAR%", year);
+    if(month != -1)
+    {
+        result = ReplaceText(result, "%MONTH%", month);
+        result = ReplaceText(result, "%MONTH-STR%", GetMsgStr(TEXTMSG_GAME, STR_MONTH(month)));
+    }
+    if(day != -1)
+        result = ReplaceText(result, "%DAY%", day);
+    if(dayOfWeek != -1)
+    {
+        result = ReplaceText(result, "%DOW%", dayOfWeek);
+        result = ReplaceText(result, "%DOW-STR%", GetMsgStr(TEXTMSG_GAME, STR_DAY_OF_WEEK(dayOfWeek)));
+    }
+    if(hour != -1)
+        result = ReplaceText(result, "%HOUR%", hour);
+    if(hour != -1)
+        result = ReplaceText(result, "%HOUR-STR%", hour >= 10 ? "" + hour : "0" + hour);
+    if(minute != -1)
+        result = ReplaceText(result, "%MINUTE%", minute);
+    if(minute != -1)
+        result = ReplaceText(result, "%MINUTE-STR%", minute >= 10 ? "" + minute : "0" + minute);
+    if(second != -1)
+        result = ReplaceText(result, "%SECOND%", second);
+    if(second != -1)
+        result = ReplaceText(result, "%SECOND-STR%", second >= 10 ? "" + second : "0" + second);
+
+    return result;
+}
+#endif
+
+// Возвращает представление времени в виде строки в формате dd.mm.yy hh:mm. rifleman17
+string DateTimeToString(uint gameTime)
+{
+    uint16 year = 0;
+    uint16 month = 0;
+    uint16 dayOfWeek = 0;
+    uint16 day = 0;
+    uint16 hour = 0;
+    uint16 minute = 0;
+    uint16 second = 0;
+    GetGameTime(gameTime, year, month, day, dayOfWeek, hour, minute, second);
+    return "" + (day > 9 ? ("" + day) : ("0" + day)) + "." + (month > 9 ? ("" + month) : ("0" + month)) + "." + year + " " + (hour > 9 ? ("" + hour) : ("0" + hour)) + ":" + (minute > 9 ? ("" + minute) : ("0" + minute));
+}

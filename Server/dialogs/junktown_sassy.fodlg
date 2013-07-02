@@ -1,0 +1,115 @@
+[comment]
+buys spears from the player in Junktown. Uses the spears to "maintain" the walls, etc...
+Spears: 50 caps a spear + 10 xp
+S. Spears: 60 caps a spear + 10xp
+Very simple fetch quest, no vars, only requires >2 int. Will be a new money making PE_PROFESSION.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _var p name_mem_player_npc = 1 #
+11 1020 D _param p ST_INTELLECT < 3 #
+2 1030 D _param p ST_INTELLECT > 2 @
+2 2000 None 0 #
+3 2010 #
+9 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+4 3020 @
+4 4000 None 0 #
+5 4010 R _var p name_mem_player_npc = 1 @
+5 5000 None 0 #
+13 5010 D _item p PID_SPEAR } 1 #
+14 5020 D _item p PID_SHARP_SPEAR } 1 #
+0 5030 @
+6 6000 None 0 #
+0 6010 D _item p PID_SPEAR } 1 R _item p PID_SPEAR - 1 R _param p ST_EXPERIENCE + 10 R _script dialog@r_AddMoney 1 50 @
+7 7000 None 0 #
+0 7010 D _item p PID_SHARP_SPEAR } 1 R _item p PID_SHARP_SPEAR - 1 R _param p ST_EXPERIENCE + 10 R _script dialog@r_AddMoney 1 60 @
+9 8000 None 0 #
+10 8010 R _var p name_mem_player_npc = 1 @
+13 9000 None 0 #
+6 9010 D _item p PID_SPEAR } 1 #
+15 9020 D _item p PID_SPEAR } 5 #
+16 9030 D _item p PID_SPEAR } 10 @
+14 10000 None 0 #
+7 10010 D _item p PID_SHARP_SPEAR } 1 #
+17 10020 D _item p PID_SHARP_SPEAR } 5 #
+18 10030 D _item p PID_SHARP_SPEAR } 10 @
+15 11000 None 0 #
+0 11010 D _item p PID_SPEAR } 5 R _item p PID_SPEAR - 5 R _param p ST_EXPERIENCE + 50 R _script dialog@r_AddMoney 1 250 @
+16 12000 None 0 #
+0 12010 D _item p PID_SPEAR } 10 R _item p PID_SPEAR - 10 R _param p ST_EXPERIENCE + 100 R _script dialog@r_AddMoney 1 500 @
+17 13000 None 0 #
+0 13010 D _item p PID_SHARP_SPEAR } 5 R _item p PID_SHARP_SPEAR - 5 R _param p ST_EXPERIENCE + 50 R _script dialog@r_AddMoney 1 300 @
+18 14000 None 0 #
+0 14010 D _item p PID_SHARP_SPEAR } 10 R _item p PID_SHARP_SPEAR - 10 R _param p ST_EXPERIENCE + 100 R _script dialog@r_AddMoney 1 600 @
+11 15000 None 0 #
+12 15010 #
+12 15020 #
+12 15030 #
+12 15040 @
+12 16000 None 0 @
+10 17000 None 0 &
+
+[engl]
+{100}{}{Sassy Givins}
+{200}{}{You see Sassy Givins.}
+{210}{}{She looks like she might help maintain the town.}
+{220}{}{She looks: Knock-out.}
+{230}{}{She looks: Knock-out.}
+{240}{}{She looks: Almost Dead.}
+{250}{}{She looks: Almost Dead,}
+{260}{}{She looks: Dead.}
+{270}{}{She's dead.}
+{1000}{}{Predialogue installations}
+{1010}{}{Known}
+{1020}{}{retard}
+{1030}{}{notknown}
+{2000}{}{Well, hey there! What brings you around Junktown stranger?}
+{2010}{}{I'm just lookin' to unload this backpack of mine. The name's @pname@ by the way.}
+{2020}{}{The name's @pname@, and I'm just lookin' for something to do.}
+{2030}{}{I'm just looking around, sorry to bother you.}
+{3000}{}{Is that so @pname@? Well it's mighty fine to meet ya', mah' name's Sassy Givins. Say @pname@, you wouldn't happen to have any spears on ya', would ya'? }
+{3010}{}{Sure do, why do you ask?}
+{3020}{}{No, why do you ask?}
+{4000}{}{Well those spears are great recyclables, and we could use em' to help maintain just about everything around here. I'd be happy to buy them off you for 50 caps a spear, 60 caps for the sharper ones. Deal?}
+{4010}{}{Hey, why not? I was just going to throw them away anyways. I'll come back with a few spears. Goodbye.}
+{5000}{}{Hi there @pname@, have you any spears for me today?}
+{5010}{}{Sure do, have a spear.}
+{5020}{}{I have a few sharpened spears.}
+{5030}{}{No not today, sorry. Goodbye.}
+{6000}{}{Thanks, here's 50 caps for it. Keep them coming please! And we'll make sure to keep the walls intact.}
+{6010}{}{Thanks, goodbye}
+{7000}{}{I'll take one, thanks. Here's 60 caps for it. Keep them coming please! We'll make sure the bar is always stocked!}
+{7010}{}{Thanks, goodbye}
+{8000}{}{Well if your bored, spears make great recyclables, and we can use them for pretty much anything around here. I'd be happy to buy some off you for 50 caps a spear, or 60 caps for a sharpened spear.}
+{8010}{}{Sounds exciting. I'll come back with a few spears. What's your name by the way?}
+{9000}{}{How many spears do you have?}
+{9010}{}{One.}
+{9020}{}{Five.}
+{9030}{}{Ten.}
+{10000}{}{How many sharpened spears do you have?}
+{10010}{}{One.}
+{10020}{}{Five.}
+{10030}{}{Ten.}
+{11000}{}{I'll take five, thanks. Here's your 250 caps. Keep em' comin'.}
+{11010}{}{Thanks, goodbye.}
+{12000}{}{I'll take ten, thanks. Here's your 500 caps. Keep em' comin'.}
+{12010}{}{Thanks, goodbye.}
+{13000}{}{I'll take five sharper ones, thanks. Here's your 300 caps. Keep em' comin'.}
+{13010}{}{Thanks, goodbye.}
+{14000}{}{I'll take ten sharper ones, thanks. Here's your 600 caps. Keep em' comin'.}
+{14010}{}{Thanks, goodbye.}
+{15000}{}{Well hey...*She pauses, then stares deeply into your eyes* You pee'd yourself...The bathroom's that a-way...}
+{15010}{}{Me wet! Yay!}
+{15020}{}{I like soup! *Smile deeply*}
+{15030}{}{Pwretty...You like @pname@?}
+{15040}{}{Derrrrr!}
+{16000}{}{Ahh! Get away from me you freak!}
+{17000}{}{Sassy Givins sweetie, I'll be seeing you! Just make sure to bring me plenty of spears okay?}
+

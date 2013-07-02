@@ -1,0 +1,144 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// backend.fos
+//
+
+#include "_defines.fos"
+#include "utils_h.fos"
+
+#define __BACKEND_MODULE__
+#include "backend_h.fos"
+
+#pragma bindfunc "int string::replaceText(string@+,string@+) -> Utils.dll String_ReplaceText"
+
+// TODO: re-add weaponmode
+void InitDBLogs()
+{
+    dbInitTable("log_items_barter", "player:int,trader:name,item:int,count:int,value:int,sell:bool");
+    // dbInitTable("log_items_sold", "player:int,trader:name,item:int,count:int,value:int");
+    dbInitTable("log_town_players", "town:int,players:int");
+    dbInitTable("log_crafting", "player:int,item:int,count:int,location:int");
+    dbInitTable("log_gm_help", "player:int,message:text");
+    dbInitTable("log_encounters", "leader:int,outdoorsman:int,groupsize:int,playerscount:int,zx:int,zy:int,location:int,groups:shorttext,turnbased:bool,special:bool");
+    dbInitTable("log_experience", "player:int,level:int,amount:int,skill:int,info:shorttext,param:int,quest:bool");
+    dbInitTable("log_attacks", "locpid:int,mapid:int,attacker:int,target:int,targetpid:int,weaponpid:int,ammopid:int,aim:int,turnbased:bool,burst:bool,rounds:int,hit:bool,critical:bool,critfailflags:int");
+    dbInitTable("log_damages", "locpid:int,mapid:int,attacker:int,target:int,targetpid:int,killed:bool,weaponpid:int,ammopid:int,aim:int,turnbased:bool,burst:bool,rounds:int,critical:bool,damage:int,effects:int");
+    dbInitTable("log_gathering", "locpid:int,mapid:int,gatherer:int,resource:int,amount:int");
+    dbInitTable("log_commands", "id:int,command:shorttext");
+    CreateTimeEvent(ELAPSED_TIME, "e_LogTownPlayers", 0, false);
+    #ifndef __DEBUG_DISABLE_SQL__
+    UpdateProtoItems();
+    #endif
+}
+
+uint e_LogTownPlayers(array<uint>@ values)
+{
+    array<Location@> locs;
+    uint             num = GetAllLocations(0, locs);
+    dbLog("log_town_players", "0|" + GetNumberOfPlayersOnline());
+    for(uint i = 0; i < num; ++i)
+    {
+        if(locs[i].IsTown())
+        {
+            array<Map@> maps;
+            uint        mn = locs[i].GetMaps(maps);
+            uint        pcount = 0;
+            for(uint j = 0; j < mn; ++j)
+                pcount += maps[j].GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, null);
+            dbLog("log_town_players", "" + locs[i].GetProtoId() + "|" + pcount);
+        }
+    }
+    return REAL_MINUTE(60);
+}
+
+void LogExperience(Critter& cr, int amount, int skill, string@ info, int param, bool quest)
+{
+    dbLog("log_experience", cr.Id + "|" + cr.Stat[ST_LEVEL] + "|" + amount + "|" + skill + "|" + info + "|" + param + "|" + (quest ? "1" : "0"));
+}
+
+void LogExperience(Critter& cr, int amount)
+{
+    LogExperience(cr, amount, -1, "", 0, false);
+}
+void LogExperience(Critter& cr, int amount, string@ info)
+{
+    LogExperience(cr, amount, -1, "", 0, false);
+}
+void LogExperience(Critter& cr, int amount, int skill)
+{
+    LogExperience(cr, amount, skill, "", 0, false);
+}
+void LogExperience(Critter& cr, int amount, int skill, string@ info)
+{
+    LogExperience(cr, amount, skill, info, 0, false);
+}
+void LogExperience(Critter& cr, int amount, int skill, int param)
+{
+    LogExperience(cr, amount, skill, "", param, false);
+}
+void LogExperience(Critter& cr, int amount, int skill, string@ info, int param)
+{
+    LogExperience(cr, amount, skill, info, param, false);
+}
+
+void LogQuestExperience(Critter& cr, int amount, string@ info)
+{
+    LogExperience(cr, amount, -1, info, 0, true);
+}
+void LogQuestExperience(Critter& cr, int amount, int skill, string@ info)
+{
+    LogExperience(cr, amount, skill, info, 0, true);
+}
+
+//	dbInitTable("log_attacks","locpid:int,mapid:int,attacker:int,target:int,weaponpid:int,ammopid:int,aim:int,turnbased:bool,burst:bool,rounds:int,hit:bool,critical:bool,critfailflags:int");
+void LogAttack(Map@ map, Critter& cr, Critter& target, ProtoItem& weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint ammoRound, uint weaponRound, bool isHit, bool isCritical, uint critfailFlags)
+{
+    dbLog("log_attacks", (valid(map) ? map.GetLocation().GetProtoId() : 0) + "|" + (valid(map) ? map.Id : 0) + "|" + cr.Id + "|" + target.Id + "|" + target.GetProtoId() + "|" + weapon.ProtoId + "|" + (valid(ammo) ? ammo.ProtoId : 0) + "|" + aim + "|" + (valid(map) ? (map.IsTurnBased() ? "1" : "0") : "0") + "|" + (isBurst ? "1" : "0") + "|" + (MIN(weaponRound, ammoRound)) + "|" + (isHit ? "1" : "0") + "|" + (isCritical ? "1" : "0") + "|" + critfailFlags);
+}
+
+// dbInitTable("log_damages","locpid:int,mapid:int,attacker:int,target:int,kill:bool,weaponpid:int,ammopid:int,aim:int,turnbased:bool,burst:bool,rounds:int,critical:bool,damage:int,effects:int");
+void LogDamage(Map@ map, Critter@ attacker, Critter& target, Item@ weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint damage, bool isCritical, uint eff, uint rounds)
+{
+    dbLog("log_damages", (valid(map) ? map.GetLocation().GetProtoId() : 0) + "|" + (valid(map) ? map.Id : 0) + "|" + (valid(attacker) ? attacker.Id : 0) + "|" + target.Id + "|" + target.GetProtoId() + "|" + (target.IsDead() ? "1" : "0") + "|" + (valid(weapon) ? weapon.GetProtoId() : 0) + "|" + (valid(ammo) ? ammo.ProtoId : 0) + "|" + aim + "|" + (valid(map) ? (map.IsTurnBased() ? "1" : "0") : "0") + "|" + (isBurst ? "1" : "0") + "|" + rounds + "|" + (isCritical ? "1" : "0") + "|" + damage + "|" + eff);
+}
+
+void LogGathering(Critter& cr, uint16 resource, int amount)
+{
+    Map@ map = cr.GetMap();
+    dbLog("log_gathering", (valid(map) ? map.GetLocation().GetProtoId() : 0) + "|" + (valid(map) ? map.Id : 0) + "|" + cr.Id + "|" + resource + "|" + amount);
+}
+
+void LogCommand(Critter& cr, const string& cmd)
+{
+    string str = cmd;
+    str.replaceText("|", "!");
+    dbLog("log_commands", "" + cr.Id + "|" + str);
+}
+
+#ifndef __DEBUG_DISABLE_SQL__
+
+# pragma bindfunc "void dbUpdateProtoItem(ProtoItem@+) -> Backend.dll dbUpdateProtoItem"
+
+void UpdateProtoItems()
+{
+    for(uint i = 0; i < 10000; i++)
+    {
+        ProtoItem@ proto = GetProtoItem(i);
+        if(valid(proto))
+        {
+            switch(proto.Type)
+            {
+            case ITEM_TYPE_ARMOR:
+            case ITEM_TYPE_DRUG:
+            case ITEM_TYPE_WEAPON:
+            case ITEM_TYPE_AMMO:
+            case ITEM_TYPE_MISC:
+            case ITEM_TYPE_KEY:
+                dbUpdateProtoItem(proto);
+            }
+        }
+    }
+}
+#endif

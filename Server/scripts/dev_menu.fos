@@ -1,0 +1,469 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// dev_menu.fos
+//
+
+// various functions that are used by devmenu
+
+#include "_macros.fos"
+#include "backend_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+// imports
+import bool GetItemPid(const string& in, int& out) from "main";
+import bool GetVarId(const string& in, int& out) from "main";
+import bool GetBaseType(const string& in, int& out) from "main";
+import void ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+import uint GetRandomDeathAnimation() from "cheats";
+
+//
+// helper - gets critter from given id, sends appropriate error messages to player
+//
+Critter@ GetDevCritter(Critter& player, int crId)
+{
+    Critter@ cr = GetCritter(crId);
+    if(!valid(cr))
+    {
+        player.Say(SAY_NETMSG, "Critter not valid");
+        return null;
+    }
+    else
+        return cr;
+}
+//
+// helper - gets item from given id, sends appropriate error message to player when item not found
+//
+Item@ GetDevItem(Critter& player, int itemId)
+{
+    Item@ item = GetItem(itemId);
+    if(!valid(item))
+    {
+        player.Say(SAY_NETMSG, "Item not valid");
+        return null;
+    }
+    else
+        return item;
+}
+
+void SendLVars(Critter& player, int p0, int p1, int p2, string@ param3, array<int>@ param4)
+{}
+
+//
+// Posses given critter
+//
+void unsafe_Possess(Critter& player, int crId, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        DLog("Swapping critters");
+        SwapCritters(player, cr, true, true);
+    }
+    LogCommandUsage(player, "possessed critter '" + cr.Name + "'");
+}
+
+//
+// Kills/revive critter
+//
+void unsafe_KillCritter(Critter& player, int p0, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, p0);
+    if(valid(cr))
+    {
+        if(cr.Cond == COND_DEAD)
+        {
+            if(cr.IsPlayer())
+                _CritUnsetMode(cr, MODE_NO_LOOT);
+            cr.ToLife();
+            Heal(cr);
+            LogCommandUsage(player, "revived '" + cr.Name + "'");
+        }
+        else
+        {
+            if(cr.IsPlayer())
+                _CritSetMode(cr, MODE_NO_LOOT);
+            cr.ToDead(GetRandomDeathAnimation(), null);
+            LogCommandUsage(player, "killed '" + cr.Name + "'");
+        }
+    }
+}
+//
+// Knock outs/wakes up critter
+//
+void unsafe_NeutralizeCritter(Critter& player, int crId, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        if(cr.IsKnockout())
+        {
+            cr.StatBase[ST_CURRENT_AP] = 100 * cr.Stat[ST_ACTION_POINTS];
+        }
+        else
+            cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0, 1) == 0), 1000, cr.HexX, cr.HexY);
+    }
+}
+//
+// Removes critter
+//
+void unsafe_RemoveCritter(Critter& player, int crId, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    string   name;
+    int      id;
+    if(valid(cr))
+    {
+        name = cr.Name;
+        id = cr.Id;
+        DeleteNpc(cr);
+        LogCommandUsage(player, "removed critter '" + name + "' (" + id + ")");
+    }
+}
+
+//
+// Removes item
+//
+void unsafe_RemoveItem(Critter& player, int itemId, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Item@ item = GetDevItem(player, itemId);
+    if(valid(item))
+        DeleteItem(item);
+    LogCommandUsage(player, "removed item");
+}
+
+//
+// Forces critter to say something
+//
+void unsafe_Say(Critter& player, int crId, int sayType, int p2, string@ message, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        cr.Say(sayType, message);
+    }
+}
+
+//
+// Issues move plan for an npc
+//
+void unsafe_MoveTo(Critter& player, int crId, int x, int y, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        cr.ErasePlane(-1, true);
+        // add walk plan
+        // MoveTo(cr, x, y, 0xff, false);
+        AddWalkPlane(cr, 0, x, y, 0xff, false, 0);
+        cr.SetHomePos(x, y, cr.Dir);
+
+        // uint8 dir = GetDirection(cr.HexX, cr.HexY, x, y);
+        // cr.MoveToDir(dir);
+    }
+    LogCommandUsage(player, "issued move plan with critter '" + cr.Name + "'");
+}
+
+
+//
+// Issues pick plan for critter
+//
+void unsafe_PickItem(Critter& player, int crId, int itemId, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    Item@    item = GetDevItem(player, itemId);
+
+    if(valid(cr) && valid(item))
+    {
+        cr.ErasePlane(-1, true);
+        // add pick plan
+        AddPickPlane(cr, 0, item, 0, false);
+    }
+    LogCommandUsage(player, "issued pick plan with critter '" + cr.Name + "'");
+}
+
+//
+// Issues attack plan for critter
+//
+void unsafe_Attack(Critter& player, int crId, int targetId, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);     // possessed critter
+    Critter@ target = GetDevCritter(player, targetId);
+
+    if(valid(cr) && valid(target))
+    {
+        cr.ErasePlane(-1, true);
+        // add pick plan
+        AddAttackPlane(cr, 0, target, __DeadHitPoints);
+    }
+    LogCommandUsage(player, "issued attack plan with critter '" + cr.Name + "'");
+}
+//
+// Clears all plans
+//
+void unsafe_Stop(Critter& player, int crId, int p1, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);     // possessed critter
+
+    if(valid(cr))
+    {
+        cr.ErasePlane(-1, true);
+    }
+}
+//
+// Shows item browsing window for critter or container
+//
+void unsafe_Trade(Critter& player, int crId, int itemId, int p2, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    /*if (player.GetAccess() < ACCESS_ADMIN)
+       {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+       }*/
+
+    if(crId != 0)
+    {
+        Critter@ cr = GetDevCritter(player, crId);
+        if(valid(cr))
+        {
+            player.ShowContainer(cr, null, TRANSFER_FAR_CRIT);
+            if(cr.IsPlayer())
+                LogCommandUsage(player, "traded with " + cr.Name);
+            else
+                LogCommandUsage(player, "traded with critter '" + cr.Name + "'");
+
+        }
+    }
+    else if(itemId != 0)
+    {
+        Item@ item = GetDevItem(player, itemId);
+        if(valid(item))
+        {
+            player.ShowContainer(null, item, TRANSFER_FAR_CONT);
+            LogCommandUsage(player, "browsed container " + item.Id);
+        }
+    }
+}
+
+//
+// Teleports critter (crId) or player to hex
+//
+void unsafe_Teleport(Critter& player, int crId, int x, int y, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    uint8 dir = 0xff;
+
+    if(crId != 0)
+    {
+        Critter@ cr = GetDevCritter(player, crId);
+        if(valid(cr))
+        {
+            dir = GetDirection(cr.HexX, cr.HexY, x, y);
+            cr.TransitToHex(x, y, dir);
+        }
+    }
+    else
+    {
+        dir = GetDirection(player.HexX, player.HexY, x, y);
+        player.TransitToHex(x, y, dir);
+    }
+}
+
+//
+// Guess what
+//
+void unsafe_Rotate(Critter& player, int crId, int dir, int y, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        if(dir > 0)
+            cr.SetDir((cr.Dir + dir) % 6);
+        else
+            cr.SetDir(cr.Dir == 0 ? 5 : cr.Dir + dir);
+    }
+}
+
+//
+// Xp reward
+//
+void GiveXp(Critter& player, int crId, int amount, int p2, string@ message, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_ADMIN)
+    {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+    }
+
+    Critter@ cr = GetDevCritter(player, crId);
+    if(valid(cr))
+    {
+        if(amount > 0)
+        {
+            if(valid(message) and message.length() > 0)
+                cr.Say(SAY_NETMSG, message);
+            cr.StatBase[ST_EXPERIENCE] += amount;
+            LogExperience(cr, amount, "devmenu");
+            LogCommandUsage(player, "gave " + amount + " XP to critter '" + cr.Name + "'");
+        }
+    }
+}
+
+void Airstrike(Critter& player, int crId, int x, int y, string@ param3, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_ADMIN)
+    {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+    }
+
+    if(valid(player))
+    {
+        player.Say(SAY_NETMSG, "Airstrike target confirmed. Dropping the payload now.");
+    }
+
+    uint16 effectPid = PID_EXPLODE_ROCKET;
+    uint   effectRadius = 2;
+    uint   damage = Random(1000, 5000);
+    uint   damageType = DAMAGE_EXPLODE;
+    uint   damageRadius = 3;
+
+    for(int i = 0; i < 20; i++)
+        ExplodeEx(player.GetMap(), x + Random(-10, 10), y + Random(-10, 10), effectPid, effectRadius, damage, damageType, damageRadius, 0);
+
+    LogCommandUsage(player, "using airstrike");
+}
+
+//
+// Spawn critters
+//
+// param4: { pid, x, y, dir, dialog, /*script*/, ai, bag, team, mob, level }
+void unsafe_SpawnCritter(Critter& player, int p0, int p1, int p2, string@ script, array<int>@ param4)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    Map@ map = player.GetMap();
+    if(!valid(map))
+    {
+        player.Say(SAY_NETMSG, "Map not valid");
+        return;
+    }
+
+    if(param4.length() < 11)
+    {
+        player.Say(SAY_NETMSG, "Invalid parameters");
+    }
+
+    uint   pid = param4[0];
+    uint16 hexX = param4[1];
+    uint16 hexY = param4[2];
+    uint   dir = param4[3];
+    uint   dialog = param4[4];
+    uint   ai = param4[6];
+    uint   bag = param4[7];
+    uint   teamIdPack = param4[8];
+    bool   isMob = param4[9] != 0;
+    uint   level = param4[10];
+
+    AddNpc(map, pid, hexX, hexY, dir, dialog, script, ai, bag, teamIdPack / 100, (teamIdPack / 10) % 10, teamIdPack, isMob, level);
+
+    LogCommandUsage(player, "spawning critter");
+}
+// some tests
+
+void answer_Generic(Critter& player, uint answerI, string& answerS)
+{
+    player.Say(SAY_NETMSG, "Answer integer<" + answerI + ">, string<" + answerS + ">.");
+}
+
+void dlgbox(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_DIALOGBOX, 5, "answer_Generic");
+    cr.Say(SAY_DIALOGBOX_TEXT, "Choose you button dude.");
+    cr.Say(SAY_DIALOGBOX_BUTTON(0), "Button0");
+    cr.Say(SAY_DIALOGBOX_BUTTON(1), "Button1");
+    cr.Say(SAY_DIALOGBOX_BUTTON(2), "Button2");
+    cr.Say(SAY_DIALOGBOX_BUTTON(3), "Button3");
+    cr.Say(SAY_DIALOGBOX_BUTTON(4), "Button4");
+}
+
+void skillbox(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_SKILLBOX, 0, "answer_Generic");
+}
+
+void say(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_SAY, p0, "answer_Generic");
+    cr.Say(SAY_SAY_TITLE, "Choose you...");
+    cr.Say(SAY_SAY_TEXT, "sometext");
+}
+
+void timer(Critter& cr, int p0, int p1, int p2)
+{
+    ProtoItem@ proto = GetProtoItem(PID_BOTTLE_CAPS);
+    cr.ShowScreen(SCREEN_TIMER, proto.PicInv, "answer_Generic");
+}
+
+void bag(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_BAG, 0, "answer_Generic");
+}
+
+void inventory(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_INVENTORY, 0, "");
+}
+
+void cha(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_CHARACTER, 0, "");
+}
+
+void fixboy(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_FIXBOY, 0, "");
+}
+
+void pipboy(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_PIPBOY, 0, "");
+}
+
+void minimap(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_MINIMAP, 0, "");
+}
+
+void close(Critter& cr, int p0, int p1, int p2)
+{
+    cr.ShowScreen(SCREEN_CLOSE, 0, "");
+}

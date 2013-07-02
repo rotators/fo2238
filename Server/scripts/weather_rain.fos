@@ -1,0 +1,61 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// weather_rain.fos
+//
+
+// Weather, rain module
+// inlined in weather.fos
+
+#include "_macros.fos"
+#include "_maps.fos"
+
+#include "weather_h.fos"
+
+/*
+ * TODO:
+ *	rain_table generator
+ */
+
+#include "weather_rain_table.fos"
+
+void InitWeather_Rain()
+{}
+
+int map_rain(uint map_pid)
+{
+    for(uint r = 0; r < rain_table.length(); r += 2)
+    {
+        if(rain_table[r] == map_pid)
+            return(rain_table[r + 1]);
+    }
+    DLog("Unknown rain level for map pid " + map_pid);
+    return(RAIN_NONE);
+}
+
+void WeatherUpdate_Rain(Map@ map, int level)   // Export
+{
+    if(valid(map))
+    {
+        if(level > 0)
+        {
+            int rain = map_rain(map.GetProtoId());
+            switch(rain)
+            {
+            case RAIN_NONE:
+                level = 0;
+                break;
+            case RAIN_OUTSIDE_DESERT:
+                level -= 15;                            // doh
+                break;
+            case RAIN_OUTSIDE:
+            default:
+                break;
+            }
+        }
+
+        level = CLAMP(level, 0, 255);
+        map.SetRain(level);
+    }
+}

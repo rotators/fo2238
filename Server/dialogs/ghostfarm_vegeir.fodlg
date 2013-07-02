@@ -1,0 +1,244 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+100 1010 D _var p q_bos_initiatequest_start = 16 D _var p q_vegeir_bos = 0 #
+2 1020 D _var n name_mem_player_npc = 0 R _var n name_mem_player_npc = 1 #
+3 1030 D _var n name_mem_player_npc = 1 D _param p REPUTATION_SLAGS > 1499 #
+5 1040 D _var n name_mem_player_npc = 1 D _param p REPUTATION_SLAGS < 1500 D _param p REPUTATION_SLAGS > -500 #
+6 1050 D _var n name_mem_player_npc = 1 D _param p REPUTATION_SLAGS < -499 @
+2 2000 None 0 #
+7 2010 #
+0 2020 @
+3 3000 None 0 #
+7 3010 #
+0 3020 @
+5 4000 None 0 #
+7 4010 #
+0 4020 @
+6 5000 None 0 #
+7 5010 #
+0 5020 @
+7 6000 None 0 #
+8 6010 #
+9 6020 #
+19 6030 #
+22 6040 #
+23 6050 #
+27 6060 #
+0 6070 @
+8 7000 None 0 #
+31 7010 #
+7 7020 #
+0 7030 @
+9 8000 None 0 #
+10 8010 @
+10 9000 None 0 #
+11 9010 @
+11 10000 None 0 #
+12 10010 @
+12 11000 None 0 #
+13 11010 @
+13 12000 None 0 #
+7 12010 #
+0 12020 #
+14 12030 #
+32 12040 @
+14 13000 None 0 #
+15 13010 #
+33 13020 @
+15 14000 None 0 #
+16 14010 @
+16 15000 None 0 #
+17 15010 @
+17 16000 None 0 #
+7 16010 #
+0 16020 #
+18 16030 @
+18 17000 None 0 #
+7 17010 #
+0 17020 @
+19 18000 None 0 #
+7 18010 #
+0 18020 #
+20 18030 @
+20 19000 None 0 #
+21 19010 @
+21 20000 None 0 #
+7 20010 #
+0 20020 @
+22 21000 None 0 #
+7 21010 #
+0 21020 @
+23 22000 None 0 #
+24 22010 @
+24 23000 None 0 #
+7 23010 #
+0 23020 #
+26 23030 D _param p SK_OUTDOORSMAN > 100 D _param p SK_SCIENCE < 100 #
+25 23040 D _param p SK_SCIENCE > 100 @
+25 24000 None 0 #
+7 24010 #
+0 24020 @
+26 25000 None 0 #
+7 25010 #
+0 25020 @
+27 26000 None 0 #
+7 26010 #
+0 26020 #
+28 26030 @
+28 27000 None 0 #
+7 27010 #
+0 27020 #
+29 27030 @
+29 28000 None 0 #
+7 28010 #
+0 28020 #
+30 28030 @
+30 29000 None 0 #
+7 29010 #
+0 29020 @
+31 30000 None 0 #
+7 30010 #
+0 30020 @
+32 31000 None 0 #
+7 31010 #
+0 31020 #
+15 31030 @
+33 32000 None 0 #
+7 32010 #
+0 32020 @
+100 33000 None 0 #
+101 33010 @
+101 34000 None 0 #
+7 34010 R _param p REPUTATION_SLAGS + 500 R _var p q_vegeir_bos = 1 #
+7 34020 R _var p q_bos_initiatequest_start = 17 R _param p REPUTATION_SLAGS - 500 R _var p q_vegeir_bos = 1 #
+102 34030 @
+102 35000 None 0 #
+0 35010 R _param p REPUTATION_SLAGS + 400 R _var p q_vegeir_bos = 1 &
+
+[engl]
+{100}{}{Vegeir}
+{200}{}{You see Vegeir.}
+{200}{}{You see the leader of the Slags.}
+{210}{}{A tall, stately man. His movements remind you of a cat stalking its prey.}
+{1000}{}{Predialogue installations}
+{1010}{}{BoS quest}
+{1020}{}{New.}
+{1030}{}{friend}
+{1040}{}{neutral}
+{1050}{}{disliked}
+{2000}{}{Another visitor. I suppose I'll have to get used to visitors now that we've broken the Seal, but it's still a surprise to me every time. I am Vegeir, leader of these people. Welcome to our home.}
+{2010}{}{Hello Vegeir. I'd really like to ask you some questions.}
+{2020}{}{I was just stopping by to say Hello.}
+{3000}{}{Ah, you again. It is good to see you, friend.}
+{3010}{}{Hello Vegeir. I'd really like to ask you some questions.}
+{3020}{}{I was just stopping by to say Hello.}
+{4000}{}{Ah, you again. I must ask that you do not cause any trouble here.}
+{4010}{}{Hello Vegeir. I'd really like to ask you some questions.}
+{4020}{}{I was just stopping by to say Hello.}
+{5000}{}{Ah, you again. I must ask that you leave: you have shown yourself to be a bad person and have caused problems for us.}
+{5010}{}{Hello Vegeir. I'd really like to ask you some questions first.}
+{5020}{}{I was just stopping by to say Hello.}
+{6000}{}{That is understandable. I asked many things of the first Surfacers I met. What do you want to know?}
+{6010}{}{Who are you?}
+{6020}{}{Who are your people?}
+{6030}{}{How do you survive?}
+{6040}{}{What is this place?}
+{6050}{}{What's this fungus?}
+{6060}{}{I can't help but notice that you really have a lot of equipment.}
+{6070}{}{Actually, I don't have any questions right now.}
+{7000}{}{I am Vegeir, I was chosen to be the leader of this group when I was 27 years old, and I have led them ever since. When we broke the Seal, I was chosen to be in charge of dealing with Surfacers as well.}
+{7010}{}{You don't look 27 anymore. You don't let the people vote on a new leader?}
+{7020}{}{Alright, thanks. I'd like to ask another question.}
+{7030}{}{Alright, thanks.}
+{8000}{}{Since I've been alive, we've called ourselves the Slags. I don't know where the name comes from, but I do know it wasn't what we used to be called.}
+{8010}{}{[More.]}
+{9000}{}{I don't know that either, I'm afraid. But I know that we are the descendents of a secret militia group before the war, and their families. When the war started, they took everyone down in to this cave network and sealed the entrance. This event was known as the Sealing.}
+{9010}{}{[More.]}
+{10000}{}{Since then, we have lived down here. The caves are huge, too big for our needs. We haven't explored them all, but most of the tunnels are blocked off at the moment. Children used to get lost. We have our own water supply down here, and we can grow a few mushrooms to eat, plump helmets mostly.}
+{10010}{}{[More.]}
+{11000}{}{But our population has flourished. We're safe from most of the dangers down here, and if some creatures emerge from one of the tunnels, we've always kept ourselves fit and trained and kept our equipment maintained, so we can deal with them. We don't interfere with people on the surface so they don't interfere with us, and life is easy.}
+{11010}{}{[More.]}
+{12000}{}{The only problem with that is that we couldn't provide for everyone anymore.}
+{12010}{}{Alright, thanks. I'd like to ask another question.}
+{12020}{}{Alright, thanks.}
+{12030}{}{Why not? You guys have water here and food growing.}
+{12040}{}{I see, so then you went up to the surface?}
+{13000}{}{Water and food, yes, mostly. The fungus and mushrooms we eat aren't enough to live on, nutritionally. Our stockpiles of pre-bombs food ran low, though, and it caused unrest. And of course, it wasn't just food. Producing new clothes became impossible, our stockpile of wood was exhausted, our medicines... Less critical items too: Books, games, toys, the things we use to pass the time down here, could all not be replaced once broken. You can't make everything from rocks and water.}
+{13010}{}{When did you break the seal?}
+{13020}{}{Man, how big were those stockpiles?}
+{14000}{}{About 7 years ago. It was quiet at first. We used the water we had down here and some items from the stockpiles to start the farm aboveground. A lifetime of living in the dark makes your eyes unattuned to the light, so we had to work in the dark. And most of our people are uncomfortable or just plain scared of the surface now, so the visits were short, night-time excursions. We didn't meet anyone for a long time.}
+{14010}{}{[More.]}
+{15000}{}{But it went well. The farm flourished. We had new food, fibre for clothes. We rounded up enough wild brahmin - although we didn't know their name then - to use them for meat and leather too.}
+{15010}{}{[More.]}
+{16000}{}{Eventually, we were found by a group of men from Modoc. It was a strange meeting, at first. Eventually however, our two groups came to understand each other. Our ways meant we would stay seperate, but our natures coincided - they are a good, quiet people - and we were close, and each of us could help the needs of the other.}
+{16010}{}{Alright, thanks. I'd like to ask another question.}
+{16020}{}{Alright, thanks.}
+{16030}{}{How do you help each other?}
+{17000}{}{We still cannot stand the sunlight, we are not used to the sky, the wind. They bring us things from the surface that we need, and we supply them with necessities from our farm surplus. They send people to us regularly to trade, and we get on well. They even have a member of their community living with us - Phil. I am pleased with how it has turned out, and after hearing stories from the men of Modoc, we see how lucky we are to have the fortune to be near Modoc, and not the other towns of the surface.}
+{17010}{}{Alright, thanks. I'd like to ask another question.}
+{17020}{}{Alright, thanks.}
+{18000}{}{The same as everyone on the surface, really. Hard work and luck. we had many things stored down here, and the rest we made ourselves, until eventually we had to break the Seal. Now we also farm above ground and trade with the good people of Modoc.}
+{18010}{}{Alright, thanks. I'd like to ask another question.}
+{18020}{}{Alright, thanks.}
+{18030}{}{If you don't mind, could you go in to a little more detail?}
+{19000}{}{Well, there is a huge underwater reservoir of water here. I think it is filled from aboveground. That is why our ancestors chose this location long before the bombs fell. They spent years preparing it for such an eventuality, so when it the fires raged the earth, they instantly came underground.}
+{19010}{}{[More.]}
+{20000}{}{We used to live off fungus and mushrooms we grew here, along with packages of food from before the war with disturbingly long 'best before' dates. When those ran low, we broke the Seal, and now our diet is supplemented by food from above ground.}
+{20010}{}{Alright, thanks. I'd like to ask another question.}
+{20020}{}{Alright, thanks.}
+{21000}{}{It a vast network of tunnels and caverns. The area we live in is but a part of it - they are so many tunnels that we have not even explored them all. Some contain problems for us - radscorpions, molerats, giant ants and such. Some contain benefits - there is a secret tunnel that runs right under Modoc, for example, that allows us to visit them in case of emergency. It might not be much to your eyes, but these caverns and tunnels are a great thing for us, and they have kept us safe for generations.}
+{21010}{}{Alright, thanks. I'd like to ask another question.}
+{21020}{}{Alright, thanks.}
+{22000}{}{The glowing one? Just a fungus, really. We just call it 'glowing fungus' or 'glower' or 'glow'. You can eat it, but it's really not one of the nicest ones to eat. But yes, the glowing is its use. When the lights installed in these caves ran out of power, long before I was born, the glowing fungus was the only illumination we had here. It's not very bright, but it's bright enough. That's why we can see very well down here and you can't, and why we are blinded on the surface and you are not.}
+{22010}{}{[More.]}
+{23000}{}{We also use it to defend ourselves. A covered in the fungus, walking around and moaning and rattling chains, has scared off hundreds of people since we broke the Seal. People are scared of what they don't understand, although that applies to us as much as it does to Surfacers.}
+{23010}{}{Alright, thanks. I'd like to ask another question.}
+{23020}{}{Alright, thanks.}
+{23030}{}{Can I take a look at the fungus?}
+{23040}{}{Can I take a look at the fungus?}
+{24000}{}{Be my guest. [He scrapes a little off the wall and places it in your hand. It's a little sticky and moist. You pick through it. It's a mold. Xerophilic clearly. It reminds you of Trichoderma. Vegeir sees your interest in it.] It seems like you know what you're looking at. Why not talk to Gatsby? He knows a lot about the molds here.}
+{24010}{}{Alright, thanks. I'd like to ask another question.}
+{24020}{}{Alright, thanks.}
+{25000}{}{Be my guest. [He scrapes a little off the wall and places it in your hand. It's a little sticky and moist. You pick through it. You've seen stuff like this before in caves, but not glowing. You taste a little. It's not toxic, but it seems like it's not much of anything else either. You rub a little on your skin and you're left with a glowing sheen. Interesting. Vegeir sees your interest.] If you're interested in the mold, you should talk to Gatsby, he's our resident expert.}
+{25010}{}{Alright, thanks. I'd like to ask another question.}
+{25020}{}{Alright, thanks.}
+{26000}{}{Yes we do. Another thing we have to thank our ancestors for. They left a very large amount of equipment, weaponry and such here for us. Most of the equipment hasn't worked in my lifetime due to a lack of power, but everything is rigorously maintained by us, and almost all of the weapons still work, even if they are extremely old. We are more than capable of defending ourselves if it ever comes to that. Right now, they're only used for the occasional defence against an attack by the creatures in the tunnels.}
+{26010}{}{Alright, thanks. I'd like to ask another question.}
+{26020}{}{Alright, thanks.}
+{26030}{}{What sort of things do you have, if you don't mind?}
+{27000}{}{Weapons: Rifles, shotguns, pistols, all with much ammunition. Knives, batons and others for close-range combat. We have armour too, many full suits. We have a lot of tools: Mining equipment, farming equipment, clothesmaking equipment, repairing tools, really we have the tools to do almost any task you need to survive. And a large amount of equipment that no longer works. Radios, televisions, telephones, record players, that sort of thing. We have a lot that still does work though: binoculars, chains and pulleys, typewriters, things like that.}
+{27010}{}{Alright, thanks. I'd like to ask another question.}
+{27020}{}{Alright, thanks.}
+{27030}{}{Typewriters? That's crazy, I didn't think there were any of them left.}
+{28000}{}{Yes. We actually produced a type document of our agreement with the people of Modoc. They were very impressed. We have a lot of things here that are rare on the surface.}
+{28010}{}{Alright, thanks. I'd like to ask another question.}
+{28020}{}{Alright, thanks.}
+{28030}{}{Can I see your equipment store?}
+{29000}{}{I'm sorry. These things are very precious to us. Some of the items are here in this cavern or on the surface, or carried by our people. But our great stockpile caverns are sealed to outsiders.}
+{29010}{}{Alright, thanks anyway. I'd like to ask another question.}
+{29020}{}{Alright, thanks anyway.}
+{30000}{}{We have many 'Slag Meetings' where we discuss everything we do. Everyone comes, even the children. No one else has ever wanted to be in charge. Really, it's more administrative than anything else. Hardly an honor, and I'm hardly a despot.}
+{30010}{}{Alright, thanks. I'd like to ask another question.}
+{30020}{}{Alright, thanks.}
+{31000}{}{Yes. The event was referred to as 'Breaking the Seal', in reference to the Sealing that kept us down here all those years ago. The people of Modoc find the term 'Breaking the Seal' somewhat amusing. I don't know why. But yes, we went out on to the surface to get more supplies.}
+{31010}{}{Alright, thanks. I'd like to ask another question.}
+{31020}{}{Alright, thanks.}
+{31030}{}{When did you break the seal?}
+{32000}{}{Truly vast. There are caverns bigger than the one you are in now, full of boxes and crates and bags and barrels and packets. Mostly empty now, of course. But they were so big that the first few generations of people here didn't even think they could run out. Even now, there is enough to keep our entire population alive for quite a long time.}
+{32010}{}{Alright, thanks. I'd like to ask another question.}
+{32020}{}{Alright, thanks.}
+{33000}{}{Hello, Surfacer. Can I help you with anything?}
+{33010}{}{I have been sent by the Brotherhood of Steel to investigate this area. I need to ask a few things.}
+{34000}{}{Surfacer, I will tell you what you need. But I ask that you do not tell anyone of our whereabouts. Our isolation is what has kept us safe all these years. Can you do me this favor?}
+{34010}{}{Yes, Vegeir. I will keep everything we discuss between us.  Now I have a few questions.}
+{34020}{}{<Lie>Yes, Vegeir. I will keep everything we discuss between us.  Now I have a few questions.}
+{34030}{}{If you want to keep secrecy, then I would prefer we not talk. }
+{35000}{}{I respect your honesty. Complete your mission and return here. Then we will talk.}
+{35010}{}{I will.}
+

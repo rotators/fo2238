@@ -1,0 +1,169 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+17 1010 D _var n name_mem_npc_player = 0 #
+2 1020 @
+2 2000 None 0 #
+30 2010 D _script factions_player@d_HasNotRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+6 2020 D _script factions_player@d_HasRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+6 2030 D _script dialog@d_IsLeader 0  #
+26 2040 D _var p q_bunker_base > 20 D _var p q_bunker_base2 = 0 R _var p q_bunker_base2 + 1 R _param p ST_EXPERIENCE + 150 R _param p REPUTATION_JUNKTOWN + 100 #
+0 2050 @
+3 3000 factions_player@dlg_EnterNameOfFaction 0 #
+0 3010 @
+4 4000 factions_player@dlg_CreateFactionBase 0 #
+0 4010 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+15 6010 #
+41 6020 #
+18 6030 D _var p q_bunker_base = 0 #
+40 6040 #
+7 6050 @
+7 7000 None 0 #
+0 7010 #
+0 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+3 9010 #
+0 9020 @
+10 10000 None 0 #
+3 10010 #
+0 10020 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+0 12010 @
+15 13000 None 0 #
+3 13010 D _script factions_player@d_HasMoneyForCave 0  R _script factions_player@r_ChooseCave 0  #
+7 13020 @
+16 14000 None 0 #
+3 14010 D _script factions_player@d_HasMoneyForCamp 0  R _script factions_player@r_ChooseCamp 0  #
+7 14020 @
+17 15000 None 0 #
+25 15010 #
+2 15020 D _item p PID_BOTTLE_CAPS > 4 R _var n name_mem_npc_player = 1 R _script dialog@r_RemoveMoney 1 5 #
+0 15030 @
+18 16000 None 0 #
+19 16010 #
+23 16020 @
+19 17000 None 0 #
+20 17010 @
+20 18000 None 0 #
+21 18010 R _var p q_bunker_base = 1 @
+21 19000 None 0 #
+22 19010 #
+24 19020 @
+22 20000 None 0 #
+0 20010 @
+23 21000 None 0 #
+19 21010 #
+7 21020 @
+24 22000 None 0 @
+25 23000 None 0 @
+30 24000 None 0 #
+0 24010 #
+18 24020 D _var p q_bunker_base = 0 #
+0 24030 @
+26 25000 None 0 #
+2 25010 #
+0 25020 @
+40 26000 None 0 #
+3 26010 D _script factions_player@d_HasMoneyForGasStation 0  R _script factions_player@r_ChooseGasStation 0  #
+7 26020 @
+41 27000 None 0 #
+3 27010 D _script factions_player@d_HasMoneyForCave2 0  R _script factions_player@r_ChooseCave2 0  #
+7 27020 &
+
+[engl]
+{100}{}{Earl}
+{200}{}{You see a skillful middle-aged hunter, wearing leather clothes.}
+{210}{}{This is Earl, a man with a very well known scout.}
+{210}{}{You see a gecko hunter. He has a limp in his left leg.}
+{1000}{}{Predialogue installations}
+{1010}{}{I dont know you}
+{1020}{}{ia ciaeii}
+{2000}{}{Yeah. What can the ol' Earl do for you this time?}
+{2010}{}{You are a scout? You must have run across some pretty interesting places in your time. You see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you?}
+{2020}{}{You are a scout? You must have run across some pretty interesting places in your time. You see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you?}
+{2030}{}{So... yeah, we are now looking for a new hideout, do you think you'd have something for us?}
+{2040}{}{About the rumors with the trapper... His name is Wally and he is alive, but... he is a ghoul now and lives in Necropolis.}
+{2050}{}{Nothing. I'm outta here.}
+{3000}{}{And what is it you guys call yourselves, anyway? [Make sure that everyone in your group is following you right now, otherwise they won't count as members]}
+{3010}{}{Nevermind.}
+{4000}{}{Best decision you ever made. Your people'll be thrilled. Let me just mark it on your map...how will you call this place?}
+{4010}{}{Nevermind.}
+{5000}{}{Never heard of you guys. Sorry. Don't think I can help you. Nothing personal.}
+{5010}{}{Ooops, I think I mispoke, let me repeat myself...}
+{5020}{}{I'm wasting my time here.}
+{6000}{}{Sure I can help you, but it ain't gonna be cheap. I happen to know a couple suitable locations, but some are a little more, how should I put it... impressive, than others. Heh, I might be able to show you the way to some kind of cave or a camp, I saw a few days ago.}
+{6010}{}{Do you know of any useful cave in the surrounding area?}
+{6020}{}{We're looking for a cave, but we're not comfortable with what you usually stumble upon in the wastes...}
+{6030}{}{Well, I am more searching for something special. You know, something that you don't see all day long.}
+{6040}{}{Maybe you could give us directions to some kind of prewar facility?}
+{6050}{}{Nevermind, I don't have the time to talk about this now. See ya later.}
+{7000}{}{Heh, your loss.}
+{7010}{}{I guess...}
+{7020}{}{I'll be back}
+{8000}{}{OK, that's it.}
+{8010}{}{Thanks!}
+{9000}{}{There's already a group of people going around calling themselves that. You better pick something different, buddy.}
+{9010}{}{Alright, how about...}
+{9020}{}{Nevermind.}
+{10000}{}{Hmm, there is something wrong with my brain. Do you want try again?}
+{10010}{}{Ok, I will tell you again, maybe you understand this time.}
+{10020}{}{Nevermind}
+{11000}{}{Sorry, so many damn groups have came to me, I don't know of any more places. Sorry. Try finding one that's already out there.}
+{11010}{}{Okay...}
+{12000}{}{And where are the caps? Get out!}
+{12010}{}{Bloody hell...}
+{13000}{}{A cave, eh? Maybe yes. It could be possible that I saw something a while ago... but it costs you 30.000 caps to fresh up my mind...}
+{13010}{}{Okay. Here, take the 30.000 caps and show me the way. I hope it's worth it.}
+{13020}{}{That's too much for me. Screw it.}
+{14000}{}{You want a camp? Maybe I know a place... It could be possible that I saw something a while ago... but it costs you 130.000 caps to fresh up my mind...}
+{14010}{}{Okay. Here, take the 130.000 caps and show me the way. I hope it's worth it.}
+{14020}{}{That's too much for me. Screw it.}
+{15000}{}{Hey, you must be new here. What about this: You hand out a beer to me and we can talk, eh?}
+{15010}{}{The fuck, no. Do I look like a bartender?}
+{15020}{}{Sure. [You wave to the bartender] One beer for my friend here!}
+{15030}{}{Maybe later. I need to go now.}
+{16000}{}{Something special, eh? Guess, I am not your man then. But I've heard some rumors...}
+{16010}{}{Rumors like what?}
+{16020}{}{Oh noe, rumors. What next, you want to tell me something about some kind of person, who is running around in a 80 years old vault suit and asking everyone if they know what a gecko is?}
+{17000}{}{There are rumors about a trapper, I don't know his name. Was already pretty old, with a scar over half of his face. He wanted to explore the south east of the Boneyard ruins. The people are saying that he moved in the very south, to a place where no human should go. I have absolutly no clue what he wanted down there, but well... The rumors say, he never came back. }
+{17010}{}{How should a trapper who "might" know something, but was probably just a rumor anyway, tell me something new?}
+{18000}{}{Boy, I tell you. If anybody knows about some special location, than this dude! He was really a outdoor master.}
+{18010}{}{And, boy, where can I find him then, if I would like to know more?}
+{19000}{}{@sex@|This is a very good question, dude! I can only give you one tip... Go to the Boneyard and ask around among the scavengers. They might know something more.||This is a very good question, lady!I can only give you one tip... Go to the Boneyard and ask around among the scavengers. They might know something more.|}
+{19010}{}{Boneyard, you say? Seems like I need to check it out then.}
+{19020}{}{God, this sounds so damn boring. }
+{20000}{}{Yeh, good luck with that.}
+{20010}{}{See you.}
+{21000}{}{@sex@|Hey boy, you don't need to listen to me, if you don't want to.||Hey girl, you don't need to listen to me, if you don't want to.|}
+{21010}{}{It's okay, go on. What do you want to say?}
+{21020}{}{So shall it be. Bye.}
+{22000}{}{Might be, if you are not into that kind of stuff. But you asked me, that's what I know, deal with it or not, I don't care.}
+{23000}{}{Then don't talk to me.}
+{24000}{}{@sex@|You don't look like a big group of travellers to me, dude. Let's make a deal, come back when you really have some followers, ok?||You don't look like a big group of travellers to me, lady. Let's make a deal, come back when you really have some followers, ok?|}
+{24010}{}{Well, ok then. Bye.}
+{24020}{}{There is still something else... Well, I am more searching for something special. You know, something that you don't see all day long.}
+{24030}{}{My folks are right there behind the walls... wait, I tell them to come over... [You leave.]}
+{25000}{}{What? Oh well... at least he is alive, eh? Thanks for the information on this. Maybe some sunny day, I will travel to Necropolis, just to meet him personally.}
+{25010}{}{There is still something else...}
+{25020}{}{Gotta go now. Bye.}
+{26000}{}{I know of some abandoned place not that far from here. For 50.000 caps, I can show you the position...}
+{26010}{}{Okay. Here, take the 50.000 caps and show me the way. I hope it's worth it.}
+{26020}{}{That's too much for me. Screw it.}
+{27000}{}{I know of some nicely located cave nearby. I can show it to you, but I need, let's say, 33.000 caps for the service...}
+{27010}{}{Sure, we're interested.}
+{27020}{}{Ahh, that's quite a lot, maybe next time.}
+

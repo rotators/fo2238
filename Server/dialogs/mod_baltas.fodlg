@@ -1,0 +1,92 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+4 1010 D _param p ST_CHARISMA > 99 #
+3 1020 D _param p ST_INTELLECT < 4 #
+8 1030 D _var p q_modoc_balthas_fetcher = 3 #
+2 1040 @
+2 2000 None 0 #
+65506 2010 #
+80 2020 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckArmorer0 1 0 #
+81 2030 D _script dialog@d_CheckArmorer1 1 0 #
+5 2040 D _var n acquaintance = 0 D _var p q_modoc_balthas_fetcher = 0 D _script dialog@d_QuestTimeoutReady 0  #
+7 2050 D _var n acquaintance = 1 D _var p q_modoc_balthas_fetcher = 0 D _script dialog@d_QuestTimeoutReady 0  #
+0 2060 @
+3 3000 None 0 @
+4 4000 None 0 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+0 6010 D _param p ST_CHARISMA > 5 R _var p q_modoc_balthas_fetcher = 1 #
+2 6020 @
+7 7000 None 0 #
+0 7010 D _param p ST_CHARISMA > 5 R _var p q_modoc_balthas_fetcher = 1 #
+2 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+0 10010 R _param p ST_EXPERIENCE + 900 R _item p PID_LEATHER_JACKET + 1 R _var p q_modoc_balthas_fetcher = 0 R _var n acquaintance = 1 R _script dialog@r_QuestTimeout 1 120 @
+80 11000 None 0 #
+82 11010 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_ARMORER = 1 #
+0 11020 @
+81 12000 None 0 #
+83 12010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_ARMORER = 2 #
+0 12020 @
+82 13000 None 0 #
+0 13010 @
+83 14000 None 0 #
+0 14010 &
+
+[engl]
+{100}{}{Balthas}
+{200}{}{A heavy set man wearing a leather apron.}
+{210}{}{A tall, muscular man who looks and smells of leather.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Idiot}
+{1030}{}{finished his little fetchquest}
+{1040}{}{Answer text}
+{2000}{}{Hello, my name’s Balthas. I run the Tannery here in Modoc. Can I help you?}
+{2010}{}{I’d like to see your wares.}
+{2020}{}{Tannery, huh? Say, can you make jackets and armors from the brahmin hide? I'm quite eager to learn how to do it properly.}
+{2030}{}{Could you teach me something more about armors?}
+{2040}{}{How's business, Balthas?}
+{2050}{}{How's business, Balthas? Still having the same problems?}
+{2060}{}{Just looking, thanks.}
+{3000}{}{Get out of here, idiot.@@Been out in the sun too long?@@Shoo!}
+{4000}{}{I killed brahmin better looking than you.@@What.. what are you?@@Please, you're scaring my son.@@I'm going to have to ask you to leave. You're hurting my business.}
+{5000}{}{Oh you know. It's been pretty slow, recently. I mean, the custom's here, but it's hard keeping up with demand. Grisham's never got enough hides to spare for me.}
+{5010}{}{You know, I don't really have a day job. I could look in to this for you.}
+{5020}{}{That sucks, man. I mean, I don't even have a job. Life is tough alright. Later.}
+{6000}{}{You would? I mean I'd do it myself but if I leave the shop for a minute some damn wastelander will try stealing what I've got here. Just check in with Grisham and see what's up.}
+{6010}{}{I'll go talk to Grisham for you Balthas and see what's up with the brahmin.}
+{6020}{}{Not interested, I've got better things to do.}
+{7000}{}{Same as ever. This is turning out to be a real chronic issue. Haven't got a decent excuse out of Grisham yet. He's always blaming wastelanders. If you could give it another shot I'd appreciate it.}
+{7010}{}{I'll go talk to Grisham for you, Balthas, and see what's up with the brahmin.}
+{7020}{}{I hope you find someone else to whine on Grisham.}
+{8000}{}{Hey wastelander. I need to thank you.}
+{8010}{}{Oh, you already heard?}
+{9000}{}{Yeah, Ed's buckaroo's got here a bit before you did and told me about it. Don't know how you got brahmin off that man, but I'm glad for the extra hides. }
+{9010}{}{Well, I'm glad to help out.}
+{10000}{}{Say, now that I've got a bit more material to work with, I think I can spare an old jacket for you, since I can't really offer you much else.}
+{10010}{}{Thanks man, really. I appreciate your candour.}
+{11000}{}{Of course I can, that's exactly what I do to earn a living. [Looking carefully at you] Hmmm, interested in expanding your skills, eh? OK, you look like you know some of the basics already... I can show you some tips, but it'll cost you fifteen hundred caps.}
+{11010}{}{Fifteen hundred caps? Here, it better be worth it!}
+{11020}{}{Sorry, that's too much for me. I might be back later, though.}
+{12000}{}{Well, I think there is something I could show you... For three grand.}
+{12010}{}{I just happen to have $3000 ready for you... [You give him the money] Let's get to it.}
+{12020}{}{Sorry, that's too much for me. I might be back later, though.}
+{13000}{}{Good, now pay attention... [Baltas shows you how to make armors and take care of them]}
+{13010}{}{Thanks Baltas, I'll do my best to put this knowledge to good use.}
+{14000}{}{Good, now pay attention... [Baltas shows you the essence of his skill]}
+{14010}{}{Thanks Baltas, I'll do my best to put this knowledge to good use.}
+

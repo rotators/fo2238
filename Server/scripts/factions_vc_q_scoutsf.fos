@@ -1,0 +1,49 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_vc_q_scoutsf.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_vars.fos"
+
+void ScoutSFMap(Map@ map, Critter@ player)
+{
+    // Ugh, rewrite to use bitflags
+
+    // Quest: "Scouting in San Francisco"
+    // The following code is all related to the quest mentioned above.
+    GameVar@ var = GetLocalVar(LVAR_factions_q_vc_scoutsf, player.Id);
+
+    // The quest is active
+    if(var == 1 || var > 9)
+    {
+        // If the area was not visited, mark it as visited
+        if(map.GetProtoId() == MAP_SanFranChina)
+        {
+            if(var == 101 || var == 1)
+            {
+                var += 10;
+            }
+        }
+
+        if(map.GetProtoId() == MAP_ShiTemple)
+        {
+            if(var < 100)
+            {
+                var += 100;
+            }
+        }
+    }
+    else
+    {
+        /*#ifdef __DEBUG__
+           player.Say(SAY_NETMSG, "The quest is not active.");
+         #endif*/
+    }
+    /*#ifdef __DEBUG__
+       Log("SF Quest var = " + var.GetValue());
+     #endif*/
+}

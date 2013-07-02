@@ -1,0 +1,44 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_barber.fos
+//
+
+#include "_defines.fos"
+#include "_basetypes.fos"
+
+import void ChangeCrTypeSafe(Critter& cr, uint8 crType) from "utils";
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+
+void fixCrType(int& crType)   // for data/DefineNames.lst
+{
+    switch(crType)
+    {
+    case -1:
+        crType = CRTYPE_FEMALE_DEFAULT;
+        break;
+    case -2:
+        crType = CRTYPE_MALE_DEFAULT;
+        break;
+    }
+}
+
+bool d_IsCrType(Critter& player, Critter@ kitty, int crType)
+{
+    fixCrType(crType);
+    return(player.Stat[ST_BASE_CRTYPE] == crType);
+}
+
+bool d_IsNotCrType(Critter& player, Critter@ kitty, int crType)
+{
+    return(!d_IsCrType(player, kitty, crType));
+}
+
+void r_Haircut(Critter& player, Critter@ tray, int crType)
+{
+    fixCrType(crType);
+    FlushScreen(player, false, 500);
+    FlushScreen(player, true, 5000);
+    ChangeCrTypeSafe(player, crType);
+}

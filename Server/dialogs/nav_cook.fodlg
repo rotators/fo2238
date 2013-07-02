@@ -1,0 +1,52 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 3 #
+2 1020 D _script dialog@d_IsDisguised 0  @
+2 2000 None 0 #
+3 2010 D _var n name_mem_player_npc = 0 R _var n name_mem_player_npc = 1 R _item p PID_MEAT_JERKY + 1 R _item p PID_MUTATED_FRUIT + 1 #
+5 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{Cookie}
+{200}{}{You see a cook.}
+{210}{}{You see a man in armor wearing a chef’s hat and an apron.}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{disguised}
+{2000}{}{Hey soldier. Ya looking for some grub or just someone to talk to?}
+{2010}{}{I could use something to eat.}
+{2020}{}{Let’s chat a while.}
+{2030}{}{I better be going now.}
+{3000}{}{Well, here ya go. The snow and fly shit’s over there. Anything else?}
+{3010}{}{Shit? Snow? What the hell kind of food is this?}
+{3020}{}{Let’s chat while I eat.}
+{3030}{}{Thanks. See you.}
+{4000}{}{I’m sorry, ya must be new to the army. Don’t take offense to what I said, that’s just what we call stuff here. Snow and fly shit’s another name for salt and pepper.}
+{4010}{}{Got it, sorry. Let’s chat while I eat.}
+{4020}{}{Yes, it makes sense now. Gotta go, see you later.}
+{5000}{}{What ya want to talk about?}
+{5010}{}{What’s going on around here?}
+{5020}{}{Thanks. I need to get back to my duty post.}
+{6000}{}{Not much. Soldiers are coming and going, usual stuff. You wanna ask about something specific or what?}
+{6010}{}{Nothing for now, thanks.}
+

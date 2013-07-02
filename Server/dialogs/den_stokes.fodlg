@@ -1,0 +1,203 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p q_raiders_induction = 0 #
+3 1020 D _var p q_raiders_induction = 1 #
+35 1030 D _var p q_raiders_induction = 4 D _var p acquaintance = 0 #
+29 1040 D _var p q_raiders_induction > 1 D _var n acquaintance = 0 #
+38 1050 D _var n acquaintance = 1 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+5 3020 @
+4 4000 None 0 #
+6 4010 D _param p REPUTATION_RAIDERS < -200 #
+7 4020 D _param p REPUTATION_RAIDERS > -199 @
+5 5000 None 0 #
+65507 5010 #
+3 5020 @
+6 6000 None 0 #
+65507 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 #
+10 8020 @
+9 9000 None 0 #
+11 9010 #
+0 9020 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 #
+15 12020 @
+13 13000 None 0 #
+14 13010 #
+0 13020 @
+14 14000 None 0 #
+16 14010 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+18 17010 #
+20 17020 @
+18 18000 None 0 #
+20 18010 #
+19 18020 D _param p ST_GENDER = 0 @
+19 19000 None 0 #
+65507 19010 @
+20 20000 None 0 #
+21 20010 #
+22 20020 @
+21 21000 None 0 #
+23 21010 @
+22 22000 None 0 #
+23 22010 @
+23 23000 None 0 #
+25 23010 #
+24 23020 @
+24 24000 None 0 #
+0 24010 @
+25 25000 None 0 #
+26 25010 R _script dialog@r_ShowLocation 1 29 @
+26 26000 None 0 #
+27 26010 @
+27 27000 None 0 #
+28 27010 @
+28 28000 None 0 #
+0 28010 R _var p q_raiders_induction = 2 @
+29 29000 None 0 #
+0 29010 D _var p q_raiders_induction = 2 #
+30 29020 D _var p q_raiders_induction = 2 #
+35 29030 D _var p q_raiders_induction = 4 @
+30 30000 None 0 #
+31 30010 @
+31 31000 None 0 #
+32 31010 @
+32 32000 None 0 #
+33 32010 @
+33 33000 None 0 #
+34 33010 @
+34 34000 None 0 #
+0 34010 @
+35 35000 None 0 #
+36 35010 @
+36 36000 None 0 #
+37 36010 R _script dialog@r_AddMoney 1 500 R _item p PID_7_62MM_AMMO + 50 R _item p PID_BEER + 2 R _item p PID_JET + 2 R _var p acquaintance = 1 R _var p q_raiders_induction = 5 @
+37 37000 None 0 #
+0 37010 @
+38 38000 None 0 &
+
+[engl]
+{100}{}{Stokes}
+{200}{}{You see Stokes.}
+{210}{}{It's Stokes. You can't help but like the guy.}
+{240}{}{You see Stokes' body.}
+{250}{}{Died as he lived. Sat around in the Den doing nothing.}
+{260}{}{You see Stokes' body.}
+{270}{}{Died as he lived. Sat around in the Den doing nothing.}
+{1000}{}{Predialogue installations}
+{1010}{}{You didnt start the quest yet}
+{1020}{}{You started the quest}
+{1030}{}{quest completed, get the extra stuff}
+{1040}{}{You've talked with him before}
+{1050}{}{You got your reward and are all finished with Stokes}
+{2000}{}{Ahhh...@@Another beer over here?@@Kickin back...@@This is the life}
+{3000}{}{Who are you?}
+{3010}{}{@pname@, Metzger said I should talk to you.}
+{3020}{}{Who am I? Who are you?}
+{4000}{}{Yeah? Why?}
+{4010}{}{About a job. Said you might have something for me.}
+{4020}{}{About a job. Said you might have something for me.}
+{5000}{}{I'm asking the questions, dickwad.}
+{5010}{}{Oh yeah? Well why don't you ask yourself this one? "Why is this guy kicking the shit out of me right now?"}
+{5020}{}{Uh yeah.  Sorry. Let's start again!}
+{6000}{}{Go hug a tree, faggot.  You aint cut out for this life.}
+{6010}{}{Are you calling me a pussy? Prepare to taste my steel, demon!}
+{6020}{}{Are you calling me a pussy? Yeah I guess I am.  I'll come back if I ever feel more bad ass.}
+{7000}{}{Well, you seem ok.  You know who I am?}
+{7010}{}{I guess not really.}
+{8000}{}{I'm a Khan, motherfucker.  You know who the Khans are?}
+{8010}{}{Raiders, right?}
+{8020}{}{Uh no, sorry.}
+{9000}{}{That's right.  We're ice cold motherfuckers and we don't let anyone tell us what to do.}
+{9010}{}{Sounds like a sweet deal}
+{9020}{}{Ohh dear!  Mother told me not to mess with you types! I'm outta here.}
+{10000}{}{Fuck, were you born yesterday?  The Khans are raiders, dumbass.  We see something we want and we go and take it.}
+{10010}{}{Sounds like a sweet deal}
+{10020}{}{Oh dear! Mother told me not to mess with those types.  I'm outta here!}
+{11000}{}{You're damn right.  Tried a bunch of things in my life, and there's no way I'm going back to any of that other wimpy shit after this.}
+{11010}{}{Hell yeah, I want in on that shit.}
+{12000}{}{Yeah yeah, every motherfucker wants in.  But if we let every motherfucker in, we'd have a bunch of pussies running around getting shot and being bitches, giving us a bad name and fucking shit up.}
+{12010}{}{Yeah guess you don't want that.}
+{12020}{}{I aint a pussy, man.}
+{13000}{}{Yeah, no one wants that.  Why would anyone want that?  You're a real fucking genius, huh?}
+{13010}{}{Shit pal, just making conversation}
+{13020}{}{Well if this is how you treat potential recruits, I shant be prolonging my interest! And expect a strongly worded letter directed to your superiors about this.  Good day sir!}
+{14000}{}{Yeah whatever.}
+{14010}{}{So can I get in or what?}
+{15000}{}{Oh you aint?  I'll be the judge of that.  I aint ever heard of you.  You don't have a heavy rep or anything. You gotta prove yourself if you wanna be one of us.}
+{15010}{}{So can I get in or what?}
+{16000}{}{Yeah maybe. Like I said we don't just let every motherfucker in.  We got standards we need to keep, and I sure as shit aint putting my ass on the line just to save some little wimp.  You gotta prove yourself if you want in.}
+{16010}{}{So how do I prove myself?}
+{17000}{}{Well, we got a little place down south. Just a little hideout and a couple of tents.}
+{17010}{}{Sounds pretty shitty to be honest. I thought the Khans were major players.}
+{17020}{}{Yeah?}
+{18000}{}{It aint our main base, dumbass.  Like I'd tell some no-dick where our main base is?}
+{18010}{}{Yeah I guess that makes sense.  Sorry, continue.}
+{18020}{}{No dick? Then what do you call this?! [Pull down your trousers and expose yourself]}
+{19000}{}{What the fuck?}
+{19010}{}{Yeah that's right motherfucker I'm doing this! Now I'm gonna kick your ass! I literally don't give a fuck about anything!}
+{20000}{}{Yeah well it's pretty far from our main base.  We mostly use it jump on caravans from the Hub and NCR then take the spoils back up north.  There's only about a dozen people there otherwise, laying low, keeping shit ticking over and doing small-time shit.}
+{20010}{}{Sounds like it's pretty short-staffed.}
+{20020}{}{Sounds like you could do with an extra man.}
+{21000}{}{Short-staffed? Where the fuck you come from?  But yeah, I bet they could go for an extra pair of hands, they always need something doing, and you not being known might actually help.}
+{21010}{}{Makes sense.}
+{22000}{}{Right. They're mostly busy guarding what we got there and keeping eyes on the caravans, seeing what's up.  They can't spare much manpower, and there's always shit that needs taking care of.}
+{22010}{}{Makes sense.}
+{23000}{}{So, you game?}
+{23010}{}{Bring it motherfucker. I can own this shit.}
+{23020}{}{Yeah but not right now. I have some other things to take care of, but I might check back on this later.}
+{24000}{}{Alright, well, I'll be sorting shit out with Metzger for a while, so you can come back later if you change your mind - always need new boys down there.}
+{24010}{}{Okay, I might be back around later, or not.  Bye.}
+{25000}{}{Hot shit.  Well, here's the location of the spot. [He pulls out a tattered 'map,' that really doesn't deserve to be called that, from his pocket. It's been folded and shoved in his pocket around a thousand times, and even when it was brand new it was just a terrible diagram drawn by a stupid raider with a pencil. Still, you can work out pretty much where the base is.] }
+{25010}{}{Alright, I got it. So I just go there?}
+{26000}{}{If you just stroll up like you know what you're doing, not toting any guns or shit, but not sneakin around like a damn faggot either, they'll figure out what's up and not waste you right away.  Say I sent you.  Name's Stokes.  Hi, by the way. The guy you want is Raynes. }
+{26010}{}{Hi. Alright, so I talk to Raynes?}
+{27000}{}{Just tell him I told you to go see him about a job to prove you're legit. This shit happens from time to time, he'll figure something out.}
+{27010}{}{Okay, I'll go do that for you.}
+{28000}{}{Alright well don't fuck up or act like a bitch or get killed or some fool shit okay? I don't wanna be chewed out for sending a faggot down there. Be prepared to do some real bad ass shit.}
+{28010}{}{Bad ass? You're talking to the master. Don't worry, I was born to be a raider. I'm gonna head down there right now.}
+{29000}{}{Hey what's up man?  You met with Raynes yet?}
+{29010}{}{Not yet. I'll go do that I guess.}
+{29020}{}{Not yet, but first I wanted to ask what exactly it is you're doing here?}
+{29030}{}{Hell yeah I did.}
+{30000}{}{I'm a Khan and I'm here dealing with Metzger? What do you think?}
+{30010}{}{Do you sell slaves to him?}
+{31000}{}{Great fucking job, detective.}
+{31010}{}{Guess that makes sense for you.}
+{32000}{}{Yeah we got a sweet deal I guess. We end up with a lot of of spare people in our business. You kill the guys who fight back at the time, but you know, even some of us don't particularly enjoy killing a woman in cold blood or nothing. So we bring them up to Metzger every time we got too many to handle. He pays us good for them.}
+{32010}{}{Aren't people supposed to run away or start shooting when they see raiders in town?}
+{33000}{}{The Den aint the sort of place that gives a fuck about that shit, and that's why we do it here. Sure Becky and that Mom lady hate our guts, but those bitches know their place and they'd never fuck with us. The guys in the Hole pretty much know what we're about and let us get on with it.}
+{33010}{}{Yeah it seems like a bar with literally no entrance standards at all.}
+{34000}{}{Hahaha.  Yeah you're damn right. About the only place a guy such as myself can drink in 'civilised' society.}
+{34010}{}{Well enjoy that drink. I need to go see Raynes about that thing. Later.}
+{35000}{}{Yeah? How'd it go?}
+{35010}{}{You're looking at a raider now.}
+{36000}{}{Welcome home then, brother. Glad to have you with us. And hey, thanks for not fucking up after I set you up.  Works good for my rep to bring in solid guys.  Take this as thanks.}
+{36010}{}{Thanks Stokes.}
+{37000}{}{Take it easy on the road, man. Hope we can hook up down the road and run a job together or some shit.}
+{37010}{}{Yeah me too, you're a good guy. Thanks for setting me up with this. It's almost like you're too nice to be a Khan! Catch you on the road.}
+{38000}{}{Hey, what's happening, @pname@?@@Come to kick back for a bit?@@Pull up a chair man@@"I'm just a teenage dirtbag, baby"}
+

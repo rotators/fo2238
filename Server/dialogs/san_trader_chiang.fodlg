@@ -1,0 +1,75 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+5 1020 D _var p name_mem_npc_player = 1 #
+8 1030 D _param p ST_CHARISMA > 99 @
+2 2000 None 0 #
+65506 2010 #
+3 2020 #
+20 2030 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 D _var p q_la_gunr_courier = 3 R _param p REPUTATION_COMMUNISTS + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+6 4010 #
+7 4020 #
+0 4030 @
+5 5000 None 0 #
+65506 5010 #
+3 5020 #
+20 5030 D _var p q_la_gunr_courier = 3 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_COMMUNISTS + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+0 5040 @
+6 6000 None 0 #
+5 6010 #
+0 6020 @
+7 7000 None 0 #
+5 7010 #
+0 7020 @
+8 8000 None 0 @
+20 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Mai Da Chiang}
+{200}{}{You see an enthusiastic man.}
+{210}{}{You see Mai Da Chiang, the owner of Red 888 Guns.}
+{210}{}{This is a rotund man who looks like he's running on permanent overdrive.}
+{1000}{}{error}
+{1010}{}{unknown}
+{1020}{}{known}
+{1030}{}{ugly}
+{2000}{}{Hi! Welcome to Red 888 Guns! I'm Mai Da Chiang, the owner. How can I help you?}
+{2010}{}{I was looking for some weaponry.}
+{2020}{}{Tell me about the place.}
+{2030}{}{I've got your Gun Runners shipment with me.}
+{2040}{}{Forget it.}
+{3000}{}{We have lived here for years, but we did not always live here. Dr. Fung knows the complete history. I'll bet what you're looking for is what we do now.}
+{3010}{}{Yep.}
+{3020}{}{No, actually, I wanted to know the history. I'll go find Fung. See you.}
+{4000}{}{Now, we are mainly fishermen, not including the comrades who are recruited by the Central Committee -- they are scientists. They are working on many different projects in order to help us rebuild the world.}
+{4010}{}{Rebuild the world... how?}
+{4020}{}{What else is going on in town?}
+{4030}{}{Thanks, bye.}
+{5000}{}{What can I do for you this time?}
+{5010}{}{I was looking for some weaponry.}
+{5020}{}{Tell me about the place.}
+{5030}{}{I've got your Gun Runners shipment with me.}
+{5040}{}{Forget it.}
+{6000}{}{I do not know, I'm just a store owner. They usually keep their work to themselves.}
+{6010}{}{I see. I have more questions.}
+{6020}{}{Thank you, bye.}
+{7000}{}{There is a gang of vagrants who have moved onto the Poseidon Oil tanker on the wharf. There were monsters living inside it, but the vagrants have sealed them into the lower hull. Though they are outsiders, we are grateful to the drifters for this task. Also, they live as a part of this commune together with us and though they are a bit loud sometimes, we can't really complain about them in any way. They're different, but good people.}
+{7010}{}{I see. I have more questions.}
+{7020}{}{Thank you, bye.}
+{8000}{}{I am asking you to leave. Politely.@@Get out, freak.@@I'm just a store owner. I want no trouble, foreigner.}
+{9000}{}{Man, it's about time! Give it to me, had been waiting for the delivery since weeks!@@About time! Give me the package and thanks.@@Thanks for the delivery, @sex@|boy||girl|, it's about time!@@Ah, finally! Hand it over, I'll take care from now on.}
+{9010}{}{Goodbye.}
+

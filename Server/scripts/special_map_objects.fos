@@ -1,0 +1,137 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// special_map_objects.fos
+//
+
+#include "_macros.fos"
+#include "MsgStr.h"
+#include "utils_h.fos"
+#include "traps_h.fos"
+
+#include "special_map_objects_forcefield.fos"
+#include "special_map_objects_steam.fos"
+#include "special_map_objects_floor.fos"
+
+void InitializeSMOs() // export
+{
+    AddCallback(SteamSearcher);
+    AddCallback(FloorSearcher);
+    AddCallback(ForceFieldSearcher);
+}
+
+interface ITogglableSMO
+{
+    void Toggle();
+    void TurnOn();
+    void TurnOff();
+};
+
+interface ISearchingCallback
+{
+    uint FindTogglableSMOs(array<ITogglableSMO@>& list, Map& map, int globalId);
+};
+
+array<ISearchingCallback@> SearchCallbacks;
+
+void AddCallback(ISearchingCallback@ newCallback)
+{
+    if(valid(newCallback))
+        SearchCallbacks.insertLast(newCallback);
+}
+
+uint FindSMOs(array<ITogglableSMO@>& smos, Map& map, int globalId)
+{
+    uint smoCount = 0;
+    for(uint i = 0, j = SearchCallbacks.length(); i < j; i++)
+    {
+        smoCount += SearchCallbacks[i].FindTogglableSMOs(smos, map, globalId);
+    }
+    return smoCount;
+}
+
+
+void r_SMOToggle(Critter& player, Critter@ npc, int globalId)
+{
+    Map@ map = player.GetMap();
+    ToggleSMO(map, globalId);
+}
+
+void r_SMOToggle(Critter& player, Critter@ npc, int globalId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleSMO(map, globalId);
+}
+
+void r_SMOOn(Critter& player, Critter@ npc, int globalId)
+{
+    Map@ map = player.GetMap();
+    SetSMOOn(map, globalId);
+}
+
+void r_SMOOn(Critter& player, Critter@ npc, int globalId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetSMOOn(map, globalId);
+}
+
+void r_SMOOff(Critter& player, Critter@ npc, int globalId)
+{
+    Map@ map = player.GetMap();
+    SetSMOOff(map, globalId);
+}
+
+void r_SMOOff(Critter& player, Critter@ npc, int globalId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetSMOOff(map, globalId);
+}
+
+////////
+
+
+void ToggleSMO(Map@ map, int globalId)
+{
+    if(!valid(map))
+        return;
+
+    array<ITogglableSMO@> smos;
+    for(uint i = 0, j = FindSMOs(smos, map, globalId); i < j; i++)
+    {
+        smos[i].Toggle();
+    }
+}
+
+void SetSMOOn(Map@ map, int globalId)
+{
+    if(!valid(map))
+        return;
+
+    array<ITogglableSMO@> smos;
+    for(uint i = 0, j = FindSMOs(smos, map, globalId); i < j; i++)
+    {
+        smos[i].TurnOn();
+    }
+}
+
+void SetSMOOff(Map@ map, int globalId)
+{
+    if(!valid(map))
+        return;
+
+    array<ITogglableSMO@> smos;
+    for(uint i = 0, j = FindSMOs(smos, map, globalId); i < j; i++)
+    {
+        smos[i].TurnOff();
+    }
+}

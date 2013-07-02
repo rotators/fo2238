@@ -1,0 +1,329 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// dialog_factions.fos
+//
+
+// previously factions_common, now inlined in dialogs.fos
+#ifndef __DIALOG_FACTIONS__
+#define __DIALOG_FACTIONS__
+
+// common dialogs for factions
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "factions_bases_h.fos"
+#include "utils_h.fos"
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+
+/** \addtogroup DialogFuncs
+ *  @{
+ */
+
+/**
+ * \~english @name Factions
+ *
+ * \~ @weight 520
+ */
+// @{
+
+/**
+ * Checks if player's rank in his/her faction is lower than value that is passed from dialog
+ */
+bool d_IsLowerRankThan(Critter& player, Critter@ npc, int rank)
+{
+    return _GroupRank(player) < rank;
+}
+/**
+ * Checks if players' rank in his/her faction is higher than given value
+ */
+bool d_IsHigherRankThan(Critter& player, Critter@, int rank)
+{
+    return _GroupRank(player) > rank;
+}
+
+bool d_HasFactionBase(Critter& player, Critter@ npc)   // nowhere
+{
+    return(GetFactionBases(player.Stat[ST_TEAM_ID], null) > 0);
+}
+
+/**
+ * Checks if the player is a leader of some faction.
+ */
+bool d_IsLeader(Critter& player, Critter@ npc)   // via dialog
+{
+    return(_GroupRank(player) == RANK_LEADER);
+}
+
+/**
+ * Checks if the player is member of the same faction as npc.
+ */
+bool d_IsMember(Critter& player, Critter@ npc)   // via dialog
+{
+    return _GroupIndex(npc) == _GroupIndex(player);
+}
+
+/**
+ * Checks if player is not member of the npc's faction.
+ */
+bool d_IsNotMember(Critter& player, Critter@ npc)   // via dialog
+{
+    return _GroupIndex(npc) != _GroupIndex(player);
+}
+/**
+ * Checks if the player is member of faction given by the parameter.
+ * @param group The faction's id
+ */
+bool d_IsMemberOf(Critter& player, Critter@ npc, int group)   // via dialog
+{
+    return _GroupIndex(player) == group;
+}
+
+/**
+ * Checks if player is not a member of faction given by the parameter.
+ * @param group The faction's id
+ */
+bool d_IsNotMemberOf(Critter& player, Critter@ npc, int group)   // via dialog
+{
+    return _GroupIndex(player) != group;
+}
+
+/**
+ * Checks if the player is member of some faction.
+ */
+bool d_IsMemberOfSomeFaction(Critter& player, Critter@ npc)   // via dialog
+{
+    uint faction = _GroupIndex(player);
+    // assert
+    if(faction == FACTION_UNKNOWN)
+        Log("Assert: player's faction shouldn't be UNKNOWN");
+    return GetGroupIndex(player) != FACTION_NONE;
+}
+
+/**
+ * Checks if player isn't member of any faction.
+ */
+bool d_NotMemberOfAnyFaction(Critter& player, Critter@ npc)   // via dialog
+{
+    uint faction = GetGroupIndex(player);
+    // assert
+    if(faction == FACTION_UNKNOWN)
+        Log("Assert: player's faction shouldn't be UNKNOWN");
+    return GetGroupIndex(player) == FACTION_NONE;
+}
+
+/**
+ * Checks if player is member of gang (playerdriven faction).
+ */
+bool d_IsGangMember(Critter& player, Critter@ npc)   // via dialog
+{
+    uint faction = GetGroupIndex(player);
+    // assert
+    if(faction == FACTION_UNKNOWN)
+        Log("Assert: player's faction shouldn't be UNKNOWN");
+
+    return IsGang(faction);
+}
+
+/**
+ * Checks whether given player is the member of one of the "big" (NPC) factions.
+ */
+bool d_BigFactionMember(Critter& player, Critter@ npc)   // nowhere
+{
+    uint faction = GetGroupIndex(player);
+    if(faction < 2)
+        return false;
+    return IsBigFaction(faction);
+}
+
+/**
+ * Adds the critter (player I assume) as a faction member. This bypass normal invitation procedure.
+ * @remarks It uses recruiter faction LVAR to determine on which faction/DB to operate
+ */
+void r_AddMember(Critter& initiate, Critter@ recruiter)   // via dialog
+{
+    uint faction = _GroupIndex(recruiter);
+    DPlayerLog(initiate, "Attempting to join faction: " + faction);
+    // check if already a member
+    if(IsMember(faction, initiate))
+    {
+        recruiter.Say(SAY_DIALOG, "Already a member");
+        return;
+    }
+    // check if member of some other faction
+    else if(d_IsMemberOfSomeFaction(initiate, recruiter))
+    {
+        DPlayerLog(initiate, "Resigning current faction...");
+        // force-quit current faction
+        _Resign(initiate.Id);
+    }
+
+
+    Log("Player.Id: " + initiate.Id + " is joining the faction:" + faction);
+    DPlayerLog(initiate, "Player.Id: " + initiate.Id + " is joining the faction:" + faction);
+    int res = AddMember(faction, initiate.Id);
+    if(res != FD_RESULT_SUCCESS)
+    {
+        initiate.Say(SAY_NETMSG, "ERR: " + FD_Result2String(res));
+        Log("ERR: " + FD_Result2String(res));
+    }
+    // add news
+    AddFactionNews(faction, initiate.Id, 0, NEWS_JOINED);
+}
+
+/**
+ * Works very much like r_AddMember, the main difference is that faction that the critter should join is specified in the val parameter instead of being taking from NPC faction.
+ */
+void r_JoinFaction(Critter& player, Critter@ npc, int val)   // nowhere
+{
+    uint faction = val;
+
+    if(IsMember(faction, player))
+    {
+        npc.Say(SAY_DIALOG, "Already a member");
+        return;
+    }
+
+    Log("Player.Id: " + player.Id + " is joining the faction:" + faction);
+    int res = AddMember(faction, player.Id);
+    if(res != FD_RESULT_SUCCESS)
+    {
+        npc.Say(SAY_NETMSG, "ERR: " + FD_Result2String(res));
+        Log("ERR: " + FD_Result2String(res));
+    }
+    // add news
+    AddFactionNews(faction, player.Id, 0, NEWS_JOINED);
+}
+
+/**
+ * Adds the player as a faction member and leader
+ * @remarks it uses recruiter faction LVAR to determine on which faction/DB to operate
+ */
+void r_AddLeader(Critter& initiate, Critter@ recruiter)   // via dialog
+{
+    uint faction = _GroupIndex(recruiter);
+    int  res;
+    if(!IsMember(faction, initiate))
+    {
+        Log("Player.Id: " + initiate.Id + " is joining the faction:" + faction);
+        res = AddMember(faction, initiate.Id);
+        if(res != FD_RESULT_SUCCESS)
+        {
+            recruiter.Say(SAY_NETMSG, "ERR: " + FD_Result2String(res));
+            Log("ERR: " + FD_Result2String(res));
+        }
+    }
+    // make him leader
+    ChangeRank(faction, initiate.Id, RANK_LEADER);
+    if(res != FD_RESULT_SUCCESS)
+    {
+        Log("ERR: " + FD_Result2String(res));
+    }
+    // add news
+    AddFactionNews(faction, initiate.Id, 0, NEWS_LEADER);
+
+}
+
+/**
+ * Adds a number to the player's faction points. Can be used to subtract the points by passing a negative value to add.
+ * @param faction Number of the faction, must be one of the supported npc factions.
+ * @param val Value to add.
+ */
+void r_AddFactionPoints(Critter& player, Critter@ npc, int faction, int val)
+{
+    int varnum = 0;
+    if(val == 0)
+        return;
+    switch(faction)
+    {
+    case FACTION_BOS:
+        varnum = LVAR_factions_points_bos;
+        break;
+    case FACTION_ENCLAVE:
+        varnum = LVAR_factions_points_enclave;
+        break;
+    case FACTION_NCR:
+        varnum = LVAR_factions_points_ncr;
+        break;
+    case FACTION_RAIDERS:
+        varnum = LVAR_factions_points_raiders;
+        break;
+    case FACTION_UNITY:
+        varnum = LVAR_factions_points_unity;
+        break;
+    case FACTION_VAULT_CITY:
+        varnum = LVAR_factions_points_vc;
+        break;
+    default:
+        Log("ERR: wrong faction used, " + faction);
+        return;
+    }
+    GameVar@ var = GetLocalVar(varnum, player.Id);
+    var += val;
+    string   name;
+    GetFactionNameStr(faction, name);
+    if(val > 0)
+        player.Say(SAY_NETMSG, "You've gained " + val + " " + name + " Faction Points.");
+    else
+        player.Say(SAY_NETMSG, "You've lost " + (-val) + " " + name + " Faction Points.");
+}
+
+/**
+ * Shows the faction the player is member of.
+ */
+void dlg_ShowFaction(Critter& player, Critter@ npc, string@ text)   // via dialog
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    string name;
+    if(!GetFactionNameStr(GetGroupIndex(player), name))
+    {
+        Log("Failed to retrieve faction name");
+    }
+
+    text += "$faction" + name;
+}
+
+/**
+ * Shows the player's faction points.
+ */
+void dlg_DisplayFactionPoints(Critter& player, Critter@ npc, string@ text)   // via dialog
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    GameVar@ var = GetLocalVar(LVAR_factions_points_bos, player.Id);
+    text += "$fp_bos" + var.GetValue();
+    @var = GetLocalVar(LVAR_factions_points_enclave, player.Id);
+    text += "$fp_enclave" + var.GetValue();
+    @var = GetLocalVar(LVAR_factions_points_ncr, player.Id);
+    text += "$fp_ncr" + var.GetValue();
+    @var = GetLocalVar(LVAR_factions_points_raiders, player.Id);
+    text += "$fp_raiders" + var.GetValue();
+    @var = GetLocalVar(LVAR_factions_points_unity, player.Id);
+    text += "$fp_unity" + var.GetValue();
+    @var = GetLocalVar(LVAR_factions_points_vc, player.Id);
+    text += "$fp_vc" + var.GetValue();
+}
+
+/**
+ * Checks if the player is disguised as member of the same faction as npc.
+ */
+bool d_IsDisguised(Critter& player, Critter@ npc)   // via dialog
+{
+    return HasFactionUniform(player, _GroupIndex(npc), UNIFORM_BODY_ONLY);
+}
+
+/**
+ * Checks if the player is not disguised as member of the same faction as npc.
+ */
+bool d_IsNotDisguised(Critter& player, Critter@ npc)   // via dialog
+{
+    return !HasFactionUniform(player, _GroupIndex(npc), UNIFORM_BODY_ONLY);
+}
+// @}
+
+/*@}*/
+
+#endif

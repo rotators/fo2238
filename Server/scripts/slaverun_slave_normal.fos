@@ -1,0 +1,75 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_slave_normal.fos
+//
+
+// This is the script with slave runs' nonhostile slaves event handlers.
+// See slaverun.fos for the list of all involved files.
+
+#include "_macros.fos"
+#include "slaverun_h.fos"
+
+import void StartSlaverunCombat(Map@ map) from "slaverun";
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_DEAD, "_SlaveNormalOnDead");
+    npc.SetEvent(CRITTER_EVENT_ATTACKED, "_SlaveNormalOnAttacked");
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    _CritSetExtMode(npc, MODE_EXT_SLAVE_NORMAL);
+}
+
+void _SlaveNormalOnDead(Critter& crit, Critter@ killer)
+{
+    uint     id = crit.GetMap().GetData(MAP_DATA_SLAVERUN_PLAYER);
+    GameVar@ normals_killed = GetLocalVar(LVAR_slaverun_normals_killed, id);
+    normals_killed += 1;
+    // Log("Normal killed, # = "+normals_killed.GetValue());
+    GameVar@ normals = GetLocalVar(LVAR_slaverun_normals, id);
+    GameVar@ status = GetLocalVar(LVAR_slaverun_status, id);
+    Critter@ player = GetCritter(id);
+
+    uint     ustatus = status.GetValue();
+
+    if(FLAG(ustatus, SLAVERUN_BOTCHED))
+        return;
+
+    if(2 * (normals - normals_killed) < normals)
+    {
+        if(valid(player))
+            player.Say(SAY_NETMSG, "You've killed too many of the tame stock. You've failed at your task.");
+        SETFLAG(ustatus, SLAVERUN_BOTCHED);
+    }
+    else
+    {
+        if(FLAG(ustatus, SLAVERUN_SLAVERS_KILLED))
+        {
+            if(valid(player))
+                player.Say(SAY_NETMSG, "You've killed too many of the tame stock and let your fellow slavers die. You've failed at your task.");
+            SETFLAG(ustatus, SLAVERUN_BOTCHED);
+        }
+        else
+        {
+            if(valid(player))
+                player.Say(SAY_NETMSG, "You've killed many of the tame stock.");
+            SETFLAG(ustatus, SLAVERUN_SLAVES_KILLED);
+        }
+    }
+    status = ustatus;
+}
+
+void _Idle(Critter& npc)
+{
+    if(Random(0, 5) == 0)
+        npc.MoveRandom();
+    npc.Wait(Random(2000, 10000));
+}
+
+bool _SlaveNormalOnAttacked(Critter& crit, Critter& attacker)
+{
+    // Log("Trying to start combat");
+    StartSlaverunCombat(crit.GetMap());
+    return false;
+}

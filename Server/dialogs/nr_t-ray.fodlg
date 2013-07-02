@@ -1,0 +1,177 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 #
+58 1020 D _param p ST_CHARISMA < 2 #
+2 1030 @
+2 2000 None 0 #
+3 2010 #
+10 2020 R _script car_seller@r_CheckCar 1 0 #
+30 2030 #
+40 2040 R _script car_seller@r_CopyKey 1 0 #
+51 2050 D _var n acquaintance = 0 D _var p q_mordinos_joining_quest = 1 #
+500 2060 D _script perks@d_PerkCheck 1 400 R _param p PE_NEGOTIATOR = 1 #
+0 2070 @
+3 3000 car_seller@dlg_PrepareBuy 0 #
+7 3010 R _script car_seller@r_BuyHummer 1 0 #
+7 3020 R _script car_seller@r_BuyBuggy 1 0 #
+7 3030 R _script car_seller@r_BuyScout 1 0 #
+7 3040 R _script car_seller@r_BuyHighwayman 1 0 #
+2 3050 #
+0 3060 @
+5 4000 None 0 @
+6 5000 None 0 @
+7 6000 None 0 #
+0 6010 @
+8 7000 None 0 #
+0 7010 @
+10 8000 car_seller@dlg_SellCar 0 #
+11 8010 R _script car_seller@r_SellCar 1 0 #
+0 8020 @
+11 9000 None 0 @
+30 10000 None 0 #
+31 10010 R _script car_seller@r_CheckCar 1 0 #
+32 10020 R _script car_seller@r_CheckCar 1 0 #
+33 10030 R _script car_seller@r_CheckCar 1 0 #
+65505 10040 @
+31 11000 car_seller@dlg_Fuel 0 #
+39 11010 R _script car_seller@r_DoFuel 1 0 #
+37 11020 #
+0 11030 @
+32 12000 car_seller@dlg_Wear 0 #
+39 12010 R _script car_seller@r_DoWear 1 0 #
+37 12020 #
+65505 12030 @
+33 13000 car_seller@dlg_Bio 0 #
+39 13010 R _script car_seller@r_DoBio 1 0 #
+37 13020 #
+65505 13030 @
+37 14000 None 0 @
+38 15000 None 0 @
+39 16000 None 0 @
+40 17000 None 0 @
+100 18000 None 0 @
+101 19000 None 0 @
+102 20000 None 0 @
+103 21000 None 0 @
+50 22000 None 0 @
+51 23000 None 0 #
+52 23010 D _param p ST_CHARISMA > 4 #
+54 23020 D _param p ST_CHARISMA < 5 R _var p acquaintance = 1 #
+0 23030 @
+52 24000 None 0 #
+53 24010 #
+0 24020 @
+53 25000 None 0 #
+56 25010 @
+54 26000 None 0 #
+55 26010 #
+0 26020 @
+55 27000 None 0 #
+65507 27010 #
+65507 27020 #
+65507 27030 @
+56 28000 None 0 #
+57 28010 #
+0 28020 @
+57 29000 None 0 #
+0 29010 R _var p q_mordinos_induction_doctor + 100 R _var p acquaintance = 1 @
+58 30000 None 0 @
+500 31000 None 0 #
+2 31010 #
+0 31020 &
+
+[engl]
+{100}{}{T-Ray}
+{200}{}{You see a good-looking black man...er, no, wait. You see T-Ray.}
+{210}{}{You see a heavily muscled black man with thick glasses, a light beard, and an attitude.}
+{210}{}{You see T-Ray. He looks pretty good in them jeans.}
+{210}{}{You see T-Ray. He occasionally flexes and feels his biceps, whispering "damn" to himself.}
+{210}{}{You can barely make out T-Ray past all that attitude.}
+{1000}{}{Preddialogue settings}
+{1010}{}{Idiot}
+{1020}{}{ugly}
+{1030}{}{2}
+{2000}{}{Hey, what can T-Ray do for you? We're in the business of buyin', sellin', repairin' and modifyin' all kinds of vehicles.}
+{2010}{}{Vehicles, huh? What do you have in stock?}
+{2020}{}{I want to sell my car. You interested?}
+{2030}{}{Do you offer any other services?}
+{2040}{}{I need a copy of this key, T-Ray.}
+{2050}{}{That's not what I'm here for. You interested in some of this? (Show him case)}
+{2060}{}{I haven't met such tough bargainer since -- well, ever! How do you get to be that good at arranging prices and attracting costumers? [Negotiator]}
+{2070}{}{I'll just be going now.}
+{3000}{}{Let's see now. We got hummers for @lex hummer@, buggies goin' for @lex buggy@, scouts for @lex scout@. If you're feeling classy, we'll sell you a Highwayman for @lex highwayman@.}
+{3010}{}{Give me a hummer.}
+{3020}{}{I'll take a buggy.}
+{3030}{}{A scout sounds good.}
+{3040}{}{I've got the chips, give me the Highwayman.}
+{3050}{}{Nope, nothing for me there. But maybe you could do something else for me?}
+{3060}{}{Good selection, but I gotta go now.}
+{4000}{}{No money, no car, pal. Get yourself some serious chips, and we can do bitness.}
+{5000}{}{Our garage is a little full right now. Come back when we got a little more room.}
+{6000}{}{(He throws you the keys) She's waiting for you in the garage. You want it repaired or modified, you come back to us, y'hear?}
+{6010}{}{Thanks, T-Ray. Bye.}
+{7000}{}{(He throws you the keys) She's waiting for you in the garage. You want it repaired or modified, you come back to us, y'hear?}
+{7010}{}{Thanks, T-Ray. Bye.}
+{8000}{}{Hmm, doesn't look too impressive. Uses too much 'tricity, smells *sniff* somethin' died in here, trunk's too small… I guess I could scrap her and use her for parts. I'll give you @lex sell_cost@ for it.}
+{8010}{}{Fine, deal.}
+{8020}{}{Not today. I'll hang onto it for now.}
+{9000}{}{Excellent. Hey boys, take care of this one! (He throws the keys out to the garage)}
+{10000}{}{We can refuel, repair, and do a little tinkerin' with the engine. Make it run on alcohol as well as energy cells. Save a lot of cash on runnin' costs.}
+{10010}{}{Just fill 'er up.}
+{10020}{}{I guess it could use a few repairs. Would you take a look?}
+{10030}{}{Running on alcohol, huh? Sounds like exactly what I need.}
+{10040}{}{I was just curious. I wanted something else.}
+{11000}{}{Sounds good. It'll cost you @lex fuel_cost@.}
+{11010}{}{Alright, fine, just do it already.}
+{11020}{}{I ain't got the cash, sorry.}
+{11030}{}{Forget it, some other time.}
+{12000}{}{Well, considering the extent of the damages, we could fix her up for @lex wear_cost@ chips.}
+{12010}{}{Deal. Just fix the damn thing.}
+{12020}{}{A little rich for my blood.}
+{12030}{}{Some other time, thanks.}
+{13000}{}{Well, this is no minor undertaking. Something this extensive will cost you @lex bio_cost@ chips, aiight?}
+{13010}{}{No problem, just get started.}
+{13020}{}{Uh, I think I left my cash in the trunk.}
+{13030}{}{Changed my mind. I want something else.}
+{14000}{}{You ain't got the chips, we ain't doing bitness.@@If you ain't got the chips, then you ain't got no business here. I got better things to do than be talking to your cheap ass.@@What, do you think cars are CHEAP?!@@Cut the bull-shit! Get some money, or get out.}
+{15000}{}{Your don't need these particular amen-ities, aiight?}
+{16000}{}{All set. Take her easy, now.}
+{17000}{}{Aiight, this ain't my normal bitness though, y'hear? You get any wheels, you drop by.}
+{18000}{}{Sorry brutha, I got shit to do right now. Come back later.}
+{19000}{}{Now how the hell am I supposed to know which vee-hic-cle you're talkin' 'bout? Show me a key, aiight?}
+{20000}{}{Then where the hell's your car? If it ain't in the garage, I ain't touchin' it. I don't do house calls.}
+{21000}{}{Now how the hell am I supposed to know which vee-hic-cle you're talkin' 'bout? Show me a key, aiight?}
+{22000}{}{Boys, who let the simpleton in here?}
+{23000}{}{Do I look like a dope fiend to you? Or maybe you think this is some sort of fuckin' drugstore? Now get yo' silly ass out of here before I call se-cu-ri-tee.}
+{23010}{}{I think you misunderstood my offer. I deal with the best. This is the purest stock you can find. With this you could get some extra pocket money on the side.}
+{23020}{}{I think you misunderstood my offer. I deal with the best. This is the purest stock you can find. With this you could get some extra pocket money on the side.}
+{23030}{}{I've changed my mind. I gotta go.}
+{24000}{}{Extra pocket money... You might be right on this one. But this shit better be good or you'll regret messing with T-Ray.}
+{24010}{}{You won't regret it. So how about...}
+{24020}{}{I've changed my mind. I gotta go.}
+{25000}{}{Keep talkin'.}
+{25010}{}{How about 100 vials for you and your boys?}
+{26000}{}{Oh I don't think so. Now quit wasting my time.}
+{26010}{}{Nobody talks to me like that and lives!}
+{26020}{}{I'm on my way.}
+{27000}{}{I'm puttin' led in your mothafuckin' ass}
+{27010}{}{Try me!}
+{27020}{}{Yikes!}
+{27030}{}{I'm sorry. I was just...}
+{28000}{}{I like that.}
+{28010}{}{Sounds good.}
+{28020}{}{I've changed my mind. I gotta go.}
+{29000}{}{(Transaction took place) @@ (You came to an agreement)}
+{29010}{}{[END]}
+{30000}{}{No car's gonna make that fucked-up excuse for a face cool. Why even bother?}
+{31000}{}{Hey dude, you're talking to T-Ray. I learned ma school on da street, got it? When I was a boy... [You listen for a while]}
+{31010}{}{Quite a story, T-Ray, that one. Look, I also wanted to ask you about something else...}
+{31020}{}{Yeah, right. I gotta go.}
+

@@ -1,0 +1,394 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// name_colorizing.fos
+//
+
+#include "_colors.fos"
+#include "_macros.fos"
+#include "lexems_h.fos"
+#include "minigames_h.fos"
+
+#ifdef __CLIENT
+
+# include "_client_defines.fos"
+
+# define NAMES_FILE_NAME    "NameColorizing.txt"
+# define COLOR_TOKEN        "@"
+# define NAME_TOKEN         ">"
+
+class Record
+{
+    string NameStr;
+    uint   NameColor;
+    uint   ContourColor;
+};
+array<Record> Records;
+
+array<int>    Colorized;
+
+array<uint>   MinigameTeamColor =
+{
+    COLOR_RGB(70,  70,  70),   // Spectator team
+    COLOR_RGB(255, 170,   0),
+    COLOR_RGB(0, 100, 240),
+    COLOR_RGB(255, 115, 220),
+    COLOR_RGB(200, 245, 145),
+    COLOR_RGB(250, 130, 130),
+    COLOR_RGB(65, 210, 255),
+    COLOR_RGB(50, 250,   0),
+    COLOR_RGB(250,   0,   0),
+    COLOR_RGB(200, 250,   0),
+    COLOR_RGB(185,   0, 250),
+    COLOR_RGB(0, 160,  65),
+    COLOR_RGB(120,  80,   0),
+    COLOR_RGB(100, 255, 225),
+    COLOR_RGB(220, 190, 145),
+    COLOR_RGB(250, 250,  10),
+};
+
+
+
+void InitNameColorizing() // Export
+{
+    Records.resize(0);
+
+    file f;
+    if(f.open(NAMES_FILE_NAME, "r") == 0)
+    {
+        // Parse colors
+        dictionary colors;
+        while(!f.isEndOfFile())
+        {
+            if(f.readWord() == COLOR_TOKEN)
+            {
+                string@ colorName = f.readWord();
+                int     r = f.readNumber();
+                int     g = f.readNumber();
+                int     b = f.readNumber();
+
+                // Change & and ? to space
+                for(uint i = 0, j = colorName.length(); i < j; i++)
+                {
+                    if(colorName[i] == '&' || colorName[i] == '?')
+                        colorName[i] = ' ';
+                }
+
+                // Store
+                colors.set(colorName, uint(COLOR_RGB(r, g, b)));
+            }
+        }
+
+        // Parse names
+        f.setPos(0);
+        while(!f.isEndOfFile())
+        {
+            if(f.readWord() == NAME_TOKEN)
+            {
+                uint    len = Records.length();
+                Records.resize(len + 1);
+                Record@ r = Records[len];
+
+                r.NameStr = strlwr(f.readWord());
+                r.NameColor = GetColor(colors, f.readWord(), COLOR_CRITTER_NAME);
+                r.ContourColor = GetColor(colors, f.readWord(), COLOR_CONTOUR_YELLOW);
+            }
+        }
+    }
+}
+
+
+bool IsFollowerCl(CritterCl& cr)
+{
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))     // !?
+        return(false);
+    uint id = cr.Id;
+    for(uint i = FOLLOWER_BEGIN; i <= FOLLOWER_END; i++)
+        if(int(id) == chosen.Followers[i])
+            return true;
+    return false;
+}
+
+uint GetColor(dictionary& dict, string& colorName, uint defaultColor)
+{
+    uint color;
+    if(!dict.get(colorName, color))
+        color = defaultColor;
+    return color;
+}
+
+bool CompareName(string& crName, string& nameStr)
+{
+    uint l = 0;
+    uint r = 0;
+    uint lLen = crName.length();
+    uint rLen = nameStr.length();
+    while(r < rLen && l < lLen)
+    {
+        uint8 lC = crName[l];
+        uint8 rC = nameStr[r];
+
+        if(rC == '*')
+        {
+            // Skip some letters
+            for(r++; r < rLen; r++)
+                if(nameStr[r] != '*' && nameStr[r] != '?')
+                    break;
+            if(r >= rLen)
+                return true;
+            rC = nameStr[r];
+
+            for(l++; l < lLen; l++)
+                if(crName[l] == rC)
+                    break;
+            if(l >= lLen)
+                return false;
+        }
+        else if(rC == '?')
+        {
+            // Skip one letter
+        }
+        else if(lC != rC)
+        {
+            // Different symbols
+            return false;
+        }
+
+        l++;
+        r++;
+    }
+
+    if(l < lLen || r < rLen)
+        return false;
+    return true;
+}
+
+
+// Colorize critter, called by client script from other module
+void ColorizeCritter(CritterCl& cr)   // Export
+{
+    if(cr.IsPlayer() && (IsLexem(cr, "$@") || IsLexem(cr, "$name")))
+        return;
+
+    CritterCl@ chosen = GetChosen();
+
+    if(!valid(chosen))       // ?!
+        return;
+
+    ColorizeCritter(chosen, cr, chosen.Param[ST_MINIGAME_DATA], cr.Param[ST_MINIGAME_DATA]);
+}
+
+
+
+// Because colorization of critter may be enforced by server, we need to send ST_MINIGAME_DATA
+// of the critters as separate arguments, because it might be not yet received by client if it
+// changed by the server script.
+void ColorizeCritter(CritterCl& chosen, CritterCl& cr, int chosenMgData, int crMgData)
+{
+
+    if(cr.IsPlayer() && (IsLexem(cr, "$@") || IsLexem(cr, "$name")))
+        return;
+
+    if(ColorizeMinigame(chosen, cr, chosenMgData, crMgData))
+        return;
+    if(ColorizeFromFile(chosen, cr))
+        return;
+    if(ColorizeGoodEvil(chosen, cr))
+        return;
+
+    // Default colors
+    cr.NameColor = COLOR_CRITTER_NAME;
+    cr.ContourColor = (cr.IsPlayer() ? COLOR_CONTOUR_YELLOW : COLOR_CONTOUR_RED);
+}
+
+
+
+bool ColorizeMinigame(CritterCl& chosen, CritterCl& cr, int chosenMgData, int crMgData)
+{
+
+    // Minigames with minigameId == 0 (default one) ignore minigameTeam
+    if(chosenMgData == 0)   // The most common case
+        return false;
+    int chosenMgId = _getMinigameId(chosenMgData);
+    if(chosenMgId == 0)
+        return false;
+
+    int crMgId = _getMinigameId(crMgData);
+
+    // Chosen and critter are in the same minigame
+    if(chosenMgId == crMgId)
+    {
+        int chosenMgTeam = _getMinigameTeam(chosenMgData);
+        int crMgTeam = _getMinigameTeam(crMgData);
+        // Chosen is spectator, colorize critter according to its team color
+        if(chosenMgTeam == 0)
+        {
+            cr.NameColor = MinigameTeamColor[crMgTeam];
+            cr.ContourColor = MinigameTeamColor[crMgTeam];
+        }
+        // Chosen is participant, colorize critter as spectator/friend/foe
+        else
+        {
+            if(crMgTeam == 0)
+            {
+                cr.NameColor = MinigameTeamColor[0];
+                cr.ContourColor = MinigameTeamColor[0];
+            }
+            else
+            {
+                if(crMgTeam == chosenMgTeam)
+                {
+                    cr.NameColor = COLOR_GREEN;
+                    cr.ContourColor = COLOR_CONTOUR_GREEN;
+                }
+                else
+                {
+                    cr.NameColor = COLOR_RED;
+                    cr.ContourColor = COLOR_CONTOUR_RED;
+                }
+            }
+        }
+    }
+    // If critter is in a different minigame, colorize it as spectators
+    else
+    {
+        cr.NameColor = MinigameTeamColor[0];
+        cr.ContourColor = MinigameTeamColor[0];
+    }
+    return true;
+}
+
+
+
+bool ColorizeFromFile(CritterCl& chosen, CritterCl& cr)
+{
+    if(cr.IsNpc())
+    {
+        if(IsFollowerCl(cr))
+        {
+            cr.ContourColor = 0x0000FF00;
+            cr.NameColor = 0x0000FF00;
+            return true;
+        }
+        return false;
+    }
+
+    if(Records.length() == 0)
+        return false;
+
+    if((!valid(chosen) || cr.Stat[ST_TEAM_ID] < 2 || chosen.Stat[ST_TEAM_ID] != cr.Stat[ST_TEAM_ID]) && (chosen.Id != cr.Id))
+        return false;
+
+    string@ crName = strlwr(cr.Name);
+    for(uint i = 0, j = Records.length(); i < j; i++)
+    {
+        Record@ r = Records[i];
+        if(CompareName(crName, r.NameStr))
+        {
+            cr.NameColor = r.NameColor;
+            cr.ContourColor = r.ContourColor;
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+bool ColorizeGoodEvil(CritterCl& chosen, CritterCl& cr)
+{
+    if(cr.IsPlayer() && !cr.IsChosen())
+    {
+        int crId = int(cr.Id);
+        for(uint i = GOOD_EVIL_LIST_BEGIN; i <= GOOD_EVIL_LIST_END; i += 1)
+        {
+            int  id = chosen.GoodEvilList[i];
+            bool isEvil = FLAG(id, 0x80000000);
+            if(isEvil)
+                id ^= 0x80000000;
+            if(id == crId)
+            {
+                cr.NameColor = (isEvil ? COLOR_RED : COLOR_GREEN);
+                cr.ContourColor = (isEvil ? COLOR_CONTOUR_RED : COLOR_CONTOUR_GREEN);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+
+
+// Force recolorizing from server scripts
+
+void _RefreshColorizing(int, int, int, string@, array<int>@ data)
+{
+    CritterCl@ chosen = GetChosen();
+
+    if(!valid(chosen))       // ?!
+        return;
+
+    int chosenMinigameData = data[0];
+
+    for(int i = 1, j = data.length(); i < j; i += 2)
+    {
+        CritterCl@ cr = GetCritter(data[i]);
+        if(!valid(cr))
+            continue;
+        int crMinigameData = data[i + 1];
+        ColorizeCritter(chosen, cr, chosenMinigameData, crMinigameData);
+    }
+}
+#endif // __CLIENT
+#ifdef __SERVER
+
+void RefreshColorizing(Critter@ chosen)
+{
+    if(chosen.IsPlayer())
+    {
+        RefreshColorizingMyself(chosen);
+        RefreshColorizingOthers(chosen);
+    }
+    RefreshColorizingMe(chosen);
+
+}
+
+// Tells chosen to recolorize himself/herself
+void RefreshColorizingMyself(Critter@ chosen)
+{
+    array<int> data = { chosen.Param[ST_MINIGAME_DATA], chosen.Id, chosen.Param[ST_MINIGAME_DATA] };
+    chosen.RunClientScript("name_colorizing@_RefreshColorizing", 0, 0, 0, null, data);
+}
+
+// Tells chosen to recolorize other critters
+void RefreshColorizingOthers(Critter@ chosen)
+{
+    array<int> data;
+    data.insertLast(chosen.Param[ST_MINIGAME_DATA]);
+
+    array<Critter@> critters;
+    uint            num = chosen.GetCritters(false, FIND_ALL, critters);
+
+    for(uint i = 0; i < num; i += 1)
+    {
+        data.insertLast(critters[i].Id);
+        data.insertLast(critters[i].Param[ST_MINIGAME_DATA]);
+    }
+    chosen.RunClientScript("name_colorizing@_RefreshColorizing", 0, 0, 0, null, data);
+}
+
+// Tells other players to recolorize chosen
+void RefreshColorizingMe(Critter@ chosen)
+{
+    array<Critter@> critters;
+    uint            num = chosen.GetCritters(true, FIND_ONLY_PLAYERS | FIND_ALL, critters);
+    for(uint i = 0; i < num; i += 1)
+    {
+        array<int> data = { critters[i].Param[ST_MINIGAME_DATA], chosen.Id, chosen.Param[ST_MINIGAME_DATA] };
+        critters[i].RunClientScript("name_colorizing@_RefreshColorizing", 0, 0, 0, null, data);
+    }
+}
+#endif // __SERVER

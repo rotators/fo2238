@@ -1,0 +1,51 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+8 1010 D _var p q_bos_initiatequest_start > 27 D or D _script dialog@d_IsNotLocationOwner 0  #
+2 1020 D _var p q_bos_initiatequest_start = 27 @
+2 2000 None 0 #
+3 2010 #
+7 2020 D _param p SK_SCIENCE } 100 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 R _param p ST_EXPERIENCE + 2000 R _var p q_bos_initiatequest_start = 28 R _script map_bosbunker@r_RetireMap 0  @
+7 7000 None 0 #
+0 7010 R _param p ST_EXPERIENCE + 2400 R _var p q_bos_initiatequest_start = 28 R _script map_bosbunker@r_RetireMap 0  @
+8 8000 None 0 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{Done}
+{1020}{}{Default}
+{2000}{}{[You connect your pipboy to the terminal.] \Input Command\}
+{2010}{}{/down research_data}
+{2020}{}{/down data -all}
+{3000}{}{\Research Data Downloaded.\ 
+\Input Command\}
+{3010}{}{/down maintenance_data}
+{4000}{}{\Maintenance Data Downloaded\
+\Input Command\}
+{4010}{}{/down logs -all}
+{5000}{}{\Team Logs Downloaded\
+\Input Command\}
+{5010}{}{/down robobrain.*}
+{6000}{}{\Robobrain Data Downloaded\
+\System.exit (0)\}
+{6010}{}{[Log off.]}
+{7000}{}{\Hard Drive Downloaded\
+\System.exit (0)\}
+{7010}{}{[Log off.]}
+{8000}{}{There's no response from the terminal.}
+

@@ -1,0 +1,31 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p name_mem_npc_player = 1 #
+2 1020 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 D _script quest@d_AtNode 2 5 1 D _item p PID_GOLD_NUGGET > 0 R _script quest@script 1 101 @
+3 3000 None 0 #
+4 3010 D _script q@dd 2 5 1 R _script q@rr 2 5 1 @
+4 4000 None 0 #
+0 4010 &
+
+[engl]
+{100}{}{Mel Williams}
+{200}{}{You see Mel Williams.}
+{210}{}{He got his shit right, sitting tight, with a bottle of whisky in the one hand and a full glass in the other hand.}
+{1000}{}{Predialogue installations}
+{1010}{}{known}
+{1020}{}{unknown}
+{2000}{}{Who are ye? What de ya want? Why do ye talk ta me?}
+{2010}{}{You are Mel Williams, right? Old Parker send me to give you this... [You show him the gold nugget of unusual size.]}
+{3000}{}{What de ya want agan?@@What de ya want?@@Ya?}
+{3010}{}{You are Mel Williams, right? Old Parker send me to give you this... [You show him the gold nugget of unusual size.]}
+{4000}{}{Oh-woo..! Gimme det, ya? [He takes the nugget out of your hand.] Det's a fine piece, really a fine piece! [He nods, while holding the nugget close to his right eye, observing it.] Thank ye very much, I'll apprecicate yer honesty! Here, take a bottle of te whiskey with me! }
+{4010}{}{Thanks. [You leave.]}
+

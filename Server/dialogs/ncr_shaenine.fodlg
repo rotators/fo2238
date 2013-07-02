@@ -1,0 +1,63 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_CHARISMA > 99 #
+2 1020 D _var n name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+2 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 #
+6 2020 D _param p ST_PERCEPTION > 5 D _var p q_ncr_shaenin = 0 D _param p ST_INTELLECT > 3 R _var p q_ncr_shaenin = 1 #
+0 2030 D _param p ST_INTELLECT > 3 #
+3 2040 D _param p ST_INTELLECT < 4 #
+0 2050 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+65506 4010 D _param p ST_INTELLECT > 3 #
+0 4020 D _param p ST_INTELLECT > 3 #
+65506 4030 D _param p ST_INTELLECT < 4 #
+0 4040 D _param p ST_INTELLECT < 4 @
+5 5000 None 0 @
+6 6000 None 0 #
+7 6010 #
+4 6020 #
+0 6030 @
+7 7000 None 0 #
+4 7010 #
+0 7020 &
+
+[engl]
+{100}{}{Seymour}
+{200}{}{You see Seymour, the traveling merchant.}
+{240}{}{He is dead, baby! He is dead!}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Unknown}
+{1030}{}{Familiar}
+{2000}{}{Hello, how can I help you?@@How may I help you today?}
+{2010}{}{I'd like to buy something.@@I want to buy something.@@Show me what you have to sell.}
+{2020}{}{I've heard stories about a traveling merchant, called Sha Enin. He had his trading post here before, do you know him?}
+{2030}{}{Nevermind. Bye.@@Nothing. Thanks.}
+{2040}{}{Runk.}
+{2050}{}{Me going. Bye.@@Me not, me go.}
+{3000}{}{Sorry, I can't understand you. Come back when you finish school.}
+{3010}{}{Uh.}
+{4000}{}{Great. Here's what I have.@@Great, always looking for new things.}
+{4010}{}{Alright, let me take a look at it.@@Let me see.}
+{4020}{}{Nevermind. Bye.}
+{4030}{}{Me want to see.}
+{4040}{}{Me going. Bye.}
+{5000}{}{I'm sorry, you're scaring away my customers.@@I do not wish to do business with a man of such... obvious deformity.@@Perhaps you should seek a doctor, it may do your looks some good.}
+{6000}{}{Never heard of that name before, son. Guessed that he had his tent on my position before, cause you aren't the first one asking me! Maybe he kept going on, traveling around, you know. That's what we do, after all: We are traveling merchants!}
+{6010}{}{Oh well, will keep my eyes and ears open! Thanks anyway.}
+{6020}{}{Show me your wares. I'd like to buy something.@@Show me your wares. I want to buy something.@@Show me your wares. Show me what you have to sell.}
+{6030}{}{Goodbye.}
+{7000}{}{No thanks. Glad I could help... or something.}
+{7010}{}{Show me your wares. I'd like to buy something.@@Show me your wares. I want to buy something.@@Show me your wares. Show me what you have to sell.}
+{7020}{}{Goodbye.}
+

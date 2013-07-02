@@ -1,0 +1,151 @@
+[comment]
+Roger Westin, head of the Westin Ranch in the NCR.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+4 1020 @
+2 2000 None 0 #
+5 2010 D _var p q_ncr_westin_quest1 = 0 D _var p q_ncr_westin_quest1_billboard ! 0 #
+0 2020 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+5 4010 D _var p q_ncr_westin_quest1_billboard > 0 D _var p q_ncr_westin_quest1 = 0 #
+8 4020 D _var p q_ncr_westin_quest1 > 0 D _var p q_ncr_westin_quest1 < 5 #
+20 4030 D _var p q_ncr_westin_quest2 = 2 R _var p q_ncr_westin_quest2 = 3 R _script dialog@r_AddMoney 1 250 R _param p ST_EXPERIENCE + 250 #
+15 4040 D _var p q_ncr_westin_quest2 = 0 D _var p q_ncr_westin_quest1 = 5 D or D _var p q_ncr_westin_quest1 = 6 #
+0 4050 @
+5 5000 None 0 #
+7 5010 D _param p ST_INTELLECT } 8 R _var p q_ncr_westin_quest1 = 1 #
+7 5020 D _param p ST_INTELLECT < 8 R _var p q_ncr_westin_quest1 = 1 #
+22 5030 #
+6 5040 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+9 8010 D _var p q_ncr_westin_quest1 = 2 R _var p q_ncr_westin_quest1 = 5 R _script dialog@r_AddMoney 1 50 #
+10 8020 D _var p q_ncr_westin_quest1 = 3 R _var p q_ncr_westin_quest1 = 5 R _script dialog@r_AddMoney 1 100 R _param p REPUTATION_NCR + 5 #
+11 8030 D _var p q_ncr_westin_quest1 = 4 R _var p q_ncr_westin_quest1 = 6 R _param p REPUTATION_NCR - 5 #
+0 8040 @
+9 9000 None 0 #
+0 9010 #
+15 9020 @
+10 10000 None 0 #
+0 10010 #
+15 10020 @
+11 11000 None 0 #
+14 11010 #
+13 11020 @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 #
+0 13010 #
+65507 13020 @
+14 14000 None 0 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+17 16010 D _script dialog@d_IsLocationVisible 1 4 #
+17 16020 D _script dialog@d_IsLocationNotVisible 1 4 #
+18 16030 D _script dialog@d_IsLocationNotVisible 1 4 R _script dialog@r_ShowLocation 1 4 @
+17 17000 None 0 #
+19 17010 R _var p q_ncr_westin_quest2 = 1 R _item p PID_Q_WESTIN_HOLO + 1 #
+21 17020 #
+0 17030 @
+18 18000 None 0 #
+19 18010 R _var p q_ncr_westin_quest2 = 1 R _item p PID_Q_WESTIN_HOLO + 1 #
+21 18020 #
+0 18030 @
+19 19000 None 0 #
+0 19010 @
+20 20000 None 0 #
+0 20010 #
+12 20020 @
+21 21000 None 0 #
+19 21010 R _var p q_ncr_westin_quest2 = 1 R _item p PID_Q_WESTIN_HOLO + 1 #
+0 21020 @
+22 22000 None 0 #
+0 22010 &
+
+[engl]
+{100}{}{Westin}
+{200}{}{You see a man dressed in fancy ranch clothes.}
+{210}{}{It's Councillor Westin.}
+{210}{}{Silver and turquoise rings, silver belt buckle, pistol at his side, this guy's clearly used to having money and having his own way.}
+{1000}{}{Predialogue installations}
+{1010}{}{unkown}
+{1020}{}{known}
+{2000}{}{I'm Roger Westin and you can't come barging in here. What do you want?}
+{2010}{}{I've read the billboard with a job offer and I'm here about that.}
+{2020}{}{Nothing, bye.}
+{3000}{}{That all? Talk to my foreman, Felix.}
+{3010}{}{Fine. Be that way.}
+{4000}{}{You again? What do you want?@@What do you want?}
+{4010}{}{I've read the billboard with a job offer and I'm here about that.}
+{4020}{}{About your brahmin.}
+{4030}{}{I have delivered the Holodisk to Thomas Moore in Vault City.}
+{4040}{}{Mr. Westin, do you have another job for me?}
+{4050}{}{Goodbye.}
+{5000}{}{Well, that's good. I need someone to take a look at my brahmin on the willow, because lately, a few of my brahmin seem to be unnatural stressed and milk is bad. How about going out there and looking into it for me? I'll pay you for your trouble. Or talk to Martin - he might need some help with driving the cattle.}
+{5010}{}{Sitting in a field, waiting for some mantoid to show up? Sure thing, count me in.}
+{5020}{}{Sounds like easy work. I'll do it.}
+{5030}{}{Where do I find this Martin?}
+{5040}{}{I've decided against it.}
+{6000}{}{Well, then here you go. Nice to meet you, stranger.}
+{6010}{}{Goodbye.}
+{7000}{}{Talk to my foreman Felix, he will guide you to the willow.}
+{7010}{}{Goodbye.}
+{8000}{}{I am listening.}
+{8010}{}{I saw nothing out of ordinary.}
+{8020}{}{A gang of children showed up and chased around the brahmins. I chased them away.}
+{8030}{}{A gang of children showed up and chased around the brahmins. I digged them a grave, six feet under.}
+{8040}{}{I have nothing new. Goodbye.}
+{9000}{}{Not what I've expected, but okay. Here, a few caps for the time you spend on it.}
+{9010}{}{Thanks, Mr. Westin. I'll be gone now.}
+{9020}{}{Is there anything else that needs to be done?}
+{10000}{}{Interesting. That's kind of what I've expected, to be honest. Here, a few caps for the time you spend on it. One of my men will now guard the willow for the time being.}
+{10010}{}{Thanks, Mr. Westin. I'll be gone now.}
+{10020}{}{Is there anything else that needs to be done?}
+{11000}{}{You have... what? You have killed children? How -- God damn, how could you do that?! And now you expect me to pay you? }
+{11010}{}{I'll be gone now.}
+{11020}{}{Is there anything else that needs to be done?}
+{12000}{}{Now? No. But come back later, maybe the situation changes.}
+{12010}{}{Goodbye.}
+{13000}{}{Another job for you? Hell, no! And now get out of here or I'll tell Felix to kick your out!}
+{13010}{}{Whatever.}
+{13020}{}{[Combat] You can try, but I will kick YOU first!}
+{14000}{}{Get out of here!}
+{15000}{}{Yes, there really is something more you could do for me. }
+{15010}{}{What is it?}
+{15020}{}{I will be back for it later.}
+{16000}{}{Do you know where Vault City lies?}
+{16010}{}{Yes.}
+{16020}{}{[Lie] Yes.}
+{16030}{}{No.}
+{17000}{}{I want you to deliver this Holodisk to a man named Thomas Moore... That's all. [He shows you a small package with a Holodisk inside.]}
+{17010}{}{No problem, I am on my way.}
+{17020}{}{What can you tell me about Thomas Moore?}
+{17030}{}{I can't do this now, but I will be back later.}
+{18000}{}{It is in the far north of the NCR. [He shows you the exact location on a map of the NCR.] I want you to bring this Holodisk to a man named Thomas Moore... That's all. }
+{18010}{}{No problem, I am on my way.}
+{18020}{}{What can you tell me about Thomas Moore?}
+{18030}{}{I can't do this now, but I will be back later.}
+{19000}{}{Good, good. Come back to me when you have delivered the Holodisk.}
+{19010}{}{[End]}
+{20000}{}{Good. Here, a few caps for the time you spend on it.}
+{20010}{}{Thanks, Mr. Westin. I'll be gone now.}
+{20020}{}{Is there anything else that needs to be done?}
+{21000}{}{Not much to tell about him. He is a Vault City citizen and my local contact. You will most likely find him inside the city borders.}
+{21010}{}{Give me the Holodisk and I am on my way.}
+{21020}{}{Maybe I will pick up this job later. Can't do it now... Goodbye.}
+{22000}{}{He should be somewhere outside, near the brahmin.}
+{22010}{}{Got it.}
+

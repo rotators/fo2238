@@ -1,0 +1,75 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_strandedrust_terminal = 1 #
+2 1020 @
+2 2000 None 0 #
+4 2010 R _script dialog@r_SkillRoll 2 Science 5 R _var p q_strandedrust_terminal = 1 #
+0 2020 @
+3 3000 None 0 #
+8 3010 #
+9 3020 D _script quest_tanker@d_HandysHostile 0  R _script quest_tanker@r_ToggleHandys 1 6 R _script quest_tanker@r_QuestTimeout 1 5 #
+9 3030 D _script quest_tanker@d_NotHandysHostile 0  R _script quest_tanker@r_ToggleHandys 1 7 R _script quest_tanker@r_QuestTimeout 1 5 #
+0 3040 @
+4 4000 None 0 #
+4 4010 R _script dialog@r_SkillRoll 2 Science 5 #
+0 4020 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+8 6010 #
+7 6020 R _script quest_tanker@r_ToggleHandys 1 7 #
+0 6030 @
+7 7000 None 0 #
+8 7010 #
+6 7020 R _script quest_tanker@r_ToggleHandys 1 6 #
+0 7030 @
+8 8000 None 0 #
+3 8010 @
+9 9000 None 0 #
+8 9010 #
+9 9020 D _script quest_tanker@d_HandysHostile 0  D _script quest_tanker@d_QuestTimeoutReady 0  R _script quest_tanker@r_ToggleHandys 1 6 #
+9 9030 D _script quest_tanker@d_NotHandysHostile 0  D _script quest_tanker@d_QuestTimeoutReady 0  R _script quest_tanker@r_ToggleHandys 1 7 #
+0 9040 &
+
+[engl]
+{100}{}{Computer Terminal}
+{1000}{}{Predialogue installations}
+{1010}{}{Computer hacked}
+{1020}{}{Computer not hacked}
+{2000}{}{0011 0000 1010 0101 1010 0011 1010 0101 1010 0011 1010 0101 1010 0011 1010 0101 1010 0011 1010 0101 1010 0011 1010 0101 1010 0011 1010 0101 1010 1111}
+{2010}{}{[Try to hack the computer terminal.]}
+{2020}{}{[Leave the computer terminal alone.]}
+{3000}{}{Welcome to the Poseiden Oil security system. Please choose your action.}
+{3010}{}{[Information.]}
+{3020}{}{[Hack the security software.]}
+{3030}{}{[Hack the security software.]}
+{3040}{}{[Logoff from the terminal.]}
+{4000}{}{[You failed to hack the computer terminal.]}
+{4010}{}{[Try again.]}
+{4020}{}{[Leave the computer terminal alone.]}
+{5000}{}{[You succeeded in hacking in to the computer terminal. You are logging in as the administrator.]}
+{5010}{}{[Wait.]}
+{5020}{}{[Logoff from the terminal.]}
+{6000}{}{All security systems are online and working.}
+{6010}{}{[Information.]}
+{6020}{}{[Deactivate security systems.]}
+{6030}{}{[Logoff from the terminal.]}
+{7000}{}{All security systems are offline and in idle mode.}
+{7010}{}{[Information.]}
+{7020}{}{[Activate security systems.]}
+{7030}{}{[Logoff from the terminal.]}
+{8000}{}{Status: PMV Hellas Prairial, General Systems offline. Security-System Active. }
+{8010}{}{[Go back to the main menu.]}
+{9000}{}{[You failed to hack the security software.]}
+{9010}{}{[Information.]}
+{9020}{}{[Try to hack the security software again.]}
+{9030}{}{[Try to hack the security software again.]}
+{9040}{}{[Logoff from the terminal.]}
+

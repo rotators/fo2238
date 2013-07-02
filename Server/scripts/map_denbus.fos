@@ -1,0 +1,50 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_denbus.fos
+//
+
+#include "_macros.fos"
+#include "_town.fos"
+#include "mapdata_h.fos"
+
+import bool AddMilitia(Map@ map) from "town";
+import void SpawnInitMilitia(Map@ map) from "town";
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetData(MAP_DATA_TOWN, TOWN_DEN);
+
+    if(firstTime)
+        SpawnInitMilitia(map);
+}
+
+// barbekky table
+
+bool s_GamingTable(Critter& player, Scenery& table, int skill, Item@ item)
+{
+    if(skill == SK_REPAIR)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_den_becky_table, player.Id);
+        if(!valid(var))
+            return false;
+
+        if(var.GetValue() != 1)
+            return false;
+
+        int chance = CLAMP(player.Skill[SK_REPAIR], 5, 95);
+        if(chance > Random(0, 99))
+        {
+            var = 2;
+            player.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+        }
+        else
+        {
+            var = 3;
+            player.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+        }
+        return true;
+    }
+    return false;
+}

@@ -1,0 +1,20 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// critter_age_h.fos
+//
+
+#ifndef __CRITTER_AGE_H__
+#define __CRITTER_AGE_H__
+
+#define AGE_CAP    (90)      // enough for one-year-long session
+
+#ifndef __CRITTER_AGE__
+
+import void SetBirthDate(Critter& cr) from "critter_age";
+import void CheckBirthDate(Critter& cr) from "critter_age";
+import void CritterAgeInit(Critter& cr) from "critter_age";
+import void SynchronizeAge(Critter& cr) from "critter_age";
+#endif // __CRITTER_AGE__
+#endif // __CRITTER_AGE_H__ //

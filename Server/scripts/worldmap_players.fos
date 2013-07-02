@@ -1,0 +1,243 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// worldmap_players.fos
+//
+
+//
+// Keeps track of players that are in the worldmap
+//
+
+#include "_macros.fos"
+#include "worldmap_h.fos"
+
+import void TryEnterCombatZone(Critter& player) from "sleepiness";
+import void TryExitCombatZone(Critter& player) from "sleepiness";
+
+class CZone
+{
+    // array of players
+    array<uint> players;
+
+    CZone()
+    {}
+
+    /**
+     * Gets the array of players in that zone.
+     */
+    /*Critter@[]@ GetPlayers()
+       {
+            return players;
+       }*/
+    /**
+     * Adds player to the zone.
+     */
+    void AddPlayer(Critter@ player)
+    {
+        players.insertLast(player.Id);
+    }
+    /**
+     * Removes player from the zone.
+     */
+    void RemovePlayer(Critter@ player)
+    {
+        if(players.length() == 0)
+            return;
+        for(uint i = 0, j = players.length(); i < j; i++)
+        {
+            if(players[i] == player.Id)
+            {
+                players.removeAt(i);
+                j--;
+            }
+        }
+    }
+};
+
+// all zones
+array<CZone> Zones(ZONE_COUNT_X* ZONE_COUNT_Y);
+
+// exports
+
+/**
+ * Updates players zone-related info, and the arrays of players in zones.
+ */
+
+// todo: if player just idles on worldmap after restart, he won't be placed in zone
+void WorldmapUpdatePlayer(Critter@ player)
+{
+    if(!valid(player) || !player.IsPlayer())
+        return;
+
+    GameVar@ vx = GetLocalVar(LVAR_zone_x, player.Id);
+    uint     ox = vx.GetValue();
+    uint     nx = player.WorldX / ZONE_LENGTH;
+    GameVar@ vy = GetLocalVar(LVAR_zone_y, player.Id);
+    uint     oy = vy.GetValue();
+    uint     ny = player.WorldY / ZONE_LENGTH;
+    GameVar@ vw = GetLocalVar(LVAR_zone_world, player.Id);
+    bool     ow = vw.GetValue() > 0;
+    bool     nw = player.GetMapId() == 0;
+
+    uint     idx = ny * ZONE_COUNT_X + nx;
+
+    // if coords has changed (and still on worldmap)
+    if((nx != ox || ny != oy) && nw && ow)
+    {
+        if(player.GetAccess() == ACCESS_ADMIN)
+            player.Say(SAY_NETMSG, "Moving on worldmap: " + ox + "," + oy + "->" + nx + "," + ny);
+        // player in another zone than on previous check
+        idx = oy * ZONE_COUNT_X + ox;
+        Zones[idx].RemovePlayer(player);
+        idx = ny * ZONE_COUNT_X + nx;
+        Zones[idx].AddPlayer(player);
+        // remember zone where update was performed
+        vx = nx;
+        vy = ny;
+        // vw = 1;
+    }
+    // left worldmap
+    else if(!nw && ow)
+    {
+        TryEnterCombatZone(player);
+        // remove player from old zone
+        uint idx = oy * ZONE_COUNT_X + ox;
+        Zones[idx].RemovePlayer(player);
+        if(player.GetAccess() == ACCESS_ADMIN)
+            player.Say(SAY_NETMSG, "Removed from: " + ox + ", " + oy);
+        // time when player left worldmap
+        vw = -ELAPSED_TIME;
+        if(player.GetAccess() == ACCESS_ADMIN)
+            player.Say(SAY_NETMSG, "Left worldmap.");
+        // remember zone where update was performed
+        vx = nx;
+        vy = ny;
+    }
+    // entered worldmap
+    else if(nw && !ow)
+    {
+        TryExitCombatZone(player);
+        // add player to zone
+        uint idx = ny * ZONE_COUNT_X + nx;
+        Zones[idx].AddPlayer(player);
+
+        // time when player entered worldmap
+        vw = ELAPSED_TIME;
+        if(player.GetAccess() == ACCESS_ADMIN)
+            player.Say(SAY_NETMSG, "Entered worldmap.");
+        // remember zone where update was performed
+        vx = nx;
+        vy = ny;
+    }
+}
+
+/**
+ * Removes the player from previously occupied zone. Called by critter_finish in main.
+ */
+void WorldmapRemovePlayer(Critter@ player)
+{
+    if(!valid(player) || !player.IsPlayer())
+        return;
+
+    GameVar@ vw = GetLocalVar(LVAR_zone_world, player.Id);
+
+    if(vw.GetValue() > 0)
+    {
+        GameVar@ vx = GetLocalVar(LVAR_zone_x, player.Id);
+        uint     ox = vx.GetValue();
+        GameVar@ vy = GetLocalVar(LVAR_zone_y, player.Id);
+        uint     oy = vy.GetValue();
+        uint     idx = oy * ZONE_COUNT_X + ox;
+        Zones[idx].RemovePlayer(player);
+    }
+}
+
+// same as above, but loops for all players in group
+void WorldmapUpdateGroup(array<Critter@>& group)
+{
+    for(uint i = 0, j = group.length(); i < j; i++)
+        WorldmapUpdatePlayer(group[i]);
+}
+
+/**
+ * Retrieves players from given zone
+ */
+array<Critter@> WorldmapGetPlayers(uint zx, uint zy)
+{
+    uint            idx = zy * ZONE_COUNT_X + zx;
+    array<Critter@> Crs;
+    for(uint i = 0, j = Zones[idx].players.length(); i < j; i++)
+    {
+        Critter@ cr = GetCritter(Zones[idx].players[i]);
+        Crs.insertLast(cr);
+    }
+
+    return Crs;
+}
+
+/**
+ * Retrieves players from given zone, appends them to given array
+ * @return Number of players added.
+ */
+uint WorldmapGetPlayers(uint zx, uint zy, array<Critter@>& players)
+{
+    uint idx = ZONE_IDX(zx, zy);
+    for(uint i = 0, j = Zones[idx].players.length(); i < j; i++)
+    {
+        Critter@ cr = GetCritter(Zones[idx].players[i]);
+        players.insertLast(cr);
+    }
+
+    return Zones[idx].players.length();
+}
+
+/**
+ * Retrieves time, how long player spent on worldmap.
+ * Negative value denotes how long ago player left worldmap.
+ */
+int WorldmapGetPlayerTime(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_zone_world, player.Id);
+
+    if(var.GetValue() > 0)
+        return ELAPSED_TIME - var.GetValue();
+    else
+        return ELAPSED_TIME + var.GetValue();
+}
+
+void check_time(Critter& cr, int p0, int p1, int p2)
+{
+    int time = WorldmapGetPlayerTime(cr);
+
+    cr.Say(SAY_NETMSG, "Left/entered worldmap " + time + " minutes ago.");
+}
+
+/**
+ * Iterates through every zone and checks if the players that are there are REALLY there.
+ */
+void check_integrity(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Checking worldmap player zones integrity.");
+    for(uint zx = 0; zx < ZONE_COUNT_X; zx++)
+    {
+        for(uint zy = 0; zy < ZONE_COUNT_Y; zy++)
+        {
+            if(Zones[ZONE_IDX(zx, zy)].players.length() == 0)
+                continue;
+            for(uint i = 0, j = Zones[ZONE_IDX(zx, zy)].players.length(); i < j; i++)
+            {
+                Critter@ player = GetCritter(Zones[ZONE_IDX(zx, zy)].players[i]);
+                if(!valid(player))
+                    continue;
+
+                uint x = ZONE_X(player.WorldX);
+                uint y = ZONE_Y(player.WorldY);
+
+                if(x != zx || y != zy)
+                    cr.Say(SAY_NETMSG, player.Name + " is in invalid zone.");
+            }
+        }
+    }
+    cr.Say(SAY_NETMSG, "Done.");
+}

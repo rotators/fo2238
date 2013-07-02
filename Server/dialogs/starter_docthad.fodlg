@@ -1,0 +1,110 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+10 1020 D _param p ST_CHARISMA < 4 #
+9 1030 D _var p starter_docblackmail = 5 #
+9 1040 D _var p starter_casequest = 5 #
+9 1050 D _var p starter_docblackmail = 2 @
+2 2000 None 0 #
+3 2010 D _item p PID_BRIEFCASE = 1 R _var p starter_casequest = 3 R _item p PID_BRIEFCASE - 1 #
+7 2020 #
+65506 2030 #
+8 2040 #
+12 2050 D _item p PID_XANDER_ROOT > 0 D _item p PID_BROC_FLOWER > 0 D _var p starter_doc_healingpowder = 1 #
+0 2060 @
+3 3000 None 0 #
+4 3010 #
+4 3020 @
+4 4000 None 0 #
+5 4010 D _param p SK_DOCTOR > 30 R _param p ST_EXPERIENCE + 250 #
+5 4020 D _param p SK_SCIENCE > 40 R _param p ST_EXPERIENCE + 250 #
+0 4030 R _var p starter_casequest = 4 R _param p ST_EXPERIENCE + 200 @
+5 5000 None 0 #
+6 5010 #
+0 5020 R _var p starter_casequest = 4 R _var p starter_docblackmail = 1 @
+6 6000 None 0 #
+0 6010 R _item p PID_HEALING_POWDER + 3 R _var p starter_casequest = 4 R _var p starter_docblackmail = 5 #
+0 6020 R _var p starter_casequest = 4 R _var p starter_docblackmail = 1 @
+7 7000 None 0 #
+8 7010 #
+2 7020 @
+8 8000 None 0 #
+2 8010 R _var p starter_doc_healingpowder = 1 #
+0 8020 R _var p starter_doc_healingpowder = 1 @
+9 9000 None 0 @
+10 10000 None 0 @
+11 11000 None 0 #
+8 11010 #
+2 11020 #
+0 11030 @
+12 12000 None 0 #
+13 12010 D _item p PID_BROC_FLOWER = 4 D _item p PID_XANDER_ROOT = 4 R _item p PID_HEALING_POWDER + 8 #
+13 12020 D _item p PID_BROC_FLOWER = 3 D _item p PID_XANDER_ROOT = 3 R _item p PID_HEALING_POWDER + 6 #
+13 12030 D _item p PID_BROC_FLOWER = 2 D _item p PID_XANDER_ROOT = 2 R _item p PID_HEALING_POWDER + 4 #
+13 12040 D _item p PID_BROC_FLOWER = 1 D _item p PID_XANDER_ROOT = 1 R _item p PID_HEALING_POWDER + 2 #
+2 12050 #
+0 12060 @
+13 13000 None 0 #
+2 13010 #
+0 13020 &
+
+[engl]
+{100}{}{Dr. Thaddeus}
+{200}{}{You see a thin man with thick, black framed glasses.}
+{210}{}{You see Dr. Thaddeus. He looks tense.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{1020}{}{Ugly}
+{1030}{}{Blackmailed}
+{1040}{}{Betrayed Seb}
+{1050}{}{Turned into the guards}
+{2000}{}{Yes? What, what is it?}
+{2010}{}{Sebastian sent me. I've got a delivery for you.}
+{2020}{}{What do you do around here?}
+{2030}{}{Could I buy some medical supplies?}
+{2040}{}{Got any work for me?}
+{2050}{}{I've got the ingredients, mind making me some healing powder?}
+{2060}{}{Nothing, thanks. bye.}
+{3000}{}{You do? Perfect. Let me see that. (He snatches the briefcase)}
+{3010}{}{Well, it looks like my work here is done.}
+{3020}{}{Am I gonna get paid for this?}
+{4000}{}{(He ignores you) Let's take a look here...propoxin, hydrozapam, alprazaline, dilaftin... not great, but it'll do. Alright, you did good. Go see Sebastian, he probably has something for you.}
+{4010}{}{Wait, dilaftin and propoxin? Those have no medicinal purpose. What the hell are you working on here, Doctor?}
+{4020}{}{With drugs like that, it sounds like you're manufacturing chems, not just medicine.}
+{4030}{}{Thanks Doctor, I'll go see him.}
+{5000}{}{(He looks at you with begrudging respect) Nice catch. You're smarter than you look.}
+{5010}{}{Nice try, Doc. This is gonna cost you.}
+{5020}{}{Forget it, I don't want to get involved.}
+{6000}{}{(His face hardens) I assumed as much. Unfortunately for you, I don't have any money. The only thing I've got are healing supplies. But they're meant for people who actually need them, you grasping little shit.}
+{6010}{}{I'll take 'em. Thanks, Doc. You have my silence. Well, probably.}
+{6020}{}{Forget it. Keep them. Goodbye.}
+{7000}{}{I'm the town doctor. People get injured, sick, I patch 'em up best I can. There's not much I can do these days. The Captain's stranglehold on trade's stopping most caravans from bothering with us. No trade means no medicine.}
+{7010}{}{That sounds bad. Anything I can do to help?}
+{7020}{}{I had something else I wanted to ask you.}
+{8000}{}{Hmm, well I'm always on the lookout for broc flower and xander root. Get me enough, I'll whip you up a batch of healing powder. As well as keep the leftovers for the hospital, of course.}
+{8010}{}{Deal. I'll bring some by later. I had some other questions.}
+{8020}{}{I'll go look for some now, thanks.}
+{9000}{}{Get out of my sight.@@Get lost, you little shit.@@::spits::@@Get out of my hospital!}
+{10000}{}{Sweet Jesus, you're hideous.@@Please, leave me to my work.@@I'm sorry, please, you're upsetting the other patients.}
+{11000}{}{Wish I could help you. Sorry, supplies are limited and we've got to prioritise the people who need it the most.}
+{11010}{}{You're low on supplies? Anything I could help with?}
+{11020}{}{That's too bad, could I ask you something else?}
+{11030}{}{What a shame. Goodbye.}
+{12000}{}{Sure, sure, no problem. Shouldn't take too long, how many batches do you want?}
+{12010}{}{Four.}
+{12020}{}{Three.}
+{12030}{}{Two.}
+{12040}{}{One.}
+{12050}{}{Forget it, I had some questions.}
+{12060}{}{Nevermind, bye.}
+{13000}{}{Alright, there you go. Take it easy, now. That stuff knocks you for six.}
+{13010}{}{Alright, thanks. I had some other questions.}
+{13020}{}{Much appreciated, Doctor. Bye.}
+

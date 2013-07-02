@@ -1,0 +1,117 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+52 1010 D _param p ST_CHARISMA > 99 #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+3 1040 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+65506 2010 #
+4 2020 #
+20 2030 D _var p q_la_gunr_courier = 5 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_NCR + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+8 2040 D _var p q_ncr_buster_smokes = 0 #
+0 2050 @
+3 3000 None 0 #
+65506 3010 #
+4 3020 #
+20 3030 D _var p q_la_gunr_courier = 5 D _item p PID_Q_GUNRUNNER_COURIER_BOX > 0 R _param p REPUTATION_NCR + 2 R _var p q_la_gunr_courier = 7 R _item p PID_Q_GUNRUNNER_COURIER_BOX - 1 #
+8 3040 D _var p q_ncr_buster_smokes = 0 #
+9 3050 D _var p q_ncr_buster_smokes = 2 D _item p PID_CIGARETTES > 2 #
+12 3060 D _var p q_ncr_buster_smokes > 2 #
+0 3070 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+7 4030 #
+0 4040 @
+5 5000 None 0 #
+4 5010 #
+0 5020 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+0 7020 @
+52 8000 None 0 @
+50 9000 None 0 @
+8 10000 None 0 #
+0 10010 R _var p q_ncr_buster_smokes = 1 #
+0 10020 @
+9 11000 None 0 #
+10 11010 D _item p PID_CIGARETTES } 3 R _item p PID_CIGARETTES - 3 R _param p ST_EXPERIENCE + 80 R _script dialog@r_AddMoney 1 30 R _var p q_ncr_buster_smokes = 3 R _item p PID_LEATHER_JACKET + 1 @
+10 12000 None 0 #
+11 12010 D _param p ST_CHARISMA > 3 R _var p q_ncr_buster_smokes = 4 R _item p PID_LIGHTER + 1 #
+12 12020 D _param p ST_CHARISMA < 4 R _var p q_ncr_buster_smokes = 4 #
+0 12030 @
+11 13000 None 0 #
+0 13010 @
+12 14000 None 0 #
+0 14010 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_LIGHTER + 1 R _script dialog@r_RemoveMoney 1 100 #
+0 14020 @
+20 15000 None 0 #
+0 15010 &
+
+[engl]
+{100}{}{Buster}
+{200}{}{You see a little grease-stained guy.}
+{210}{}{You're looking at Buster, the gun guy.}
+{210}{}{This guy's clothes are ragged and he's got gun-bluing all over his hands, arms, and face. Still, he seems pretty cheerful.}
+{1000}{}{error}
+{1010}{}{ugly}
+{1020}{}{Idiot}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{2000}{}{Hey, welcome to Buster's Fine Emporium of Armament! I'm Buster and there ain't nobody else. Got some fine goods here and on my shelves. Check it out. I'm ready to deal.}
+{2010}{}{What do you got?}
+{2020}{}{I've got some questions.}
+{2030}{}{I've got your Gun Runners shipment with me.}
+{2040}{}{Got any work for me, Buster?}
+{2050}{}{Goodbye.}
+{3000}{}{Hey, back again? What can I do for you?}
+{3010}{}{What do you got?}
+{3020}{}{I've got some questions.}
+{3030}{}{I've got your Gun Runners shipment with me.}
+{3040}{}{Got any work for me, Buster?}
+{3050}{}{Hey, I'm back from the Rawhide. I brought your smokes.}
+{3060}{}{Say, got any lighter to sell?}
+{3070}{}{Goodbye.}
+{4000}{}{Sure, stranger, what do you want to know?}
+{4010}{}{Tell me about the NCR.}
+{4020}{}{What's the deal with Merk?}
+{4030}{}{What can you tell me about Frank Westin?}
+{4040}{}{Nothing. Forget it. Bye.}
+{5000}{}{New California Republic - that's what it is. President Tandi and the bunch say they're trying to rebuild the old days; I figure they're just trying to grab whatever they can. Hell, I got no complaint with them - the old days is all before my time. They're kind of a prissy bunch, though - don't like slaves, gambling, whatnot. That's why I set up out here. Don't like rules - never have.}
+{5010}{}{I see. I wanted to know something else.}
+{5020}{}{That's all for now. Goodbye.}
+{6000}{}{I don't mess with Mr. Merk and it don't pay to go gossiping about him. You got questions, go ask about him at the Rawhide.}
+{6010}{}{I see. I wanted to know something else.}
+{6020}{}{Duly noted. See ya.}
+{7000}{}{Frank Westin? You mean that Congress guy? Got himself a spread out west of town.  Brahmin man - big wheel in the Stockman's Association. He's always looking for hands, if you're wanting work.}
+{7010}{}{Interesting. Tell me something else.}
+{7020}{}{Good for him. Goodbye.}
+{8000}{}{You better get outta here before something hits ya... Hard.@@Funny fella, aintcha? Beat it.@@Don't touch anything! It can blow your empty head off!@@Get lost, freakshow.}
+{9000}{}{You better get outta here before something hits ya... Hard.@@Funny fella, aintcha? Beat it.@@Don't touch anything! It can blow your empty head off!}
+{10000}{}{Little down on your luck, huh? I been there. Run down to the Rawhide, pick me up three packs o' smokes, an' I'll throw a couple bucks your way. Deal? I'd do it myself, but I can't leave this place alone for a minute.}
+{10010}{}{Sure thing. Back in a second.}
+{10020}{}{I'm not buying your damn cigarettes. I'm outta here.}
+{11000}{}{Thanks, buddy. Here's a couple bucks. I better get back to work. See you around.}
+{11010}{}{Thanks Buster. I'll catch you later.}
+{12000}{}{Wait, 'fore you go, you could probably use this old jacket I had lying around. Take care of yourself out there.}
+{12010}{}{Thanks, Buster! Say, you don't happen to have a lighter somewhere around here, do ya?}
+{12020}{}{Thanks, Buster! Say, you don't happen to have a lighter somewhere around here, do ya?}
+{12030}{}{Hey, thanks! Let me try it out right away! [Leave]}
+{13000}{}{A passionate smoker, aintcha? Here, this one's on the house. Drop by anytime if you need any more of these.}
+{13010}{}{You're the best, Buster, I'll put up a good word about you among my buddies. Bye!}
+{14000}{}{One lighter, hundred caps. You got the caps, you walk outta this place as a happy owner of a *working* lighter.}
+{14010}{}{Just gimme the damn thing already, I'm in a hurry! [Give him $100 and leave]}
+{14020}{}{Hm, I'm short on money right now... I'll come back later.}
+{15000}{}{Man, it's about time! Give it to me, had been waiting for the delivery since weeks!@@About time! Give me the package and thanks.@@Thanks for the delivery, @sex@|boy||girl|, it's about time!@@Ah, finally! Hand it over, I'll take care from now on.}
+{15010}{}{There you go. Goodbye!}
+

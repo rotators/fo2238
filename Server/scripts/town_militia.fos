@@ -1,0 +1,235 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// town_militia.fos
+//
+
+// TC militia script
+
+/**
+ * \~english @defgroup TownControlMilitiaGroup Town Control Militia
+ * Town Control militia functionality.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+#include "_macros.fos"
+#include "_basetypes.fos"
+#include "_town.fos"
+
+#include "entire.fos"
+#include "factions_h.fos"
+#include "follower_common_h.fos"
+#include "follower_h.fos"
+#include "guard_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "reputations_h.fos"
+#include "town_h.fos"
+#include "utils_h.fos"
+#include "world_common_h.fos"
+
+void r_BecomeMilitia(Critter& player, Critter@ cr)
+{
+    if(!DisbandFollower(player, cr, true))
+    {
+        Log("!!! follower not present in followers slot (" + player.Id + "," + cr.Id + ")");
+        return;
+    }
+    cr.SetScript("town_militia@critter_init");
+    cr.RefreshVisible();
+}
+
+uint GetMilitiaTeamByLoc(Location@ loc)
+{
+    uint locpid = loc.GetProtoId();
+    if(locpid == LOCATION_BrokenHills)
+        return FACTION_BH_MUTANTS;
+    else if(locpid == LOCATION_TheDen)
+        return FACTION_SLAVERS_GUILD;
+    else
+        return ReputationIndex(locpid);
+}
+
+void AssignMilitiaTeam(Critter& cr)
+{
+    ITown@ town = RetrieveTown(cr);
+    if(valid(town))
+    {
+        if(town.GetControllingFaction() > 0)
+        {
+            SetGroupInfo(cr, town.GetControllingFaction(), 3, FACTION_MODE_PASSIVE);      // passive to avoid conflicts with global handler
+            return;
+        }
+    }
+    SetGroupInfo(cr, GetMilitiaTeamByLoc(cr.GetMap().GetLocation()), 3, FACTION_MODE_PASSIVE);     // passive to avoid conflicts with global handler
+}
+
+void critter_init(Critter& cr, bool firstTime)
+{
+    // remove if stranded on WM
+    if(cr.GetMapId() == 0)
+    {
+        DeleteNpc(cr);
+        return;
+    }
+
+    cr.StatBase[ST_DIALOG_ID] = DIALOG_militia;
+
+    cr.SetEvent(CRITTER_EVENT_SMTH_ATTACK, "_SomeoneAttacked");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_Dead");
+    cr.SetEvent(CRITTER_EVENT_SMTH_STEALING, "_OnSomeoneSteal");
+
+    if(firstTime)
+        SetGroupInfo(cr, FACTION_NONE, 1, FACTION_MODE_PASSIVE);      // passive to avoid conflicts with global handler
+
+    AssignMilitiaTeam(cr);
+
+    _CritUnsetMode(cr, MODE_NO_HOME);
+    _CritSetExtMode(cr, MODE_EXT_MILITIA);
+    _CritSetMode(cr, MODE_NO_STEAL);
+    _CritSetMode(cr, MODE_NO_DROP);
+    _CritSetMode(cr, MODE_NO_LOOT);
+    _CritSetMode(cr, MODE_NO_KNOCK);
+    _CritSetMode(cr, MODE_UNLIMITED_AMMO);
+    _CritUnsetMode(cr, MODE_NO_BARTER);
+    _CritUnsetMode(cr, MODE_NO_ENEMY_STACK);
+
+    if(firstTime)
+    {
+        MilitiaMoveToFreeHex(cr);
+
+        GuardPerks(cr);
+
+        cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+        cr.PerkBase[PE_BONUS_HTH_ATTACKS] += Random(0, 1);
+        cr.PerkBase[PE_BONUS_RATE_OF_FIRE] = 1;
+        cr.PerkBase[PE_BONUS_RANGED_DAMAGE] += Random(1, 2);
+        cr.PerkBase[PE_BONUS_HTH_DAMAGE] += Random(1, 2);
+
+        for(uint i = SK_SMALL_GUNS; i <= SK_THROWING; i++)
+            cr.SkillBase[i] = Random(200, 300);
+
+        cr.StatBase[ST_INTELLECT] = Random(8, 10);
+        cr.StatBase[ST_PERCEPTION] = Random(8, 10);
+
+        cr.StatBase[ST_MAX_LIFE] += Random(50, 225);
+        cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE];
+
+    }
+}
+
+void MilitiaMoveToFreeHex(Critter& cr)
+{
+    uint8[] entires = { 0, 1, 2, 3, 4, 5, 6 };
+    shuffle_array(entires, uint8);
+    uint8  dir;
+    uint16 x, y;
+    x = y = dir = 0;
+
+    for(uint i = 0; i < entires.length(); i++)
+    {
+        if(entires[i] == 0)
+            dir = Random(0, 5);
+        else
+            dir = entires[i] - 1;
+
+        if(GetEntireFreeHex(cr.GetMap(), ENTIRE_MILITIA + entires[i], x, y))
+        {
+            cr.SetHomePos(x, y, dir);
+            return;
+        }
+    }
+
+    Log("Unable to find free militia hex on map " + cr.GetMapId());
+}
+
+void _Dead(Critter& cr, Critter@ killer)
+{
+    _CritUnsetMode(cr, MODE_GECK);
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+}
+
+void _Idle(Critter& cr)
+{
+    if(Random(0, 99) == 0)
+        MilitiaMoveToFreeHex(cr);
+
+    ITown@ town = RetrieveTown(cr);
+
+    if(!town.IsLaw(TOWN_LAW_CARRYING_WEAPONS))
+        return;
+
+    array<Critter@> crits;
+    uint            num = cr.GetCritters(false, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetGroupIndex(crits[i]) == town.GetControllingFaction())
+            continue;
+
+        if((GetCrittersDistantion(cr, crits[i]) < 6))
+            CheckForWeapons(cr, crits[i]);
+    }
+}
+
+bool _Attacked(Critter& follower, Critter& attacker)
+{
+    // A friend attacked (maybe an accident?). Don't fire back
+    if(IsFriend(follower, attacker))
+    {
+        follower.ErasePlane(AI_PLANE_ATTACK, true);
+        return true;
+    }
+
+    return false;
+}
+
+void _SomeoneAttacked(Critter& cr, Critter& fromCrit, Critter& target)
+{
+    // A friend attacked someone who's not a friend. He must suffer.
+    if(IsFriend(cr, fromCrit) && !(IsFriend(cr, target)))
+        AttackCritter(cr, target, __DeadHitPoints);
+
+    // A friendly was attacked, attack purpotrator.
+    if(IsFriend(cr, target) && !IsFriend(cr, fromCrit))
+        AttackCritter(cr, fromCrit, __DeadHitPoints);
+
+    ITown@ town = RetrieveTown(cr);
+
+    if(!town.IsLaw(TOWN_LAW_ATTACK_FLAGGED))
+        return;
+
+    if(!IsFriend(cr, fromCrit))
+        AttackCritter(cr, fromCrit, __DeadHitPoints);
+}
+
+void _OnSomeoneSteal(Critter& militia, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    ITown@ town = RetrieveTown(militia);
+
+    if(!town.IsLaw(TOWN_LAW_STEALING))
+        return;
+
+    if(DetectStealing(militia, target, thief))
+        AttackCritter(militia, target);         // kill
+}
+
+bool IsFriend(Critter& cr, Critter& target)
+{
+    ITown@ town = RetrieveTown(cr);
+
+    if(int(target.Id) == cr.Stat[ST_VAR0])   // Is town leader
+        return true;
+    if(target.IsNpc() && !_IsFollower(target))
+        return true;
+    if(_IsFollower(target) && uint(target.FollowerVar[FV_FACTION]) == town.GetControllingFaction())
+        return true;
+
+
+    return town.IsFriend(target);
+}
+/*@}*/

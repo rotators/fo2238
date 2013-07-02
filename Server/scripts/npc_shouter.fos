@@ -1,0 +1,38 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_shouter.fos
+//
+
+#include "_macros.fos"
+#include "npc_roles_h.fos"
+#include "npc_planes_h.fos"
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+#define _TryShouter    # (__role, __dialog, __start, __end, __minwait, __maxwait) if(npc.Stat[ST_NPC_ROLE] == __role) { npc.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(__dialog, Random(__start, __end))); npc.Wait(Random(__minwait, __maxwait)); }
+void _Idle(Critter& npc)
+{
+    uint   mapid = 0;
+    uint16 hx = 0;
+    uint16 hy = 0;
+    uint8  dir = 0;
+    npc.GetHomePos(mapid, hx, hy, dir);
+    if(hx != npc.HexX || hy != npc.HexY || dir != npc.Dir)
+        AddWalkPlane(npc, 0, hx, hy, dir, false, 0);
+    _TryShouter(ROLE_JNK_DRUNKPRIEST, 1712, 1, 9, 10000, 15000)
+    else
+        _TryShouter(ROLE_HUB_BARMAN, 1712, 10, 12, 10000, 15000)
+        else
+            _TryShouter(ROLE_HUB_PETE, 2503, 1, 5, 10000, 15000)
+            else
+                _TryShouter(ROLE_HUB_ARENA_ADVERTISER, 2530, 1, 5, 10000, 15000)
+                else
+                    _TryShouter(ROLE_NR_SHEB, 764, 1, 14, 10000, 15000)
+                    else
+                        _TryShouter(ROLE_NCR_MINE_OVERSEER, 1059, 1, 4, 10000, 15000);
+}

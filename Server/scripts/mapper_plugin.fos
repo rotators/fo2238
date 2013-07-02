@@ -1,0 +1,88 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_plugin.fos
+//
+
+#include "_macros.fos"
+#define __MAPPER_PLUGIN_MODULE__
+#include "mapper_plugin_h.fos"
+
+array<IMapperPlugin@> Plugins;
+
+bool Plugins_Register(IMapperPlugin@ plugin)
+{
+    Plugins.insertLast(plugin);
+    return true;
+}
+
+void Plugins_Render(uint layer)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        Plugins[i].Render(layer);
+}
+
+bool Plugins_MouseDown(int click)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        if(Plugins[i].MouseDown(click))
+            return true;
+    return false;
+}
+
+bool Plugins_MouseUp(int click)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        if(Plugins[i].MouseUp(click))
+            return true;
+    return false;
+}
+
+void Plugins_MouseMove(int x, int y)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        Plugins[i].MouseMove(x, y);
+}
+
+bool Plugins_KeyDown(uint8 key)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        if(Plugins[i].KeyDown(key))
+            return true;
+    return false;
+}
+
+bool Plugins_KeyUp(uint8 key)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        if(Plugins[i].KeyUp(key))
+            return true;
+    return false;
+}
+
+void Plugins_InputLost()
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        Plugins[i].InputLost();
+}
+
+void Plugins_Loop()
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        Plugins[i].Loop();
+}
+
+bool Plugins_Message(string& message)
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        if(Plugins[i].Message(message))
+            return true;
+    return false;
+}
+
+void Plugins_RenderMap()
+{
+    for(uint i = 0, j = Plugins.length(); i < j; i++)
+        Plugins[i].RenderMap();
+}

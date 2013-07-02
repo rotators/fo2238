@@ -1,0 +1,73 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n acquaintance = 0 #
+6 1020 D _var n acquaintance = 1 D _item p PID_OLD_SHOVEL = 0 D _item p PID_SHOVEL = 0 #
+7 1030 D _var n acquaintance = 1 D _item p PID_SHOVEL > 0 #
+8 1040 D _var n acquaintance = 1 D _item p PID_OLD_SHOVEL > 0 #
+9 1050 D _var n acquaintance = 2 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _var n acquaintance = 1 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 D _item p PID_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_SLEDGEHAMMER + 1 R _item p PID_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 7020 D _item p PID_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_KNIFE + 1 R _item p PID_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 7030 D _item p PID_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_AXE + 1 R _item p PID_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 7040 D _item p PID_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_SHOVEL - 1 R _param p ST_EXPERIENCE + 300 @
+8 8000 None 0 #
+0 8010 D _item p PID_OLD_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_SLEDGEHAMMER + 1 R _item p PID_OLD_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 8020 D _item p PID_OLD_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_KNIFE + 1 R _item p PID_OLD_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 8030 D _item p PID_OLD_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_AXE + 1 R _item p PID_OLD_SHOVEL - 1 R _param p ST_EXPERIENCE + 100 #
+0 8040 D _item p PID_OLD_SHOVEL } 1 R _var n acquaintance = 2 R _item p PID_OLD_SHOVEL - 1 R _param p ST_EXPERIENCE + 300 @
+9 9000 None 0 &
+
+[engl]
+{100}{}{Dan}
+{200}{}{You see Dan.}
+{210}{}{You see Dan, the luckless loser.}
+{1000}{}{Predialogue installations}
+{1010}{}{First chat.}
+{1020}{}{No shovel.}
+{1030}{}{Shovel.}
+{1040}{}{Old Shovel.}
+{1050}{}{Quest completed.}
+{2000}{}{Hey, hey man!}
+{2010}{}{Uh, hello.}
+{2020}{}{Get out of my way, scum!}
+{3000}{}{I got a plan, man!}
+{3010}{}{Oh yeah? What is it?}
+{3020}{}{I literally couldn't give less of a shit.}
+{4000}{}{It's a big one, a good one! But I need something! You need to get me a shovel man, can you do that for me?}
+{4010}{}{Find you a shovel? Yeah I guess I could handle that.}
+{4020}{}{No thanks.}
+{5000}{}{Thanks man, I'm gonna be rich with this plan! I'll wait right here for it!}
+{5010}{}{Alright, I'll swing back when I've got one.}
+{6000}{}{H-hey m-man, you find that shovel? I really need it!}
+{6010}{}{Having some trouble tracking it down. I'll let you know when I've found one.}
+{7000}{}{Oh man, thanks man! This is just what I need for my plan. Don't you worry about me man, I've got this under control. Hey thanks for helping, take this as thanks. It aint much but it's all I got.}
+{7010}{}{[Take sledgehammer]}
+{7020}{}{[Take knife]}
+{7030}{}{[Take hatchet]}
+{7040}{}{No problem.}
+{8000}{}{Oh man, thanks man! This is just what I need for my plan. Don't you worry about me man, I've got this under control. Hey thanks for helping, take this as thanks. It aint much but it's all I got.}
+{8010}{}{[Take sledgehammer]}
+{8020}{}{[Take knife]}
+{8030}{}{[Take hatchet]}
+{8040}{}{No problem.}
+{9000}{}{Woo-hoo!@@Hey man.@@Thanks man.@@I owe you man.@@I'm gonna be rich!}
+

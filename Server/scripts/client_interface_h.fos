@@ -1,0 +1,26 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_interface_h.fos
+//
+
+#ifndef __CLIENT_INTERFACE_H__
+#define __CLIENT_INTERFACE_H__
+
+#define TOWN_MODOC      (0)
+#define TOWN_KLAMATH    (1)
+#define TOWN_GECKO      (2)
+#define TOWN_BH         (3)
+#define TOWN_DEN        (4)
+#define TOWN_REDDING    (5)
+#define TOWN_COUNT      (6)
+
+#ifndef __CLIENT_INTERFACE__
+
+import void IndicatorMouse(bool down, int click) from "client_interface";
+import void ToggleInterfaceShown() from "client_interface";
+import void SetInterfaceShown(bool setting) from "client_interface";
+import bool IsInterfaceShown() from "client_interface";
+#endif // !__CLIENT_INTERFACE__
+#endif // __CLIENT_INTERFACE_H__ //

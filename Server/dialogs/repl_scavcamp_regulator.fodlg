@@ -1,0 +1,134 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+18 1010 D _param n ST_INTELLECT < 4 #
+16 1020 D _var p q_la_howitzer = 2 #
+3 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+2 1040 @
+16 2000 None 0 #
+0 2010 R _item p PID_TICKET + 1 R _var p q_la_howitzer = 4 @
+2 3000 None 0 #
+0 3010 #
+19 3020 #
+13 3030 D _var p q_la_howitzer = 0 @
+3 4000 None 0 #
+5 4010 #
+4 4020 #
+13 4030 D _var p q_la_howitzer = 0 #
+0 4040 @
+4 5000 None 0 #
+17 5010 #
+11 5020 #
+7 5030 @
+5 6000 None 0 #
+7 6010 #
+7 6020 #
+9 6030 @
+7 7000 None 0 #
+8 7010 #
+10 7020 @
+6 8000 None 0 #
+4 8010 #
+7 8020 @
+8 9000 None 0 #
+0 9010 #
+11 9020 @
+9 10000 None 0 #
+0 10010 #
+4 10020 #
+13 10030 @
+10 11000 None 0 #
+12 11010 #
+0 11020 @
+11 12000 None 0 #
+7 12010 @
+12 13000 None 0 #
+0 13010 @
+13 14000 None 0 #
+14 14010 #
+15 14020 #
+0 14030 @
+14 15000 None 0 #
+0 15010 #
+4 15020 #
+15 15030 @
+15 16000 None 0 #
+0 16010 R _var p q_la_howitzer = 1 @
+17 17000 None 0 #
+0 17010 R _script dialog@r_ShowLocation 1 38 #
+11 17020 @
+18 18000 None 0 @
+19 19000 None 0 #
+17 19010 #
+0 19020 &
+
+[engl]
+{100}{}{Sergeant}
+{200}{}{You see the Sergeant.}
+{1000}{}{Predialogue installations}
+{1010}{}{player is dumb.}
+{1020}{}{solved howizter ammo}
+{1030}{}{I don't know you.}
+{1040}{}{I know you now.}
+{2000}{}{What? You again! I've got the first bunch of new howitzer shells already! Hah! Great work, guess you're not that much of a rookie then I thought. Anyway... thanks... Here, take that train ticket. It should be still valid, one of the scavs found it 'few days ago.}
+{2010}{}{No problem. That's what I do... See you around.}
+{3000}{}{What, you are back, ruin crawler! Didn't I send you out already? Let's - the fuck - go, the day is long and the world is full of junk to salvage!}
+{3010}{}{Yes, Sergeant!}
+{3020}{}{Uh... eh... Sergeant, how did I came to that place again?}
+{3030}{}{Whats that big gun doing here?}
+{4000}{}{What, who are you? A crawler? Salvager... Scavenger? I didn't saw you here, ever! ... Wait, I remember! You are that one rookie, that my man dragged out of the ruins, aren't you? I am Sergeant, and you call me Sergeant, you've understand, *rookie*?}
+{4010}{}{What happened? Ruins? And where am I? The only thing I remember was that someone made a chunk of flesh out of me...}
+{4020}{}{Crawler? Salvager... Scavenger?}
+{4030}{}{Whats that big gun doing here?}
+{4040}{}{That's really not important. Bye.}
+{5000}{}{The workers. They crawl, they salvage, some also call it scavenge. They run around all day long, collecting everything that looks useful from the ruins of the Boneyard. Because you know... We need everything that might be useful. If just the damn dogs...}
+{5010}{}{From where all the salvagers are coming? Can't really believe that it's this place...}
+{5020}{}{Dogs?}
+{5030}{}{That's interesting. But I really have to go now...}
+{6000}{}{HAH! *Rookie*. People imagine a lot, if they get a close-to-death experience! The scavs found you between some ruins, lying on ground, doing nothing. Shit! Eh! Idiots how they are, they carried you to our camp.}
+{6010}{}{That must have been pretty close then? Glad they found me...}
+{6020}{}{Pfft, I would have managed it without them too. }
+{6030}{}{I remember... there have been some guys... You know, some really ugly monkey asses. They tried to rip me into small parts.}
+{7000}{}{You should take care a bit more. The wasteland is not a easy place and people can die quickly. }
+{7010}{}{I will do. Thanks for fixing me up, Sergeant.}
+{7020}{}{Do you have any job to offer?}
+{8000}{}{Are you drunk? Or is it the sun? God damn, my workers found you between the ruins. You've got something with your head? The scavs are everywhere.}
+{8010}{}{Scavs?}
+{8020}{}{That's interesting. But I really have to go now...}
+{9000}{}{Yeah, and now you should slowly move out *rookie*. You can stay as long as you want or just piss off and go back to scavenge. I really don't care, as long as you don't lead the fucking dogs to us.}
+{9010}{}{Okay. }
+{9020}{}{The dogs?}
+{10000}{}{The times are not easy right now, rookie. We heard about rumors from the far noth. But I don't care, this is the south. I care about the fucking dogs and my scavs. You should take care of yourself a bit more, that's all I can say. Now get off from me.}
+{10010}{}{I will do. Thanks for fixing me up, Sergeant.}
+{10020}{}{Tell me again about the scavs.}
+{10030}{}{Whats that big gun doing here?}
+{11000}{}{What? Where do you think you are? This is a salvager camp, god damn rookie! There is always shit do to! }
+{11010}{}{So you've got something for me?}
+{11020}{}{Thanks for the information. See you.}
+{12000}{}{The dogs! Man, they are everywhere. We shot them as often as we can, but they always come back.}
+{12010}{}{Guess you've got pretty much to do. See you.}
+{13000}{}{What? No! But ask Governor Morgan Hendriks in New Adytum. He might got something, who knows. I don't know and I don't care. Now get off from me.}
+{13010}{}{Thanks for the information. See you.}
+{14000}{}{What? That! It's 'ma howitzer. She's pretty, isn't she? My scavs found it in a 'ol warehouse or so. We fixed it up and now we use it against the damn dogs. Man, *BOOM* and the shit is flying through the air. God damn, it's so great, rookie, I tell you... A shame that we don't have much ammo and the boys from New Adytum are so god damn stubborn when it comes to produce the *good* ammunition. }
+{14010}{}{Sounds great. Can I test it?}
+{14020}{}{Who's the one in charge of the ammo? Maybe I could check it out and organize you some more...}
+{14030}{}{Cool, but I have to go now. See you.}
+{15000}{}{What? No! We are already scarce on ammunition. I can't let a rookie shoot my gun.}
+{15010}{}{What a pitty. Anyway, have to go now. See you.}
+{15020}{}{Can you explain me that *scavs* thing again?}
+{15030}{}{Who's the one in charge of the ammo? Maybe I could check it out and organize you some more...}
+{16000}{}{Hah! That would you do? Oh well, then... It's Jargo. Jargo the gunsmith in New Adytum, down in the south. Guess you will have to bugg him a lot, cause he's not that simple one... }
+{16010}{}{I will see, what I can do.}
+{17000}{}{What? This here is just a small outpost, rookie! The scav's main transshipment place is in the north west of New Adytum. They've got themself the old nightclub there.}
+{17010}{}{Maybe I will check it out... See you.}
+{17020}{}{What was this about the dogs?}
+{18000}{}{From what hole are you coming from?}
+{19000}{}{A brain like a hole, eh rookie? You are the one that my man dragged out of the ruins.}
+{19010}{}{From where are all the salvagers coming? Can't really believe that it's this place...}
+{19020}{}{Meh, see you later.}
+

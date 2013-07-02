@@ -1,0 +1,105 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+17 2010 D _script factions_player@d_HasNotRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+6 2020 D _script factions_player@d_HasRequiredFollowers 1 2 D _script dialog@d_NotMemberOfAnyFaction 0  #
+6 2030 D _script dialog@d_IsLeader 0  #
+0 2040 @
+3 3000 factions_player@dlg_EnterNameOfFaction 0 #
+0 3010 @
+4 4000 factions_player@dlg_CreateFactionBase 0 #
+0 4010 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+15 6010 #
+18 6020 #
+7 6030 @
+7 7000 None 0 #
+0 7010 #
+0 7020 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+3 9010 #
+0 9020 @
+10 10000 None 0 #
+3 10010 #
+0 10020 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 #
+0 12010 @
+15 13000 None 0 #
+3 13010 D _script factions_player@d_HasMoneyForCave 0  R _script factions_player@r_ChooseCave 0  #
+7 13020 @
+16 14000 None 0 #
+3 14010 D _script factions_player@d_HasMoneyForScrapheap 0  R _script factions_player@r_ChooseScrapheap 0  #
+18 14020 #
+7 14030 @
+17 15000 None 0 #
+0 15010 @
+18 16000 None 0 #
+3 16010 D _script factions_player@d_HasMoneyForGasStation 0  R _script factions_player@r_ChooseGasStation 0  #
+7 16020 &
+
+[engl]
+{100}{}{Hurl}
+{200}{}{You see a skillful aged hunter, wearing leather clothes.}
+{210}{}{This is Hurl, a man with a very well known scout.}
+{210}{}{You see a gecko hunter. He has a limp in his left leg.}
+{1000}{}{Predialogue installations}
+{1010}{}{ia ciaeii}
+{2000}{}{Hi! My name is Hurl. What do you want from me?}
+{2010}{}{You are a trapper? You must have run across some pretty interesting places in your time. Y'see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you?}
+{2020}{}{You are a trapper? You must have run across some pretty interesting places in your time. Y'see, I happen to be the leader of a group of travellers, and we're desperate for somewhere to settle down. You don't happen to know anywhere we could use, do you?}
+{2030}{}{So... yeah, we are now looking for a new hideout, do you think you'd have something for us?}
+{2040}{}{Nothing. I'm outta here.}
+{3000}{}{And what is it you guys call yourselves, anyway? [Make sure that everyone in your group is following you right now, otherwise they won't count as members]}
+{3010}{}{Nevermind.}
+{4000}{}{Best decision you ever made. Your people'll be thrilled. Let me just mark it on your map...how will you call this place?}
+{4010}{}{Nevermind.}
+{5000}{}{Never heard of you guys. Sorry. Don't think I can help you. Nothing personal.}
+{5010}{}{Ooops, I think I mispoke, let me repeat myself...}
+{5020}{}{I'm wasting my time here.}
+{6000}{}{Sure I can help you, but it ain't gonna be cheap. I happen to know a couple suitable locations, but some are a little more, how should I put it... impressive, than others.}
+{6010}{}{I am searching for a place that could be used as a nice hideout. Do you know about something in the mountains?}
+{6020}{}{I was looking for old gas stations. Do you happen to know about one?}
+{6030}{}{Screw you, I changed my mind.}
+{7000}{}{Heh, your loss.}
+{7010}{}{I guess...}
+{7020}{}{I'll be back}
+{8000}{}{Alright, done!}
+{8010}{}{Thanks!}
+{9000}{}{There's already a group of people going around calling themselves that. You better pick something different, buddy.}
+{9010}{}{Alright, how about...}
+{9020}{}{Nevermind.}
+{10000}{}{Hmm, there is something wrong with my brain. Do you want try again?}
+{10010}{}{Ok, I will tell you again, maybe you understand this time.}
+{10020}{}{Nevermind}
+{11000}{}{Sorry, so many damn groups have came to me, I don't know of any more places. Sorry. Try finding one that's already out there.}
+{11010}{}{Okay...}
+{12000}{}{And where are the caps? Get out!}
+{12010}{}{Damn!}
+{13000}{}{How about a cave, eh? Yes, yes... I saw something interesting a while ago, not sure where though. For a mere sum of 30.000 caps, I bet I could recall where the location was.}
+{13010}{}{Okay. Here, take the 30.000 caps and show me the way. I hope it's worth it.}
+{13020}{}{That's too much for me. Screw it.}
+{14000}{}{You want a camp? Maybe I know a place... It could be possible that I saw something a while ago... but it costs you 70.000 caps to fresh up my mind...}
+{14010}{}{Okay. Here, take the 70.000 caps and show me the way. I hope it's worth it.}
+{14020}{}{You don't have anything less expensive, don't you?}
+{14030}{}{That's too much for me. Screw it.}
+{15000}{}{Are you serious? I can only see you standing there in front of me. Haha, I got it! A joke, that's it?}
+{15010}{}{Hehe, yes... A joke... You got it, hehe. [You move away slowly.]}
+{16000}{}{Hm, maybe. I know about some god forsaken place, and it's not too far from here. For 50.000 caps, I can show you the location...}
+{16010}{}{Okay. Here, take the 50.000 caps and show me the way. I hope it's worth it.}
+{16020}{}{That's too much for me. Screw it.}
+

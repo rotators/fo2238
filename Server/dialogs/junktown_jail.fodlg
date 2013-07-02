@@ -1,0 +1,44 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT > 3 #
+4 2020 D _param p ST_INTELLECT > 3 #
+6 2030 D _param p ST_INTELLECT > 3 #
+0 2040 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 #
+6 4020 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{Stephan}
+{200}{}{You see Stephan, the jail guard.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Can I help you?}
+{2010}{}{Who are you?}
+{2020}{}{What are you doing?}
+{2030}{}{No thanks.}
+{2040}{}{Eergh!}
+{3000}{}{I'm Stephan. My job is to guard the jail.}
+{3010}{}{What are you doing?}
+{4000}{}{I'm guarding the jail. I make sure that miscreants don't get in or out.}
+{4010}{}{Why would you keep people from getting in the jail?}
+{4020}{}{Oh.}
+{5000}{}{Someone might leave something to help a prisoner escape. Or someone might get locked inside, and stuck until we could get the keys.}
+{5010}{}{Oh.}
+{6000}{}{You have a good day. And stay out of trouble.}
+{6010}{}{[OK]}
+

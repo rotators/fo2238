@@ -1,0 +1,108 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_flare.fos
+//
+
+// Author: flare fix by kamex
+// Thread: http://www.fonline.ru/forum/showthread.php?t=18316
+// rewritten for 2238
+
+#include "_macros.fos"
+#define STR_LIGHT_FLARE         (4070)
+
+// active flares lifetime, in minutes
+#ifndef __DEBUG__
+# define FLARE_AGE_MIN          (10)
+# define FLARE_AGE_MAX          (20)
+# define FLAREGROUND_AGE_MIN    (30)
+# define FLAREGROUND_AGE_MAX    (60)
+#endif
+#ifdef __DEBUG__
+# define FLARE_AGE_MIN          (1)
+# define FLARE_AGE_MAX          (2)
+# define FLAREGROUND_AGE_MIN    (3)
+# define FLAREGROUND_AGE_MAX    (6)
+#endif
+
+void _FlareInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_Used");
+}
+
+void _GroundFlareInit(Item& item, bool firstTime)
+{
+    if(firstTime)
+    {
+        CreateTimeEvent(AFTER(REAL_MINUTE(Random(FLAREGROUND_AGE_MIN, FLAREGROUND_AGE_MAX))),
+                        "e_DeleteFlare", item.Id, true);
+    }
+}
+
+bool _Used(Item& item, Critter& crit, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    uint old_pid = item.GetProtoId();
+    _SubItem(item, 1);
+
+    uint new_pid = 0;
+    switch(old_pid)
+    {
+    case PID_FLARE:
+        new_pid = PID_ACTIVE_FLARE;
+        break;
+    case PID_FLARE_GREEN:
+        new_pid = PID_ACTIVE_FLARE_GREEN;
+        break;
+    case PID_FLARE_WHITE:
+        new_pid = PID_ACTIVE_FLARE_WHITE;
+        break;
+    case PID_FLARE_YELLOW:
+        new_pid = PID_ACTIVE_FLARE_YELLOW;
+        break;
+    default:
+        break;
+    }
+
+    if(new_pid > 0)
+    {
+        Item@ new = _CritAddItem(crit, new_pid, 1);
+        if(valid(new))
+        {
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_LIGHT_FLARE);
+            CreateTimeEvent(AFTER(REAL_MINUTE(Random(FLARE_AGE_MIN, FLARE_AGE_MAX))),
+                            "e_DeleteFlare", new.Id, true);
+            return(true);
+        }
+    }
+    else
+        Log("Invalid new flare pid <" + new_pid + ">");
+
+    return(false);
+}
+
+uint e_DeleteFlare(array<uint>@ data)
+{
+    if(data.length() < 1)
+    {
+        Log("Flare removing fail: !id");
+        return(0);
+    }
+    if(data[0] == 0)
+    {
+        Log("Flare removing fail: id == 0");
+        return(0);
+    }
+    Item@ flare = GetItem(data[0]);
+    if(!valid(flare) || flare.IsNotValid)
+    {
+        // item is gone already - don't panic!
+        DLog("Flare already removed");
+        return(0);
+    }
+
+    DLog("Removing flare <" + flare.Id + ">");
+    DeleteItem(flare);
+
+    return(0);
+}

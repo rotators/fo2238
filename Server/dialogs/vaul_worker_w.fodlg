@@ -1,0 +1,93 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 6 #
+20 1020 D _param p SK_SPEECH < 51 D _param p ST_CHARISMA < 6 #
+21 1030 D _param p ST_CHARISMA > 5 #
+21 1040 D _param p SK_SPEECH > 60 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+6 3020 #
+10 3030 D _var n factions_q_vc_questionnaire_u = 0 D _item p PID_QUESTIONNAIRE > 0 D _script dialog@d_LillyCheckQuest 1 4203 R _item p PID_QUESTIONNAIRE - 1 R _var n factions_q_vc_questionnaire_u = 1 #
+0 3040 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+3 5010 @
+6 6000 None 0 #
+7 6010 #
+8 6020 #
+9 6030 #
+3 6040 @
+7 7000 None 0 #
+8 7010 #
+9 7020 #
+3 7030 @
+8 8000 None 0 #
+7 8010 #
+9 8020 #
+3 8030 @
+9 9000 None 0 #
+7 9010 #
+8 9020 #
+3 9030 @
+10 10000 None 0 #
+0 10010 @
+20 11000 None 0 @
+21 12000 None 0 &
+
+[engl]
+{100}{}{Servant}
+{200}{}{You see a Vault City servant.}
+{210}{}{You see a healthy-looking woman in working clothes. She is keeping her eyes firmly fixed on the ground.}
+{240}{}{You see a dead servant.}
+{250}{}{You see a dead servant from the Vault City.}
+{260}{}{You see a slain servant.}
+{270}{}{You see a slain servant from the Vault City.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{1030}{}{-}
+{1040}{}{-}
+{2000}{}{Hello, Citizen.@@Good day, Citizen.}
+{2010}{}{Hello! Mind if I ask you something?}
+{2020}{}{Excuse me.}
+{3000}{}{Anything you need, sir.}
+{3010}{}{Can you tell me what's been happening in Vault City recently?}
+{3020}{}{Say, would you mind taking a minute and telling me a little more about this place?}
+{3030}{}{Would you be so kind as to fill out this questionnaire?}
+{3040}{}{That'd be it, I guess. Farewell.}
+{4000}{}{Well, nothing much. We have a lot of work to do, we can always make ends meet.}
+{4010}{}{Isn't a little hard to be working all the time?}
+{5000}{}{Honest work is never hard, sir.}
+{5010}{}{Yeah, I guess you're right. Tell me something else then...}
+{6000}{}{Well, this is probably gonna be the most technologically advanced place you've ever seen. The Vault Dwellers have survived the Great War thanks to the Vault, and after some time they left it and founded this great city where we stand.}
+{6010}{}{Why does everyone call each other Citizen?}
+{6020}{}{And who does the manual work around here?}
+{6030}{}{Technologically advanced, huh? What is it you can get here?}
+{6040}{}{I had also some other questions right now...}
+{7000}{}{Well, it's simple. Either you're Citizen or not. Citizens can enjoy all the advantages of this place, while the Outworlders are granted a limited amount of it. Of course, that's if they can even get inside.}
+{7010}{}{Why are there so many people not wearing vault suits?}
+{7020}{}{What kind of technology are you guys working on here anyway?}
+{7030}{}{I had also some other questions right now...}
+{8000}{}{Oh, that's us... the workers. We help the citizens by taking care of anything that requires hard labor. In return, we're provided with plenty of food and water, as well as safety among these walls.}
+{8010}{}{Why does everyone call each other Citizen?}
+{8020}{}{Is there any good tech available here?}
+{8030}{}{I had also some other questions right now...}
+{9000}{}{Well, the city mainly produces medical supplies, and trades them for other products or services. The energy comes from Gecko, the food from Modoc and the guns usually from New Reno or NCR. The trading caravans bring the stuff all over the wasteland.}
+{9010}{}{Why does everyone call each other Citizen?}
+{9020}{}{And who moves all this stuff around the city?}
+{9030}{}{I had also some other questions right now...}
+{10000}{}{Oh, my! I'd be happy to help. Did you know this city taught me to read and write? I'm always eager to put that knowledge to good use. [She starts with it right away]}
+{10010}{}{Thank you!}
+{11000}{}{I am not permitted to speak with Outsiders.@@I'm sorry, but I don't have time to talk.@@Speaking to Outsiders is against the rules.@@I cannot speak to you. I have work to do.@@I must finish my duties within the hour.@@Please leave me be.@@The guards will report me if you continue to talk to me. Please go.@@I cannot speak to you. I have duties to attend to.@@Escape? Why would I want to? Life is good here.}
+{12000}{}{The Citizens treat me very well. The food here is excellent.@@The Citizens brought my entire tribe inside the City to serve as servants.@@I hear they do horrible things to slaves in New Reno.@@Vault City rewards servants who work diligently with extra rations.@@I was lucky that Vault City had need of servants. I could have ended up in New Reno.@@The Citizens tell us that our service allows them time for more important matters.@@The Citizens teach us that work is its own reward.@@The Citizens told me that if I work hard enough, one day *I* could become a Citizen.@@Escape? Why? Life is good here.@@I was taken from a tribal village to the north, but life is much better here.@@I was first captured in the Den. Fortunately, I ended up here.@@I used to have two children, but they were shipped northwards. I hope they make their way here someday.}
+

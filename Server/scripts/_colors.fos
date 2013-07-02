@@ -1,0 +1,65 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _colors.fos
+//
+
+#ifndef __COLORS__
+#define __COLORS__
+
+// Stuff
+#define COLOR_RGB               # (r, g, b)(uint((0xFF << 24) | (((r) & 0xFF) << 16) | (((g) & 0xFF) << 8) | ((b) & 0xFF)))
+#define COLOR_RGBA              # (r, g, b, a)(uint(((a) << 24) | (((r) & 0xFF) << 16) | (((g) & 0xFF) << 8) | ((b) & 0xFF)))
+#define COLOR_CHANGE_ALPHA      # (v, a)((((v) | 0xFF000000) ^ 0xFF000000) | ((a) & 0xFF) << 24)
+#define COLOR_LIGHT             # (color, light)(COLOR_CHANGE_ALPHA(__GetColor(((color >> 16) & 0xFF) + light, ((color >> 8) & 0xFF) + light, (color & 0xFF) + light), (color >> 24) & 0xFF))
+#ifndef CLAMP
+# define CLAMP                  # (x, low, high)(((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#endif
+
+uint __GetColor(int r, int g, int b, int a = 0xFF)
+{
+    r = CLAMP(r, 0, 255);
+    g = CLAMP(g, 0, 255);
+    b = CLAMP(b, 0, 255);
+    a = CLAMP(a, 0, 255);
+    return COLOR_RGBA(r, g, b, a);
+}
+
+// Iface
+#define COLOR_IFACE_FIX         (COLOR_RGB(103, 95, 86)
+#define COLOR_IFACE             (__GetColor(((COLOR_IFACE_FIX >> 16) & 0xFF) + __Light, ((COLOR_IFACE_FIX >> 8) & 0xFF) + __Light, (COLOR_IFACE_FIX & 0xFF) + __Light))
+#define COLOR_IFACE_A           # (a)       ((COLOR_IFACE ^ 0xFF000000) | ((a) << 24))
+#define COLOR_IFACE_RED         (COLOR_IFACE | (0xFF << 16))
+#define COLOR_IFACE_GREEN       (COLOR_IFACE | (0xFF << 8))
+
+// Text
+#define COLOR_TEXT              (COLOR_RGB(60, 248, 0))           // Default text color
+#define COLOR_CRITTER_NAME      (COLOR_RGB(0xAD, 0xAD, 0xB9))     // Default critter nickname color
+#define COLOR_CONTOUR_RED       (COLOR_RGB(150, 0, 0))
+#define COLOR_CONTOUR_YELLOW    (COLOR_RGB(150, 150, 0))
+#define COLOR_CONTOUR_GREEN     (COLOR_RGB(0, 150, 0))
+
+#define COLOR_LGRAY             (COLOR_RGB(0xAB, 0xAB, 0xAB))
+#define COLOR_GRAY              (COLOR_RGB(0x7F, 0x7F, 0x7F))
+#define COLOR_WHITE             (COLOR_RGB(0xFF, 0xFF, 0xFF))
+#define COLOR_RED               (COLOR_RGB(0xC8, 0, 0))
+#define COLOR_DRED              (COLOR_RGB(0xAA, 0, 0))
+#define COLOR_DDRED             (COLOR_RGB(0x66, 0, 0))
+#define COLOR_LRED              (COLOR_RGB(0xFF, 0, 0))
+#define COLOR_BLUE              (COLOR_RGB(0, 0, 0xC8))
+#define COLOR_DBLUE             (COLOR_RGB(0, 0, 0xAA))
+#define COLOR_LBLUE             (COLOR_RGB(0, 0, 0xFF))
+#define COLOR_GREEN             (COLOR_RGB(0, 0xC8, 0))
+#define COLOR_DGREEN            (COLOR_RGB(0, 0xAA, 0))
+#define COLOR_DDGREEN           (COLOR_RGB(0, 0x66, 0))
+#define COLOR_LGREEN            (COLOR_RGB(0, 0xFF, 0))
+#define COLOR_BLACK             (COLOR_RGB(0, 0, 0))
+#define COLOR_SBLACK            (COLOR_RGB(0x10, 0x10, 0x10))
+#define COLOR_DARK              (COLOR_RGB(0x30, 0x30, 0x30))
+#define COLOR_GREEN_RED         (COLOR_RGB(0, 0xC8, 0xC8))
+#define COLOR_SAND              (COLOR_RGB(0x8F, 0x6F, 0))
+
+// Other
+#define COLOR_GAME_RGB          # (r, g, b)(__GetColor(r + __Light, g + __Light, b + __Light))
+#endif // __COLORS__

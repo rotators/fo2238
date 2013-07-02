@@ -1,0 +1,191 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+25 1010 D _script dialog@d_IsMember 0  #
+20 1020 D _var p acquaintance = 2 #
+2 1030 D _var p q_raiders_induction = 2 D _var p acquaintance < 1 #
+17 1040 D _var p q_raiders_induction = 3 #
+27 1050 @
+2 2000 None 0 #
+3 2010 #
+65507 2020 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+8 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 #
+12 10020 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+15 14010 R _item p PID_LOCKPICKS + 1 R _item p PID_ROPE + 1 R _item p PID_NUKA_COLA + 1 R _item p PID_MULTI_TOOL + 1 R _item p PID_KNIFE + 1 R _script quest_raiders@r_SpawnFarmhome 0  @
+15 15000 None 0 #
+16 15010 #
+16 15020 @
+16 16000 None 0 #
+0 16010 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+19 18010 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_RAIDERS + 300 R _var p acquaintance = 2 R _script dialog@r_AddMember 0  R _var p q_raiders_induction = 4 @
+19 19000 None 0 #
+20 19010 #
+20 19020 #
+20 19030 #
+20 19040 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+22 21010 R _script dialog@r_ShowLocation 1 27 R _var p acquaintance = 3 #
+22 21020 R _script dialog@r_ShowLocation 1 27 R _var p acquaintance = 3 @
+22 22000 None 0 #
+23 22010 #
+23 22020 @
+23 23000 None 0 #
+0 23010 #
+24 23020 @
+24 24000 None 0 #
+0 24010 @
+25 25000 None 0 #
+50 25010 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+26 25020 #
+28 25030 #
+0 25040 @
+26 26000 None 0 #
+0 26010 @
+27 27000 None 0 #
+50 27010 D _var p q_la_gunrunners_caravan > 0 D _item p PID_Q_GUNRUNNER_BOX > 0 D _var p q_la_gunrunners_caravan ! 3 D _var p q_la_gunrunners_caravan ! 4 D _var p q_la_gunrunners_caravan ! 5 #
+0 27020 @
+28 28000 None 0 #
+0 28010 R _script dialog@r_ShowLocation 1 27 R _var p acquaintance = 3 @
+50 29000 None 0 #
+51 29010 #
+0 29020 @
+51 30000 None 0 #
+0 30010 D _item p PID_Q_GUNRUNNER_BOX > 0 R _item p PID_Q_GUNRUNNER_BOX - 1 R _var p q_la_warehouse = 5 R _param p REPUTATION_RAIDERS + 300 R _param p REPUTATION_RAIDERS - 50 R _script quest_la_gunr_caravan@r_DeleteLocation 0  R _item p PID_PSYCHO + 5 R _item p PID_JET + 5 R _item p PID_MENTATS + 5 R _item p PID_BUFFOUT + 5 @
+52 31000 None 0 #
+0 31010 R _item p PID_BEER + 10 #
+53 31020 R _param p REPUTATION_RAIDERS + 100 #
+54 31030 D _param p SK_TRAPS } 50 R _param p REPUTATION_RAIDERS + 25 R _param p ST_EXPERIENCE + 25 @
+53 32000 None 0 @
+54 33000 None 0 #
+0 33010 &
+
+[engl]
+{100}{}{Raynes}
+{200}{}{You see Raynes.}
+{210}{}{You see Jim Raynes, the old Khan lieutenant. He's grizzled and rough with an unkempt beard and an impressive physique for a man his age.}
+{240}{}{You see the corpse of Raynes.}
+{250}{}{Looks like he went down fighting.}
+{260}{}{You see the corpse of Raynes.}
+{270}{}{Looks like he went down fighting.}
+{1000}{}{Predialogue installations}
+{1010}{}{Khan coming back to say hi}
+{1020}{}{the base, say again?}
+{1030}{}{On the quest, first time you meet him}
+{1040}{}{Killed cooper, returning for yr reward}
+{1050}{}{default}
+{2000}{}{Oi! Who are you?}
+{2010}{}{@pname@. Stokes told me to come down here to see about a job.}
+{2020}{}{Your fucking dad, asshole! Yeah let's go right now bitch, put 'em up!}
+{3000}{}{Yeah, figured as much. No one's daft enough to just stroll in to a Khan base with no good reason.}
+{3010}{}{Right. So, you're Raynes?}
+{4000}{}{Yeah, Jim Raynes. I run this outpost.}
+{4010}{}{This outpost?}
+{5000}{}{Yeah it's basically just a crash house for the boys if we hear about a juicy target from the Hub or Junktown.  When there's nothing going on, the few of us who stay here all the time mostly terrorise homesteaders for what we need.}
+{5010}{}{Sounds nice. So, is there work for me?}
+{6000}{}{Yeah there's something that needs taking care of.  A real iceman job. If there's anything that could give you second thoughts you best fuck off now and forget where this place is.}
+{6010}{}{I can handle this. Lay it on me.}
+{6020}{}{Yeah, not sure I'm ready for the heavy stuff. I'm out of here.}
+{7000}{}{Alright. A little while ago, one of our boys, Cooper, went missing after a raid. Couple weeks later we get word from out of our contacts in town that he was there picking up some supplies.}
+{7010}{}{Yeah?}
+{7020}{}{Oh my god, that is so not Cooper! Why would he DO that?!}
+{8000}{}{Turns out that motherfucker wanted out. He got a girl and a little house in the middle of nowhere for himself, figured he'd make a go of it like an honest man.}
+{8010}{}{An honest man, huh? That's not cool, is it?}
+{9000}{}{No one leaves the Khans, not ever. Thats the cardinal fucking rule of this shit. If you're a Khan you're not anything else and you never will be.}
+{9010}{}{So where do I fit in to all this?}
+{10000}{}{So you have to end him, wiseacre.}
+{10010}{}{"End" him?! What?}
+{10020}{}{All right, I can do this. Tell me more.}
+{11000}{}{Kill him, dumbass. I don't care how you do it, but shit has to get done.}
+{11010}{}{All right. I can do that.}
+{12000}{}{We found his little homestead. Real back of beyond shit. Some little shack, little brahmin pen, a well I think. Garbage. He's got all he needs there, but if shit goes wrong it's a real long walk back in to town if you get my drift.}
+{12010}{}{Right}
+{13000}{}{Also he can't walk if he's fucking dead.}
+{13010}{}{True.}
+{14000}{}{Right like I said, don't give a fuck how you do it, but shit needs to get done.  Take these, might be useful.}
+{14010}{}{Uh thanks. I guess I could conceivably use some or all of these to complete this quest in a variety of ways in true Fallout style.}
+{15000}{}{[He passes you a crude map.] See? Real middle of nowhere. You can raise hell if you want, no one's gonna come stop you.}
+{15010}{}{The way I do things, that's probably going to come in handy.}
+{15020}{}{The way I do things, that probably wont be necessary.}
+{16000}{}{Alright. Don't mess it up. And if he gets a look at you while you do the deed, let him know what's up.}
+{16010}{}{Oh he'll know. Don't even worry about it. I'll be back when I'm done.}
+{17000}{}{Well if it aint Mr Iceman back from the job.}
+{17010}{}{Mr Iceman? Wait, you already know how I did?}
+{18000}{}{Of course, moron. Not just gonna take your word for it, am I? Had to know you handled that shit like a man.  And you did.}
+{18010}{}{So, I'm in?}
+{19000}{}{Yeah, you're a Khan now asshole, for life. Welcome to the family.}
+{19010}{}{Awesome.}
+{19020}{}{Excellent.}
+{19030}{}{Hooray!}
+{19040}{}{About time.}
+{20000}{}{Alright, what you need to do now is go to our main hideout, meet the guys in charge and get settled in to your new life.}
+{20010}{}{Main hideout?}
+{21000}{}{It's in some big cave up north. Real secret spot, but in a great location for some prime work. You got a map?}
+{21010}{}{Why yes, yes I do! I have a map right here! Here it is, here is my map.}
+{21020}{}{Yes.}
+{22000}{}{[He marks the cave on your map.] All right. The guy who watched over you has already gone on ahead to spread the word, so you're not gonna get iced the moment you step in. Shit, you might even get a bed or a meal.}
+{22010}{}{It wouldn't be very cool if I got iced after all this work!}
+{22020}{}{A bed? Am I going to live there?}
+{23000}{}{Yeah dumbass. Talk to Carter when you get to the cave, he's the big boss man. I just run down here.}
+{23010}{}{Carter, right. I'm gone.  Later Raynes.}
+{23020}{}{Carter, right. So what is it you do down here exactly?}
+{24000}{}{Like I said, it's just a place to lie low, plan shit, and get wasted after. If you've ever doing work in this area, this is your safehouse. Sometimes we have work out of here too, so check back when you got some free time, maybe we can sort something out for you.}
+{24010}{}{I'll keep that in mind. Going to head to that cave though. Bye!}
+{25000}{}{Hey @pname@, what's up?}
+{25010}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{25020}{}{Yeah not much.  Got any work going?}
+{25030}{}{Eh... this sounds somehow stupid, but can you tell me again where our other hideout is?}
+{25040}{}{Yeah you know. Just checking in. Bye.}
+{26000}{}{Don't think we got shit going on at the moment, sorry.}
+{26010}{}{Oh dude! Lame!}
+{27000}{}{Yeah? What?}
+{27010}{}{Are you folks interested in a few high quality weapon manufacturing plans from the Gun Runners?}
+{27020}{}{Nothing, bye.}
+{28000}{}{It's in some big cave up north. Real secret spot, but in a great location for some prime work.}
+{28010}{}{Great. Once again. And also... bye.}
+{29000}{}{You have... what? From where did you got that stuff? Hand it over and I'll guarantee you fair paiment!}
+{29010}{}{Here it is. [You give him the metal box.]}
+{29020}{}{I changed my mind. Goodbye.}
+{30000}{}{Finally we got a hand on their turf! Here, you get a share of our drug production of this week. But don't take all the shit at once... [He gives you 5 Psycho, 5 Jet, 5 Mentats and 5 Buffout.]}
+{30010}{}{Stop the talking and give me the damn drugs! Can't wait the whole day, don't want become a fucking tree...}
+{31000}{}{Here, take this too! For your way back... [He throws a pack of 10 beer at you.]}
+{31010}{}{Thanks...}
+{31020}{}{Place it in your ass! [You throw it back to him.]}
+{31030}{}{Keep in mind, that the box is rigged with explosives. All Gun Runner packages are.}
+{32000}{}{Hah! A really tough one today, aren't we?}
+{33000}{}{Man, why didn't you said that earlier? Could have blown up us all!! Here, take another beer and now get out! I'll have to work on something...}
+{33010}{}{Goodbye.}
+

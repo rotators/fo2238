@@ -1,0 +1,206 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_bosbunker.fos
+//
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "_maps.fos"
+#include "elevators_h.fos"
+#include "mapdata_h.fos"
+#include "MsgStr.h"
+#include "npc_roles_h.fos"
+#include "utils_h.fos"
+
+/*
+   CElevator Elevator(ELEVATOR_BOS_01);
+   bool ElevatorsAdded = false;
+ */
+
+uint16 FieldX = 0;
+uint16 FieldY = 0;
+
+
+void map_init(Map& map, bool firstTime)
+{
+    /*
+       if (!ElevatorsAdded)
+       {
+       ElevatorsAdded=true;
+       AddElevator(Elevator);
+       }
+     */
+
+    uint16 x = 0, y = 0;
+
+    switch(map.GetProtoId())
+    {
+    /*case MAP_BosBunker1:
+            if(map.GetEntireCoords(1, 0, x, y))
+              Elevator.AddFloor(map.Id,1);
+            break;*/
+
+    case MAP_BoSbunkerlevel2:
+        // if(map.GetEntireCoords(0, 0, x, y))
+        //   Elevator.AddFloor(map.Id,0);
+        map.GetEntireCoords(ENTIRE_BOSBUNKER_FORCEFIELD, 0, FieldX, FieldY);
+        break;
+    default:
+    }
+}
+
+/*
+   void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+   {
+        HandleElevator(Elevator, critter, entered);
+   }*/
+
+void r_RetireMap(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_bosbunker_locid, player.Id);
+    if(var.GetValue() != 0)
+    {
+        Location@ loc = GetLocation(var.GetValue());
+        if(valid(loc))
+            loc.AutoGarbage = true;
+    }
+}
+
+bool s_Shaft(Critter& player, Scenery& valve, int skill, Item@ item)
+{
+    Map@ map = player.GetMap();
+    if(!valid(item) && skill == -1 && map.GetData(MAP_DATA_ROPE) == 1)
+    {
+        player.TransitToMap(player.GetMap().GetLocation().GetMap(MAP_BoSbunkerlevel3).Id, 0);
+        return true;
+    }
+    if(!valid(item) || item.GetProtoId() != PID_ROPE)
+        return false;
+
+    Item@ rope = map.AddItem(valve.HexX, valve.HexY, PID_SHAFT_WITH_ROPE, 1);
+    if(!valid(rope))
+        return false;
+    map.SetData(MAP_DATA_ROPE, 1);
+    if(item.GetCount() < 2)
+        DeleteItem(item);
+    else
+        item.SetCount(item.GetCount() - 1);
+    rope.SetScript("map_bosbunker@_RopeInit");
+    player.Say(SAY_NETMSG, "You've attached the rope to the top of the shaft.");
+    return true;
+}
+
+void _RopeInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_OnShaftRopeUse");
+}
+
+bool _OnShaftRopeUse(Item& item, Critter& player, int skill)
+{
+    if(skill != -1)
+        return true;
+    player.TransitToMap(GetMap(item.MapId).GetLocation().GetMap(MAP_BoSbunkerlevel3).Id, 0);
+    return true;
+}
+
+bool s_Emitter(Critter& player, Scenery& valve, int skill, Item@ item)
+{
+    int bonus = 0;
+    if(valid(item))
+    {
+        switch(item.GetProtoId())
+        {
+        case PID_MULTI_TOOL:
+            bonus = 25;
+            break;
+        case PID_SUPER_TOOL_KIT:
+            bonus = 50;
+            break;
+        default:
+            return false;
+        }
+        RepairEmitter(player, bonus);
+        return true;
+    }
+
+    if(skill != SK_REPAIR)
+        return false;
+    RepairEmitter(player, 0);
+    return true;
+}
+
+void RepairEmitter(Critter& player, int bonus)
+{
+    Map@ map = player.GetMap();
+    if(player.Timeout[TO_SK_REPAIR] > 0)
+    {
+        player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+        return;
+    }
+    if(map.GetData(MAP_DATA_FORCEFIELD) == 1)
+    {
+        player.Say(SAY_NETMSG, "The forcefield is already down.");
+        return;
+    }
+
+    _SetTimeout(player, TO_SK_REPAIR, REPAIR_TIMEOUT(cr));
+    int skill = player.Skill[SK_REPAIR] + bonus;
+    skill = CLAMP(skill, 5, 95);
+    if(Random(1, 100) <= skill)
+    {
+        player.Say(SAY_NETMSG, "You managed to bring the forcefield down, at least for a while.");
+        FieldDown(map, REAL_SECOND(skill / 3));
+    }
+    else
+    {
+        player.Say(SAY_NETMSG, "You've failed to do anything.");
+    }
+}
+
+bool FieldDown(Map& map, int to)
+{
+    Item@ item = map.GetItem(FieldX, FieldY, PID_FORCEFIELD_YELLOW_2);
+    if(valid(item))
+        DeleteItem(item);
+    map.SetData(MAP_DATA_FORCEFIELD, 1);
+    CreateTimeEvent(AFTER(to), "e_FieldUp", map.Id, true);
+    return true;
+}
+
+uint e_FieldUp(array<uint>@ values)
+{
+    Map@ map = GetMap(values[0]);
+    if(!valid(map))
+        return 0;
+    if(FieldUp(map))
+        return 0;
+    return 1;
+}
+
+bool FieldUp(Map& map)
+{
+    Item@ item = map.AddItem(FieldX, FieldY, PID_FORCEFIELD_YELLOW_2, 1);
+    if(!valid(item))
+        return false;
+    map.SetData(MAP_DATA_FORCEFIELD, 0);
+    return true;
+}
+
+void r_DisableRobobrains(Critter& player, Critter@ npc)
+{
+    array<Map@>     maps;
+    array<Critter@> crits;
+    for(uint i = 0, j = player.GetMap().GetLocation().GetMaps(maps); i < j; i++)
+        maps[i].GetCritters(0, FIND_ALL, crits);
+    for(uint i = 0, j = crits.length(); i < j; i++)
+        if(crits[i].Stat[ST_NPC_ROLE] == ROLE_ROBOBRAIN)
+        {
+            crits[i].SetScript(null);
+            ClearEvents(crits[i]);
+            ClearEnemyStack(crits[i]);
+        }
+}
+
+// PID_FORCEFIELD_YELLOW_2

@@ -1,0 +1,81 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 #
+6 1020 @
+2 2000 None 0 #
+3 2010 #
+80 2020 D _param p PE_PROFESSION_GUNSMITH_B < 2 D _var n name_mem_npc_player = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 R _var n name_mem_npc_player = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+80 4020 D _param p PE_PROFESSION_GUNSMITH_B < 2 #
+0 4030 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+80 6010 D _param p PE_PROFESSION_GUNSMITH_B < 2 #
+0 6020 @
+80 7000 None 0 #
+81 7010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithB0 1 0 #
+82 7020 D _script dialog@d_CheckGunsmithB1 1 0 #
+0 7030 @
+81 8000 None 0 #
+83 8010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_B = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 8020 @
+82 9000 None 0 #
+84 9010 R _param p PE_PROFESSION_GUNSMITH_B = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 9020 @
+83 10000 None 0 #
+0 10010 @
+84 11000 None 0 #
+0 11010 &
+
+[engl]
+{100}{}{Quincy}
+{200}{}{You see a man in a military uniform.}
+{210}{}{You see a man in a military uniform. Judging by the grease spots you think he is more of a mechanic than a soldier.}
+{210}{}{You see a burly old mutant with a weary cast to his face. He still looks vigorous and tough.}
+{1000}{}{Predialogue installations}
+{1010}{}{member unknown}
+{1020}{}{member known}
+{2000}{}{Name's Quincy, soldier. Why are you tapping my shoulder and looking lost?}
+{2010}{}{Hi. I need to ask you something.}
+{2020}{}{Let's talk about big guns, Quincy.}
+{2030}{}{Never mind.}
+{3000}{}{All right, but make it quick. I have inventory to do.}
+{3010}{}{What is this place?}
+{3020}{}{Well, got to go.}
+{4000}{}{This is maintenance. We repair pretty much anything except for the vertibirds. Even the guns. Big guns, you know what I mean?}
+{4010}{}{Where do the vertibirds get repaired?}
+{4020}{}{Excellent, I was just looking for someone who could help me with the big guns!}
+{4030}{}{Bye.}
+{5000}{}{They only fit in the hangar or outdoors. You figure it out from there, okay?}
+{5010}{}{Oh, yeah. I get it.}
+{6000}{}{You again, soldier?}
+{6010}{}{I wanted to talk to you about big guns...}
+{6020}{}{Never mind.}
+{7000}{}{[Quincy smiles] What's on your mind?}
+{7010}{}{I would like to know how they work, what they're made of... technical stuff.}
+{7020}{}{I thought you could clarify some things about the construction and usage of big guns to me.}
+{7030}{}{Erhm... Actually, nothing right now. I better be going.}
+{8000}{}{I really hope you know what you're talking about, otherwise it'll be waste of time. Also I need something in return. I'm always short on caps, maybe you could bring me... Let's say $1500.}
+{8010}{}{Okay, I think I've got fifteen hundred right here. Why don't you take it, so we can start right away? [Give him $1500]}
+{8020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{9000}{}{Yeah, I see you're already skilled with those, so it shouldn't take too long. But, as you may already know, I'm in really bad need of caps. If you get me $3000, I'll show you everything I know.}
+{9010}{}{It wasn't easy to find that many caps ... It better be worth it! [Give him $3000]}
+{9020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{10000}{}{Very well, it's a deal then. [Quincy starts explaining. In the end he gives you a magazine about weapons and ammunition.]}
+{10010}{}{Thanks for everything Quincy, that's exectly what I wanted to know. See you!}
+{11000}{}{Very well, it's a deal then. [Quincy starts explaining]}
+{11010}{}{Thanks Quincy, that was really something new for me. I have to go now, bye.}
+

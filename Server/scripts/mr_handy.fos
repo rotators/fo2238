@@ -1,0 +1,666 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mr_handy.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "npc_planes_h.fos"
+#include "mapdata_h.fos"
+
+
+import bool ReversableItem(Item& item) from "fix_boy";
+import bool ReverseItem(Critter& cr, Item& item) from "fix_boy";
+import bool TryRepairItemCall(Critter& cr, Item@ item, Item@ withItem) from "repair";
+
+#define SET_REPAIRED_ABOVE            # (cr, val)(cr.ParamBase[ST_VAR1] = (cr.ParamBase[ST_VAR1] & (~(0x7F))) | ((val & 0x7F)))
+#define SET_REPAIRED_MAXABOVE         # (cr, val)(cr.ParamBase[ST_VAR1] = (cr.ParamBase[ST_VAR1] & (~(0x7F << 7))) | ((val & 0x7F) << 7))
+#define SET_REPAIRED_BELLOW           # (cr, val)(cr.ParamBase[ST_VAR1] = (cr.ParamBase[ST_VAR1] & (~(0x7F << 14))) | ((val & 0x7F) << 14))
+#define SET_REPAIRED_MAXBELLOW        # (cr, val)(cr.ParamBase[ST_VAR1] = (cr.ParamBase[ST_VAR1] & (~(0x7F << 21))) | ((val & 0x7F) << 21))
+#define GET_REPAIRED_ABOVE            # (cr)                ((cr.ParamBase[ST_VAR1]) & (0x7F))
+#define GET_REPAIRED_MAXABOVE         # (cr)     ((cr.ParamBase[ST_VAR1] >> 7) & (0x7F))
+#define GET_REPAIRED_BELLOW           # (cr)               ((cr.ParamBase[ST_VAR1] >> 14) & (0x7F))
+#define GET_REPAIRED_MAXBELLOW        # (cr)    ((cr.ParamBase[ST_VAR1] >> 21) & (0x7F))
+
+#define SET_REPAIRRES_ABOVE           # (cr, val)(cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & (~(0x7F))) | ((val & 0x7F)))
+#define SET_REPAIRRES_MAXABOVE        # (cr, val)(cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & (~(0x7F << 7))) | ((val & 0x7F) << 7))
+#define SET_REPAIRRES_BELLOW          # (cr, val)(cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & (~(0x7F << 14))) | ((val & 0x7F) << 14))
+#define SET_REPAIRRES_MAXBELLOW       # (cr, val)(cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & (~(0x7F << 21))) | ((val & 0x7F) << 21))
+#define GET_REPAIRRES_ABOVE           # (cr)               ((cr.ParamBase[ST_VAR2]) & (0x7F))
+#define GET_REPAIRRES_MAXABOVE        # (cr)    ((cr.ParamBase[ST_VAR2] >> 7) & (0x7F))
+#define GET_REPAIRRES_BELLOW          # (cr)              ((cr.ParamBase[ST_VAR2] >> 14) & (0x7F))
+#define GET_REPAIRRES_MAXBELLOW       # (cr)   ((cr.ParamBase[ST_VAR2] >> 21) & (0x7F))
+#define SET_REPAIR_RANDOM             # (cr)         (cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & 0x3FFFFFFF))
+#define SET_REPAIR_PRIMITIVE          # (cr)      (cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & 0x3FFFFFFF) | 0x40000000)
+#define SET_REPAIR_ADV                # (cr)            (cr.ParamBase[ST_VAR2] = (cr.ParamBase[ST_VAR2] & 0x3FFFFFFF) | 0x80000000)
+#define IS_REPAIR_RANDOM              # (cr)          ((cr.ParamBase[ST_VAR2] & (~0x3FFFFFFF)) == 0)
+#define IS_REPAIR_PRIMITIVE           # (cr)       ((cr.ParamBase[ST_VAR2] & (~0x3FFFFFFF)) == 0x40000000)
+#define IS_REPAIR_ADV                 # (cr)                     ((cr.ParamBase[ST_VAR2] & (~0x3FFFFFFF)) == 0x80000000)
+
+#define SET_DISSASSEMBLE_ABOVE        # (cr, val)(cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & (~(0x7F))) | ((val & 0x7F)))
+#define SET_DISSASSEMBLE_MAXABOVE     # (cr, val)(cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & (~(0x7F << 7))) | ((val & 0x7F) << 7))
+#define SET_DISSASSEMBLE_BELLOW       # (cr, val)(cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & (~(0x7F << 14))) | ((val & 0x7F) << 14))
+#define SET_DISSASSEMBLE_MAXBELLOW    # (cr, val)(cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & (~(0x7F << 21))) | ((val & 0x7F) << 21))
+#define GET_DISSASSEMBLE_ABOVE        # (cr)            ((cr.ParamBase[ST_VAR3]) & (0x7F))
+#define GET_DISSASSEMBLE_MAXABOVE     # (cr)         ((cr.ParamBase[ST_VAR3] >> 7) & (0x7F))
+#define GET_DISSASSEMBLE_BELLOW       # (cr)           ((cr.ParamBase[ST_VAR3] >> 14) & (0x7F))
+#define GET_DISSASSEMBLE_MAXBELLOW    # (cr)        ((cr.ParamBase[ST_VAR3] >> 21) & (0x7F))
+#define SET_DISSASSEMBLE_ALL          # (cr)              (cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & 0x3FFFFFFF))
+#define SET_DISSASSEMBLE_BEYOND       # (cr)   (cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & 0x3FFFFFFF) | 0x40000000)
+#define SET_DISSASSEMBLE_ADV          # (cr)              (cr.ParamBase[ST_VAR3] = (cr.ParamBase[ST_VAR3] & 0x3FFFFFFF) | 0x80000000)
+#define IS_DISSASSEMBLE_ALL           # (cr)               ((cr.ParamBase[ST_VAR3] & (~0x3FFFFFFF)) == 0)
+#define IS_DISSASSEMBLE_BEYOND        # (cr)    ((cr.ParamBase[ST_VAR3] & (~0x3FFFFFFF)) == 0x40000000)
+#define IS_DISSASSEMBLE_ADV           # (cr)                       ((cr.ParamBase[ST_VAR3] & (~0x3FFFFFFF)) == 0x80000000)
+
+#define MR_HANDY_ON                   (0x0001)
+#define MR_HANDY_REPAIR_ON            (0x0002)
+#define MR_HANDY_DISSASSEMBLE_ON      (0x0004)
+#define MR_HANDY_ACTIVE               (0x0008)
+
+#define SET_WORK_RANGE                # (cr, val)(cr.ParamBase[ST_VAR4] = (cr.ParamBase[ST_VAR4] & (~(0x7F))) | ((val & 0x7F)))
+#define GET_WORK_RANGE                # (cr)            ((cr.ParamBase[ST_VAR4]) & (0x7F))
+
+/*****************************
+   DIALOG STUFF
+ ******************************/
+
+void r_ResetRepValues(Critter& player, Critter@ npc)
+{
+    SetDefaultRepair(npc);
+}
+
+void r_ResetDisValues(Critter& player, Critter@ npc)
+{
+    SetDefaultDissassemble(npc);
+}
+
+void r_SetValue(Critter& player, Critter@ npc, int value)
+{
+    SetLvar(player, LVAR_terminal_current, value);
+}
+
+uint r_SetValueBack(Critter& player, Critter@ npc)
+{
+    int parameter = GetLvar(player, LVAR_terminal_current);
+    return parameter / 10;
+}
+
+void r_TurnOn(Critter& player, Critter@ npc)
+{
+    TurnOn(npc);
+}
+
+void r_TurnOff(Critter& player, Critter@ npc)
+{
+    TurnOff(npc);
+}
+
+void r_Activate(Critter& player, Critter@ npc)
+{
+    Activate(npc);
+}
+
+void r_Barter(Critter& player, Critter@ npc)
+{
+    // player.ShowContainer(npc,null,TRANSFER_CRIT_BARTER);
+}
+
+void r_Deactivate(Critter& player, Critter@ npc)
+{
+    Deactivate(npc);
+}
+
+void dlg_RepConf(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        if(IS_REPAIR_RANDOM(npc))
+        {
+            say = "$repconfRepair randomly";
+        }
+        else if(IS_REPAIR_PRIMITIVE(npc))
+        {
+            say = "$repconfRepair items with better condition with items in worse condition";
+        }
+        else if(IS_REPAIR_ADV(npc))
+        {
+            say = "$repconfRepair items with condition from " + GET_REPAIRED_ABOVE(npc) + "/" + GET_REPAIRED_MAXABOVE(npc) + " to " + GET_REPAIRED_BELLOW(npc) + "/" + GET_REPAIRED_MAXBELLOW(npc);
+            say += "by items with condition from " + GET_REPAIRRES_ABOVE(npc) + "/" + GET_REPAIRRES_MAXABOVE(npc) + " to " + GET_REPAIRRES_BELLOW(npc) + "/" + GET_REPAIRRES_MAXBELLOW(npc);
+        }
+    }
+}
+
+void dlg_ItemDefinitionRepair(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        say = "$itemrepRepair items with condition from " + GET_REPAIRED_ABOVE(npc) + "/" + GET_REPAIRED_MAXABOVE(npc) + " to " + GET_REPAIRED_BELLOW(npc) + "/" + GET_REPAIRED_MAXBELLOW(npc);
+        say += "$itemresby items with condition from " + GET_REPAIRRES_ABOVE(npc) + "/" + GET_REPAIRRES_MAXABOVE(npc) + " to " + GET_REPAIRRES_BELLOW(npc) + "/" + GET_REPAIRRES_MAXBELLOW(npc);
+    }
+}
+
+void dlg_DisConf(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        if(IS_DISSASSEMBLE_ALL(npc))
+        {
+            say = "$disconfDissassemble: All items";
+        }
+        else if(IS_DISSASSEMBLE_BEYOND(npc))
+        {
+            say = "$disconfDissassemble: Items beyond repair";
+        }
+        else if(IS_DISSASSEMBLE_ADV(npc))
+        {
+            say = "$disconfDissassemble: Items with condition from " + GET_DISSASSEMBLE_ABOVE(npc) + "/" + GET_DISSASSEMBLE_MAXABOVE(npc) + " to " + GET_DISSASSEMBLE_BELLOW(npc) + "/" + GET_DISSASSEMBLE_MAXBELLOW(npc);
+        }
+    }
+}
+
+void dlg_ItemDefinitionDis(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        say = "$itemdisItems with condition from " + GET_DISSASSEMBLE_ABOVE(npc) + "/" + GET_DISSASSEMBLE_MAXABOVE(npc) + " to " + GET_DISSASSEMBLE_BELLOW(npc) + "/" + GET_DISSASSEMBLE_MAXBELLOW(npc);
+    }
+}
+
+uint dlg_SetValue(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        int parameter = GetLvar(player, LVAR_terminal_current);
+        if(parameter == 41)
+            say = "$valueWrite value between 0 and 15:";
+        else
+            say = "$valueWrite value between 0 and 100:";
+    }
+    else if(IS_DIALOG_SAY_MODE(say))
+    {
+        int  parameter = GetLvar(player, LVAR_terminal_current);
+        uint value = 0;
+        if(StrToInt(say, value))
+        {
+            // value;
+            switch(parameter)
+            {
+            case 41:
+                if(value < 0 || value > 120)
+                    return 0;                                              // 0 - 15
+                SET_WORK_RANGE(npc, value);
+                return 4;
+            case 4141:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRED_BELLOW(npc, value);
+                return 414;
+            case 4142:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRED_MAXBELLOW(npc, value);
+                return 414;
+            case 4143:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRED_ABOVE(npc, value);
+                return 414;
+            case 4144:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRED_MAXABOVE(npc, value);
+                return 414;
+
+            case 4151:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRRES_BELLOW(npc, value);
+                return 415;
+            case 4152:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRRES_MAXBELLOW(npc, value);
+                return 415;
+            case 4153:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRRES_ABOVE(npc, value);
+                return 415;
+            case 4154:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_REPAIRRES_MAXABOVE(npc, value);
+                return 415;
+
+            case 4161:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_DISSASSEMBLE_BELLOW(npc, value);
+                return 416;
+            case 4162:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_DISSASSEMBLE_MAXBELLOW(npc, value);
+                return 416;
+            case 4163:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_DISSASSEMBLE_ABOVE(npc, value);
+                return 416;
+            case 4164:
+                if(value < 0 || value > 100)
+                    return 0;
+                SET_DISSASSEMBLE_MAXABOVE(npc, value);
+                return 416;
+
+            default:
+                Log("Error! wrong/unexpected parameter");
+            }
+        }
+        else
+            return 0;
+    }
+    return 0;
+}
+
+void dlg_MainMenu(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        say = "$powerpopopopower$modeMode$toolsTools";
+        say += "$rangeRange: " + GET_WORK_RANGE(npc);
+    }
+}
+
+void dlg_AttemptHack(Critter& player, Critter@ npc, string@ say)
+{
+    if(IS_DIALOG_GENERATED(say))
+    {
+        say = "$haxorThem hax.";
+        bool success = true;
+        if(success)
+        {
+            npc.ParamBase[FV_MASTER] = player.Id;
+            npc.ParamBase[ST_FREE_BARTER_PLAYER] = npc.ParamBase[FV_MASTER];
+        }
+    }
+}
+
+void r_DisableDis(Critter& player, Critter@ npc)
+{
+    UNSETFLAG(npc.ParamBase[ST_VAR0], MR_HANDY_DISSASSEMBLE_ON);
+}
+void r_EnableDis(Critter& player, Critter@ npc)
+{
+    SETFLAG(npc.ParamBase[ST_VAR0], MR_HANDY_DISSASSEMBLE_ON);
+}
+void r_DisableRep(Critter& player, Critter@ npc)
+{
+    UNSETFLAG(npc.ParamBase[ST_VAR0], MR_HANDY_REPAIR_ON);
+}
+void r_EnableRep(Critter& player, Critter@ npc)
+{
+    SETFLAG(npc.ParamBase[ST_VAR0], MR_HANDY_REPAIR_ON);
+}
+
+void r_SetDissAdvanced(Critter& player, Critter@ npc)
+{
+    SET_DISSASSEMBLE_ADV(npc);
+}
+void r_SetDissBeyond(Critter& player, Critter@ npc)
+{
+    SET_DISSASSEMBLE_BEYOND(npc);
+}
+void r_SetDissAll(Critter& player, Critter@ npc)
+{
+    SET_DISSASSEMBLE_ALL(npc);
+}
+
+void r_SetRepAdvanced(Critter& player, Critter@ npc)
+{
+    SET_REPAIR_ADV(npc);
+}
+void r_SetRepPrimitive(Critter& player, Critter@ npc)
+{
+    SET_REPAIR_PRIMITIVE(npc);
+}
+void r_SetRepRandom(Critter& player, Critter@ npc)
+{
+    SET_REPAIR_RANDOM(npc);
+}
+
+bool d_DisDisabled(Critter& player, Critter@ npc)
+{
+    return !FLAG(npc.Param[ST_VAR0], MR_HANDY_DISSASSEMBLE_ON);
+}
+bool d_DisEnabled(Critter& player, Critter@ npc)
+{
+    return FLAG(npc.Param[ST_VAR0], MR_HANDY_DISSASSEMBLE_ON);
+}
+bool d_RepDisabled(Critter& player, Critter@ npc)
+{
+    return !FLAG(npc.Param[ST_VAR0], MR_HANDY_REPAIR_ON);
+}
+bool d_RepEnabled(Critter& player, Critter@ npc)
+{
+    return FLAG(npc.Param[ST_VAR0], MR_HANDY_REPAIR_ON);
+}
+bool d_IsOff(Critter& player, Critter@ npc)
+{
+    return !FLAG(npc.Param[ST_VAR0], MR_HANDY_ON);
+}
+bool d_IsActive(Critter& player, Critter@ npc)
+{
+    return FLAG(npc.Param[ST_VAR0], MR_HANDY_ACTIVE);
+}
+bool d_IsMaster(Critter& player, Critter@ npc)
+{
+    return npc.Param[FV_MASTER] == int(player.Id);
+}
+
+/*****************************
+
+ ******************************/
+
+void spawnHandy(Critter& player, int p0, int p1, int p2)
+{
+    if(player.GetAccess() < ACCESS_TESTER)
+        return;
+    if(player.GetAccess() < ACCESS_ADMIN)
+    {
+        player.Say(SAY_NETMSG, "You are not allowed to use this feature.");
+        return;
+    }
+    Map@ map = player.GetMap();
+    if(valid(map))
+    {
+        Critter@ handy = map.AddNpc(74, player.HexX, player.HexY, 3, null, null, "_HandyInit");
+    }
+}
+
+void _HandyInit(Critter& handy, bool firstTime)
+{
+    handy.ParamBase[ST_FREE_BARTER_PLAYER] = handy.ParamBase[FV_MASTER];
+    handy.ModeBase[MODE_NO_STEAL] = 1;
+    handy.ModeBase[MODE_NO_HEAL] = 1;
+    handy.ModeBase[MODE_NO_ENEMY_STACK] = 1;
+    handy.ModeBase[MODE_DLG_SCRIPT_BARTER] = 1;
+
+    if(firstTime)
+    {
+        SetDefaultDissassemble(handy);
+        SetDefaultRepair(handy);
+        handy.ParamBase[ST_CARRY_WEIGHT] = 500000000;
+        handy.ParamBase[SK_SCIENCE] = 300;
+        handy.ParamBase[SK_REPAIR] = 300;
+    }
+
+    if(FLAG(handy.Param[ST_VAR0], MR_HANDY_ON))
+    {
+        TurnOn(handy);
+    }
+    else
+    {
+        TurnOff(handy);
+    }
+    handy.SetEvent(CRITTER_EVENT_USE_SKILL_ON_ME, "_HandyUseSkill");
+}
+
+void TurnOn(Critter@ handy)
+{
+    if(valid(handy))
+    {
+        handy.SetAnims(0, 0, 0);
+        handy.Animate(0, 88, null, false, false);
+        handy.StatBase[ST_DIALOG_ID] = 10152;
+        SETFLAG(handy.ParamBase[ST_VAR0], MR_HANDY_ON);
+        handy.ModeBase[MODE_NO_HOME] = 0;
+        handy.ModeBase[MODE_NO_PUSH] = 0;
+        handy.ModeBase[MODE_NO_WALK] = 0;
+        handy.ModeBase[MODE_NO_KNOCK] = 0;
+        handy.ModeBase[MODE_NO_BARTER] = 0;
+        UNSETFLAG(handy.ModeBase[MODE_EXT], MODE_EXT_NO_HIT_ANIM);
+    }
+}
+
+void TurnOff(Critter@ handy)
+{
+    if(valid(handy))
+    {
+        handy.SetAnims(0, 0, 86);
+        handy.Animate(0, 82, null, false, false);
+        handy.StatBase[ST_DIALOG_ID] = 0;
+        UNSETFLAG(handy.ParamBase[ST_VAR0], MR_HANDY_ON);
+        handy.ModeBase[MODE_NO_HOME] = 1;
+        handy.ModeBase[MODE_NO_PUSH] = 1;
+        handy.ModeBase[MODE_NO_WALK] = 1;
+        handy.ModeBase[MODE_NO_KNOCK] = 1;
+        handy.ModeBase[MODE_NO_BARTER] = 1;
+        SETFLAG(handy.ModeBase[MODE_EXT], MODE_EXT_NO_HIT_ANIM);
+        // handy.SetHomePos(handy.HexX,handy.HexY,handy.Dir);
+    }
+}
+
+void SetDefaultDissassemble(Critter@ npc)
+{
+    if(valid(npc))
+    {
+        SET_DISSASSEMBLE_ABOVE(npc, 0);
+        SET_DISSASSEMBLE_MAXABOVE(npc, 0);
+        SET_DISSASSEMBLE_BELLOW(npc, 0);
+        SET_DISSASSEMBLE_MAXBELLOW(npc, 0);
+    }
+}
+
+void SetDefaultRepair(Critter@ npc)
+{
+    if(valid(npc))
+    {
+        SET_REPAIRED_ABOVE(npc, 0);
+        SET_REPAIRED_MAXABOVE(npc, 50);
+        SET_REPAIRED_BELLOW(npc, 100);
+        SET_REPAIRED_MAXBELLOW(npc, 100);
+
+        SET_REPAIRRES_ABOVE(npc, 0);
+        SET_REPAIRRES_MAXABOVE(npc, 0);
+        SET_REPAIRRES_BELLOW(npc, 49);
+        SET_REPAIRRES_MAXBELLOW(npc, 49);
+    }
+}
+
+
+void _HandyIdle(Critter& handy)
+{
+    if(handy.Timeout[TO_BATTLE] > 0)
+    {
+        return;
+    }
+
+    if(TryDissassembleItem(handy))
+        return;
+    if(TryRepairItem(handy))
+        return;
+
+    Map@ map = handy.GetMap();
+    if(valid(map))
+    {
+        array<Item@> items;
+        uint         count = map.GetItems(handy.HexX, handy.HexY, GET_WORK_RANGE(handy), 0, items);
+        // if(count>5) count=5;
+        for(uint i = 0; i < count; i++)
+        {
+            if(FLAG(items[i].Flags, ITEM_CAN_PICKUP))
+            {
+                if(!AddPickPlane(handy, 0, items[i].HexX, items[i].HexY, items[i].GetProtoId(), 0, false))
+                    break;
+            }
+        }
+    }
+}
+
+bool TryRepairItem(Critter@ handy)
+{
+    if(!valid(handy))
+        return false;
+    if(!FLAG(handy.ParamBase[ST_VAR0], MR_HANDY_REPAIR_ON))
+        return false;
+
+    uint         rMod = 0;
+    array<Item@> invItems;
+    uint         count = handy.GetItems(0, invItems);
+    if(IS_REPAIR_RANDOM(handy))
+        rMod = Random(0, count - 1);
+    for(uint i = 0 + rMod; i < (count + rMod); i++)
+    {
+        uint ind = i % count;
+        if(invItems[ind].IsDeteriorable() && !FLAG((invItems[ind]).BrokenFlags, BI_NOTRESC))
+        {
+            uint deter = (100 - invItems[ind].Deterioration * 100 / MAX_DETERIORATION);
+            uint deterMax = (100 - invItems[ind].BrokenCount);
+            if(IS_REPAIR_ADV(handy))
+            {
+                if(!(GET_REPAIRED_ABOVE(handy) <= deter && GET_REPAIRED_BELLOW(handy) >= deter &&
+                     GET_REPAIRED_MAXABOVE(handy) <= deterMax && GET_REPAIRED_MAXBELLOW(handy) >= deterMax) || deter == deterMax)
+                    continue;
+            }
+
+            array<Item@> resItems;
+            uint         count2 = handy.GetItems(0, resItems);
+            for(uint j = 0; j < count2; j++)
+            {
+                if(resItems[j].GetProtoId() != invItems[ind].GetProtoId())
+                    continue;
+                if(resItems[j].Id == invItems[ind].Id)
+                    continue;
+                if(FLAG((resItems[j]).BrokenFlags, BI_NOTRESC))
+                    continue;
+
+                uint deter2 = (100 - resItems[j].Deterioration * 100 / MAX_DETERIORATION);
+                uint deterMax2 = (100 - resItems[j].BrokenCount);
+                if(IS_REPAIR_RANDOM(handy))
+                {
+                    if(TryRepairItemCall(handy, invItems[ind], resItems[j]))
+                        return true;
+                }
+                else if(IS_REPAIR_PRIMITIVE(handy))
+                {
+                    if(deter > deter2)
+                    {
+                        if(deter == deterMax)
+                            break;
+                        if(TryRepairItemCall(handy, invItems[ind], resItems[j]))
+                            return true;
+                    }
+                    else
+                    {
+                        if(deter2 == deterMax2)
+                            continue;
+                        if(TryRepairItemCall(handy, resItems[j], invItems[ind]))
+                            return true;
+                    }
+                }
+                else if(IS_REPAIR_ADV(handy))
+                {
+                    if(GET_REPAIRRES_ABOVE(handy) <= deter2 && GET_REPAIRRES_BELLOW(handy) >= deter2 &&
+                       GET_REPAIRRES_MAXABOVE(handy) <= deterMax2 && GET_REPAIRRES_MAXBELLOW(handy) >= deterMax2)
+                    {
+                        if(TryRepairItemCall(handy, invItems[ind], resItems[j]))
+                            return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool TryDissassembleItem(Critter@ handy)
+{
+    if(!valid(handy))
+        return false;
+    if(!FLAG(handy.ParamBase[ST_VAR0], MR_HANDY_DISSASSEMBLE_ON))
+        return false;
+
+    Map@ map = handy.GetMap();
+    if(valid(map) && _MapHasMode(map, MAP_MODE_NO_DISMANTLING))
+    {
+        return false;
+    }
+
+    array<Item@> invItems;
+    uint         count = handy.GetItems(0, invItems);
+    for(uint i = 0; i < count; i++)
+    {
+        if(ReversableItem(invItems[i]))
+        {
+            if(IS_DISSASSEMBLE_ALL(handy))
+            {
+                if(ReverseItem(handy, invItems[i]))
+                {
+                    return true;
+                }
+            }
+            else if(IS_DISSASSEMBLE_BEYOND(handy))
+            {
+                if(FLAG((invItems[i]).BrokenFlags, BI_NOTRESC))
+                {
+                    if(ReverseItem(handy, invItems[i]))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else if(IS_DISSASSEMBLE_ADV(handy))
+            {
+                if(FLAG((invItems[i]).BrokenFlags, BI_NOTRESC))
+                {
+                    if(ReverseItem(handy, invItems[i]))
+                    {
+                        return true;
+                    }
+                }
+                uint deter = (100 - invItems[i].Deterioration * 100 / MAX_DETERIORATION);
+                uint deterMax = (100 - invItems[i].BrokenCount);
+                if(GET_DISSASSEMBLE_ABOVE(handy) <= deter && GET_DISSASSEMBLE_BELLOW(handy) >= deter &&
+                   GET_DISSASSEMBLE_MAXABOVE(handy) <= deterMax && GET_DISSASSEMBLE_MAXBELLOW(handy) >= deterMax)
+                {
+                    if(ReverseItem(handy, invItems[i]))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void Activate(Critter@ handy)
+{
+    if(valid(handy))
+    {
+        SETFLAG(handy.ParamBase[ST_VAR0], MR_HANDY_ACTIVE);
+        handy.SetEvent(CRITTER_EVENT_IDLE, "_HandyIdle");
+    }
+}
+
+void Deactivate(Critter@ handy)
+{
+    if(valid(handy))
+    {
+        UNSETFLAG(handy.ParamBase[ST_VAR0], MR_HANDY_ACTIVE);
+        handy.SetEvent(CRITTER_EVENT_IDLE, "");
+    }
+}
+
+bool _HandyUseSkill(Critter& handy, Critter& whoUse, int skill)
+{
+    if(!FLAG(handy.Param[ST_VAR0], MR_HANDY_ON))
+    {
+        RunDialog(whoUse, handy, 10152, true);
+        return true;
+    }
+    return false;
+} // 10152

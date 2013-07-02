@@ -1,0 +1,65 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// all_brahmin_herdsman.fos
+//
+
+// Generic brahmin herdsman script
+
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+
+import bool IsDung(Item@ item) from "all_brahmin";
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    // Cleaning crap will make them run all over the map sometimes.
+    // npc.SetEvent(CRITTER_EVENT_SHOW_ITEM_ON_MAP, "_ShowItemOnMap");
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+void _Idle(Critter& npc)
+{
+    if(Random(0, 2) == 0)
+        MoveRandom(npc, 4);
+    // till next move
+    // DISABLED npc.Wait because it makes critter busy for talk (dialog)
+    // npc.Wait(Random(500, 20000));
+}
+
+/*	DISABLED, look at the critter_init comments
+
+   void _ShowItemOnMap(Critter& crit, Item& showItem, bool added, Critter@ dropper)
+   {
+        if(IsDung(showItem))
+        {
+                if(Random(0,4)==0)
+                {
+                        AddWalkPlane(crit, 0, showItem.HexX, showItem.HexY, GetDirection(crit.HexX, crit.HexY, showItem.HexX, showItem.HexY), false, 1);
+                        AddMiscPlane(crit, 0, Random(0,1), "all_brahmin_herdsman@plane_CleanCrap");
+                        // remember item
+                        crit.StatBase[ST_VAR0] = showItem.Id;
+                }
+        }
+   }
+
+   void plane_CleanCrap(Critter& npc)
+   {
+        npc.Animate(0, ANIM1_EMPTY, ANIM2_USE, 0xFF, 0, true, true, true);
+        // get crap
+        Item@ crap = GetItem(npc.Stat[ST_VAR0]);
+        if(not valid(crap))
+                return;
+        Item@ shovel;
+
+        if(_CritCountItem(npc, PID_OLD_SHOVEL) > 0)
+                @shovel = npc.GetItem(PID_OLD_SHOVEL, -1);
+        else
+                @shovel = npc.AddItem(PID_OLD_SHOVEL, 1);
+
+        crap.EventUseOnMe(npc, shovel);
+        npc.Wait(Random(1000, 5000));
+   }
+ */

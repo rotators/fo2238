@@ -1,0 +1,45 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_trainyard.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+
+//
+// Map script for all trainyards.
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(firstTime)
+    {
+        if(proto == MAP_SanFransiscoTrainStation)
+        {
+            uint[] maxes = { 10, 16 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_BoneyardTrainStation)
+        {
+            uint[] maxes = { 10, 16 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_NCRTrainStation)
+        {
+            uint[] maxes = { 10, 20 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_VaultCityTrainStation)
+        {
+            uint[] maxes = { 10, 16 };
+            SetAlertMap(map, maxes);
+        }
+    }
+}

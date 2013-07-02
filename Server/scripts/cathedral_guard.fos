@@ -1,0 +1,94 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cathedral_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "guard_h.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+
+import void NpcSetLevel(Critter& npc, int level) from "parameters";
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+
+    GuardInit(guard);
+
+    if(firstTime)
+    {
+        NpcSetLevel(guard, 26);
+        GuardPerks(guard);
+    }
+}
+
+void _Idle(Critter& guard)
+{
+    if(guard.Stat[ST_NPC_ROLE] == ROLE_CATHEDRAL_WANDERING_GUARD)
+    {
+        if(Random(0, 2) == 0)
+            guard.MoveRandom();
+        // till next move
+        guard.Wait(Random(500, 20000));
+    }
+}
+
+void _OnMessage(Critter& guard, Critter& critter, int num, int val)
+{
+    GuardOnMessage(guard, critter, num, val);
+
+    switch(num)
+    {
+    case MSG_ATTACK_ME:
+        AttackCritter(guard, critter);
+        break;
+    // Player enters cave with floaters and stuff.
+    case MSG_CATH_PLAYER_ENTER_CAVE:
+        if(!CanEnter(critter))
+            critter.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+        break;
+    }
+}
+
+void _OnShowCritter(Critter& guard, Critter& showCrit)
+{
+    GuardOnShowCritter(guard, showCrit);
+
+    // i wonder if it could be moved to another event function, but there might be bug related to when the npc role is set
+    if(!CanEnter(showCrit) && guard.Stat[ST_NPC_ROLE] == ROLE_CATHEDRAL_ANOTHER_GUARD)
+        showCrit.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+bool IsCathedralCellar(Map@ map)
+{
+    if(!valid(map))
+    {
+        Log("Error, map object is invalid");
+        return false;
+    }
+
+    uint mapPid = map.GetProtoId();
+
+    return(mapPid == MAP_Cathedral_CellarLevel1 || mapPid == MAP_Cathedral_CellarLevel2 || mapPid == MAP_Cathedral_CellarLevel3 || mapPid == MAP_Cathedral_CellarLevel4);
+}
+
+bool IsUnityMember(Critter& critter)
+{
+    return(GetGroupIndex(critter) == FACTION_UNITY);
+}
+
+bool CanEnter(Critter& critter)
+{
+    if(!critter.IsPlayer())
+        return true;
+
+    return(IsUnityMember(critter) && GetPlayerRank(critter.Id) > RANK_UNITY_CHILD);
+}

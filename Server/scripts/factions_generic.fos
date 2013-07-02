@@ -1,0 +1,93 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_generic.fos
+//
+
+#ifndef _FACTIONS_GENERIC
+
+#include "_macros.fos"
+#include "factions_h.fos"
+
+//
+// Script for generic factions areas/npcs
+//
+
+// messages
+
+// player near npc
+#define MSG_PLAYER_NEAR                  (1)
+
+#define MSG_PLAYER_ENTERED               (2)
+#define MSG_PLAYER_LEFT                  (3)
+#define MSG_PLAYER_NEAR_RANK3_AREA       (4)
+#define MSG_PLAYER_ENTERED_RANK3_AREA    (5)
+#define MSG_PLAYER_NEAR_RANK1_AREA       (6)
+#define MSG_PLAYER_ENTERED_RANK1_AREA    (7)
+
+// say messages
+#define MSG_SAY_HELLO                    (100)
+
+//
+// IDLE MESSAGE PASSING
+//
+
+shared interface IMessageHandler
+{
+    // layer of indirection between functions used in on_idle
+    // and on_message handler.
+    // for most of the time, this function will just call on_message
+    // but it can be extended to first handle the most important messages
+    // this may be important, cause in the npc idle function you
+    // can place many Idle..... functions, thus producing large amounts of idle messages
+    void OnMessage(Critter& npc, Critter& critter, int num, int val);
+};
+
+//
+// Watches for players around, sends appropriate messages via handler
+//
+// Params
+//		npc - npc that will handle the message
+//		dist - dist to send MESSAGE_NEAR
+void IdleLookAround(Critter& npc, uint dist, IMessageHandler@ handler)
+{
+    array<Critter@> critters;
+
+    // get visible critters
+    uint num = npc.GetCritters(false, FIND_LIFE, critters);
+
+    // iterate through all critters in sight
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(npc, critters[i]) > dist)
+            continue;
+
+        handler.OnMessage(npc, critters[i], MSG_PLAYER_NEAR, 0);
+    }
+}
+
+//
+// MESSAGE HANDLERS FUNCTION
+//
+
+//
+// Greet if the critter is member of the same faction
+//
+void GreetMember(Critter& npc, Critter& critter, IMessageHandler@ handler)
+{
+    // greet if member
+    if(GetGroupIndex(npc) == GetGroupIndex(critter))
+    {
+        // check when last interaction had place
+        // TODO: maybe in future it should use UVAR_greeted or something
+        GameVar@ var = GetUnicumVar(UVAR_interacted, npc.Id, critter.Id);
+        // next greeting after 6h period
+        if(var.GetValue() + GAME_HOUR(6) < int(ELAPSED_TIME))
+        {
+            handler.OnMessage(npc, critter, MSG_SAY_HELLO, 0);
+            var = ELAPSED_TIME;
+        }
+    }
+}
+#endif

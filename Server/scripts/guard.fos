@@ -1,0 +1,400 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// guard.fos
+//
+
+// Common guard stuff
+
+// Below is the explanation for all ingame variants of guards.
+// A critter can become a guard in one of the following ways:
+// 1. Having set a script with the guard behaviour, or
+// 2. Having their ST_FACTION_MODE other than FACTION_MODE_NEVER. This must be set during the spawn.
+// In case of 2., of the critter's ST_TEAM_ID is between 1 and 199 inclusive, the critter will also
+// be assigned either generic_guard or encounter_guard script, depending on the location.
+
+// Various guard scripts cover all events except reaction to attacks. This is handled by
+// critter_attacked global handler insteads.
+// Relevant npc stats are:
+// ST_FACTION_MODE - determines whether the NPC is eligible to help a target from its own, or allied faction.
+// ST_FACTION_RANK - determines the reputation penalty for attacking or killing the target.
+
+#ifndef __NPC_GUARDS__
+#define __NPC_GUARDS__
+
+#include "_colors.fos"
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_vars.fos"
+#include "economy.fos"
+#include "follower_common_h.fos"
+#include "groups_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "MsgStr.h"
+#include "npc_common_h.fos"
+#include "world_common_h.fos"
+
+import bool AddHealCritterPlane(Critter& npc, uint priority, Critter@ target, bool run) from "npc_planes";
+import bool AddDoctorCritterPlane(Critter& npc, uint priority, Critter@ target, bool run) from "npc_planes";
+import int  GetGroupsStatus(Critter& c1, Critter& c2) from "reputations_modifiers";
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+
+// several In...Zone functions are still location-specific
+bool InNoStealZone(Critter@ cr)
+{
+    uint pid = cr.GetMap().GetProtoId();
+    return !((pid == MAP_Junktown && cr.HexY > 327));
+}
+
+bool InNoAttackZone(Critter@ cr)
+{
+    uint pid = cr.GetMap().GetProtoId();
+    return !((pid == MAP_Junktown && cr.HexY > 327));
+}
+
+bool InNoBombZone(Critter@ cr)
+{
+    uint pid = cr.GetMap().GetProtoId();
+    return !(pid == MAP_Junktown && cr.HexY > 327);
+}
+
+// Is it allowed to carry weapon openly
+bool InWeaponAllowedZone(Critter@ cr)
+{
+    uint pid = cr.GetMap().GetProtoId();
+    if((pid == MAP_VaultCityDowntown && cr.HexY <= 243) || (pid == MAP_Junktown && cr.HexY <= 327) || (pid == MAP_NCR && cr.HexY >= 158))
+        return false;
+    return true;
+}
+
+bool InDrugsAllowedZone(Critter@ cr)
+{
+    uint pid = cr.GetMap().GetProtoId();
+
+    if(pid == MAP_NCR && (pid == MAP_NCR && cr.HexY >= 158))
+        return false;
+    return true;
+}
+
+bool IsWeapon(Item@ item)
+{
+    if(!valid(item))
+        return false;
+
+    uint pid = item.GetProtoId();
+    if(pid == PID_OLD_SHOVEL || pid == PID_SHOVEL)
+        return false;
+
+    return(item.GetType() == ITEM_TYPE_WEAPON);
+}
+
+bool IsDrug(Item@ item)
+{
+    if(!valid(item))
+        return false;
+
+    uint pid = item.GetProtoId();
+
+    switch(pid)
+    {
+    case PID_BUFFOUT:
+    case PID_MENTATS:
+    case PID_JET:
+    case PID_PSYCHO:
+        return true;
+    default:
+    }
+    return false;
+}
+
+// Check if player has put down weapon, else open fire.
+uint e_CheckWeapon(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+        return 0;
+
+    Item@ item = _CritGetItemHand(player);
+    if(IsWeapon(item) && (player.Stat[ST_CURRENT_HP] > 0))
+        AttackCritter(guard, player, 0);
+
+    return 0;
+}
+
+uint e_CheckDrug(array<uint>@ values)
+{
+    Critter@ player = GetCritter(values[0]);
+    Critter@ guard = GetCritter(values[1]);
+
+    if(!valid(player) || !(valid(guard)))
+        return 0;
+
+    Item@ item = _CritGetItemHand(player);
+    if(IsDrug(item) && (player.Stat[ST_CURRENT_HP] > 0))
+        AttackCritter(guard, player, 0);
+    return 0;
+}
+
+uint CreateWeaponCheckEvent(Critter& guard, Critter& player)
+{
+    int[] data = { player.Id, guard.Id };
+    return CreateTimeEvent(AFTER(REAL_SECOND(5)), "e_CheckWeapon", data, false);
+}
+
+uint CreateDrugCheckEvent(Critter& guard, Critter& player)
+{
+    int[] data = { player.Id, guard.Id };
+    return CreateTimeEvent(AFTER(REAL_SECOND(5)), "e_CheckDrug", data, false);
+}
+
+void CheckForDrugs(Critter& guard, Critter& crit)
+{
+    if(InDrugsAllowedZone(crit))
+        return;
+
+    Item@ item = _CritGetItemHand(crit);
+
+    if(IsDrug(item) && (Random(0, 1) == 0))
+    {
+        guard.Say(SAY_SHOUT_ON_HEAD, "Put away your drugs immediately, it's not allowed here!");
+        crit.Say(SAY_NETMSG, "Guard: |0xFFFF0000 PUT AWAY YOUR DRUGS IMMEDIATELY, IT'S NOT ALLOWED HERE!");
+        CreateDrugCheckEvent(guard, crit);
+    }
+}
+
+
+void CheckForWeapons(Critter& guard, Critter& crit)
+{
+    // Probably some jihadist, kill
+    if(((crit.CountItem(PID_ACTIVE_DYNAMITE) > 0) || (crit.CountItem(PID_ACTIVE_PLASTIC_EXPLOSIVE) > 0)) && InNoBombZone(crit))
+    {
+        int rand = (crit.Skill[SK_TRAPS] - 12 * guard.Stat[ST_PERCEPTION]);
+        rand = CLAMP(rand, 5, 95);
+        if(Random(1, 100) > rand)
+        {
+            AttackCritter(guard, crit);
+            if(Random(0, 2) == 0)
+                guard.Say(SAY_SHOUT_ON_HEAD, "Alert! Terrorist spotted!");
+            crit.Say(SAY_NETMSG, "Guard: |0xFFFF0000 ALERT! TERRORIST SPOTTED!");
+        }
+    }
+
+    Item@ item = _CritGetItemHand(crit);
+
+    if(InWeaponAllowedZone(crit))
+        return;
+
+
+    if(IsWeapon(item))
+    {
+        guard.Say(SAY_SHOUT_ON_HEAD, "Put away your weapon immediately!!!");
+        crit.Say(SAY_NETMSG, "Guard: |0xFFFF0000 PUT AWAY YOUR WEAPON IMMEDIATELY!!!");
+        CreateWeaponCheckEvent(guard, crit);
+    }
+}
+
+void CheckHealing(Critter& cr)   // maybe lend this function to all the npcs? what about the performance? give me more cores pretty please?
+{
+    if(valid(cr.GetMap()) && cr.GetMap().IsTurnBased())
+        return;
+
+    // FA first
+    if(cr.Stat[ST_CURRENT_HP] < cr.Stat[ST_MAX_LIFE])
+        if(cr.Timeout[TO_SK_FIRST_AID] == 0 || cr.Timeout[TO_WEAKENED] == 0)
+        {
+            array<NpcPlane@> planes;
+            cr.GetPlanes(PLANE_HEAL_CRITTER, planes);
+            if(planes.length() > 0)
+                planes[0].IdentifierExt = cr.Id;
+            else
+                AddHealCritterPlane(cr, 0, cr, false);   // self
+        }
+
+    // doctor
+    if(cr.Damage[DAMAGE_EYE] > 0 || cr.Timeout[TO_WEAKENED] > 0 || cr.Damage[DAMAGE_RIGHT_ARM] > 0 ||
+       cr.Damage[DAMAGE_LEFT_ARM] > 0 || cr.Damage[DAMAGE_RIGHT_LEG] > 0 || cr.Damage[DAMAGE_LEFT_LEG] > 0 /*||
+                                                                                                              cr.Damage[DAMAGE_POISONED]>0*/)
+        if(cr.Timeout[TO_SK_DOCTOR] == 0)
+        {
+            array<NpcPlane@> planes;
+            cr.GetPlanes(PLANE_DOCTOR_CRITTER, planes);
+            if(planes.length() > 0)
+                planes[0].IdentifierExt = cr.Id;
+            else
+                AddDoctorCritterPlane(cr, 0, cr, false);   // self
+        }
+}
+
+void CheckInventory(Critter& guard)
+{
+    if(_CritCountItem(guard, PID_BOTTLE_CAPS) > 0)
+        BanksTransferFromCritter(guard, _CritCountItem(guard, PID_BOTTLE_CAPS), TRANSACTION_GUARDLOOT, false);
+}
+
+void GuardInit(Critter& guard)
+{
+    _CritSetMode(guard, MODE_NO_ENEMY_STACK);
+    _CritSetMode(guard, MODE_NO_LOOT);
+    _CritSetMode(guard, MODE_NO_STEAL);
+    _CritSetMode(guard, MODE_NO_DROP);
+    _CritSetMode(guard, MODE_UNLIMITED_AMMO);
+    _CritSetExtMode(guard, MODE_EXT_NO_WALL_CHECK);
+    _CritSetExtMode(guard, MODE_EXT_GUARD);
+}
+
+void GuardPerks(Critter& cr)
+{
+    cr.PerkBase[PE_BONUS_RATE_OF_FIRE] += 1;
+    cr.PerkBase[PE_SHARPSHOOTER] += 1;
+    for(uint i = 0, j = Random(0, 2); i < j; i++)
+        cr.PerkBase[PE_BONUS_RANGED_DAMAGE] += 1;
+    cr.PerkBase[PE_BETTER_CRITICALS] += 1;
+    if(Random(0, 49) == 0)
+        cr.PerkBase[PE_SNIPER] += 1;
+    if(Random(0, 49) == 0)
+        cr.PerkBase[PE_TERMINATOR] += 1;
+    if(Random(0, 1) == 0)
+        cr.PerkBase[PE_STONEWALL] += 1;
+
+    for(uint i = 0, j = Random(1, 3); i < j; i++)
+        cr.PerkBase[PE_MORE_CRITICALS] += 1;
+    for(uint i = 0, j = Random(1, 2); i < j; i++)
+        cr.PerkBase[PE_TOUGHNESS] += 1;
+
+    if(cr.StatBase[ST_INTELLECT] < 10)
+        cr.PerkBase[PE_GAIN_INTELLIGENCE] += 1;
+
+    if(Random(0, 5) == 0)
+        cr.TraitBase[TRAIT_FINESSE] = 1;
+}
+
+void GuardOnIdle(Critter& guard)
+{
+    array<Critter@> crits;
+    uint            num = guard.GetCritters(false, FIND_LIFE | FIND_ONLY_PLAYERS, crits);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if((GetCrittersDistantion(guard, crits[i]) < 6))
+        {
+            CheckForWeapons(guard, crits[i]);
+            CheckForDrugs(guard, crits[i]);
+        }
+    }
+
+    if(Random(0, 9) == 0)
+        CheckHealing(guard);
+}
+
+bool DetectStealing(Critter& cr, Critter& target, Critter& thief)
+{
+    int dist = GetCrittersDistantion(cr, thief);
+    if(dist > 20)
+        return false;
+    int steal = thief.Skill[SK_STEAL];
+    steal -= (IsNight() ? 8 : 12) * cr.Stat[ST_PERCEPTION];
+    steal += dist * 2;
+    steal = CLAMP(steal, dist, (95 + thief.Stat[ST_LUCK] / 3));
+    return(steal <= Random(1, 100));      /* && InNoStealZone(sender)*/
+}
+
+void GuardOnSomeoneSteal(Critter& guard, Critter& target, Critter& thief, bool success, Item& item, uint count)
+{
+    if(!success)
+    {
+        if(Random(0, 15) == 0 && (target.IsSee(guard) || thief.IsSee(guard)))
+        {
+            switch(Random(0, 4))
+            {
+            case 0:
+                guard.Say(SAY_NORM_ON_HEAD, "That was pathetic");
+                break;
+            case 1:
+                guard.Say(SAY_NORM_ON_HEAD, "Now you just failed badly, " + thief.Name);
+                break;
+            case 2:
+                guard.Say(SAY_NORM_ON_HEAD, "You didn't even try, did you?");
+                break;
+            case 3:
+                guard.Say(SAY_NORM_ON_HEAD, thief.Name + ", that was some kind of a joke");
+                break;
+            default:
+                guard.Say(SAY_NORM_ON_HEAD, "Useless bastard");
+            }
+        }
+        return;
+    }
+
+    if(DetectStealing(guard, target, thief))
+    {
+        SetCritterIllegalFlag(thief, ILLEGAL_FLAG_STEALING);
+        if(target.IsPlayer() && (target.IsSee(guard) || thief.IsSee(guard)))
+        {
+            if(Random(0, 2) == 0)
+                guard.SayMsg(SAY_NORM, TEXTMSG_TEXT, STR_GUARD_SEE_THIEF, "$name" + target.Name + "$thief" + thief.Name);
+
+            target.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, STR_THIEF_SPOTTED, "$name" + thief.Name);
+        }
+    }
+}
+
+bool WillCallForHelp(uint locid)
+{
+    switch(locid)
+    {
+    case LOCATION_VaultCity:
+        return true;
+    case LOCATION_BrokenHills:
+        return true;
+    case LOCATION_NCR:
+        return true;
+    case LOCATION_Junktown:
+        return true;
+    case LOCATION_Hub:
+        return true;
+    case LOCATION_Boneyard:
+        return true;
+    default:
+        return false;
+    }
+    return false;
+}
+
+
+void GuardOnShowCritter(Critter& cr, Critter& target)
+{
+    if(GetGroupsStatus(target, cr) == FACTION_ENEMY)
+    {
+        AttackCritter(cr, target);
+        return;
+    }
+
+    if(!_IsTrueNpc(target) && (target.Reputation[_GroupIndex(cr)] < -2000 || (target.Reputation[_GroupIndex(cr)] < __ReputationHated && !HasFactionUniform(target, _GroupIndex(cr), UNIFORM_FULL))))
+        if(Random(-2000, -1500) >= target.Reputation[_GroupIndex(cr)])
+            AttackCritter(cr, target);
+}
+
+void GuardOnMessage(Critter& guard, Critter& sender, int num, int val)
+{
+    if(num == MSG_ATTACK_ME)
+        AttackCritter(guard, sender);
+
+    else if(num == MSG_IM_BLOCKING)
+    {
+        if(val == MSG_PARAM_WARN)
+        {
+            if(guard.IsSeenBy(sender) && Random(0, 5) == 0)
+                guard.Say(SAY_SHOUT_ON_HEAD, sender.Name + ", stop blocking the path for others!");
+        }
+        else if(val == MSG_PARAM_PUNISH)
+        {
+            if(guard.IsSeenBy(sender) && Random(0, 5) == 0)
+                guard.Say(SAY_NORM_ON_HEAD, sender.Name + ", now we don't care.");
+        }
+    }
+}
+#endif

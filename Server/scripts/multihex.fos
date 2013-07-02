@@ -1,0 +1,419 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// multihex.fos
+//
+
+// To the extent possible under law, the author(s) have dedicated all copyright
+// and related and neighboring rights to this script to the public domain.
+// This script is distributed without any warranty.
+
+#ifndef __MULTIHEX__
+#define __MULTIHEX__
+
+#include "_macros.fos"
+#include "multihex_h.fos"
+#include "multihex_data.fos"
+
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// Multihex Initialization and Cleanup
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+// Should be called when the multihex item is spawned.
+//
+void MultihexSpawned(Item& item)
+{
+    uint mHexId = GetLocalVar(LIVAR_mhex_id, item.Id).GetValue();
+    if(mHexId == 0)
+    {
+        array<uint> values = { item.Id };
+        CreateTimeEvent(AFTER(0), "e_AddMHexes", values, true);
+    }
+    else
+    {
+        Log("WARNING: Function MultihexSpawned called multiple times for item " +
+            item.Id + " [ProtoId: " + item.GetProtoId() + "]");
+    }
+}
+
+
+
+// Should be called when the multihex item is removed from the game.
+//
+void MultihexDeleted(Item& item)
+{
+    DeleteMHexes(item);
+}
+
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// Public Functions
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+// Gets all mHexes (PID_MHEX items) attached to a multihex item.
+//
+uint GetMHexes(Item@ item, array<Item@>@ mHexes)
+{
+    if(!valid(item))
+    {
+        return 0;
+    }
+    uint nextMHexId = GetLocalVar(LIVAR_mhex_id, item.Id).GetValue();
+    for( ; ;)
+    {
+        if(nextMHexId == 0)
+            break;
+        Item@ mHex = GetItem(nextMHexId);
+        if(!valid(mHex))
+            break;
+        mHexes.insertLast(@mHex);
+        nextMHexId = MHEX_NEXT(mHex);
+    }
+    return mHexes.length();
+}
+
+
+
+// Returns true if the item is a multihex item.
+//
+bool IsMultihex(Item@ item)
+{
+    uint mHexId = GetLocalVar(LIVAR_mhex_id, item.Id).GetValue();
+    if(mHexId == 0)
+    {
+        return false;
+    }
+    return true;
+}
+
+
+
+// Returns true if any of the non-blocking hexes of the multihex item
+// (mHexes or the item hex) are blocked by something else.
+//
+bool IsMultihexBlocked(Item@ item)
+{
+    if(!valid(item))
+    {
+        return false;
+    }
+    Map@ map = GetMap(item.MapId);
+    if(!valid(map))
+    {
+        return false;
+    }
+    if(FLAG(item.Flags, ITEM_NO_BLOCK))
+    {
+        if(!map.IsHexPassed(item.HexX, item.HexY))
+        {
+            return true;
+        }
+    }
+    array<Item@> mHexes;
+    uint         num = GetMHexes(item, mHexes);
+    for(uint i = 0; i < num; i++)
+    {
+        if(FLAG(mHexes[i].Flags, ITEM_NO_BLOCK))
+        {
+            if(!map.IsHexPassed(mHexes[i].HexX, mHexes[i].HexY))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+
+// Switches multihex to state 1 (AKA closed/off/default).
+//
+void MultihexClose(Item@ item)
+{
+    array<Item@> mHexes;
+    uint         num = GetMHexes(item, mHexes);
+    for(uint i = 0; i < num; i++)
+    {
+        mHexes[i].Flags = MHEX_STATE_1(mHexes[i]);
+        mHexes[i].Update();
+    }
+}
+
+
+
+// Switches multihexes to state 2 (AKA open/on/non-default).
+//
+void MultihexOpen(Item@ item)
+{
+    array<Item@> mHexes;
+    uint         num = GetMHexes(item, mHexes);
+    for(uint i = 0; i < num; i++)
+    {
+        mHexes[i].Flags = MHEX_STATE_2(mHexes[i]);
+        mHexes[i].Update();
+    }
+}
+
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// Private Functions (shouldn't be called from external modules)
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+// TimeEvent function to delay spawning mHexes a bit.
+//
+uint e_AddMHexes(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(valid(item))
+    {
+        AddMHexes(item, MHexData(item.Proto.ProtoId));
+    }
+    return 0;
+}
+
+
+
+// Spawns mHexes for the multihex item according to the mHexData.
+//
+void AddMHexes(Item@ item, const array<uint>@ mHexData)
+{
+    if(!valid(item) || !valid(mHexData))
+        return;
+    if(item.Accessory != ACCESSORY_HEX)
+        return;
+    if(mHexData.length() == 0 || (mHexData.length() % 3 != 0))
+        return;
+    Map@ map = GetMap(item.MapId);
+    if(!valid(map))
+        return;
+
+    uint16 mHexX = 0, mHexY = 0;
+    uint   previousMHexId = 0;
+    for(uint i = 0, j = mHexData.length(); i < j; i += 3)
+    {
+        mHexX = item.HexX;
+        mHexY = item.HexY;
+        GetMHexPosition(mHexData[i], map, mHexX, mHexY);
+        Item@ mHex = map.AddItem(mHexX, mHexY, PID_MHEX, 1);
+
+        MHEX_SET_PARENT(mHex, item);
+
+        if(i == 0)
+        {
+            GameVar@ VarMHexId = GetLocalVar(LIVAR_mhex_id, item.Id);
+            VarMHexId = mHex.Id;
+        }
+        else
+        {
+            Item@ previousMHex = GetItem(previousMHexId);
+            MHEX_SET_NEXT(previousMHex, mHex);
+        }
+
+        MHEX_SET_STATE_1(mHex, mHexData[i + 1]);
+        MHEX_SET_STATE_2(mHex, mHexData[i + 2]);
+        mHex.SetEvent(ITEM_EVENT_WALK, "_Walk");
+
+        mHex.Flags = MHEX_STATE_1(mHex);
+        previousMHexId = mHex.Id;
+    }
+}
+
+
+
+// Deletes all mHexes connected to the multihex item.
+//
+void DeleteMHexes(Item@ item)
+{
+    if(!valid(item))
+        return;
+
+    array<Item@> mHexes;
+    uint         num = GetMHexes(item, mHexes);
+    DeleteItems(mHexes);
+}
+
+
+
+// Returns by reference position of an mHex.
+// Used when placing mHexes according to MHexData.
+//
+void GetMHexPosition(uint move, Map& map, uint16& x, uint16& y)
+{
+    map.MoveHexByDir(x, y, (move & 0xFF), ((move >> 8) & 0xFF));
+    if(move > 65535)     // bits 16-31 are for the 2nd step.
+    {
+        map.MoveHexByDir(x, y, ((move >> 16) & 0xFF), ((move >> 24) & 0xFF));
+    }
+}
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// Events
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+void _Init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_FINISH, "_Finish");
+    if(firstTime)
+    {
+        MultihexSpawned(item);
+    }
+}
+
+
+
+void _Finish(Item& item, bool deleted)
+{
+    if(deleted)
+    {
+        MultihexDeleted(item);
+    }
+}
+
+
+// Called by mHexes when a critter walks on them.
+//
+void _Walk(Item& item, Critter& cr, bool entered, uint8 dir)
+{
+    if(MHEX_ORPHANED(item))
+    {
+        DeleteItem(item);
+        return;
+    }
+    Item@ multihex = GetItem(MHEX_PARENT(item));
+    if(valid(multihex))
+    {
+        multihex.EventWalk(cr, entered, dir);
+    }
+}
+
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// Exported Functions
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+// Called by critter_move_item() to protect multihexes from abuse.
+//
+void GuardMultihexMove(Item& item, uint8 fromSlot, uint8 toSlot)
+{
+    if(item.Proto.ProtoId == PID_MHEX)
+    {
+        if(MHEX_ORPHANED(item))
+        {
+            DeleteItem(item);
+            return;
+        }
+        else
+        {
+            Item@ multihex = GetItem(MHEX_PARENT(item));
+            if(valid(multihex))
+            {
+                DeleteMHexes(multihex);
+                AddMHexes(multihex, MHexData(multihex.Proto.ProtoId));
+            }
+            return;
+        }
+    }
+    if(IsMultihex(item))
+    {
+        if(fromSlot == SLOT_GROUND)
+        {
+            DeleteMHexes(item);
+        }
+        else if(toSlot == SLOT_GROUND)
+        {
+            array<uint> values = { item.Id };
+            CreateTimeEvent(AFTER(0), "e_AddMHexes", values, true);
+        }
+    }
+}
+
+
+
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+// ~run Commands
+// \\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+
+void close(Critter& cr, int i, int, int)
+{
+    Item@ item = GetItem(i);
+    if(valid(item))
+        if(IsMultihex(item))
+            MultihexClose(item);
+}
+
+
+
+void open(Critter& cr, int i, int, int)
+{
+    Item@ item = GetItem(i);
+    if(valid(item))
+        if(IsMultihex(item))
+            MultihexOpen(item);
+}
+
+
+
+void cleanup(Critter& cr, int i, int, int)
+{
+    // Todo...
+}
+
+
+
+void show(Critter& cr, int i, int, int)
+{
+    Item@ item = GetItem(i);
+    if(valid(item))
+    {
+        array<Item@> mHexes;
+        uint         num = GetMHexes(item, mHexes);
+        for(uint i = 0; i < num; i++)
+        {
+            if(FLAG(mHexes[i].Flags, ITEM_NO_BLOCK))
+                mHexes[i].PicMap = GetStrHash("art\\intrface\\HLGRN.FRM");
+            else
+                mHexes[i].PicMap = GetStrHash("art\\intrface\\HLRED.FRM");
+            mHexes[i].Update();
+        }
+    }
+    else
+    {
+        cr.Say(SAY_NETMSG, "Invalid item Id.");
+    }
+}
+
+
+
+void hide(Critter& cr, int i, int, int)
+{
+    Item@ item = GetItem(i);
+    if(valid(item))
+    {
+        array<Item@> mHexes;
+        uint         num = GetMHexes(item, mHexes);
+        for(uint i = 0; i < num; i++)
+        {
+            mHexes[i].PicMap = GetStrHash("art\\intrface\\BLANK.FRM");
+            mHexes[i].Update();
+        }
+    }
+    else
+    {
+        cr.Say(SAY_NETMSG, "Invalid item Id.");
+    }
+}
+#endif // __MULTIHEX__

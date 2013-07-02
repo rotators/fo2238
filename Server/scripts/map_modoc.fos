@@ -1,0 +1,38 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_modoc.fos
+//
+
+#include "_macros.fos"
+#include "_town.fos"
+#include "mapdata_h.fos"
+
+#define NORMAL_ENTRANCE    (0) // For everyone
+#define SIDE_ENTRANCE      (1) // For people with outdoorsman > 49
+
+import bool AddMilitia(Map@ map) from "town";
+import void SpawnInitMilitia(Map@ map) from "town";
+
+//
+// map.Data:
+// 3 - Town ID, check _town.fos and towns.fos for more info
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    DLog("Initializing modoc");
+    map.SetData(MAP_DATA_TOWN, TOWN_MODOC);
+
+    if(firstTime)
+        SpawnInitMilitia(map);
+}
+
+// Will be called for every entrance.
+bool entrance_modoc(array<Critter@>& critters, uint8 entrance)
+{
+    if(entrance == SIDE_ENTRANCE)
+        return(critters[0].Skill[SK_OUTDOORSMAN] > 49);
+    return true;
+}

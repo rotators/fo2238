@@ -1,0 +1,545 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// car_seller.fos
+//
+
+/**
+ * \~english @defgroup CarSellerGroup Car Seller
+ * Module with a bunch of functions related to car sellers.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+#include "_entires.fos"
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "entire.fos"
+#include "logging_h.fos"
+#include "MsgStr.h"
+#include "serializator.fos"
+#include "utils_h.fos"
+
+#define FD_NO_MONEY                  (5)
+#define FD_NO_PLACES                 (6)
+#define FD_BUY_SUCCESS_WORKSHOP      (7)
+#define FD_BUY_SUCCESS_CARSTOP       (8)
+#define FD_MODIFY_NO_MONEY           (37)
+#define FD_MODIFY_NO_NEED            (38)
+#define FD_GENERIC_ERROR             (100)
+#define FD_TAKE_KEY_IN_HAND          (101)
+#define FD_CAR_NOT_FOUND             (102)
+#define FD_TAKE_KEY_IN_HAND2         (103)
+
+#define STR_BUY_LIST                 (2100)
+#define STR_COST_HUMMER              (2101)
+#define STR_COST_BUGGY               (2102)
+#define STR_COST_SCOUT               (2103)
+#define STR_COST_HIGHWAYMAN          (2104)
+#define STR_COST_COCKROACH           (2105)
+
+#define CAR_HUMMER                   (0)
+#define CAR_BUGGY                    (1)
+#define CAR_SCOUT                    (2)
+#define CAR_HIGHWAYMAN               (3)
+#define CAR_COCKROACH                (4)
+#define CAR_CARAVAN_ORANGE           (5)
+#define CAR_CARAVAN_WHITE            (6)
+
+#define CAR_COUNT                    (7)
+
+#define CAR_PRICE_UPDATE_INTERVAL    (REAL_MINUTE(30))
+#define CAR_MINIMUM_PRICE            (3000)     // Car price can't go under this price.
+
+#define KEY_COPY_COST                (1000)
+
+#define _IsCaravanCar                # (__proto)  (__proto == PID_CARAVAN_WHITE || __proto == PID_CARAVAN_ORANGE)
+
+#define CARS_INIT_ID                 (50000)
+#define CARS_SOLD                    (GetGvar(GVAR_car_id) - CARS_INIT_ID)
+
+array<int>   CarPrices;
+Serializator serializer;
+
+void InitCars()
+{
+    if(IS_FIRST_TIME)
+    {
+        SetGvar(GVAR_car_id, CARS_INIT_ID);
+        CarPrices.resize(CAR_COUNT);
+        CarPrices[CAR_HUMMER] = GetProtoItem(PID_HUMMER).Cost;
+        CarPrices[CAR_BUGGY] = GetProtoItem(PID_BUGGY).Cost;
+        CarPrices[CAR_SCOUT] = GetProtoItem(PID_SCOUT).Cost;
+        CarPrices[CAR_HIGHWAYMAN] = GetProtoItem(PID_HIGHWAYMAN).Cost;
+        CarPrices[CAR_COCKROACH] = GetProtoItem(PID_COCKROACH).Cost;
+        CarPrices[CAR_CARAVAN_ORANGE] = GetProtoItem(PID_CARAVAN_ORANGE).Cost;
+        CarPrices[CAR_CARAVAN_WHITE] = GetProtoItem(PID_CARAVAN_WHITE).Cost;
+        CreateTimeEvent(AFTER(CAR_PRICE_UPDATE_INTERVAL), "e_UpdateCarPrices", true);
+    }
+    else
+        LoadCarPriceData();
+}
+
+void SetPrice(uint index, int value)
+{
+    CarPrices[index] = value;
+}
+
+int GetPrice(uint index)
+{
+    if(index >= CAR_COUNT)
+        return -1;
+    return CarPrices[index];
+}
+
+uint e_UpdateCarPrices(array<uint>@ values)
+{
+    DLog("Updating car prices");
+    for(uint i = 0; i < CAR_COUNT; i++)
+    {
+        CarPrices[i] -= Random(10, 50);
+        if(CarPrices[i] < CAR_MINIMUM_PRICE)
+            CarPrices[i] = CAR_MINIMUM_PRICE;
+    }
+
+    return REAL_MINUTE(30);
+}
+
+uint PidToIndex(uint16 protoCar)
+{
+    switch(protoCar)
+    {
+    case PID_HUMMER:
+        return 0;
+    case PID_BUGGY:
+        return 1;
+    case PID_SCOUT:
+        return 2;
+    case PID_HIGHWAYMAN:
+        return 3;
+    case PID_COCKROACH:
+        return 4;
+    case PID_CARAVAN_ORANGE:
+        return 5;
+    case PID_CARAVAN_WHITE:
+        return 6;
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+void ChangeCarPrice(uint16 protoCar, int sum)
+{
+    CarPrices[PidToIndex(protoCar)] += sum;
+    if(CarPrices[PidToIndex(protoCar)] < CAR_MINIMUM_PRICE)
+        CarPrices[PidToIndex(protoCar)] = CAR_MINIMUM_PRICE;
+}
+
+void LoadCarPriceData()
+{
+    serializer.Clear();
+    if(!serializer.Load("car_prices"))
+        return;
+    serializer.Get(CarPrices);
+}
+
+void SaveCarPriceData()
+{
+    serializer.Clear();
+    serializer.Set(CarPrices).Save("car_prices");
+}
+
+string PidToStr(uint16 protoCar)
+{
+    switch(protoCar)
+    {
+    case PID_HUMMER:
+        return "PID_HUMMER";
+    case PID_BUGGY:
+        return "PID_BUGGY";
+    case PID_SCOUT:
+        return "PID_SCOUT";
+    case PID_HIGHWAYMAN:
+        return "PID_HIGHWAYMAN";
+    case PID_COCKROACH:
+        return "PID_COCKROACH";
+    case PID_CARAVAN_ORANGE:
+        return "PID_CARAVAN_ORANGE";
+    case PID_CARAVAN_WHITE:
+        return "PID_CARAVAN_WHITE";
+    default:
+        return "Unknown";
+    }
+    return "Unknown";
+}
+
+int GetCarCost(uint16 protoCar)
+{
+    uint       count = WorldItemCount(protoCar);
+    ProtoItem@ car = GetProtoItem(protoCar);
+    if(valid(car))
+    {
+        return CarPrices[PidToIndex(protoCar)];
+    }
+    return 0;
+}
+
+int GetFuelCost(Item@ car)
+{
+    return _CarGetFuelTank(car) - car.Charge + 10;
+}
+
+int GetWearCost(Item@ car)
+{
+    return((car.Deterioration / 10) + 10);
+}
+
+int GetBioCost(Item@ car)
+{
+    return GetCarCost(car.GetProtoId()) * 10 / 100;
+}
+
+void dlg_PrepareBuy(Critter& player, Critter@ tray, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+
+    lexems += "$hummer" + GetCarCost(PID_HUMMER);
+    lexems += "$buggy" + GetCarCost(PID_BUGGY);
+    lexems += "$scout" + GetCarCost(PID_SCOUT);
+    lexems += "$highwayman" + GetCarCost(PID_HIGHWAYMAN);
+    lexems += "$cockroach" + GetCarCost(PID_COCKROACH);
+    lexems += "$orange" + GetCarCost(PID_CARAVAN_ORANGE);
+    lexems += "$white" + GetCarCost(PID_CARAVAN_WHITE);
+}
+
+uint r_BuyHummer(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_HUMMER);
+}
+
+uint r_BuyBuggy(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_BUGGY);
+}
+
+uint r_BuyScout(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_SCOUT);
+}
+
+uint r_BuyHighwayman(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_HIGHWAYMAN);
+}
+
+uint r_BuyCockroach(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_COCKROACH);
+}
+
+uint r_BuyCaravanWhite(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_CARAVAN_WHITE);
+}
+
+uint r_BuyCaravanOrange(Critter& player, Critter@ tray, int val)
+{
+    return TryCreateCar(player, PID_CARAVAN_ORANGE);
+}
+
+bool d_CanAffordCockroach(Critter& player, Critter@ someone)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) >= uint(GetCarCost(PID_COCKROACH)));
+}
+
+bool d_CanNotAffordCockroach(Critter& player, Critter@ someone)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) < uint(GetCarCost(PID_COCKROACH)));
+}
+
+bool d_CanAffordCaravanWhite(Critter& player, Critter@ tray)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) >= uint(GetCarCost(PID_CARAVAN_WHITE)));
+}
+
+bool d_CanAffordCaravanOrange(Critter& player, Critter@ tray)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) >= uint(GetCarCost(PID_CARAVAN_ORANGE)));
+}
+
+bool d_CanNotAffordCaravanWhite(Critter& player, Critter@ tray)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) < uint(GetCarCost(PID_CARAVAN_WHITE)));
+}
+
+bool d_CanNotAffordCaravanOrange(Critter& player, Critter@ tray)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) < uint(GetCarCost(PID_CARAVAN_ORANGE)));
+}
+
+uint TryCreateCar(Critter& player, uint16 protoCar)
+{
+    if(protoCar != PID_HUMMER && protoCar != PID_BUGGY && protoCar != PID_SCOUT && protoCar != PID_HIGHWAYMAN && protoCar != PID_COCKROACH && protoCar != PID_CARAVAN_WHITE && protoCar != PID_CARAVAN_ORANGE)
+        return FD_GENERIC_ERROR;
+
+    int cost = GetCarCost(protoCar);
+    if(_CritCountItem(player, PID_BOTTLE_CAPS) < uint(cost))
+        return FD_NO_MONEY;
+
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return FD_GENERIC_ERROR;
+
+    array<Entire> entires;
+    ParseEntires(map, entires, ENTIRE_WORKSHOP);
+    ParseEntires(map, entires, ENTIRE_CAR);
+
+    uint16 hx, hy, entNum;
+    for(int i = 0, j = entires.length(); i <= j; i++)
+    {
+        if(i == j)
+            return FD_NO_PLACES;
+
+        Entire@ ent = entires[i];
+        if(map.CheckPlaceForItem(ent.HexX, ent.HexY, protoCar))
+        {
+            hx = ent.HexX;
+            hy = ent.HexY;
+            entNum = ent.Number;
+            break;
+        }
+    }
+
+    GameVar@ var = GetGlobalVar(GVAR_car_id);
+    uint     keyId = var.GetValue();
+    var += 1;
+
+    Item@ car = map.AddItem(hx, hy, protoCar, 1);
+    if(!valid(car))
+        return FD_GENERIC_ERROR;
+    car.LockerId = keyId;
+    car.Charge = car.Proto.Car_TankVolume;
+    car.Deterioration = 0;
+    car.Update();
+
+    Item@ bag = car.GetChild(0);
+    if(valid(bag))
+    {
+        bag.LockerId = keyId;
+        bag.LockerComplexity = Random(50, 100);
+        bag.Update();
+    }
+
+    Item@ key = player.AddItem(PID_KEY, 1);
+    if(valid(key))
+    {
+        key.LockerId = keyId;
+        key.Update();
+    }
+
+    FLog(LOG_CAR, GetCritterInfo(player) + " has purchased car " + PidToStr(protoCar) + " for " + cost + " on map " + player.GetMap().Id);
+
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    BanksAddMoney(cost);
+    ChangeCarPrice(protoCar, Random(500, 1000));
+    if(entNum == ENTIRE_WORKSHOP)
+        return FD_BUY_SUCCESS_WORKSHOP;
+    else
+        return FD_BUY_SUCCESS_CARSTOP;
+}
+
+Item@ GetPlayerKey(Critter@ player)
+{
+    Item@ key = _CritGetItemHand(player);
+    if(!valid(key) || key.GetType() != ITEM_TYPE_KEY)
+        return null;
+    return key;
+}
+
+Item@ GetPlayerCar(Critter@ player)
+{
+    uint dummy = 0;
+    return GetPlayerCar(player, dummy);
+}
+
+Item@ GetPlayerCar(Critter@ player, uint& force)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+    {
+        force = FD_GENERIC_ERROR;
+        return null;
+    }
+
+    Item@ key = GetPlayerKey(player);
+    if(!valid(key))
+    {
+        force = FD_TAKE_KEY_IN_HAND;
+        return null;
+    }
+
+    array<Entire> entires;
+    ParseEntires(map, entires, ENTIRE_WORKSHOP);
+    ParseEntires(map, entires, ENTIRE_CAR);
+    for(int i = 0, j = entires.length(); i < j; i++)
+    {
+        Item@ car = map.GetCar(entires[i].HexX, entires[i].HexY);
+        if(valid(car) && car.LockerId == key.LockerId)
+            return car;
+    }
+
+    force = FD_CAR_NOT_FOUND;
+    return null;
+}
+
+uint r_CheckCar(Critter& player, Critter@ tray, int val)
+{
+    uint force = 0;
+    GetPlayerCar(player, force);    // Force if fail.
+    return force;
+}
+
+void dlg_SellCar(Critter& player, Critter@ tray, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        lexems = "$sell_cost0";
+    else
+        lexems = "$sell_cost" + (GetCarCost(car.GetProtoId()) / 4);
+}
+
+void r_SellCar(Critter& player, Critter@ tray, int val)
+{
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        return;
+    int   cost = GetCarCost(car.GetProtoId()) / 4;
+    Item@ key = _CritGetItemHand(player);
+    if(valid(key) && key.GetType() == ITEM_TYPE_KEY && key.LockerId == car.LockerId)
+        DeleteItem(key);
+    FLog(LOG_CAR, GetCritterInfo(player) + " has sold car " + PidToStr(car.GetProtoId()) + " for " + cost + " on map " + player.GetMap().Id);
+    ChangeCarPrice(car.GetProtoId(), Random(-300, -100));
+    DeleteItem(car);
+    player.AddItem(PID_BOTTLE_CAPS, cost);
+}
+
+void dlg_Fuel(Critter& player, Critter@ tray, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        lexems = "$fuel_cost0";
+    else
+        lexems = "$fuel_cost" + GetFuelCost(car);
+}
+
+void dlg_Wear(Critter& player, Critter@ tray, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        lexems = "$wear_cost0";
+    else
+        lexems = "$wear_cost" + GetWearCost(car);
+}
+
+void dlg_Bio(Critter& player, Critter@ tray, string@ lexems)
+{
+    if(!IS_DIALOG_GENERATED(lexems))
+        return;
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        lexems = "$bio_cost0";
+    else
+        lexems = "$bio_cost" + GetBioCost(car);
+}
+
+uint r_DoFuel(Critter& player, Critter@ tray, int val)
+{
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        return 0;
+
+    uint cost = GetFuelCost(car);
+    uint money = player.CountItem(PID_BOTTLE_CAPS);
+    if(cost > money)
+        return FD_MODIFY_NO_MONEY;
+
+    if(car.Charge >= _CarGetFuelTank(car))
+        return FD_MODIFY_NO_NEED;
+    car.Charge = car.Proto.Car_TankVolume;
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    BanksAddMoney(cost);
+    FLog(LOG_CAR, GetCritterInfo(player) + " has re-fueled car " + PidToStr(car.GetProtoId()) + " for " + cost + " on map " + player.GetMap().Id);
+    return 0;
+}
+
+uint r_DoWear(Critter& player, Critter@ tray, int val)
+{
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        return 0;
+
+    uint cost = GetWearCost(car);
+    uint money = player.CountItem(PID_BOTTLE_CAPS);
+    if(cost > money)
+        return FD_MODIFY_NO_MONEY;
+
+    if(car.Deterioration == 0)
+        return FD_MODIFY_NO_NEED;
+    car.Deterioration = 0;
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    BanksAddMoney(cost);
+    FLog(LOG_CAR, GetCritterInfo(player) + " has repaired car " + PidToStr(car.GetProtoId()) + " for " + cost + " on map " + player.GetMap().Id);
+    return 0;
+}
+
+uint r_DoBio(Critter& player, Critter@ tray, int val)
+{
+    Item@ car = GetPlayerCar(player);
+    if(!valid(car))
+        return 0;
+
+    uint cost = GetBioCost(car);
+    uint money = player.CountItem(PID_BOTTLE_CAPS);
+    if(cost > money)
+        return FD_MODIFY_NO_MONEY;
+
+    if(_CarIsBioEngine(car))
+        return FD_MODIFY_NO_NEED;
+    _CarSetBioEngine(car);
+    player.DeleteItem(PID_BOTTLE_CAPS, cost);
+    BanksAddMoney(cost);
+    FLog(LOG_CAR, GetCritterInfo(player) + " has purchased a bioengine for car " + PidToStr(car.GetProtoId()) + " which costed " + cost + " on map " + player.GetMap().Id);
+    return 0;
+}
+
+uint r_CopyKey(Critter& player, Critter@ tray, int val)
+{
+    uint money = player.CountItem(PID_BOTTLE_CAPS);
+    if(money < KEY_COPY_COST)
+        return FD_MODIFY_NO_MONEY;
+
+    Item@ key = GetPlayerKey(player);
+    if(!valid(key))
+        return FD_TAKE_KEY_IN_HAND2;
+
+    Item@ keyCopy = player.AddItem(PID_KEY, 1);
+    if(!valid(keyCopy))
+        return FD_GENERIC_ERROR;
+    keyCopy.LockerId = key.LockerId;
+    keyCopy.Update();
+
+    player.DeleteItem(PID_BOTTLE_CAPS, KEY_COPY_COST);
+    BanksAddMoney(KEY_COPY_COST);
+    FLog(LOG_CAR, GetCritterInfo(player) + " has copied a key for " + KEY_COPY_COST + " on map " + player.GetMap().Id);
+    return 0;
+}

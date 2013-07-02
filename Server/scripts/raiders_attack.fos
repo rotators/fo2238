@@ -1,0 +1,574 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// raiders_attack.fos
+//
+
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "entire.fos"
+#include "_ai.fos"
+#include "npc_planes_h.fos"
+#include "groups_h.fos"
+#include "utils_h.fos"
+
+#define ATK_GARBAGER_TIME      (REAL_MINUTE(30))
+
+#define STATE_MOP_UP           (0)
+#define STATE_GATHER           (1)
+#define STATE_MOP_UP_INSIDE    (2)
+#define STATE_GATHER_INSIDE    (3)
+#define STATE_RETREAT          (4)
+#define STATE_PANIC            (5)
+
+#define SSTATE_PRE             (0)
+#define SSTATE_GO              (1)
+#define SSTATE_READY           (2)
+#define SSTATE_PRE_INSIDE      (3)
+#define SSTATE_GO_INSIDE       (4)
+#define SSTATE_READY_INSIDE    (5)
+#define SSTATE_WENT_OUTSIDE    (6)
+#define SSTATE_RETREATING      (7)
+
+#define _GetState              # (cr)   (attacks[cr.Stat[ST_VAR0]].state)
+#define _CrAttack              # (cr)   attacks[cr.Stat[ST_VAR0]]
+
+#define GO_IN_X                (52)
+#define GO_IN_Y                (29)
+#define GO_OUT_X               (71)
+#define GO_OUT_Y               (119)
+#define CHECKPOINT_OUT_X       (57)
+#define CHECKPOINT_OUT_Y       (39)
+#define CHECKPOINT_IN_X        (69)
+#define CHECKPOINT_IN_Y        (105)
+
+// var0 attack, var1 pos, var2 assigned
+
+array<CRaidersAttack@> attacks;
+
+shared interface IRaidersAttack
+{
+    void            Destroy();
+    IRaidersAttack@ AddCritter(Critter& cr);
+    void            AddEnemy(uint id);
+    bool            IsMember(Critter& cr);
+    bool            DeleteCritter(Critter& cr, bool killed);
+    void            SetState(uint nstate);
+    void            GatherFinished();
+    void            TransferCritter(Critter& cr);
+    void            GotoCheckpoint(Critter& cr);
+    void            GotoExit(Critter& cr);
+
+    void ReportCritter(Critter& cr, Map& map);
+    // Critter@ GetEnemy(Critter& cr);
+
+    void Process();
+};
+
+class CRaidersAttack : IRaidersAttack
+{
+    uint        startNumbers;
+    uint        numbers;
+    uint        killed;
+    uint        lastenemies;
+    uint        map_out;
+    uint        map_in;
+    array<uint> crits;
+    uint        id;
+    uint        timeid;
+    uint        state;
+    uint        finished;
+    uint        go_exit_x;
+    uint        go_exit_y;
+
+    CRaidersAttack(uint nid)
+    {
+        startNumbers = 0;
+        numbers = 0;
+        killed = 0;
+        lastenemies = 0;
+        id = nid;
+        finished = 0;
+        state = STATE_MOP_UP;
+        if(Random(0, 1) == 0)
+        {
+            go_exit_x = 15;
+            go_exit_y = 45;
+        }
+        else
+        {
+            go_exit_x = 80;
+            go_exit_y = 48;
+        }
+        timeid = CreateTimeEvent(AFTER(GAME_MINUTE(1)), "e_ProcessAttack", nid, false);
+        Log("created attack: " + id);
+    }
+
+    void Destroy()
+    {
+        Log("removing attack " + id);
+        @attacks[id] = null;
+        EraseTimeEvent(timeid);
+    }
+
+    IRaidersAttack@ AddCritter(Critter& cr)
+    {
+        crits.insertLast(cr.Id);
+        cr.StatBase[ST_VAR0] = id;
+        cr.StatBase[ST_VAR1] = numbers;
+        cr.StatBase[ST_VAR2] = SSTATE_PRE;
+        numbers++;
+        startNumbers++;
+        return this;
+    }
+
+    void AddEnemy(uint id)
+    {
+        for(uint i = 0, j = crits.length(); i < j; i++)
+        {
+            Critter@ cr = GetCritter(crits[i]);
+            cr.AddEnemyInStack(id);
+        }
+    }
+
+    bool IsMember(Critter& cr)
+    {
+        return (cr.Stat[ST_VAR0] == int(id)) && IsAttackingRaider(cr);
+    }
+
+    bool DeleteCritter(Critter& cr, bool waskilled)
+    {
+        if(cr.Stat[ST_VAR0] != int(id))
+            return false;
+        int len = crits.length();
+        if(len == 0)
+            return false;
+        if(cr.Stat[ST_VAR1] >= len)
+            return false;
+        len--;
+        if(cr.Stat[ST_VAR1] < len)
+        {
+            crits[cr.Stat[ST_VAR1]] = crits[len];
+            Critter@ ModCr = GetCritter(crits[len]);
+            ModCr.StatBase[ST_VAR1] = cr.Stat[ST_VAR1];
+        }
+        cr.StatBase[ST_VAR0] = -1;
+        crits.resize(len);
+        numbers--;
+        Log("critter deleted: " + id + ", remaining: " + numbers);
+        if(waskilled)
+            killed++;
+        if(numbers == 0)
+            Destroy();
+        else if(killed == startNumbers / 2 && state != STATE_PANIC && state != STATE_RETREAT)
+            SetState(STATE_PANIC);
+        return true;
+    }
+
+    void SetState(uint nstate)
+    {
+        if((state == STATE_MOP_UP && nstate == STATE_GATHER) || (state == STATE_MOP_UP_INSIDE && nstate == STATE_GATHER_INSIDE))
+        {
+            for(uint i = 0, j = crits.length(); i < j; i++)
+            {
+                Critter@ cr = GetCritter(crits[i]);
+                cr.StatBase[ST_VAR2] = state == STATE_MOP_UP ? SSTATE_PRE : SSTATE_PRE_INSIDE;
+                cr.DropPlanes();
+            }
+            finished = 0;
+            array<Item@>    loot;
+            array<Critter@> dead;
+            Map@            map = state == STATE_MOP_UP ? GetMap(map_out) : GetMap(map_in);
+            map.GetItems(0, loot);
+            map.GetCritters(0, FIND_DEAD, dead);
+            uint k = 0;
+            for(uint i = 0, j = dead.length(); i < j; i++)
+                if(!_CritHasMode(dead[i], MODE_NO_LOOT))
+                {
+                    Critter@ WalkCr = GetCritter(crits[k % numbers]);
+                    AddWalkPlane(WalkCr, AI_PLANE_PICK_PRIORITY + 5, PLANE_LOOT, dead[i].Id, dead[i].HexX, dead[i].HexY, 6, true, 1);
+                    k++;
+                }
+            for(uint i = 0, j = loot.length(); i < j; i++)
+            {
+                uint8 type = loot[i].GetType();
+                if(type == ITEM_TYPE_ARMOR || type == ITEM_TYPE_DRUG || type == ITEM_TYPE_WEAPON || type == ITEM_TYPE_AMMO || type == ITEM_TYPE_MISC || type == ITEM_TYPE_KEY)
+                {
+                    Critter@ PickCr = GetCritter(crits[k % numbers]);
+                    AddPickPlane(PickCr, AI_PLANE_PICK_PRIORITY, loot[i], 0, false, true);
+                    k++;
+                }
+            }
+        }
+        else if(nstate == STATE_RETREAT)
+        {
+            for(uint i = 0, j = crits.length(); i < j; i++)
+            {
+                Critter@ cr = GetCritter(crits[i]);
+                AddWalkPlane(cr, 0, PLANE_GOTO_TRANSFER, 0, GO_OUT_X, GO_OUT_Y, 6, true, 1);
+            }
+        }
+        else if((nstate == STATE_MOP_UP && state == STATE_GATHER) || (nstate == STATE_MOP_UP_INSIDE && state == STATE_GATHER_INSIDE))
+        {
+            for(uint i = 0, j = crits.length(); i < j; i++)
+            {
+                Critter@ cr = GetCritter(crits[i]);
+                cr.DropPlanes();
+            }
+        }
+        else if(nstate == STATE_MOP_UP_INSIDE)
+        {
+            for(uint i = 0, j = crits.length(); i < j; i++)
+            {
+                Critter@ cr = GetCritter(crits[i]);
+                AddWalkPlane(cr, 0, PLANE_GOTO_TRANSFER, 0, GO_IN_X, GO_IN_Y, 6, true, 1);
+                ClearEnemyStack(cr);
+            }
+
+            array<Critter@> enemies;
+            Map@            MapIn = GetMap(map_in);
+            MapIn.GetCritters(0, FIND_LIFE_AND_KO | FIND_ONLY_NPC, enemies);   // fixme
+            for(uint i = 0, j = enemies.length(); i < j; i++)
+                AddEnemy(enemies[i].Id);
+        }
+        else if(nstate == STATE_PANIC)
+            return;                       // fixme
+        Log("SET STATE: " + nstate);
+        state = nstate;
+    }
+
+    void GatherFinished()
+    {
+        finished++;
+        if(finished == numbers)
+            SetState(state == STATE_GATHER ? STATE_MOP_UP_INSIDE : STATE_RETREAT);
+    }
+
+    void TransferCritter(Critter& cr)
+    {
+        if(cr.GetMap().Id == map_out)
+        {
+            cr.TransitToMap(map_in, 0);
+            Log("transferred in: " + cr.Id);
+        }
+        else
+        {
+            cr.TransitToMap(map_out, 1);
+            Log("transferred out: " + cr.Id);
+            cr.StatBase[ST_VAR2] = SSTATE_WENT_OUTSIDE;
+        }
+    }
+
+    void GotoCheckpoint(Critter& cr)
+    {
+        if(cr.GetMap().Id == map_out)
+        {
+            Log("moving to outer checkpoint: " + cr.Id);
+            AddWalkPlane(cr, 0, CHECKPOINT_OUT_X, CHECKPOINT_OUT_Y, 0xFF, true, Random(2, 3));
+        }
+        else
+        {
+            Log("moving to inner checkpoint: " + cr.Id);
+            AddWalkPlane(cr, 0, CHECKPOINT_IN_X, CHECKPOINT_IN_Y, 0xFF, true, Random(2, 3));
+        }
+    }
+
+    void GotoExit(Critter& cr)
+    {
+        Log("evacuating: " + cr.Id);
+        AddWalkPlane(cr, 0, PLANE_GOTO_EXIT, 0, go_exit_x, go_exit_y, 6, true, 1);
+    }
+
+    /*Critter@ GetEnemy(Critter& cr)
+       {
+       Critter@[] enemies;
+       Critter@[] allcrits;
+       map_out.GetCritters(0, FIND_LIFE_AND_KO|FIND_ONLY_NPC, allcrits); // fixme: npc
+       for (uint i=0,j=allcrits.length();i<j;i++) if (!IsMember(allcrits[i]))
+        enemies.insertLast( allcrits[i] )
+
+       return GetClosestCritter(cr.HexX, cr.HexY, enemies);
+       }*/
+
+    void ReportCritter(Critter& cr, Map& map)
+    {
+        if(IsMember(cr))
+            return;
+        if(state == STATE_GATHER && map.Id == map_out)
+        {
+            SetState(STATE_MOP_UP);
+            AddEnemy(cr.Id);
+            Process();
+        }
+        else if(state == STATE_GATHER_INSIDE && map.Id == map_in)
+        {
+            SetState(STATE_MOP_UP_INSIDE);
+            AddEnemy(cr.Id);
+            Process();
+        }
+    }
+
+    void Process()
+    {
+// Log("process start");
+        if(state == STATE_MOP_UP || state == STATE_MOP_UP_INSIDE)
+        {
+            Map@ map = state == STATE_MOP_UP ? GetMap(map_out) : GetMap(map_in);
+            if(!valid(map))
+            {
+                Destroy();
+                return;
+            }
+            array<Critter@> enemies;
+            array<Critter@> allcrits;
+            array<Critter@> lazy;
+
+// Log("taking allcrits");
+            map.GetCritters(0, FIND_LIFE_AND_KO | FIND_ONLY_NPC, allcrits);   // fixme: npc
+// Log("taking allcrits: ok");
+            for(uint i = 0, j = allcrits.length(); i < j; i++)
+                if(!IsMember(allcrits[i]))
+                    enemies.insertLast(allcrits[i]);
+                else if(!valid(allcrits[i].GetCurPlane()) || allcrits[i].GetCurPlane().Identifier != AI_PLANE_ATTACK)
+                    lazy.insertLast(allcrits[i]);
+            // else
+            // allcrits[i].Say(SAY_NORM_ON_HEAD,"attacking, timestamp: "+__FullMinute);
+
+// Log("all: "+allcrits.length()+", enemies: "+enemies.length()+", lazy: "+lazy.length());
+            lastenemies = enemies.length();
+            if(lastenemies > 0)
+            {
+                if(lazy.length() == 0)
+                    return;
+                uint16   hx = 0, hy = 0;
+                GravityCentre(hx, hy, lazy);
+                Critter@ closest = GetClosestCritter(hx, hy, enemies);
+                for(uint i = 0, j = lazy.length(); i < j; i++)
+                {
+                    lazy[i].DropPlanes();
+                    // lazy[i].Say(SAY_NORM_ON_HEAD, "(by lazy) attacking "+closest.Id+", timestamp: "+__FullMinute);
+                    AttackCritter(lazy[i], closest);
+                }
+                // closest.Say(SAY_NORM_ON_HEAD, "THAT WOULD BE ME, timestamp: "+__FullMinute);
+            }
+            else if(state == STATE_MOP_UP)
+                SetState(STATE_GATHER);
+            else if(lazy.length() == numbers)
+                SetState(STATE_GATHER_INSIDE);
+        }
+
+    }
+};
+
+void GravityCentre(uint16& hx, uint16& hy, array<Critter@> crits)
+{
+    uint len = crits.length();
+    if(len == 0)
+        return;
+    hx = hy = 0;
+    for(uint i = 0; i < len; i++)
+    {
+        hx += crits[i].HexX;
+        hy += crits[i].HexY;
+    }
+    hx /= len;
+    hy /= len;
+}
+
+Critter@ GetClosestCritter(uint16 hx, uint16 hy, array<Critter@>& crits)
+{
+    uint len = crits.length();
+    if(len == 0)
+        return null;
+    uint mindist = GetDistantion(crits[0].HexX, crits[0].HexY, hx, hy);
+    uint minidx = 0;
+    for(uint i = 1; i < len; i++)
+        if(GetDistantion(crits[i].HexX, crits[i].HexY, hx, hy) < mindist)
+        {
+            mindist = GetDistantion(crits[i].HexX, crits[i].HexY, hx, hy);
+            minidx = i;
+        }
+    return crits[minidx];
+}
+
+uint GetFreeAttackNumber()
+{
+    uint i = 0;
+    for(uint j = attacks.length(); i < j; i++)
+        if(!valid(attacks[i]))
+            return i;
+    attacks.insertLast(null);
+    return i;
+}
+
+CRaidersAttack@ CreateAttack()
+{
+    uint n = GetFreeAttackNumber();
+    @attacks[n] = CRaidersAttack(n);
+    return attacks[n];
+}
+
+uint e_ProcessAttack(array<uint>@ values)
+{
+    uint id = values[0];
+    attacks[id].Process();
+    return REAL_SECOND(1);
+}
+
+uint e_GarbageAttacks(array<uint>@ values)
+{
+    uint len = attacks.length();
+    if(len == 0)
+        return ATK_GARBAGER_TIME;
+    len--;
+    if(!valid(attacks[len]))
+        attacks.resize(len);
+    return ATK_GARBAGER_TIME;
+}
+
+bool IsAttackingRaider(Critter& cr)
+{
+    if(cr.GetScriptId() == uint(-1))
+        return false;
+    if(cr.GetScriptId() == 0)
+        return false;
+    return GetScriptName(cr.GetScriptId()) == "raiders_attack@critter_init";
+}
+
+bool InitRaidersAttacks()
+{
+    CreateTimeEvent(AFTER(ATK_GARBAGER_TIME), "e_GarbageAttacks", false);
+    return true;
+}
+
+bool RaidersAttack(Location& loc)
+{
+    CRaidersAttack@ attack = CreateAttack();
+    attack.map_out = loc.GetMapByIndex(0).Id;
+    attack.map_in  = loc.GetMapByIndex(1).Id;   // fixme
+
+    array<Critter@> crits;
+    Map@            MapOut = GetMap(attack.map_out);
+    MapOut.GetCritters(0, FIND_LIFE_AND_KO | FIND_ONLY_NPC, crits);   // fixme: npc
+    array<Entire>   entires;
+    int             len = ParseEntires(MapOut, entires, 0);
+    len = Random(0, len - 1);
+
+    uint16 hx = entires[len].HexX;
+    uint16 hy = entires[len].HexY;
+
+    uint   num = 5; // Random(5,10);
+    for(uint i = 0; i < num; i++)
+    {
+        Critter@ raider = AddNpc(MapOut, 250, hx, hy, Random(0, 5), 0, "raiders_attack@critter_init", AIPACKET_MERC_RAIDER, 168, TEAM_Mob0, false, 1);
+        raider.ModeBase[MODE_INVULNERABLE] = 1;   // fixme
+        raider.ModeBase[MODE_UNLIMITED_AMMO] = 1; // fixme
+        attack.AddCritter(raider);
+    }
+
+    for(uint i = 0, j = crits.length(); i < j; i++)
+    {
+        attack.AddEnemy(crits[i].Id);
+        Log("added enemy: " + crits[i].Id);
+    }
+
+    return true;
+}
+
+void critter_init(Critter& cr, bool firstTime)
+{
+    if(firstTime)
+    {
+        cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_DELETE;
+        cr.SetEvent(CRITTER_EVENT_IDLE, "_RaiderIdle");
+        cr.SetEvent(CRITTER_EVENT_DEAD, "_RaiderDead");
+        cr.SetEvent(CRITTER_EVENT_FINISH, "_RaiderFinish");
+        cr.SetEvent(CRITTER_EVENT_PLANE_END, "_RaiderPlaneEnd");
+        // cr.SetEvent(CRITTER_EVENT_PLANE_BEGIN, "_RaiderPlaneBegin");
+        cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_RaiderShowCritter");
+        cr.ModeBase[MODE_NO_HOME] = 1;
+        cr.StatBase[ST_CARRY_WEIGHT] = (1 << 30);
+    }
+    else
+        DeleteNpc(cr);
+}
+
+void _RaiderIdle(Critter& cr)
+{
+    if(cr.Stat[ST_VAR2] == SSTATE_PRE && _GetState(cr) == STATE_GATHER)
+    {
+        cr.StatBase[ST_VAR2] = SSTATE_GO;
+        _CrAttack(cr).GotoCheckpoint(cr);
+    }
+    else if(cr.Stat[ST_VAR2] == SSTATE_GO && _GetState(cr) == STATE_GATHER)
+    {
+        cr.StatBase[ST_VAR2] = SSTATE_READY;
+        _CrAttack(cr).GatherFinished();
+    }
+    else if(cr.Stat[ST_VAR2] == SSTATE_PRE_INSIDE && _GetState(cr) == STATE_GATHER_INSIDE)
+    {
+        cr.StatBase[ST_VAR2] = SSTATE_GO_INSIDE;
+        _CrAttack(cr).GotoCheckpoint(cr);
+    }
+    else if(cr.Stat[ST_VAR2] == SSTATE_GO_INSIDE && _GetState(cr) == STATE_GATHER_INSIDE)
+    {
+        cr.StatBase[ST_VAR2] = SSTATE_READY_INSIDE;
+        _CrAttack(cr).GatherFinished();
+    }
+    else if(cr.Stat[ST_VAR2] == SSTATE_WENT_OUTSIDE)
+    {
+        cr.StatBase[ST_VAR2] = SSTATE_RETREATING;
+        _CrAttack(cr).GotoExit(cr);
+    }
+}
+
+void _RaiderDead(Critter& cr, Critter@ killer)
+{
+    Log("calling deletion of " + cr.Id);
+    if(cr.Stat[ST_VAR0] >= 0)
+        _CrAttack(cr).DeleteCritter(cr, true);
+}
+
+void _RaiderFinish(Critter& cr, bool deleted)
+{
+    if(cr.IsDead())
+        return;                 // processed in death event
+    Log("calling deletion of " + cr.Id);
+    if(cr.Stat[ST_VAR0] >= 0)
+        _CrAttack(cr).DeleteCritter(cr, false);
+}
+
+/*bool _RaiderPlaneBegin(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ item)
+   {
+   if (reason==REASON_GO_HOME)
+   {
+    cr.Say(SAY_NORM_ON_HEAD,"cancelling go home");
+    cr.SetHomePos(cr.HexX, cr.HexY, cr.Dir);
+    return false;
+   }
+   return true;
+   }*/
+
+bool _RaiderPlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ item)
+{
+    if(plane.Identifier == PLANE_GOTO_TRANSFER)
+        _CrAttack(cr).TransferCritter(cr);
+    else if(plane.Identifier == PLANE_GOTO_EXIT)
+        DeleteNpc(cr);
+    return true;
+    /*Critter@ target = _CrAttack(cr).GetEnemy(cr);
+       if (valid(target)) AttackCritter(cr, target);*/
+}
+
+void _RaiderShowCritter(Critter& cr, Critter& showCrit)
+{
+    if(showCrit.Cond != COND_DEAD)
+        if(cr.Stat[ST_VAR0] >= 0)
+            _CrAttack(cr).ReportCritter(showCrit, showCrit.GetMap());
+}
+
+void commence(Critter& cr, int p0, int p1, int p2)
+{
+    RaidersAttack(cr.GetMap().GetLocation());
+}

@@ -1,0 +1,23 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_golgotha.fos
+//
+
+#include "_macros.fos"
+#include "_vars.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "OnInCritter");
+}
+
+void OnInCritter(Map& map, Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_iguana_mutant_message, player.Id);
+    if(var != 3)
+        return;
+    var = 5;
+    // todo message
+}

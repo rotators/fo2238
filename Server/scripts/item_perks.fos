@@ -1,0 +1,119 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_perks.fos
+//
+
+// Easier management of item perks
+
+#ifndef __ITEM_PERKS__
+#define __ITEM_PERKS__
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+// #include "item_perks_h.fos"
+
+#define Item_Perk    Armor_Perk // yea
+
+// helper
+uint ItemPerkTypeParam(uint8 type)
+{
+    uint param = 0;
+    switch(type)
+    {
+    case ITEM_PERK_ARMOR:
+        return(ST_CURRENT_ARMOR_PERK);
+    case ITEM_PERK_HELMET:
+        return(ST_CURRENT_HELMET_PERK);
+    default:
+        DLog("Invalid itemPerk type<" + type + ">");
+        break;
+    }
+
+    return(0);
+}
+
+void DisableItemPerk(Critter& cr, uint8 type)
+{
+    uint param = ItemPerkTypeParam(type);
+
+    if(param > 0)
+    {
+        ApplyItemPerk(cr, type, cr.Stat[param], false);
+        cr.StatBase[param] = 0;
+    }
+}
+
+void DisableItemPerk(Critter& cr, Item& item, uint8 type)
+{
+    uint param = ItemPerkTypeParam(type);
+
+    ApplyItemPerk(cr, type, item.Proto.Item_Perk, false);
+    if(param > 0)
+        cr.StatBase[param] = 0;
+}
+
+void EnableItemPerk(Critter& cr, Item& item, uint8 type)
+{
+    uint param = ItemPerkTypeParam(type);
+
+    ApplyItemPerk(cr, type, item.Proto.Item_Perk, true);
+    if(param > 0)
+        cr.StatBase[param] = item.Proto.Item_Perk;
+}
+
+void ApplyItemPerk(Critter& cr, uint8 type, uint perk, bool enable)
+{
+    int sign = (enable ? int(1) : -1);
+
+    switch(type)
+    {
+    case ITEM_PERK_ARMOR:
+    {
+        switch(perk)
+        {
+        case ARMOR_PERK_POWERED:
+            cr.StatBase[ST_STRENGTH_EXT] += 3 * sign;
+            cr.StatBase[ST_RADIATION_RESISTANCE_EXT] += 30 * sign;
+            break;
+        case ARMOR_PERK_COMBAT:
+            cr.StatBase[ST_RADIATION_RESISTANCE_EXT] += 20 * sign;
+            break;
+        case ARMOR_PERK_ADVANCED_I:
+            cr.StatBase[ST_STRENGTH_EXT] += 4 * sign;
+            cr.StatBase[ST_RADIATION_RESISTANCE_EXT] += 60 * sign;
+            break;
+        case ARMOR_PERK_ADVANCED_II:
+            cr.StatBase[ST_STRENGTH_EXT] += 4 * sign;
+            cr.StatBase[ST_RADIATION_RESISTANCE_EXT] += 75 * sign;
+            break;
+        default:
+            break;
+        }
+        ;
+        break;
+    }
+
+    case ITEM_PERK_HELMET:
+    {
+        switch(perk)
+        {
+        case HELMET_PERK_CHARISMA:
+            cr.StatBase[ST_CHARISMA_EXT] += 1 * sign;
+            break;
+        case HELMET_PERK_PERCEPTION_GLASSES:
+            cr.StatBase[ST_PERCEPTION_EXT] += (cr.StatBase[ST_PERCEPTION] >= 4 ? 0 : 4 - CLAMP(cr.StatBase[ST_PERCEPTION], 1, 3)) * sign;
+            break;
+        // HELMET_PERK_PROTECT_EYES -> combat.fos, "now we change aim"
+
+        default:
+            break;
+        }
+        ;
+        break;
+    }
+    }
+}
+#endif // __ITEM_PERKS__ //

@@ -1,0 +1,75 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// world_common.fos
+//
+
+// common world functions here, like IsNight and other things whose definitions encompass the whole world
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "groups_h.fos"
+
+bool IsNight()
+{
+    return(IS_NIGHT(__Hour));
+}
+
+bool IsDay()
+{
+    return(!IsNight());
+}
+
+bool IsMorning()
+{
+    return(IS_MORNING(__Hour));
+}
+
+bool IsAfternoon()
+{
+    return(IS_AFTERNOON(__Hour));
+}
+
+bool IsEvening()
+{
+    return(IS_EVENING(__Hour));
+}
+
+bool IsHospital(Map@ map)
+{
+    return map.GetLocation().IsReplication();
+}
+
+bool IsCave(Map@ map)
+{
+    return map.GetLocation().IsCave();
+}
+
+bool IsMine(Map@ map)
+{
+    return map.GetLocation().IsMine();
+}
+
+bool IsJail(Map@ map)
+{
+    int pid = map.GetProtoId();
+    return(pid == 380 || pid == 381);
+}
+
+bool IsBase(Map@ map)
+{
+    return map.GetLocation().IsBase();
+}
+
+bool IsTent(Map@ map)
+{
+    return map.GetLocation().IsTent();
+}
+
+// Some deathmatch arenas and other "event" maps
+bool IsWarzone(Map@ map)
+{
+    int pid = map.GetProtoId(); // Map PID
+    return(pid == 550 || pid == 551);
+}

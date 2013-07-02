@@ -1,0 +1,203 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+9 1030 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+6 2020 #
+7 2030 #
+80 2040 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+0 2050 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+9 3030 #
+0 3040 @
+4 4000 None 0 #
+9 4010 #
+0 4020 @
+5 5000 None 0 #
+3 5010 #
+0 5020 @
+6 6000 None 0 #
+9 6010 #
+0 6020 @
+7 7000 None 0 #
+30 7010 D _var p q_redd_rats = 0 #
+9 7020 #
+0 7030 @
+9 8000 None 0 #
+3 8010 #
+6 8020 #
+7 8030 #
+80 8040 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+41 8050 D _var p q_redd_rats = 3 #
+39 8060 D _var p q_redd_rats = 1 R _var p q_redd_rats = 5 #
+40 8070 D _param p ST_STRENGTH > 100 #
+38 8080 D _param p ST_STRENGTH > 100 #
+39 8090 D _script npc_common@d_HasNumPlayersInParty 1 1 D _param p ST_STRENGTH > 100 #
+35 8100 D _script npc_common@d_HasNotNumPlayersInParty 1 1 D _param p ST_STRENGTH > 100 #
+39 8110 D _script npc_common@d_HasNumPlayersInParty 1 1 D _param p ST_STRENGTH > 100 #
+35 8120 D _script npc_common@d_HasNotNumPlayersInParty 1 1 D _param p ST_STRENGTH > 100 #
+0 8130 @
+20 9000 None 0 @
+80 10000 None 0 #
+81 10010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDemolitionExpert0 1 0 #
+82 10020 D _script dialog@d_CheckDemolitionExpert1 1 0 #
+0 10030 @
+81 11000 None 0 #
+83 11010 D _item p PID_BOTTLE_CAPS > 1499 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 11020 @
+82 12000 None 0 #
+83 12010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 12020 @
+83 13000 None 0 #
+0 13010 @
+30 14000 None 0 #
+31 14010 D _var p q_redd_rats < 4 #
+0 14020 D _var p q_redd_rats < 4 #
+35 14030 D _script npc_common@d_HasNotNumPlayersInParty 1 1 D _var p q_redd_rats = 9 D _script dialog@d_QuestTimeoutReady 0  #
+37 14040 D _var p q_redd_rats = 9 D _script dialog@d_QuestTimeoutNotReady 0  #
+36 14050 D _script npc_common@d_HasNumPlayersInParty 1 1 D _var p q_redd_rats = 9 D _script dialog@d_QuestTimeoutReady 0  #
+39 14060 @
+31 15000 None 0 #
+32 15010 #
+0 15020 @
+32 16000 None 0 #
+33 16010 #
+0 16020 @
+33 17000 None 0 #
+0 17010 R _var p q_redd_rats = 1 #
+0 17020 @
+34 18000 None 0 #
+35 18010 D _script npc_common@d_HasNotNumPlayersInParty 1 1 #
+37 18020 #
+36 18030 D _script npc_common@d_HasNumPlayersInParty 1 1 #
+34 18040 @
+35 19000 None 0 #
+0 19010 @
+37 20000 None 0 #
+0 20010 @
+36 21000 None 0 #
+0 21010 R _var p q_redd_rats = 4 @
+38 22000 None 0 #
+0 22010 R _var p q_redd_rats2 = 1 @
+39 23000 None 0 #
+0 23010 @
+40 24000 None 0 #
+0 24010 R _var p q_redd_rats2 = 1 @
+41 25000 None 0 #
+42 25010 #
+0 25020 @
+42 26000 None 0 #
+0 26010 R _script dialog@r_AddMoney 1 100 R _var p q_redd_rats = 4 #
+0 26020 &
+
+[engl]
+{100}{}{Marge LeBarge}
+{200}{}{You see a burly, middle-aged woman covered with rock-dust.}
+{210}{}{You see Marge LeBarge, owner of the Kokoweef Mine.}
+{210}{}{You see a strong, durable woman with an air of authority.}
+{1000}{}{Predialogue installations}
+{1010}{}{Idiot}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{Hello there. I'm Marge. Marge LeBarge, and I run this mine.}
+{2010}{}{What do you mine here?}
+{2020}{}{Are you a Redding native?}
+{2030}{}{Know about any jobs or anything else going on here?}
+{2040}{}{You're a miner right? Then you must know how to blow things up.}
+{2050}{}{I was just looking around a bit. Goodbye.}
+{3000}{}{Gold, of course. We mine it right here at the Kokoweef, and then ship it to Vault City, New Reno, and the New California Republic.}
+{3010}{}{You send it all over the place?}
+{3020}{}{Why did you call your mine Kokoweef?}
+{3030}{}{Let me ask you something else.}
+{3040}{}{I see. Thanks. That's all I need to know for now. Goodbye.}
+{4000}{}{Sure do. Everyone likes gold. You should talk to the caravan master, James Hoffy, if you're really curious about it.}
+{4010}{}{Let me ask you something else.}
+{4020}{}{Thanks, I'll do that. Goodbye.}
+{5000}{}{Why not? Actually, I don't know where the name came from. I think it's always been called that. Even before I got here. It's got kind of a romantic sound to it, don't it? Ko-ko-weef. Yeah, I still like the way that sounds.}
+{5010}{}{Uh, yeah. Okay. Uh, what did you say you mine here?}
+{5020}{}{Uh huh. Well I'll be leaving now. Goodbye.}
+{6000}{}{Heck no. I was born way up north. Right on the edge of a lake. Lake LeBarge, it was.}
+{6010}{}{I've never heard of that. Let me ask you something else.}
+{6020}{}{Sounds nice. Maybe I'll go hunt that place down. Goodbye for now.}
+{7000}{}{Well, if you're not afraid of a little dirty work, you could always ask the sheriff if there's any bounty work to be done.}
+{7010}{}{Yeah... Yeah... I know that. But how about you? Don't you have any problems I could take care of? }
+{7020}{}{Maybe a little later. I've got a couple more questions.}
+{7030}{}{Maybe I'll go speak to him. Goodbye.}
+{8000}{}{What can Marge do you for?}
+{8010}{}{What do you mine here?}
+{8020}{}{Are you a Redding native?}
+{8030}{}{Know about any jobs or anything else going on here?}
+{8040}{}{You must be one of the experts when it comes to blowing things up.}
+{8050}{}{I've been told by Caminetto to speak with you about the job.}
+{8060}{}{About that job with rats... I give up on it.}
+{8070}{}{Mines are clear. I'm here to claim my reward. (Mine has to be clear for the first time)}
+{8080}{}{Mines are clear. I'm here to claim my reward. (Mine has to be clear for the next time, etc... this option shows only if quest is active again god damn.)}
+{8090}{}{Could you let me back inside the mines? I'm not quite finished there, yet. (Not alone)}
+{8100}{}{Could you let me back inside the mines? I'm not quite finished there, yet. (Alone)}
+{8110}{}{Could you let me back inside the mines? I'm not quite finished there, yet. (Not alone, at least second job)}
+{8120}{}{Could you let me back inside the mines? I'm not quite finished there, yet. (alone, at least second job)}
+{8130}{}{I was just looking around a bit. Goodbye.}
+{9000}{}{Sorry, I don't have time for charity cases right now.@@Come back when that head-wound heals up.@@I'm surprised that you can walk and talk at the same time.@@Looks like your belt doesn't go through all the loops.@@You're just a few clowns short of a circus, aren't you?}
+{10000}{}{Well, it's not quite as simple as all that. Those methods are quite rare these days. But yes, I can still "blow things up." What were you interested in?}
+{10010}{}{Ma'am, I want to know how to make bigger explosions whilst using less explosives.}
+{10020}{}{Just wanted to know how to make some fancy exploding thingies... [You explain everything to Marge]}
+{10030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{11000}{}{Yeah, yeah, got ya -- but I need something in return. You see, my miners are pretty addicted to that new drug - the Jet. If they're out of it, the gold flow suffers, that's all there is to it. You bring me $1500 to buy some and then we can talk explosives, okay?}
+{11010}{}{It's already taken care of, here you go. [You give her $1500]}
+{11020}{}{Roger that, on my way.}
+{12000}{}{That can be arranged, I guess... But, you see, my miners need Jet badly, so you could do me a favor and give me some caps to buy some. Let me see -- $3000 should be enough to keep them working for a while.}
+{12010}{}{It's already taken care of, here you go. [You give her $3000]}
+{12020}{}{Roger that, on my way.}
+{13000}{}{Excellent, we can start right after I put this to a safe place. [After hiding the money, Marge explains everything you wanted to know]}
+{13010}{}{You really helped me a lot, thanks for that. I have to go now, bye!}
+{14000}{}{Well... Actually we have a rat problems down the mines. Filthy vermins are infesting whole undergrounds. We hire mercenaries. They kill them. But rats keep coming back and slowing down the whole gold production since most miners simply don't want to work during rat invasion.}
+{14010}{}{Pssh. That's easy! Just take me to the mine and I'll take care of your problem... For the right pay of course! }
+{14020}{}{Rat problems? Are you fucking kidding me? Do I look like a fucking pest controller to you? Goodbye, lady.}
+{14030}{}{Can you take me to the mines then? I'm up for smashing some rats!  (Quest completed at least once) (Alone)}
+{14040}{}{Can you take me to the mines then? I'm up for smashing some rats!  (Quest completed at least once) (Cooldown)}
+{14050}{}{Can you take me to the mines then? I'm up for smashing some rats!  (Quest completed at least once)}
+{14060}{}{Maybe a little later. I've got a couple more questions.}
+{15000}{}{Ah of course! If you would manage to clean the mines I'll gladly pay you 800 caps for the job. But... Uh forget it. I doubt you can help here. You just don't look very tough, honey and I'm afraid you would just get yourself hurt.}
+{15010}{}{Hurt killing rats? Are you serious? }
+{15020}{}{Well... Fuck you. You don't look very tough neither<end> }
+{16000}{}{You see... Those aren't just ordinary rats. Those are some kind of mutated freaky half-moles half-rats. Their claws can tear even through a thick armor. }
+{16010}{}{I'm still up for the job. Just tell me what to do. }
+{16020}{}{Oh. I guess I'll be heading out then, bye.}
+{17000}{}{Fine. But first you need to prove that are the right @sex@|guy||girl| for the job. Go talk with Caminetto. He usually hangs out in Malamute Saloon after work. He's my old... Err... Friend... He's gonna ask you to do something more simple for him and let me know how well did you do. }
+{17010}{}{Allright. I'll come back with his recommendation. Bye.}
+{17020}{}{Forget it. I'm outta here!}
+{18000}{}{Don't worry I've heard what you did, honey. You could be the right person for this extermination job, I guess.}
+{18010}{}{Can you take me to the mines then? I'm up for smashing some rats!  (alone)}
+{18020}{}{Can you take me to the mines then? Let's smash some rats! (cooldown)}
+{18030}{}{Can you take me to the mines then? We're up for smashing some rats!}
+{18040}{}{Maybe a little later. I've got a couple more questions. }
+{19000}{}{Alone? That's a deathwish! Bring some tough friends with you and I'll let you inside. }
+{19010}{}{Allright.}
+{20000}{}{Rats? No rats are in the mines at this moment, sweety... Oh but I'm sure they'll return. Just come back later. }
+{20010}{}{Allright.}
+{21000}{}{Allright. Let's go.}
+{21010}{}{[Follow]}
+{22000}{}{Ah, great job down there. A bit messy bit still great. Here you go. }
+{22010}{}{Thanks. [You leave.]}
+{23000}{}{If it's too hard for you then just give up and I'll hire someone else. *sighs*}
+{23010}{}{Allright.}
+{24000}{}{Ah, great job down there. A bit messy bit still great. Here you go. }
+{24010}{}{Thanks. [Exit]}
+{25000}{}{Don't worry I've heard what you did, honey. Let's see about your payment the, shall we?}
+{25010}{}{Payment? I thought you were going to take me down to the mines...}
+{25020}{}{I need no payments, and your babbling bores me to death already. Forget everything I said. [Leave]}
+{26000}{}{Oh, c'mon, don't you think if there even were rats of some sort that the miners wouldn't take care of them already? I just needed someone to take care of that Caminetto job, that's all. Since two of us gotta deal, he pays me $200 for the radscorpion tails, and I give a cut to the providers. So, here you go, $100 for your work. Hope you're happy with it.}
+{26010}{}{Well, money has always been welcomed by these hands, you know what I mean? [Take the money] See you around, Marge!}
+{26020}{}{I need none of your stinking money! [Leave]}
+

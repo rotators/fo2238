@@ -1,0 +1,15 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_spawner_container.fos
+//
+
+// This script turns an item into a spawning container. See spawner_container.fos for details.
+
+#include "spawner_container_h.fos"
+
+void item_init(Item& item, bool firstTime)
+{
+    MakeSpawnerContainer(item, item.Val4);
+}

@@ -1,0 +1,361 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_tanker.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "mapdata_h.fos"
+#include "_scripts.fos"
+#include "_entires.fos"
+#include "entire.fos"
+#include "backend_h.fos"
+#include "utils_h.fos"
+#include "MsgStr.h"
+
+// map data flags
+// MAP_DATA_VALVES is used on root map, MAP_StrandedTanker_Outside
+#define MD_FLG_VALVE1        (0x1)
+#define MD_FLG_VALVE2        (0x2)
+#define MD_FLG_OIL_CAN       (0x4)
+#define MD_FLG_MACHINE       (0x8)
+#define MD_FLG_STEAM         (0x10)
+
+// MAP_DATA_HANDYS is used on the MAP_StrandedTanker_Level2 map
+#define MD_FLG_HANDYS_OFF    (0x1)
+#define MD_FLG_EXP_OFF       (0x2)
+#define MD_FLG_EXP_ON        (0x4)
+
+// other
+#define PID_MR_HANDY         (73)
+
+void r_SpawnTanker(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_StrandedTanker, 122, 223, crits);
+    if(loc == 0)
+        return;
+    GameVar@ locidv = GetLocalVar(LVAR_q_strandedrust_locid, player.Id);
+    locidv = loc;
+    // player.SetKnownLoc(true, loc);
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(location);
+    SetQuestGarbager(0, player.Id, loc, LVAR_q_strandedrust, 4);
+    // player.SetKnownLoc(true, loc);
+}
+
+void r_DeleteTanker(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_strandedrust_locid, player.Id);
+    DeleteLocation(var.GetValue());
+}
+
+void _Hole(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseRopeOnHole");
+}
+
+bool _UseRopeOnHole(Item& item, Critter& crit, Item@ usedItem)
+{
+    if(!crit.IsPlayer())
+        return false;
+    if(!valid(usedItem))
+        return false;
+    if(usedItem.GetProtoId() != PID_ROPE)
+        return false;
+    Map@          map = crit.GetMap();
+    Map@          lowermap = map.GetLocation().GetMap(MAP_StrandedTanker_Level3);
+    array<Entire> ropespawns;
+    if(ParseEntires(lowermap, ropespawns, ENTIRE_TANKER_ROPE) == 0)
+        return false;
+
+    Item@ newRope = lowermap.AddItem(ropespawns[0].HexX, ropespawns[0].HexY, PID_TANKER_ROPE, 1);
+    Item@ newHole = map.AddItem(item.HexX, item.HexY, PID_TANKER_ROPE_HOLE, 1);
+    newHole.SetEvent(ITEM_EVENT_SKILL, "_UseRopeHole");
+    newRope.SetEvent(ITEM_EVENT_SKILL, "_UseRope");
+    DeleteItem(item);
+    crit.StatBase[ST_EXPERIENCE] += 50;
+    LogQuestExperience(crit, 50, "tanker");
+    crit.Say(SAY_NETMSG, "You've dropped a rope down the hole.");
+    return true;
+}
+
+bool _UseRopeHole(Item& item, Critter& crit, int skill)
+{
+    if(skill != -1)
+        return false;
+    crit.TransitToMap(GetMap(item.MapId).GetLocation().GetMap(MAP_StrandedTanker_Level3).Id, 6);
+    return true;
+}
+
+bool _UseRope(Item& item, Critter& crit, int skill)
+{
+    if(skill != -1)
+        return false;
+    crit.TransitToMap(GetMap(item.MapId).GetLocation().GetMap(MAP_StrandedTanker_Level2).Id, 7);
+    return true;
+}
+
+bool s_Valve1(Critter& player, Scenery& valve, int skill, Item@ item)
+{
+    if(valid(item))
+        return false;
+
+    if(skill != -1)
+        return false;
+
+    Map@ map = player.GetMap().GetLocation().GetMap(MAP_StrandedTanker_Outside);   // "root" map of the location
+    uint flags = map.GetData(MAP_DATA_VALVES);
+
+    if(FLAG(flags, MD_FLG_STEAM))
+    {
+        player.Say(SAY_NETMSG, "The valve is stuck and you can't rotate it anymore.");   // player tried to use the valve after the steam business is complete; error message
+        return true;
+    }
+
+    if(FLAG(flags, MD_FLG_VALVE1))
+    {
+        player.Say(SAY_NETMSG, "The valve is stuck. It looks like the compressure is too high.");   // player tried to use the valve less than 3 seconds after the last use; error message
+        return true;
+    }
+
+    if(!FLAG(flags, MD_FLG_MACHINE))
+    {
+        player.Say(SAY_NETMSG, "You try to use the valve, but nothing happens.");   // higher valve is used, but machine parts weren't; error message
+        return true;
+    }
+
+    SETFLAG(flags, MD_FLG_VALVE1);
+    if(flags & (MD_FLG_VALVE1 | MD_FLG_VALVE2) == (MD_FLG_VALVE1 | MD_FLG_VALVE2))
+    {
+        RemoveSteam(map.GetLocation());
+        SETFLAG(flags, MD_FLG_STEAM);
+        map.SetData(MAP_DATA_VALVES, flags);
+        player.Say(SAY_NETMSG, "You rotate the valve and the noise of the machines can be heard. Looks like you've redirected the compressure.");   // successful use of both valves
+        player.StatBase[ST_EXPERIENCE] += 100;
+        LogQuestExperience(player, 100, "tanker");
+        return true;
+    }
+    // else
+    map.SetData(MAP_DATA_VALVES, flags);
+    player.Say(SAY_NETMSG, "You rotate the valve, the compressure is pending.");   // one valve is used, second must be used soon
+    uint[] values = { map.GetLocation().Id, MD_FLG_VALVE1 };
+    CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_shutvalve", values, true);
+    return true;
+}
+
+
+bool s_Valve2(Critter& player, Scenery& valve, int skill, Item@ item)
+{
+    if(valid(item))
+    {
+        if(item.GetProtoId() != PID_OIL_CAN)
+            return false;
+        Map@ map = player.GetMap().GetLocation().GetMap(MAP_StrandedTanker_Outside);   // "root" map of the location
+        uint flags = map.GetData(MAP_DATA_VALVES);
+        if(FLAG(flags, MD_FLG_OIL_CAN))
+        {
+            player.Say(SAY_NETMSG, "You've already poured oil on this valve.");
+            return true;
+        }
+        DeleteItem(item);
+        map.SetData(MAP_DATA_VALVES, flags | MD_FLG_OIL_CAN);
+        player.StatBase[ST_EXPERIENCE] += 100;
+        LogQuestExperience(player, 100, "tanker");
+        player.Say(SAY_NETMSG, "You've poured some oil on this old valve.");
+        return true;
+    }
+    else
+    {
+        if(skill != -1)
+            return false;
+        Map@ map = player.GetMap().GetLocation().GetMap(MAP_StrandedTanker_Outside);   // "root" map of the location
+        uint flags = map.GetData(MAP_DATA_VALVES);
+
+        if(FLAG(flags, MD_FLG_STEAM))
+        {
+            player.Say(SAY_NETMSG, "You rotate the valve but nothing happens.");   // player tried to use the valve after the steam business is complete; error message
+            return true;
+        }
+
+        if(FLAG(flags, MD_FLG_VALVE2))
+        {
+            player.Say(SAY_NETMSG, "You try as hard as possible, but can't rotate the valve.");   // player tried to use the valve less than 3 seconds after the last use; error message
+            return true;
+        }
+
+        if(!FLAG(flags, MD_FLG_OIL_CAN))
+        {
+            player.Say(SAY_NETMSG, "It won't budge.");   // player tried to move the valve without oiling it first; error message
+            return true;
+        }
+
+        if(!FLAG(flags, MD_FLG_MACHINE))
+        {
+            player.Say(SAY_NETMSG, "You can now use the valve, but after you tried to open the ventile, a big noise came out of the generator machine behind you. Seems like it is broken now. You have to fix it first, before you can use the valve.");   // oiled lower valve is used, but machine parts weren't; error message
+            return true;
+        }
+
+        SETFLAG(flags, MD_FLG_VALVE2);
+        if(flags & (MD_FLG_VALVE1 | MD_FLG_VALVE2) == (MD_FLG_VALVE1 | MD_FLG_VALVE2))
+        {
+            RemoveSteam(map.GetLocation());
+            SETFLAG(flags, MD_FLG_STEAM);
+            map.SetData(MAP_DATA_VALVES, flags);
+            player.Say(SAY_NETMSG, "You rotate the valve and the noise of the machines can be heard. Seems like you've redirected the compressure.");   // successful use of both valves
+            LogQuestExperience(player, 100, "tanker");
+            player.StatBase[ST_EXPERIENCE] += 100;
+            return true;
+        }
+        // else
+        map.SetData(MAP_DATA_VALVES, flags);
+        player.Say(SAY_NETMSG, "This valve works, now you have to find and use the other valve fast.");   // one valve is used, second must be used soon
+        uint[] values = { map.GetLocation().Id, MD_FLG_VALVE2 };
+        CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_shutvalve", values, true);
+        return true;
+    }
+}
+
+bool s_Machine(Critter& player, Scenery& valve, int skill, Item@ item)
+{
+    if(!player.IsPlayer())
+        return false;
+    if(!valid(item))
+        return false;
+    if(item.GetProtoId() != PID_TANKER_PUMPPART)
+        return false;
+    Map@ map = player.GetMap().GetLocation().GetMap(MAP_StrandedTanker_Outside);   // "root" map of the location
+    uint flags = map.GetData(MAP_DATA_VALVES);
+    if(FLAG(flags, MD_FLG_MACHINE))
+    {
+        player.Say(SAY_NETMSG, "This does nothing. The machine is already repaired.");   // player tried to use machine parts after fixing the machine; error message
+        return true;
+    }
+
+    if(player.Timeout[TO_SK_REPAIR] > 0)
+    {
+        player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+        return true;
+    }
+
+    player.TimeoutBase[TO_SK_REPAIR] = player.Timeout[TO_SK_REPAIR] + REAL_MINUTE(2);   // 2 minutes repair timeout
+
+    if(player.Skill[SK_REPAIR] < Random(1, 100) + 100)
+    {
+        player.Say(SAY_NETMSG, "You try to fix the machine, but failed in doing this.");   // machine parts used, repair test failed
+        return true;
+    }
+
+    SETFLAG(flags, MD_FLG_MACHINE);
+    map.SetData(MAP_DATA_VALVES, flags);
+    DeleteItem(item);
+    player.Say(SAY_NETMSG, "You successfully repaired the rusty machine with the spares.");   // successful use of machine parts
+    player.StatBase[ST_EXPERIENCE] += 500;
+    LogQuestExperience(player, 500, SK_REPAIR, "tanker");
+    return true;
+}
+
+bool s_Terminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != -1 || valid(item))
+        return false;
+    RunDialog(player, DIALOG_q_tanker_terminal, terminal.HexX, terminal.HexY, false);
+    return true;
+}
+
+void RemoveSteam(Location@ loc)
+{
+    Map@         map = loc.GetMap(MAP_StrandedTanker_Level3);
+    array<Item@> steams;
+    map.GetItems(PID_TANKER_STEAM, steams);
+    DeleteItems(steams);
+}
+
+uint e_shutvalve(array<uint>@ values)
+{
+    Map@ map = GetLocation(values[0]).GetMap(MAP_StrandedTanker_Outside);
+    uint flags = map.GetData(MAP_DATA_VALVES);
+    UNSETFLAG(flags, values[1]);
+    map.SetData(MAP_DATA_VALVES, flags);
+    return 0;
+}
+
+bool d_HandysHostile(Critter& player, Critter@ npc)
+{
+    return !FLAG(player.GetMap().GetData(MAP_DATA_HANDYS), MD_FLG_HANDYS_OFF);
+}
+
+bool d_NotHandysHostile(Critter& player, Critter@ npc)   // yes, this function name is an insult for the english grammar
+{
+    return FLAG(player.GetMap().GetData(MAP_DATA_HANDYS), MD_FLG_HANDYS_OFF);
+}
+
+uint r_ToggleHandys(Critter& player, Critter@ npc, int successnode)
+{
+    if(player.Skill[SK_SCIENCE] - 75 < Random(1, 100))
+        return 0;
+
+    Map@ map = player.GetMap();
+    uint flags = map.GetData(MAP_DATA_HANDYS);
+
+    if(!FLAG(flags, MD_FLG_HANDYS_OFF))      // turn them off
+    {
+        SETFLAG(flags, MD_FLG_HANDYS_OFF);
+        if(!FLAG(flags, MD_FLG_EXP_OFF))
+        {
+            SETFLAG(flags, MD_FLG_EXP_OFF);
+            player.StatBase[ST_EXPERIENCE] += 200;
+            LogQuestExperience(player, 200, SK_SCIENCE, "tanker");
+        }
+        array<Critter@> handys;
+        uint            n = map.GetCritters(PID_MR_HANDY, FIND_LIFE_AND_KO | FIND_ONLY_NPC, handys);
+        for(uint i = 0; i < n; i++)
+        {
+            handys[i].SetScript(null);
+            handys[i].ClearEnemyStack();
+            handys[i].DropPlanes();
+        }
+        map.SetData(MAP_DATA_HANDYS, flags);
+    }
+    else // turn them on
+    {
+        UNSETFLAG(flags, MD_FLG_HANDYS_OFF);
+        if(!FLAG(flags, MD_FLG_EXP_ON))
+        {
+            SETFLAG(flags, MD_FLG_EXP_ON);
+            player.StatBase[ST_EXPERIENCE] += 75;
+            LogQuestExperience(player, 75, SK_SCIENCE, "tanker");
+        }
+        array<Critter@> handys;
+        uint            n = map.GetCritters(PID_MR_HANDY, FIND_LIFE_AND_KO | FIND_ONLY_NPC, handys);
+        for(uint i = 0; i < n; i++)
+            handys[i].SetScript(SCRIPT_mob);
+        map.SetData(MAP_DATA_HANDYS, flags);
+    }
+
+    return successnode;
+}
+
+
+bool d_QuestTimeoutReady(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_strandedrust_terminal_timeout, player.Id);
+    DLog("var value: " + var.GetValue());
+    return var.GetValue() == 0 || uint(var.GetValue()) <= ELAPSED_TIME;
+}
+
+bool d_QuestTimeoutNotReady(Critter& player, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_strandedrust_terminal_timeout, player.Id);
+    return var.GetValue() != 0 && uint(var.GetValue()) > ELAPSED_TIME;
+}
+
+void r_QuestTimeout(Critter& player, Critter@ npc, int timeout)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_strandedrust_terminal_timeout, player.Id);
+    var = ELAPSED_TIME + GAME_HOUR(timeout);
+}

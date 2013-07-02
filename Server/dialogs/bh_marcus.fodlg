@@ -1,0 +1,199 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+4 1020 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+5 4010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+7 4020 #
+11 4030 #
+80 4040 D _param p PE_PROFESSION_GUNSMITH_B < 2 D _var n name_mem_npc_player = 1 #
+4 4050 D _script town@d_IsNotControllingTown 1 1 D _script dialog@d_IsGangMember 0  D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+50 4060 D _script town@d_CanRecruitMilitia 0  #
+120 4070 D _script town@d_IsControllingTown 1 1 #
+0 4080 #
+500 4090 D _script town@d_CanChangeLaws 0  @
+5 5000 None 0 #
+7 5010 #
+7 5020 #
+0 5030 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+6 7010 #
+8 7020 #
+4 7030 #
+0 7040 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 #
+4 10020 #
+0 10030 @
+11 11000 None 0 #
+4 11010 #
+0 11020 @
+50 12000 town@dlg_ShowMilitiaCost 0 #
+50 12010 R _script town@r_RecruitMilitia 0  #
+4 12020 @
+80 13000 None 0 #
+81 13010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithB0 1 0 #
+82 13020 D _script dialog@d_CheckGunsmithB1 1 0 #
+0 13030 @
+81 14000 None 0 #
+83 14010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_B = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 14020 @
+82 15000 None 0 #
+84 15010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_B = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 15020 @
+83 16000 None 0 #
+0 16010 @
+84 17000 None 0 #
+0 17010 @
+302 18000 dialog@dlg_ShowFaction 0 #
+0 18010 #
+65507 18020 #
+130 18030 D _script town@d_MembersAlmost 1 1 R _script town@r_TakeoverCheck 1 0 @
+301 19000 dialog@dlg_ShowFaction 0 #
+0 19010 #
+130 19020 D _script town@d_PresentAlmost 1 1 R _script town@r_TakeoverCheck 1 0 @
+130 20000 None 0 #
+0 20010 #
+65507 20020 @
+310 21000 None 0 #
+0 21010 D _script town@d_GainControl 1 1 @
+320 22000 None 0 #
+0 22010 D _script town@d_GainControl 1 1 @
+120 23000 None 0 @
+500 24000 town@dlg_ShowPolicies 0 #
+500 24010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 24020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 24030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 24040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 24050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 24060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+4 24070 @
+410 25000 None 0 #
+0 25010 @
+420 26000 None 0 #
+0 26010 @
+430 27000 None 0 #
+0 27010 @
+440 28000 None 0 @
+450 29000 None 0 #
+0 29010 @
+330 30000 None 0 &
+
+[engl]
+{100}{}{Marcus}
+{110}{}{avatar_marcus.png}
+{200}{}{You see a burly old mutant.}
+{210}{}{You see the sheriff of Broken Hills.}
+{210}{}{You see a burly old mutant with a weary cast to his face. He still looks vigorous and tough.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Normal}
+{2000}{}{What do you want, human?}
+{2010}{}{Uggie.}
+{3000}{}{Yeah, I’m an ugly mutant. I also run this place. You got a problem with that?}
+{3010}{}{Uh!}
+{4000}{}{What do you want, human?}
+{4010}{}{Who are you?}
+{4020}{}{What’s the story with this place?}
+{4030}{}{Why aren’t you mutants attacking me?}
+{4040}{}{I was wondering, you carrying that big gun around and all... Maybe you could show me a few tricks about big guns.}
+{4050}{}{Do some good, earn some scratch. Got myself a little gang, and we get hungry and bored if we don't have anything to do or any pay coming our way.}
+{4060}{}{We need some volunteers to secure the town.}
+{4070}{}{Where is our cut of the profits?}
+{4080}{}{Bye.}
+{4090}{}{Let's discuss the law in this place.}
+{5000}{}{I’m Marcus, helped build the place. Now I’m sheriff.}
+{5010}{}{You helped build this place? That must have been a long time ago...}
+{5020}{}{Bullshit. How could you have been around that long?}
+{5030}{}{Bye.}
+{6000}{}{Right. Me and a human named Jacob built this place around that old bank about 60 years ago. Anyone’s welcome here, long as they keep the peace.}
+{6010}{}{Great. I have more questions.}
+{6020}{}{Fair enough. Bye.}
+{7000}{}{Long story. Want it short or the whole thing?}
+{7010}{}{Give me the short version.}
+{7020}{}{Hell, I’m not too busy. Let’s hear it all.}
+{7030}{}{Neither. I have more questions.}
+{7040}{}{Neither. See ya.}
+{8000}{}{Right...After the Master and the vats were destroyed, I wandered a bit. No place to go. One day got attacked by this fool wearin’ power armor.}
+{8010}{}{Really?}
+{9000}{}{That was Jacob, from the Brotherhood of Steel. He’d sworn some oath to destroy muties. We tussled for a while - probably a day or two. After a while, we just started laughing. What was the point?}
+{9010}{}{So why did they set up here?}
+{10000}{}{Uranium mine. I knew there was one around from old maps. Now anybody’s welcome here - ‘long as they act right. Others might not think much of us, but nobody’s more free than we are. There ya go.}
+{10010}{}{What, you’re not killing humans anymore?}
+{10020}{}{I had some more questions.}
+{10030}{}{Thanks. There I go. Bye.}
+{11000}{}{I'm not gonna argue with you, but the fact some mutants are not mindless killers can't be beaten. You are safe in Broken Hills, I assure you.}
+{11010}{}{Yah. I had some more questions.}
+{11020}{}{Oh. My mistake. Well, thanks. Bye.}
+{12000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{12010}{}{Sounds good, here's @lex cost@ caps.}
+{12020}{}{Nah, I think we're doing fine as it is now.}
+{13000}{}{What's on your mind?}
+{13010}{}{I would like to know how they work, what they're made of... technical stuff.}
+{13020}{}{I thought you could clarify some things about the construction and usage of big guns to me.}
+{13030}{}{Erhm... Actually, nothing right now. I better be going.}
+{14000}{}{I really hope you know what you're talking about, otherwise it'll be waste of time. And I need something in return. I'm always short on caps, maybe you could bring me... Let's say $1500.}
+{14010}{}{Okay, I think I've got fifteen hundred right here. Why don't you take it, so we can start right away? [Give him $1500]}
+{14020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{15000}{}{Yeah, I see you're already skilled with those, so it shouldn't take too long. But, you see, I recently ran into some financial problems... How about you get me $3000 and I show you everything I know?}
+{15010}{}{It wasn't easy to find that many caps... It better be worth it! [Give him $3000]}
+{15020}{}{Too bad, I don't have that much on me right now. Maybe some other time then.}
+{16000}{}{Very well, it's a deal then. [Marcus starts explaining. Finally, he gives you a magazine about weapons and ammunition.]}
+{16010}{}{Thanks for everything Jester, that's exectly what I wanted to know. See you!}
+{17000}{}{Very well, it's a deal then. [Marcus starts explaining]}
+{17010}{}{Thanks Jester, that was really something new for me. I have to go now, bye.}
+{18000}{}{'Little' gang is right, all right. You wouldn't last 5 minutes out here. Maybe when you're a little bigger and more seasoned.}
+{18010}{}{Right.}
+{18020}{}{How rude! I must slay you for the honour of @lex faction@!}
+{18030}{}{Small, but perfectly formed. We're seasoned as hell don't even worry about that. You don't think we can last 5 minutes? Gives us the chance and we'll prove you wrong.}
+{19000}{}{[Burps.] I'm gonna need to see a few more heads before I think about handing anything over. Bring the rest of your gang over here and we'll see.}
+{19010}{}{Okay.}
+{19020}{}{It's now about how many heads you see, it's about whats in those heads. And every one of @lex faction@ is smart and quick, along with being obscenely bad ass. It's impossible for anything to go wrong with us watching over the Hills.}
+{20000}{}{Look, I can hear you trying to talk the talk, but I'm not seeing the walk being walked here partner. I'm not handing over anything from this town to anyone but the very best. If this town was run by amateurs, it wouldn't even exist. I just can't take the chance on you.}
+{20010}{}{I understand. Goodbye.}
+{20020}{}{You just made a big mistake turning us down, mutie. You're gonna see how bad ass we are. When we tear the shit out of your town, I mean. Watch us go. [Spit on the floor and kick the wooden beam next to Jester.]}
+{21000}{}{Yeah...this could work. Standard deal - keep Broken Hills running smoothly and safely, you get a cut of the profits. It's a rough town, and things can get nasty if you're not prepared. Deal?}
+{21010}{}{Deal.}
+{22000}{}{Yeah...this could work. Standard deal - keep Broken Hills running smoothly and safely, you get a cut of the profits. It's a rough town, and things can get nasty if you're not prepared. Deal?}
+{22010}{}{Deal.}
+{23000}{}{Go to the room just behind me. You will find everything in the locker.}
+{24000}{}{Here's the current laws in Broken Hills:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{24010}{}{I want it to be legal to carry weapons openly.}
+{24020}{}{I want it to be illegal to carry weapons openly.}
+{24030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{24040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{24050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{24060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{24070}{}{Looks good.}
+{25000}{}{Alright, there you go.}
+{25010}{}{Right.}
+{26000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{26010}{}{Ok.}
+{27000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{27010}{}{Yeah, yeah...}
+{28000}{}{Error. Report this.}
+{29000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{29010}{}{Uh, sure!}
+{30000}{}{Guards, get those retards!}
+

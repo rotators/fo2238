@@ -1,0 +1,156 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+10 1010 D _script dialog@d_IsNotMemberOf 1 FACTION_BOS #
+2 1020 @
+2 2000 None 0 #
+3 2010 D _var p q_bos_initiatequest_start = 14 D _var p faction_bos_quartermaster = 0 #
+100 2020 D _var p faction_bos_quartermaster > 0 #
+0 2030 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 D _param p SK_ENERGY_WEAPONS } 50 R _item p PID_SMALL_ENERGY_CELL + 20 R _item p PID_LASER_PISTOL + 1 R _item p PID_LEATHER_JACKET + 1 R _var p faction_bos_quartermaster = 2 #
+8 7020 D _param p SK_BIG_GUNS } 50 R _item p PID_FLAMER + 1 R _item p PID_FLAMETHROWER_FUEL + 20 R _item p PID_LEATHER_JACKET + 1 R _var p faction_bos_quartermaster = 2 #
+8 7030 D _param p SK_SMALL_GUNS } 50 R _item p PID_DESERT_EAGLE + 1 R _item p PID_44_MAGNUM_JHP + 20 R _item p PID_LEATHER_JACKET + 1 R _var p faction_bos_quartermaster = 2 #
+9 7040 D _param p SK_MELEE_WEAPONS } 50 R _item p PID_SLEDGEHAMMER + 1 R _item p PID_LEATHER_JACKET + 1 R _var p faction_bos_quartermaster = 2 R _item p PID_HEALING_POWDER + 4 #
+9 7050 R _item p PID_LEATHER_JACKET + 1 R _item p PID_SPIKED_KNUCKLES + 1 R _var p faction_bos_quartermaster = 2 R _item p PID_HEALING_POWDER + 4 #
+8 7060 D _param p SK_THROWING } 50 R _item p PID_MOLOTOV_COCKTAIL + 25 R _item p PID_LEATHER_JACKET + 1 R _var p faction_bos_quartermaster = 2 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+0 9010 @
+10 10000 Attack 0 @
+99 11000 dialog@dlg_DisplayFactionPoints 0 #
+100 11010 #
+0 11020 @
+100 12000 None 0 #
+101 12010 #
+102 12020 #
+103 12030 #
+104 12040 #
+106 12050 #
+108 12060 #
+105 12070 #
+0 12080 @
+101 13000 None 0 #
+107 13010 D _var p factions_points_bos } 150 R _item p PID_10MM_JHP + 20 R _item p PID_10MM_PISTOL + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -150 #
+107 13020 D _var p factions_points_bos } 200 R _item p PID_SHOTGUN + 1 R _item p PID_SHOTGUN_SHELLS + 20 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -200 #
+100 13030 @
+102 14000 None 0 #
+107 14010 D _var p factions_points_bos } 500 R _item p PID_FLAMER + 1 R _item p PID_FLAMETHROWER_FUEL + 15 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -500 #
+100 14020 @
+103 15000 None 0 #
+107 15010 D _var p factions_points_bos } 400 R _item p PID_MAGNETO_LASER_PISTOL + 1 R _item p PID_SMALL_ENERGY_CELL + 24 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -400 #
+100 15020 @
+104 16000 None 0 #
+107 16010 D _var p factions_points_bos } 50 R _item p PID_ANTIDOTE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -50 #
+107 16020 D _var p factions_points_bos } 80 R _item p PID_HEALING_POWDER + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -80 #
+107 16030 D _var p factions_points_bos } 50 R _item p PID_CIGARETTES + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -50 #
+100 16040 @
+105 17000 None 0 #
+107 17010 D _var p factions_points_bos } 100 R _item p PID_ROPE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -100 #
+107 17020 D _var p factions_points_bos } 20 R _item p PID_KNIFE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -20 #
+107 17030 D _var p factions_points_bos } 70 R _item p PID_AXE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -70 #
+107 17040 D _var p factions_points_bos } 60 R _item p PID_SLEDGEHAMMER + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -60 #
+100 17050 @
+106 18000 None 0 #
+107 18010 D _var p factions_points_bos } 200 R _item p PID_SPIKED_KNUCKLES + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -200 #
+107 18020 D _var p factions_points_bos } 120 R _item p PID_THROWING_KNIFE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -120 #
+107 18030 D _var p factions_points_bos } 180 R _item p PID_COMBAT_KNIFE + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -180 #
+100 18040 @
+107 19000 None 0 #
+100 19010 #
+0 19020 @
+108 20000 None 0 #
+107 20010 D _var p factions_points_bos } 250 R _item p PID_LEATHER_JACKET + 1 R _script dialog@r_AddFactionPoints 2 FACTION_BOS -250 #
+100 20020 &
+
+[engl]
+{100}{}{Quartermaster}
+{200}{}{You see the quartermaster.}
+{210}{}{He is the quartermaster of the Brotherhood of Steel bunker.}
+{1000}{}{Predialogue installations}
+{1010}{}{not BoS}
+{1020}{}{Default}
+{2000}{}{Hello, Brother. Can I do anything for you?}
+{2010}{}{I have just been promoted and instructed to speak with you, sir.}
+{2020}{}{I'd like to browse your inventory, sir.}
+{2030}{}{No, I'm just looking around.}
+{3000}{}{Ah, an Initiate. Congratulations. I assume this is your first time receiving supplies?}
+{3010}{}{Yes, sir.}
+{4000}{}{Then let me give you a quick rundown. The two tasks you received for your promotion were menial. From this point on, you will receive much more substantial missions. As a reward for completing these tasks, you will receive faction points.}
+{4010}{}{[continue]}
+{5000}{}{Speak to any Brotherhood quartermaster like myself to exchange these points for rewards ranging from armor to weapons to meds. You may even be able to trade for weapon blueprints from time to time.}
+{5010}{}{[continue]}
+{6000}{}{Additionally, faction points will eventually be the means to you being promoted. However, the only member with permission to promote to those ranks is the head quartermaster in the Lost Hills.}
+{6010}{}{Anything else I should know, sir?}
+{7000}{}{As this is your first promotion, you get a free set of armor and a weapon. The armor is standard, so what type of weapons do you specialize in?}
+{7010}{}{Energy weapons, sir!}
+{7020}{}{Big guns, sir!}
+{7030}{}{Small guns, sir!}
+{7040}{}{Melee weapons, sir!}
+{7050}{}{I fight hand-to-hand combat, sir!}
+{7060}{}{Thrown weapons, sir!}
+{8000}{}{Very well, here are your weapon and armor. At the moment, we do not have any work for a Brother of your rank, but you will be notified when you are of use again here. Until then, your orders will be given directly to you in the Lost Hills. Dismissed.}
+{8010}{}{Thank you, sir.}
+{9000}{}{Very well, here are your weapon and armor. And I threw in a few healing powders in there since you'll be on the front lines. At the moment, we do not have any work for a Brother of your rank, but you will be notified when you are of use again here. Until then, your orders will be given directly to you in the Lost Hills. }
+{9010}{}{Thank you, sir.}
+{10000}{}{An Enclave spy! Kill him!}
+{11000}{}{Alright, let's see....You have @lex fp_bos@ points remaining.}
+{11010}{}{Thank you, sir. I'd like to browse your inventory now.}
+{11020}{}{Thank you, sir. I'll be going now.}
+{12000}{}{What are you looking for?}
+{12010}{}{Small guns.}
+{12020}{}{Big guns.}
+{12030}{}{Energy weapons.}
+{12040}{}{Medical supplies.}
+{12050}{}{Any other weapons?}
+{12060}{}{I'm looking for quality armor.}
+{12070}{}{Anything else you can offer me?}
+{12080}{}{Actually, I changed my mind. I don't need anything right now.}
+{13000}{}{[He pulls out a few holsters, each carrying a small gun and some ammunition.] Take your pick.}
+{13010}{}{I'll take the 10mm pistol. [150 FP]}
+{13020}{}{I'll take the shotgun. [200 FP]}
+{13030}{}{Actually, I'd like to look at something else.}
+{14000}{}{[He points to a pile of large weapons in a corner.] Sorry if I can't be bothered to move them all, but that's what you're looking for.}
+{14010}{}{I'll take the flamer. [500 FP]}
+{14020}{}{Actually, I'd like to look at something else.}
+{15000}{}{[He takes out metal cases, each carrying a high-tech weapon.] Take your pick.}
+{15010}{}{I'll take the Magneto Pistol. [400 FP]}
+{15020}{}{Actually, I'd like to look at something else.}
+{16000}{}{[He pulls out a first aid kit. Inside are a few meds.] This is all we have in the medical department.}
+{16010}{}{I need an antidote. [50 FP]}
+{16020}{}{I need some healing powder. [80 FP]}
+{16030}{}{I need a pack of cigarettes. [50 FP]}
+{16040}{}{Actually, I'd like to look at something else.}
+{17000}{}{[He shows you a bag full of assorted survival tools.] Any of this useful to you?}
+{17010}{}{I'll take the rope. [100 FP]}
+{17020}{}{I'll take the knife. [20 FP]}
+{17030}{}{I'll take the hatchet. [70 FP]}
+{17040}{}{I'll take the hammer. [60 FP]}
+{17050}{}{Actually, I'd like to look at something else.}
+{18000}{}{[He takes out quite an assortment of weapons.] What looks good to you?}
+{18010}{}{I'll take the spiked knuckles. [200 FP]}
+{18020}{}{I'll take a throwing knife. [120 FP]}
+{18030}{}{I'll take the combat knife. [180 FP]}
+{18040}{}{Actually, I'd like to look at something else.}
+{19000}{}{There you go. Anything else?}
+{19010}{}{I think I'll keep looking.}
+{19020}{}{No, that's all for now. Thank you.}
+{20000}{}{[He pulls out a hanging rack of armors.] Let's find something that fits you properly.}
+{20010}{}{I'll take the leather jacket. [250 FP]}
+{20020}{}{Actually, I'd like to look at something else.}
+

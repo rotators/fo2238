@@ -1,0 +1,37 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mob_wave_h.fos
+//
+
+#ifndef __MOB_WAVE_H__
+#define __MOB_WAVE_H__
+
+enum MobWaveType
+{
+    MOB_WAVE_TYPE_CUSTOM,
+    MOB_WAVE_TYPE_ENCOUNTER,
+    MOB_WAVE_TYPE_ZOMBIES
+};
+
+#define MOB_WAVE_LOCATION              # (data)       data[0]     // Location Id
+#define MOB_WAVE_TYPE                  # (data)           data[1] // Mob Wave type (see enum MobWaveType)
+#define MOB_WAVE_LEVEL                 # (data)          data[2]  // Level of mob wave (capped)
+#define MOB_WAVE_COUNT                 # (data)          data[3]  // Overall count of mob wave spawning phases
+#define MOB_WAVE_MOBS                  # (data)           data[4] // Mog group defined in warning phase
+#define MOB_WAVE_RESET                 # (data)          data[5]
+#define MOB_WAVE_TIME_SCALE            # (data)     data[6]
+
+#define MOB_WAVE_TIME_SPAWNING_BASE    (REAL_SECOND(15))
+#define MOB_WAVE_TIME_SPAWNING         # (data)  ((MOB_WAVE_TIME_SPAWNING_BASE * MOB_WAVE_TIME_SCALE(data)) / 100)
+#define MOB_WAVE_TIME_WARNING          # (data)   (((Random(REAL_SECOND(MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][0][0]), REAL_SECOND(MobWaves[MOB_WAVE_TYPE(data)][MOB_WAVE_LEVEL(data)][0][1])) - MOB_WAVE_TIME_SPAWNING_BASE) * MOB_WAVE_TIME_SCALE(data)) / 100)
+
+#define MOB_WAVE_MAX_MOBS              (50)     // Maximum number of alive Mob Wave mobs in a map
+
+#define _LocationHasMobWave            # (loc) (loc.GetMapByIndex(0).GetData(MAP_DATA_MOB_WAVE) > 0)
+
+#ifndef __MOB_WAVE__
+import void TryStartEncounterMobWave(Map& map) from "mob_wave";
+#endif // __MOB_WAVE__ //
+#endif // __MOB_WAVE_H__ //

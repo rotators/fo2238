@@ -1,0 +1,33 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// buffer_lazy_h.fos
+//
+
+#ifndef __BUFFER_LAZY_H__
+#define __BUFFER_LAZY_H__
+
+#include "_defines.fos"
+
+//
+// ...docs...
+//
+
+// Module name, as seen by AngelScript, for fast module renaming
+#define BUFFERLAZY_MODULE         "buffer_lazy"
+
+#define BUFFERLAZY_SAFE_ACCESS    (ACCESS_MODER)
+// #define BUFFERLAZY_
+
+#ifndef __BUFFER_LAZY__
+
+# ifdef __CLIENT
+import void RunLazyScript(string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4) from BUFFERLAZY_MODULE;
+import void RunLazyScriptUnsafe(string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4) from BUFFERLAZY_MODULE;
+# endif
+# ifdef __SERVER
+import void RunLazyScript(Critter& player, string& funcName, int p0, int p1, int p2, string@ p3, array<int>@ p4) from BUFFERLAZY_MODULE;
+# endif
+#endif // !__BUFFER_LAZY__
+#endif // __BUFFER_LAZY_H__ //

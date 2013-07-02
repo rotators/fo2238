@@ -1,0 +1,28 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// generator.fos
+//
+
+#include "_macros.fos"
+#include "MsgStr.h"
+
+bool s_Generator(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    int bonus = 0;
+    if(valid(item))
+    {
+        if(item.GetProtoId() == PID_MULTI_TOOL)
+            bonus = 25;
+        else if(item.GetProtoId() == PID_SUPER_TOOL_KIT)
+            bonus = 50;
+        else
+            return false;
+    }
+    else if(skill != SK_REPAIR)
+        return false;
+
+    player.Say(SAY_NETMSG, "Not implemented.");
+    return true;
+}

@@ -1,0 +1,211 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_vcity.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "economy_h.fos"
+#include "elevators_h.fos"
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+
+import void StartFirstTentQuest(Critter& player) from "quest_first_tent";
+
+//
+// Initialize map, and store the Vault City faction id
+// to be read by their terminal
+//
+// Map Data:
+// 0 - faction id (VC)
+// 2 - bank id (VC bank)
+//
+
+// vault elevator
+CElevator VaultElevator(ELEVATOR_VAULT_123);
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_CritterOut");
+
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_VAULT_CITY);
+        map.SetData(MAP_DATA_BANK, BANK_VAULTCITY);         // This map contains the Vault City bank
+    }
+    if(!ElevatorsAdded)
+    {
+        AddElevator(VaultElevator);
+        ElevatorsAdded = true;
+    }
+    // parse elevators
+    if(map.GetProtoId() == MAP_VaultCityVaultLevel1 ||
+       map.GetProtoId() == MAP_VaultCityVaultLevel2 ||
+       map.GetProtoId() == MAP_VaultCityVaultLevel3)
+    {
+        uint16 x, y;
+        // num2 for vault elevator
+        if(map.GetEntireCoords(2, 0, x, y))
+            VaultElevator.AddFloor(map.Id, 2);
+    }
+
+    if(firstTime && map.GetProtoId() == MAP_VaultCityDowntown)
+    {
+        uint[] maxes = { 25, 20 };
+        SetAlertMap(map, maxes);
+    }
+}
+
+
+void _CritterOut(Map& map, Critter& cr)
+{
+    if(cr.IsPlayer() && _IsOnline(cr) && GetLocalVar(LVAR_q_first_tent, cr.Id) == 0 && cr.Param[ST_LEVEL] > 1)
+    {
+        StartFirstTentQuest(cr);
+    }
+}
+
+
+//////////////
+// TRIGGERS
+//////////////
+
+//
+// Elevator triggers
+//
+void t_ElevatorVault(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(VaultElevator, critter, entered);
+}
+
+void t_NearGate(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    // Trigger [151, 246]
+    if(trigger.HexX == 151 && trigger.HexY == 246)
+        if(dir != 3 && dir != 4)
+            return;
+    // Trigger [166, 244]
+    if(trigger.HexX == 166 && trigger.HexY == 244)
+        if(dir != 1)
+            return;
+    // Normal triggers
+    if((trigger.HexX != 166 && trigger.HexY != 244) && (trigger.HexX != 151 && trigger.HexY != 246))
+        if(dir == 1 || dir == 2 || dir == 3)
+            return;
+
+    critter.SendMessage(MSG_VC_PLAYER_NEAR_GATE, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_EnterGate(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_AT_GATE, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_NearCouncil(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_NEAR_COUNCIL, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void t_EnterCouncil(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_AT_COUNCIL, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// near hq building entrance
+void t_NearHq(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    // Trigger [179, 166]
+    if(trigger.HexX == 179 && trigger.HexY == 166 && dir < 3)
+        return;
+
+    // Triggers in line x [179]
+    if(trigger.HexX == 179 && dir < 3)
+        return;
+
+    // Triggers in lines y [166, 173]
+    if(trigger.HexY > 165 && trigger.HexY < 174 && (dir == 1 || dir == 2))
+        return;
+
+    // Triggers in lines y [162]
+    if(trigger.HexY == 162 && dir != 1 && dir != 2)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_NEAR_HQ, 0, MESSAGE_TO_VISIBLE_ME);
+}
+// at hq building entrance
+void t_EnterHq(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_AT_HQ, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// near hq underground entrance
+void t_NearHqu(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 2 || dir == 3 || dir == 4)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_NEAR_HQU, 0, MESSAGE_TO_VISIBLE_ME);
+}
+// at hq underground entrance
+void t_EnterHqu(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_AT_HQU, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// near vault entrance
+void t_NearVault(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    // Trigger [104, 172]
+    if(trigger.HexX == 104 && trigger.HexY == 172 && dir > 1)
+        return;
+
+    // Triggers in lines x [104]
+    if(trigger.HexX == 104 && trigger.HexY > 172 && trigger.HexY < 185 && dir > 1)
+        return;
+
+    // Triggers in lines y [170, 172]
+    if(trigger.HexY > 169 && trigger.HexY < 173 && trigger.HexX != 104 && dir != 1 && dir != 2)
+        return;
+
+    // Triggers in lines y [191, 193]
+    if(trigger.HexY > 190 && trigger.HexY < 194 && dir != 0 && dir != 5)
+        return;
+
+    critter.SendMessage(MSG_VC_PLAYER_NEAR_VAULT, 0, MESSAGE_TO_VISIBLE_ME);
+}

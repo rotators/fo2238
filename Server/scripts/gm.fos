@@ -1,0 +1,297 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// gm.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+
+//
+// Module for managing Game Masters (include file for cheats module)
+//
+
+#define AUTH_LEVEL_GM       (1)
+#define AUTH_LEVEL_ADMIN    (2)
+
+//
+// Checks if player is Game Master (if and ONLY if)
+//
+bool GM_IsGameMaster(uint playerId)
+{
+    GameVar@ var = GetLocalVar(LVAR_auth_level, playerId);
+    if(!valid(var))
+        return false;
+    else
+        return var.GetValue() == 1;
+}
+
+//
+// Checks the amount of credit points given player have.
+//
+int GM_GetCredit(uint playerId)
+{
+    GameVar@ var = GetLocalVar(LVAR_gm_credit, playerId);
+    if(!valid(var))
+        return 0;
+    else
+        return var.GetValue();
+}
+
+//
+// Gives credit points to GM
+//
+void GM_GiveCredit(uint playerId, uint amount)
+{
+    if(!GM_IsGameMaster(playerId))
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_gm_credit, playerId);
+
+    var += amount;
+}
+
+//
+// Substracts given amount of credits points
+//
+void GM_DeduceCredit(uint playerId, uint amount)
+{
+    if(!GM_IsGameMaster(playerId))
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_gm_credit, playerId);
+
+    var -= amount;
+}
+
+//
+// Binds npc to GM
+//
+void GM_BindNpc(uint playerId, uint npcId)
+{
+    if(!GM_IsGameMaster(playerId))
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_gm_npc, playerId);
+
+    var = npcId;
+}
+
+//
+// Makes GM out of casual player
+//
+void ExecGMCommand(array<string@>@ command, Critter& player, Critter@ target)
+{
+    player.Say(SAY_NETMSG, "Assigning GM");
+
+    if(target.Id == player.Id)
+    {
+        player.Say(SAY_NETMSG, "You can't make GM out of yourself");
+        return;
+    }
+    if(!target.IsPlayer())
+    {
+        player.Say(SAY_NETMSG, "Target has to be player");
+        return;
+    }
+
+    GameVar@ var = GetLocalVar(LVAR_auth_level, target.Id);
+    var = AUTH_LEVEL_GM;
+
+    // starting amount of credit points
+    string s_credit = GetParameterString(command, "-c");
+    int    credit = 0;
+    StrToInt(s_credit, credit);
+    if(credit > 0)
+    {
+        GM_GiveCredit(target.Id, credit);
+        player.Say(SAY_NETMSG, "Credit points: " + credit);
+    }
+
+    // npc that GM will play
+    string npc = GetParameterString(command, "-t");
+    int    npcId = 0;
+    StrToInt(npc, npcId);
+    if(npcId != 0)
+    {
+        GM_BindNpc(target.Id, npcId);
+        player.Say(SAY_NETMSG, "Bound to npc: " + npcId);
+    }
+}
+
+//
+// Unbind npc from GM
+//
+// void ExecUnbindCommand(string@[]@ command, Critter& player, Critter@ target)
+// {
+// }
+
+//
+// Manipulates stats of the GM character
+//
+// It's not GM command. It's command admin should issue on GMs (he can issue it on every critter though)
+void ExecModCharCommand(array<string@>@ command, Critter& player, Critter@ target)
+{
+    player.Say(SAY_NETMSG, "Modifying GM character...");
+
+    string stat = GetParameterString(command, "-s");
+    if(stat != "")
+    {
+        int val = 0;
+        StrToInt(GetParameterString(command, "-v"), val);
+        ModifyStat(player, target, stat, val);
+    }
+    string armor = GetParameterString(command, "-a");
+    if(armor != "")
+    {
+        ModifyArmor(player, target, armor);
+    }
+}
+
+//
+// Modifies armor of the given critter (BASE armor, any other armor critter can wear
+// applies its modificators too)
+//
+void ModifyArmor(Critter& player, Critter@ target, const string& armor)
+{
+    if(armor == "body")
+    {
+        player.Say(SAY_NETMSG, "Wearing off cheated armor");
+        mod_armor(target, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    }
+    else if(armor == "lj")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to leather jacket");
+        mod_armor(target, 8, 0, 20, 0, 20, 0, 10, 0, 10, 0, 20, 0, 30);
+    }
+    else if(armor == "la")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to leather armor");
+        mod_armor(target, 15, 2, 25, 0, 20, 0, 20, 0, 10, 0, 20, 0, 30);
+    }
+    else if(armor == "ma")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to metal armor");
+        mod_armor(target, 10, 4, 30, 6, 75, 4, 10, 4, 20, 4, 25, 0, 0);
+    }
+    else if(armor == "ca")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to combat armor");
+        mod_armor(target, 20, 5, 40, 8, 60, 4, 30, 4, 50, 6, 40, 2, 50);
+    }
+    else if(armor == "pa")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to powered armor");
+        mod_armor(target, 25, 12, 40, 18, 80, 12, 60, 10, 40, 20, 50, 12, 40);
+    }
+    else if(armor == "apa")
+    {
+        player.Say(SAY_NETMSG, "Setting armor to a-sucky-pa");
+        mod_armor(target, 30, 15, 55, 19, 90, 16, 70, 15, 60, 20, 65, 15, 60);
+    }
+    else if(armor == "god")
+    {
+        player.Say(SAY_NETMSG, "Setting an uber armor");
+        mod_armor(target, 90, 9999, 100, 9999, 100, 9999, 100, 9999, 100, 9999, 100, 9999, 100);
+    }
+}
+
+// helper
+void mod_armor(Critter@ crit, int ac,
+               int dt_norm, int dr_norm,
+               int dt_laser, int dr_laser,
+               int dt_fire, int dr_fire,
+               int dt_plasma, int dr_plasma,
+               int dt_explode, int dr_explode,
+               int dt_electrical, int dr_electrical)
+{
+    crit.StatBase[ST_ARMOR_CLASS] = ac;
+    crit.StatBase[ST_NORMAL_ABSORB] = dt_norm;
+    crit.StatBase[ST_NORMAL_RESIST] = dr_norm;
+    crit.StatBase[ST_LASER_ABSORB] = dt_laser;
+    crit.StatBase[ST_LASER_RESIST] = dr_laser;
+    crit.StatBase[ST_FIRE_ABSORB] = dt_fire;
+    crit.StatBase[ST_FIRE_RESIST] = dr_fire;
+    crit.StatBase[ST_PLASMA_ABSORB] = dt_plasma;
+    crit.StatBase[ST_PLASMA_RESIST] = dr_plasma;
+    crit.StatBase[ST_EXPLODE_ABSORB] = dt_explode;
+    crit.StatBase[ST_EXPLODE_RESIST] = dr_explode;
+    crit.StatBase[ST_ELECTRO_ABSORB] = dt_electrical;
+    crit.StatBase[ST_ELECTRO_RESIST] = dr_electrical;
+}
+
+//
+// Modifies given statistic, returns false in case of failure
+//
+bool ModifyStat(Critter& player, Critter@ target, const string& stat, int val)
+{
+    player.Say(SAY_NETMSG, "Modifying stat...");
+    // mod
+    if(stat.length() == 3)
+    {
+        if(stat[2] == '+')
+            val = 1;
+        else if(stat[2] == '-')
+            val = -1;
+        else
+            return false;
+
+        string sub = substring(stat, 0, 2);
+        if(sub == "st")
+            target.StatBase[ST_STRENGTH] += val;
+        else if(sub == "pe")
+            target.StatBase[ST_PERCEPTION] += val;
+        else if(sub == "en")
+            target.StatBase[ST_ENDURANCE] += val;
+        else if(sub == "ch")
+            target.StatBase[ST_CHARISMA] += val;
+        else if(sub == "in")
+            target.StatBase[ST_INTELLECT] += val;
+        else if(sub == "ag")
+            target.StatBase[ST_AGILITY] += val;
+        else if(sub == "lk")
+            target.StatBase[ST_LUCK] += val;
+        else
+        {
+            player.Say(SAY_NETMSG, "Wrong stat");
+            return false;
+        }
+
+        if(val == 1)
+            player.Say(SAY_NETMSG, "Incremented " + sub);
+        if(val == -1)
+            player.Say(SAY_NETMSG, "Decremented " + sub);
+    }
+    // set
+    else
+    {
+        if(val < 1 || val > 10)
+        {
+            player.Say(SAY_NETMSG, "Incorrect stat value");
+            return false;
+        }
+
+        if(stat == "st")
+            target.StatBase[ST_STRENGTH] = val;
+        else if(stat == "pe")
+            target.StatBase[ST_PERCEPTION] = val;
+        else if(stat == "en")
+            target.StatBase[ST_ENDURANCE] = val;
+        else if(stat == "ch")
+            target.StatBase[ST_CHARISMA] = val;
+        else if(stat == "in")
+            target.StatBase[ST_INTELLECT] = val;
+        else if(stat == "ag")
+            target.StatBase[ST_AGILITY] = val;
+        else if(stat == "lk")
+            target.StatBase[ST_LUCK] = val;
+        else
+        {
+            player.Say(SAY_NETMSG, "Wrong stat");
+            return false;
+        }
+        player.Say(SAY_NETMSG, "Modified " + stat + " to " + val);
+    }
+    return true;
+}

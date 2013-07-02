@@ -1,0 +1,43 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_tent_h.fos
+//
+
+#ifndef __MAP_TENT_H__
+#define __MAP_TENT_H__
+
+#ifndef __MAP_TENT__
+
+import void InitTents() from "map_tent";
+
+import uint GetTentVars(array<uint>& vars) from "map_tent";
+import uint GetTentVarsCount() from "map_tent";
+import bool GetFreeTentVar(Critter& cr, uint& var) from "map_tent";
+import uint GetFreeTentVars(Critter& cr, array<uint>& vars) from "map_tent";
+import uint GetTakenTentVars(Critter& cr, array<uint>& vars) from "map_tent";
+import uint GetTakenTentVars(uint crId, array<uint>& vars) from "map_tent";
+
+import uint GetAllTents(array<Location@>& locations) from "map_tent";
+import uint GetAllShelters(array<Location@>& locations) from "map_tent";
+import uint GetAllHouses(array<Location@>& locations) from "map_tent";
+
+import uint GetTentLocations(Critter& tentOwner, array<Location@>& locations) from "map_tent";
+import uint GetTentLocations(uint tentOwnerId, array<Location@>& locations) from "map_tent";
+
+import Location@ GetNearestTentLocation(Critter& tentOwner, uint16 wx, uint16 wy) from "map_tent";
+import Location@ GetNearestTentLocation(uint tentOwnerId, uint16 wx, uint16 wy) from "map_tent";
+
+import bool CanCreateTent(Map& map) from "map_tent";
+import void TryCreateTent(Critter& cr) from "map_tent";
+
+import bool RemoveTent(Critter& cr, Location& tent, bool recycle) from "map_tent";
+import bool RemoveTentByVar(Critter& cr, uint var, bool recycle) from "map_tent";
+import void RemoveAllTents(Critter& cr, bool recycle) from "map_tent";
+
+import bool IsTentOwner(Map& tent, Critter& cr) from "map_tent";
+
+import void myinfo_tent(Critter& cr) from "map_tent";
+#endif // __MAP_TENT__
+#endif // __MAP_TENT_H__ //

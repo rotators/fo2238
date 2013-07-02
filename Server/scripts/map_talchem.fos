@@ -1,0 +1,223 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_talchem.fos
+//
+
+#include "_maps.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+import void AffectPoison(Critter& cr, int value) from "poison";
+
+#define RADIATION_LOOP        (Random(10000, 20000))     // Radiation damage time, in milliseconds
+#define RADIATION_DOSE_MIN    (1)
+#define RADIATION_DOSE_MAX    (5)
+#define FLOATER_DOSE_MIN      (20)
+#define FLOATER_DOSE_MAX      (30)
+
+/************
+   FIRST FLOOR
+ *************/
+
+void _TalchemFirstFloor(Map& map, bool firstTime)
+{
+    map.SetLoopTime(0, RADIATION_LOOP / 20);
+    map.SetData(0, RADIATION_DOSE_MIN * 5);
+    map.SetData(1, RADIATION_DOSE_MAX * 5);
+    map.SetEvent(MAP_EVENT_LOOP_0, "_MapLoop0TwoRectangleZone");
+
+    map.SetLoopTime(1, RADIATION_LOOP * 1);
+    map.SetData(2, RADIATION_DOSE_MIN * 1);
+    map.SetData(3, RADIATION_DOSE_MAX * 1);
+    map.SetData(4, FLOATER_DOSE_MIN / 10);
+    map.SetData(5, FLOATER_DOSE_MAX / 10);
+    map.SetEvent(MAP_EVENT_LOOP_1, "_MapLoop1DangerZone");
+}
+
+void _MapLoop0TwoRectangleZone(Map& map)
+{
+    AffectRadiotationTwoRectangleZoneCritters(map, 0);
+    map.SetLoopTime(0, RADIATION_LOOP / 20);
+}
+
+void AffectRadiotationTwoRectangleZoneCritters(Map& map, int value1)
+{
+    // prvni obdelnik
+    uint minX1 = 150;
+    uint minY1 = 175;
+    uint maxX1 = 190;
+    uint maxY1 = 211;
+    // druhy obdelnik
+    uint minX2 = 150;
+    uint minY2 = 212;
+    uint maxX2 = 174;
+    uint maxY2 = 219;
+
+    if(value1 == 0)
+        value1 = Random(map.GetData(0), map.GetData(1));
+
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        if(critters[i].IsPlayer() && ((critters[i].HexX >= minX1 && critters[i].HexX <= maxX1 && critters[i].HexY >= minY1 && critters[i].HexY <= maxY1) ||
+                                      (critters[i].HexX >= minX2 && critters[i].HexX <= maxX2 && critters[i].HexY >= minY2 && critters[i].HexY <= maxY2)))
+        {
+            AffectRadiation(critters[i], value1);
+        }
+    }
+}
+
+void _MapLoop1DangerZone(Map& map)
+{
+    AffectRadiationAndPoisonToDangerZoneCritters(map, 0, 0);
+    map.SetLoopTime(1, RADIATION_LOOP / 1);
+}
+
+void AffectRadiationAndPoisonToDangerZoneCritters(Map& map, int value1, int value2)
+{
+    uint minX = 130;
+    uint minY = 160;
+    uint maxX = 265;
+    uint maxY = 277;
+
+    if(value1 == 0)
+        value1 = Random(map.GetData(2), map.GetData(3));
+    if(value2 == 0)
+        value2 = Random(map.GetData(4), map.GetData(5));
+
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        if(critters[i].IsPlayer() && critters[i].HexX >= minX && critters[i].HexX <= maxX && critters[i].HexY >= minY && critters[i].HexY <= maxY)
+        {
+            AffectRadiation(critters[i], value1);
+            AffectPoison(critters[i], value2);
+        }
+    }
+}
+
+/************
+   SECOND FLOOR
+ *************/
+
+#define DOOR_LOOP             (REAL_MINUTE(1))
+
+#define DOOR_ALPHA1_ENT       (991)
+#define DOOR_ALPHA2_ENT       (992)
+#define DOOR_BETA_ENT         (993)
+#define DOOR_A_ENT            (994)
+#define DOOR_B_ENT            (995)
+#define DOOR_1_ENT            (996)
+#define DOOR_2_ENT            (997)
+
+const uint[][] DOOR_GROUPS =
+{
+    { DOOR_BETA_ENT, DOOR_B_ENT, DOOR_2_ENT },
+    { DOOR_ALPHA1_ENT, DOOR_ALPHA2_ENT, DOOR_B_ENT, DOOR_1_ENT },
+    { DOOR_ALPHA1_ENT, DOOR_ALPHA2_ENT, DOOR_A_ENT, DOOR_2_ENT }
+};
+
+void _TalchemSecondFloor(Map& map, bool firstTime)
+{
+    map.SetLoopTime(0, RADIATION_LOOP * 1);
+    map.SetData(0, RADIATION_DOSE_MIN * 1);
+    map.SetData(1, RADIATION_DOSE_MAX * 1);
+    map.SetData(2, FLOATER_DOSE_MIN / 10);
+    map.SetData(3, FLOATER_DOSE_MAX / 10);
+    map.SetEvent(MAP_EVENT_LOOP_0, "_MapLoop0DangerZone");
+
+    map.SetLoopTime(1, DOOR_LOOP);
+    map.SetData(MAP_LAST_DOOR_GROUP, Random(0, DOOR_GROUPS.length() - 1));
+    map.SetEvent(MAP_EVENT_LOOP_1, "_MapLoop1PowerDoor");
+    PowerDoor(map);
+
+    /*if(!ElevatorsAdded)
+       {
+            // add elevators
+            AddElevator(Elevator);
+            ElevatorsAdded = true;
+       }
+
+       uint16 x = 0, y = 0;
+
+       if(!FloorOneInElevator && map.GetEntireCoords(2, 0, x, y))
+       {
+            Elevator.AddFloor(map.Id, 2);
+            FloorOneInElevator=true;
+       }*/
+}
+
+void _MapLoop1PowerDoor(Map& map)
+{
+    PowerDoor(map);
+    map.SetLoopTime(0, DOOR_LOOP);
+}
+
+void PowerDoor(Map& map)
+{
+    uint previous = map.GetData(MAP_LAST_DOOR_GROUP);
+    uint next = previous + Random(1, (DOOR_GROUPS.length() - 1));
+    next = next % DOOR_GROUPS.length();
+    map.SetData(MAP_LAST_DOOR_GROUP, next);
+
+    for(uint i = 0; i < DOOR_GROUPS[previous].length(); i++)
+    {
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        map.GetEntireCoords(DOOR_GROUPS[previous][i], 0, hexX, hexY);
+        Item@  door = map.GetDoor(hexX, hexY);
+        if(valid(door))
+        {
+            door.SetEvent(ITEM_EVENT_SKILL, "");
+        }
+    }
+
+    for(uint i = 0; i < DOOR_GROUPS[next].length(); i++)
+    {
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        map.GetEntireCoords(DOOR_GROUPS[next][i], 0, hexX, hexY);
+        Item@  door = map.GetDoor(hexX, hexY);
+        if(valid(door))
+        {
+            door.SetEvent(ITEM_EVENT_SKILL, "_PowerelessDoorUse");
+        }
+    }
+}
+
+bool _PowerelessDoorUse(Item& item, Critter& player, int skill)
+{
+    if(skill == -1)
+    {
+        player.Say(SAY_NETMSG, "The door has no power.");
+        return true;
+    }
+    return false;
+}
+
+void _MapLoop0DangerZone(Map& map)
+{
+    AffectRadiationAndPoisonToCritters(map, 0, 0);
+    map.SetLoopTime(0, RADIATION_LOOP / 1);
+}
+
+void AffectRadiationAndPoisonToCritters(Map& map, int value1, int value2)
+{
+    if(value1 == 0)
+        value1 = Random(map.GetData(0), map.GetData(1));
+    if(value2 == 0)
+        value2 = Random(map.GetData(2), map.GetData(3));
+
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        AffectRadiation(critters[i], value1);
+        AffectPoison(critters[i], value2);
+    }
+}

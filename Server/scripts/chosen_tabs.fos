@@ -1,0 +1,203 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// chosen_tabs.fos
+//
+
+#include "_macros.fos"
+#include "_client_defines.fos"
+#include "_colors.fos"
+#include "MsgStr.h"
+#include "sprite.fos"
+
+#define RADIATION_DEATH    (1800) // from radiation.fos
+
+import int GUI_GetActiveMainScreen() from "client_gui";
+import int GUI_GetActiveScreen() from "client_gui";
+import int GetIniValue(string& iniKey, int defaultValue) from "ini_parser";
+import     array<int>@ GetIniValues2(string & iniKey, array<int>@ defaultValues) from "ini_parser";
+
+Sprite     TabPic;
+array<int> Position;
+int        StepX;
+int        StepY;
+bool       LevelUp;
+int        CurTab;
+
+
+void InitChosenTabs() // Export
+{
+    TabPic.LoadByIni("ChosenTabPic", PT_ART_INTRFACE);
+    Position = GetIniValues2("ChosenTab", null);
+    StepX = GetIniValue("ChosenTabStepX", 0);
+    StepY = GetIniValue("ChosenTabStepY", 5);
+    if(StepX != 0)
+        StepX += TabPic.Width;
+    if(StepY != 0)
+        StepY += TabPic.Height;
+    LevelUp = false;
+    CurTab = 0;
+}
+
+Sprite ChosenTabSprite()
+{
+    return(TabPic);
+}
+
+int ChosenTabsDrawn()
+{
+    return(CurTab);
+}
+
+void SetChosenTabLevelUp(bool enable)   // Export
+{
+    LevelUp = enable;
+}
+
+uint PercentColor(uint percent, bool clamp = true)
+{
+    if(!clamp || (clamp && percent < 100))
+        return(COLOR_RGB((0xFF * percent) / 100, (0xFF * (100 - percent)) / 100, 0));
+    else
+        return(COLOR_RGB(0xFF, 0, 0));
+}
+
+void DrawChosenTabs() // Export
+{
+    if(GUI_GetActiveMainScreen() != CLIENT_MAIN_SCREEN_GAME)
+        return;
+
+    CritterCl@ chosen = GetChosen();
+    if(!valid(chosen))
+        return;
+
+    // duplicated later
+    if(chosen.Stat[ST_UNSPENT_PERKS] > 0 || chosen.Stat[ST_UNSPENT_SKILL_POINTS] > 0)
+        LevelUp = true;
+    else
+        LevelUp = false;
+
+    if(LevelUp && (GUI_GetActiveMainScreen() != CLIENT_MAIN_SCREEN_GAME ||
+                   GUI_GetActiveScreen() == CLIENT_SCREEN_CHARACTER || GUI_GetActiveScreen() == CLIENT_SCREEN_PERK))
+        LevelUp = false;
+
+    CurTab = 0;
+
+    if(chosen.Mode[MODE_HIDE] != 0)
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_HIDEMODE_TITLE), COLOR_DGREEN);
+
+    if(LevelUp)
+    {
+        string ex = "";
+
+        // duplicated earlier
+        for(uint u = ST_UNSPENT_SKILL_POINTS; u <= ST_UNSPENT_PERKS; u++)
+        {
+            if(chosen.Stat[u] > 0)
+                ex += GetMsgStr(TEXTMSG_GAME, 100000 + (u * 10) + 1) + ": " + chosen.Stat[u] + "\n";
+        }
+
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_LEVELUP_TITLE), COLOR_DGREEN, ex);
+    }
+
+    if(chosen.IsOverweight())
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_OVERWEIGHT_TITLE), COLOR_DRED);
+
+    if(chosen.Timeout[TO_SLEEPY] > 0 && chosen.Param[TO_SLEEPY_STOPPED] == -1 && chosen.Param[ST_MINIGAME_DATA] == 0)
+        DrawTab("Idler", COLOR_DRED);
+
+    if(chosen.Damage[DAMAGE_POISONED] != 0)
+    {
+        string@ ex = "";
+        uint    color = COLOR_DRED, percent = 0;
+
+        if((percent = chosen.Stat[ST_POISONING_LEVEL]) > 0)
+        {
+            ex = "Poisoning level: " + percent + "%";
+            color = PercentColor(percent);
+        }
+
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_POISONED_TITLE), color, ex);
+    }
+
+    if(chosen.Damage[DAMAGE_RADIATED] != 0)
+    {
+        string ex = "";
+        uint   color = COLOR_DRED, percent = 0;
+
+        if((percent = (chosen.Stat[ST_RADIATION_LEVEL] * 100) / RADIATION_DEATH) > 0)
+        {
+            ex = "Radiation level: " + percent + "%";
+            color = PercentColor(percent);
+        }
+
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_RADIATED_TITLE), color, ex);
+    }
+
+    if(chosen.IsInjured())
+    {
+        string ex = "";
+
+        for(uint d = DAMAGE_EYE; d <= DAMAGE_LEFT_LEG; d++)
+        {
+            if(chosen.Damage[d] > 0)
+                ex += GetMsgStr(TEXTMSG_GAME, 100000 + (d * 10) + 1) + "\n";
+        }
+
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_INJURED_TITLE), COLOR_DRED, ex);
+    }
+
+    if(chosen.IsAddicted())
+    {
+        string ex = "";
+
+        for(uint a = ADDICTION_BEGIN; a < ADDICTION_END; a++)
+        {
+            if(chosen.Addiction[a] > 0)
+                ex += GetMsgStr(TEXTMSG_GAME, 100000 + (a * 10) + 1) + "\n";
+        }
+
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_ADDICTED_TITLE), COLOR_DRED, ex);
+    }
+
+    #ifdef __DEBUG__ // public-hidden for maps under `disablegrids effect
+    if(chosen.Timeout[TO_TRANSFER] > 0)
+        DrawTab(GetMsgStr(TEXTMSG_GAME, STR_TIMEOUT_TITLE), chosen.Timeout[TO_TRANSFER] / __TimeMultiplier, COLOR_DRED);
+    #endif
+
+    if(IsTurnBased())
+    {
+        if(chosen.IsTurnBasedTurn())
+            DrawTab(GetMsgStr(TEXTMSG_GAME, STR_YOU_TURN_TITLE), int(GetTurnBasedTime() / 1000), COLOR_DGREEN);
+        else
+            DrawTab(GetMsgStr(TEXTMSG_GAME, STR_TURN_BASED_TITLE), COLOR_DRED);
+    }
+}
+
+void DrawTab(string@ text, uint color, string@ onText = null, uint onColor = 0)
+{
+    int x1 = Position[0] + CurTab * StepX, y1 = Position[1] + CurTab * StepY,
+        x2 = x1 + TabPic.Width,            y2 = y1 + TabPic.Height;
+
+    TabPic.Draw(x1, y1);
+    DrawText(valid(text) ? text : "", x1, y1, x2 - x1, y2 - y1, color, FONT_FALLOUT, FT_CENTERXY);
+
+    if(valid(onText) && onText.length() > 0 &&
+       GetCurrentCursor() == CURSOR_DEFAULT &&                                 // avoid crap on screen durring battle
+       (__MouseX > x1 && __MouseX < x2) && (__MouseY > y1 && __MouseY < y2))   // sic! don't use <= / >=
+    {
+        int w = 0, h = 0, l = 0;
+        GetTextInfo(onText, 0, 0, FONT_FALLOUT, FT_BORDERED, w, h, l);
+        DrawText(onText, __MouseX + 30, __MouseY + 18, w, h, onColor, FONT_FALLOUT, FT_BORDERED);
+    }
+
+    CurTab++;
+}
+
+void DrawTab(string@ text, int value, uint color, string@ onText = null, uint onColor = 0)
+{
+    if(valid(text))
+        text = ReplaceText(text, "VALUE", value);
+    DrawTab(text, color, onText, onColor);
+}

@@ -1,0 +1,1640 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_travel.fos
+//
+
+#ifndef __NPC_TRAVEL__
+#define __NPC_TRAVEL__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_math.fos"
+#include "_basetypes.fos"
+#include "_colors.fos"
+#include "_time.fos"
+
+#include "guard_h.fos"
+#include "lexems_h.fos"
+#include "npc_common_h.fos"
+#include "npc_names_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+#include "npc_travel_h.fos"
+
+// inline
+#include "entire.fos"
+
+import void UseDrug(Critter& cr, Item& drug) from "drugs";
+
+import void MoveGlobalGroup(Critter& cr, Item@ car, float& curX, float& curY, float& toX, float& toY, float& speed) from "globalmap_group";
+
+import bool CheckBattleWeapon(Critter& npc, Item& weapon) from "main_planes";
+
+import void PerkUp(Critter& cr, uint perk, int fromlevel) from "perks";
+import bool SupportPerkCheck(Critter& cr, uint perk) from "perks";
+
+import void ReplicateCritter(Critter& cr) from "replication";
+
+#define _SECOND    # (__s) (__s * 1000)
+#define _MINUTE    # (__m) (__m * 60000)
+
+array<array<array<uint> > > SupportPerks =
+{
+// { dialog, perk1, ... }, { map1pid, ... }, { giver1id, ... }
+    { { 0, /*Light Step*/ 397 }, {}, {} },
+    { { 0, /*Gecko Skinning*/ 430 }, {}, {} },
+    { { 0, /*Mr. Fixit*/ 332 }, {}, {} },
+    { { 0, /*Rad Resistance*/ 312 }, {}, {} },
+    { { 0, /*Stealth Girl*/ 454 }, {}, {} },
+    { { 0, /*Scout*/ 346 }, {}, {} },
+    { { 0, /*Demolition Expert*/ 383 }, {}, {} },
+    { { 0, /*Negotiator*/ 400 }, {}, {} },
+    { { 0, /*Treasure Hunter*/ 459 }, {}, {} },
+    { { DIALOG_ncr_Hoss, /*Awareness*/ 301, /*Pathfinder*/ 344, /*Cautious Nature*/ 381 }, {}, {} },
+    { { DIALOG_nr_kitty, /*Harmless*/ 392, /*Magnetic Personality*/ 399, /*Sex Appeal*/ 450 }, {}, {} },
+    { { DIALOG_ncr_train_mantis, /*Explorer*/ 342 }, {}, {} },
+    { { DIALOG_ul_gas_tamira, /*Ranger*/ 348 }, {}, {} },
+    { { DIALOG_san_doctor_fung, /*Faster Healing*/ 308 }, {}, {} },
+    { { 0, /*Snakeater*/ 331 }, {}, {} },
+    { { DIALOG_junktown_boyce, /*Best of a Bad Lot*/ 455, /*Dismantler*/ 456 }, {}, {} },
+    { { 0, /*Dead Man Walking*/ 461 }, {}, {} },
+    { { 0, /*Master Thief*/ 334 }, {}, {} },
+    { { 0, /*Pickpocket*/ 338 }, {}, {} },
+    { { 0, /*Thief*/ 406 }, {}, {} },
+    { { 0, /*Swift Learner*/ 351 }, {}, {} },
+    { { DIALOG_la_lib_therese, /*Educated*/ 319 }, {}, {} },
+    { { 0, /*Speaker*/ 335 }, {}, {} }
+};
+
+void InitTravel()
+{
+    array<Critter@> npcs;
+    Log("Initializing travel tables...");
+    uint            npcount = GetAllNpc(0, npcs);
+
+    Log("- SupportPerksMaps");
+    for(uint n = 0; n < npcount; n++)
+    {
+        Map@ map = npcs[n].GetMap();
+        if(!valid(map))
+            continue;
+
+        for(uint p = 0, pLen = SupportPerks.length(); p < pLen; p++)
+        {
+            if(SupportPerks[p][0][0] == 0)
+                continue;
+
+            if(npcs[n].Param[ST_DIALOG_ID] == int(SupportPerks[p][0][0]))
+            {
+                bool added1 = false, added2 = false;
+                for(uint m = 0, mLen = SupportPerks[p][1].length(); m < mLen; m++)
+                {
+                    if(map.GetProtoId() == SupportPerks[p][1][m])
+                    {
+                        added1 = true;
+                        break;
+                    }
+                }
+                for(uint n = 0, nLen = SupportPerks[p][2].length(); n < nLen; n++)
+                {
+                    if(npcs[n].Id == SupportPerks[p][2][n])
+                    {
+                        added2 = true;
+                        break;
+                    }
+                }
+                if(!added1)
+                {
+                    DLog(" +map " + map.GetProtoId());
+                    SupportPerks[p][1].insertLast(map.GetProtoId());
+                }
+                if(!added2)
+                {
+                    DLog(" +npc " + npcs[n].Id);
+                    SupportPerks[p][2].insertLast(npcs[n].Id);
+                }
+            }
+        }
+    }
+    Log("Travel tables initialized");
+}
+
+/*
+   class CTravelTown : ITravelTown
+   {
+        uint	id;
+
+        CTravelTown( int id )
+        {
+                this.id = id;
+        }
+   }
+ */
+
+class CTravellerCallback : ITravellerCallback
+{
+    uint               type;
+    int                priority;
+    TravellerCallback@ callback;
+
+    CTravellerCallback(uint type, TravellerCallback@ callback)
+    {
+        this.type = type;
+        this.priority = TRAVEL_PRIORITY_REGULAR;
+        @this.callback = callback;
+    }
+
+    uint GetType()
+    {
+        return(this.type);
+    }
+
+    int GetPriority()
+    {
+        return(this.priority);
+    }
+
+    void SetPriority(int priority)
+    {
+        this.priority = priority;
+    }
+
+    void TryRun(Critter& npc, int event)
+    {}
+};
+
+class CTraveller : ITraveller
+{
+    uint                       id;
+    bool                       ignoreEncounters;
+
+    ITravellerGroup@           group;
+
+    array<uint>                lastVisited;
+    uint                       lastVisitedMax;
+    array<uint>                primaryDestination;
+    array<uint>                secondaryDestination;
+    uint                       currentDestination;
+    uint                       destinationSearchRadius;
+    array<uint>                ignoredLocation;
+
+    array<ITravellerCallback@> callback;
+
+    CTraveller(uint id)
+    {
+        this.id = id;
+        this.ignoreEncounters = true;
+
+        this.lastVisited.resize(0);
+        this.lastVisitedMax = 25;
+        this.primaryDestination.resize(0);
+        this.ignoredLocation.resize(0);
+        this.currentDestination = 0;
+
+        // this.Load();
+    }
+
+    /*
+       void Load()
+       {
+       }
+
+       void Save()
+     */
+
+    uint get_Id()
+    {
+        return(this.id);
+    }
+
+    Critter@ GetCritter()
+    {
+        Critter@ critter = ::GetCritter(this.id);
+        return((valid(critter) ? critter : null));
+    }
+
+    Map@ GetMap()
+    {
+        if(this.OnMap)
+            return(this.GetCritter().GetMap());
+        else
+            return(null);
+    }
+
+    // group
+    // only handle, everything else should be done inside ITravellerGroup
+    bool get_HaveGroup()
+    {
+        if(valid(this.group))
+            return(true);
+        else
+            return(false);
+    }
+
+    ITravellerGroup@ get_Group()
+    {
+        if(this.HaveGroup)
+            return(@this.group);
+        else
+            return(null);
+    }
+
+    void set_Group(ITravellerGroup@ newGroup)
+    {
+        @this.group = newGroup;
+    }
+
+    bool get_IgnoreEncounters()
+    {
+        return(this.ignoreEncounters);
+    }
+
+    void set_IgnoreEncounters(bool ignore)
+    {
+        this.ignoreEncounters = ignore;
+    }
+
+    // memory
+
+    void AddLastVisited(uint id)
+    {
+        if(this.IsReallyLastVisited(id))
+            return;
+
+        if(this.LastVisitedCount() > this.lastVisitedMax)
+            this.lastVisited.removeAt(0);
+
+        this.RemoveLastVisited(id);
+
+        this.lastVisited.insertLast(id);
+    }
+
+    void RemoveLastVisited(uint id)
+    {
+        remove_all_from_array(this.lastVisited, id);
+    }
+
+    bool IsPrimaryDestination(uint id)
+    {
+        for(uint p = 0, plen = this.primaryDestination.length(); p < plen; p++)
+        {
+            if(this.primaryDestination[p] == id)
+                return(true);
+        }
+        return(false);
+    }
+
+    bool IsSecondaryDestination(uint id)
+    {
+        for(uint p = 0, plen = this.secondaryDestination.length(); p < plen; p++)
+        {
+            if(this.secondaryDestination[p] == id)
+                return(true);
+        }
+        return(false);
+    }
+
+    bool IsLastVisited(uint id)
+    {
+        return(Present(id, this.lastVisited));
+    }
+
+    bool IsReallyLastVisited(uint id)
+    {
+        if(this.lastVisited.length() == 0)
+            return(false);
+        return((this.lastVisited.last() == id));
+    }
+
+    uint LastVisitedCount()
+    {
+        return(this.lastVisited.length());
+    }
+
+    // world
+
+    uint DestinationSearchRadius()
+    {
+        return(this.destinationSearchRadius);
+    }
+
+    void SetDestinationSearchRadius(uint radius)
+    {
+        this.destinationSearchRadius = radius;
+    }
+
+    bool HavePrimaryDestination()
+    {
+        return((this.primaryDestination.length() > 0));
+    }
+
+    bool IsPrimaryDestination(uint id)
+    {
+        return(Present(id, this.primaryDestination));
+    }
+
+    uint GetCurrentDestination()
+    {
+        return(this.currentDestination);
+    }
+
+    void SetCurrentDestination(uint id)
+    {
+        this.currentDestination = id;
+    }
+
+    bool IsCurrentDestination(uint id)
+    {
+        if(this.GetCurrentDestination() == id)
+            return(true);
+        else
+            return(false);
+    }
+
+    // brain
+
+    bool get_OnMap()
+    {
+        if(valid(this.GetCritter()) && valid(this.GetCritter().GetMap()))
+            return(true);
+        else
+            return(false);
+    }
+
+    bool get_OnWorldmap()
+    {
+        return(!this.OnMap);
+    }
+
+    bool Find_Destination(int type, Item@ car, float& inout x, float& inout y, float& inout toX, float& inout toY, float& inout speed, uint& inout encounterDescriptor, bool& inout waitForAnswer)
+    {
+        this.Report("Find_Destination");
+
+        Critter@  npc = this.GetCritter();
+        Location@ destination = null;
+
+        if(this.GetCurrentDestination() > 0)
+            @destination = GetLocation(this.GetCurrentDestination());
+
+        if(valid(destination))
+        {
+            toX = float(destination.WorldX);
+            toY = float(destination.WorldY);
+            speed = GLOBAL_MAP_BASE_SPEED;
+
+            MoveGlobalGroup(npc, car, x, y, toX, toY, speed);
+            Report("Moving to (saved): " + GetLocationName(destination) + "(PID:" + destination.GetProtoId() + ")(ID:" + destination.Id + ") (XY:" + toX + "," + toY + ")");
+            if(!this.OnMap &&
+               x == toX && y == toY &&
+               x == destination.WorldX && y == destination.WorldY)
+                this.Enter_Location(destination);
+            return(true);
+        }
+
+        if(!valid(destination) && Random(0, 10) == 0)
+        {
+            Find_SupportPerk(destination);
+        }
+
+        // no destination yet? get one!
+        array<Location@> locations;
+        uint             count = GetLocations(npc.WorldX, npc.WorldY, this.DestinationSearchRadius(), locations);
+
+        if(!valid(destination))
+        {
+            this.Report("Picking closest location");
+            for(uint l = 0; l < count; l++)
+            {
+                if(this.IsLastVisited(locations[l].Id))
+                    continue;
+
+                if(!locations[l].IsTown())
+                    continue;                     // TODO
+
+                if(locations[l].IsReplication())
+                    continue;
+
+                if(locations[l].IsEncounter() && this.IgnoreEncounters)
+                    continue;
+
+                int dist = DIST(npc.WorldX, npc.WorldY, locations[l].WorldX, locations[l].WorldY);
+
+                if(!valid(destination) ||
+                   (valid(destination) && dist < DIST(npc.WorldX, npc.WorldY, destination.WorldX, destination.WorldY)))
+                {
+                    @destination = locations[l];
+                    string name = "<unknown>";
+                    destination.ProtoName(name);
+                    this.Report("Thinking about: " + name + "(DIST:" + dist + "PID:" + destination.GetProtoId() + ")(ID:" + destination.Id + ") (XY:" + toX + "," + toY + ")");
+                    continue;
+                }
+            }
+        }
+        if(!valid(destination))
+        {
+            this.SetDestinationSearchRadius(this.DestinationSearchRadius() + Random(10, 100));
+            this.Report("No destination found, adjusting search radius: " +
+                        this.DestinationSearchRadius());
+
+            // TODO: pick random known city
+        }
+        else
+        {
+            toX = float(destination.WorldX);
+            toY = float(destination.WorldY);
+            speed = GLOBAL_MAP_BASE_SPEED;
+
+            this.Report("Moving to: " + GetLocationName(destination) +
+                        "(PID:" + destination.GetProtoId() + ")(ID:" + destination.Id + ") (XY:" + toX + "," + toY + ")");
+            this.SetCurrentDestination(destination.Id);
+            MoveGlobalGroup(npc, car, x, y, toX, toY, speed);
+        }
+
+        return(true);
+    }
+
+
+    bool Find_SupportPerk(Location@& /*!1*/ resultWorldmap)
+    {
+        @resultWorldmap = null;
+
+        Critter@ npc = this.GetCritter();
+        if(!valid(npc))
+        {
+            return(false);
+        }
+
+        if(this.OnMap)
+        {
+            Map@ map = this.GetMap();
+
+            for(uint s = 0, sLen = SupportPerks.length(); s < sLen; s++)
+            {
+                if(SupportPerks[s][0][0] == 0)
+                    continue;
+
+                // is on correct map?
+                for(uint m = 0, mLen = SupportPerks[s][1].length(); m < mLen; m++)
+                {
+                    if(map.GetProtoId() == SupportPerks[s][1][m])
+                    {
+                        this.Report("It's support perk map");
+                        // can take a perk?
+                        for(uint p = 1, pLen = SupportPerks[s][0].length(); p < pLen; p++)
+                        {
+                            if(SupportPerkCheck(npc, SupportPerks[s][0][p]))
+                            {
+                                this.Report("Available support perk: " + SupportPerks[s][0][p]);
+                                // can find perk giver?
+                                for(uint n = 0, nLen = SupportPerks[s][2].length(); n < nLen; n++)
+                                {
+                                    Critter@ giver = map.GetCritter(SupportPerks[s][2][n]);
+                                    if(valid(giver))
+                                    {
+                                        // close to giver, take dat perk!
+                                        if(npc.IsSee(giver) && GetDistantion(npc.HexX, npc.HexY, giver.HexX, giver.HexY) <= 3)
+                                        {
+                                            this.Report("Taking perk " + SupportPerks[s][0][p]);
+                                            // ??? PerkUp( npc, SupportPerks[s][0][p], npc.Param[SupportPerks[s][0][p]] );
+                                            npc.ParamBase[SupportPerks[s][0][p]]++;
+                                        }
+                                        // walk to give
+                                        else
+                                        {
+                                            this.Report("Going to perk giver: " + giver.Name);
+                                            AddWalkPlane(npc, AI_PLANE_WALK, 0, 0, giver.HexX, giver.HexY, 0xFF, (Random(0, 10) == 0 ? true : false), 2);
+                                        }
+                                        return(true);
+                                    }
+                                    else
+                                        this.Report("Perk giver " + SupportPerks[s][2][n] + " not found on this map");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return(false);
+        }
+        else         // !this.OnMap
+        {
+            for(uint s = 0, sLen = SupportPerks.length(); s < sLen; s++)
+            {
+                if(SupportPerks[s][0][0] == 0)
+                    continue;
+
+                for(uint p = 1, pLen = SupportPerks[s][0].length(); p < pLen; p++)
+                {
+                    if(SupportPerkCheck(npc, SupportPerks[s][0][p]) &&
+                       SupportPerks[s][1].length() > 0 &&
+                       SupportPerks[s][2].length() > 0)
+                    {
+                        Map@ map = GetMapByPid(random_from_array(SupportPerks[s][1]), 0);
+                        if(valid(map))
+                        {
+                            Report("I want a perk, now!");
+                            @resultWorldmap = map.GetLocation();
+                            return(true);
+                        }
+                    }
+                }
+            }
+            return(false);
+        }
+    }
+
+    bool Enter_Location(Location& location)
+    {
+        Critter@ npc = this.GetCritter();
+
+        for(uint m = 0; m < location.GetMapCount(); m++)
+        {
+            Map@ targetMap = location.GetMapByIndex(m);
+            if(!valid(targetMap))
+                continue;
+
+            array<Entire> entire;
+            uint          ecount = ParseEntires(targetMap, entire, ENTIRE_DEFAULT);
+            if(ecount > 0)
+            {
+                shuffle_array(entire, Entire);
+                this.Report("Found " + ecount + " default entires at map " + m);
+                for(uint e = 0; e < ecount; e++)
+                {
+                    if(npc.TransitToMap(targetMap.Id, entire[e].HexX, entire[e].HexY, entire[e].Direction))
+                    {
+                        this.Report("Entered location, map " + m + " entire index " + entire[e].Number);
+                        return(true);
+                    }
+                }
+            }
+        }
+        return(false);
+    }
+
+    bool Goto_ExitGrid(bool run = false)
+    {
+        if(!this.OnMap)
+            return(false);
+
+        Critter@ npc = this.GetCritter();
+        Map@     map = this.GetMap();
+
+        uint16   hx = npc.HexX;
+        uint16   hy = npc.HexY;
+
+        if(this.GetMap().FindNearestGridApprox(hx, hy))
+        {
+            this.Report((run ? "Runn" : "Walk") + "ing to exit grid (" + npc.HexX + "," + npc.HexY + ")->(" + hx + "," + hy + ")");
+            if(this.GetCurrentDestination() > 0 &&
+               map.GetLocation().Id != this.GetCurrentDestination())
+                this.Report("I have location " + this.GetCurrentDestination() + " to visit");
+
+            // npc.ErasePlane( AI_PLANE_WALK, true);
+            AddWalkPlane(npc, (run ? 50 : 10), PLANE_GOTO_EXIT, 0, hx, hy, 0xFF, run, 0);
+            return(true);
+        }
+        else
+        {
+            this.Report("No exit grid found");
+            npc.MoveRandom();
+            npc.Wait(_SECOND(30));
+            return(false);
+        }
+    }
+
+    // debug or something
+
+    void Report(string& message)
+    {
+        if(valid(this.GetCritter()))
+            ::Report(this.GetCritter(), message);
+    }
+
+    // callback
+
+    void AddCallback(uint type, ITravellerCallback@ callback)
+    {
+        this.callback.insertLast(callback);
+    }
+
+    void RemoveCallback(uint type)
+    {
+        for(uint c = 0; c < this.callback.length();)
+        {
+            if(this.callback[c].GetType() == type)
+            {
+                this.callback.removeAt(c);
+
+                if(this.callback.length() == 0)
+                    break;
+                else
+                    c = 0;
+            }
+            else
+                c++;
+        }
+    }
+
+    private uint SortCallbacks(array<ITravellerCallback@>& result)
+    {
+        bool                       first = true;
+        int                        last  = 0;
+        uint                       count = 0;
+        array<ITravellerCallback@> copy = this.callback;
+        for(uint c = 0; c < copy.length();)
+        {
+            if(copy.length() == 0)
+                break;
+
+            if(first || copy[c].GetPriority() <= last)
+            {
+                result.insertLast(copy[c]);
+                last = copy[c].GetPriority();
+                copy.removeAt(c);
+
+                if(copy.length() == 0)
+                    break;
+                else
+                {
+                    first = false;
+                    count++;
+                    c = 0;
+                }
+            }
+            else
+                c++;
+        }
+        return(count);
+    }
+
+    void RunEvent(int event)
+    {
+        array<ITravellerCallback@> list;
+        uint                       count = this.SortCallbacks(list);
+
+        for(uint c = 0; c < count; c++)
+        {
+            Critter@ npc = this.GetCritter();
+            if(valid(npc))
+            {
+                list[c].TryRun(npc, event);
+            }
+            else
+            {
+                Log("RunEvent: lost Critter");
+            }
+        }
+    }
+};
+array<CTraveller@> Travellers;
+
+class              CTravellerGroup : ITravellerGroup
+{
+    uint               id;
+    ITraveller@        leader;
+    array<ITraveller@> members;     // leader not included!
+
+    CTravellerGroup(ITraveller@ leader)
+    {
+        @this.leader = leader;
+        this.members.resize(0);
+    }
+
+    uint get_Id()
+    {
+        return(this.id);
+    }
+
+    ITraveller@ get_Leader()
+    {
+        return(this.leader);
+    }
+
+    array<ITraveller@> get_Members()
+    {
+        return(this.members);
+    }
+
+    bool IsLeader(ITraveller@ maybeLeader)
+    {
+        if(this.leader.Id == maybeLeader.Id)
+            return(true);
+        else
+            return(false);
+    }
+
+    bool IsMember(ITraveller@ member)
+    {
+        for(uint m = 0, mLen = members.length(); m < mLen; m++)
+        {
+            if(members[m].Id == member.Id)
+                return(true);
+        }
+
+        return(false);
+    }
+
+    void Invite(ITraveller@ newMember)
+    {
+        Critter@ cnewMember = newMember.GetCritter();
+        if(!valid(cnewMember))
+            return;
+
+        if(newMember.HaveGroup)
+        {
+            newMember.Group.Kick(newMember);
+            if(newMember.Group.Members.length() == 0)
+            {
+                RemoveTravellerGroup(newMember.Group.Id);
+            }
+        }
+
+        this.members.insertLast(newMember);
+        @newMember.Group = this;
+        cnewMember.StatBase[ST_FOLLOW_CRIT] = this.Leader.GetCritter().Id;
+    }
+
+    void Kick(ITraveller@ member)
+    {
+        if(this.IsLeader(member))
+        {
+            if(this.members.length() > 0)
+            {
+                int newLeader = Random(0, this.members.length() - 1);
+                @this.leader = this.members[newLeader];
+                Report(this.leader.GetCritter(), "I am new leader of my group");
+            }
+            else
+            {
+                @this.leader = null;
+                // group cleanup done inside Invite()
+            }
+        }
+
+        for(uint m = 0, mLen = this.members.length(); m < mLen; m++)
+        {
+            if(this.members[m].Id == member.Id)
+            {
+                this.members.removeAt(m);
+                return;
+            }
+        }
+    }
+};
+array<CTravellerGroup@> TravellersGroups;
+
+ITraveller@ CreateTraveller(uint crId)
+{
+    CTraveller@ traveller = CTraveller(crId);
+    if(valid(traveller))
+    {
+        Travellers.insertLast(traveller);
+        return(Travellers.last());
+    }
+    return(null);
+}
+
+ITraveller@ GetTraveller(uint crId)
+{
+    for(uint t = 0, tlen = Travellers.length; t < tlen; t++)
+    {
+        if(Travellers[t].Id == crId)
+            return(Travellers[t]);
+    }
+
+    return(null);
+}
+
+bool RemoveTraveller(uint crId)
+{
+    for(uint t = 0, tlen = Travellers.length(); t < tlen; t++)
+    {
+        if(Travellers[t].Id == crId)
+        {
+            Travellers.removeAt(t);
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+bool RemoveTravellerGroup(uint groupId)
+{
+    for(uint t = 0, tlen = TravellersGroups.length(); t < tlen; t++)
+    {
+        if(TravellersGroups[t].Id == groupId)
+        {
+            TravellersGroups.removeAt(t);
+            return(true);
+        }
+    }
+
+    return(false);
+}
+
+void fix(Critter& cr, int, int, int pid)
+{
+    if(cr.LastSpawnedCritter > 0)
+    {
+        Critter@ npc = GetCritter(cr.LastSpawnedCritter);
+        if(valid(npc))
+        {
+            cr.Say(SAY_NETMSG, "fix attempt");
+            critter_init(npc, true);
+        }
+        else
+            cr.Say(SAY_NETMSG, "last spawned npc don't exists");
+    }
+}
+
+void spawn(Critter& cr, int, int, int pid)
+{
+    if(!valid(cr.GetMap()))
+    {
+        cr.Say(SAY_NETMSG, "Not on worldmap.");
+        return;
+    }
+
+    Critter@ npc = AddNpc(cr.GetMap(), pid, cr.HexX + Random(-3, 3), cr.HexY + Random(-3, 3), 0, 0, "npc_travel@critter_init", Random(22, 25), 0, 0, false, Random(1, 3));
+    if(valid(npc))
+    {
+        cr.LastSpawnedCritter = npc.Id;
+        npc.SpawnedBy = cr.Id;
+    }
+}
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    ITraveller@ traveller = CreateTraveller(npc.Id);
+
+    if(firstTime)
+    {
+        if(npc.Stat[ST_BODY_TYPE] != BT_MEN &&
+           npc.Stat[ST_BODY_TYPE] != BT_WOMEN &&
+           npc.Stat[ST_BODY_TYPE] != BT_GHOUL)
+        {
+            DSay(npc, "Wrong body type");
+            DeleteNpc(npc);
+            return;
+        }
+
+        string crName = GetRandomFullName(npc.Stat[ST_GENDER]);
+        if(crName.length() > 0)
+            SetLexem(npc, "$name", crName);
+
+        uint8[] crTypesMale =
+        {
+            // player-like
+            CRTYPE_MALE_JUMPSUIT,
+            CRTYPE_LHD_JUMPSUIT,
+            CRTYPE_BHD_JUMPSUIT,
+            CRTYPE_MALE_VAULTSUIT,
+            // npc
+            CRTYPE_KHAN_LONGHAIR,
+            CRTYPE_MONK
+        };
+        uint8[] crTypesFemale =
+        {
+            // player-like
+            CRTYPE_FEMALE_JUMPSUIT,
+            CRTYPE_FEMALE_VAULTSUIT,
+            // npc
+            CRTYPE_WOMAN_2,
+            CRTYPE_MONK
+        };
+        uint16[] armor =
+        {
+            PID_LEATHER_JACKET,
+            PID_LEATHER_ARMOR,
+            PID_LEATHER_ARMOR_MK_II,
+            PID_CURED_LEATHER_ARMOR,
+            PID_METAL_ARMOR,
+            PID_METAL_ARMOR_MK_II
+        };
+        uint16[] helmets =
+        {
+            PID_LEATHER_JACKET_HELMET,
+            PID_LEATHER_ARMOR_HELMET,
+            PID_LEATHER_ARMOR_HELMET_MK2,
+            PID_METAL_HELMET,
+            PID_METAL_HELMET_MK2
+        };
+        uint16[] weapon =
+        {
+            // pistol
+            PID_ZIP_GUN,             // :)
+            PID_9MM_MAUSER,
+            PID_10MM_PISTOL,
+            PID_14MM_PISTOL,
+            PID_DESERT_EAGLE,
+            PID_DESERT_EAGLE_EXT_MAG,
+            PID_223_PISTOL,
+            PID_44_MAGNUM_REVOLVER,
+            PID_44_MAGNUM_SPEEDLOADER,
+            // rifle
+            PID_HUNTING_RIFLE,
+            PID_SCOPED_HUNTING_RIFLE,
+            PID_SPRINGER_RIFLE,
+            PID_RED_RYDER_BB_GUN,
+            PID_RED_RYDER_LE_BB_GUN,
+            // shotgun
+            PID_SHOTGUN,
+            PID_SAWED_OFF_SHOTGUN,
+            PID_COMBAT_SHOTGUN,
+            // smg
+            PID_10MM_SMG,
+            PID_GREASE_GUN,
+            // big guns
+            PID_FLAMER,
+            // energy weapons
+            PID_LASER_PISTOL,
+            PID_LASER_RIFLE,
+            // melee
+            PID_WAKIZASHI_BLADE
+        };
+        uint16[] weapon_backup1 =
+        {
+            // grenades
+            PID_MOLOTOV_COCKTAIL,
+            PID_FRAG_GRENADE,
+            // throwing
+            PID_THROWING_KNIFE,
+            PID_ROCK
+        };
+        uint16[] weapon_backup2 =
+        {
+            // melee
+            PID_CLUB,
+            PID_CROWBAR,
+            PID_WRENCH,
+            PID_SLEDGEHAMMER,
+            PID_LOUISVILLE_SLUGGER
+        };
+
+        array<uint8> crTypes = (npc.Stat[ST_GENDER] == GENDER_MALE ? crTypesMale : crTypesFemale);
+        ChangeCrTypeSafe(npc, random_from_array(crTypes));
+
+        for(uint skill = SK_SMALL_GUNS; skill < SK_THROWING; skill++)
+        {
+            npc.SkillBase[skill] = Random(50, 200);
+            Report(npc, SkillName(skill) + ": " + npc.Skill[skill]);
+        }
+        npc.ParamBase[MODE_NO_HOME] = 1;
+        npc.StatBase[ST_REPLICATION_TIME] = 1;
+        npc.SkillBase[SK_OUTDOORSMAN] = Random(80, 150);
+
+        npc.AddItem(random_from_array(armor), 1);
+        if(Random(0, 100) <= 40)
+            npc.AddItem(random_from_array(helmets), 1);
+        Item@ _weapon = npc.AddItem(random_from_array(weapon), 1);
+        npc.AddItem(random_from_array(weapon_backup1), Random(5, 10));
+        if(Random(0, 1) == 0)
+            npc.AddItem(random_from_array(weapon_backup2), 1);
+
+        if(valid(_weapon))
+        {
+            uint16 pidAmmo = _weapon.Proto.Weapon_DefaultAmmoPid;
+            npc.AddItem(_weapon.Proto.Weapon_DefaultAmmoPid,
+                        Random(_weapon.Proto.Weapon_MaxAmmoCount + 10, _weapon.Proto.Weapon_MaxAmmoCount * 5));
+        }
+    }
+
+    npc.SetEvent(CRITTER_EVENT_IDLE,                       "_Idle");
+    npc.SetEvent(CRITTER_EVENT_FINISH,                     "_Finish");
+//	npc.SetEvent( CRITTER_EVENT_PLANE_RUN,		"_PlaneRun" );
+    npc.SetEvent(CRITTER_EVENT_PLANE_END,          "_PlaneEnd");
+
+    npc.SetEvent(CRITTER_EVENT_ATTACKED,           "_Attacked");
+
+    npc.SetEvent(CRITTER_EVENT_GLOBAL_PROCESS,     "_GlobalProcess");
+}
+
+Item@ WearBestHelmet(Critter& critter)
+{
+    return(WearBestArmor(critter, SLOT_HEAD));
+}
+
+Item@ WearBestArmor(Critter& critter)
+{
+    return(WearBestArmor(critter, SLOT_ARMOR));
+}
+
+Item@ WearBestArmor(Critter& critter, uint8 slot)   // it's "Any" not "Best" for now
+{
+    if(slot != SLOT_ARMOR && slot != SLOT_HEAD)
+    {
+        Report(critter, "Invalid slot for WearBestArmor: " + slot);
+        return(null);
+    }
+
+    array<Item@> items;
+    uint         count = critter.GetItems(SLOT_INV, items);
+    for(uint i = 0; i < count; i++)
+    {
+        if(items[i].GetType() == ITEM_TYPE_ARMOR && items[i].Proto.Slot == slot)
+        {
+            _CritMoveItem(critter, items[i], slot);
+            critter.SetFavoriteItem(slot, items[i].GetProtoId());
+            return(items[i]);
+        }
+    }
+    return(null);
+}
+
+Item@ WearBestWeapon(Critter& npc, uint8 slot)
+{
+    if(slot != SLOT_HAND1 && slot != SLOT_HAND2)
+    {
+        Report(npc, "Invalid slot for WearBestWeapon: " + slot);
+        return(null);
+    }
+
+    uint bestskill = GetBestWeaponSkill(npc);
+    int[] skills = { bestskill, SK_BIG_GUNS, SK_ENERGY_WEAPONS, SK_SMALL_GUNS, SK_THROWING, SK_MELEE_WEAPONS };
+
+    array<Item@> items;
+    uint         num = npc.GetItems(SLOT_INV, items);
+
+    for(uint i = 0; i < skills.length(); i++)
+    {
+        for(uint y = 0; y < num; y++)
+        {
+            if(items[y].GetType() == ITEM_TYPE_WEAPON && GetProtoItem(items[y].GetProtoId()).Weapon_Skill_0 == skills[i])
+            {
+                if(CanUseWeapon(npc, items[y]) && CheckBattleWeapon(npc, items[y]))
+                {
+                    _CritMoveItem(npc, items[y], slot);
+                    npc.SetFavoriteItem(slot, items[y].GetProtoId());
+                    return items[y];
+                }
+            }
+        }
+    }
+    return null;
+}
+
+void Report(Critter& npc, string& message)
+{
+    if(npc.SpawnedBy > 0)
+    {
+        Critter@ master = GetCritter(npc.SpawnedBy);
+        if(valid(master))
+        {
+            string name = GetLexem(npc, "$name");
+            if(name.length() == 0)
+                name = "Traveller";
+            master.Say(SAY_NETMSG,
+                       name + "(" + npc.Id + ") |" + COLOR_RGB(200, 0, 0) + " " + message);
+        }
+        else
+            DLog(message);
+    }
+}
+
+bool CheckHealth(Critter& npc, Critter& target)
+{
+    if(valid(npc.GetMap()) && npc.GetMap().IsTurnBased())
+        return(true);
+
+    // FA first
+    if(target.Stat[ST_CURRENT_HP] < target.Stat[ST_MAX_LIFE])
+    {
+        if(npc.Timeout[TO_SK_FIRST_AID] == 0 && npc.Timeout[TO_WEAKENED] == 0)
+        {
+            Report(npc, "First Aid plan added");
+            AddHealCritterPlane(npc, 0, target, false);
+            return(false);
+        }
+        else
+        {
+            // don't waste stims on light wounds, wait for timeout end
+            if((target.Stat[ST_MAX_LIFE] - target.Stat[ST_CURRENT_HP]) <= 20)
+            {
+                Report(npc, "Waiting for First Aid timeout");
+                return(true);
+            }
+
+            if(target.Id == npc.Id)
+            {
+                array<Item@> stims;
+                uint         count = 0;
+                count += npc.GetItems(SLOT_HAND1, stims);
+                count += npc.GetItems(SLOT_HAND2, stims);
+                count += npc.GetItems(SLOT_INV, stims);
+                // look for stims
+                for(uint i = 0; i < count; i++)
+                {
+                    if(stims[i].GetProtoId() == PID_STIMPAK)
+                    {
+                        Report(npc, "Using Stimpak");
+                        UseDrug(npc, stims[i]);
+                        npc.Wait(_SECOND(5));
+                        return(false);
+                    }
+                }
+            }
+        }
+    }
+
+    // doctor
+    if(target.Damage[DAMAGE_EYE] > 0 || target.Timeout[TO_WEAKENED] > 0 ||
+       target.Damage[DAMAGE_RIGHT_ARM] > 0 || target.Damage[DAMAGE_LEFT_ARM] > 0 ||
+       target.Damage[DAMAGE_RIGHT_LEG] > 0 || target.Damage[DAMAGE_LEFT_LEG] > 0 /*||
+                                                                                    target.Damage[DAMAGE_POISONED]>0*/)
+    {
+        if(npc.Timeout[TO_SK_DOCTOR] == 0)
+        {
+            Report(npc, "Doctor plan added");
+            AddDoctorCritterPlane(npc, 0, target, false);
+            return(false);
+        }
+    }
+
+    return(true);
+}
+
+bool CheckEquipment(Critter& npc)
+{
+    // harsh wasteland, be always ready to fight
+
+    if(valid(npc.GetMap()) && InWeaponAllowedZone(npc))
+    {
+        if(!valid(npc.GetItem(0, SLOT_HAND1)))
+        {
+            if(valid(WearBestWeapon(npc, SLOT_HAND1)))
+            {
+                Report(npc, "WearBestWeapon SLOT_HAND1");
+                npc.Wait(_SECOND(2));
+                return(false);
+            }
+        }
+
+        if(!valid(npc.GetItem(0, SLOT_HAND2)))
+        {
+            if(valid(WearBestWeapon(npc, SLOT_HAND2)))
+            {
+                Report(npc, "WearBestWeapon SLOT_HAND2");
+                npc.Wait(_SECOND(2));
+                return(false);
+            }
+        }
+    }
+
+    if(!valid(npc.GetItem(0, SLOT_ARMOR)))
+    {
+        if(valid(WearBestArmor(npc)))
+        {
+            Report(npc, "WearBestArmor SLOT_ARMOR");
+            npc.Wait(_SECOND(2));
+            return(false);
+        }
+    }
+    if(!valid(npc.GetItem(0, SLOT_HEAD)))
+    {
+        if(valid(WearBestHelmet(npc)))
+        {
+            Report(npc, "WearBestHelmet SLOT_HEAD");
+            npc.Wait(_SECOND(2));
+            return(false);
+        }
+    }
+    return(true);
+}
+
+bool CheckWoundedCritters(Critter& npc)
+{
+    Map@ map = npc.GetMap();
+
+    if(!valid(map))
+    {
+        // TODO
+        return(true);
+    }
+
+    array<Critter@> crits;
+    uint            count = npc.GetCritters(false, FIND_LIFE_AND_KO, crits);
+    for(uint c = 0; c < count; c++)
+    {
+        if(Random(1, 10) <= 7)
+            CheckHealth(npc, crits[c]);
+    }
+
+    return(true);
+}
+
+bool CheckSupportPerks(Critter& npc)
+{
+    Map@ map = npc.GetMap();
+
+    if(!valid(map))
+        return(true);
+
+    ///
+
+    return(true);
+}
+
+bool CheckNextDestination(Critter& npc)
+{
+    // ignore locations 'under feet'
+    array<Location@> ignored;
+    uint             count = GetLocations(npc.WorldX, npc.WorldY, 0, ignored);
+    for(uint l = 0; l < count; l++)
+    {
+        string name = "<unknown>";
+        ignored[l].ProtoName(name);
+        name += ":" + ignored[l].GetProtoId();
+        Report(npc, "CheckNextDestination: ignoring " + name);
+    }
+    npc.Wait(_SECOND(15));
+
+    return(true);
+}
+
+uint GetItemsToSell(Critter& npc, array<Item@>& items)
+{
+    array<Item@> myItems;
+
+    uint         total = 0;
+    uint         count = npc.GetItems(-1, myItems);
+    for(uint i = 0; i < count; i++)
+    {
+        if(myItems[i].GetType() == ITEM_TYPE_AMMO ||
+           myItems[i].GetType() == ITEM_TYPE_ARMOR ||
+           myItems[i].GetType() == ITEM_TYPE_BLUEPRINT ||
+           myItems[i].GetType() == ITEM_TYPE_DRUG ||
+           myItems[i].GetType() == ITEM_TYPE_WEAPON)
+        {
+            // TODO: decide
+            continue;
+        }
+
+        items.insertLast(myItems[i]);
+        total++;
+    }
+    return(total);
+}
+
+bool CheckTraders(Critter& npc)
+{
+    Map@ map = npc.GetMap();
+    if(!valid(map))
+        return(true);
+
+    array<Critter@> crits;
+    array<Critter@> traders;
+    uint            count = map.GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, crits);
+    for(uint c = 0; c < count; c++)
+    {
+        if(_CritHasExtMode(crits[c], MODE_EXT_TRADER))
+            traders.insertLast(crits[c]);
+    }
+    crits.resize(0);
+    if(traders.length() > 0)
+    {
+        Report(npc, "Found traders: " + traders.length());
+        npc.Wait(_SECOND(15));
+        return(false);
+    }
+    else
+    {
+        Report(npc, "No traders found");
+        return(true);
+    }
+}
+
+bool _Attacked(Critter& npc, Critter& attacker)
+{
+    ITraveller@ traveller = GetTraveller(npc.Id);
+    if(!valid(traveller))
+    {
+        Report(npc, "Traveller invalid");
+        // npc.Wait( _MINUTE(1) );
+        return(false);
+    }
+
+    Map@ map = npc.GetMap();
+
+    if(!valid(map))
+        return(false);
+
+    if(npc.Stat[ST_CURRENT_HP] <= npc.Stat[ST_MAX_LIFE] / 3)
+    {
+        CheckHealth(npc, npc);
+
+        traveller.Goto_ExitGrid(true);
+    }
+
+    return(false);
+}
+
+void _Idle(Critter& npc)
+{
+    array<Item@> items;
+    Map@         map = npc.GetMap();
+
+    if(!valid(map))
+        return;
+
+    if(npc.IsDead() && npc.Timeout[TO_REPLICATION] > 0)
+    {
+        Report(npc, "Replication: " + npc.Timeout[TO_REPLICATION]);
+        npc.Wait(_SECOND(Random(1, 3)));
+        return;
+    }
+
+    if(npc.IsDead() && npc.Timeout[TO_REPLICATION] == 0)
+    {
+        Report(npc, "Arise!");
+        ReplicateCritter(npc);           // do i really need that?
+        return;
+    }
+
+    ITraveller@ traveller = GetTraveller(npc.Id);
+    if(!valid(traveller))
+    {
+        Report(npc, "Traveller invalid");
+        npc.Wait(_MINUTE(1));
+        return;
+    }
+
+    if(!traveller.IsLastVisited(map.GetLocation().Id))
+        Report(npc, "LastVisited += " + map.GetLocation().Id);
+    traveller.AddLastVisited(map.GetLocation().Id);
+
+    bool reachedDestination = false;
+    if(map.GetLocation().Id == traveller.GetCurrentDestination())
+    {
+        Report(npc, "SetCurrentDestination : 0");
+        traveller.SetCurrentDestination(0);
+    }
+
+    if(!CheckHealth(npc, npc))
+        return;
+
+    if(!CheckEquipment(npc))
+        return;
+
+    items.resize(0);
+    int sellItems = GetItemsToSell(npc, items);
+    if(sellItems > 0)
+    {
+        if(!CheckTraders(npc))
+            return;
+    }
+    // else
+    // Report( npc, "Nothing to sell" );
+
+    Location@ dloc = null;
+    if(traveller.Find_SupportPerk(dloc))
+        return;
+
+    if(!CheckWoundedCritters(npc))
+        return;
+
+    DSay(npc, "_Idle");
+
+    if(map.GetLocation().Id != traveller.GetCurrentDestination() ||
+       Random(1, 100) <= 60)
+    {
+        traveller.Goto_ExitGrid();
+        return;
+    }
+
+    return;
+}
+
+/*
+   bool FindDestination( Critter& npc, int type, Item@ car, float&inout x, float&inout y, float&inout toX, float&inout toY, float&inout speed, uint&inout encounterDescriptor, bool&inout waitForAnswer )
+   {
+        ITraveller@ traveller = GetTraveller(npc.Id);
+        if( !valid(traveller) )
+        {
+                Report( npc, "Traveller invalid" );
+                npc.Wait( _MINUTE(1) );
+                return( true );
+        }
+
+        Report( npc, "FindDestination" );
+
+        Location@ dest = null;
+
+        if( traveller.GetCurrentDestination() > 0 )
+                @dest = GetLocation( traveller.GetCurrentDestination() );
+
+        if( valid(dest) )
+        {
+                toX = float(dest.WorldX);
+                toY = float(dest.WorldY);
+                speed = GLOBAL_MAP_BASE_SPEED;
+
+                MoveGlobalGroup(npc,car,x,y,toX,toY,speed);
+                Report( npc, "Moving to (saved): "+GetLocationName(dest)+"(PID:"+dest.GetProtoId()+")(ID:"+dest.Id+") ("+toX+","+toY+")" );
+                if( x == toX && y == toY && x == dest.WorldX && y == dest.WorldY )
+                        EnterLocation( npc, dest );
+                return( true );
+        }
+
+        if( !valid(dest) && Random(0,10)==0 )
+        {
+                for( uint s=0, sLen=SupportPerks.length(); s<sLen; s++ )
+                {
+                        if( SupportPerks[s][0][0] == 0 )
+                                continue;
+
+                                for( uint p=1, pLen=SupportPerks[s][0].length(); p<pLen; p++ )
+                                {
+                                        if( SupportPerkCheck( npc, SupportPerks[s][0][p] ) &&
+                                                SupportPerks[s][1].length() > 0 &&
+                                                SupportPerks[s][2].length() > 0 )
+                                        {
+                                                Map@ map = GetMapByPid( random_from_array( SupportPerks[s][1] ), 0 );
+                                                if( valid(map) )
+                                                {
+                                                        Report( npc, "I want a perk, now!" );
+                                                        @dest = map.GetLocation();
+                                                }
+                                        }
+                                }
+                }
+        }
+
+        // no destination yet, get one
+        array<Location@> locations;
+        uint count = GetLocations( npc.WorldX, npc.WorldY, traveller.DestinationSearchRadius(), locations );
+
+        if( !valid(dest) )
+        {
+                Report( npc, "Picking closest location" );
+                for( uint l=0; l<count; l++ )
+                {
+                        if( traveller.IsLastVisited( locations[l].Id  ))
+                                continue;
+
+                        if( !locations[l].IsTown() )
+                                continue; // TODO
+
+                        if( locations[l].IsReplication() )
+                                continue;
+
+                        if( locations[l].IsEncounter() && traveller.IgnoreEncounters )
+                                continue;
+
+                        int dist = DIST( npc.WorldX, npc.WorldY, locations[l].WorldX, locations[l].WorldY );
+
+                        if( !valid(dest) ||
+                                (valid(dest) && dist < DIST( npc.WorldX, npc.WorldY, dest.WorldX, dest.WorldY )))
+                        {
+                                @dest = locations[l];
+                                string name = "<unknown>";
+                                dest.ProtoName( name );
+                                Report( npc, "Thinking about: "+name+"(DIST:"+dist+"PID:"+dest.GetProtoId()+")(ID:"+dest.Id+") ("+toX+","+toY+")" );
+                                continue;
+                        }
+                }
+        }
+        if( !valid(dest) )
+        {
+                traveller.SetDestinationSearchRadius( traveller.DestinationSearchRadius()+10 );
+                Report( npc, "No destination found, adjusting search radius: "+
+                        traveller.DestinationSearchRadius() );
+
+                // TODO: pick random known city
+        }
+        else
+        {
+                toX = float(dest.WorldX);
+                toY = float(dest.WorldY);
+                speed = GLOBAL_MAP_BASE_SPEED;
+
+                Report( npc, "Moving to: "+GetLocationName(dest)+"(PID:"+dest.GetProtoId()+")(ID:"+dest.Id+") ("+toX+","+toY+")" );
+                traveller.SetCurrentDestination( dest.Id );
+                MoveGlobalGroup(npc,car,x,y,toX,toY,speed);
+        }
+
+        return( true );
+   }
+
+ */
+
+bool _GlobalProcess(Critter& npc, int type, Item@ car, float& inout x, float& inout y, float& inout toX, float& inout toY, float& inout speed, uint& inout encounterDescriptor, bool& inout waitForAnswer)
+{
+    // traveller.Report( "_GlobalProcess" );
+
+    ITraveller@ traveller = GetTraveller(npc.Id);
+    if(!valid(traveller))
+    {
+        Report(npc, "Traveller invalid");
+        npc.Wait(_MINUTE(1));
+        return(true);
+    }
+
+    switch(type)
+    {
+    case GLOBAL_PROCESS_MOVE:
+        // traveller.Report( "GLOBAL_PROCESS_MOVE" );
+        MoveGlobalGroup(npc, car, x, y, toX, toY, speed);
+        return(false);
+
+    case GLOBAL_PROCESS_ENTER:
+        traveller.Report("GLOBAL_PROCESS_ENTER");
+        return(false);
+
+    case GLOBAL_PROCESS_START_FAST:
+        traveller.Report("GLOBAL_PROCESS_START_FAST");
+        traveller.SetDestinationSearchRadius(Random(50, 150));
+        traveller.Report("DestinationSearchRadius: " +
+                         traveller.DestinationSearchRadius());
+
+        CheckEquipment(npc);
+        return(false);
+
+    case GLOBAL_PROCESS_START:
+        traveller.Report("GLOBAL_PROCESS_START");
+        while(x == toX && y == toY)                     // infinite loop warning
+        {
+            if(traveller.Find_Destination(type, car, x, y, toX, toY, speed, encounterDescriptor, waitForAnswer))
+                return(true);
+        }
+        return(false);
+
+    case GLOBAL_PROCESS_SET_MOVE:
+        traveller.Report("GLOBAL_PROCESS_SET_MOVE");
+        return(false);
+
+    case GLOBAL_PROCESS_STOPPED:
+    {
+        traveller.Report("GLOBAL_PROCESS_STOPPED");
+        array<Location@> locations;
+        uint             lcount = GetLocations(npc.WorldX, npc.WorldY, 2, locations);
+
+        for(uint l = 0; l < lcount; l++)
+        {
+            if(locations[l].Id == traveller.GetCurrentDestination())
+            {
+
+                traveller.Report("Reached destination");
+                traveller.Enter_Location(locations[l]);
+            }
+        }
+        return(traveller.Find_Destination(type, car, x, y, toX, toY, speed, encounterDescriptor, waitForAnswer));
+    }
+    case GLOBAL_PROCESS_NPC_IDLE:
+        // traveller.Report( "GLOBAL_PROCESS_NPC_IDLE" );
+
+        if(!CheckEquipment(npc))
+            return(true);
+
+        if(x == toX && y == toY && traveller.GetCurrentDestination() == 0)
+        {
+            return(traveller.Find_Destination(type, car, x, y, toX, toY, speed, encounterDescriptor, waitForAnswer));
+        }
+        else
+        {
+            // if( Random(0,100)==0 )
+            //	traveller.Find_Destination(type,car,x,y,toX,toY,speed,encounterDescriptor,waitForAnswer);
+        }
+
+        return(false);
+
+    case GLOBAL_PROCESS_KICK:
+        traveller.Report("GLOBAL_PROCESS_KICK");
+        return(false);
+    }
+
+    return(false);
+}
+
+void _Finish(Critter& npc, bool toDelete)
+{
+    Report(npc, "_Finish, toDelete:" + toDelete);
+    if(toDelete)
+        RemoveTraveller(npc.Id);
+}
+
+int _PlaneEnd(Critter& npc, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(plane.Identifier == PLANE_GOTO_EXIT)
+    {
+        if(reason == REASON_HEX_BUSY)
+        {
+            return(PLANE_KEEP);
+        }
+        else
+        {
+            Report(npc, "Going to worldmap (reason:" + reason + ")");
+            npc.TransitToGlobal(true);
+            return(PLANE_DISCARD);
+        }
+    }
+    else
+        Report(npc, "_PlaneEnd:" + plane.Identifier + " reason:" + reason);
+
+    return(PLANE_RUN_GLOBAL);
+}
+#endif // __NPC_TRAVEL__ //

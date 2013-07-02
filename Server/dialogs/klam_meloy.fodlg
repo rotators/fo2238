@@ -1,0 +1,154 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 1020 @
+20 2000 None 0 #
+3 2010 #
+0 2020 D _var p q_strandedrust > 0 #
+6 2030 D _var p q_strandedrust = 0 #
+16 2040 D _var p q_strandedrust > 0 D _var p q_strandedrust < 3 @
+2 3000 None 0 #
+3 3010 #
+0 3020 D _var p q_strandedrust > 0 #
+6 3030 D _var p q_strandedrust = 0 #
+16 3040 D _var p q_strandedrust > 0 D _var p q_strandedrust < 3 @
+3 4000 None 0 #
+4 4010 #
+5 4020 #
+22 4030 @
+4 5000 None 0 #
+5 5010 @
+5 6000 None 0 #
+0 6010 D _var p q_strandedrust > 0 #
+6 6020 D _var p q_strandedrust = 0 @
+6 7000 None 0 #
+7 7010 @
+7 8000 None 0 #
+8 8010 D _param p SK_DOCTOR < 61 #
+9 8020 D _param p SK_DOCTOR > 60 @
+8 9000 None 0 #
+9 9010 #
+0 9020 @
+9 10000 None 0 #
+10 10010 #
+0 10020 @
+10 11000 None 0 #
+11 11010 @
+11 12000 None 0 #
+12 12010 D _script npc_common@d_HasNotNumPlayersInParty 1 1 D _param p ST_LEVEL > 9 R _var p q_strandedrust = 1 #
+13 12020 D _script npc_common@d_HasNumPlayersInParty 1 1 D _param p ST_LEVEL > 9 R _var p q_strandedrust = 1 #
+21 12030 D _param p ST_LEVEL < 10 R _var p q_strandedrust = 1 #
+0 12040 @
+12 13000 None 0 #
+0 13010 @
+13 14000 None 0 #
+14 14010 @
+14 15000 None 0 #
+15 15010 R _var p q_strandedrust = 2 R _script quest_tanker@r_SpawnTanker 0  @
+15 16000 None 0 #
+0 16010 @
+16 17000 None 0 #
+14 17010 D _var p q_strandedrust = 1 D _script npc_common@d_HasNumPlayersInParty 1 1 D _param p ST_LEVEL > 9 #
+0 17020 D _param p ST_LEVEL < 10 #
+17 17030 D _item p PID_TANKER_METALLBOX > 0 #
+15 17040 @
+17 18000 None 0 #
+0 18010 D _item p PID_TANKER_METALLBOX } 1 R _script quest_tanker@r_DeleteTanker 0  R _param p ST_EXPERIENCE + 500 R _item p PID_TANKER_METALLBOX - 1 R _var p q_strandedrust = 3 R _script dialog@r_AddMoney 1 100 #
+18 18020 D _param p SK_BARTER < 80 D _item p PID_TANKER_METALLBOX } 1 R _script quest_tanker@r_DeleteTanker 0  R _item p PID_TANKER_METALLBOX - 1 R _param p ST_EXPERIENCE + 500 R _var p q_strandedrust = 3 R _script dialog@r_AddMoney 1 100 #
+19 18030 D _param p SK_BARTER > 79 D _item p PID_TANKER_METALLBOX } 1 R _script quest_tanker@r_DeleteTanker 0  R _item p PID_TANKER_METALLBOX - 1 R _param p ST_EXPERIENCE + 600 R _var p q_strandedrust = 3 R _script dialog@r_AddMoney 1 200 @
+18 19000 None 0 #
+0 19010 @
+19 20000 None 0 #
+0 20010 @
+21 21000 None 0 #
+0 21010 @
+22 22000 None 0 #
+6 22010 D _var p q_strandedrust = 0 #
+0 22020 D _var p q_strandedrust > 0 #
+23 22030 R _script dialog@r_ShowLocation 1 363 @
+23 23000 None 0 #
+6 23010 D _var p q_strandedrust = 0 #
+0 23020 D _var p q_strandedrust > 0 &
+
+[engl]
+{100}{}{Meloy}
+{200}{}{You see Meloy, the trapper.}
+{210}{}{He looks muddy and unwashed.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text, didnt talked before}
+{1020}{}{bereits gesprochen}
+{2000}{}{I don't believe we've met again! What can I do for you?}
+{2010}{}{A trapper? Man, you stink.}
+{2020}{}{I'm just looking around, thanks.}
+{2030}{}{I'm just looking around, thanks.}
+{2040}{}{About that stranded ship...}
+{3000}{}{I don't believe we've met. I'm Meloy. What can I do for you?}
+{3010}{}{You are a trapper? Man, you stink.}
+{3020}{}{I'm just looking around, thanks.}
+{3030}{}{I'm just looking around, thanks.}
+{3040}{}{About that stranded ship...}
+{4000}{}{I might stink, but that doesn't change the fact of me being smart!}
+{4010}{}{Yeah, I see.}
+{4020}{}{You look like you have some stories to tell.}
+{4030}{}{So, as a trapper, you know some fancy caves?}
+{5000}{}{[Looks like he didn't noticed your sarcasm.] Finally someone who acknowledges it!}
+{5010}{}{You look like you have some stories to tell.}
+{6000}{}{You are really right, that's what I have! But unfortunately, I am not in the mood to tell you now.}
+{6010}{}{That's a shame. I am going then...}
+{6020}{}{That's a shame. I am going then...}
+{7000}{}{Hey, wait a second.}
+{7010}{}{What now?}
+{8000}{}{Say, you look like some mean bastard. I might have something to do for you... I would do it by myself, but as you maybe can see, I am not in the best condition anymore.}
+{8010}{}{You look pretty okay to me.}
+{8020}{}{You look pretty okay to me.}
+{9000}{}{But I am not!}
+{9010}{}{Maybe you are right. What is it that you want me to do?}
+{9020}{}{Still no chance. See you.}
+{10000}{}{Yes, maybe you are right... But I need your help anyway.}
+{10010}{}{If it's so important and dangerous, what is it then?}
+{10020}{}{Yeah, that's what I thought. Bye.}
+{11000}{}{Me and my friends have been at the coast a short while ago. There we found a big old ship, stranded. Empty as far as we could see. Tried to enter it on the side, was possible because it got a big hole there.}
+{11010}{}{And what has this to do with me?}
+{12000}{}{It was very dangerous. A lot of locked doors and rats and even armed robots! Too much for us, eh. We left it and that's it. But I want something from there... The ship documents. If you can bring them to me, I will reward you well!}
+{12010}{}{Fair deal? Guess that could work. Tell me where it is and I'll get you that documents.}
+{12020}{}{Fair deal? Guess that could work. Tell me where it is and I'll get you that documents.}
+{12030}{}{Fair deal? Guess that could work. Tell me where it is and I'll get you that documents.}
+{12040}{}{I will think about it. See you later.}
+{13000}{}{Wait, not so fast. You alone? Pah! Get yourself some backup, else it doesn't make sense.}
+{13010}{}{Okay, I come back later.}
+{14000}{}{I see you have some backup with you. This should higher your survival chance a 'lil bit. }
+{14010}{}{Where is that ship now?}
+{15000}{}{Give me your map, I'll show you the location... It's on the west coast, some miles south west from here. [He shows you the position.]}
+{15010}{}{Got it. We will come back with your documents.}
+{16000}{}{I am waiting.}
+{16010}{}{See you.}
+{17000}{}{You have anything new to say?}
+{17010}{}{I've catched myself some backup. We are ready to go to the stranded ship now.}
+{17020}{}{I think, I should train a bit more... see you later.}
+{17030}{}{I have what you wanted.}
+{17040}{}{Nothing new yet.}
+{18000}{}{Very good! [He looks like a happy child.] Here, take the 100 caps and be happy with it!}
+{18010}{}{Very well. It was nice to make deals with you.}
+{18020}{}{What, just 100 caps? Give me more!}
+{18030}{}{What, just 100 caps? That really wasn't an easy task. You could give me some more.}
+{19000}{}{I don't have any additional caps. You should be happy with what I could give you!}
+{19010}{}{Yeah, whatever...}
+{20000}{}{Yeah, I guess you are right. Here, another 100 caps for you. But more I can really not give you.}
+{20010}{}{Sounds better. Thanks.}
+{21000}{}{Wait, don't you feel a bit too weak? You should train a bit more first, then we can talk again.}
+{21010}{}{Okay, I come back later.}
+{22000}{}{You mean like the 'ol toxic caves? Nah...}
+{22010}{}{What a shame. Anyway, see you later. Maybe. And by the way, you stink.}
+{22020}{}{What a shame. Anyway, see you later. Maybe. And by the way, you stink.}
+{22030}{}{...Toxic caves? Tell me about it.}
+{23000}{}{Did I just say toxic caves? Uh oh... eh... well. Yeah, that's some big hole in the mountain to the north of here. It's not a nice place, but you can find many golden geckos in that area.}
+{23010}{}{Maybe I will check it out one day. See you.}
+{23020}{}{Maybe I will check it out one day. See you.}
+

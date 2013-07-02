@@ -1,0 +1,116 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+10 1010 D _var p q_raiders_kazen_notgambler = 1 #
+2 1020 D _param p ST_CHARISMA < 5 #
+3 1030 D _param p ST_CHARISMA > 4 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+2 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+5 3020 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+7 5010 D _param p SK_GAMBLING < 50 D _var p q_raiders_kazen_notgambler = 0 #
+6 5020 D _param p SK_GAMBLING < 50 D _var p q_raiders_kazen_notgambler = 0 #
+13 5030 D _param p SK_GAMBLING > 49 D _var p q_raiders_kazen_gambler = 0 @
+6 6000 None 0 #
+7 6010 #
+65507 6020 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 R _var p q_raiders_kazen_notgambler = 1 R _param p SK_GAMBLING + 13 R _param p ST_EXPERIENCE + 195 @
+10 10000 None 0 #
+11 10010 #
+11 10020 #
+11 10030 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+0 12010 R _var p q_raiders_kazen_notgambler = 2 R _script dialog@r_AddMoney 1 227 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+15 14010 @
+15 15000 None 0 #
+16 15010 #
+16 15020 #
+16 15030 @
+16 16000 None 0 #
+17 16010 #
+17 16020 #
+17 16030 #
+17 16040 @
+17 17000 None 0 #
+18 17010 R _script dialog@r_FlushScreen 0  @
+18 18000 None 0 #
+0 18010 R _var p q_raiders_kazen_gambler = 1 R _param p ST_EXPERIENCE + 281 R _script dialog@r_AddMoney 1 419 &
+
+[engl]
+{100}{}{Kazenzakis}
+{200}{}{You see Kazenzakis.}
+{200}{}{You see a Khan eyeing the flop.}
+{210}{}{You see a Khan sat at the table, playing cards.}
+{210}{}{You see the Khan who spends more time playing cards than shooting homesteaders.}
+{210}{}{Kazenzakis is deep in thought, trying to work out his odds.}
+{1000}{}{Predialogue installations}
+{1010}{}{Nongambler back to gamble}
+{1020}{}{standard khan chatter}
+{1030}{}{First chat for non fucks}
+{1040}{}{Gambling shit done}
+{2000}{}{Anyone got a smoke?@@Those suckers didn't know what hit 'em@@Sheeeeeeiiit@@Modoc's a bunch of pussies if ya ask me@@I could go for some jet...@@Mordino's ain't shit!@@Man...@@I'm fucking bored@@Hey Miller, got any 10mm?@@What's our next target?@@Glad I'm not in Scully's crew@@Carter's a crazy motherfucker@@Gecko freaks me out@@I ran out of space for notches on my gun@@Ever eaten someone?@@I'm fucking starving@@I'm hungry@@We got any fucking food here or what?@@Man, I ain't even give a fuck@@Garcia's been givin' me too many watch shifts, he don't like me@@I need some new gear@@We need some girls in here@@After the next big haul, I'm goin to the Cat's Paw@@Hey Hernandez, pass me that cat's Paw mag@@We need some more Nuka Cola@@This place could really do with some rugs or drapes, a little natural light...@@I can bench twice as much as Stokes, easy@@I heard there's no kids in Vault City cause everyone in VC is gay@@College kids aint shit!@@That haircut makes you look like a fag@@Today sucks@@I'm bored as shit@@When are we gonna do somethin?@@I want a new gun@@How come Garcia always gets first pick on the new shit?@@Man that new slave aint know shit about washing clothes, this shit is a disgrace@@Man, remember shaving?@@Too many new guys recently@@Wish I had a car, I'd take off east@@Yo, pass me a smoke@@This jet aint shit@@Quit hoggin all the psycho@@Fuck you, asshole@@Murphy shoots like a faggot@@Remember when we shot that guy in the groin?@@Anyone up for hold 'em?@@We need more jet@@Fuck Vault City@@Fuck Modoc@@Sometimes.....I get bored of raiding@@We need more slaves@@No, share a bunk with yourself, faggot@@What's the matter, you turning faggot?@@VC's a bunch of wimps@@I spent a month in Gecko once.  My piss was green@@No one talks trash about us@@Replicating's for wimps@@Banks are for faggots@@I just took 8 doses of buffout...@@You see Carter shoot that bitch last week?@@I'm tired@@I'm sick of eating Cheez Puffs@@Right@@*yawns*}
+{3000}{}{What's up, man?}
+{3010}{}{Taking it easy.}
+{3020}{}{Yeah not a lot. You playing cards there?}
+{4000}{}{Yeah, keep at it.}
+{4010}{}{Yeah will do. What are you playing?}
+{5000}{}{Why you asking, man? You a card player?}
+{5010}{}{Not really. I was just asking, you know.}
+{5020}{}{I dabble.}
+{5030}{}{Hell yes I am. But I haven't found a decent table in weeks.}
+{6000}{}{"I dabble." Hahaha, sheeeeeit. You're a fruity motherfucker, man.}
+{6010}{}{Hey man, I'm just saying. I play a bit but not a lot. Just saying.}
+{6020}{}{Call me a fruity motherfucker? That shit is not on. You're dead, fuckles. [Kick his ass.]}
+{7000}{}{Alright, alright. We're playing poker, man. Hold'em. None of that lame-ass Tragic shit, and none of that whacky 'two on the table, one in your hand, three in the middle, another one in your hand, one more on the table' bullshit poker they play in Redding.}
+{7010}{}{Right. [You have no idea what he's talking about. But it's probably about cards.]}
+{8000}{}{You game for a bit? I can teach you a little if you want, nothing goin' on right now. I ain't going easy on you, but we'll do this run for no money, cause otherwise that's just damn cruel.}
+{8010}{}{Alright, let's deal. [Play some cards.]}
+{8020}{}{No way, brother. Cards are for poofs. I'm outta here.}
+{9000}{}{Yeah you getting the hang of it huh? You're not that bad, man. See how it goes now? Maybe you can play a little with your friends and make some pocket money.}
+{9010}{}{Thanks. [You learnt some card skills. You've got a better eye for odds than you did a minute ago.]}
+{10000}{}{Yo, back again?}
+{10010}{}{Oh yes. I'm here to beat your ass at cards and all that.}
+{10020}{}{Correct. Time to play some cards.}
+{10030}{}{Back to kick the shit out of you, via the medium of playing cards.}
+{11000}{}{Oh-ho, not getting cocky I hope! Haha, I'm just messing with ya. Yo Murphy, perk up, we got a game.}
+{11010}{}{[Sit down and look like you mean business.]}
+{12000}{}{Damn man, guess I taught you too good. [He laughs.] Nah man, all's fair at the table, we don't have the energy to start fights over this shit. Your winning's are yours, fair an' square. Just glad you didn't clean us out.}
+{12010}{}{[Pocket your winnings and swagger off.]}
+{13000}{}{Yeah man tell me about it! Every game you walk in to in the city there's either a magnum under the table or half a dozen shills on it. That's why we just play back here.}
+{13010}{}{Yeah, I guess a bunch of kidnapping, slave-trading murderers throw down the most refined card-game, huh.}
+{14000}{}{Look, any one of these motherfuckers might fuck me over one day, we all know it and we all live with it. But man, there really ain't a whole lot of shit to do in a fucking cave, you know? One of these clowns fucks someone else over a card game, enjoy reading the Lavender Flower each night in your own fuckin' corner. Until you get shanked in your fucking bed, right?}
+{14010}{}{I guess you've got a point.}
+{15000}{}{Boredom's enough to keep even bad ass motherfuckers like us in line. I mean sure, we go to the Den and play a game, wont think twice about dropping a couple of suckers to take off with the pot, but here, man, shit is run right. It's beautiful.}
+{15010}{}{Sure.}
+{15020}{}{Sounds it.}
+{15030}{}{I guess.}
+{16000}{}{Anyway, enough talking, right? Want a little game?}
+{16010}{}{Well fuck yes I do.}
+{16020}{}{I'm not here to listen to your gay-ass life story, I'm here to kick your asses at cards. Gay-ass cards.}
+{16030}{}{Of course.}
+{16040}{}{Yes please.}
+{17000}{}{Alright, 's what I like to hear. Yo Murphy, Rodriguez. Yo hey King! Got a game here, man.}
+{17010}{}{[Play cards with the Khans.]}
+{18000}{}{You run a nice game my friend. I mean King's a dumb motherfucker, no offence, so no surprises when he ate your bluff, but Murphy's a straight ice queen at the table and you made off with more of her chips than she'll admit tomorrow. [He laughs loudly.] Alright, enjoy that shit. Take it easy.}
+{18010}{}{Will do. [Pocket your winnings and leave like a champion, a little wiser and a little richer.]}
+

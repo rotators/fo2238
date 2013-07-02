@@ -1,0 +1,72 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p factions_player_faction = 3 D _var p factions_player_rank < 3 #
+3 1020 D _var p factions_player_faction = 3 #
+2 1030 D _script dialog@d_IsDisguised 0  #
+10 1040 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+0 3030 @
+4 4000 None 0 #
+65505 4010 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+3 5020 #
+0 5030 @
+6 6000 None 0 #
+7 6010 D _param p SK_SCIENCE > 119 #
+3 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 #
+3 7020 #
+0 7030 @
+8 8000 None 0 #
+3 8010 #
+0 8020 @
+10 9000 None 0 &
+
+[engl]
+{100}{}{Dr. Schreber}
+{200}{}{You see Dr. Schreber.}
+{210}{}{You see a balding man in a lab coat.}
+{1000}{}{Predialogue installations}
+{1010}{}{member}
+{1020}{}{important member}
+{1030}{}{disguised}
+{1040}{}{non-member}
+{2000}{}{I don’t have time to chitchat with the grunts!@@Stop interrupting my work, soldier.@@This is the research lab. What are you doing here? Leave immidiately!}
+{3000}{}{Yes, officer?}
+{3010}{}{Who are you?}
+{3020}{}{What are you doing here?}
+{3030}{}{Forget it, I'm leaving anyway.}
+{4000}{}{My name is Schreber, Dr. Schreber. I'm the head of the research team among other things, Sir. }
+{4010}{}{Got it. Another question...}
+{4020}{}{Okay. I think I'll be going now.}
+{5000}{}{I work as the base physician but that's just a sideline. Actually, I'm a geneticist.}
+{5010}{}{What's a geneticist?}
+{5020}{}{Got it. Another question...}
+{5030}{}{Okay. I think I'll be going now.}
+{6000}{}{I really don't think you have the intellectual capacity to understand my work. Let's just say that I can 'customize' people or animals. Even viruses. And that's what we're working on here.}
+{6010}{}{Viruses?}
+{6020}{}{Got it. Another question...}
+{6030}{}{Okay. I think I'll be going now.}
+{7000}{}{You see, we are trying to find a specific strain of the FEV -- the so called Forced Evolutionary Virus -- which would allow us to annihilate the abominations created by the Great War. We can not fight them using conventional weapons and methods, and our great country can not allow itself to be populated by mutants, irradiated and genetically modified humans and all the other trash of the wasteland. The Enclave will bring a new dawn for these States, That is certain.}
+{7010}{}{But who is going to populate the country then?}
+{7020}{}{Got it. Another question...}
+{7030}{}{Okay. I think I'll be going now.}
+{8000}{}{Well, did you ever hear of the Vaults? Parts of their population are quite suitable for such task. Too bad some of them are rather stubborn and have to be... eliminated. Also, The Enclave itself has enough strength to start rebuilding the West Coast on its own, once we find the right strain and start our 'cleansing'. You should feel lucky to be one of us in the times to come.}
+{8010}{}{Got it. Another question.}
+{8020}{}{Okay. I think I'll be going now.}
+{9000}{}{Holy shit! We're being invaded! Alert!@@Intruders! Call the guard!@@Guard! Intruders in the research lab!}
+

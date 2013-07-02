@@ -1,0 +1,128 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// golden_globes.fos
+//
+
+#include "_macros.fos"
+
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+
+// ************************************************************************/
+// *                                                                      */
+// ************************************************************************/
+
+#define REC_MAX_TIME             (GAME_MINUTE(10))     // In game minutes
+#define FORCE_DIALOG_REC_SUCC    (3)
+#define FORCE_DIALOG_REC_FAIL    (4)
+
+uint RecPlayerId = 0;
+uint RecBeginTime = 0;
+uint FuckCount = 0;
+
+void CheckTime()
+{
+    if(RecPlayerId != 0 && ELAPSED_TIME - RecBeginTime > REC_MAX_TIME)
+        EndRec();
+}
+
+bool RecInAir()
+{
+    CheckTime();
+    return RecPlayerId != 0;
+}
+
+void BeginRec(Critter@ cr)
+{
+    RecPlayerId = cr.Id;
+    RecBeginTime = ELAPSED_TIME;
+    FuckCount = 0;
+}
+
+void EndRec()
+{
+    RecPlayerId = 0;
+    RecBeginTime = 0;
+    FuckCount = 0;
+}
+
+// ************************************************************************/
+// * Scenery                                                              */
+// ************************************************************************/
+
+bool s_Camera(Critter& cr, Scenery& camera, int skill, Item@ item)
+{
+    return true;
+}
+
+bool s_Bed(Critter& cr, Scenery& bed, int skill, Item@ item)
+{
+    CheckTime();
+    if(skill != -1 || valid(item))
+        return true;
+    if(cr.Id != RecPlayerId)
+        return true;
+    FuckCount++;
+    cr.KarmaBase[KARMA_PORN_STAR] = 1;
+    // FlushScreen(cr,false,3000);
+    // FlushScreen(cr,true,1000);
+    return true;
+}
+
+// ************************************************************************/
+// * Demands                                                              */
+// ************************************************************************/
+
+bool d_IsCanRec(Critter& player, Critter@ npc, int val)
+{
+    CheckTime();
+    return !RecInAir();
+}
+
+bool d_IsFucked(Critter& player, Critter@ npc, int val)
+{
+    CheckTime();
+    return player.Id == RecPlayerId && FuckCount > 0;
+}
+
+bool d_IsRec(Critter& player, Critter@ npc, int val)
+{
+    CheckTime();
+    return player.Id == RecPlayerId;
+}
+
+bool d_IsNotRec(Critter& player, Critter@ npc, int val)
+{
+    CheckTime();
+    return player.Id != RecPlayerId;
+}
+
+// ************************************************************************/
+// * Results                                                              */
+// ************************************************************************/
+
+uint r_TryRec(Critter& player, Critter@ npc, int val)
+{
+    if(!RecInAir())
+    {
+        BeginRec(player);
+        return FORCE_DIALOG_REC_SUCC;
+    }
+
+    return FORCE_DIALOG_REC_FAIL;
+}
+
+void r_BeginRec(Critter& player, Critter@ npc, int val)
+{
+    BeginRec(player);
+}
+
+void r_EndRec(Critter& player, Critter@ npc, int val)
+{
+    EndRec();
+}
+
+// ************************************************************************/
+// *                                                                      */
+// ************************************************************************/

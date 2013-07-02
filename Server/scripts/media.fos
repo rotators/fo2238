@@ -1,0 +1,160 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// media.fos
+//
+
+#include "_macros.fos"
+
+// Templates:
+// import void PlaySound(Critter& cr, string& soundName ) from "media";
+// import void PlayMusic(Critter& cr, string& musicName, uint pos, uint repeat) from "media";
+// import void PlayMusic(Map& map, string& musicName, uint pos, uint repeat) from "media";
+// import void PlayVideo(Critter& cr, string& videoName, bool canStop) from "media";
+// import void PlayVideo(Map& map, string& videoName, bool canStop) from "media";
+
+
+void PlaySound(Critter& cr, string& soundName)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_PlaySound", 0, 0, 0, soundName, null);
+}
+
+void PlayMusic(Critter& cr, string& musicName, uint pos, uint repeat)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_PlayMusic", int(pos), int(repeat), 0, musicName, null);
+}
+
+void PlayMusic(Map& map, string& musicName, uint pos, uint repeat)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_PlayMusic", int(pos), int(repeat), 0, musicName, null);
+}
+
+void PlayVideo(Critter& cr, string& videoName, bool canStop)   // Export
+{
+    if(cr.IsPlayer())
+        cr.RunClientScript("_PlayVideo", canStop ? 1 : 0, 0, 0, videoName, null);
+}
+
+void PlayVideo(Map& map, string& videoName, bool canStop)   // Export
+{
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_ALL | FIND_ONLY_PLAYERS, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+        critters[i].RunClientScript("_PlayVideo", canStop ? 1 : 0, 0, 0, videoName, null);
+}
+
+string PrepareSound_Pick(Item& item)
+{
+    if(!valid(item) || item.IsNotValid)
+        return("");
+
+    string sound = "";
+    switch(item.GetProtoId())
+    {
+    // armors
+    case PID_PURPLE_ROBE:
+    case PID_KEEPBRIGE_ROBE:
+    case PID_SAND_ROBE:
+        sound = "robe.acm";
+        break;
+    case PID_LEATHER_ARMOR:
+    case PID_LEATHER_ARMOR_MK_II:
+        sound = "ltharmor.acm";
+        break;
+    case PID_METAL_ARMOR:
+    case PID_METAL_ARMOR_MK_II:
+    case PID_TESLA_ARMOR:
+        sound = "mtlarmor.acm";
+        break;
+    case PID_POWERED_ARMOR:
+    case PID_HARDENED_POWER_ARMOR:
+    case PID_ADVANCED_POWER_ARMOR:
+    case PID_ADVANCED_POWER_ARMOR_MK2:
+        sound = "pwrarmor.acm";
+        break;
+    // weapons
+    case PID_ZIP_GUN:
+    case PID_9MM_MAUSER:
+    case PID_10MM_PISTOL:
+    case PID_14MM_PISTOL:
+    case PID_DESERT_EAGLE:
+    case PID_DESERT_EAGLE_EXT_MAG:
+    case PID_223_PISTOL:
+    case PID_44_MAGNUM_REVOLVER:
+    case PID_44_MAGNUM_SPEEDLOADER:
+    case PID_NEEDLER_PISTOL:
+    case PID_PK12_GAUSS_PISTOL:
+        sound = "pistol.acm";
+        break;
+    case PID_HUNTING_RIFLE:
+    case PID_SCOPED_HUNTING_RIFLE:
+    case PID_SPRINGER_RIFLE:
+    case PID_ASSAULT_RIFLE:
+    case PID_ASSAULT_RIFLE_EXT_MAG:
+    case PID_SNIPER_RIFLE:
+    case PID_FN_FAL:
+    case PID_FN_FAL_NIGHT_SCOPE:
+    case PID_FN_FAL_HPFA:
+    case PID_RED_RYDER_BB_GUN:
+    case PID_RED_RYDER_LE_BB_GUN:
+    case PID_JONNY_BB_GUN:
+    case PID_INDEPENDENT:
+    case PID_M72_GAUSS_RIFLE:
+        sound = "rifle.acm";
+        break;
+    case PID_10MM_SMG:
+    case PID_HK_P90C:
+    case PID_TOMMY_GUN:
+    case PID_HK_G11:
+    case PID_HK_G11E:
+    case PID_GREASE_GUN:
+        sound = "uzi.acm";
+        break;
+    case PID_ROCKET_LAUNCHER:
+        sound = "rlaunch.acm";
+        break;
+    case PID_SLEDGEHAMMER:
+    case PID_SUPER_SLEDGE:
+        sound = "sledge.acm";
+        break;
+    case PID_SPEAR:
+    case PID_SHARP_SPEAR:
+    case PID_SHARPENED_POLE:
+        sound = "spear.acm";
+        break;
+    case PID_FLARE:
+    case PID_FLARE_GREEN:
+    case PID_FLARE_WHITE:
+    case PID_FLARE_YELLOW:
+    case PID_ACTIVE_FLARE:
+    case PID_ACTIVE_FLARE_GREEN:
+    case PID_ACTIVE_FLARE_WHITE:
+    case PID_ACTIVE_FLARE_YELLOW:
+        sound = "flare.acm";
+        break;
+    // other
+    case PID_KEY:
+    case PID_KEYS:
+    case PID_BOTTLE_CAPS:
+    case PID_DOGTAGS:
+        sound = "pickkeys.acm";
+        break;
+    case PID_ROPE:
+        sound = "rope.acm";
+        break;
+    }
+
+    if(sound.length() <= 4)         // .ext
+    {
+        if(item.GetType() == ITEM_TYPE_AMMO)
+            sound = "ammo.acm";
+    }
+
+    return(sound);
+}

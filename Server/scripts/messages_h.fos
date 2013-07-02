@@ -1,0 +1,97 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// messages_h.fos
+//
+
+#ifndef __MESSAGES__
+#define __MESSAGES__
+
+#define MSG_ATTACK_ME                        (1000) // sender wants to be attacked
+#define MSG_IM_BLOCKING                      (1001)
+#define MSG_HELP                             (1003)
+#define MSG_TOWN_UNDER_ATTACK                (1004)
+#define MSG_REINFORCEMENTS_ARRIVED           (1005)
+
+#define MSG_GUARD_KILLED                     (1010)
+#define MSG_GUARD_ATTACKED                   (1011)
+#define MSG_PLAYER_KILLED                    (1012)
+#define MSG_GUARD_ATTACKING                  (1013)
+#define MSG_SOMEONE_KILLED                   (1014)
+
+#define MSG_IM_ATTACKED                      (1020)
+
+#define MSG_TRAIN_ARRIVED                    (1031)
+#define MSG_TRAIN_LEAVING                    (1032)
+#define MSG_TRAIN_LEFT                       (1033)
+
+// message params (for im_blocking and maybe others??)
+#define MSG_PARAM_WARN                       (0)
+#define MSG_PARAM_PUNISH                     (1)
+
+// Junktown
+#define MSG_JNK_PLAYER_ENTRANCE              (1)
+#define MSG_JNK_PLAYER_ENTRANCE_ENTER        (2)
+
+// NCR Prison
+#define MSG_CONVICT_PLAYER_BORDER_WARNING    (1)
+#define MSG_CONVICT_PLAYER_BORDER_ATTACK     (2)
+#define MSG_PRISON_GUARD_ATTACK              (3)
+#define MSG_PRISON_DOOR                      (4)
+
+// BoS, Lost Hills
+#define MSG_BOS_PLAYER_NEAR_HQ               (1)
+#define MSG_BOS_PLAYER_LAST_WARNING          (2)
+#define MSG_BOS_PLAYER_AT_HQ                 (3)
+#define MSG_BOS_PLAYER_NEAR_STORAGE          (4)
+#define MSG_BOS_PLAYER_STORAGE_ENTER         (5)
+#define MSG_BOS_PLAYER_NEAR_COMPUTER         (6)
+#define MSG_BOS_PLAYER_COMPUTER_ENTER        (7)
+
+// Navarro
+#define MSG_NAV_TRESPASSER                   (0)
+#define MSG_NAV_AREA_NOT_ALLOWED             (1)
+#define MSG_NAV_WELCOME                      (2)
+
+// Raiders
+#define MSG_RAIDER_TRESPASSER                (0)
+#define MSG_RAIDER_AREA_NOT_ALLOWED          (1)
+#define MSG_RAIDER_WELCOME                   (2)
+
+// Cathedral
+#define MSG_CATH_PLAYER_ENTER_CAVE           (0)
+
+// VC
+// player approach gate
+#define MSG_VC_PLAYER_NEAR_GATE              (1)
+// player enters the gate
+#define MSG_VC_PLAYER_AT_GATE                (2)
+// player near hq building entrance
+#define MSG_VC_PLAYER_NEAR_HQ                (3)
+// player at hq building entrance
+#define MSG_VC_PLAYER_AT_HQ                  (4)
+// player near hq underground entrance
+#define MSG_VC_PLAYER_NEAR_HQU               (5)
+// player at hq undergroung entrance
+#define MSG_VC_PLAYER_AT_HQU                 (6)
+// player near council building
+#define MSG_VC_PLAYER_NEAR_COUNCIL           (7)
+// player at council entrance
+#define MSG_VC_PLAYER_AT_COUNCIL             (8)
+#define MSG_VC_PLAYER_NEAR_VAULT             (9)
+#define MSG_VC_PLAYER_AT_VAULT               (10)
+
+// Quests
+// Caesars Legion quest location
+#define MSG_AMBUSH_ATTACK                    (1)
+
+// Cathedral Basement Monk
+#define MSG_MONK_ATTACK                      (1)
+
+// Boneyard, Warehouse Rape Party
+#define MSG_PUNK_ATTACK                      (1)
+
+// Boneyard, Gun Runners Caravan
+#define MSG_ENTRANCE_MUTANT_ATTACK           (1)
+#endif

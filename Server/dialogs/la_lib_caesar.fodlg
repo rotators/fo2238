@@ -1,0 +1,224 @@
+[comment]
+Hammilton is officially a Follower of the Apocalypse, but belongs to Caesar's Legion. Caesar itself is moved away already, while Hammilton still takes his role as Follower to get more informations from this territory.
+
+The "Who are you really"-question pops up after the player has done the train quest. He gets a hint on this from the target person.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+33 1010 D _var n name_mem_player_npc = 1 #
+41 1020 D _var p q_la_train_caesar = 14 #
+33 1030 D _var p q_la_train_caesar = 15 #
+2 1040 D _var p q_la_train_caesar > 0 D _var p q_la_train_caesar < 14 #
+4 1050 D _var p q_la_train_caesar = 0 D _param p KARMA_SLAVER = 1 #
+3 1060 D _param p ST_STRENGTH < 8 D _var p q_la_train_caesar = 0 #
+5 1070 D _param p ST_STRENGTH > 7 D _var p q_la_train_caesar = 0 #
+2 1080 @
+2 2000 None 0 #
+0 2010 #
+35 2020 D _var p q_la_train_caesar = 4 R _script quest_caesar_train@r_DeleteCamp 0  R _param p ST_EXPERIENCE + 2000 R _var p q_la_train_caesar = 14 #
+36 2030 D _var p q_la_train_caesar = 7 R _script quest_caesar_train@r_DeleteCamp 0  R _script dialog@r_SkillRoll 2 Speech 35 R _param p ST_EXPERIENCE + 2000 R _var p q_la_train_caesar = 15 #
+32 2040 D _var p q_la_train_caesar = 7 R _script quest_caesar_train@r_DeleteCamp 0  R _var p q_la_train_caesar = 15 R _param p ST_EXPERIENCE + 2000 R _var p q_la_train_caesar_ambush = 1 @
+3 3000 None 0 #
+20 3010 #
+6 3020 #
+8 3030 D _param p ST_CHARISMA > 5 D _var p q_la_train_caesar = 0 #
+0 3040 @
+4 4000 None 0 #
+20 4010 #
+6 4020 #
+8 4030 D _var p q_la_train_caesar = 0 D _param p ST_CHARISMA > 5 #
+0 4040 @
+5 5000 None 0 #
+20 5010 #
+6 5020 #
+8 5030 D _var p q_la_train_caesar = 0 #
+0 5040 @
+6 6000 None 0 #
+8 6010 D _var p q_la_train_caesar = 0 #
+30 6020 @
+7 7000 None 0 #
+65507 7010 #
+6 7020 @
+20 8000 None 0 #
+6 8010 @
+8 9000 None 0 #
+9 9010 #
+0 9020 @
+9 10000 None 0 #
+10 10010 #
+11 10020 #
+11 10030 #
+11 10040 @
+10 11000 None 0 #
+11 11010 #
+0 11020 @
+11 12000 None 0 #
+12 12010 @
+12 13000 None 0 #
+13 13010 #
+13 13020 #
+13 13030 @
+13 14000 None 0 #
+14 14010 #
+0 14020 @
+14 15000 None 0 #
+15 15010 @
+15 16000 None 0 #
+18 16010 #
+16 16020 @
+16 17000 None 0 #
+17 17010 R _var p q_la_train_caesar = 1 R _script dialog@r_ShowLocation 1 353 @
+17 18000 None 0 #
+0 18010 #
+6 18020 @
+18 19000 None 0 #
+16 19010 @
+30 20000 None 0 #
+31 20010 #
+6 20020 #
+0 20030 @
+31 21000 None 0 #
+6 21010 #
+0 21020 @
+32 22000 None 0 @
+33 23000 None 0 @
+35 24000 None 0 #
+37 24010 #
+39 24020 D _param p KARMA_SLAVER = 1 #
+40 24030 D _param p KARMA_SLAVER = 0 @
+36 25000 None 0 #
+38 25010 R _script dialog@r_SkillRoll 2 Speech 35 #
+32 25020 R _var p q_la_train_caesar_ambush = 1 R _var p q_la_train_caesar = 15 @
+37 26000 None 0 #
+43 26010 D _param p KARMA_SLAVER = 0 #
+42 26020 D _param p KARMA_SLAVER = 1 @
+38 27000 None 0 #
+32 27010 R _var p q_la_train_caesar = 15 R _var p q_la_train_caesar_ambush = 1 @
+39 28000 None 0 #
+42 28010 #
+32 28020 R _var n name_mem_player_npc = 1 @
+40 29000 None 0 #
+43 29010 #
+32 29020 R _var n name_mem_player_npc = 1 @
+41 30000 None 0 #
+0 30010 @
+42 31000 None 0 #
+0 31010 R _script dialog@r_AddMoney 1 1500 R _item p PID_14MM_AP + 15 R _item p PID_14MM_PISTOL + 1 R _var p q_la_train_caesar = 14 #
+6 31020 R _script dialog@r_AddMoney 1 1500 R _item p PID_14MM_AP + 15 R _item p PID_14MM_PISTOL + 1 R _var p q_la_train_caesar = 14 @
+43 32000 None 0 #
+0 32010 R _script dialog@r_AddMoney 1 1000 R _var p q_la_train_caesar = 14 #
+6 32020 R _script dialog@r_AddMoney 1 1000 R _var p q_la_train_caesar = 14 &
+
+[engl]
+{100}{}{Hammilton}
+{200}{}{You see Hammilton, a Follower of the Apocalypse.}
+{210}{}{You see Hammilton, a charismatic Follower of the Apocalypse. }
+{1000}{}{Predialogue installations}
+{1010}{}{pissed off}
+{1020}{}{A Man's job done, "good" way.}
+{1030}{}{A Man's job done, "evil" way.}
+{1040}{}{i got the quest.}
+{1050}{}{train quest - slaver}
+{1060}{}{train quest - weak}
+{1070}{}{train quest - strong}
+{1080}{}{floating message}
+{2000}{}{I am not in the mood to talk to you now. Come back when you are done with the job.}
+{2010}{}{Okay.@@I will be back later.@@Laters...@@Fine.}
+{2020}{}{I've killed the target person. He really wasn't a big deal.}
+{2030}{}{[Lie] I've killed the target person. He really wasn't a big deal. }
+{2040}{}{After talking to him, I've decided to let him go. You didn't told me what it's really all about.}
+{3000}{}{Who are you and what do you want from me, whimp?}
+{3010}{}{What are you doing here?}
+{3020}{}{Can I ask you some questions?}
+{3030}{}{I can see in your eyes, that you have a job for someone like me!}
+{3040}{}{Meh, nothing. Bye.@@Sorry, wrong door...@@Nothing.}
+{4000}{}{Who are you and what do you want from me, slaver?}
+{4010}{}{What are you doing here?}
+{4020}{}{Can I ask you some questions?}
+{4030}{}{I can see in your eyes, that you have a job for someone like me!}
+{4040}{}{Meh, nothing. Bye.@@Sorry, wrong door...@@Nothing.}
+{5000}{}{Man, what kind of a bear are you? Big muscles all over, wah?}
+{5010}{}{What are you doing here?}
+{5020}{}{Can I ask you some questions?}
+{5030}{}{I can see in your eyes that you have a job for someone like me!}
+{5040}{}{Sorry, wrong door.}
+{6000}{}{Do I look like a tattletale to you?@@What do you want now?}
+{6010}{}{You looks like something is bothering you. }
+{6020}{}{What is this place?}
+{7000}{}{If you don't stop the questions, I will kick your ass out of here very fast. }
+{7010}{}{Yeah, as if you can kick my ass. [Combat]}
+{7020}{}{I am sorry. There is still something else I would like to know.}
+{8000}{}{What are YOU doing here? Going me on my nerves.}
+{8010}{}{Can I ask you some question?}
+{9000}{}{No. And now get out here, I have to work.}
+{9010}{}{Maybe I can help you with your problem}
+{9020}{}{Good, bye.}
+{10000}{}{Mhm. [He takes a look at you closely.] Are you good? Do you know how to use a gun? Can you be a ice cold motherfucker?}
+{10010}{}{Guns? God no! That's really not what I am looking for. }
+{10020}{}{I think I am pretty skilled.}
+{10030}{}{The gun is my longer arm. I can't without it.}
+{10040}{}{I *am* a ice cold motherfucker!}
+{11000}{}{Then I don't need you. And now get out here, I have to work.}
+{11010}{}{Wait! Did I said no guns? Well, I meaned... No guns for the other! Tell me what I should do and I am on it.}
+{11020}{}{Yeah. Bye.}
+{12000}{}{This could work. Anyway... I need a god damn motherfucker and I give you the job. But don't prove me that you are *not* a god damn motherfucker or shit comes down on you. }
+{12010}{}{Tell me what's the job about.}
+{13000}{}{I have some very explicit business ongoing and some days ago, one of my... workers... has left.}
+{13010}{}{So whats the job now?}
+{13020}{}{I have to bring him back?}
+{13030}{}{What do you want me to do exactly?}
+{14000}{}{Find him. Find him and then kill him. Report back to me, as soon as you are done.}
+{14010}{}{Good. Do you have any clue where I can find him?}
+{14020}{}{That's horrible. Not with me! Bye.}
+{15000}{}{If it would be me, I would try to take the train and flee as far away as possible. You should try it there first. Talk to everyone, maybe someone saw him. He is a middle-aged man, black hair, normal build, wears a old leather armor with a black bull on it.}
+{15010}{}{What train are you talking about?}
+{16000}{}{Are you sleeping or what? The NCR train that is running since some time now. They fixed up the rail lines.}
+{16010}{}{Never heard of that.}
+{16020}{}{Where can I find the train station?}
+{17000}{}{The closest is in the north west from here. You have to travel a bit, but shouldn't take much time.}
+{17010}{}{Fine. I will find your worker and get the job done.}
+{18000}{}{Good. Come back to me and when you are done.}
+{18010}{}{I will. [Leave]}
+{18020}{}{Another question, before I start, if you don't mind.}
+{19000}{}{It took them a long time and they are still working on rebuilding even more rail lines.}
+{19010}{}{Where can I find the train station?}
+{20000}{}{This is the library of the Follower of the Apocalypse. We study and archive all books we can find and which we choose to be very important for the future.}
+{20010}{}{How can you guys survive out here?}
+{20020}{}{I want to know something else.}
+{20030}{}{That's all I wanted to hear. See you.}
+{21000}{}{It's not as hard anymore, as it was few years ago. But why the fuck am I talking to you anyway? Get off, I am busy.}
+{21010}{}{Wait, one last thing...}
+{21020}{}{Okay.}
+{22000}{}{You got damn idiot. You will regret it, I swear you. }
+{23000}{}{You will regret what you have done.}
+{24000}{}{Ladies and Gentleman, that's what I call good work!}
+{24010}{}{You've searched a *god damn mother fucker* and that's what you got!}
+{24020}{}{I think that it wasn't right.}
+{24030}{}{I think that it wasn't right.}
+{25000}{}{Something tells me, that you are not telling the truth. You are lying to me, am I right?}
+{25010}{}{Your feelings must be wrong, because I've killed him and yes, this is the truth.}
+{25020}{}{You are right, I didn't killed him. After I've heard his story, it was obvious to me that *you* are the person who should have been killed.}
+{26000}{}{That's true! Man, what a great day now. }
+{26010}{}{So, where is my reward? }
+{26020}{}{So, where is my reward? }
+{27000}{}{No. I know that you are lying to me. So, tell me. What have you done? The truth.}
+{27010}{}{You are right, I didn't killed him. After I've heard his story, it was obvious to me that *you* are the person who should have been killed.}
+{28000}{}{But it was your job and that's all that matters, *slaver*.}
+{28010}{}{I'll guess. So... where is my reward now?}
+{28020}{}{I'll guess. You can stab you my reward into your ass. Bye.}
+{29000}{}{But it was your job and that's all that matters.}
+{29010}{}{I'll guess. So... where is my reward now?}
+{29020}{}{I'll guess. You can stab you my reward into your ass. Bye.}
+{30000}{}{@sex@|Ah, my lucky boy again! Sorry, but I don't have time for you right now. Maybe I will have a new job for you, somewhat later.||Ah, my lucky girl again! Sorry, but I don't have time for you right now. Maybe I will have a new job for you, somewhat later.|}
+{30010}{}{Sure. See you.}
+{31000}{}{Sure. And you know what? For a slaver like you, I'll give you 1500 caps. That's even a bonus! Take care of that beautiful piece of hardware. Ah and here, a few bullets... Because you never know, eh?}
+{31010}{}{Thanks. See you.}
+{31020}{}{Thanks. I still have one question...}
+{32000}{}{Sure. Here, I'll give you 1000 caps. Should be enough for such a job. It was nice to work with you.}
+{32010}{}{Thanks. See you.}
+{32020}{}{Thanks. I still have one question...}
+

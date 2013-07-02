@@ -1,0 +1,32 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// reputations_h.fos
+//
+
+#ifndef __REPUTATIONS_H__
+#define __REPUTATIONS_H__
+
+#include "groups_h.fos"
+#define _CheckValidIndex    # (__index)  if(__index < 2 || __index > 99) { DLog("invalid reputation index: " + __index); return; }
+
+#ifndef __REPUTATIONS_MODULE__
+import void AddReputation(Critter@ cr, uint index, int val) from "reputations";
+import void SubReputation(Critter@ cr, uint index, int val) from "reputations";
+import void AddReputation(Critter@ cr, uint index, int val, int cap) from "reputations";
+import void SubReputation(Critter@ cr, uint index, int val, int cap) from "reputations";
+import uint ReputationIndex(uint locid) from "reputations";
+import void ProcessProfitReputation(Critter@ cr, uint index, int profit) from "reputations";
+
+import void InitGroups() from "reputations_modifiers";
+import void ApplyReputationModifiers(Critter& cr, uint index) from "reputations_modifiers";
+import void ApplyReputationModifiers(Critter& cr, uint index, float fraction) from "reputations_modifiers";
+import void ApplyReputationModifiers(Critter& cr, uint index, int num, int den) from "reputations_modifiers";
+import int  GetReputationModifier(uint fac1, uint fac2) from "reputations_modifiers";
+import int  GetGroupsStatus(uint fac1, uint fac2) from "reputations_modifiers";
+import int  GetGroupsStatus(Critter& c1, Critter& c2) from "reputations_modifiers";
+import void ReputationsInit(Critter& cr) from "reputations_modifiers";
+import void FeedReputations(Critter@ cr, uint index, int cap) from "reputations_modifiers";
+#endif // __REPUTATIONS_MODULE__
+#endif // __REPUTATIONS_H__

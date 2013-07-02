@@ -1,0 +1,323 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+98 1010 D _param p ST_INTELLECT < 3 #
+99 1020 D _param p ST_CHARISMA > 99 #
+7 1030 D _var p name_mem_npc_player = 1 #
+2 1040 D _var p name_mem_npc_player = 0 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+6 4010 #
+5 4020 #
+0 4030 @
+5 5000 None 0 #
+0 5010 #
+65507 5020 @
+6 6000 None 0 #
+8 6010 R _var p name_mem_npc_player = 1 @
+7 7000 None 0 #
+8 7010 D _var p q_la_ady_lorraine_pistol = 0 #
+80 7020 #
+50 7030 #
+100 7040 D _var p q_la_ady_lorraine_fornication = 0 D _param p ST_CHARISMA < 7 #
+101 7050 D _var p q_la_ady_lorraine_fornication = 0 D _param p ST_CHARISMA > 6 #
+22 7060 D _var p q_la_ady_lorraine_pistol = 1 #
+103 7070 D _var p q_la_ady_lorraine_fornication = 1 #
+24 7080 D _var p q_la_ady_lorraine_pistol = 2 D _item p PID_10MM_PISTOL } 2 #
+0 7090 @
+8 8000 None 0 #
+9 8010 #
+7 8020 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+13 10010 #
+11 10020 #
+0 10030 @
+11 11000 None 0 #
+12 11010 D _param p ST_INTELLECT } 6 D _var p q_la_ady_lorraine_magazine = 0 R _param p ST_EXPERIENCE + 50 R _var p q_la_ady_lorraine_magazine = 1 #
+13 11020 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 #
+7 13020 @
+14 14000 None 0 #
+15 14010 #
+21 14020 #
+0 14030 @
+15 15000 None 0 #
+16 15010 @
+16 16000 None 0 #
+17 16010 @
+17 17000 None 0 #
+18 17010 @
+18 18000 None 0 #
+19 18010 @
+19 19000 None 0 #
+20 19010 @
+20 20000 None 0 #
+21 20010 #
+15 20020 @
+21 21000 None 0 #
+0 21010 R _var p q_la_ady_lorraine_pistol = 1 #
+7 21020 R _var p q_la_ady_lorraine_pistol = 1 @
+22 22000 None 0 #
+15 22010 #
+23 22020 D _var p q_la_ady_lorraine_pistol = 1 D _item p PID_FIREWOOD } 2 D _item p PID_PUMP_PARTS } 6 @
+98 23000 None 0 @
+99 24000 None 0 @
+50 25000 None 0 #
+60 25010 #
+65 25020 #
+7 25030 @
+100 26000 None 0 #
+65505 26010 #
+65507 26020 @
+101 27000 None 0 #
+65505 27010 #
+102 27020 D _param p ST_ENDURANCE } 6 D _param p ST_GENDER = 0 R _param p ST_EXPERIENCE + 150 R _var p q_la_ady_lorraine_fornication = 1 #
+102 27030 D _param p ST_GENDER = 1 D _param p ST_AGILITY } 6 R _param p ST_EXPERIENCE + 150 R _var p q_la_ady_lorraine_fornication = 1 @
+102 28000 None 0 #
+0 28010 #
+65507 28020 @
+60 29000 None 0 #
+61 29010 #
+7 29020 @
+61 30000 None 0 #
+62 30010 @
+62 31000 None 0 #
+63 31010 @
+63 32000 None 0 #
+64 32010 @
+64 33000 None 0 #
+65 33010 #
+7 33020 @
+65 34000 None 0 #
+66 34010 #
+7 34020 @
+66 35000 None 0 #
+67 35010 #
+7 35020 @
+67 36000 None 0 #
+68 36010 #
+7 36020 @
+68 37000 None 0 #
+69 37010 D _var p q_la_ady_lorraine_science = 0 #
+7 37020 @
+69 38000 None 0 #
+70 38010 R _var p q_la_ady_lorraine_science = 1 @
+70 39000 None 0 #
+71 39010 #
+0 39020 @
+71 40000 None 0 #
+72 40010 D _param p SK_SCIENCE } 60 #
+7 40020 #
+72 40030 D _param p ST_INTELLECT > 5 D _param p ST_PERCEPTION > 6 @
+72 41000 None 0 #
+7 41010 R _param p ST_EXPERIENCE + 75 @
+80 42000 None 0 #
+81 42010 #
+7 42020 @
+81 43000 None 0 #
+82 43010 @
+82 44000 None 0 #
+85 44010 #
+83 44020 #
+7 44030 @
+83 45000 None 0 #
+84 45010 #
+7 45020 @
+84 46000 None 0 #
+7 46010 #
+0 46020 @
+85 47000 None 0 #
+86 47010 #
+0 47020 @
+86 48000 None 0 #
+87 48010 #
+7 48020 @
+87 49000 None 0 #
+7 49010 #
+0 49020 @
+103 50000 None 0 #
+104 50010 @
+104 51000 None 0 #
+0 51010 @
+23 52000 None 0 #
+0 52010 R _var p q_la_ady_lorraine_pistol = 2 #
+7 52020 R _var p q_la_ady_lorraine_pistol = 2 @
+24 53000 None 0 #
+65505 53010 D _item p PID_10MM_PISTOL } 1 R _var p q_la_ady_lorraine_pistol = 3 R _item p PID_10MM_PISTOL - 1 R _item p PID_10MM_JHP + 50 R _param p ST_EXPERIENCE + 250 #
+65505 53020 &
+
+[engl]
+{100}{}{Lorraine}
+{200}{}{You see a young woman with green hair.}
+{210}{}{Her green mohawk, leather clothing and handgun suggest that this girl does not fuck around.}
+{1000}{}{Predialogue installations}
+{1010}{}{Dumb}
+{1020}{}{Ugly}
+{1030}{}{Known}
+{1040}{}{Unknown}
+{2000}{}{[You see a young woman, gritting her teeth as she vainly wrestles with her worn out and fatigued weapon] Goddammit...}
+{2010}{}{Hi...}
+{2020}{}{[Walk Away]}
+{3000}{}{[After a few more moments with the pistol, the reluctant slide finally locks forward with a satisfying *clink*] Gotcha ya sumbitch!}
+{3010}{}{Something wrong with your handgun?}
+{3020}{}{[Walk Away]}
+{4000}{}{[Finally noticing you for the first time, a devious smile crosses her lips as she speaks in a southern drawl] Not no more. I don't recognize you, new in town?}
+{4010}{}{Yeah, I'm @pname@.}
+{4020}{}{Yeah, but my name isn't important.}
+{4030}{}{Sorry, can't talk now.}
+{5000}{}{Well then I doubt that anything you have to say is important. Why don't ya come back when you learn some manners?}
+{5010}{}{Whatever}
+{5020}{}{Oh yeah? You think that's funny bitch? Try laughing this off... [Attack]}
+{6000}{}{[Grinning and extending her hand] Nice to meetcha @pname@, I'm Lorraine.}
+{6010}{}{Likewise}
+{7000}{}{So what's up?@@How's it goin'?@@What's new?@@Didja need somethin'?}
+{7010}{}{What's wrong with your handgun?}
+{7020}{}{What can you tell me about New Adytum}
+{7030}{}{What do you do here?}
+{7040}{}{What would you say to you and I getting to know each other a little better?}
+{7050}{}{What would you say to you and I getting to know each other a little better?}
+{7060}{}{Lorraine, about that scaving you wanted me to do...}
+{7070}{}{Hey girl, feel like partying?}
+{7080}{}{I finished making those pistols. You were right, it's not that hard to do at all.}
+{7090}{}{Gotta run Lorraine, see you around.}
+{8000}{}{[Lorraine grips her weapon in her outstretched hand, wistfully admiring it] Yeah, this ole girl has saved my ass plenty of times. But she's starting to show her age and I'm gonna have to break her down soon, try to salvage her for parts.}
+{8010}{}{Break her down for parts? Why not just repair your gun?}
+{8020}{}{I'm sorry to hear that, but their was something else I wanted to ask you about.}
+{9000}{}{Well for starters, I wouldn't know how to. If ya don't know a damn thing about fixing stuff, don't try it. You'll end up making things worse or just outright breaking what you're trying to repair.}
+{9010}{}{Alright, what about getting someone who knows what they're doing,  to fix it for you?}
+{10000}{}{[Her eyes narrow as she answers] Around here that would be Jargo the gunsmith. He can kiss my ass if he thinks I'm gonna pay the price he's asking for, and I know he would LOVE to do just that.}
+{10010}{}{So, what will you do then?}
+{10020}{}{Well how much does he want?}
+{10030}{}{Sounds to me like you're shit-outta-luck. Later.}
+{11000}{}{It's not 'how much' he wants, it's 'what' he wants in exchange. Look, I'm no psalm singing angel alright? I've rolled in the hay plenty. But to do THAT, with HIM? Aside from looking like something a ghoul threw up, there is a reason he likes to play with guns. He needs to compensate for his tiny, little 9mm.}
+{11010}{}{I bet he burns through his clip faster than an SMG too.}
+{11020}{}{Oh, I see. So what will you do then?}
+{12000}{}{Ha ha ha! Ain't that the damn truth! That's too funny, I'm gonna have to tell him that to his face the next time I see him.}
+{12010}{}{I thought you might like that.}
+{13000}{}{The best thing for me to do is to just make a new pistol. Even if I did get this one repaired, she'd never be quite as good as she used to be. Everytime ya fix something it just breaks down faster and faster until eventually you have to replace it.}
+{13010}{}{Building a pistol from scratch sounds tough.}
+{13020}{}{Well, good luck with that then. I wanted to talk to you about something else.}
+{14000}{}{Hell no, it's easy if ya can find a workbench and have all the parts. Take your standard 10mm pistol for instance. All ya need to make one is a little bit of wood and some junk pieces. All of that can be scaved right here in the Boneyard with some patience and luck.}
+{14010}{}{Really? So how would I go about getting started on that?}
+{14020}{}{I already know enough about scaving, tell me what you want }
+{14030}{}{Scaving in the Boneyard? No thanks, I'll pass.}
+{15000}{}{Just head on outside of Adytum and start scrounging around anywhere in the city ruins. You'll prolly run into other Scavs or Regulators out their, they're usually not too much trouble. If ya run into any dogs or other critters, then it's best to just high-tail it outta there and try searching somewhere else.}
+{15010}{}{[Selecting an empty part of the world map and clicking on it will cause your red cross figure to travel into an open green triangle. Click inside the open green triangle to begin scaving]}
+{16000}{}{Now the wood should be easy to find, just find a tree. Not every tree is going to be worth your time though, so be sure to take a close look at your tree before ya start hacking away at it.}
+{16010}{}{[If you highlight a tree with the mouse and a binoculars icon appears, you cannot harvest it. If you highlight a tree and a hand icon appears, you can harvest it.]}
+{17000}{}{You're gonna need an axe to chop down that tree. Your best bet is to scav around the cliffs and mountains north of the Boneyard for a piece of Flint. With that piece of Flint you can use your FixBoy to make a Primitive Tool. Then take your tool and use that to chop down a tree for it's wood.}
+{17010}{}{[F is the default key to open up your FixBoy. With Flint in your inventory, the option to create a Primitive Tool should be highlighted in green. Select the Primitive Tool and click the Fix button to create it. You can now use this item on a harvestable tree to collect wood.]}
+{18000}{}{Junk can be a little tricky to find sometimes, but if you're patient you can usually spot it. There ain't too many spots in the Boneyard that don't have junk just lying around, but if ya can't find any just pick a different spot and keep looking.}
+{18010}{}{[Junk can only be found in city ruins maps. If you are having trouble finding any junk on your map don't forget to check carefully and slowly along the walls of the buildings or their interiors. Junk usually spawns in clusters so if you find one, chances are there will be more nearby.]}
+{19000}{}{Now scaving can take alot out of ya and you won't even realize it. Even expert salvagers like myself need to take a rest from time to time.}
+{19010}{}{[Harvesting trees, collecting junk and other forms of Gathering will increase the cooldown on your Gathering timer dependant on the item Gathered. Once your timer exceeds 20 minutes, you will have to wait until the timer returns to 20 minutes or less until you can Gather more resources.]}
+{20000}{}{Phew, that's an awful lot to cover in such a short time. Ya want me to go over it again or do ya think you're ready to start scaving?}
+{20010}{}{I think I'm ready to start scaving, what is it you want me to get?}
+{20020}{}{Let's go over that again, just in case I missed something important.}
+{21000}{}{Alright then if ya think you're ready to start scavin, I want ya to head out into the Boneyard and collect 2 pieces of wood and 6 pieces of junk. Once you're done, come on back to see me and I'll show ya how you can turn that junk into something useful.}
+{21010}{}{Ok, wish me luck.}
+{21020}{}{Will do, before I go I wanted to ask you something.}
+{22000}{}{Yeah?}
+{22010}{}{Can you tell me what I need to do again?}
+{22020}{}{I've collected everything you've asked for, now what?}
+{23000}{}{Sorry, I don't speak "DUH".@@Beat it, moron.@@Still thinking of somethin' to say?}
+{24000}{}{Oh my god, did your daddy fuck a ghoul or what?@@I've seen Deathclaw shit prettier than you.@@Beat it, ugly.}
+{25000}{}{I'm a Scav, I go out in the ruins and look for things that might be useful. Mostly I find junk, but even junk can be useful if ya know what to do with it.}
+{25010}{}{You don't look like any Scav I've ever seen.}
+{25020}{}{Is their anything out in the ruins that I should look out for?}
+{25030}{}{Let's talk about something else.}
+{26000}{}{[Lorraine chuckles a bit as she eyes you up and down.] With you, I don't think so. }
+{26010}{}{Nevermind then}
+{26020}{}{Oh, so I'm not pretty enough for a stuck up bitch,  like yourself?}
+{27000}{}{[Lorraine eyes you up and down, grinning as she leans in close to you.] Mmm, well ya don't look too bad suga, ya think you can handle a woman like me?}
+{27010}{}{On second thought, maybe we should just stay friends.}
+{27020}{}{Baby, it's time to drop the big one...}
+{27030}{}{Honey, I can handle anything you like...}
+{28000}{}{[You and Lorraine spend a completely fabulous time in each other's company. When the dust finally settles, Lorraine looks deep into your eyes, her skin aglow with more than just background radiation.] That... was...}
+{28010}{}{...good for me too. You be sure to look me up if you ever wanna party again.}
+{28020}{}{...ok. I've had better. Gotta run, later bitch.}
+{29000}{}{Oh ya mean because I look like I'm PREPARED? Because  I'm not heading out into the harsh wasteland with little more than the rags on my back and the easily broken promise of a Regulator? Well then, I suppose you're right.}
+{29010}{}{All I meant was that you look like you can handle yourself.}
+{29020}{}{Jesus, nevermind. Let's just talk about something else.}
+{30000}{}{That's because I can. These other Scavs, they don't have what it takes to be a real salvager, and that's why they'll always be poor.}
+{30010}{}{What do you mean?}
+{31000}{}{Look, it's like this. When ya go out in the ruins, you can either go it alone and take your chances, or you can hire help. Most Scavs aren't fast enough or tough enough to go it alone, so they hire Regulators as mercenaries to escort them through the ruins.}
+{31010}{}{Doesn't sound like a bad system.}
+{32000}{}{Sure, it's great if you're a Regulator. By the time you've paid them their intial fee, and then pay out their cut of the salvaged loot, there is barely any left over for yourself. Most Scavs are just grateful to get three squares out of a day's worth of scaving.}
+{32010}{}{But if you go out alone, you get to keep everything you find.}
+{33000}{}{Damn straight. But ya see not everyone can do it, there are a lot of dangerous things out in the ruins.}
+{33010}{}{Like what?}
+{33020}{}{I'll be sure to keep my eyes open. I wanted to ask you something else.}
+{34000}{}{Mostly dogs, sometimes rats. Those ya don't have too be worried about, if ya don't have a weapon, just run away. You'll run into other Scavs too, which is no big deal usually, but the ones to keep an eye out for are the bandits. They'll shoot you and anyone else they see before ya even know what's happened, including Regulators. They don't care if ya have anything valuable, they'll shoot ya just for the hell of it.}
+{34010}{}{Anything else?}
+{34020}{}{Thanks Lorraine, I'll be on my guard. Let me ask you something else.}
+{35000}{}{Well, there is one other thing, but I haven't see one in years.}
+{35010}{}{What was it?}
+{35020}{}{Oh, well if it's been that long, I probably won't run into it then. Let's change the subject.}
+{36000}{}{Now mind ya, this was a long time ago, but I think I saw what's known as a Deathclaw.}
+{36010}{}{A Deathclaw huh? What did it look like?}
+{36020}{}{A Deathclaw? Big deal. Do you have anything to talk about that isn't boring?}
+{37000}{}{It was big, really big. Fast too. I saw it from a few blocks away, but that was close enough for me. }
+{37010}{}{So what should I do if I run into one?}
+{37020}{}{That was somehow, less, than what I was expecting. Can we talk about something else?}
+{38000}{}{Well, running would be a good start, but like I said, they're fast, and you may not be fast enough. Ya can try hiding, but they got powerful sense of smell. It helps them find fruit easier.}
+{38010}{}{Fruit?}
+{39000}{}{Yeah, everyone knows that Deathclaws are omnivores. They only hunt meat since there ain't much vegetation left in wastes to keep em alive. }
+{39010}{}{What the f...?!}
+{39020}{}{Congratulations, that is officially the dumbest thing I have ever heard. I am now going to end this conversation before the contamination of your intellect can further infect my own mind.}
+{40000}{}{So that's why if you ever run into one, you should throw any fruit ya have at it so that it will go after the fruit instead.}
+{40010}{}{Lorraine, the Deathclaw's improved perception, speed, and strength would suggest that it is a predatory creature. Scientifically speaking, it would be much more logical to assume that the Deathclaw is a carnivore.}
+{40020}{}{Fruit huh? I'll believe it when I see it. Can I ask you something else.}
+{40030}{}{Fruit..? Wait a minute, you're just fucking with me aren't you.}
+{41000}{}{Well don't YOU just know how to ruin a perfectly good joke. Just forget it.}
+{41010}{}{Hilarious, particularly the part where your bad advice gets me killed. Let's change the subject.}
+{42000}{}{Not much more than anyone else. These ruins were once part of a large city called L.A. As ya can see, this place was hit pretty hard by the bombs.}
+{42010}{}{So what happened after that?}
+{42020}{}{Fascinating, let me ask you something else.}
+{43000}{}{What do I look like...a historian? People just started showing up out of the woodwork. Literally. Those who were lucky enough made it here to New Adytum, and did what they could to survive.}
+{43010}{}{You said New Adytum, what happened to the old one?}
+{44000}{}{Nothing, your standing in it now. The name change was just a bit of rosewater that those NCR guys sprinkled on this turd since they slowly starting to taking charge of things.}
+{44010}{}{NCR, who are they?}
+{44020}{}{Why would this place need a name change at all?}
+{44030}{}{If the NCR is in charge, then we have nothing to worry about. Let's discuss something less treasonous.}
+{45000}{}{Adytum has developed a bad reputation with most of the NCR and rightly so. Before, the people of Adytum were less than slaves to the Regulators. With the NCR swooping in, the people here are now slightly more than slaves. That's progress for ya.}
+{45010}{}{I don't see anyone in chains here, how can you say they're being treated like slaves.}
+{45020}{}{Well I guess some improvement is more than anyone can hope for in the wasteland. I wanted to talk about something else.}
+{46000}{}{Not all chains are visible. Yeah, these folks can make a living anyway they want, as long as they're willing to pay the taxes the Regulators charge. If ya don't pay, well then the Regulators have all the guns and muscle to decide if ya get to stay in town or not. The Regulators can charge whatever they want, and nobody, not even the NCR can say boo about it. It may not be slavery, but it's pretty damn close.}
+{46010}{}{Sounds harsh. Let's talk about something else for a while.}
+{46020}{}{That's just too damn depressing. I'll come back and talk to you later when I've cheered up a bit.}
+{47000}{}{The New California Republic. If the land around you is sandy or rocky, theirs a good chance that you're in the NCR. They've annexed just about every city from here to San Francisco and don't plan to stop their.}
+{47010}{}{Sounds like you don't like them very much.}
+{47020}{}{I didn't realize this was going to be a political discussion. Count me out.}
+{48000}{}{To be honest with ya, I don't give a damn one way or the other about them. I just hate that they go around, expanding their influence, all the while telling us it's for our own good. If you ask me, it's really all about one thing, greed. And you know what they say, greed never changes.}
+{48010}{}{Who says that?}
+{48020}{}{I don't have any problems with greed, just as long as I have more than everyone else. Let's pick a new topic.}
+{49000}{}{What, about greed? Everyone says that. Well, it's not always about greed, sometimes they just say it about other things like stupidity, scarcity , war, theft, death. You know, just day to day things. }
+{49010}{}{I see. I had some other questions if you don't mind.}
+{49020}{}{Well, thanks for chatting Lorraine, see you around.}
+{50000}{}{Sure, what the hell. Hope ya brought some smokes for after.}
+{50010}{}{[Get down to business]}
+{51000}{}{[You spend several sweaty minutes together. While the experience is very satisfying, it ultimately yields no other benefits.]}
+{51010}{}{I'll call you, I promise.}
+{52000}{}{Great. Now ya just need to turn this garbage into something useful. Head on over to Jargo's shop. In the back is a workbech, don't worry he won't mind if you use it. You should find all the tools you need there to whip up a couple 10mm pistols. Come back and see me when you're done.}
+{52010}{}{Ok, I'll be right back.}
+{52020}{}{Ok, but first I wanted to ask you something,}
+{53000}{}{[Lorraine takes one of the pistols from you and gives it a stern appraisal] Nice work you've done here. I still need to replace my current pistol, would you be willing to trade this one to me? I can offer you 50 rounds of 10mm JHP.}
+{53010}{}{Sure, a new toy is useless without batteries. Let's trade.}
+{53020}{}{Let me think about it and get back to you with that.}
+

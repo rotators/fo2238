@@ -1,0 +1,221 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_INTELLECT < 4 D _var n acquaintance = 0 #
+30 1020 D _param p ST_INTELLECT < 4 D _var n acquaintance = 1 #
+20 1030 D _var p factions_player_faction = 6 D _var n name_mem_npc_player = 0 #
+30 1040 D _var p factions_player_faction = 6 D _var n name_mem_npc_player = 1 #
+2 1050 D _var n acquaintance = 0 #
+12 1060 D _var n acquaintance = 1 @
+2 2000 None 0 #
+3 2010 #
+9 2020 #
+60 2030 D _var p q_ncr_westin_quest2 = 1 D _item p PID_Q_WESTIN_HOLO > 0 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+4 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+5 4020 #
+0 4030 @
+5 5000 None 0 #
+6 5010 #
+6 5020 #
+0 5030 @
+6 6000 None 0 #
+11 6010 #
+7 6020 #
+0 6030 @
+7 7000 None 0 #
+8 7010 R _var n acquaintance = 1 #
+8 7020 R _var n acquaintance = 1 #
+8 7030 R _var n acquaintance = 1 #
+0 7040 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 #
+0 9020 @
+10 10000 None 0 #
+6 10010 #
+6 10020 #
+0 10030 @
+11 11000 None 0 #
+65507 11010 #
+65507 11020 #
+0 11030 R _var n acquaintance = 1 @
+12 12000 None 0 #
+10 12010 #
+60 12020 D _item p PID_Q_WESTIN_HOLO > 0 D _var p q_ncr_westin_quest2 > 0 #
+0 12030 @
+20 13000 None 0 #
+21 13010 #
+23 13020 #
+60 13030 D _item p PID_Q_WESTIN_HOLO > 0 D _var p q_ncr_westin_quest2 > 0 #
+0 13040 @
+21 14000 None 0 #
+22 14010 #
+0 14020 @
+22 15000 None 0 #
+65507 15010 #
+0 15020 R _var n name_mem_npc_player = 1 @
+23 16000 None 0 #
+21 16010 #
+0 16020 @
+30 17000 None 0 #
+60 17010 D _var p q_ncr_westin_quest2 > 0 D _item p PID_Q_WESTIN_HOLO > 0 @
+50 18000 None 0 #
+51 18010 #
+51 18020 #
+51 18030 #
+0 18040 @
+51 19000 None 0 #
+52 19010 #
+52 19020 #
+52 19030 #
+0 19040 @
+52 20000 None 0 #
+53 20010 #
+53 20020 #
+53 20030 #
+0 20040 @
+53 21000 None 0 #
+54 21010 #
+54 21020 #
+54 21030 #
+0 21040 @
+54 22000 None 0 #
+55 22010 #
+55 22020 #
+55 22030 #
+0 22040 @
+55 23000 None 0 #
+56 23010 R _var n acquaintance = 1 #
+56 23020 R _var n acquaintance = 1 #
+56 23030 R _var n acquaintance = 1 #
+0 23040 @
+56 24000 None 0 #
+0 24010 @
+60 25000 None 0 #
+61 25010 R _var p q_ncr_westin_quest2 = 2 R _item p PID_Q_WESTIN_HOLO - 1 R _param p ST_EXPERIENCE + 100 #
+0 25020 @
+61 26000 None 0 #
+0 26010 &
+
+[engl]
+{100}{}{Thomas Moore}
+{200}{}{You see a wild-eyed man. Despite his unkempt hair and scruffy beard, his clothes look clean and well-cared for.}
+{210}{}{You see Thomas Moore.}
+{210}{}{You see Thomas Moore. Despite his disheveled hair and beard, his clothes look clean and tidy.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{dumb acquainted}
+{1030}{}{citizen unknown}
+{1040}{}{citizen known}
+{1050}{}{non-citizen not acquainted}
+{1060}{}{non-citizen acquainted}
+{2000}{}{Hello and welcome, traveler! Have you heard the word today?}
+{2010}{}{Why, no... I haven't.}
+{2020}{}{And you are...?}
+{2030}{}{I'll have this Holodisk here from Roger Westin...}
+{2040}{}{Uh, no, and I don't want to. Goodbye.}
+{3000}{}{The word, my friend... the word is SELFISHNESS. Mix in a slew of arrogance, and what do you have? Vault City... in all its self-righteous, slave-trading glory.}
+{3010}{}{Amen, brother!}
+{3020}{}{Why do you live here if you hate it so much?}
+{3030}{}{I think I've heard enough. Goodbye.}
+{4000}{}{It is TIME to hear the wailing of our kin outside these walls and let them in! We have more than enough to feed and shelter our brothers... we need not be rich when so MANY are poor.}
+{4010}{}{I hear you!}
+{4020}{}{At last, someone who speaks sense! Why must others suffer when aid lies within these walls?}
+{4030}{}{I've heard enough. Goodbye.}
+{5000}{}{Friend... as I look upon you today, I see STRENGTH. I see FAITH. Do my eyes deceive me? Or do they see a kindred soul that shares my cause?}
+{5010}{}{Damn right!}
+{5020}{}{Yes! Know that it is TIME... time for this city, built on sin and slavery, to open its gates to everyone!}
+{5030}{}{I have to leave. Good talking... er, listening, to you.}
+{6000}{}{Then let me ask you this, my friend - to what LENGTHS would you go to spread the word?}
+{6010}{}{Well, that depends on how much money you have on you... "friend."}
+{6020}{}{No lengths are too long... no distance too great, when the cause is just, and the word is true. Whatever needs be done, I will do it!}
+{6030}{}{I don't like the direction this conversation is going. Good day.}
+{7000}{}{Even though it may mean banishment from this oasis?}
+{7010}{}{This is no oasis, my brother. It is a city, built on selfishness and greed. It needs to be saved from itself... in that light, is banishment too high a price? I think not.}
+{7020}{}{Anything to release my fellow man from his bonds!}
+{7030}{}{I don't know... what are you asking me to do?}
+{7040}{}{Hmmm. Well, since you put it that way, no, I guess not. Good day.}
+{8000}{}{Ha! A true beliver among the demons! [Leans in and whispers] Drop by later, I might have a job for you.}
+{8010}{}{OK, got it. Goodbye.}
+{9000}{}{My name? I am Thomas Moore, preacher of the word and the truth. And what brings you to me today, friend? Do YOU seek the word?}
+{9010}{}{The word?}
+{9020}{}{Uh, no, not today, thanks. Goodbye.}
+{10000}{}{Even those who appear the most innocent may deceive a messenger of the word... how do I know that you're a TRUE believer?}
+{10010}{}{I AM a true believer, brother. How can I prove my devotion?}
+{10020}{}{I know that this city has built its foundations on sin and slavery, and that only the righteous may set it right!}
+{10030}{}{You know, maybe we'll just talk later.}
+{11000}{}{Ignorant heathen! You have ears, but you do not listen! You have eyes, but you are blind! Get from my sight, filthy swine!}
+{11010}{}{Filthy... uh... sw... what? Nobody talks to me like that! Hope you ain't got no family that'll miss you, dead man...}
+{11020}{}{Nobody talks to me like that, least of all some two-bit wanna-be soapbox preacher. I think it's time you learned a lesson, dead man}
+{11030}{}{Calm down. I'm leaving.}
+{12000}{}{One must beware serpents that echo the words of truth, yet shelter falsehood within their heart!}
+{12010}{}{Amen, brother!}
+{12020}{}{I'll have this Holodisk here from Roger Westin...}
+{12030}{}{Uh... sure. Maybe we'll talk later.}
+{13000}{}{Hello and welcome, citizen! Have you heard the word today?}
+{13010}{}{Why, no... I haven't.}
+{13020}{}{And you are...?}
+{13030}{}{I'll have this Holodisk here from Roger Westin...}
+{13040}{}{Uh, no, and I don't want to. Goodbye.}
+{14000}{}{The word, my friend... the word is SELFISHNESS. Mix in a slew of arrogance, and what do you have? Vault City... in all its self-righteous, slave-trading glory.}
+{14010}{}{Go sell crazy somewhere else, pal... we're all stocked up here.}
+{14020}{}{I think I've heard enough. Goodbye.}
+{15000}{}{The arrogant one against the TRUE believer? The hand of justice will strike upon your stone-cold heart soon!}
+{15010}{}{You'll be a true believer when I shove my foot up your ass!}
+{15020}{}{I'm wasting my time here.}
+{16000}{}{My name? I am Thomas Moore, preacher of the word and the truth. And what brings you to me today, friend? Do YOU seek the word?}
+{16010}{}{The word?}
+{16020}{}{Uh, no, not today. Goodbye.}
+{17000}{}{Have you heard the word today?@@Hear the word! The word shall set you free!@@Slavery shall damn this city!@@We must open the gates of Vault City and embrace the outside world!@@Why can we not share our wealth?!@@Can you not hear the cries of those that suffer outside our walls?!}
+{17010}{}{I'll have this Holodisk here from Roger Westin...}
+{18000}{}{Hello and welcome, traveler! Have you heard the word today?}
+{18010}{}{Uurmph}
+{18020}{}{Ecch}
+{18030}{}{Portzebie}
+{18040}{}{[Shamble off]}
+{19000}{}{The word, my friend... the word is SELFISHNESS. Mix in a slew of arrogance, and what do you have? Vault City... in all its self-righteous, slave-trading glory.}
+{19010}{}{Uurmph}
+{19020}{}{Ecch}
+{19030}{}{Portzebie}
+{19040}{}{[Shamble off]}
+{20000}{}{It is TIME to hear the wailing of our kin outside these walls and let them in! We have more than enough to feed and shelter our brothers... we need not be rich when so MANY are poor.}
+{20010}{}{Uurmph}
+{20020}{}{Ecch}
+{20030}{}{Portzebie}
+{20040}{}{[Shamble off]}
+{21000}{}{Friend... as I look upon you today, I see STRENGTH. I see FAITH. Do my eyes deceive me? Or do they see a kindred soul that shares my cause?}
+{21010}{}{Uurmph}
+{21020}{}{Ecch}
+{21030}{}{Portzebie}
+{21040}{}{[Shamble off]}
+{22000}{}{Then let me ask you this, my friend - to what LENGTHS would you go to spread the word?}
+{22010}{}{Uurmph}
+{22020}{}{Ecch}
+{22030}{}{Portzebie}
+{22040}{}{[Shamble off]}
+{23000}{}{Even though it may mean banishment from this oasis?}
+{23010}{}{Uurmph}
+{23020}{}{Ecch}
+{23030}{}{Portzebie}
+{23040}{}{[Shamble off]}
+{24000}{}{Ha! A true beliver among the demons! [Leans in and whispers] Drop by later, I might have a job for you.}
+{24010}{}{[Shamble off]}
+{25000}{}{Pssst! [He seems to be a little bit upset.] Don't talk too loud. Give me the Holodisk.}
+{25010}{}{Here it is. [You give him the package.]}
+{25020}{}{Maybe later...}
+{26000}{}{Thanks. [He seems to be ignoring you now.]}
+{26010}{}{Goodbye.}
+

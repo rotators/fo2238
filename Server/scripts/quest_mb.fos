@@ -1,0 +1,771 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_mb.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "npc_roles_h.fos"
+#include "utils_h.fos"
+#include "elevators_h.fos"
+#include "MsgStr.h"
+
+// npc roles (defines distance mob will attack from))
+#define ROLE_DEFAULT      (0)
+#define ROLE_AGRESSIVE    (1)
+#define ROLE_PASSIVE      (2)
+
+// useful variables
+#define ALERTED           # (cr)           (cr.StatBase[ST_VAR1]) // idle time is shorter if in that mode // note that it uses StatBase for read and write
+
+// idle time in milseconds (normal is slower for performance issues)
+#define IDLE_NORMAL       (5000)
+#define IDLE_ALERTED      (1000)
+
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+
+void r_SpawnMap(Critter& player, Critter@ npc)
+{
+    Critter@[] crits = { player };
+    int loc = CreateLocation(LOCATION_RuinedMilitaryBase, Random(1400, 1600), Random(1000, 1200), crits);
+    if(loc < 1)
+        return;
+    GameVar@  locidv = GetLocalVar(LVAR_q_mb_loc_id, player.Id);
+    locidv = loc;
+    Location@ location = GetLocation(loc);
+    Map@      map = location.GetMapByIndex(0);
+
+    if(valid(map))
+    {
+        if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+            SetTurnBasedAvailability(location);
+        map.SetData(MAP_DATA_Q_MB_OWNER, player.Id);
+
+        Map@ curMap = player.GetMap();
+        if(valid(curMap))
+        {
+            curMap.SetData(MAP_DATA_Q_MB_ENC_SPAWNED, loc);
+        }
+    }
+
+
+    // Quest garbager is not needed in this quest
+    // SetQuestGarbager(0, player.Id, loc, LVAR_q_mb, 4);
+}
+
+bool d_MapNotSpawned(Critter& player, Critter@ npc)
+{
+    Map@ curMap = player.GetMap();
+    if(valid(curMap))
+    {
+        return(1 > curMap.GetData(MAP_DATA_Q_MB_ENC_SPAWNED));
+    }
+    return false;
+}
+
+void r_DeleteMap(Critter& critter, Critter@ npc)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_mb_loc_id, critter.Id);
+    DeleteLocation(var.GetValue());
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_Q_MB_OWNER));
+}
+uint GetOwnerId(Map& map)
+{
+    return map.GetData(MAP_DATA_Q_MB_OWNER);
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_Q_MB_OWNER)));
+}
+
+// =============================================
+// Demand / Result stuff
+// =============================================
+
+
+// =============================================
+// Critter stuff
+// =============================================
+
+void _InitDeadBodyWithDialog(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+
+    cr.SetEvent(CRITTER_EVENT_USE_SKILL_ON_ME, "_DeadBodyDialog");
+}
+
+bool _DeadBodyDialog(Critter& me, Critter& whoUse, int skill)
+{
+    if(whoUse.IsPlayer() && (skill == SKILL_LOOT_CRITTER || skill == SK_STEAL))
+    {
+        RunDialog(whoUse, me.Param[ST_DIALOG_ID], me.HexX, me.HexY, true);
+        return true;
+    }
+    return false;
+}
+
+
+
+void _Robot(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    // cr.StatBase[ST_MAX_LIFE_EXT]=35;
+    // cr.StatBase[ST_CURRENT_HP]=45;
+
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.ModeBase[MODE_NO_LOOT] = 1;
+    cr.ModeBase[MODE_UNLIMITED_AMMO] = 1;
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_MobIdle");
+    // cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    cr.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_MobShowCritter");
+    cr.SetEvent(CRITTER_EVENT_HIDE_CRITTER, "_MobHideCritter");
+    _CritSetExtMode(cr, MODE_EXT_MOB);
+
+    /*if(firstTime)
+       {
+            NpcSetLevel(cr, 10);
+       } */
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, fromCr);
+}
+
+// =============================================
+// Mob script parts
+// =============================================
+
+//
+// Checks if critter is within attack distance
+//
+void _MobIdle(Critter& cr)
+{
+    // check critters in sight
+    array<Critter@> crits;
+    // get visible players
+    uint            num = cr.GetCritters(false, FIND_ONLY_PLAYERS | FIND_LIFE, crits);
+    // mob.Say(SAY_NORM_ON_HEAD, ""+num);
+    // check distance
+    uint dist = GetDistance(cr);
+    for(uint i = 0; i < num; i++)
+    {
+        if(GetCrittersDistantion(cr, crits[i]) > dist)
+            continue;
+        else
+        {
+            // attack
+            cr.AddEnemyInStack(crits[i].Id);
+            return;
+        }
+    }
+    if(ALERTED(cr) > 0)
+    {
+        // MoveMob(mob, false);
+        cr.Wait(IDLE_ALERTED);
+    }
+    else
+    {
+        MoveMob(cr, false);
+        // mob.Say(SAY_NORM_ON_HEAD, "Don't care");
+        cr.Wait(IDLE_NORMAL);
+    }
+}
+
+void MoveMob(Critter& cr, bool run)
+{
+    int dist = Random(0, (cr.Stat[ST_NPC_ROLE] % 100 / 10));
+    if(dist == 0)
+    {
+        cr.MoveRandom();
+    }
+    else
+    {
+        // bool AddWalkPlane(Critter& npc, uint priory, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint8 cut)
+        uint16 hexX = cr.HexX;
+        uint16 hexY = cr.HexY;
+        cr.GetMap().MoveHexByDir(hexX, hexY, Random(0, 5), dist);
+        AddWalkPlane(cr, 0, hexX, hexY, 0xff, run, 0);
+    }
+}
+
+//
+// Gets distance after which critter becomes agressive
+//
+uint GetDistance(Critter& cr)
+{
+    // TODO: damaged eye??
+    uint base = __LookNormal + 3 * cr.Stat[ST_PERCEPTION];
+
+    // switch works only for ints??
+    int role = int(cr.Stat[ST_NPC_ROLE]);
+    switch(role)
+    {
+    case ROLE_DEFAULT:
+        // mob.Say(SAY_NORM, "" + base + "/" + 3 + "=" + base/3);
+        return base / 3;
+    case ROLE_AGRESSIVE:
+        return base / 2;
+    case ROLE_PASSIVE:
+        return base / 4;
+    }
+    return base / 3;
+}
+//
+// Alerts that oponent is near
+//
+void _MobShowCritter(Critter& cr, Critter& showCrit)
+{
+    if(showCrit.IsPlayer())
+        ALERTED(cr) += 1;
+}
+
+void _MobHideCritter(Critter& cr, Critter& hideCrit)
+{
+    if(hideCrit.IsPlayer())
+        ALERTED(cr) -= 1;
+}
+
+
+// ========================
+// Map stuff - by Johnny Nuclear's scriptslave Mayck
+// ========================
+
+#define RADIATION_LOOP                (Random(1000, 2000))     // Radiation damage time, in milliseconds
+#define RADIATION_DOSE_MIN            (150)
+#define RADIATION_DOSE_MAX            (180)
+
+#define SURFACE_REACTOR_COMPLEXITY    (20)
+#define BLASTDOOR_ENTIRE              (12)
+#define BLASTDOOR_KEY_ID              (22422)
+#define ARMORY_KEY_ID                 (29294)
+
+#define TIME_OF_DAY_LIGHT             (400)
+
+#define OUTSIDE_MAP_PID               (103)
+
+#define LOC_STATE_ALL_OFF             (0)
+#define LOC_STATE_SURFACE_CLEAN       (1)
+#define LOC_STATE_SURFACE_ON          (2)
+#define LOC_STATE_REACTOR_ON          (6)
+#define LOC_STATE_SWITCH1_ON          (7)
+#define LOC_STATE_SWITCH2_ON          (8)
+#define LOC_STATE_FLOOR1_ON           (9)
+#define LOC_STATE_FLOOR2_ON           (10)
+
+
+/****
+   Maps and elevators
+****/
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+import void SetForceFieldOn(Map@ map, int id) from "special_map_objects";
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+CPidElevator Elevator(ELEVATOR_MILITARY_12);
+bool ElevatorsAdded = false;
+bool FloorOneInElevator = false;
+bool FloorTwoInElevator = false;
+
+void t_Elevator(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator, critter, entered);
+}
+
+void _MBFirstFloor(Map& map, bool firstTime)
+{
+    map.SetLoopTime(0, RADIATION_LOOP);
+    map.SetData(21, RADIATION_DOSE_MIN);
+    map.SetData(22, RADIATION_DOSE_MAX);
+    map.SetEvent(MAP_EVENT_LOOP_0, "_MapLoop0TwoRectangleZone");
+
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator);
+        ElevatorsAdded = true;
+    }
+
+    uint16 x = 0, y = 0;
+
+    if(!FloorOneInElevator && map.GetEntireCoords(2, 0, x, y))
+    {
+        Elevator.AddFloor(map.Id, 2);
+        FloorOneInElevator = true;
+    }
+
+    Location@ loc = map.GetLocation();
+    if(valid(loc))
+    {
+        if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_FLOOR1_ON)
+            map.SetTime(TIME_OF_DAY_LIGHT);
+    }
+}
+
+void _MBSecondFloor(Map& map, bool firstTime)
+{
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator);
+        ElevatorsAdded = true;
+    }
+
+    uint16 x = 0, y = 0;
+
+    if(!FloorTwoInElevator && map.GetEntireCoords(2, 0, x, y))
+    {
+        Elevator.AddFloor(map.Id, 2);
+        FloorTwoInElevator = true;
+    }
+
+    Location@ loc = map.GetLocation();
+    if(valid(loc))
+    {
+        if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_FLOOR2_ON)
+            map.SetTime(TIME_OF_DAY_LIGHT);
+    }
+}
+
+void _MapLoop0TwoRectangleZone(Map& map)
+{
+    AffectRadiotationTwoRectangleZoneCritters(map, 0);
+    map.SetLoopTime(0, RADIATION_LOOP);
+}
+
+void AffectRadiotationTwoRectangleZoneCritters(Map& map, int value1)
+{
+    // prvni obdelnik
+    uint minX1 = 200;
+    uint minY1 = 150;
+    uint maxX1 = 210;
+    uint maxY1 = 182;
+    // druhy obdelnik
+    uint minX2 = 186;
+    uint minY2 = 150;
+    uint maxX2 = 200;
+    uint maxY2 = 194;
+
+    if(value1 == 0)
+        value1 = Random(map.GetData(21), map.GetData(22));
+
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        if(critters[i].IsPlayer() && ((critters[i].HexX >= minX1 && critters[i].HexX <= maxX1 && critters[i].HexY >= minY1 && critters[i].HexY <= maxY1) ||
+                                      (critters[i].HexX >= minX2 && critters[i].HexX <= maxX2 && critters[i].HexY >= minY2 && critters[i].HexY <= maxY2)))
+        {
+            AffectRadiation(critters[i], value1);
+        }
+    }
+}
+
+// dialog from terminal
+bool s_TerminalDialog(Critter& player, Scenery& terminal, int skill, Item@ item, int dialNum)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+        RunDialog(player, dialNum, terminal.HexX, terminal.HexY, false);
+    return true;
+}
+
+/****
+   Door controls
+****/
+bool s_rDoorMid(Critter& player, Scenery& terminal, int skill, Item@ item, int entireNum, int entireNum2)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        Map@   map = player.GetMap();
+        map.GetEntireCoords(entireNum, 0, hexX, hexY);
+        Item@  door = map.GetDoor(hexX, hexY);
+        map.GetEntireCoords(entireNum2, 0, hexX, hexY);
+        Item@  door2 = map.GetDoor(hexX, hexY);
+
+        if(door.LockerCondition == LOCKER_ISOPEN)
+        {
+            door.LockerClose();
+            door2.LockerOpen();
+        }
+        else
+        {
+            door2.LockerClose();
+            door.LockerOpen();
+        }
+        return true;
+    }
+    return false;
+}
+
+void t_rDoorInner(Critter& player, Scenery& trigger, bool entered, uint8 dir, int entireNum, int entireNum2)
+{
+    uint16 hexX = 0;
+    uint16 hexY = 0;
+    Map@   map = player.GetMap();
+    map.GetEntireCoords(entireNum, 0, hexX, hexY);
+    Item@  door = map.GetDoor(hexX, hexY);
+    map.GetEntireCoords(entireNum2, 0, hexX, hexY);
+    Item@  door2 = map.GetDoor(hexX, hexY);
+
+    door.LockerOpen();
+    door2.LockerClose();
+}
+
+void r_rDoorOuter(Critter& player, Critter@ terminal, int entireNum, int entireNum2)
+{
+    uint16 hexX = 0;
+    uint16 hexY = 0;
+    Map@   map = player.GetMap();
+    map.GetEntireCoords(entireNum, 0, hexX, hexY);
+    Item@  door = map.GetDoor(hexX, hexY);
+    map.GetEntireCoords(entireNum2, 0, hexX, hexY);
+    Item@  door2 = map.GetDoor(hexX, hexY);
+
+    door.LockerOpen();
+    door2.LockerClose();
+}
+
+// Blast door control
+bool s_ControlBlastDoor(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        Location@ loc = GetLocationOf(player);
+        Map@      map = player.GetMap();
+        if(!valid(map) || !valid(loc))
+            return false;
+        if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_SURFACE_ON)
+        {
+            array<Item@> keys;
+            for(uint i = 0, j = player.GetItemsByType(ITEM_TYPE_KEY, keys); i < j; i++)
+                if(keys[i].LockerId == BLASTDOOR_KEY_ID)
+                {
+                    uint16 hexX = 0;
+                    uint16 hexY = 0;
+                    map.GetEntireCoords(BLASTDOOR_ENTIRE, 0, hexX, hexY);
+                    Item@  door = map.GetDoor(hexX, hexY);
+                    if(!valid(door))
+                        return false;
+                    door.LockerOpen();
+                    return true;
+                }
+            player.Say(SAY_NETMSG, "Need a key.");
+            return true;
+        }
+        else
+            player.Say(SAY_NETMSG, "Terminal has no power.");
+
+        return true;
+    }
+    return false;
+}
+
+// armory door unlocking terminals
+bool s_ArmoryDoorTerminal(Critter& player, Scenery& terminal, int skill, Item@ item, int entireNum)
+{
+    if(player.IsPlayer() && skill == -1 && !valid(item))
+    {
+        uint16 hexX = 0;
+        uint16 hexY = 0;
+        Map@   map = player.GetMap();
+        map.GetEntireCoords(entireNum, 0, hexX, hexY);
+
+        array<Item@> keys;
+        for(uint i = 0, j = player.GetItemsByType(ITEM_TYPE_KEY, keys); i < j; i++)
+            if(keys[i].LockerId == ARMORY_KEY_ID)
+            {
+                uint16 hexX = 0;
+                uint16 hexY = 0;
+                map.GetEntireCoords(entireNum, 0, hexX, hexY);
+                UnlockDoor(hexX, hexY, map);
+                player.Say(SAY_NETMSG, "Door unlocked.");
+                return true;
+            }
+
+        player.Say(SAY_NETMSG, "Need a key.");
+        return true;
+    }
+    return false;
+}
+
+// Surface Generator
+bool s_RepairSurfaceGenerator(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return false;
+
+    if(player.IsPlayer())
+    {
+        if(skill == SK_SCIENCE && !valid(item))
+        {
+            if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_SURFACE_ON)
+            {
+                player.Say(SAY_NETMSG, "The generator is running.");
+                return true;
+            }
+            if(GetLvar(loc.Id, LLVAR_q_mb_location_state) == LOC_STATE_SURFACE_CLEAN)
+            {
+                player.Say(SAY_NETMSG, "It's apparentally missing some electronic parts.");
+                return true;
+            }
+            player.Say(SAY_NETMSG, "There's large amount of dust inside, your attempt to blow it away ends up with your face full of unhealthy dust and you inhaling some of it.");
+            InjureCritter(player, 1, DAMAGE_NORMAL, (player.Dir + 3) % 6, 0);
+            player.Say(SAY_NETMSG, "You clean the contacts and throw away some burned out circuits.");
+            SetLvar(loc.Id, LLVAR_q_mb_location_state, LOC_STATE_SURFACE_CLEAN);
+            return true;
+        }
+        if((skill == SK_REPAIR && !valid(item)) || (valid(item) && item.GetProtoId() == PID_ELECTRONIC_PARTS))
+        {
+            if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_SURFACE_ON)
+            {
+                player.Say(SAY_NETMSG, "The generator is running.");
+                return true;
+            }
+            if(GetLvar(loc.Id, LLVAR_q_mb_location_state) != LOC_STATE_SURFACE_CLEAN)
+            {
+                if(valid(item))
+                    return false;
+                player.Say(SAY_NETMSG, "There's a lots of dust and dirt, you can't see what is wrong.");
+                return true;
+            }
+            if(player.CountItem(PID_ELECTRONIC_PARTS) > 0)
+            {
+                if(player.Timeout[TO_SK_REPAIR] > 0)
+                {
+                    player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                    return true;
+                }
+                int base = player.Skill[SK_REPAIR] - SURFACE_REACTOR_COMPLEXITY;
+                base = CLAMP(base, 0, 95);
+                if(base >= Random(1, 100))
+                {
+                    SetLvar(loc.Id, LLVAR_q_mb_location_state, LOC_STATE_SURFACE_ON);
+                    player.DeleteItem(PID_ELECTRONIC_PARTS, 1);
+                    player.Say(SAY_NETMSG, "You managed to repair the generator with some electronic parts.");
+                }
+                else
+                {
+                    player.Say(SAY_NETMSG, "You didn't manage to repair the generator.");
+                }
+                _SetTimeout(player, TO_SK_REPAIR, REPAIR_TIMEOUT(player));
+                return true;
+            }
+            else
+            {
+                player.Say(SAY_NETMSG, "You need to have some electronic parts in your possession to replace burned out circuits.");
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/*****
+   Doors and switches init and use functions
+*****/
+
+void _ElevatorDoorInit(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_ElevatorDoorUse");
+}
+
+bool _ElevatorDoorUse(Item& item, Critter& player, int skill)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return true;
+    if(skill == -1)
+    {
+        if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_FLOOR1_ON)
+            return false;
+        player.Say(SAY_NETMSG, "The door has no power.");
+        return true;
+
+    }
+    return false;
+}
+
+void _SecondFloorDoorInit(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SecondFloorDoorUse");
+}
+
+bool _SecondFloorDoorUse(Item& item, Critter& player, int skill)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return true;
+    if(skill == -1)
+    {
+        if(GetLvar(loc.Id, LLVAR_q_mb_location_state) >= LOC_STATE_FLOOR2_ON)
+            return false;
+        player.Say(SAY_NETMSG, "The door has no power.");
+        return true;
+
+    }
+    return false;
+}
+
+void _LeftSwitchInit(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_LeftSwitchUse");
+}
+
+void TryToTurnOnPowerOutside(Critter& player, int state, int neededState)
+{
+    if(state != neededState)
+        return;
+    Location@ loc = GetLocationOf(player);
+    if(valid(loc))
+    {
+        Map@ map = loc.GetMap(OUTSIDE_MAP_PID);
+        if(valid(map))
+        {
+            array<Critter@> critters;
+            uint            critCount = map.GetCritters(0, FIND_KO | FIND_ONLY_NPC, critters);
+            for(uint i = 0; i < critCount; i++)
+            {
+                critters[i].ToLife();
+            }
+        }
+    }
+}
+
+void TryToTurnOnPower(Critter& player, int state, int neededState)
+{
+    if(state != neededState)
+        return;
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+    SetForceFieldOn(map, -1);
+    map.SetTime(TIME_OF_DAY_LIGHT);
+
+    array<Critter@> critters;
+    uint            critCount = map.GetCritters(0, FIND_KO | FIND_ONLY_NPC, critters);
+    for(uint i = 0; i < critCount; i++)
+    {
+        critters[i].ToLife();
+    }
+}
+
+bool _LeftSwitchUse(Item& item, Critter& player, int skill)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return true;
+    if(skill == -1)
+    {
+        int state = GetLvar(loc.Id, LLVAR_q_mb_location_state);
+        if(state < LOC_STATE_REACTOR_ON)
+        {
+            player.Say(SAY_NETMSG, "You fiddle with the switch a bit, but it doesn't seem to do anything.");
+            return true;
+        }
+        else if(state == LOC_STATE_REACTOR_ON || state == LOC_STATE_SWITCH2_ON)
+        {
+            state += 1;
+            SetLvar(loc.Id, LLVAR_q_mb_location_state, state);
+            TryToTurnOnPower(player, state, LOC_STATE_FLOOR1_ON);
+            TryToTurnOnPowerOutside(player, state, LOC_STATE_FLOOR1_ON);
+            return false;
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "It is on.");
+            return true;
+        }
+    }
+    return false;
+}
+
+void _RightSwitchInit(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_RightSwitchUse");
+}
+
+bool _RightSwitchUse(Item& item, Critter& player, int skill)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return true;
+    if(skill == -1)
+    {
+        int state = GetLvar(loc.Id, LLVAR_q_mb_location_state);
+        if(state < LOC_STATE_REACTOR_ON)
+        {
+            player.Say(SAY_NETMSG, "You fiddle with the switch a bit, but it doesn't seem to do anything.");
+            return true;
+        }
+        if(state == LOC_STATE_REACTOR_ON || state == LOC_STATE_SWITCH1_ON)
+        {
+            state += 2;
+            SetLvar(loc.Id, LLVAR_q_mb_location_state, state);
+            TryToTurnOnPower(player, state, LOC_STATE_FLOOR1_ON);
+            TryToTurnOnPowerOutside(player, state, LOC_STATE_FLOOR1_ON);
+            return false;
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "It is on.");
+            return true;
+        }
+    }
+    return false;
+}
+
+void _SecondFloorSwitchInit(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_SecondFloorSwitchUse");
+}
+
+bool _SecondFloorSwitchUse(Item& item, Critter& player, int skill)
+{
+    Location@ loc = GetLocationOf(player);
+    if(!valid(loc))
+        return true;
+    if(skill == -1)
+    {
+        int state = GetLvar(loc.Id, LLVAR_q_mb_location_state);
+        if(state < LOC_STATE_FLOOR1_ON)
+        {
+            player.Say(SAY_NETMSG, "You fiddle with the switch a bit, but it doesn't seem to do anything.");
+            return true;
+        }
+        if(state == LOC_STATE_FLOOR1_ON)
+        {
+            state += 1;
+            SetLvar(loc.Id, LLVAR_q_mb_location_state, state);
+            TryToTurnOnPower(player, state, LOC_STATE_FLOOR2_ON);
+            return false;
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "It is on.");
+            return true;
+        }
+    }
+    return false;
+}

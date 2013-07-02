@@ -1,0 +1,258 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_dialog.fos
+//
+
+// This script contains mostly Metzger's dialog demand and results.
+// See slaverun.fos for the list of all involved files.
+
+#include "_macros.fos"
+#include "_vars.fos"
+#include "slaverun_h.fos"
+#include "utils_h.fos"
+#include "groups_h.fos"
+
+// metzger's lines:
+#define NODE_FIRSTTIME         (52)
+#define NODE_INTRODUCTION      (56)
+#define NODE_TIMEOUT           (58)
+#define NODE_BULLSHIT          (62)
+#define NODE_SLAVER_SUCKED     (63)
+#define NODE_BOLD_STUPID       (65)
+#define NODE_COMPLETED         (60)
+#define NODE_TOO_LATE          (59)
+#define NODE_SLAVERS_KILLED    (61)
+#define NODE_SLAVES_KILLED     (64)
+#define NODE_BOTCHED           (66)
+#define NODE_ERROR             (6)
+#define NODE_TOO_LOW_REP       (20)
+
+#define REWARD                 player.StatBase[ST_VAR1]
+
+import void StartSlaverunCombat(Map@ map) from "slaverun";
+import uint SpawnSlaverunLocation(Critter@ player, uint num) from "slaverun";
+import uint GetSlaverunLocLength() from "slaverun";
+import uint SlaverunLocationReward(uint num) from "slaverun";
+import void SlaveLog(string& s) from "slaverun";
+
+
+/*
+   bool d_StatusFlag(Critter& player, Critter@ npc, int val)
+   {
+   GameVar@ status = GetLocalVar(LVAR_slaverun_status, player.Id);
+   uint ustatus = status.GetValue();
+   return FLAG(ustatus,val);
+   }
+ */
+
+bool d_Var1isSet(Critter& player, Critter@ npc, int val)
+{
+    return(npc.Stat[ST_VAR1] == val);
+}
+
+bool d_NotStatusFlag(Critter& player, Critter@ npc, int val)
+{
+    GameVar@ status = GetLocalVar(LVAR_slaverun_status, player.Id);
+    uint     ustatus = status.GetValue();
+    return !FLAG(ustatus, val);
+}
+
+bool d_SlaverunAttempted(Critter& player, Critter@ npc, int val)
+{
+    uint ustatus = GetLocalVar(LVAR_slaverun_status, player.Id).GetValue();
+    // if (FLAG(ustatus,SLAVERUN_ATTEMPTED) || FLAG(ustatus,SLAVERUN_TOO_LATE)) Log("Slaverun attempted true");
+    return FLAG(ustatus, SLAVERUN_ATTEMPTED) || FLAG(ustatus, SLAVERUN_TOO_LATE);
+}
+
+uint r_SelectRewardNode(Critter& player, Critter@ npc, int val)
+{
+    uint base = GetLvar(player, LVAR_slaverun_normals) - GetLvar(player, LVAR_slaverun_normals_killed);
+    base *= SlaverunLocationReward(GetLvar(player, LVAR_slaverun_current_loctype) - 1);
+    uint ustatus = GetLvar(player, LVAR_slaverun_status);
+    if(FLAG(ustatus, SLAVERUN_SLAVERS_KILLED) || FLAG(ustatus, SLAVERUN_SLAVES_KILLED))
+        base /= 2;
+    REWARD = base;
+    SetLvar(player, LVAR_slaverun_status, SLAVERUN_KNOWN);
+    SetLvar(player, LVAR_slaverun_current_loctype, 0);
+    SetLvar(player, LVAR_slaverun_current_loc, 0);
+
+    if(FLAG(ustatus, SLAVERUN_TOO_LATE))
+    {
+        GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+        time = ELAPSED_TIME + 2 * SLAVERUN_TIMEOUT;
+        SlaverepModify(player, -150, 0);
+        return NODE_TOO_LATE;
+    }
+    if(FLAG(ustatus, SLAVERUN_BOTCHED))
+    {
+        GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+        time = ELAPSED_TIME + 2 * SLAVERUN_TIMEOUT;
+        SlaverepModify(player, -120, 0);
+        return NODE_BOTCHED;
+    }
+    if(FLAG(ustatus, SLAVERUN_SLAVERS_KILLED))
+    {
+
+        player.AddItem(PID_BOTTLE_CAPS, REWARD);
+        GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+        time = ELAPSED_TIME + (3 * SLAVERUN_TIMEOUT) / 2;
+        SlaverepModify(player, 48, 150);
+        player.StatBase[ST_EXPERIENCE] += 500;
+        LogQuestExperience(player, 500, "slaverun");
+        return NODE_SLAVERS_KILLED;
+    }
+    if(FLAG(ustatus, SLAVERUN_SLAVES_KILLED))
+    {
+
+        player.AddItem(PID_BOTTLE_CAPS, REWARD);
+        GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+        time = ELAPSED_TIME + (3 * SLAVERUN_TIMEOUT) / 2;
+        SlaverepModify(player, 48, 150);
+        player.StatBase[ST_EXPERIENCE] += 500;
+        LogQuestExperience(player, 500, "slaverun");
+        return NODE_SLAVES_KILLED;
+    }
+    if(FLAG(ustatus, SLAVERUN_COMPLETED))
+    {
+
+        GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+        time = ELAPSED_TIME + SLAVERUN_TIMEOUT;
+        player.AddItem(PID_BOTTLE_CAPS, REWARD);
+        SlaverepModify(player, 90, 150);
+        player.StatBase[ST_EXPERIENCE] += 800;
+        LogQuestExperience(player, 800, "slaverun");
+        return NODE_COMPLETED;
+    }
+
+    SlaveLog("ERR: no proper flag combination!");
+    return NODE_BOTCHED;
+}
+
+uint r_SelectNode(Critter& player, Critter@ npc, int val)
+{
+    if(player.Reputation[FACTION_SLAVERS_GUILD] < 160)
+    {
+        return NODE_TOO_LOW_REP;
+    }
+    if(GetLvar(player, LVAR_slaverun_current_loctype) == 0)
+        SetLvar(player, LVAR_slaverun_current_loctype, Random(1, GetSlaverunLocLength()));
+    if(GetLvar(player, LVAR_slaverun_status) == SLAVERUN_UNKNOWN)
+    {
+        return NODE_FIRSTTIME;
+    }
+    if(int(ELAPSED_TIME) >= GetLvar(player, LVAR_slaverun_last_time))
+        return NODE_INTRODUCTION;
+    return 0;
+}
+
+uint r_ActivateQuest(Critter& player, Critter@ npc, int val)
+{
+    uint num = GetLocalVar(LVAR_slaverun_current_loctype, player.Id).GetValue() - 1;
+    uint loc = SpawnSlaverunLocation(player, num);
+    if(loc == 0)
+    {
+        return NODE_ERROR;
+    }
+
+    SetLvar(player, LVAR_slaverun_current_loc, loc);
+    SetLvar(player, LVAR_slaverun_status, SLAVERUN_ACTIVE);
+    uint[] values = { player.Id, uint(loc) };
+    uint eventnum = CreateTimeEvent(ELAPSED_TIME + RUN_TIME, "slaverun@e_deleteMap", values, true);
+    if(eventnum != 0)
+        SetLvar(player, LVAR_slaverun_eventnum, eventnum);
+    return 0;
+}
+
+/*
+   void r_StatusSetFlag(Critter& player, Critter@ npc, int val)
+   {
+   GameVar@ status = GetLocalVar(LVAR_slaverun_status, player.Id);
+   uint ustatus = status.GetValue();
+   SETFLAG(ustatus,val);
+   status = ustatus;
+   }
+
+
+   void r_StatusUnsetFlag(Critter& player, Critter@ npc, int val)
+   {
+   GameVar@ status = GetLocalVar(LVAR_slaverun_status, player.Id);
+   uint ustatus = status.GetValue();
+   UNSETFLAG(ustatus,val);
+   status = ustatus;
+   }
+
+
+
+   void r_SetTimeout(Critter& player, Critter@ npc, int val)
+   {
+   GameVar@ time = GetLocalVar(LVAR_slaverun_last_time, player.Id);
+   time = __FullMinute + val*__TimeMultiplier;
+   }
+ */
+
+void r_StartSlaverunCombat(Critter& player, Critter@ npc, int val)
+{
+    StartSlaverunCombat(npc.GetMap());
+}
+
+uint r_SpeechSlaver(Critter& player, Critter@ npc, int val)
+{
+    if(MIN(player.Skill[SK_SPEECH], 95) >= Random(1, 100))
+    {
+        player.AddItem(PID_BOTTLE_CAPS, REWARD);
+        return NODE_SLAVER_SUCKED;
+    }
+    return 0;
+}
+
+uint r_SpeechBoldStupid(Critter& player, Critter@ npc, int val)
+{
+    if(MIN(player.Skill[SK_SPEECH], 95) >= Random(1, 100))
+    {
+        player.AddItem(PID_BOTTLE_CAPS, REWARD);
+        return NODE_BOLD_STUPID;
+    }
+    return 0;
+}
+
+void r_Var1Set(Critter& player, Critter@ npc, int val)
+{
+    npc.StatBase[ST_VAR1] = val;
+}
+
+// args: increase, cap (none if =0)
+void r_SlaverepModify(Critter& player, Critter@ npc, int val1, int val2)
+{
+    SlaverepModify(player, val1, val2);
+}
+
+
+void dlg_ShowReward(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+    text += "$price" + REWARD;
+}
+
+void SlaverepModify(Critter& player, int val1, int val2)
+{
+    int slavereputation = player.Reputation[FACTION_SLAVERS_GUILD];
+    slavereputation += val1;
+    if(val2 != 0)
+    {
+        if(val1 < 0)
+        {
+            if(slavereputation < val2)
+                slavereputation = val2;
+        }
+        else if(val1 > 0)
+        {
+            if(slavereputation > val2)
+                slavereputation = val2;
+        }
+    }
+    player.ReputationBase[FACTION_SLAVERS_GUILD] = slavereputation;
+
+}

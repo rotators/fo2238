@@ -1,0 +1,425 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_addons.fos
+//
+
+#ifndef __FOART_ADDONS__
+#define __FOART_ADDONS__
+
+// inlined in foart.fos
+
+#ifdef _MSC_VER
+# include "foart.fos"
+#endif
+
+class FOArt_Addon : FOArtAddon
+{
+    uint8                 id;
+    bool                  enabled;
+    #ifdef __SERVER
+    FOART_AddonPreSpawn@  callbackPreSpawn;
+    FOART_AddonPostSpawn@ callbackPostSpawn;
+    #endif
+
+    FOArt_Addon(uint8 id)
+    {
+        this.id      = id;
+        this.enabled = true;
+    }
+
+    uint8 ID()
+    {
+        return(this.id);
+    }
+
+    void Enable()
+    {
+        this.enabled = true;
+    }
+
+    void Disable()
+    {
+        this.enabled = false;
+    }
+
+    bool Enabled()
+    {
+        return((this.enabled == true));
+    }
+
+    bool Disabled()
+    {
+        return(!this.Enabled());
+    }
+
+    #ifdef __SERVER
+    void SetPreSpawn(FOART_AddonPreSpawn@ callback)
+    {
+        if(valid(callback))
+        {
+            @this.callbackPreSpawn = @callback;
+        }
+    }
+
+    void SetPostSpawn(FOART_AddonPostSpawn@ callback)
+    {
+        if(valid(callback))
+        {
+            @this.callbackPostSpawn = @callback;
+        }
+    }
+
+    void PreSpawn(Buffer& data, uint16 pid, uint16 hexX, uint16 hexY)
+    {
+        if(this.Enabled() && valid(callbackPreSpawn))
+        {
+            -data;
+            this.callbackPreSpawn(data, pid, hexX, hexY);
+            -data;
+        }
+    }
+
+    void PostSpawn(Buffer& data, Item@ item)
+    {
+        if(this.Enabled() && valid(callbackPostSpawn))
+        {
+            -data;
+            this.callbackPostSpawn(data, item);
+            -data;
+        }
+    }
+    #endif // __SERVER
+};
+array<FOArtAddon@> FOArtAddons;
+
+bool               AddonsInitialized = false;
+
+// Create FOArtAddon object
+FOArtAddon@ NewFOArtAddon(uint8 id)   // Export
+{
+    if(valid(GetFOArtAddon(id)))
+    {
+        Log("Addon with id <" + id + "> already exists");
+        return(null);
+    }
+
+    return(@FOArt_Addon(id));
+}
+
+// Find FOArtAddon in initialized addons list
+FOArtAddon@ GetFOArtAddon(uint8 id)   // Export
+{
+    for(uint addon = 0, addonLen = FOArtAddons.length(); addon < addonLen; addon++)
+    {
+        if(FOArtAddons[addon].ID() == id)
+            return(FOArtAddons[addon]);
+    }
+
+    return(null);
+}
+
+// modified Buffer::opShr(string&), we need string length to be always same type
+// FOArt-specific string reader
+string GetFOArtString(Buffer& buff)
+{
+    string result = "";
+
+    uint16 len = 0;
+    buff >> len;
+    for(uint s = 0; s < len; s++)
+    {
+        uint8 char = 0;
+        buff >> char;
+        result.resize(s + 1);
+        result[s] = char;
+    }
+    return(result);
+}
+
+/******************************************************************************/
+
+#define FOART_ADDON_FLAGS     (1)
+#define FOART_ADDON_LIGHT     (2)
+#define FOART_ADDON_IMAGE     (3)
+#define FOART_ADDON_LEXEM     (4)
+#define FOART_ADDON_STACK     (5)
+#define FOART_ADDON_OFFSET    (6)
+
+#define FOART_ADDON_TEST      (255)
+
+#ifdef __SERVER
+
+# ifdef FO2238
+#  include "foart_2238.fos"
+# endif
+
+// Initialize addons
+void AddonsInit() // called from: FOArt_Base::Spawn(), FOArt_Definition::Spawn()
+{
+    if(AddonsInitialized)
+        return;
+
+// bundled addons
+    Addon_Flags();
+    Addon_Light();
+    Addon_Image();
+    Addon_Lexem();
+    Addon_Stack();
+
+    Addon_Test();
+
+    # ifdef FO2238
+    AddonsInit2238();
+    # endif
+
+    AddonsInitialized = true;
+}
+
+/******* Flags *******/
+
+/*
+   Flags
+
+   OVERWRITE mode
+   uint32 FLAGS
+
+   SET/UNSET mode
+   uint32 FLAGS_SET
+   uint32 FLAGS_UNSET
+*/
+
+void Addon_Flags()
+{
+    FOArtAddon@ flags = NewFOArtAddon(FOART_ADDON_FLAGS);
+    if(valid(flags))
+    {
+        flags.SetPostSpawn(@Addon_Flags_PostSpawn);
+
+        FOArtAddons.insertLast(flags);
+        return;
+    }
+}
+
+void Addon_Flags_PostSpawn(Buffer& buff, Item& item)
+{
+    if(buff.IsRaw(8))
+    {
+        uint32 add = 0;
+        uint32 remove = 0;
+
+        buff >> add >> remove;
+
+        if(add > 0)
+            SETFLAG(item.Flags, add);
+
+        if(remove > 0)
+            UNSETFLAG(item.Flags, remove);
+    }
+    else if(buff.IsRaw(4))
+    {
+        uint32 overwrite = 0;
+
+        buff >> overwrite;
+
+        item.Flags = overwrite;
+    }
+    else
+        Log("Addon:Flags invalid data length, ignored");
+}
+
+/******* Light *******/
+
+/*
+   Light
+
+   uint8  FLAGS
+   uint32 COLOR
+   int8   INTENSITY
+   uint8  RADIUS
+*/
+
+void Addon_Light()
+{
+    FOArtAddon@ light = NewFOArtAddon(FOART_ADDON_LIGHT);
+    if(valid(light))
+    {
+        light.SetPostSpawn(@Addon_Light_PostSpawn);
+
+        FOArtAddons.insertLast(light);
+        return;
+    }
+}
+
+void Addon_Light_PostSpawn(Buffer& buff, Item& item)
+{
+    uint8  flags = 0;
+    uint32 color = 0;
+    int8   intensity = 0;
+    uint8  radius = 0;
+
+    buff >> flags >> color >> intensity >> radius;
+
+    item.LightFlags     = flags;
+    item.LightColor     = color;
+    item.LightIntensity = intensity;
+    item.LightDistance  = radius;
+}
+
+/******* Image *******/
+
+/*
+   Image
+
+   uint16  PICMAP_NAME_LENGTH
+   uint8[] PICMAP_NAME
+
+   uint16  PICINV_NAME_LENGTH
+   uint8[] PICINV_NAME
+*/
+
+void Addon_Image()
+{
+    FOArtAddon@ image = NewFOArtAddon(FOART_ADDON_IMAGE);
+    if(valid(image))
+    {
+        image.SetPostSpawn(@Addon_Image_PostSpawn);
+
+        FOArtAddons.insertLast(image);
+        return;
+    }
+}
+
+void Addon_Image_PostSpawn(Buffer& buff, Item& item)
+{
+    string picMap = GetFOArtString(buff);
+    string picInv = GetFOArtString(buff);
+
+    if(picMap.length() > 0)
+        item.PicMap = GetStrHash(picMap);
+
+    if(picInv.length() > 0)
+        item.PicInv = GetStrHash(picInv);
+}
+
+/******* Lexem *******/
+
+/*
+   Lexem
+
+   uint16  LEXEM_LENGTH
+   uint8[] LEXEM
+*/
+
+void Addon_Lexem()
+{
+    FOArtAddon@ lexem = NewFOArtAddon(FOART_ADDON_LEXEM);
+    if(valid(lexem))
+    {
+        lexem.SetPostSpawn(@Addon_Lexem_PostSpawn);
+
+        FOArtAddons.insertLast(lexem);
+    }
+}
+
+void Addon_Lexem_PostSpawn(Buffer& buff, Item& item)
+{
+    string lexem = GetFOArtString(buff);
+
+    if(lexem.length() > 0)
+        item.SetLexems(lexem);
+}
+
+/******* Stack *******/
+
+/*
+   Stack
+
+   uint32 COUNT
+*/
+
+void Addon_Stack()
+{
+    FOArtAddon@ stack = NewFOArtAddon(FOART_ADDON_STACK);
+    if(valid(stack))
+    {
+        stack.SetPostSpawn(@Addon_Stack_PostSpawn);
+
+        FOArtAddons.insertLast(stack);
+    }
+}
+
+void Addon_Stack_PostSpawn(Buffer& buff, Item& item)
+{
+    uint32 count = 0;
+
+    buff >> count;
+
+    if(count > 0)
+    {
+        if(item.IsStackable())
+            item.SetCount(count);
+        else
+            Log("Addon:Stack not a stackable item, pid<" + item.Proto.ProtoId + ">");
+    }
+}
+
+/******* Offset *******/
+
+/*
+   Offset
+
+   int16 OFFSET_X
+   int16 OFFSET_Y
+*/
+
+void Addon_Offset()
+{
+    FOArtAddon@ offset = NewFOArtAddon(FOART_ADDON_OFFSET);
+    if(valid(offset))
+    {
+        offset.SetPostSpawn(@Addon_Offset_PostSpawn);
+
+        FOArtAddons.insertLast(offset);
+    }
+}
+
+void Addon_Offset_PostSpawn(Buffer& buff, Item& item)
+{
+    int16 offset_x = 0, offset_y = 0;
+
+    buff >> offset_x >> offset_y;
+
+    if(offset_x != 0)
+        item.OffsetX = offset_x;
+
+    if(offset_y != 0)
+        item.OffsetY = offset_y;
+}
+
+/******* Test *******/
+
+void Addon_Test()
+{
+    FOArtAddon@ test = NewFOArtAddon(FOART_ADDON_TEST);
+    if(valid(test))
+    {
+        test.SetPreSpawn(@Addon_Test_PreSpawn);
+        test.SetPostSpawn(@Addon_Test_PostSpawn);
+
+        FOArtAddons.insertLast(test);
+    }
+}
+
+void Addon_Test_PreSpawn(Buffer&, uint16 pid, uint16 hexX, uint16 hexY)
+{
+    Log("Addon:Test pre-spawn pid<" + pid + "> hexX<" + hexX + "> hexY<" + hexY + ">");
+}
+
+void Addon_Test_PostSpawn(Buffer&, Item& item)
+{
+    Log("Addon:Test post-spawn item <" + item.Id + ">");
+}
+#endif // __SERVER
+#endif // __FOART_ADDONS__ //

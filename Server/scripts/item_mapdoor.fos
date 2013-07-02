@@ -1,0 +1,46 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_mapdoor.fos
+//
+
+//
+// doors leading to other maps in same location, must be opened first :)
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+import bool LockerOpen(Item& item) from "lockers";
+import bool LockerClose(Item& item) from "lockers";
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_MapDoorSkill");
+}
+
+bool _MapDoorSkill(Item& item, Critter& cr, int skill)
+{
+    if(item.Val0 == 0 && item.Val1 == 0)
+        return(true);
+
+    if(item.GetType() == ITEM_TYPE_DOOR && item.Proto.Container_Changeble)
+    {
+        if(FLAG(item.LockerCondition, LOCKER_ISOPEN))
+        {
+            Map@ currentMap = cr.GetMap();
+            if(valid(currentMap))
+            {
+                Map@ targetMap = currentMap.GetLocation().GetMapByIndex(item.Val0);
+                if(valid(targetMap))
+                    cr.TransitToMap(targetMap.Id, item.Val1);
+
+                LockerClose(item);
+            }
+        }
+        else
+            LockerOpen(item);
+    }
+
+    return(true);
+}

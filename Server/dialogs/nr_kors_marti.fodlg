@@ -1,0 +1,322 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+51 1010 D _param p REPUTATION_CORSICAN_BROTHERS < -299 #
+30 1020 D _var p q_nr_corsican_initiate > 0 #
+10 1030 #
+20 1040 D _param p ST_INTELLECT < 4 @
+9 2000 None 0 @
+10 3000 None 0 #
+150 3010 D _var p q_mordinos_joining_quest = 1 #
+11 3020 D _var p sex_exp = 0 #
+15 3030 D _var p sex_exp > 0 #
+12 3040 #
+13 3050 #
+50 3060 D _param p ST_CHARISMA < 5 D _var p q_nr_corsican_initiate = 0 D _param p ST_STRENGTH > 100 R _param p REPUTATION_CORSICAN_BROTHERS - 100 #
+200 3070 D _param p ST_CHARISMA > 4 D _var p q_nr_corsican_initiate = 0 D _param p ST_STRENGTH > 100 #
+0 3080 @
+11 4000 None 0 #
+14 4010 R _script dialog@r_AddMoney 1 5 R _var p sex_exp + 5 #
+0 4020 @
+12 5000 None 0 #
+10 5010 #
+0 5020 @
+13 6000 None 0 #
+10 6010 #
+0 6020 @
+14 7000 None 0 #
+0 7010 @
+15 8000 None 0 @
+20 9000 None 0 @
+29 10000 None 0 @
+30 11000 None 0 #
+31 11010 #
+250 11020 D _var p q_nr_corsican_initiate = 6 D _var p q_nr_corsican_tattoo = 0 #
+210 11030 D _var p q_nr_corsican_initiate > 0 D _var p q_nr_corsican_initiate < 5 #
+230 11040 D _var p q_nr_corsican_initiate = 7 #
+250 11050 D _var p q_nr_corsican_initiate = 5 D _var p q_nr_corsican_tattoo = 0 #
+260 11060 D _var p q_nr_corsican_tattoo = 2 #
+300 11070 D _var p q_nr_corsican_tattoo = 3 #
+0 11080 @
+31 12000 None 0 #
+0 12010 @
+49 13000 None 0 @
+50 14000 None 0 @
+51 15000 Attack 0 @
+149 16000 None 0 @
+150 17000 None 0 #
+151 17010 D _param p ST_CHARISMA < 6 #
+160 17020 D _param p ST_CHARISMA > 5 #
+0 17030 @
+151 18000 None 0 #
+0 18010 @
+160 19000 None 0 #
+161 19010 @
+161 20000 None 0 #
+162 20010 @
+162 21000 None 0 #
+0 21010 R _var p q_mordinos_induction_doctor + 50 @
+199 22000 None 0 @
+200 23000 None 0 #
+201 23010 #
+203 23020 D _param p ST_STRENGTH > 4 D _param p ST_ENDURANCE > 5 D _param p ST_LUCK > 3 #
+0 23030 @
+201 24000 None 0 #
+202 24010 R _param p REPUTATION_CORSICAN_BROTHERS - 150 #
+202 24020 R _param p REPUTATION_CORSICAN_BROTHERS - 100 @
+202 25000 None 0 @
+203 26000 None 0 #
+204 26010 #
+331 26020 R _param p REPUTATION_CORSICAN_BROTHERS = -300 @
+204 27000 None 0 #
+205 27010 #
+205 27020 D _param p REPUTATION_CORSICAN_BROTHERS < 25 R _param p REPUTATION_CORSICAN_BROTHERS + 25 @
+205 28000 None 0 #
+206 28010 @
+206 29000 None 0 #
+207 29010 @
+207 30000 None 0 #
+208 30010 R _var p q_nr_corsican_initiate = 1 R _param p REPUTATION_CORSICAN_BROTHERS + 75 #
+51 30020 R _param p REPUTATION_CORSICAN_BROTHERS = -300 @
+208 31000 None 0 #
+0 31010 @
+210 32000 None 0 #
+211 32010 D _var p q_nr_corsican_initiate = 4 R _var p q_nr_corsican_initiate = 5 #
+220 32020 D _var p q_nr_corsican_initiate = 3 R _var p q_nr_corsican_initiate = 6 R _param p REPUTATION_CORSICAN_BROTHERS - 100 #
+51 32030 R _var p q_nr_corsican_tattoo = 7 R _param p REPUTATION_CORSICAN_BROTHERS = -300 #
+31 32040 @
+211 33000 None 0 #
+212 33010 R _param p REPUTATION_CORSICAN_BROTHERS + 25 R _script quest_corsican_brothers@r_RewardOne 0  #
+212 33020 R _script quest_corsican_brothers@r_RewardOne 0  @
+212 34000 None 0 #
+250 34010 #
+0 34020 @
+220 35000 None 0 #
+221 35010 #
+221 35020 @
+221 36000 None 0 #
+0 36010 R _script quest_corsican_brothers@r_RewardOne 0  @
+230 37000 None 0 #
+231 37010 #
+231 37020 #
+65507 37030 R _param p REPUTATION_CORSICAN_BROTHERS = -300 #
+51 37040 R _param p REPUTATION_CORSICAN_BROTHERS = -300 @
+231 38000 None 0 #
+51 38010 R _script dialog@r_StatRoll 2 Luck 50 R _param p REPUTATION_CORSICAN_BROTHERS = -300 #
+51 38020 R _param p REPUTATION_CORSICAN_BROTHERS = -300 #
+51 38030 R _script dialog@r_StatRoll 2 Luck 50 R _param p REPUTATION_CORSICAN_BROTHERS = -300 @
+248 39000 None 0 @
+249 40000 None 0 @
+250 41000 None 0 #
+251 41010 R _var p q_nr_corsican_tattoo = 1 #
+50 41020 R _param p REPUTATION_CORSICAN_BROTHERS - 100 @
+251 42000 None 0 #
+0 42010 @
+260 43000 None 0 #
+261 43010 R _var p q_nr_corsican_tattoo = 3 R _script dialog@r_AddMember 0  #
+0 43020 @
+261 44000 None 0 #
+262 44010 @
+262 45000 None 0 #
+300 45010 #
+300 45020 R _param p REPUTATION_CORSICAN_BROTHERS + 25 #
+0 45030 @
+298 46000 None 0 @
+299 47000 None 0 @
+300 48000 None 0 #
+301 48010 @
+301 49000 None 0 #
+302 49010 @
+302 50000 None 0 #
+303 50010 #
+303 50020 @
+303 51000 None 0 #
+304 51010 R _var p q_nr_corsican_execution = 1 R _var p acquaintance = 2 #
+0 51020 R _var p q_nr_corsican_execution = 1 @
+304 52000 None 0 #
+31 52010 #
+0 52020 @
+310 53000 None 0 #
+320 53010 D _var p q_nr_corsican_execution > 2 D _var p q_nr_corsican_execution < 5 #
+330 53020 D _var p q_nr_corsican_execution = 2 R _param p REPUTATION_CORSICAN_BROTHERS - 300 #
+31 53030 #
+0 53040 @
+320 54000 None 0 #
+321 54010 D _var p q_nr_corsican_execution = 3 R _param p REPUTATION_CORSICAN_BROTHERS + 150 R _var p q_nr_corsican_execution = 5 #
+321 54020 D _var p q_nr_corsican_execution = 4 R _param p REPUTATION_CORSICAN_BROTHERS + 100 R _var p q_nr_corsican_execution = 5 @
+321 55000 None 0 #
+31 55010 #
+0 55020 @
+330 56000 None 0 #
+331 56010 #
+51 56020 #
+65507 56030 #
+51 56040 R _script dialog@r_StatRoll 2 Luck 50 @
+331 57000 None 0 @
+348 58000 None 0 &
+
+[engl]
+{100}{}{Marty}
+{200}{}{You see one of the Corsican Brothers.}
+{210}{}{You see Marty, one of the Corsican Brothers. His hair is slicked back, and his face is covered with a thin sheen of sweat.}
+{1000}{}{Predialogue installations}
+{1010}{}{Screwed up}
+{1020}{}{acquainted}
+{1030}{}{Normal}
+{1040}{}{Idiot}
+{2000}{}{- - - - - - - - - - - - - - - - - - - - USUAL VISITORS AND NOT ACQUAINTED >>> 10 - 28 <<<  - - - - - - - - - - - - - - - - - - - -}
+{3000}{}{The Corsican Brothers at yer service… [Glances up, irritated] Well? I don't normally have time for fluffers.}
+{3010}{}{That's great, but I really couldn't give a shit about that right now. Today I am here with a proposition. I have Jet for you my friend, by the bucketload. You interested?}
+{3020}{}{I'm looking for work.}
+{3030}{}{I'm looking for work.}
+{3040}{}{What is this place?}
+{3050}{}{Uh, what's a fluffer?}
+{3060}{}{I am no fluffer! You can't imagine what I had to go through to get to this place -- you could at least provide me some answers, don't you think so?}
+{3070}{}{Look 'brother', your assumptions about my appearance are a bit out of place. Tell you what, let's keep this talk smooth and maybe we can get to a win-win situation. Now, let me introduce myself first, my name is @pname@.}
+{3080}{}{I'm definitely in the wrong place. Bye.}
+{4000}{}{Awright then. Head to the back, start waxing the shafts. There's 5 chips in it for you.}
+{4010}{}{[Do as he says]}
+{4020}{}{Um, actually, I changed my mind. No thanks. I'd best be going now.}
+{5000}{}{This place? This here's the Golden Globes, a FILM studio, pal, the only one in Reno, probably the ONLY one still erect and standing, see? Now, you gonna talk my ears off, or do you need something?}
+{5010}{}{I've got something else I want to ask you.}
+{5020}{}{No, bye.}
+{6000}{}{You yanking my member? Look, if you gotta ask, then you AIN'T the person for the job. Now whaddya want?}
+{6010}{}{I had something I wanted to ask.}
+{6020}{}{Nothing, forget it.}
+{7000}{}{You have a foul, unhealty taste in your mouth, and you feel sick to your stomach. With nothing to show for it.}
+{7010}{}{Ack! ::spit, spit:: That SUCKED!}
+{8000}{}{Your fluffing sucks, stop wasting my time!}
+{9000}{}{Get out of here, idiot.@@Can someone get this moron off set?@@Shoo!}
+{10000}{}{- - - - - - - - - - - - - - - - - - - - ACQUAINTED OR MEMBER OR DOING QUEST - - - - - - - - - - - - - - - - - - - -}
+{11000}{}{What are you doing here?@@What is it this time?}
+{11010}{}{I had some questions.}
+{11020}{}{So... no hard feelings about that body, right?}
+{11030}{}{About that dead body...}
+{11040}{}{About that dead body...}
+{11050}{}{So, any chance to join this crowd, Marty?}
+{11060}{}{About that tattoo...}
+{11070}{}{I'm interested in more work.}
+{11080}{}{I was just leaving. Bye.}
+{12000}{}{Yes?@@Okay, I'm listening.@@And that would be?}
+{12010}{}{Nothing. Goodbye.}
+{13000}{}{- - - - - - - - - - - - - - - - - - - - SCREWING SOMETHING UP >>> 50 - 98 <<< - - - - - - - - - - - - - - - - - - - -}
+{14000}{}{What a little yanker! Get the fuck outta here, jerk!@@Ha! Get lost, you prick!}
+{15000}{}{Get @sex@|him||her|, quickly!}
+{16000}{}{- - - - - - - - - - - - - - - - - - - - MORDINOS QUEST: SELLING JET IN NEW RENO >>> 150 - 198 <<< - - - - - - - - - - - - - - - - - - - -}
+{17000}{}{Hmm well I guess we do get through quite a lot. But I'm sure Senor Mordino would kill us if we went behind his back.}
+{17010}{}{I'm working for the Mordinos!}
+{17020}{}{I am representing the Mordino family.}
+{17030}{}{Yeah, I know how that goes. I wont try and force you in to it. Goodbye.}
+{18000}{}{I don't believe you. Sorry pal. I learnt the hard way that is pays to be loyal.}
+{18010}{}{But but but but but!!!.......}
+{19000}{}{Is that so? I guess I did see you in the Desperado a while back. Alright, spot me 50 doses?}
+{19010}{}{'Spot you'? You do realise you have to pay for this, right?}
+{20000}{}{Hey man what kind of man do you think I am? Of course I pay on time!}
+{20010}{}{Alright, let's do this.}
+{21000}{}{[You make the deal.] Come by any time.}
+{21010}{}{Super.}
+{22000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #1: GET RID OF A DEAD BODY  >> 200 - 248 <<< - - - - - - - - - - - - - - - - - - - -}
+{23000}{}{[Marty stops for a moment, as if he didn't expect such an exquisite answer] Right, let's suppose I *had* time for you. Waddya want from Marty, @pname@?}
+{23010}{}{I'm looking for *real* work.}
+{23020}{}{I know you appreciate people who can do work. And I can *do* work -- quite a work actually.}
+{23030}{}{I think I'm in the wrong place after all. Goodbye!}
+{24000}{}{[Marty looks at you, then at Snake. And then at Sid.] You hear this, people? [He looks around himself, as if talking to an invisible public that surrounds him] Did you just hear this motherfucker?}
+{24010}{}{But, but...}
+{24020}{}{[Remain silent]}
+{25000}{}{Ha-haha, look at you, wussy! I suggest you leave this place at once, before loosing your virginity... cunt!}
+{26000}{}{Since you put it that way... There is something about you, you do seem to have potential for this line of work. So, you really interested in job or what? It's dirty one, that much I can promise.}
+{26010}{}{There are no clean jobs Marty, and you know it. Just keep talking.}
+{26020}{}{Uf-uf, stop it right there! I'm not into dirty jobs, forget it! [Leave]}
+{27000}{}{We had... an accident a while ago. One of our actresses 'slipped on a bar of soap' [Marty smiles bizarrely] and hurt herself badly, if you know what I mean. An awful scene, her fucking brain was all over the floor. There was no way she could make it alive out of it. [He makes a short motion with his hand, slicing a piece of air in front of him in two]}
+{27010}{}{[Keep listening]}
+{27020}{}{Yes, unfortunatelly such accidents keep happening all the time [you look back at Marty in almost the same bizarre way he's been smiling at you]. But pardon my interrupt, please continue.}
+{28000}{}{[Marty changes his mood to almost cheerful] Well, obviously, we need to get rid of the body. The problem is, the unfortunate victim of the soap menace has had good connections in the town due to her high 'entertainment qualities'. I'd rather not upset the common townsfolk by talking about the unfortunate event... [Marty looks at the ceiling]}
+{28010}{}{[Keep listening]}
+{29000}{}{... and I definitely wouldn't like the other part of the townsfolk, the one with more influence, experience anything about her premature death. That would cause quite a rumble around here, mind you, since they had great time with her on each occasion we -- erhm -- we 'leased' her. Now, about the body... [He gets serious again and strikes you with his dark eyes]}
+{29010}{}{[Keep listening]}
+{30000}{}{@sex@|Dude||Baby|, just make it disappear, okay?}
+{30010}{}{Just prepare a proper compensation when I get back.}
+{30020}{}{This is more than I can handle, really. Just forget it. [Head for the door]}
+{31000}{}{Excellent! [Marti cheers up and makes a funny motion with his right hand, as if he's serving a drink to you] You'll want to talk to Snake about the details, because I have to run the business and all. [Marty  nods in the direction where Snake is standing]}
+{31010}{}{[Leave]}
+{32000}{}{[Marty looks at you carefully with his eyes half opened]}
+{32010}{}{Did I just say 'dead body'? Ah, I slipped my tongue again. There's no dead body, not at all. [You slightly raise your eyebrows, spreading your hands]}
+{32020}{}{Did I just say 'dead body'? Ah, I slipped my tongue again. There's no dead body, not at all. [You raise your eyebrows, spreading your hands]}
+{32030}{}{I think I'm the wrong person for the job.}
+{32040}{}{Nothing for now. I had some other questions, though.}
+{33000}{}{My @sex@|man||champion|, @pname@! Hey Sid, look at @sex@|him||her|, this is the person we're looking for. This, *this* is what I need. [Pointing to you with his index finger while talking to Sid, who's smiling slightly retarded]}
+{33010}{}{Hey, fuck speeches, I'm here for the stuff! Whatcha got for me, Marty?}
+{33020}{}{Okay, work's done. Now, about my payment...}
+{34000}{}{See, Sid? See that? Straight. To. The. Point. That's what I miss around here, it's just *that*. We need more people like @pname@, yes we do. Yes. We. Do. You've done your work properly, and now we have to reward you accordingly... There you go. [Marty hands over some stuff from his bookcase to you]}
+{34010}{}{Good. Now, is there anything else you've got for me or should I hit the road?}
+{34020}{}{That's not bad at all, yeah! I'll drop by later for more chat, just let me check this out first. [Leave]}
+{35000}{}{No fucking body, eh? [Marty seems nervous, leant with both arms on his table] Did you hear that, Sid? Did you hear *that*? [He picks up an ashtray from his table, throws it and hits you in the head. You feel something warm on your forehead, it must be your own blood. Marty continues to yell] You idiot, someone dig out the body! And you got some luck, you @sex@|son of a bitch||little whore|, you know that?}
+{35010}{}{[Remain silent]}
+{35020}{}{What the... Luck?}
+{36000}{}{Yes, you stupid cunt! It was one of the New Reno junkies! Good thing he's our informer, that's some luck you've got right there! [He points at you with his index finger] When we've heard about it, we've had to stuck a few caps down his pocket, in return he's taken care of the body once and for all. Fuck, just get the hell outta my face and don't get back until you fix that retarded G-Nome of yours! [Marty turns his back to you and looks through the window]}
+{36010}{}{[Before you leave, Sid gives you some stuff. It seems Marty did not notice that]}
+{37000}{}{Well, well -- ain't you here to explain yourself, you irradiated piece of shit?}
+{37010}{}{What the --}
+{37020}{}{Explain myself?}
+{37030}{}{Those words were your last will! [Attack]}
+{37040}{}{[Run for the door]}
+{38000}{}{We know all of it! Sid was supposed to cover your back out there, but it turned out that he'd better killed you right on the spot, you dipshit! [Marty errupts] Was it *that hard* to do what Snake instructed you to do? Why don't any of you little creeps coming into my office and asking for a job listen at least for once, are you that dumb?}
+{38010}{}{[Remain silent]}
+{38020}{}{[Attack]}
+{38030}{}{[Run for the door]}
+{39000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #1 END - - - - - - - - - - - - - - - - - - - -}
+{40000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #2: JOIN CORSICAN BROTHERS BY GETTING THEIR TATTOO >> 300 - 348 <<< - - - - - - - - - - - - - - - - - - - -}
+{41000}{}{Well you proved yourself more-less useful, I can't let you go now... no, not just like that. And we need more fools and horses around here, that's a fact. How about *you* join the crowd? We've got @sex@|hookers||caps|, guns, this fancy place in the middle of the city of lights -- yeah @sex@|dude||baby|, this is New Reno! Whaddya say?[Marty looks left towards Sid, then right towards Snake. After a second he starts to laugh, followed by other members of the Corsican Brothers]}
+{41010}{}{Well, can't let Sid stand there like a ghoul all by himself, right? [Everyone laughs again]}
+{41020}{}{Sorry, but I... I can't. There's other issues I've got to take care of. Goodbye.}
+{42000}{}{Well, then you have to do something first... [He looks at you again] Go visit the tattoo shop just west of here, next to the ol' man Eldridge and let him sign the deal with ink and needle. He'll even give you a discount, we've gotta special arrangement with him, if you know what I mean. Get back when you're finished, maybe something pops up in the meantime.}
+{42010}{}{Roger that, see you later.}
+{43000}{}{Yes, did you get one already?}
+{43010}{}{I sure did! Look at this piece of art, rats!}
+{43020}{}{No, nothing yet. See you later!}
+{44000}{}{[Members of the Corsican Brothers smile and laugh as you show them your tattoo. Marty interrupts it] Okay, okay, that's some fancy tattoo right there. I see the bald-headed yanker really brushed up his skills. Anyway, consider this your official welcome to the Corsican Brothers.}
+{44010}{}{Yeah, good to have a place like this these days.}
+{45000}{}{Good, now... Are you interested in more work?}
+{45010}{}{Bring it on, Marty!}
+{45020}{}{Somehow, I've never been really looking for work. It seems like work always finds *me* first...}
+{45030}{}{Nah, let me take a rest for a while. I'll report back later.}
+{46000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #2 END - - - - - - - - - - - - - - - - - - - -}
+{47000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #3: MAKE OLD MAN MCGEE PAY FOR HIS DEBTS >> 300 - 348 <<< - - - - - - - - - - - - - - - - - - - -}
+{48000}{}{Good, good. [Marty nods as he walks around his table] Now, you see -- there's this guy called Old Man McGee, he's a notorious gambler around these parts. By coincidence... [he makes a pause, holding his index finger pointing towards the ceiling, then continues] ... by a rather unfortunate coincidence, he owes us some money. He used to work for us, but only to feed that damn gambling problem of his.}
+{48010}{}{[Keep listening]}
+{49000}{}{Now we would squeeze the caps outta him, but he's really low on caps lately... [Marty makes a sad face] Too low, I'm affraid. We're quite sure he'll never be able to pay us back. This is a situation where we have to ask what's rightfully ours. If he can't repay his debt, we must take something valuable from him, don't you agree? It's a simple... compensation. A sort of.}
+{49010}{}{[Keep listening]}
+{50000}{}{Well, to be honest with you, his only valuable posession right now is -- his life. Since we have no other choice, I reckon you'll agree that we must take his life from him. [He leans a bit to the left and to the right as he walks around the room] Aaaaand in order to teach him a lesson, we need to take his life in a monstrous, barbaric way. In such a way that he shits his pants the very moment he dies. [Marty turns to you suddenly] Do you follow me?}
+{50010}{}{But, of course! We need to teach him a lesson.}
+{50020}{}{[You nod to him]}
+{51000}{}{Now, before you jump out this fine establishment and start rummaging around, you should know that there are people in New Reno that wouldn't wanna see the old bastard dead. [Marty gets serious, but his voice still sounds friendly] You can't do it in the town, capisce?}
+{51010}{}{Understood. Where can I find him?}
+{51020}{}{Old Man, dead, not in town. I think I'm beginning to like the trinity. See you soon, Marty.[Turn around and leave]}
+{52000}{}{What, you wanna disappoint me now? [Marty turns his back to you and looks through the window] This is New Reno, walls have ears around here! Just keep asking and you'll find the little shit eventually. Now go!}
+{52010}{}{Let me ask you something else before I leave.}
+{52020}{}{Very well then. [Leave]}
+{53000}{}{Is he dead already?@@Did you take care of him?@@What about him?}
+{53010}{}{Old Man McGee, unfortunatelly, won't get any older. [A moment of silence, then one by one, the Corsican Brothers start to laugh. In just a few seconds the room is filled with loud laughter]}
+{53020}{}{I can't find the bastard, no trace of him. Maybe he left New Reno for good or got killed by Radscorpions somewhere outta town. One way or another, I think the job's finished.}
+{53030}{}{Uhm, I actually have no news about it yet. Can we talk about something else instead?}
+{53040}{}{Uhm, nothing right now.}
+{54000}{}{Helluva work, @pname@! I knew you're the right person for the job. Now, now, now... [He leans a bit forward, as if expecting to hear something important] How did he die?}
+{54010}{}{All alone, squealing like a ratpig under knife. [Everybody laughs again, while Marty spreads his arms, walks up to you and hugs you gently]}
+{54020}{}{The bastard lured me into a trap and jumped me up with couple of his friends. They shat their pants as soon as I've blown the first head off. No begging for mercy could stop me, and there was plenty of it, you know? [Marty is grinning ear-to-ear as he listens]}
+{55000}{}{Well, what can I say? Congratulations, you earned our full trust! [As he walks away approaching his table, he continues] This actually means we can count on your support in our everyday business with the studio and movies. And that means more work -- and more caps, for all of us. Welcome to the film industry, @sex@|dude||baby|!}
+{55010}{}{That sounds great, Marty. So, can I ask you a few questions then?}
+{55020}{}{Good to know. I'll check in once I get some rest. Bye!}
+{56000}{}{No trace of him, huh? No fucking trace of the bastard, *right*? [Marty looks for the ashtray on his table, but it's not there. He grabs some papers and throws them your way, then continues] Snake was following you all the time, we know what you did, you little fuck!}
+{56010}{}{[Remain silent]}
+{56020}{}{Look buddy, let me explain some things to you...}
+{56030}{}{Now you'll bite it, motherfucker! [Attack]}
+{56040}{}{[Leave]}
+{57000}{}{Get the fuck outta my sight and don't you ever, and I mean *ever* enter that door again!}
+{58000}{}{- - - - - - - - - - - - - - - - - - - - QUEST #3 END - - - - - - - - - - - - - - - - - - - -}
+

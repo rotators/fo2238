@@ -1,0 +1,56 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// backend_h.fos
+//
+
+#ifndef __BACKEND__
+#define __BACKEND__
+
+#pragma bindfunc "void Dummy() -> Backend.dll Dummy"
+
+#ifndef __DEBUG_DISABLE_SQL__
+# pragma bindfunc "bool dbInitTable(string@+,string@+) -> Backend.dll dbInitTable"
+# pragma bindfunc "bool dbLog(string@+, string@+) -> Backend.dll dbLog"
+#endif
+
+#ifdef __DEBUG_DISABLE_SQL__
+bool dbInitTable(string@, string@) { return true; }
+bool dbLog(string@, string@)       { return true; }
+#endif
+
+#ifndef __BACKEND_MODULE__
+# ifndef __DEBUG_DISABLE_SQL__
+import void InitDBLogs() from "backend";
+
+import void LogExperience(Critter& cr, int amount) from "backend";
+import void LogExperience(Critter& cr, int amount, string@ info) from "backend";
+import void LogExperience(Critter& cr, int amount, int skill) from "backend";
+import void LogExperience(Critter& cr, int amount, int skill, string@ info) from "backend";
+import void LogExperience(Critter& cr, int amount, int skill, int param) from "backend";
+import void LogExperience(Critter& cr, int amount, int skill, string@ info, int param) from "backend";
+import void LogQuestExperience(Critter& cr, int amount, string@ info) from "backend";
+import void LogQuestExperience(Critter& cr, int amount, int skill, string@ info) from "backend";
+import void LogAttack(Map@ map, Critter& cr, Critter& target, ProtoItem& weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint ammoRound, uint weaponRound, bool isHit, bool isCritical, uint critfailFlags) from "backend";
+import void LogDamage(Map@ map, Critter@ attacker, Critter& target, Item@ weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint damage, bool isCritical, uint eff, uint rounds) from "backend";
+import void LogGathering(Critter&, uint16, int) from "backend";
+# endif
+
+# ifdef __DEBUG_DISABLE_SQL__
+void InitDBLogs() {}
+
+void LogExperience(Critter& cr, int amount)                                                                                                                                                            {}
+void LogExperience(Critter& cr, int amount, string@ info)                                                                                                                                              {}
+void LogExperience(Critter& cr, int amount, int skill)                                                                                                                                                 {}
+void LogExperience(Critter& cr, int amount, int skill, string@ info)                                                                                                                                   {}
+void LogExperience(Critter& cr, int amount, int skill, int param)                                                                                                                                      {}
+void LogExperience(Critter& cr, int amount, int skill, string@ info, int param)                                                                                                                        {}
+void LogQuestExperience(Critter& cr, int amount, string@ info)                                                                                                                                         {}
+void LogQuestExperience(Critter& cr, int amount, int skill, string@ info)                                                                                                                              {}
+void LogAttack(Map@ map, Critter& cr, Critter& target, ProtoItem& weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint ammoRound, uint weaponRound, bool isHit, bool isCritical, uint critfailFlags) {}
+void LogDamage(Map@ map, Critter@ attacker, Critter& target, Item@ weapon, ProtoItem@ ammo, uint8 aim, bool isBurst, uint damage, bool isCritical, uint eff, uint rounds)                              {}
+void LogGathering(Critter&, uint16, int)                                                                                                                                                               {}
+# endif
+#endif
+#endif

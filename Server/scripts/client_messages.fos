@@ -1,0 +1,802 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_messages.fos
+//
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_globalvars.fos"
+#include "_client_defines.fos" // temporary
+#include "_colors.fos"
+
+#include "buffer_h.fos"
+#include "config_file_h.fos"
+#include "client_utils_h.fos"
+#include "lexems_h.fos"
+
+import bool IsGMTEnabled() from "client_main";
+
+import uint GetPossessedCritterId() from "client_dev_menu";
+import bool IsPossessMode() from "client_dev_menu";
+
+import bool FOArt_SendFile(string& filename, bool spawnFast) from "foart";
+
+import int GMToolsCommand(string& message) from "client_gmtools";
+import int GMToolsPossess() from "client_gmtools";
+
+import int OnlineStatsCommand(string& message) from "client_online_stats";
+
+import string@ GetRecord(const string& filename) from "client_recording";
+import void    StartRecording(const string& filename) from "client_recording";
+import void    StartReplay(string@ rec) from "client_recording";
+import void    Record(const string& message) from "client_recording";
+import void    StopRecording() from "client_recording";
+import bool    IsRecording() from "client_recording";
+
+import bool TimeoutsCommand(string& message) from "client_timeouts";
+
+import void InitNameColorizing() from "name_colorizing";
+
+#pragma bindfunc "void OnlineStats_URL(string@+) -> client_parameters.dll OnlineStats_URL"
+
+bool isListen    = false;
+bool LogAutoSave = false;
+
+/*
+   // chance for replacing words in player sentence, starting from 1IN
+   // if IN is bigger than array length, nothing is done
+   const uint8[] out_chance =
+   {
+        100, 100, 100, 100, 100, 100, 100, 100, 100, 100
+   //	100, 80, 60, 30
+   };
+
+   // words to be replaced; first - original word, anything else - possible variations
+   // input word case is ignored
+   // if variaton picked is empty, word is removed
+   const string[][] out_replace =
+   {
+   //	{ "input",			"output", "output" },
+        { "a",				"" },
+        { "am",				"is" },
+        { "an",				"" },
+        { "are",			"harr" },
+        { "armor",			"armar" },
+        { "attack",			"hurt" },
+        { "bos",			"Shiny Shiny Tinmen" },
+        { "brotherhood",	"Tinmen" },
+        { "burst",			"dakdak" },
+        { "but",			"bat" },
+        { "caps",			"munneh", "maney", "monnies" },
+        { "could",			"cudd" },
+        { "dead",			"deaded" },
+        { "doc",			"dok" }
+        { "don't",			"donn" },
+        { "dont",			"donn" },
+        { "enemy",			"enemi" },
+        { "enemies",		"baddies" },
+        { "encounter",		"fite" },
+        { "enclave",		"Anklaff", "Enlkav" },
+        { "fa",				"stich meh!" },
+        { "food",			"yummeyh" },
+        { "did",			"done" },
+        { "ghoul",			"stinker" },
+        { "ghouls",			"stinkers" },
+        { "grenade",		"boomer", "boom-boom" },
+        { "gun",			"boomstick", "gan" },
+        { "had",			"haved" },
+        { "has",			"got" },
+        { "have",			"gotted" },
+        { "hunt",			"killen" },
+        { "into",			"in" },
+        { "i",				"me" },
+        { "injured",		"hurted" },
+        { "join",			"go vith mee" },
+        { "kill",			"ded", "keel" },
+        { "knife",			"stabber" },
+        { "laser",			"red light" },
+        { "love",			"luv" },
+        { "mutant",			"ugly" },
+        { "mutants",		"ugly" },
+        { "nade",			"boomer", "boom-boom" },
+        { "no",				"nah" },
+        { "pa",				"Big Tin Zuit" },
+        { "pk",				"baddies" },
+        { "powerarmor",		"Big Tin Zuit" },
+        { "plasma",			"plazme" },
+        { "pretty",			"preety" },
+        { "raiders",		"baddies" },
+        { "rocket",			"rokkeet" },
+        { "so",				"den" },
+        { "tank",			"strongman" },
+        { "the",			"teh" },
+        { "thief",			"stealer" },
+        { "took",			"tack" },
+        { "want",			"wannuh
+        { "weak",			"girly" },
+        { "weapon",			"hurter" },
+        { "what?",			"duhh" },
+        { "wtb",			"me buyyeh" },
+        { "wtb",			"me solding" },
+        { "why",			"wai", "y" },
+        { "will",			"gonnah" },
+        { "with",			"vith" },
+        { "you",			"yoo", "u" },
+        { "yell",			"yel" },
+        { "yes",			"yeh" }
+   };
+ */
+void ForceSay(uint8 sayType, uint critterId, string& message)
+{
+    CritterCl@ cr = GetCritter(critterId);
+    string     who = (valid(cr) ? cr.Name : "someone");
+
+    ForceSay(sayType, who, message);
+}
+
+void ForceSay(uint8 sayType, string& who, string& message)
+{
+    if(sayType > 0)
+    {
+        message = ReplaceText(GetMsgStr(TEXTMSG_GAME, 100 + (sayType - 1)),
+                              "%s", message);
+
+        if(sayType == SAY_SHOUT)
+            message = strupr(message);
+        else if(sayType == SAY_WHISP)
+            message = strlwr(message);
+
+        who = FormatTags(who, "");
+    }
+
+    Message(who + ": " + message, FOMB_TALK);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on receive message on map.
+// By default delay == [TextDelay + message length * 100] ms
+bool map_message(string& message, uint16& hexX, uint16& hexY, uint& color, uint& delay)
+{
+    // Detect radio
+    if(color == 0xFFFFFFFE)
+        message = "..." + message + "...";
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on receive message.
+// By default delay == [TextDelay + message length * 100] ms
+bool in_message(string& message, int& sayType, uint& critterId, uint& delay)
+{
+    // |dlgNameX| parser, must be present before custom say types
+    string dlgName = "|dlgName";
+    while(findFirst(message, dlgName) >= 0)
+    {
+        string num = "";
+
+        for(uint l = (findFirst(message, dlgName) + dlgName.length()); l < message.length(); l++)
+        {
+            if(message[l] == '|')
+                break;
+            else if(message[l] < '0' || message[l] > '9')
+            {
+                Log("dlgName : invalid character <" + substring(message, l, 1) + ">");
+                break;
+            }
+            else
+                num += substring(message, l, 1);
+        }
+        if(num.length() > 0)
+        {
+            uint   crId = 0;
+            string name = "error";
+            if(StrToInt(num, crId))
+            {
+                CritterCl@ cr = GetCritter(crId);
+                name = (valid(cr) ? cr.Name : "error");
+            }
+            message = ReplaceText(message, dlgName + num + "|", name);
+        }
+    }
+
+    CritterCl@ critter = GetCritter(critterId);
+
+    /*
+       if( sayType == SAY_VERBOSE_ACTION )
+       {
+            bool allow = false;
+
+            if( GetCurrentMapPid() > 0 )
+            {
+                    if( __ConfigVerboseActionHead )
+                    {
+                            sayType = SAY_NORM_ON_HEAD;
+                            allow = true;
+                    }
+            }
+
+            if( __ConfigVerboseActionBox )
+            {
+                    if( valid(critter) && IsLexem( critter, "$name" ))
+                            ForceSay( 0, GetLexem( critter, "$name" ), message );
+                    else
+                            ForceSay( 0, critterId, message );
+            }
+
+            return( allow );
+       }
+     */
+
+    if(LogAutoSave)
+    {
+        file   f;
+        string msg = message;
+
+        if(f.open("autosave.log", "a") == 0)
+        {
+            if((sayType >= SAY_NORM) && (sayType <= SAY_RADIO))
+            {
+                if(valid(critter))
+                {
+                    msg = critter.Name + ": " + msg;
+                }
+            }
+            uint16 undef;
+            uint16 hour = 0;
+            uint16 minuue = 0;
+            uint16 second = 0;
+            uint16 minute = 0;
+            uint16 day = 0;
+            uint16 month = 0;
+            uint16 year = 0;
+
+            GetTime(year, month, day, undef, hour, minute, second, undef);
+            f.writeString("[" + hour + ":" + minute + ":" + second + " " + day + "." + month + "." + year + "] " + msg + "\r\n");
+            f.writeString(msg + "\r\n");
+            f.close();
+        }
+    }
+
+    if(valid(critter))
+    {
+        if(IsLexem(critter, "$name") && (sayType >= SAY_NORM && sayType <= SAY_SOCIAL))
+        {
+            bool floater =
+                (sayType == SAY_NORM_ON_HEAD  || sayType == SAY_SHOUT_ON_HEAD ||
+                 sayType == SAY_EMOTE_ON_HEAD || sayType == SAY_WHISP_ON_HEAD);
+
+            if(sayType == SAY_NORM  || sayType == SAY_SHOUT ||
+               sayType == SAY_EMOTE || sayType == SAY_WHISP)
+                sayType += 1;                 // *_ON_HEAD
+            else if(sayType == SAY_SOCIAL)
+            {
+                message = ReplaceText(GetMsgStr(TEXTMSG_GAME, 108),
+                                      "%s", message);
+                sayType = SAY_NORM_ON_HEAD;
+            }
+            if(!floater)
+                ForceSay(sayType - 1, GetLexem(critter, "$name"), message);
+        }
+    }
+    return true;
+}
+
+array<string> oocflood;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on send message.
+bool out_message(string& message, int& sayType)
+{
+    if(IsGMTEnabled() && message.length() > 0)
+    {
+        int ret = GMToolsCommand(message);
+        if(ret == 0)
+            return(false);
+        if(ret == 1)
+            return(true);
+    }
+
+    if(message[0] == '~')
+    {
+        array<string@>@ words = splitEx(message, " ");
+        int ret = 1;
+
+        #ifndef __DEBUG__
+        // smartass detector
+        if(words.length() >= 3 &&
+           words[0] == "~getaccess" && words[1] == "admin" &&
+           (words[2] == "pass" || words[2] == "password" ||
+            words[2] == "love" || words[2] == "sex" || words[2] == "god"))
+        {
+            Message("You gotta be kidding me... shoo shoo, mighty hacker.");
+            OnlineStats_URL("http://fonline2238.net/vtdb/ar.php?i=jinxed&h=Busted!&d=|Your%20awesome%20hacker%20skills|failed%20this%20time.%20You%20have|been%20caught%20when%20trying|to%20get%20access%20to%20place,|where%20you%20are%20not%20allowed|to%20be.||We%27re%20watching%20you,%20scum.");
+            RunServerScript("unsafe_client@unsafe_disconnect", 0, 0, 0, " ", null);
+            return(false);
+        }
+
+        /* disabled commands
+                when adding another command, don't forget to
+                add it to server-side check (main@player_allowcommand)
+         */
+        array<string> disabled =
+        {
+            "additem", "additemself", "addloc", "addnpc", "crash", "param"
+        };
+
+        for(uint d = 0; d < disabled.length(); d++)
+        {
+            string check = substring(words[0], 1, disabled[d].length());
+            if(check == disabled[d])
+            {
+                // simulate hardcoded message
+                Message("Command: " + check + ".");
+                Message("Unknown command.");
+                return(false);
+            }
+        }
+        #endif         // !__DEBUG__
+
+        if(message.length() >= 2 && message[1] == '~')
+        {
+            Message("Nice try, but no banana.");
+            return(false);
+        }
+
+        if(words.length() >= 2 && words[0] == "~gameinfo" && words[1] == "1")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_gameinfo", 0, 0, 0, "command " + substring(message, 1, message.length() - 1), null);
+            return(false);
+        }
+
+        if(words.length() > 0 && words[0] == "~getaccess")
+        {
+            if(words.length() == 3)
+            {
+                RunServerScriptUnsafe("unsafe_client@unsafe_getaccess", 0, 0, 0, words[1] + "|" + words[2], null);
+                return(false);
+            }
+            else             // let the client take care of it
+                return(true);
+        }
+
+        if(message == "~names")
+        {
+            InitNameColorizing();
+            Message("Names colorizer refreshed.");
+            return false;
+        }
+        else if(message.length() >= 9 && substring(message, 0, 9) == "~timeouts")
+        {
+            return(TimeoutsCommand(message));
+        }
+        else if(substring(message, 1, 12) == "disbandparty")
+        {
+            if((words.length() > 1) && (words[1] != "away_team"))
+            {
+                Message("Invalid command argument.");
+                Message("Usage: ~disbandparty [away_team].");
+                return false;
+            }
+            RunServerScriptUnsafe("unsafe_client@unsafe_ExecDisbandParty", 0, 0, 0, message, null);
+            Message(((words.length() > 1) && (words[1] == "away_team") ? "Disbanding the away team..." : "Disbanding whole party..."));
+            return false;
+        }
+        else if(message == "~spectate")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_Spectate", 0, 0, 0, null, null);
+            return false;
+        }
+        else if(message == "~suicide")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_Suicide", 0, 0, 0, null, null);
+            return false;
+        }
+        else if(message == "~eventsuicide")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_Suicide2", 0, 0, 0, null, null);
+            return false;
+        }
+        else if(message == "~partypoints" || message == "~pp")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_PartyPoints", 0, 0, 0, null, null);
+            return false;
+        }
+        /*
+           else if( message == "~influence" )
+           {
+                RunServerScriptUnsafe( "unsafe_client@unsafe_ExecShowFactionInfluence", 0, 0, 0, null, null );
+                return false;
+           }
+         */
+        else if(message == "~logautosave")
+        {
+            LogAutoSave = !LogAutoSave;
+            Message("Log autosave " + (LogAutoSave ? "enabled" : "disabled") + ".");
+            return false;
+        }
+        else if(message == "~awareness")
+        {
+            __ConfigAwareness = !__ConfigAwareness;
+            Message("Onscreen Awareness " + (__ConfigAwareness ? "enabled" : "disabled") + ".");
+            if(SetConfigValue(CONFIG_FILE, CONFIG_2238, "Awareness", __ConfigAwareness) &&
+               string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+                SaveConfig(CONFIG_FILE);
+            return false;
+        }
+        else if(message == "~freefactionnames" || message == "~ffn")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_FreeFactionNames", 0, 0, 0, null, null);
+            return false;
+        }
+        ret = OnlineStatsCommand(message);
+        if(ret == 0)
+            return(false);
+        if(ret == 1)
+            return(true);
+
+        if(words.length() > 0 && words[0] == "~combatmode")
+        {
+            if(words.length() >= 2)
+            {
+                if(words[1] == "any" || words[1] == "both")
+                    __DefaultCombatMode = 0;
+                else if(words[1] == "rt" || words[1] == "realtime")
+                    __DefaultCombatMode = 1;
+                else if(words[1] == "tb" || words[1] == "turnbased")
+                    __DefaultCombatMode = 2;
+
+                RunServerScriptUnsafe("unsafe_client@unsafe_CombatMode", __DefaultCombatMode, 0, 0, null, null);
+
+                SetConfigValue(CONFIG_FILE, CONFIG_2238, "CombatMode", __DefaultCombatMode);
+
+                if(string2bool(GetConfigValue(CONFIG_FILE, CONFIG_2238, "Autosave")))
+                    SaveConfig(CONFIG_FILE);
+            }
+            string cmode = "";
+            switch(__DefaultCombatMode)
+            {
+            case 0:
+                cmode = "Both";
+                break;
+            case 1:
+                cmode = "Real-Time";
+                break;
+            case 2:
+                cmode = "Turn-Based";
+                break;
+            default:
+                cmode = "Unknown (" + __DefaultCombatMode + ")";
+                break;
+            }
+            Message("Combat Mode: " + cmode);
+            return(false);
+        }
+
+        string test = words[0];
+        if(test == "~getaccess" || test == "~runscript" || test == "~run")
+        {
+            RunServerScriptUnsafe("unsafe_client@unsafe_ExecCommandEntered", 0, 0, 0, message, null);
+            // array<string@>@ lines = split(message, " ");
+            // if (lines[1] == "moder") isModer = true;
+            isListen = true;
+        }
+
+        if(words.length() > 0 && words[0] == "~myinfo")
+        {
+            // int full = (words.length() >= 2 && words[1] == "-full" ? 1 : 0);
+            RunServerScriptUnsafe("unsafe_client@unsafe_MyInfo", 0, 0, 0, " ", null);
+            return(false);
+        }
+        if(words.length() > 0 && words[0] == "~factioninfo")
+        {
+            int full = (words.length() >= 2 && words[1] == "-full" ? 1 : 0);
+            RunServerScriptUnsafe("unsafe_client@unsafe_FactionInfo", full, 0, 0, " ", null);
+            return(false);
+        }
+
+        #ifdef __DEBUG__
+        if(words.length() >= 4 && words[0] == "~seteffect")
+        {
+            int type = 0, subtype = 0;
+            if(StrToInt(words[1], type) &&
+               StrToInt(words[2], subtype))
+            {
+                Message("SetEffect( <" + type + ">, <" + subtype + ">, <" + words[3] + "> );");
+                SetEffect(type, subtype, words[3]);
+            }
+            else
+                Message("Wrong args");
+        }
+        #endif         // __DEBUG__
+
+        return true;   // Command
+    }
+
+    // cheat command
+
+    #ifndef __DEBUG__     // cheats1 only
+    if(message.length() > 1 && message[0] == '`')
+    #endif
+
+    #ifdef __DEBUG__     // cheats1, cheats2
+    if(message.length() > 1 && (message[0] == '`' || message[0] == '!'))
+    #endif
+
+    {
+        array<string@>@ command = split(substring(message, 1, message.length() - 1), " ");
+        if(command[0] == "play")
+        {
+            string @rec = GetRecord(command[1]);
+            if(valid(rec))
+            {
+                Message("Playing...");
+                StartReplay(rec);
+            }
+            else
+                Message("Recording not valid, you sure the file exists?");
+        }
+        else
+        {
+            #ifndef __DEBUG__             // cheats1 only
+            sayType = SAY_RADIO;
+            message = "command " + substring(message, 1, message.length() - 1);
+            RunServerScriptUnsafe("cheats@unsafe_ExecCommand", 0, 0, 0, message, null);
+            #endif
+
+            #ifdef __DEBUG__             // cheats1, cheats2
+            bool use2 = (message[0] == '!');
+            if(use2)
+            {
+                message = substring(message, 1, message.length() - 1);
+                RunServerScriptUnsafe("cheats2@unsafe_ExecCheat", 0, 0, 0, message, null);
+            }
+            else
+            {
+                message = "command " + substring(message, 1, message.length() - 1);
+                RunServerScriptUnsafe("cheats@unsafe_ExecCommand", 0, 0, 0, message, null);
+            }
+            #endif
+        }
+        Record(message);
+        return false;
+    }
+
+    // client commands
+    if(message.length() > 1 && message[0] == '+')
+    {
+        array<string@>@ command = split(substring(message, 1, message.length() - 1), " ");
+        if(command[0] == "requesthelp")
+        {
+            sayType = SAY_RADIO;
+            RunServerScriptUnsafe("unsafe_client@unsafe_ExecGMHelpCommand", 0, 0, 0, message, null);
+            return false;
+        }
+        else if(command[0] == "record" && !IsRecording())
+        {
+            string @fname = command[1];
+            StartRecording(fname);
+            Message("Recording started: " + fname);
+            return false;
+        }
+        else if(command[0] == "record" && IsRecording())
+        {
+            StopRecording();
+            Message("Recording stopped.");
+            return false;
+        }
+    }
+
+    CritterCl@ chosen = GetChosen();
+
+    if(valid(chosen) && chosen.Param[MODE_HIDE] > 0 && GetCurrentMapPid() != 0 &&
+       (sayType == SAY_NORM || sayType == SAY_SHOUT || sayType == SAY_EMOTE))
+    {
+        int oldSayType = sayType;
+        sayType = SAY_WHISP;
+        if(message.length() > 2 && (message[0] == '/' || message[0] == '.') &&
+           (message[1] == 'ê' || message[1] == 'Ê' || message[1] == 's' || message[1] == 'S' ||
+            message[1] == 'ý' || message[1] == 'Ý' || message[1] == 'e' || message[1] == 'E' ||
+            message[1] == 'ø' || message[1] == 'Ø' || message[1] == 'w' || message[1] == 'W' ||
+            message[1] == 'ù' || message[1] == 'o' || message[1] == 'O'))
+        {
+            string tmp = substring(message, 2, message.length() - 2);
+            message = tmp;
+        }
+
+        if(message.length() > 2 && (message[0] == '/' || message[0] == '.') &&
+           (message[1] == 'ð' || message[1] == 'Ð' || message[1] == 'r' || message[1] == 'R' ||
+            message[1] == 'ð' || message[1] == 'h' || message[1] == 'H'))
+            sayType = oldSayType;
+    }
+
+    if(sayType == SAY_NORM)
+    {
+        if(isListen && !IsPossessMode())
+        {
+            RunServerScriptUnsafe("logging_critter@unsafe_Say", sayType, 0, 0, message, null);
+            RunServerScriptUnsafe("logging_critter@unsafe_Ping", sayType, 0, 0, message, null);
+        }
+
+        bool ooc = false;
+        bool distress = false;
+        if(message.length() > 2 && (message[0] == '/' || message[0] == '.'))
+        {
+            int  eraseCount = 1;
+            int8 ch = message[1];
+            if(ch == 'ê' || ch == 'Ê' || ch == 's' || ch == 'S')
+                sayType = SAY_SHOUT;
+            else if(ch == 'ý' || ch == 'Ý' || ch == 'e' || ch == 'E')
+                sayType = SAY_EMOTE;
+            else if(ch == 'ø' || ch == 'Ø' || ch == 'w' || ch == 'W')
+                sayType = SAY_WHISP;
+            // else if(ch=='ñ' || ch=='Ñ' || ch=='$'           ) sayType=SAY_SOCIAL;
+            else if(ch == 'ð' || ch == 'Ð' || ch == 'r' || ch == 'R')
+                sayType = SAY_RADIO;
+            else if(ch == 'ù' || ch == 'o' || ch == 'O')
+                ooc = true;
+            else if(ch == 'ð' || ch == 'h' || ch == 'H')
+            {
+                sayType = SAY_RADIO;
+                distress = true;
+            }
+            if(sayType != SAY_NORM || ooc)
+            {
+                eraseCount++;
+                if(message[2] == ' ')
+                    eraseCount++;
+            }
+
+            message = substring(message, eraseCount, message.length() - eraseCount);
+
+            if(ooc)
+            {
+                /* moved to unsafe_client.fos
+
+                   uint color = COLOR_RGB(0xF6, 0xF7, 0xC9);
+                   color = COLOR_CHANGE_ALPHA(color, 155);
+                   message = "|"+color +" " + message;
+                 */
+                if(oocflood.length() == 2)
+                {
+                    if(message == oocflood[0] && oocflood[0] == oocflood[1])
+                        return(false);
+                    else
+                        oocflood.removeAt(0);
+                }
+
+                RunServerScriptUnsafe("unsafe_client@unsafe_OOC", 0, 0, 0, message, null);
+                oocflood.insertLast(message);
+                return(false);
+            }
+            else if(distress)
+            {
+                RunServerScriptUnsafe("unsafe_client@unsafe_RadioDistressCall", 0, 0, 0, message, null);
+                return false;
+            }
+        }
+        else if(         // RegExp: [*]([^*].*[^*])[*]
+            message.length() >= 4 && message[0] == '*' && message[1] != '*' &&
+            message[message.length() - 2] != '*' && message[message.length() - 1] == '*')
+        {
+            sayType = SAY_EMOTE;
+            message = substring(message, 1, message.length() - 2);
+        }
+    }
+
+    bool result = false;
+    for(uint i = 0, j = message.length(); i < j; i++)
+    {
+        if(message[i] != ' ')
+        {
+            result = true;
+            break;
+        }
+    }
+
+    if(IsGMTEnabled() && GMToolsPossess() > 0)
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_Say", GMToolsPossess(), sayType, 0, message, null);
+        return false;
+    }
+    // in case of possessed mode, show message as npc
+    if(IsPossessMode())
+    {
+        if(isListen)
+            RunServerScriptUnsafe("logging_critter@unsafe_Say", sayType, GetPossessedCritterId(), 0, message, null);
+
+        RunServerScriptUnsafe("dev_menu@unsafe_Say", GetPossessedCritterId(), sayType, 0, message, null);
+        return false;
+    }
+
+    return result;
+}
+
+void _Listen(int param1, int param2, int param3, string@ param4, array<int>@ param5)
+{
+    isListen = true;
+}
+
+void _foart(int, int, int, string@ name, array<int>@)
+{
+    FOArt_SendFile(name, false);
+}
+
+void sayEx(int type, int crId, int, string@ text, array<int>@)
+{
+    if(type <= 0 || type >= SAYEX_MAX || crId == 0 ||
+       !valid(text) || text.length() == 0)
+        return;
+
+    uint color = COLOR_RGB(0, 255, 0);
+
+    switch(type)
+    {
+    case SAYEX_VERBOSE_ACTION:
+        if(!__ConfigVerboseActionBox)
+            return;
+        color = __ConfigVerboseActionColor;
+        break;
+
+    default:
+        return;
+    }
+
+    CritterCl@ cr = GetCritter(crId);
+    string     who = "someone";
+    if(valid(cr))
+    {
+        if(IsLexem(cr, "$name"))
+            who = FormatTags(GetLexem(cr, "$name"), "");
+        else
+            who = cr.Name;
+    }
+
+    Message(who + ": |" + color + " " + text, FOMB_TALK);
+}
+
+
+void map(int type, int hx, int hy, string@ text, array<int>@ data)
+{
+    if(type < 0 || type >= FLOAT_MAX || hx <= 0 || hy <= 0 ||
+       !valid(text) || text.length() == 0 ||
+       !valid(data) || data.length() == 0)
+        return;
+
+    text = FormatTags(text, "");
+
+    Buffer@ buff = NewBuffer(data);
+
+    uint8   delay = 0;
+    uint32  color = 0;
+    bool    fade = false;
+    int8    fromX = 0, toX = 0, fromY = 0, toY = 0;
+
+    buff >> delay >> color >> fade >> fromX >> toX >> fromY >> toY;
+
+    switch(type)
+    {
+    case FLOAT_ENFORCED:
+        break;
+
+    case FLOAT_VERBOSE_ACTION:
+        if(!__ConfigVerboseActionHead)
+            return;
+        color = __ConfigVerboseActionColor;
+        fromX = __ConfigVerboseActionOffXfrom;
+        toX   = __ConfigVerboseActionOffXto;
+        fromY = __ConfigVerboseActionOffYfrom;
+        toY   = __ConfigVerboseActionOffYto;
+        break;
+
+    case FLOAT_EXPERIENCE:
+        if(!__ConfigFollowerExperience)
+            return;
+        break;
+
+    default:
+        return;
+    }
+
+    MapMessage(text, hx, hy, __TextDelay + text.length() * delay, color, fade, Random(fromX, toX), Random(fromY, toY));
+}

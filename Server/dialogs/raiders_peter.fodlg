@@ -1,0 +1,81 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+41 1010 D _var n acquaintance > 2 #
+40 1020 D _param p ST_KARMA > 99 R _var n acquaintance + 1 #
+2 1030 D _var n name_mem_npc_player = 0 #
+12 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+3 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 R _var n name_mem_npc_player = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 D _param p ST_CHARISMA > 3 #
+8 4020 D _param p ST_CHARISMA < 4 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 D _param p ST_CHARISMA > 4 #
+8 6020 D _param p ST_CHARISMA < 5 @
+7 7000 None 0 #
+9 7010 D _param p ST_CHARISMA > 5 #
+8 7020 D _param p ST_CHARISMA < 6 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+11 10010 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 @
+40 13000 None 0 @
+41 14000 Attack 0 &
+
+[engl]
+{100}{}{Peter}
+{200}{}{You see Peter.}
+{210}{}{You see a young wastelander standing around, watching what's going on intently.}
+{1000}{}{Predialogue installations}
+{1010}{}{Attack if you bother him}
+{1020}{}{Hostile to good people}
+{1030}{}{First.}
+{1040}{}{Second.}
+{2000}{}{[He looks at you as you approach; his eyebrows raising almost imperceptibly, questioning you.]}
+{2010}{}{Who are you?}
+{2020}{}{Hello.}
+{2030}{}{[Shrug at him and walk on.]}
+{3000}{}{Who are you?}
+{3010}{}{@pname@. Who are you?}
+{3020}{}{Not telling.}
+{4000}{}{I'm Peter.}
+{4010}{}{What do you do here, Peter?}
+{4020}{}{What do you do here, Peter?}
+{5000}{}{A little bit of everything. I help out at the bar at night, help out Art during the day, pitch in with whatever needs doing.}
+{5010}{}{Are you a Khan?}
+{6000}{}{Nope. It's not for me.}
+{6010}{}{Why do you live here then?}
+{6020}{}{Why do you live here then?}
+{7000}{}{It works well for me. I like the atmosphere, and they can use a guy who doesn't ask questions.}
+{7010}{}{What can you tell me about the Khans?}
+{7020}{}{What can you tell me about the Khans?}
+{8000}{}{You sure got a lot of questions, stranger.}
+{8010}{}{[End]}
+{9000}{}{I'm sure you've heard stories.}
+{9010}{}{Yeah, but I can't help but notice I'm not being shot to death right now.}
+{10000}{}{If someone who didn't belong showed up, they would be. You don't have to be a Khan to hang out outside, but you can't be a goody-two-shoes.}
+{10010}{}{So normal people can live outside?}
+{11000}{}{Yeah, inside is Khans only, but outside they let a few of us regular wastelanders stay. It works well for them - they get extra guns if they ever get attacked, and having a few shacks out here has got them a trader, a bar and...well, you can see for yourself.}
+{11010}{}{Yes I can. Thanks for the information.}
+{12000}{}{Hi @pname@.@@How's it goin'?}
+{13000}{}{What the fuck are ya doin' here, man? Get lost before someone shoots ya!@@We don't like your kind here. You better get the fuck outta here, before getting bullet in the back.@@Man, I would dissapear from this place if I were you.}
+{14000}{}{That's it man, you're history!}
+

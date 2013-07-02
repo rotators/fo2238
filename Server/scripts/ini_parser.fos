@@ -1,0 +1,90 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// ini_parser.fos
+//
+
+// FOnline *.ini parser
+
+// import int GetIniValue(string& iniKey, int defaultValue) from "ini_parser";
+// import int[]@ GetIniValues2(string& iniKey, int[]@ defaultValues) from "ini_parser";
+// import int[]@ GetIniValues4(string& iniKey, int[]@ defaultValues) from "ini_parser";
+
+
+int GetIniValue(string& iniKey, int defaultValue)   // Export
+{
+    string@ str = GetIfaceIniStr(iniKey);
+    if(@str == null || str == "")
+        return defaultValue;
+
+    int i = 0;
+    if(!StrToInt(str, i))
+        return defaultValue;
+
+    return i;
+}
+
+array<int>@ GetIniValues2(string & iniKey, array<int>@ defaultValues)       // Export
+{
+    int[] result = { 0, 0 };
+    if(@defaultValues != null && defaultValues.length() >= 2)
+    {
+        result[0] = defaultValues[0];
+        result[1] = defaultValues[1];
+    }
+
+    string@ str = GetIfaceIniStr(iniKey);
+    if(@str == null || str == "")
+        return result;
+
+    array<string@>@ valuesStr = splitEx(str, " ");
+    if(valuesStr.length() < 2)
+        return result;
+
+    array<int> values(2);
+    if(!StrToInt(valuesStr[0], values[0]))
+        return result;
+    if(!StrToInt(valuesStr[1], values[1]))
+        return result;
+
+    result[0] = values[0];
+    result[1] = values[1];
+    return result;
+}
+
+array<int>@ GetIniValues4(string & iniKey, array<int>@ defaultValues)       // Export
+{
+    int[] result = { 0, 0, 0, 0 };
+    if(@defaultValues != null && defaultValues.length() >= 4)
+    {
+        result[0] = defaultValues[0];
+        result[1] = defaultValues[1];
+        result[2] = defaultValues[2];
+        result[3] = defaultValues[3];
+    }
+
+    string@ str = GetIfaceIniStr(iniKey);
+    if(@str == null || str == "")
+        return result;
+
+    array<string@>@ valuesStr = splitEx(str, " ");
+    if(valuesStr.length() < 4)
+        return result;
+
+    array<int> values(4);
+    if(!StrToInt(valuesStr[0], values[0]))
+        return result;
+    if(!StrToInt(valuesStr[1], values[1]))
+        return result;
+    if(!StrToInt(valuesStr[2], values[2]))
+        return result;
+    if(!StrToInt(valuesStr[3], values[3]))
+        return result;
+
+    result[0] = values[0];
+    result[1] = values[1];
+    result[2] = values[2];
+    result[3] = values[3];
+    return result;
+}

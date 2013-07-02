@@ -1,0 +1,42 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+6 1010 D _var p q_bos_bunker > 0 D or D _script dialog@d_IsNotLocationOwner 0  #
+2 1020 @
+2 2000 None 0 #
+3 2010 D _param p SK_SCIENCE > 115 #
+4 2020 @
+3 3000 None 0 #
+5 3010 R _script map_bosbunker@r_DisableRobobrains 0  R _var p q_bos_bunker = 1 #
+0 3020 @
+4 4000 None 0 #
+0 4010 R _var p q_bos_bunker = 2 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{Already used}
+{1020}{}{Default}
+{2000}{}{[Input Command]}
+{2010}{}{Security Inquiry}
+{2020}{}{Crew Status}
+{3000}{}{[Robobrain security system active. Deactivate?]}
+{3010}{}{Proceed}
+{3020}{}{Exit.}
+{4000}{}{[Last crew update: 18 hours. Status unknown.]}
+{4010}{}{Damn.}
+{5000}{}{Error. Units deactivated (4). Units still active (1).}
+{5010}{}{Error.}
+{6000}{}{Error.}
+{6010}{}{Damn.}
+

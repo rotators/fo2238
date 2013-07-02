@@ -1,0 +1,313 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// critter_item_movement.fos
+//
+
+#include "_defines.fos"
+#include "_basetypes.fos"
+#include "_macros.fos"
+#ifdef __SERVER
+# include "item_perks_h.fos"
+# include "logging_h.fos"
+# include "mapdata_h.fos"
+# include "utils_h.fos"
+import bool GodOfTheRealm(uint) from "cheats";
+import bool GuardNotLegit(Critter@ cr, Item@ item, bool deleteItem) from "cheats";
+import void GuardMultihexMove(Item& item, uint8 fromSlot, uint8 toSlot) from "multihex";
+#endif
+
+#ifdef __CLIENT
+# define Critter    CritterCl
+# define Item       ItemCl
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on something critter want move item from one slot to another.
+// Return true to allow transaction, false to disallow.
+// Function must exist on server and client side.
+bool critter_check_move_item(Critter& cr, Item& item, uint8 toSlot, Item@ itemSwap)
+{
+    uint8 fromSlot = item.CritSlot;
+
+    // Guarding not legit items - although transaction is allowed it will delete item if not legit
+    #ifdef __SERVER
+    if(GuardNotLegit(cr, item, true))
+        return true;
+    #endif
+
+    // Drop
+    if(toSlot == SLOT_GROUND)
+    {
+        #ifdef __SERVER
+        // this is just ugly
+        if(item.GetType() == ITEM_TYPE_CONTAINER && item.GetProtoId() != PID_TENT)
+        {
+            Location@ loc = GetLocationOf(cr);
+            if(valid(loc) && !loc.IsBase() && !loc.IsEncounter() && !loc.IsTent())
+            {
+                cr.Say(SAY_NETMSG, "You can't drop this here.");
+                return false;
+            }
+        }
+        #endif
+        return true;
+    }
+
+    if(item.GetType() == ITEM_TYPE_CONTAINER && toSlot != SLOT_INV)
+    {
+        if(item.Proto.ProtoId != PID_TENT)
+            return false;
+    }
+
+    // If busy, then allow only hands item swapping
+    bool handsSwap = ((fromSlot == SLOT_HAND1 && toSlot == SLOT_HAND2) || (fromSlot == SLOT_HAND2 && toSlot == SLOT_HAND1));
+    if(valid(itemSwap) && !handsSwap)
+        return false;
+
+    // Weapon animation
+    if(toSlot == SLOT_HAND1)
+    {
+        if(item.GetType() == ITEM_TYPE_WEAPON && !IsCritterAnim1(cr.CrType, item.Proto.Weapon_Anim1))
+            return false;
+    }
+
+    // Armor animation
+    if(toSlot == SLOT_ARMOR)
+    {
+        bool can = true;
+        if(item.GetType() != ITEM_TYPE_ARMOR || item.Proto.Slot != SLOT_ARMOR)
+        {
+            if(cr.PerkBase[PE_TERMINATOR] == 1337)
+            {
+                #ifdef __SERVER
+                if(GodOfTheRealm(cr.Id))
+                #endif
+                can = true;
+            }
+            else
+                can = false;
+        }
+
+        if(can && !IsCritterCanArmor(cr.CrType))
+            can = false;
+
+        return(can);
+    }
+
+    // Custom slot checks
+    if(toSlot > SLOT_ARMOR)
+    {
+        if(toSlot != item.Proto.Slot)
+        {
+            if(cr.PerkBase[PE_TERMINATOR] == 1337)
+            {
+                #ifdef __SERVER
+                if(GodOfTheRealm(cr.Id))
+                #endif
+                return(true);
+            }
+            return(false);
+        }
+
+        if(toSlot == SLOT_TROPHY && cr.IsPlayer())           // add ST_BASE_CRTYPE here?
+            return(false);
+    }
+
+    // Allow moving
+    return true;
+}
+
+const int[][] armorRedirect =
+{
+    //	ST_BASE_CRTYPE					ST_GENDER					fallback
+    //																-1 = use Armor_CrType
+    //	Armor_CrType	->	->	->	->	override
+
+    /* PLAYER */
+    {
+        CRTYPE_LHD_JUMPSUIT,                    GENDER_MALE,                            -1,
+        CRTYPE_MALE_LEATHER_JACKET,             CRTYPE_LHD_LEATHER_JACKET,
+        CRTYPE_MALE_LEATHER_ARMOR,              CRTYPE_LHD_LEATHER_ARMOR,
+        CRTYPE_MALE_METAL_ARMOR,                CRTYPE_LHD_METAL_ARMOR,
+    },
+
+    {
+        CRTYPE_BHD_JUMPSUIT,                    GENDER_MALE,                            -1,
+        CRTYPE_MALE_LEATHER_JACKET,             CRTYPE_BHD_LEATHER_JACKET,
+        CRTYPE_MALE_LEATHER_ARMOR,              CRTYPE_BHD_LEATHER_ARMOR,
+        CRTYPE_MALE_METAL_ARMOR,                CRTYPE_BHD_METAL_ARMOR,
+    },
+
+    /* NPC */
+    {
+        CRTYPE_PUNK,                                    GENDER_FEMALE,                          CRTYPE_PUNK,
+        CRTYPE_FEMALE_LEATHER_ARMOR,    CRTYPE_PUNK,
+    }
+};
+
+#ifdef __SERVER
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Call on critter change item in active slot - Hands or Armor.
+// If Item::CritSlot == 0xFF than item dropped/erased
+void critter_move_item(Critter& cr, Item& item, uint8 fromSlot)
+{
+    uint8 toSlot = item.CritSlot;
+
+    GuardMultihexMove(item, fromSlot, toSlot);
+
+    // Armor changing
+    if(item.GetType() == ITEM_TYPE_ARMOR && (fromSlot == SLOT_ARMOR || toSlot == SLOT_ARMOR))
+    {
+        if(GetCritterAnimType(cr.CrType) != ANIM_TYPE_3D)
+        {
+            // Default dude
+            bool isMale = (cr.Stat[ST_GENDER] == GENDER_MALE);
+            uint crType = cr.Stat[ST_BASE_CRTYPE];
+            if(crType == 0)
+                crType = (isMale ? CRTYPE_MALE_DEFAULT : CRTYPE_FEMALE_DEFAULT);
+
+            if(toSlot == SLOT_ARMOR)
+            {
+                if(cr.Stat[ST_OVERRIDE_CRTYPE] == 0)               // old, default behaviour
+                    crType = (isMale ? item.Proto.Armor_CrTypeMale : item.Proto.Armor_CrTypeFemale);
+                else
+                {
+                    uint over = cr.Stat[ST_OVERRIDE_CRTYPE];
+                    if(isMale)
+                    {
+                        if(over == item.Proto.Armor_CrTypeMale2 ||
+                           over == item.Proto.Armor_CrTypeMale3 ||
+                           over == item.Proto.Armor_CrTypeMale4)
+                            crType = over;
+                    }
+                    else
+                    {
+                        if(over == item.Proto.Armor_CrTypeFemale2 ||
+                           over == item.Proto.Armor_CrTypeFemale3 ||
+                           over == item.Proto.Armor_CrTypeFemale4)
+                            crType = over;
+                    }
+                }
+            }
+
+            // Long hair dude redirects
+            if(cr.Stat[ST_BASE_CRTYPE] == CRTYPE_LHD_JUMPSUIT && isMale)
+            {
+                crType = CRTYPE_LHD_JUMPSUIT;
+                if(toSlot == SLOT_ARMOR)
+                {
+                    crType = item.Proto.Armor_CrTypeMale;
+                    if(crType == CRTYPE_MALE_LEATHER_ARMOR)
+                        crType = CRTYPE_LHD_LEATHER_ARMOR;
+                    else if(crType == CRTYPE_MALE_LEATHER_JACKET)
+                        crType = CRTYPE_LHD_LEATHER_JACKET;
+                    else if(crType == CRTYPE_MALE_METAL_ARMOR)
+                        crType = CRTYPE_LHD_METAL_ARMOR;
+                }
+            }
+
+            // Bald Head Dude redirects
+            if(cr.Stat[ST_BASE_CRTYPE] == CRTYPE_BHD_JUMPSUIT && isMale)
+            {
+                crType = CRTYPE_BHD_JUMPSUIT;
+                if(toSlot == SLOT_ARMOR)
+                {
+                    crType = item.Proto.Armor_CrTypeMale;
+                    if(crType == CRTYPE_MALE_LEATHER_ARMOR)
+                        crType = CRTYPE_BHD_LEATHER_ARMOR;
+                    else if(crType == CRTYPE_MALE_LEATHER_JACKET)
+                        crType = CRTYPE_BHD_LEATHER_JACKET;
+                    else if(crType == CRTYPE_MALE_METAL_ARMOR)
+                        crType = CRTYPE_BHD_METAL_ARMOR;
+                }
+            }
+
+            // Punk Girl redirects
+            if(cr.Stat[ST_BASE_CRTYPE] == CRTYPE_PUNK && !isMale)
+            {
+                crType = CRTYPE_PUNK;
+                if(toSlot == SLOT_ARMOR)
+                {
+                    crType = item.Proto.Armor_CrTypeFemale;
+                    if(crType == CRTYPE_FEMALE_LEATHER_ARMOR)
+                        crType = CRTYPE_PUNK_LA;
+                    else
+                        crType = CRTYPE_PUNK;
+                }
+            }
+
+            /*
+               for( uint a=0,aLen=armorRedirect.length(); a<aLen; a++ )
+               {
+                    if( cr.IsNpc() && cr.Stat[ST_OVERRIDE_CRTYPE] != 0 )
+                            break;
+
+                    if( armorRedirect[a].length() < 5 )
+                            continue;
+
+                    if( cr
+               }
+             */
+
+            if(cr.CrType != crType)
+                cr.ChangeCrType(crType);
+        }
+
+        // Armor modifiers
+        if(toSlot == SLOT_ARMOR)
+            EnableItemPerk(cr, item, ITEM_PERK_ARMOR);
+        else if(fromSlot == SLOT_ARMOR)
+            DisableItemPerk(cr, item, ITEM_PERK_ARMOR);
+    }
+
+    if(fromSlot == SLOT_HEAD || toSlot == SLOT_HEAD)
+    {
+        // Helmet modifiers
+        if(toSlot == SLOT_HEAD)
+            EnableItemPerk(cr, item, ITEM_PERK_HELMET);
+        else if(fromSlot == SLOT_HEAD)
+            DisableItemPerk(cr, item, ITEM_PERK_HELMET);
+    }
+
+    if(item.GetType() == ITEM_TYPE_WEAPON && item.Proto.Weapon_NoRunning)
+    {
+        if(toSlot == SLOT_HAND1 || toSlot == SLOT_HAND2)
+            cr.ModeBase[MODE_NO_RUN] = cr.ModeBase[MODE_NO_RUN] + 1;
+        if(fromSlot == SLOT_HAND1 || fromSlot == SLOT_HAND2)
+            cr.ModeBase[MODE_NO_RUN] = cr.ModeBase[MODE_NO_RUN] - 1;                                                  // mustn't put else here
+    }
+
+    // Add/remove sneak penalty for carrying active explosives.
+    // It works also for arming/disarming, because explosives are replaced with
+    // a new item when armed/disarmed.
+    //
+    if(item.Proto.ProtoId == PID_ACTIVE_PLASTIC_EXPLOSIVE ||
+       item.Proto.ProtoId == PID_ACTIVE_DYNAMITE ||
+       item.Proto.ProtoId == PID_ACTIVE_MINE)
+    {
+        if(fromSlot == SLOT_GROUND)
+        {
+            SETFLAG(cr.ParamBase[ST_SNEAK_FLAGS], 0x1);
+            DSay(cr, "Added sneak penalty for armed explosives.");
+        }
+        else
+        {
+            if(!valid(cr.GetItem(PID_ACTIVE_PLASTIC_EXPLOSIVE, -1)) &&
+               !valid(cr.GetItem(PID_ACTIVE_DYNAMITE, -1)) &&
+               !valid(cr.GetItem(PID_ACTIVE_MINE, -1)))
+            {
+                UNSETFLAG(cr.ParamBase[ST_SNEAK_FLAGS], 0x1);
+                DSay(cr, "Removed sneak penalty for armed explosives.");
+            }
+        }
+    }
+
+    // Slot modifiers
+// SLOT_PERK_MIRROR_SHADES // +1 charisma
+// SLOT_PERK_COSMETIC_CASE // +1 charisma to female
+// SLOT_PERK_MOTION_SENSOR // +20 outdoorsman
+// SLOT_PERK_STEALTH_BOY   // +20 sneak
+}
+#endif

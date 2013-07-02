@@ -1,0 +1,68 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// minigames_h.fos
+//
+
+#ifndef __MINIGAMES_H__
+#define __MINIGAMES_H__
+
+// ST_MINIGAME_DATA
+
+#define _minigame                   # (cr)                 cr.ParamBase[ST_MINIGAME_DATA]
+#define _hasMinigame                # (cr)              _minigame(cr) != 0
+#define _resetMinigame              # (cr)            _minigame(cr) = 0
+
+
+// Global Data
+
+// Mask 0x0000000F: MinigameTeam
+#define _setMinigameTeam            # (cr, team)_minigame(cr) = ((_minigame(cr) & 0xFFFFFFF0) | ((team) & 0xF))
+#define _getMinigameTeam            # (mgData)      ((mgData) & 0xF)
+
+// Mask 0x000000F0: MinigameId
+#define _setMinigameId              # (cr, id)cr.ParamBase[ST_MINIGAME_DATA] = ((cr.Param[ST_MINIGAME_DATA] & 0xFFFFFF0F) | (((id) & 0xF) << 4))
+#define _getMinigameId              # (mgData) (((mgData) >> 4) & 0xF)
+
+// Mask 0x000000FF: MinigameTeamAndId (MinigameTeam and MinigameId combined)
+#define _getMinigameTeamAndId       # (mgData) ((mgData) & 0xFF)
+
+// Mask 0x00000F00: MinigameFlags
+#define _setMinigameFlags           # (cr, flags)cr.ParamBase[ST_MINIGAME_DATA] = ((cr.Param[ST_MINIGAME_DATA] & 0xFFFFF0FF) | (((flags) & 0xF) << 8))
+#define _getMinigameFlags           # (mgData) (((mgData) >> 8) & 0xF)
+#define MINIGAME_PERSISTENT         (0x1) // Don't reset minigame when removing critter from game
+#define MINIGAME_FORCE_COLOR        (0x2) // NOT IMPLEMENTED - the team has team color visible for everyone (not only minigame spectators)
+
+//  Custom Data (remember not to overwrite first 12 bits)
+// Mask 0xFFFFF000: Generic 20 bit unsigned number
+#define _setMinigameData            # (cr, data)cr.ParamBase[ST_MINIGAME_DATA] = ((cr.Param[ST_MINIGAME_DATA] & 0x00000FFF) | ((data & 0xFFFFF) << 12))
+#define _getMinigameData            # (mgData) ((mgData) >> 12)
+
+
+#define _getPrevDSpawnId            # (spawn, team)(ODD(team) ? spawn.Val3 : spawn.Val4)
+#define _getNextDSpawnId            # (spawn, team)(ODD(team) ? spawn.Val4 : spawn.Val3)
+#define _getDSpawnTransportToMap    # (spawn)   (spawn.Val5)
+#define DSPAWN_CAPTURE_TIME         # (_dSpawn) (_dSpawn.Val1 >> 24)
+
+#ifndef __MINIGAMES__
+# ifdef __SERVER
+import void SetMinigame(Critter& cr, int team, int id, int flags, int data) from "minigames";
+import void UnsetMinigame(Critter& cr) from "minigames";
+import void UnsetMinigame(Critter& cr, bool refreshColors) from "minigames";
+import void ChangeMinigameTeam(Critter& cr, int team) from "minigames";
+import int  GetMinigameTeamColor(int minigameTeam) from "minigames";
+
+import Item@ GetDSpawn(Map@ map, int minigameData) from "minigames";
+import Item@ GetNextDSpawn(Item@ dSpawn, int minigameTeamAndId, bool reverse) from "minigames";
+
+import void _DSpawn(Item& item, bool firstTime) from "minigames";
+import void _DSpawnWalk(Item& item, Critter& crit, bool entered, uint8 dir) from "minigames";
+import bool _DSpawnSkill(Item& item, Critter& crit, int skill) from "minigames";
+
+import bool TryCaptureDSpawn(Item@ dSpawn, Critter@ crit) from "minigames";
+import void CaptureDSpawn(Item@ dSpawn, Critter@ crit, uint minigameTeamAndId) from "minigames";
+import uint CaptureDSpawnTick(array<int>@ eventValues) from "minigames";
+# endif    // __SERVER
+#endif // __MINIGAMES__
+#endif // __MINIGAMES_H__

@@ -1,0 +1,130 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mine.fos
+//
+
+#include "_ai.fos"
+#include "_macros.fos"
+#include "_npc_pids.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "mine_h.fos"
+#include "npc_roles_h.fos"
+#include "production_h.fos"
+#include "utils_h.fos"
+
+
+import void SetAmountOfResources(array<Item@>&, int value) from "production";
+
+uint r_CheckCanBuy(Critter& player, Critter@ npc)
+{
+    uint lastTime = uint(GetLvar(player, LVAR_mine_bought_time));
+
+    if(GetLvar(player, LVAR_mine_id) == 0 || (ELAPSED_TIME > (lastTime + MINE_TIME)))
+        return FORCE_DIALOG_MINE_CAN_BUY;
+
+    return FORCE_DIALOG_MINE_ALREADY_HAS_MINE;
+}
+
+bool d_CanAfford(Critter& player, Critter@ npc)
+{
+    return(player.CountItem(PID_BOTTLE_CAPS) >= MINE_COST);
+}
+void createmine(Critter& cr, int, int, int)
+{
+    cr.AddItem(PID_BOTTLE_CAPS, MINE_COST);
+    r_PurchaseMine(cr, null);
+}
+
+void r_PurchaseMine(Critter& player, Critter@ npc)
+{
+    // Check existing mine
+    uint oldMineId = GetLvar(player, LVAR_mine_id);
+    if(oldMineId > 0)
+    {
+        Location@ oldMine = GetLocation(oldMineId);
+        if(valid(oldMine))
+        {
+            DeleteLocation(oldMine.Id);
+        }
+    }
+
+    Critter@[] players = { player };
+    uint x, y = 0;
+
+    if(player.GetMap().GetLocation().GetProtoId() == LOCATION_MiningSiteKlamath)
+    {
+        x = Random(130, 250);
+        y = Random(100, 250);
+    }
+    else
+    {
+        x = Random(500, 738);
+        y = Random(500, 672);
+    }
+
+    uint      locId = CreateLocation(LOCATION_MiningSitePlayer, x, y, players);
+    Location@ loc = GetLocation(locId);
+    loc.Color = 0xFFC72E00;
+    loc.Update();
+
+    if(!valid(loc))
+    {
+        Log("ERR: Can't find mining location.");
+        return;
+    }
+    Map@ map = loc.GetMapByIndex(1);
+    if(!valid(map))
+    {
+        Log("ERR: Can't find mining map");
+        return;
+    }
+
+    SetRootMapData(loc, MAP_DATA_OWNER, uint(player.Id));
+
+    // Spawn nasty creatures
+    array<Item@> spots;
+    uint         num = map.GetItems(PID_SPOT_GENERIC, spots);
+
+    uint16       pid = NPC_PID_Deathclaw3;
+    uint         pidrnd = Random(0, 5);
+    if(pidrnd == 0)
+        pid = NPC_PID_DeathclawSpawn;
+    else if(pidrnd == 1)
+        pid = NPC_PID_ToughGoldenGecko;
+    else if(pidrnd == 2)
+        pid = NPC_PID_MutatedMoleRat;
+    else if(pidrnd == 3)
+        pid = NPC_PID_PigRat;
+    else if(pidrnd == 4)
+        pid = NPC_PID_Rat;
+    else if(pidrnd == 5)
+        pid = NPC_PID_BlackRadscorpion;
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(Random(0, 1) == 0)
+        {
+            Critter@ mob = AddNpc(map, pid, spots[i].HexX, spots[i].HexY, Random(0, 5), 0, "mob@_MineMob", AIPACKET_MEAN_DEATHCLAW, 1, Random(5000, 5009), false, Random(0, 12));
+            mob.ParamBase[ST_REPLICATION_TIME] = 3600 * Random(36, 96);
+            mob.ParamBase[ST_NPC_ROLE] = ROLE_MOB_MINE;
+            mob.ParamBase[ST_PERCEPTION] = 10;
+        }
+
+    }
+
+    /*
+        array<Item@> minerals;
+        GetFacilities(map, "prod_rocks_minerals@_NormalDepletable", minerals);
+        SetAmountOfResources(minerals, MINE_RESOURCE_VALUE / 2);
+        array<Item@> ore;
+        GetFacilities(map, "prod_rocks_ore@_NormalDepletable", ore);
+        SetAmountOfResources(ore, MINE_RESOURCE_VALUE / 2);
+     */
+
+    BanksTransferFromCritter(player, MINE_COST, TRANSACTION_MINE, false);
+    SetLvar(player, LVAR_mine_id, loc.Id);
+    SetLvar(player, LVAR_mine_bought_time, int(ELAPSED_TIME));
+}

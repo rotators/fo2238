@@ -1,0 +1,31 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// scenario_mfc_craft.fos
+//
+
+// Crafting Micro Fusion Cells scenario
+
+//
+// CONCEPT
+//
+
+// This scenario can be taken from respective BoS/Enclave officers, anyone can take it as long as member of BoS/Enclave
+// The scenario needs LVAR_factions_q_nav_mfc (#4207), this is where the amount of crafted MFC cells is stored for each player
+// The scenario is always active and can be seen in PiPBoy > Quests. It ends with the game session.
+// Scenario flow:
+// 1) Talk to Officer, LVAR is set from 0 (inactive) to 1 (active for all LVAR > 0)
+// 2) Go to Mariposa, alone or with team (no matter), craft MFC there
+// 3) For each MFC crafting cycle "the crafter player" gets +40 to LVAR (because that's how much MFC he can make at once), use "fixboy.fos" for this
+// 4) Reporting back to Officer, when coming to the line about report (in dialog) then compare the LVAR of player with number of MFCs in his inventory
+// 5) Maximal amount of MFCs player can give to Officer is LVAR-1, so the LVAR can't drop below 1 (which means the quest remains always active)
+// 6) E.g. if I start scenario, LVAR=1 >>> if I craft 80 MFC, LVAR=81 >>> I can give away the max. amount of 80 MFCs to Officer, LVAR=1
+// 7) This maximal amount (100%) should be represented with lexem, and also a few more options (75%, 50%, 25%) if you decide to keep some for you
+// 8) After giving away the cells, XP reward is given, 5XP for each Cell (80 Cells = 400 XP), XP is shared among team members equally
+// 9) The 90% of the cells given to Officer go to New Reno, to Salvatores, and they put it for selling at Renesco's (so move them to Renesco right away)
+// 10) Renesco needs to have MFCs excluded from his common trader routine, which means no min/max/respawn etc, but the MFCs should go to limbo (once we make TC for New Reno)
+// 11) The rest 10% of MFCs go to Navarro Commander's room to locker at [63, 90]
+// We could use lexem for "I managed to create xyz cells" if player is alone and "We managed to create xyz cells" if in team with other players.
+// Ideally, players can craft 320 MFCs in one day. This is limited by uranium production in BH, see Zaius' script (for balancing)
+// The amount of MFCs crafted will possibly lay between 80 and 240 MFC/day, depending on players and their stats, skills, actions...

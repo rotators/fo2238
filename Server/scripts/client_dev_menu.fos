@@ -1,0 +1,662 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_dev_menu.fos
+//
+
+#define SKIP_PRAGMAS    // deleteme as soon the pragma bug is fixed
+// developer's menu
+// Compile with -client switch
+#define __CLIENT
+
+#ifndef __CLIENT_DEV_MENU__
+# define __CLIENT_DEV_MENU__
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+# include "client_gui_h.fos"
+# include "client_gui_ex.fos"
+# include "client_spawn_npc.fos"
+# include "client_utils_h.fos"
+
+// for devmenu (can be hacked, but it really doesn't change anything)
+bool Authorized = false;
+bool IsAuthorized() { return Authorized; }
+
+void Authorize(int p0, int p1, int p2, string@ + p3, array<int>@ + p4)
+{
+    Authorized = true;
+}
+
+// global window controls
+CContextMenu    DevMenu;
+CXpWindow       XpWindow;
+CSpawnNpcWindow SpawnWindow;
+
+void InitDevMenu()
+{
+    GUI_CreateScreen(CLIENT_SCREEN_DEVMENU, null)
+    .Control(DevMenu)
+    .SetCallbackShow(DevMenu)
+    .SetCallbackFocus(DevMenu)
+    .CanMove(true)
+    .Modal(false)
+    .Multiinstance(false);
+    GUI_CreateScreen(CLIENT_SCREEN_GIVEXP, "input_box.png")
+    .Control(XpWindow)
+    .SetCallbackShow(XpWindow)
+    .CanMove(true)
+    .Modal(true)
+    .Multiinstance(false);
+    GUI_CreateScreen(CLIENT_SCREEN_SPAWNNPC, "perk.png")
+    .Control(SpawnWindow)
+    .SetCallbackShow(SpawnWindow)
+    .CanMove(true)
+    .Modal(true)
+    .Multiinstance(false);
+}
+
+bool DevMenuProcessKey(uint8 key)
+{
+    switch(key)
+    {
+    case DIK_ESCAPE:
+        if(IsPossessMode())
+        {
+            Unpossess();
+            return true;
+        }
+        break;
+    }
+    return(false);
+}
+
+//
+// Kills/revives critter
+//
+class CKillerButton : CContextButton
+{
+    CKillerButton()
+    {
+        super("Kill");
+    }
+
+    void SetCritter(CritterCl@ cr)
+    {
+        if(cr.Cond == COND_DEAD)
+            caption = "Revive";
+        else
+            caption = "Kill";
+        CContextButton::SetCritter(cr);
+    }
+
+    //
+    // Performs action depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("dev_menu@unsafe_KillCritter", crId, 0, 0, null, null);
+        parent.HideWindow();
+    }
+};
+//
+// Knocks out critter
+//
+class CNeutralizeButton : CContextButton
+{
+    CNeutralizeButton()
+    {
+        super("Neutralize");
+    }
+
+    void SetCritter(CritterCl@ cr)
+    {
+        if(cr.IsKnockout())
+            caption = "Wake";
+        else
+            caption = "Neutralize";
+        CContextButton::SetCritter(cr);
+    }
+
+    //
+    // Performs action depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("dev_menu@unsafe_NeutralizeCritter", crId, 0, 0, null, null);
+    }
+};
+
+//
+// Removes critter/item
+//
+class CCleanButton : CContextButton
+{
+    CCleanButton()
+    {
+        super("Remove");
+    }
+
+    void SetCritter(CritterCl@ cr)
+    {
+        caption = "Remove critter";
+        CContextButton::SetCritter(cr);
+    }
+    void SetItem(ItemCl@ item)
+    {
+        caption = "Remove item";
+        CContextButton::SetItem(item);
+    }
+    //
+    // Performs removal depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("dev_menu@unsafe_RemoveCritter", crId, 0, 0, null, null);
+        else if(itemId != 0)
+            RunServerScriptUnsafe("dev_menu@unsafe_RemoveItem", itemId, 0, 0, null, null);
+        parent.HideWindow();
+    }
+};
+
+//
+// Assigns critter to be controled by player
+//
+
+// GLOBAL id of 'possessed' critter
+uint PossessedCritterId;
+uint GetPossessedCritterId() { return PossessedCritterId; }
+
+//
+// global check if possessed mode is on
+//
+bool IsPossessMode()
+{
+    return PossessedCritterId != 0;
+}
+
+class CPossessButton : CContextButton
+{
+    CPossessButton()
+    {
+        super("Possess");
+    }
+
+    void Click()
+    {
+        PossessedCritterId = crId;
+        // Message(""+crId);
+        // RunServerScript("dev_menu@Possess", crId, 0, 0, null, null);
+        // disable normal input
+        // __DisableLMenu = true;
+        // __DisableMouseEvents = true;
+        // hide player
+        // CritterCl@ player = GetChosen();
+        // player.SetVisible(false);
+        parent.HideWindow();
+    }
+};
+//
+// Disables possess mode
+//
+void Unpossess()
+{
+    PossessedCritterId = 0;
+    // __DisableLMenu = false;
+    // __DisableMouseEvents = false;
+    // CritterCl@ player = GetChosen();
+    // player.SetVisible(true);
+}
+
+//
+// Issue pick plan for possessed critter
+//
+class CPickButton : CContextButton
+{
+    CPickButton()
+    {
+        super("Pick item");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_PickItem", PossessedCritterId, itemId, 0, null, null);
+        parent.HideWindow();
+    }
+};
+
+class CAttackButton : CContextButton
+{
+    CAttackButton()
+    {
+        super("Attack");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_Attack", PossessedCritterId, crId, 0, null, null);
+        parent.HideWindow();
+    }
+};
+
+//
+// Issues walk plan
+//
+class CMoveToButton : CContextButton
+{
+    CMoveToButton()
+    {
+        super("Move to");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_MoveTo", PossessedCritterId, hexX, hexY, null, null);
+        parent.HideWindow();
+    }
+};
+//
+// Cancels all plans
+//
+class CStopButton : CContextButton
+{
+    CStopButton()
+    {
+        super("Stop");
+    }
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_Stop", PossessedCritterId, 0, 0, null, null);
+        parent.HideWindow();
+    }
+};
+
+//
+// Container/critter equipment browsing
+//
+class CTradeButton : CContextButton
+{
+    CTradeButton()
+    {
+        super("Trade");
+    }
+
+    void SetCritter(CritterCl@ cr)
+    {
+        caption = "Trade";
+        CContextButton::SetCritter(cr);
+    }
+    void SetItem(ItemCl@ item)
+    {
+        caption = "Browse items";
+        CContextButton::SetItem(item);
+    }
+    //
+    // Shows appropriate inv window depending on attached critter/item
+    //
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_Trade", crId, itemId, 0, null, null);
+        parent.HideWindow();
+    }
+};
+
+//
+// Teleport to hex
+//
+class CTeleportButton : CContextButton
+{
+    CTeleportButton()
+    {
+        super("Teleport");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("dev_menu@unsafe_Teleport", 0, hexX, hexY, null, null);
+        parent.HideWindow();
+    }
+};
+
+//
+// Drop airstrike on hex
+//
+class CAirstrikeButton : CContextButton
+{
+    CAirstrikeButton()
+    {
+        super("Airstrike");
+    }
+
+    void Click()
+    {
+        RunServerScript("dev_menu@Airstrike", 0, hexX, hexY, null, null);
+    }
+};
+
+
+//
+// Xp reward button
+//
+class CXpButton : CContextButton
+{
+    CXpButton()
+    {
+        super("Give XP");
+    }
+
+    void Click()
+    {
+        XpWindow.Auto(GUI_IsKeyPressed(DIK_LSHIFT));
+        XpWindow.SetCritter(crId);
+        XpWindow.ShowWindow();
+    }
+};
+
+//
+// Xp reward window
+//
+class CXpOKButton : CDialogRedButton
+{
+    CXpWindow@ window;
+    CXpOKButton(int left, int top, CXpWindow@ window)
+    {
+        super(left, top);
+        @this.window = @window;
+    }
+    void Click()
+    {
+        parent.HideWindow();
+        RunServerScript("dev_menu@GiveXp", window.CrId(), window.Xp(), 0, window.Message(), null);
+    }
+};
+class CXpCancelButton : CDialogRedButton
+{
+    CXpWindow@ window;
+    CXpCancelButton(int left, int top, CXpWindow@ window)
+    {
+        super(left, top);
+        @this.window = @window;
+    }
+
+    void Click() { parent.HideWindow(); }
+};
+class CXpWindow : Window
+{
+    CTextBox@        message;
+    CTextBox@        amount;
+    CXpOKButton@     ok;
+    CXpCancelButton@ cancel;
+    uint             crId;
+
+    void Init()
+    {
+        // ::Message("ayeeee");
+        int w = 288;
+        int h = 257;
+
+        @message = CTextBox(50, 35, 196, 140, "You've done a good job!");
+        AddControl(@message);
+        @amount = CTextBox(54, 188, 195, 14, "1000");
+        AddControl(@amount);
+
+        @ok = CXpOKButton(62, 214, this);
+        AddControl(@ok);
+        @cancel = CXpCancelButton(167, 214, this);
+        AddControl(@cancel);
+        AddControl(CLabel(95, 210, 40, 20, "OK", FONT_FAT));
+        AddControl(CLabel(185, 210, 60, 20, "CANCEL", FONT_FAT));
+
+        Window::Init();
+    }
+
+    //
+    // Properties
+    //
+    uint CrId() { return crId; }
+    uint Xp()
+    {
+        uint xp = 0;
+        if(!StrToInt(amount.Text(), xp))
+            ::Message("Incorrect xp amount");
+        return xp;
+    }
+    string@ Message() { return message.Text(); }
+
+    void SetCritter(uint crId) { this.crId = crId; }
+
+    void OnShow()
+    {
+        if(Auto())
+            ok.Click();
+    }
+};
+//
+// Spawn npc button
+//
+class CSpawnNpcButton : CContextButton
+{
+    CSpawnNpcButton()
+    {
+        super("Spawn critter");
+    }
+
+    void Click()
+    {
+        SpawnWindow.Auto(GUI_IsKeyPressed(DIK_LSHIFT));
+        SpawnWindow.SetHex(hexX, hexY);
+        SpawnWindow.ShowWindow();
+    }
+};
+//
+// Right-click context menu
+//
+class CContextMenu : Window
+{
+    CButton@          title;
+    CKillerButton@    killer;
+    CPossessButton@   possess;
+    CCleanButton@     clean;
+    CTradeButton@     trade;
+    CTeleportButton@  teleport;
+    CAirstrikeButton@ airstrike;
+    CXpButton@        xp;
+    CSpawnNpcButton@  spawnNpc;
+
+    // possess mode buttons
+    CPickButton@       pick;
+    CAttackButton@     attack;
+    CMoveToButton@     moveTo;
+    CStopButton@       stop;
+    CNeutralizeButton@ neutralize;
+
+    void Init()
+    {
+        // register some top-level windows
+        // @xpWindow = CXpWindow();
+        // manager.RegisterControl(@xpWindow);
+        // @spawnNpcWindow = CSpawnNpcWindow();
+        // manager.RegisterControl(@spawnNpcWindow);
+
+        visible = false;
+
+        int top = 0;
+
+        @title = CButton(0, top += 30, "<<Context>>");
+        title.Disable();
+        AddControl(@title);
+        // this order determine displaying order
+        @spawnNpc = CSpawnNpcButton();
+        AddControl(@spawnNpc);
+        // @neutralize = CNeutralizeButton();
+        // AddControl(@neutralize);
+        @xp = CXpButton();
+        AddControl(@xp);
+        @possess = CPossessButton();
+        AddControl(@possess);
+        @trade = CTradeButton();
+        AddControl(@trade);
+        @killer = CKillerButton();
+        AddControl(@killer);
+        @clean = CCleanButton();
+        AddControl(@clean);
+        @teleport = CTeleportButton();
+        AddControl(@teleport);
+        @airstrike = CAirstrikeButton();
+        AddControl(@airstrike);
+        // possess mode buttons
+        @pick = CPickButton();
+        AddControl(@pick);
+        @attack = CAttackButton();
+        AddControl(@attack);
+        @moveTo = CMoveToButton();
+        AddControl(@moveTo);
+        @stop = CStopButton();
+        AddControl(@stop);
+
+        Window::Init();
+    }
+
+    int Width() { return title.Width(); }
+
+    /**
+     * Sets controls visibility depending on the context.
+     */
+    void OnShow()
+    {
+        // hide all for a start
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            controls[i].Hide();
+            controls[i].Disable();
+        }
+
+        uint x = Left();
+        uint y = Top();
+        // Message("Showing devmenu");
+
+        CritterCl@ cr = GetMonitorCritter(x, y);
+        ItemCl@    item = GetMonitorItem(x, y);
+        CritterCl@ chosen = GetChosen();
+
+
+        title.Show();
+
+        // "loop" through all buttons, choose what should be displayed depending on context
+        // critter context
+        if(valid(cr))
+        {
+            // Message("Critter context");
+            if(cr.IsChosen())
+                title.SetCaption("<<You - " + cr.Id + ">>");
+            else if(cr.IsPlayer())
+                title.SetCaption("<<Player - " + cr.Id + ">>");
+            else
+                title.SetCaption("<<" + (cr.Id - NPC_BASE_ID) + ">>");
+
+            // neutralize.SetCritter(cr);
+            // neutralize.Show();
+
+            if(cr.IsPlayer())
+            {
+                xp.SetCritter(cr);
+                xp.Show();
+            }
+            if(!cr.IsChosen() /* && !cr.IsPlayer()*/)
+            {
+                possess.SetCritter(cr);
+                possess.Show();
+            }
+
+            killer.SetCritter(cr);
+            killer.Show();
+
+            if(!cr.IsPlayer())               // we can't remove player
+            {
+                clean.SetCritter(cr);
+                clean.Show();
+            }
+            // attack in possessed mode, but only other critters
+            if(IsPossessMode() && PossessedCritterId != cr.Id)
+            {
+                attack.SetCritter(cr);
+                attack.Show();
+            }
+            if(!cr.IsPlayer())
+            {
+                // stop.SetCritter(cr);
+                // stop.Show();
+            }
+            // don't trade with yourself
+            if(chosen.Id != cr.Id)
+            {
+                trade.SetCritter(cr);
+                trade.Show();
+            }
+        }
+        // item context
+        else if(valid(item) && item.GetType() != ITEM_TYPE_NONE && item.GetType() != ITEM_TYPE_GRID && item.GetType() != ITEM_TYPE_GENERIC)
+        {
+            // Message("Item context");
+            title.SetCaption("<<Item>>");
+            clean.SetItem(item);
+            clean.Show();
+
+            if(IsPossessMode())
+            {
+                pick.SetItem(item);
+                pick.Show();
+            }
+            if(item.GetType() == ITEM_TYPE_CONTAINER)
+            {
+                trade.SetItem(item);
+                trade.Show();
+            }
+            // teleport on items is handy, too
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            GetMonitorHex(x, y, hexX, hexY);
+            teleport.SetHex(hexX, hexY);
+            teleport.Show();
+        }
+        // ground context
+        else
+        {
+            // Message("Ground context.");
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            GetMonitorHex(x, y, hexX, hexY);
+            title.SetCaption("<<Hex>>");
+            teleport.SetHex(hexX, hexY);
+            teleport.Show();
+            if(IsPossessMode())
+            {
+                moveTo.SetHex(hexX, hexY);
+                moveTo.Show();
+            }
+            spawnNpc.SetHex(hexX, hexY);
+            spawnNpc.Show();
+            airstrike.SetHex(hexX, hexY);
+            airstrike.Show();
+        }
+
+        // arrange all controls
+        int top = -30;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible())
+            {
+                controls[i].Enable();
+                controls[i].Show(0, top += 30);
+            }
+        }
+        title.Disable();
+        // Message("Arranged: " + (top / 30 + 1) + " controls from " + controls.length() + ".");
+        screen.Size(Width(), top + 30);
+    }
+};
+#endif // __CLIENT_DEV_MENU__

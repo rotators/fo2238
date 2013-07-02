@@ -1,0 +1,92 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+8 1010 D _var p q_brahmin_run = 7 #
+6 1020 D _script quest_brahmin_run@d_CheckReputationTooLow 1 5 #
+10 1030 D _var p acquaintance = 0 D _script quest_brahmin_run@d_CheckQuestRetakable 0  #
+2 1040 D _script quest_brahmin_run@d_CheckQuestRetakable 0  #
+7 1050 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+0 3030 @
+4 4000 None 0 #
+0 4010 R _script quest_brahmin_run@r_InitiateRun 2 0 5 #
+0 4020 @
+5 5000 None 0 #
+0 5010 R _script quest_brahmin_run@r_InitiateRun 2 1 5 #
+0 5020 @
+6 6000 None 0 @
+7 7000 None 0 @
+8 8000 None 0 #
+9 8010 R _script quest_brahmin_run@r_RewardPlayer 0  @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 #
+0 10010 #
+15 10020 @
+11 11000 None 0 #
+12 11010 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+3 14010 R _var p acquaintance = 1 #
+0 14020 @
+15 15000 None 0 #
+0 15010 #
+11 15020 &
+
+[engl]
+{100}{}{Martin}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{1020}{}{-}
+{1030}{}{-}
+{1040}{}{-}
+{1050}{}{-}
+{2000}{}{We have a new herd to be taken care of. Interested in doing the job again?}
+{2010}{}{Yeah.}
+{2020}{}{No, not this time.}
+{3000}{}{You can either lead this herd to the Parker's farm, or to the more distant Richardson's farm. The latter pays more but it's a more dangerous road.}
+{3010}{}{I will drive them to the Parker's farm.}
+{3020}{}{I will drive them to the Richardson's farm.}
+{3030}{}{Now that I think of it, maybe I'll pass.}
+{4000}{}{Parker's farm that is. Just remember, once you set out on this job you must not enter any town before you complete the job, if you would need to restock then it would be too late.}
+{4010}{}{Alright. I will be leaving at once.}
+{4020}{}{Before I go, I need some time to prepare.}
+{5000}{}{Richardson's farm that is. Just remember, once you set out on this job you must not enter any town before you complete the job, if you would need to restock then it would be too late.}
+{5010}{}{Alright. I will be leaving at once.}
+{5020}{}{Before I go, I need some time to prepare.}
+{6000}{}{I just don't like you enough.}
+{7000}{}{We don't need any brahmin driven anywhere right now. Sorry for that, mate. Try it later.}
+{8000}{}{So, I got the word that you succeeded. Came to claim the reward?}
+{8010}{}{Yes, please.}
+{9000}{}{Here you go. Nice doing business with you.}
+{9010}{}{Thanks.}
+{10000}{}{Hey there. Here about the notice?}
+{10010}{}{Uh, what notice?}
+{10020}{}{Yes, what's the job about?}
+{11000}{}{The job is simple, but requires you to be able to handle yourself. Take a herd of brahmin, lead them safely to one of the outlying ranches. Once there, return for the reward.}
+{11010}{}{Sounds easy.}
+{12000}{}{Once you leave the city, don't stop until you get to your destination. Don't waste time and don't wander to any other places. If attacked, defend the brahmin. We'll pay you less if you lose some.}
+{12010}{}{I guess that's fair. How can I be sure the brahmin will be just following me?}
+{13000}{}{You'll be going with a herdsman to help you with that. Make sure he comes to no harm.}
+{13010}{}{And what about my payment?}
+{14000}{}{We'll pay you around 30 caps for each brahmin that arrives safely to the nearest farm. For the more distant farm, we throw an extra 30%. The job will then become available again later, once we have a new shipment. Interested?}
+{14010}{}{Sure!}
+{14020}{}{Maybe another time.}
+{15000}{}{Well, you can either talk to Mr. Westin - or maybe you are interested in driving a brahmin herd? We could use some help there.}
+{15010}{}{I will talk to Westin.}
+{15020}{}{Brahmin driving?}
+

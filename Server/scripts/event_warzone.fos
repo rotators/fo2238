@@ -1,0 +1,18 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// event_warzone.fos
+//
+
+#include "_macros.fos"
+#include "_dialogs.fos"
+
+bool s_Terminal(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != -1 || valid(item))
+        return false;
+
+    RunDialog(player, DIALOG_event_warzone_terminal, terminal.HexX, terminal.HexY, false);
+    return true;
+}

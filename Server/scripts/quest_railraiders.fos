@@ -1,0 +1,111 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_railraiders.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "utils_h.fos"
+
+/*
+        WHAT IS STILL LEFT TO DO:
+   LVAR_q_rail_raider_path:
+   0 == Path blocked.
+   1 == Path cleaned. << If players moved away all rubble piles. Rubble piles still need script and stuff attached. Also I think it is best if I place some entires or such on the rails, so we can say that if rubble pile PID != entire object xy, then it's good. If no PIDs are on the entires anymore, rails are cleaned.
+   The idea is inspired from caravan box lifting. Players use the PIDs, get new item in their inventory, the PID in the map is deleted. Now the player drops the PID on a place where no defined rail is. On dropping, the object gets deleted (the objects do weight a lot, so it shouldn't be possible to pick up more than one in a turn).
+
+
+   LVAR_q_rail_raider_status:	(All these quest variables have to be set for all players in the map, except if a player left the map already.)
+   0 == Inactive
+   1 == Ambush begins!	<< If the player enters the map, show (quest)text in log window.
+   2 == Raiders gone / dead
+   3 == Raiders gone / scared
+   4 == Raiders gone / paid money
+   5 == Raiders gone / talked over -- not used right now, merged with scared away. Maybe will be used again in future.
+   6 == Player left map! << If a player runs into the exit grid to exit the map *and not all thugs are dead*, he will get his variable set to 6.
+
+   If variable 3 to 5 is set, the leader and thugs run to waypoint (PID == 1851, Value1 == 1) and dissapear then (remove them, like a player who goes to worldmap).
+
+   Also if more than 1 player comes too close to the group, they will start attacking. Maybe based on a placed entire with range radius to detect players inside? I don't know...
+ */
+
+#define MAP_ENTER       (1)
+#define THUGS_KILLED    (2)
+#define THUGS_SCARED    (3)
+#define THUGS_PAID      (4)
+#define THUGS_TALKED    (5)
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_CritterIn");
+}
+
+void _CritterIn(Map& map, Critter& cr)
+{
+    if(cr.IsPlayer() && map.GetData(MAP_DATA_RAILRAIDER_OWNER) == 0)
+        map.SetData(MAP_DATA_RAILRAIDER_OWNER, cr.Id);
+}
+
+Critter@ GetOwner(Map& map)
+{
+    return GetCritter(map.GetData(MAP_DATA_RAILRAIDER_OWNER));
+}
+uint GetOwnerId(Map& map)
+{
+    return map.GetData(MAP_DATA_RAILRAIDER_OWNER);
+}
+
+// Rail Raiders / Thugs
+void _Thug(Critter& cr, bool firstTime)
+{
+    cr.StatBase[ST_REPLICATION_TIME] = REPLICATION_NEVER;
+    cr.ModeBase[MODE_NO_HOME] = 1;
+    cr.SetEvent(CRITTER_EVENT_DEAD, "_ThugDead");
+    cr.SetEvent(CRITTER_EVENT_ATTACKED, "_Attacked");
+    cr.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    if(firstTime)
+    {
+        Map @map = cr.GetMap();
+        map.SetData(MAP_DATA_RAILRAIDER_THUGS, map.GetData(MAP_DATA_RAILRAIDER_THUGS) + 1);
+    }
+}
+
+void _ThugDead(Critter& cr, Critter@ killer)
+{
+    Map @map = cr.GetMap();
+    map.SetData(MAP_DATA_RAILRAIDER_THUGS, map.GetData(MAP_DATA_RAILRAIDER_THUGS) - 1);
+    if(map.GetData(MAP_DATA_RAILRAIDER_THUGS) == 0)
+    {
+        GameVar@ var = GetLocalVar(LVAR_q_rail_raider_status, GetOwnerId(map));
+        var = THUGS_KILLED;
+        Critter@ owner = GetOwner(map);
+        if(valid(owner))
+            owner.SayMsg(SAY_NETMSG, TEXTMSG_QUEST, var.GetQuestStr());
+    }
+}
+
+bool _Attacked(Critter& cr, Critter& attacker)
+{
+    cr.SendMessage(MSG_IM_ATTACKED, attacker.Id, MESSAGE_TO_ALL_ON_MAP);
+    return false;
+}
+void _OnMessage(Critter& cr, Critter& fromCr, int message, int value)
+{
+    if(message == MSG_IM_ATTACKED)
+        AttackCritter(cr, GetCritter(value));
+}
+
+void CheckOwner(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Owner: " + GetSafePlayerName(cr.GetMap().GetData(MAP_DATA_RAILRAIDER_OWNER)));
+}
+void CheckThugs(Critter& cr, int p0, int p1, int p2)
+{
+    cr.Say(SAY_NETMSG, "Thugs dead: " + cr.GetMap().GetData(MAP_DATA_RAILRAIDER_THUGS));
+}

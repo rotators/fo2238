@@ -1,0 +1,179 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_keybinds_h.fos
+//
+
+import bool GUI_IsKeyPressed(uint8 key) from "client_gui";
+import void SetLastMode(uint8 mode) from "client_mapper_animation";
+
+shared interface IBind
+{
+    bool Active();
+    void Exec();
+};
+
+shared interface IBindExecFunc // "function pointer"
+{
+    void Exec();
+};
+
+class BaseBind : IBind
+{
+    bool ctrl;
+    bool alt;
+    bool shift;
+    BaseBind()
+    {
+        ctrl = false;
+        alt = false;
+        shift = false;
+    }
+
+    bool CtrlPressed()  { return GUI_IsKeyPressed(DIK_LCONTROL) || GUI_IsKeyPressed(DIK_RCONTROL); }
+    bool ShiftPressed() { return GUI_IsKeyPressed(DIK_LSHIFT) || GUI_IsKeyPressed(DIK_RSHIFT); }
+    bool AltPressed()   { return GUI_IsKeyPressed(DIK_LMENU) || GUI_IsKeyPressed(DIK_RMENU); }
+
+    bool Active()
+    {
+        return((!ctrl || CtrlPressed()) && (!alt || AltPressed()) && (!shift || ShiftPressed()));
+    }
+
+    void Exec() {}
+};
+
+shared class BindList
+{
+    array<IBind@> binds;
+
+    BindList()
+    {
+        binds.resize(0);
+    }
+
+    bool TryRun()
+    {
+        if(__ConsoleActive)
+            return(false);
+        bool ret = false;
+        for(uint i = 0, j = binds.length(); i < j; i++)
+            if(binds[i].Active())
+            {
+                binds[i].Exec();
+                ret = true;
+            }
+        return ret;
+    }
+
+    void AddBind(IBind@ bind)
+    {
+        binds.insertLast(bind);
+    }
+};
+
+class Bind : IBind
+{
+    array<int> modifiers;
+
+    bool Active()
+    {
+        for(uint i = 0; i < modifiers.length(); i++)
+            if(!GUI_IsKeyPressed(modifiers[i]))
+                return false;
+
+        return true;
+    }
+
+    void Exec() {}
+};
+
+class GMBind : Bind
+{
+    array<string> commands;
+
+    void Exec()
+    {
+        for(uint i = 0; i < this.commands.length(); i++)
+        {
+            string entry = this.commands[i];
+
+            array<string@>@ command = split(entry, " ");
+
+            if(command[0] == "play")
+            {
+                string @rec = GetRecord(command[1]);
+                if(valid(rec))
+                {
+                    Message("Playing...");
+                    StartReplay(rec);
+                }
+                else
+                    Message("Recording not valid, you sure the file exists?");
+            }
+            else
+                RunServerScriptUnsafe("cheats@unsafe_ExecCommand", 0, 0, 0, "command " + entry, null);
+        }
+    }
+};
+
+class UseBind : BaseBind
+{
+    array<uint16> pids;
+    void Exec()
+    {
+        CritterCl@ cr = GetChosen();
+        ItemCl@    item = null;
+        for(uint i = 0; i < pids.length(); i++)
+        {
+            @item = cr.GetItem(pids[i], -1);
+            if(valid(item))
+                break;
+        }
+        if(!valid(item))
+            return;
+        uint[] action = { CHOSEN_USE_ITEM, item.Id, item.GetProtoId(), TARGET_SELF, cr.Id, ITEM_MODE_USE, 0 };
+        SetChosenActions(action);
+    }
+};
+
+class ReloadBind : BaseBind
+{
+    void Exec()
+    {
+        CritterCl@ cr = GetChosen();
+        ItemCl@    item = cr.GetItem(0, SLOT_HAND1);
+        if(!valid(item))
+            return;
+        uint[] Reload = { CHOSEN_USE_ITEM, item.Id, 0, TARGET_SELF_ITEM, 0, ITEM_MODE_RELOAD, 0 };
+
+        if(item.GetType() == ITEM_TYPE_WEAPON && item.AmmoCount < item.Proto.Weapon_MaxAmmoCount)
+        {
+            uint mode = item.Mode;
+            RunServerScriptUnsafe("unsafe_client@unsafe_WeaponMode", mode, 0, 0, "", null);
+            SetLastMode(mode);
+            SetChosenActions(Reload);
+        }
+    }
+};
+
+class AimBind : BaseBind
+{
+    uint8 aim;
+    AimBind(uint8 _aim)
+    {
+        this.aim = _aim;
+    }
+    void Exec()
+    {
+        CurrentAim = this.aim;
+    }
+};
+
+class ToggleFogBind : BaseBind
+{
+    void Exec()
+    {
+        __ConfigFog = !__ConfigFog;
+    }
+};

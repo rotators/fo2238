@@ -1,0 +1,682 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_schedules.fos
+//
+
+#ifndef __NPC_SCHEDULES__
+#define __NPC_SCHEDULES__
+
+enum HardcodedSchedules
+{
+    // special, 1-9
+    RADIATED_AI = 1,
+//	LAST_REGISTERED,
+
+    // towns patrols, 10-99
+    PATROL_ADYTUM = 10,
+    PATROL_HINKLEY,
+    PATROL_HUB,
+    PATROL_LOST_HILLS,
+    PATROL_NAVARRO,
+    PATROL_SHADY_SANDS,
+    PATROL_SAN_FRANCISCO,
+    PATROL_VAULT_CITY,
+
+    // other, 100-9999
+    GRAVE_KEEPER = 100,
+    JAIL_EMITTERS,
+
+    SETH_GENERIC = 200,
+    SETH_OUTSIDE,
+    SETH_ARMORER,
+    SETH_COOK,
+    SETH_PRISONER,
+    SETH_RANGER,
+
+    SETH_GUARD_DBM1 = 220,
+    SETH_GUARD_DBM2,
+    SETH_GUARD_DBL1,
+    SETH_GUARD_DBL2,
+    SETH_GUARD_DBR1,
+    SETH_GUARD_DBR2,
+    SETH_GUARD_NBL1,
+    SETH_GUARD_NBL2,
+    SETH_GUARD_NBR1,
+    SETH_GUARD_NBR2,
+    SETH_GUARD_NBM1,
+    SETH_GUARD_NBM2,
+    SETH_GUARD_RANGER1,
+    SETH_GUARD_RANGER2
+};
+
+int[] public_schedules =
+{
+    GRAVE_KEEPER,
+//	LAST_REGISTERED
+};
+
+void InitHardcodedSchedules()
+{
+    Radiated_AI();
+//	Last_Registered();
+
+    Grave_Keeper();
+    Jail();
+
+//	Fort_Seth();
+}
+// #include "SETH.fos"
+
+void hlist(Critter& cr, int, int, int)
+{
+    array<string@> names;
+    array<int>     values;
+    uint           count = GetEnum("HardcodedSchedules", names, values);
+    for(uint e = 0; e < count; e++)
+    {
+        if(values[e] <= 0)
+            continue;
+
+        if(!valid(names[e]) || names[e].length() == 0)
+            continue;
+
+        INpcSchedule@ schedule = GetScheduleByPid(values[e]);
+        if(valid(schedule))
+        {
+            #ifndef __DEBUG__
+            if(public_schedules.find(schedule.PID) >= 0)
+            #endif
+            cr.Say(SAY_NETMSG, values[e] + ", " + names[e] + ", \"" + schedule.Name + "\"");
+        }
+    }
+}
+
+void OverrideNpcSchedule(uint pid, INpcSchedule@ schedule)
+{
+    CNpcSchedule@ prototypeRaw = cast<CNpcSchedule>(schedule);
+    prototypeRaw.pid = pid;
+
+    bool added = false;
+    for(uint p = 0, pLen = prototypes.length(); p < pLen; p++)
+    {
+        if(prototypes[p].PID == pid)
+        {
+            added = true;
+            _WLog("Overriding hardcoded schedule prototype : " + prototypeRaw.FullName, DEBUG_WARNING);
+            prototypes[p] = prototypeRaw;
+        }
+    }
+    if(!added)
+    {
+        _WLog("Adding hardcoded schedule prototype : " + prototypeRaw.FullName, DEBUG_WARNING);
+        AddNpcSchedule(prototypeRaw);
+    }
+
+    CNpcSchedule@ proto = GetSchedulePrototype(pid);
+    if(!valid(proto))
+    {
+        _WLog("Cannot fetch prototype PID<" + pid + ">", DEBUG_CRITICAL);
+        return;
+    }
+
+    for(uint i = 0, iLen = instances.length(); i < iLen; i++)
+    {
+        if(instances[i].prototypePID == pid)
+        {
+            uint owner = instances[i].Owner;
+            _WLog("Overriding hardcoded schedule instance : " + instances[i].FullName, DEBUG_WARNING);
+            instances[i].SetPrototype(proto);
+            for(uint t = 0, tLen = instances[i].tasks.length(); t < tLen; t++)
+            {
+                instances[i].tasks[t].state = TASKSTATE_READY;
+            }
+        }
+    }
+}
+
+void Radiated_AI() // npc_schedule demo, NCR
+{
+    INpcSchedule@ schedule = CreateNpcSchedule("Radiated AI");
+
+    /*
+       schedule.AddTask_OnIdleChance( "Wander", 100 )
+            .Walk_Random( 15 );
+     */
+
+    uint16[][] ncr_sleep =
+    {
+        { 155, 79, 5 }
+    };
+
+    schedule.AddTask_OnTime("SleepEarly", 23, 00)
+    .Roll(9)
+    .If_MapPid(MAP_NCR)
+    .Walk_RandomHome(ncr_sleep)
+    .EndIf()
+    .Sleep();
+
+    schedule.AddTask_OnTime("Sleep", 01, 00)
+    .If_MapPid(MAP_NCR)
+    .Walk_RandomHome(ncr_sleep)
+    .EndIf()
+    .Sleep();
+
+    uint16[][] ncr_bulletin =
+    {
+        { 131, 124, 0 },
+        { 130, 184, 0 }
+    };
+
+    schedule.AddTask_OnMorning("Bulletin")
+    .Roll(1500)
+    .If_MapPid(MAP_NCR)
+    .Walk_RandomHome(ncr_bulletin)
+    .EndIf()
+    .Wait(REAL_SECOND(2))
+    .Say(SAY_EMOTE_ON_HEAD, "reads bulletin")
+    .Wait_Random(REAL_SECOND(5), REAL_SECOND(35))
+    .Say(SAY_NORM_ON_HEAD, "Nothing interesting... as always.");
+
+
+    uint16[] CaravanJobMaps =
+    {
+        MAP_HubDowntown
+    };
+    // Hub
+    uint16[][] CaravanJobHubPacker  =
+    {
+        { 92, 56, 5 },
+        { 92, 57, 5 },
+        { 93, 56, 0 },
+        { 93, 57, 0 },
+        { 94, 56, 0 }
+    };
+    uint16[][] CaravanJobHubWagon =
+    {
+        { 89, 53, 5 },
+        { 91, 53, 0 }
+    };
+    uint16[][] CaravanJobHubDrop =
+    {
+        { 73, 73, 4 },
+        { 74, 73, 5 },
+        { 75, 70, 0 },
+        { 75, 71, 0 },
+        { 75, 72, 0 },
+        { 75, 73, 0 },
+        { 76, 70, 0 },
+        { 77, 70, 0 }
+    };
+    schedule.AddTask_OnEvening("CaravanJob")
+    .Roll(1)
+    .If_NotMapPids(CaravanJobMaps)
+    // .Log( "Skipped: wrong map" )
+    .EndIf()
+    .If_MapPids(CaravanJobMaps)
+    // 1
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubPacker)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 2
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 3
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .If_Percent(25)
+    .Say(SAY_NORM_ON_HEAD, "Hngh... These boxes are heavier than i though...")
+    .EndIf()
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 4
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 5
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    .If_Percent(25)
+    .Say_Wait(SAY_NORM_ON_HEAD, "Half of job done, ha!")
+    .EndIf()
+    // 6
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 7
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 8
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    // 9
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    .If_Percent(25)
+    .Say(SAY_NORM_ON_HEAD, "Just one more...")
+    .EndIf()
+    // 10!
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubWagon)
+    .EndIf()
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(1))
+    .If_MapPid(MAP_HubDowntown)
+    .Walk_RandomHome(CaravanJobHubDrop)
+    .EndIf()
+    .Animate(ANIM2_PICKUP, true, true)
+    .Walk_RandomHome(CaravanJobHubPacker)
+    .EndIf();
+
+    uint16[] BarrelMaps =
+    {
+        MAP_NCR
+    };
+    uint16[][] BarrelNCR =
+    {
+        { 36,  74, 4 },
+        { 23,  84, 3 },
+        { 34, 103, 5 },
+        { 59, 106, 0 },
+        { 75,  85, 0 },
+        { 56,  79, 2 }
+    };
+    schedule.AddTask_OnIdle("Barrel")
+    .Roll(500)
+    .If_MapPids(BarrelMaps)
+    .If_MapPid(MAP_NCR)
+    .Walk_RandomHome(BarrelNCR)
+    .EndIf()
+    .Wait(REAL_SECOND(1))
+    .Animate(ANIM2_USE, true, true)
+    .If_Morning()
+    .VerboseAction("warms hands")
+    .EndIf()
+//			.If_Afternoon()
+//			.EndIf()
+    .If_Evening()
+    .VerboseAction("puts something into fire")
+    .EndIf()
+    .If_Night()
+    .VerboseAction("warms hands")
+    .EndIf()
+    .Wait_Random(REAL_SECOND(10), REAL_SECOND(30))
+    .EndIf();
+
+    uint16[][] ncr_nukacola1 =
+    {
+        { 109, 231, 5 }
+    };
+    uint16[][] ncr_nukacola2 =
+    {
+        { 127, 234, 0 },
+        { 122, 230, 2 },
+        { 117, 234, 3 }
+    };
+    schedule.AddTask_OnIdle("NukaCola")
+    .Roll(500)
+    .Walk_RandomHome(ncr_nukacola1)
+    .Animate(ANIM2_USE, true, true)
+    .VerboseAction("takes nuka cola")
+    .Walk_RandomHome(ncr_nukacola2)
+    .Wait(REAL_SECOND(1))
+    .VerboseAction("drinks nuka cola")
+    .Animate(ANIM2_USE, true, true)
+    .Wait(REAL_SECOND(3))
+    .Say(SAY_NORM_ON_HEAD, "Oh yea!")
+    .Wait_Random(REAL_SECOND(1), REAL_MINUTE(1));
+
+    schedule.AddTask_OnIdle("Song: Caravan")
+    .Roll(5000)
+    .If_NotMapPid(MAP_Junktown)
+    .Say_Wait(SAY_NORM_ON_HEAD, "Carry me, caravan, take me away...")
+    .Say_Wait(SAY_NORM_ON_HEAD, "...take me to Quincy, take me to The Gray..")
+    .Say_Wait(SAY_NORM_ON_HEAD, "...Modoc with fields full of grain...")
+    .Say_Wait(SAY_NORM_ON_HEAD, "..I have to see you... again and again...")
+    .Say_Wait(SAY_NORM_ON_HEAD, "...take me... Junktown Caravan...")
+    .Say_Wait(SAY_NORM_ON_HEAD, "...yes I know you can...")
+    .Wait(REAL_MINUTE(1))
+    .EndIf();
+
+
+    /*
+       TODO: Collect_Critter*
+
+       uint16[][] ncr_nearGuard = {
+            { 41,  76, 0 },
+            { 25,  79, 5 },
+            { 45, 111, 3 },
+            { 49, 122, 5 },
+            { 63, 141, 3 },
+            { 61, 108, 2 },
+            { 78,  89, 3 },
+            { 72,  84, 5 },
+            { 68,  84, 5 },
+            { 87, 119, 0 }
+       };
+       schedule.AddTask_OnIdle( "Gecko" )
+            .Roll( 1000 )
+            .Walk_RandomHome( ncr_nearGuard )
+            .Wait_Random( REAL_SECOND(1), REAL_SECOND(2) )
+            .Say_Wait( SAY_NORM, "I heard there were some geckos around here recently." )
+            .Say( SAY_NORM, "Awful creatures." )
+            .Wait_Random( REAL_SECOND(1), REAL_SECOND(2) )
+            .DemandAnswer( SAY_NORM, "Horrid beasts, I hate the things." )
+            .Wait( REAL_SECOND(10) );
+
+       schedule.AddTask_OnIdle( "Molerat" )
+            .Roll( 1000 )
+            .Walk_RandomHome( ncr_nearGuard )
+            .Wait( REAL_SECOND(1) )
+            .Say( SAY_NORM, "I saw a molerat the other day." )
+            .Wait( REAL_SECOND(2) )
+            .DemandAnswer( SAY_NORM, "Horrible creatures, I avoid them whenever I can." )
+            .Wait( REAL_SECOND(10) );
+     */
+
+    OverrideNpcSchedule(RADIATED_AI, schedule);
+}
+
+/*
+   void Last_Registered()
+   {
+        INpcSchedule@ schedule = CreateNpcSchedule( "LastRegistered" )
+                .AddTask_OnIdle( "LastRegistered: speak" )
+                        .TaskVar_CopyFromGlobalVar( "last_registered", GVAR_last_registered )
+                        .CustomAction( "npc_schedule@Last_Registered_Action", true )
+                        .Wait( REAL_MINUTE(1) )
+                        .ParentSchedule()
+        ;
+        OverrideNpcSchedule( LAST_REGISTERED, schedule );
+   }
+
+   int Last_Registered_Action( IObject@ object )
+   {
+        NpcTaskCustomAction@ custom = cast<NpcTaskCustomAction>(object);
+
+        int last_registered = 0;
+        custom.task.GetTaskVar( "last_registered", last_registered );
+
+        if( last_registered > 0 )
+                custom.npc.Say( SAY_SOCIAL, "Last registered: "+GetSafePlayerName( last_registered )+" ("+last_registered+")" );
+
+        return( 1 );
+   }
+ */
+
+void Grave_Keeper()
+{
+    INpcSchedule@ schedule = CreateNpcSchedule("Grave Keeper");
+    INpcTask@     task = null;
+
+    #ifdef __DEBUG__
+    # define CHECK_GRAVES_MIN    1
+    # define CHECK_GRAVES_MAX    2
+    #endif
+    #ifndef __DEBUG__
+    # define CHECK_GRAVES_MIN    15
+    # define CHECK_GRAVES_MAX    60
+    #endif
+
+    #define CHECK_GRAVES                                                             \
+        # (_map, _pid, _graves, _idle)                                               \
+        .If_MapPid(_map);                                                            \
+        for(uint g = 0, gLen = _graves.length(); g < gLen; g++)                      \
+        {                                                                            \
+            /*check#1*/ task.If_ContainerOpened(_pid, _graves[g][0], _graves[g][1]); \
+            uint16[][] home = {                                                      \
+                { _graves[g][0] + 2, _graves[g][1] + 1, 0 },                         \
+                { _graves[g][0] + 2, _graves[g][1] + 2, 0 },                         \
+                { _graves[g][0] - 1, _graves[g][1] - 1, 3 },                         \
+                { _graves[g][0] - 1, _graves[g][1],   3 }                            \
+            };                                                                       \
+            home.removeAt(0);                                                        \
+            task.Walk_RandomHome(home)                                               \
+            /*check#2*/.If_ContainerOpened(_pid, _graves[g][0], _graves[g][1])       \
+            .Container_Close(_pid, _graves[g][0], _graves[g][1], ANIM2_USE)          \
+            .EndIf()                                                                 \
+            .EndIf();                                                                \
+        }                                                                            \
+        task.Walk_RandomHome(_idle)                                                  \
+        .Wait_Random(REAL_MINUTE(CHECK_GRAVES_MIN), REAL_MINUTE(CHECK_GRAVES_MAX))   \
+        .EndIf()
+
+    uint16[] graves =
+    {
+        MAP_Cathedral_Enter,
+        MAP_DenBusiness,
+        MAP_Redding
+    };
+    uint16[][] graves_cathedral =
+    {
+        { 112,  42 },
+        { 116,  42 },
+        { 120,  42 },
+        { 125,  42 },
+        { 124,  49 },
+        { 124,  56 },
+        { 125,  64 },
+        { 120,  64 },
+        { 116,  64 },
+        { 112,  64 },
+        { 111,  56 }
+    };
+    uint16[][] idle_cathedral =
+    {
+        { 83, 63, 1 },
+        { 81, 63, 2 },
+        { 79, 63, 2 },
+        { 77, 63, 2 },
+        { 77, 63, 3 },
+        { 75, 64, 3 },
+        { 75, 66, 3 },
+        { 75, 68, 4 },
+        { 76, 69, 4 },
+        { 77, 70, 5 },
+        { 79, 70, 5 },
+        { 82, 70, 0 },
+        { 83, 65, 1 },
+        { 83, 67, 0 },
+        { 83, 69, 0 },
+
+        { 82, 57, 5 },
+        { 62, 57, 5 }
+    };
+    uint16[][] graves_den =
+    {
+        { 123, 146 },
+        { 120, 145 },
+        { 116, 145 },
+        { 113, 145 },
+        { 109, 145 },
+        { 123, 155 },
+        { 119, 155 },
+        { 115, 155 },
+        { 111, 155 },
+        { 108, 155 },
+        { 122, 160 },
+        { 119, 161 },
+        { 115, 160 },
+        { 112, 160 },
+        { 109, 161 }
+    };
+    uint16[][] idle_den =
+    {
+        // stare at slaves
+        { 85, 88,  0 },
+        { 85, 89,  0 },
+        { 85, 90,  0 },
+        { 85, 91,  0 },
+        { 85, 92,  0 },
+        { 85, 93,  0 },
+        { 85, 94,  0 },
+        { 85, 95,  0 },
+        { 85, 96,  0 },
+        { 85, 97,  0 },
+        { 85, 98,  0 },
+        { 85, 99,  0 },
+        { 85, 100, 0 },
+        { 85, 101, 0 },
+        { 85, 102, 0 },
+        { 85, 103, 0 },
+        { 85, 104, 0 },
+        { 85, 105, 0 },
+        { 85, 106, 0 },
+        { 85, 107, 0 },
+        { 85, 108, 0 },
+        { 85, 109, 0 },
+        { 85, 110, 0 },
+        { 85, 111, 0 },
+        { 85, 112, 0 },
+        { 85, 113, 0 }
+    };
+    uint16[][] graves_redding =
+    {
+        { 73, 28 },
+        { 69, 28 },
+        { 65, 28 },
+        { 61, 28 },
+        { 73, 35 },
+        { 69, 35 },
+        { 65, 35 },
+        { 61, 35 }
+    };
+    uint16[][] idle_redding =
+    {
+        // stare at coffins
+        // { 76, 46, 2 },
+        { 78, 61, 5 },
+        { 86, 54, 0 },
+        { 86, 55, 0 }
+    };
+    @task = schedule.AddTask_OnIdle("Check graves")
+            .Roll(50)
+            .If_NotMapPids(graves)
+            .Say(SAY_SOCIAL, "INVALID MAP")
+            .Wait(REAL_MINUTE(10))
+            .EndIf()
+            .If_MapPids(graves)
+            CHECK_GRAVES(MAP_Cathedral_Enter, 344, graves_cathedral, idle_cathedral)
+            CHECK_GRAVES(MAP_DenBusiness, 344, graves_den, idle_den)
+            CHECK_GRAVES(MAP_Redding, 344, graves_redding, idle_redding)
+            .EndIf();
+
+    OverrideNpcSchedule(GRAVE_KEEPER, schedule);
+}
+
+
+void Jail()
+{
+    INpcSchedule@ schedule = CreateNpcSchedule("Jail: emitters");
+    INpcTask@     task = null;
+
+    uint16[][] emitters_idle =
+    {
+        { 178, 203, 2 },
+        { 176, 203, 2 }
+    };
+    uint16[][] emitters_west =
+    {
+        { 180, 218, 0 },
+        { 168, 218, 1 },
+        { 168, 226, 1 },
+        { 180, 226, 0 },
+        { 180, 234, 0 },
+        { 168, 234, 1 },
+        { 168, 242, 1 },
+        { 180, 242, 0 },
+        { 180, 250, 0 },
+        { 168, 250, 1 }
+    };
+    uint16[][] emitters_east =
+    {
+        { 152, 218, 0 },
+        { 140, 218, 1 },
+        { 140, 226, 1 },
+        { 152, 226, 0 },
+        { 152, 234, 0 },
+        { 140, 234, 1 },
+        { 140, 242, 1 },
+        { 152, 242, 0 },
+        { 152, 250, 0 },
+        { 140, 250, 1 }
+    };
+
+    #define CHECK_EMITTERS                                                         \
+        # (_emitters)                                                              \
+        .If_MapPid(MAP_Jail);                                                      \
+        for(uint e = 0, eLen = _emitters.length(); e < eLen; e++)                  \
+        {                                                                          \
+            if(_emitters[e][2] == 0)                                               \
+                task.Walk_Home(_emitters[e][0] - 1, _emitters[e][1] + 1, 4);       \
+            else                                                                   \
+                task.Walk_Home(_emitters[e][0] + 1, _emitters[e][1] + 1, 0);       \
+            /*task.FixForcefield( _emitters[e][0], _emitters[e][1], ANIM2_USE );*/ \
+        }                                                                          \
+        task.EndIf()
+
+    @task = schedule.AddTask_OnMinute("Check emitters", 00)
+            CHECK_EMITTERS(emitters_west)
+            CHECK_EMITTERS(emitters_east)
+            .Walk_RandomHome(emitters_idle);
+
+    OverrideNpcSchedule(JAIL_EMITTERS, schedule);
+}
+#endif // __NPC_SCHEDULES__ //

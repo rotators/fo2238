@@ -1,0 +1,843 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// special_map_objects_floor.fos
+//
+
+#define FLOOR_ON                     (0x01)
+
+#define ELECTRO_CONTROLLER_PID       (10012)
+#define MINEFIELD_CONTROLLER_PID     (10013)
+#define ELECTRO_FLOOR_PLATE_PID      (10010)
+#define MINEFIELD_FLOOR_PLATE_PID    (10011)
+
+#define FLOOR_TYPE_ELECTRO           (0)
+#define FLOOR_TYPE_MINEFIELD         (1)
+
+uint[] floorControllerPids = { ELECTRO_CONTROLLER_PID, MINEFIELD_CONTROLLER_PID };
+uint[] floorPlatePids = { ELECTRO_FLOOR_PLATE_PID, MINEFIELD_FLOOR_PLATE_PID };
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+class CFloorSearcher : ISearchingCallback
+{
+    uint FindTogglableSMOs(array<ITogglableSMO@>& list, Map& map, int globalId)
+    {
+        uint         origLength = list.length();
+        array<Item@> controllers;
+        array<uint> typeCounts(floorControllerPids.length());
+        uint         controllerCount = 0;
+        for(uint fi = 0, fm = floorControllerPids.length; fi < fm; fi++)
+        {
+            typeCounts[fi] = map.GetItems(floorControllerPids[fi], controllers);
+            controllerCount += typeCounts[fi];
+        }
+        uint searchedControllerCount = 0;
+
+        array<bool> controllerValidity(controllerCount);
+
+        for(uint i = 0; i < controllerCount; i++)
+        {
+            if(globalId == -1 || globalId == controllers[i].Val1)
+            {
+                controllerValidity[i] = true;
+                searchedControllerCount++;
+            }
+            else
+                controllerValidity[i] = false;
+        }
+
+        list.resize(origLength + searchedControllerCount);
+        for(uint i = 0, j = origLength, fi = 0, k = 0; i < controllerCount; i++)
+        {
+            while(k >= typeCounts[fi])
+            {
+                k = 0;
+                fi++;
+            }
+            if(controllerValidity[i])
+            {
+                if(floorControllerPids[fi] == FLOOR_TYPE_ELECTRO)
+                    @list[j] = MapElectroFloorObject(controllers[i], map);
+                else if(floorControllerPids[fi] == FLOOR_TYPE_MINEFIELD)
+                    @list[j] = MapElectroFloorObject(controllers[i], map);
+                else
+                    @list[j] = null;
+                j++;
+            }
+            k++;
+        }
+        return searchedControllerCount;
+    }
+
+    uint FindFloorObjects(array<MapFloorObject@>& list, Map& map, int type)
+    {
+        uint         origLength = list.length();
+        uint         floorControllerPid = floorControllerPids[type];
+
+        array<Item@> floorControllers;
+        uint         floorCount = map.GetItems(floorControllerPid, floorControllers);
+
+        list.resize(origLength + floorCount);
+
+        if(type == FLOOR_TYPE_ELECTRO)
+            for(uint i = 0, j = origLength; i < floorCount; i++)
+            {
+                @list[j] = MapElectroFloorObject(floorControllers[i], map);
+                j++;
+            }
+        else if(type == FLOOR_TYPE_MINEFIELD)
+            for(uint i = 0, j = origLength; i < floorCount; i++)
+            {
+                @list[j] = MapMineFieldFloorObject(floorControllers[i], map);
+                j++;
+            }
+        return floorCount;
+    }
+
+    MapFloorObject@ FindSingleFloor(Map& map, int id, int type)
+    {
+        uint         floorControllerPid = floorControllerPids[type];
+
+        array<Item@> floorControllers;
+        uint         floorCount = map.GetItems(floorControllerPid, floorControllers);
+
+        for(uint i = 0; i < floorCount; i++)
+        {
+            if(id == floorControllers[i].Val0)
+            {
+                if(type == FLOOR_TYPE_ELECTRO)
+                    return MapElectroFloorObject(floorControllers[i], map);
+                else if(type == FLOOR_TYPE_MINEFIELD)
+                    return MapMineFieldFloorObject(floorControllers[i], map);
+            }
+        }
+        return null;
+    }
+};
+
+CFloorSearcher@ FloorSearcher = CFloorSearcher();
+
+
+
+/********************************************************************************/
+/********************* ELECTROFLOOR DIALOG FUNCTIONS******************************/
+/******************************************************** ************************/
+
+// electrofloor dialog demand functions
+
+bool d_IsElectroFloorOn(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    return IsFloorOn(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+bool d_IsElectroFloor2On(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsFloorOn(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+bool d_IsElectroFloorOff(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    return IsFloorOff(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+bool d_IsElectroFloorOff(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsFloorOff(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+// electrofloor dialog result functions
+
+void r_ElectroFloorToggle(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    ToggleFloor(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorToggle(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleFloor(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorOn(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    SetFloorOn(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorOn(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOn(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorOff(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    SetFloorOff(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorOff(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOff(map, controllerId, FLOOR_TYPE_ELECTRO);
+}
+
+
+// electrofloor dialog result all-on-this-map functions
+
+void r_ElectroFloorAllToggle(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    ToggleFloor(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorAllToggle(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleFloor(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorAllOn(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetFloorOn(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorAllOn(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOn(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorAllOff(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetFloorOff(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+void r_ElectroFloorAllOff(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOff(map, -1, FLOOR_TYPE_ELECTRO);
+}
+
+
+
+
+/********************************************************************************/
+/********************* MINEFIELD FLOOR DIALOG FUNCTIONS******************************/
+/******************************************************** ************************/
+
+// minefield floor dialog demand functions
+
+bool d_IsMineFieldFloorOn(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    return IsFloorOn(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+bool d_IsMineFieldFloor2On(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsFloorOn(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+bool d_IsMineFieldFloorOff(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    return IsFloorOff(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+bool d_IsMineFieldFloorOff(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsFloorOff(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+// minefield floor dialog result functions
+
+void r_MineFieldFloorToggle(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    ToggleFloor(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorToggle(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleFloor(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorOn(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    SetFloorOn(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorOn(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOn(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorOff(Critter& player, Critter@ npc, int controllerId)
+{
+    Map@ map = player.GetMap();
+    SetFloorOff(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorOff(Critter& player, Critter@ npc, int controllerId, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOff(map, controllerId, FLOOR_TYPE_MINEFIELD);
+}
+
+// minefield floor dialog result all-on-this-map functions
+
+void r_MineFieldFloorAllToggle(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    ToggleFloor(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorAllToggle(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleFloor(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorAllOn(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetFloorOn(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorAllOn(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOn(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorAllOff(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetFloorOff(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+void r_MineFieldFloorAllOff(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetFloorOff(map, -1, FLOOR_TYPE_MINEFIELD);
+}
+
+
+
+//
+
+void SetFloorOn(Map@ map, int controllerId, uint floorType)
+{
+    if(!valid(map))
+        return;
+
+    if(controllerId != -1)
+    {
+        MapFloorObject@ floor = FloorSearcher.FindSingleFloor(map, controllerId, floorType);
+        if(valid(floor))
+            floor.TurnOn();
+        return;
+    }
+
+    array<MapFloorObject@> floors;
+    for(uint i = 0, j = FloorSearcher.FindFloorObjects(floors, map, floorType); i < j; i++)
+    {
+        floors[i].TurnOn();
+    }
+}
+
+void SetFloorOff(Map@ map, int controllerId, uint floorType)
+{
+    if(!valid(map))
+        return;
+
+    if(controllerId != -1)
+    {
+        MapFloorObject@ floor = FloorSearcher.FindSingleFloor(map, controllerId, floorType);
+        if(valid(floor))
+            floor.TurnOff();
+        return;
+    }
+
+    array<MapFloorObject@> floors;
+    for(uint i = 0, j = FloorSearcher.FindFloorObjects(floors, map, floorType); i < j; i++)
+    {
+        floors[i].TurnOff();
+    }
+}
+
+void ToggleFloor(Map@ map, int controllerId, uint floorType)
+{
+    if(!valid(map))
+        return;
+
+    if(controllerId != -1)
+    {
+        MapFloorObject@ floor = FloorSearcher.FindSingleFloor(map, controllerId, floorType);
+        if(valid(floor))
+            floor.Toggle();
+        return;
+    }
+
+    array<MapFloorObject@> floors;
+    for(uint i = 0, j = FloorSearcher.FindFloorObjects(floors, map, floorType); i < j; i++)
+    {
+        floors[i].Toggle();
+    }
+}
+
+
+
+bool IsFloorOn(Map@ map, int floorControllerId, uint floorType)
+{
+    if(!valid(map) || floorControllerId == -1)
+        return false;
+
+    MapFloorObject@ floor = FloorSearcher.FindSingleFloor(map, floorControllerId, floorType);
+    if(valid(floor))
+        return floor.IsOn();
+
+    return false;
+}
+
+bool IsFloorOff(Map@ map, int floorControllerId, uint floorType)
+{
+    if(!valid(map) || floorControllerId == -1)
+        return false;
+
+    MapFloorObject@ floor = FloorSearcher.FindSingleFloor(map, floorControllerId, floorType);
+    if(valid(floor))
+        return floor.IsOff();
+
+    return false;
+}
+
+
+
+
+// init functions
+
+void _InitElectroFloorController(Item& controller, bool firstTime)
+{
+    if(!firstTime)
+        return;
+    uint[] values = { controller.Id, FLOOR_TYPE_ELECTRO };
+
+    if(controller.Val2 & 0xFFFF0000 == 0)
+        controller.Val2 = controller.Val2 | 0x00010000;
+    if(controller.Val2 & 0x0000FFFF == 0)
+        controller.Val2 = controller.Val2 | 0x00000001;
+
+    CreateTimeEvent(__FullSecond + REAL_SECOND(1), "e_StartFloor", values, true);
+}
+
+void _InitMineFieldFloorController(Item& controller, bool firstTime)
+{
+    if(!firstTime)
+        return;
+    uint[] values = { controller.Id, FLOOR_TYPE_MINEFIELD };
+    CreateTimeEvent(__FullSecond + REAL_SECOND(1), "e_StartFloor", values, true);
+}
+
+// timeevents
+
+uint e_StartFloor(array<uint>@ values)     // delayed item initialization
+{
+    Item@ controller = GetItem(values[0]);
+    if(!valid(controller) || controller.MapId == 0)
+        return 0;
+
+    uint16 hexX, hexY;
+    Map@   map = controller.GetMapPosition(hexX, hexY);
+    if(!valid(map))
+        return 0;
+
+    uint            type = values[1];
+
+    MapFloorObject@ floor;
+    if(type == FLOOR_TYPE_ELECTRO)
+        @floor = MapElectroFloorObject(controller, map);
+    else if(type == FLOOR_TYPE_MINEFIELD)
+        @floor = MapMineFieldFloorObject(controller, map);
+    else
+        return 0;
+
+    if(floor.IsOn())
+    {
+        floor.ForceOn();
+    }
+    return 0;
+}
+
+uint e_StartMineFieldFloor(array<uint>@ values)     // delayed item initialization
+{
+    Item@ controller = GetItem(values[0]);
+    if(!valid(controller) || controller.MapId == 0)
+        return 0;
+
+    uint16 hexX, hexY;
+    Map@   map = controller.GetMapPosition(hexX, hexY);
+    if(!valid(map))
+        return 0;
+
+    MapFloorObject@ floor = MapMineFieldFloorObject(controller, map);
+
+    if(floor.IsOn())
+    {
+        floor.ForceOn();
+    }
+    return 0;
+}
+
+
+uint e_ShockFloor(array<uint>@ values)
+{
+    Map@  map = GetMap(values[0]);
+    Item@ controller = GetItem(values[1]);
+    if(!valid(map) || !valid(controller))
+        return 0;
+    uint len = values.length();
+    array<Item@> floorPlates(len - 2);
+    for(uint i = 2; i < len; i++)
+    {
+        @floorPlates[i - 2] = GetItem(values[i]);
+    }
+    MapElectroFloorObject@ electroFloor = MapElectroFloorObject(controller, map, floorPlates);
+
+    electroFloor.Zap();
+    return REAL_SECOND(electroFloor.GetShockInterval());
+}
+
+// classes
+
+class MapFloorObject : ITogglableSMO
+{
+    Item@         controller;
+    array<Item @> floorPlates;
+    bool          floorInitialized;
+    Map@          map;
+
+    MapFloorObject(Item@ controller, Map@ map)
+    {
+        @this.controller = controller;
+        this.floorPlates = floorPlates;
+        @this.map = map;
+        floorInitialized = false;
+    }
+
+    MapFloorObject(Item@ controller, Map@ map, array<Item @> floorPlates)
+    {
+        @this.controller = controller;
+        @this.map = map;
+        this.floorPlates = floorPlates;
+        floorInitialized = true;
+    }
+
+    void LazyInitFloor(uint platePid)
+    {
+        array<Item@> plates;
+        uint         plateCount = map.GetItems(platePid, plates);
+
+        uint         controlledPlatesCount = 0;
+
+        for(uint i = 0; i < plateCount; i++)
+        {
+            if(controller.Val0 == plates[i].Val0)
+                controlledPlatesCount++;
+        }
+
+        floorPlates.resize(controlledPlatesCount);
+
+        for(uint i = 0, j = 0; i < plateCount; i++)
+        {
+            if(controller.Val0 == plates[i].Val0)
+            {
+                @floorPlates[j] = plates[i];
+                j++;
+            }
+        }
+    }
+
+    void ForceOn() {}
+    bool IsOn()    { return false; }
+    void TurnOn()  {}
+    bool IsOff()   { return false; }
+    void TurnOff() {}
+
+    void Toggle()
+    {
+        if(IsOn())
+            TurnOff();
+        else
+            TurnOn();
+    }
+};
+
+class MapMineFieldFloorObject : MapFloorObject
+{
+    MapMineFieldFloorObject(Item@ controller, Map@ map)
+    {
+        super(controller, map);
+    }
+
+    MapMineFieldFloorObject(Item@ controller, Map@ map, array<Item @> floorPlates)
+    {
+        super(controller, map, floorPlates);
+    }
+
+    void TurnOn()
+    {
+        if(IsOff())
+        {
+            ForceOn();
+        }
+    }
+
+    void ForceOn()
+    {
+        if(!floorInitialized)
+            LazyInitFloor(MINEFIELD_FLOOR_PLATE_PID);
+        SETFLAG(controller.Val4, FLOOR_ON);
+        uint complexity = GetComplexity();
+        uint hideSkill = GetHideSkill();
+        uint bonusDamage = GetBonusDamage();
+        uint bonusRadius = GetBonusRadius();
+        for(uint i = 0; i < floorPlates.length(); i++)
+        {
+            Item@ mine = map.AddItem(floorPlates[i].HexX, floorPlates[i].HexY, PID_ACTIVE_MINE, 1);
+            if(valid(mine))
+            {
+                MakeMine(mine, 0, complexity, hideSkill, bonusDamage, bonusRadius);
+                floorPlates[i].Val1 = mine.Id;
+            }
+        }
+    }
+
+    uint GetComplexity()
+    {
+        return (controller.Val3 >> 16) & 0x0000FFFF;
+    }
+
+    void SetComplexity(uint complexity)
+    {
+        controller.Val3 = (controller.Val3 & 0x0000FFFF) | ((complexity << 16) & 0xFFFF0000);
+    }
+
+    uint GetHideSkill()
+    {
+        return controller.Val3 & 0x0000FFFF;
+    }
+
+    void SetHideSkill(uint hideSkill)
+    {
+        controller.Val3 = (controller.Val3 & 0xFFFF0000) | (hideSkill & 0x0000FFFF);
+    }
+
+    uint GetBonusDamage()
+    {
+        return (controller.Val2 >> 16) & 0x0000FFFF;
+    }
+
+    void SetBonusDamage(uint damage)
+    {
+        controller.Val2 = (controller.Val2 & 0x0000FFFF) | ((damage << 16) & 0xFFFF0000);
+    }
+
+    uint GetBonusRadius()
+    {
+        return controller.Val2 & 0x0000FFFF;
+    }
+
+    void SetBonusRadius(uint radius)
+    {
+        controller.Val2 = (controller.Val2 & 0xFFFF0000) | (radius & 0x0000FFFF);
+    }
+
+    void TurnOff()
+    {
+        if(IsOn())
+        {
+            if(!floorInitialized)
+                LazyInitFloor(MINEFIELD_FLOOR_PLATE_PID);
+            UNSETFLAG(controller.Val4, FLOOR_ON);
+            for(uint i = 0; i < floorPlates.length(); i++)
+            {
+                Item@ mine = GetItem(floorPlates[i].Val1);
+                if(valid(mine))
+                    DeleteItem(mine);
+            }
+        }
+    }
+
+    bool IsOn()
+    {
+        return FLAG(controller.Val4, FLOOR_ON);
+    }
+
+    bool IsOff()
+    {
+        return !FLAG(controller.Val4, FLOOR_ON);
+    }
+};
+
+class MapElectroFloorObject : MapFloorObject
+{
+
+    MapElectroFloorObject(Item@ controller, Map@ map)
+    {
+        super(controller, map);
+    }
+
+    MapElectroFloorObject(Item@ controller, Map@ map, array<Item @> floorPlates)
+    {
+        super(controller, map, floorPlates);
+    }
+
+    void Zap()
+    {
+        if(!floorInitialized)
+            LazyInitFloor(ELECTRO_FLOOR_PLATE_PID);
+
+        for(uint i = 0; i < floorPlates.length(); i++)
+        {
+            Critter@ critter = map.GetCritter(floorPlates[i].HexX, floorPlates[i].HexY);
+            if(valid(critter))
+            {
+                InjureCritter(critter, GetDamage(), DAMAGE_ELECTR, critter.Dir, 0);
+            }
+        }
+    }
+
+    void TurnOn()
+    {
+        if(IsOff())
+        {
+            ForceOn();
+        }
+
+    }
+
+    void ForceOn()
+    {
+        Zap();
+        SETFLAG(controller.Val3, FLOOR_ON);
+        array<uint> values(floorPlates.length() + 2);
+        values[0] = map.Id;
+        values[1] = controller.Id;
+        for(uint i = 0; i < floorPlates.length(); i++)
+            values[i + 2] = floorPlates[i].Id;
+
+        controller.Val4 = CreateTimeEvent(__FullSecond + REAL_SECOND(GetShockInterval()), "e_ShockFloor", values, true);
+    }
+
+    void SetDamage(uint damage)
+    {
+        if(damage == 0)
+            damage = 1;
+
+        controller.Val2 = (controller.Val2 & 0x0000FFFF) | ((damage << 16) & 0xFFFF0000);
+    }
+
+    uint GetDamage()
+    {
+        return (controller.Val2 >> 16) & 0x0000FFFF;
+    }
+
+    void SetShockInterval(uint interval)
+    {
+        if(interval == 0)
+            interval = 1;
+        controller.Val2 = (controller.Val2 & 0xFFFF0000) | (interval & 0x0000FFFF);
+    }
+
+    uint GetShockInterval()
+    {
+        return controller.Val2 & 0x0000FFFF;
+    }
+
+    void TurnOff()
+    {
+        if(IsOn())
+        {
+            UNSETFLAG(controller.Val3, FLOOR_ON);
+            if(controller.Val4 != 0)
+            {
+                EraseTimeEvent(controller.Val4);
+                controller.Val4 = 0;
+            }
+        }
+    }
+
+    bool IsOn()
+    {
+        return FLAG(controller.Val3, FLOOR_ON);
+    }
+
+    bool IsOff()
+    {
+        return !FLAG(controller.Val3, FLOOR_ON);
+    }
+};

@@ -1,0 +1,37 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// frisco_trader.fos
+//
+
+#include "_macros.fos"
+#include "world_common_h.fos"
+
+// Strings
+#define DIALOG_ID    (1423)
+#define STR_FISH     (1)
+
+import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
+
+// NPC init
+void critter_init(Critter& trader, bool firstTime)
+{
+    // Time event when floating text should occur
+    if(CreateTimeEvent(AFTER(REAL_SECOND(Random(2, 5))), "e_Yelling", trader.Id, false) == 0)
+        Log("Time event e_Yelling could not be created, " + GetLastError());
+}
+
+// Time event
+uint e_Yelling(array<uint>@ values)
+{
+    // Selling fish during the day only
+    if(IsNight())
+        return GetNearFullSecond(0, 0, 0, 8, Random(2, 5), 0) - ELAPSED_TIME;
+
+    // Call the floats
+    Critter@ trader = GetCritter(values[0]);
+    if(valid(trader))
+        trader.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, STR_FISH));
+    return GAME_MINUTE(Random(2, 5));
+}

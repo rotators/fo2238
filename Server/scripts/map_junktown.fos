@@ -1,0 +1,115 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_junktown.fos
+//
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "_defines.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+#include "msgstr.h"
+#include "world_common_h.fos"
+
+#include "npc_junktown_tasks.fos"
+#include "junktown_skumpitt.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    InitJunktownTasks();
+    InitSkumpittEvents();
+    // certainly
+
+    if(firstTime)
+    {
+        uint[] maxes = { 20, 20 };
+        SetAlertMap(map, maxes);
+    }
+
+}
+
+// Entrance at day
+void t_NearEntrance(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_JNK_PLAYER_ENTRANCE, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// Player enters the town
+void t_EntranceEnter(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    if(dir == 1 || dir == 2 || dir == 3)
+        return;
+
+    critter.SendMessage(MSG_JNK_PLAYER_ENTRANCE_ENTER, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+void _Gate(Item& item, bool firstTime)
+{
+    uint[] values = { item.Id, 0 };
+    CreateTimeEvent(AFTER(REAL_SECOND(5)), "e_SwitchGate", values, false);
+    item.SetEvent(ITEM_EVENT_SKILL, "_GateSkill");
+}
+
+bool _GateSkill(Item& item, Critter& crit, int skill)
+{
+    crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    return true;
+}
+
+uint e_SwitchGate(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    if(FLAG(item.LockerCondition, LOCKER_ISOPEN) && IsNight())
+    {
+        // to close
+        uint16   hx = 0, hy = 0;
+        Map@     map = item.GetMapPosition(hx, hy);
+        Critter@ cr = map.GetCritter(hx, hy);
+        if(valid(cr))
+        {
+            if(values[1] < 5)
+                cr.MoveRandom();
+            else
+                cr.ToDead(ANIM2_DEAD_BACK, null);
+            values[1]++;
+            return REAL_SECOND(1);
+        }
+
+        if(item.LockerClose())
+        {
+            values[1] = 0;
+            return REAL_MINUTE(1);
+        }
+        else
+            return REAL_SECOND(5);
+    }
+
+    if(!FLAG(item.LockerCondition, LOCKER_ISOPEN) && !IsNight())
+    {
+        // to open
+        if(item.LockerOpen())
+        {
+            values[1] = 0;
+            return REAL_MINUTE(1);
+        }
+        else
+            return REAL_SECOND(5);
+    }
+
+    // on init
+    return REAL_SECOND(5);
+}

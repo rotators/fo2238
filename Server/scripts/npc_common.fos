@@ -1,0 +1,782 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_common.fos
+//
+
+#ifndef __NPC_COMMON__
+#define __NPC_COMMON__
+
+#include "_colors.fos"
+#include "_macros.fos"
+#include "weap_anim_table_h.fos"
+#include "npc_common_h.fos"
+#include "npc_names_h.fos"
+#include "groups_h.fos"
+#include "messages_h.fos"
+#include "utils_h.fos"
+#include "npc_planes_h.fos"
+#include "reputations_h.fos"
+
+import bool IsTCTown(Map@ map) from "town";
+import void DropPoison(Critter& cr) from "poison";
+import void DropRadiation(Critter& cr) from "radiation";
+
+/**
+ * \~english @defgroup NPCCommon NPC Common
+ * Various functions related to NPCs/Critters.
+ * Include npc_common_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+bool AttackCritter(Critter& attacker, Critter& target, uint minhp)
+{
+    return AddAttackPlane(attacker, 0, target, minhp);
+}
+
+bool AttackCritter(Critter& attacker, Critter& target)
+{
+    return AttackCritter(attacker, target, __DeadHitPoints);
+}
+
+bool HasIntelligentBrain(Critter& cr)
+{
+    return (cr.Stat[ST_BODY_TYPE] == BT_MEN || cr.Stat[ST_BODY_TYPE] == BT_WOMEN ||
+            cr.Stat[ST_BODY_TYPE] == BT_SUPER_MUTANT || cr.Stat[ST_BODY_TYPE] == BT_GHOUL || cr.Stat[ST_BODY_TYPE] == BT_ROBOT) &&
+           (cr.Stat[ST_INTELLECT] > 1);
+}
+
+void UnsetCritterIllegalFlag(Critter& critter)
+{
+    Location@ loc = critter.GetMap().GetLocation();
+    UnsetCritterIllegalFlag(critter.Id, loc.GetProtoId());
+}
+
+void UnsetCritterIllegalFlag(Critter& critter, int location)
+{
+    UnsetCritterIllegalFlag(critter.Id, location);
+}
+
+void UnsetCritterIllegalFlag(uint id, int location)
+{
+    GameVar@ var = GetUnicumVar(UVAR_guard_illegal_flag, location, id);
+    if(valid(var))
+    {
+        #ifdef __DEBUG__
+        Critter@ cr = GetCritter(id);
+        if(valid(cr))
+            cr.Say(SAY_NETMSG, "Unsetting illegal flag on location " + location + ". Your id: " + id);
+        #endif
+        var = 0;
+    }
+}
+
+void SetCritterIllegalFlag(Critter& critter, int reason)
+{
+    Location@ loc = critter.GetMap().GetLocation();
+
+    if(!valid(loc))
+    {
+        Log("Location not valid, critter is on map with id: " + critter.GetMapId());
+        return;
+    }
+    if(!loc.IsTown())
+        return;
+
+    SetCritterIllegalFlag(critter, loc.GetProtoId(), reason);
+}
+
+void SetCritterIllegalFlag(Critter& critter, int location, int reason)
+{
+    if(!valid(critter))
+        return;
+
+    int[] data = { critter.Id, location };
+
+    GameVar@ var = GetUnicumVar(UVAR_guard_illegal_flag, location, critter.Id);
+    if(valid(var))
+    {
+        #ifdef __DEBUG__
+        critter.Say(SAY_NETMSG, "You have been flagged on location " + location  + " for " + reason + ". Your id: " + critter.Id);
+        #endif
+
+        if((var.GetValue() & reason) != 0)
+            return;
+
+        if(var.GetValue() == 0)
+            CreateTimeEvent(AFTER(REAL_MINUTE((60 + (5 * critter.Stat[ST_LEVEL])))), "e_UnsetIllegalFlag", data, true);
+
+        var = var.GetValue() | reason;
+        switch(reason)
+        {
+        case ILLEGAL_FLAG_STEALING:
+            SubReputation(critter, ReputationIndex(location), REP_FLAG_PENALTY / (critter.Perk[PE_HARMLESS] != 0 ? 8 : 4));
+            break;
+        default:
+            SubReputation(critter, ReputationIndex(location), REP_FLAG_PENALTY);
+        }
+    }
+}
+
+void PutAwayItems(Critter& critter)
+{
+    Item@ item1 = _CritGetItemHand(critter);
+    Item@ item2 = _CritGetItemHandExt(critter);
+
+    if(valid(item1))
+    {
+        _CritMoveItem(critter, item1, SLOT_INV);
+        critter.SetFavoriteItem(SLOT_HAND1, 0);
+    }
+    if(valid(item2))
+    {
+        _CritMoveItem(critter, item2, SLOT_INV);
+        critter.SetFavoriteItem(SLOT_HAND2, 0);
+    }
+}
+
+/**
+ * Get illegal flag status of critter in a specific location.
+ */
+int GetCritterIllegalFlag(Critter& critter, int location)
+{
+    GameVar@ var = GetUnicumVar(UVAR_guard_illegal_flag, location, critter.Id);
+    return var.GetValue();
+}
+
+/**
+ * Clear illegal flags in critter's current location.
+ */
+int GetCritterIllegalFlag(Critter& critter)
+{
+    Location@ loc = critter.GetMap().GetLocation();
+    return GetCritterIllegalFlag(critter, loc.GetProtoId());
+}
+
+/**
+ * Clear illegal flags in all towns
+ */
+void ClearIllegalFlags(Critter& critter)
+{
+    for(uint i = 1; i < 28; i++)
+        UnsetCritterIllegalFlag(critter, i);   // todo: scrap uvars here!
+}
+
+bool IsFlaggedAsIllegal(Critter& critter)
+{
+    if(!valid(critter))
+        return false;
+
+    Map@ map = critter.GetMap();
+    if(!valid(map))
+        return false;
+
+    Location@ loc = map.GetLocation();
+    if(!valid(loc))
+        return false;
+
+    return IsFlaggedAsIllegal(critter, loc.GetProtoId());
+}
+
+bool IsFlaggedAsIllegal(Critter& critter, int location)
+{
+    if(!valid(critter))
+        return false;
+    GameVar@ var = GetUnicumVar(UVAR_guard_illegal_flag, location, critter.Id);
+    if(valid(var))
+    {
+        return(var.GetValue() != 0);
+    }
+    else
+        return false;
+}
+
+/**
+ * Heal a critter.
+ * @param cr Critter handle.
+ * @remarks This function will remove poison, radiation, heal limbs and give the critter full HP.
+ */
+void Heal(Critter& cr)
+{
+    cr.DamageBase[DAMAGE_EYE] = 0;
+    cr.DamageBase[DAMAGE_RIGHT_ARM] = 0;
+    cr.DamageBase[DAMAGE_LEFT_ARM] = 0;
+    cr.DamageBase[DAMAGE_RIGHT_LEG] = 0;
+    cr.DamageBase[DAMAGE_LEFT_LEG] = 0;
+    cr.StatBase[ST_CURRENT_HP] = cr.Stat[ST_MAX_LIFE];
+    DropPoison(cr);
+    DropRadiation(cr);
+}
+
+/**
+ * Check if two critters has the same script assigned.
+ */
+bool HasSameScript(Critter& critter1, Critter& critter2)
+{
+    return(critter1.GetScriptId() == critter2.GetScriptId());
+}
+
+/**
+ * Check if a critter is in a specific location.
+ */
+bool IsInLocation(Critter& critter, int locationPID)
+{
+    if(!valid(critter.GetMap()))
+        return false;
+    return(critter.GetMap().GetLocation().GetProtoId() == uint(locationPID));
+}
+
+bool MoveByDir(Critter& critter, uint8 dir, uint steps, bool run)
+{
+    uint16 HexX, HexY;
+    HexX = critter.HexX;
+    HexY = critter.HexY;
+    critter.GetMap().MoveHexByDir(HexX, HexY, dir, steps);
+    return AddWalkPlane(critter, 0, HexX, HexY, dir, run, 0);
+}
+
+/**
+ * Gets all general purpose guards in a radius around given hex.
+ */
+uint GetNearGuards(Map@ map, uint16 hexX, uint16 hexY, uint radius, array<Critter@>@ crits)
+{
+    array<Critter@> critters;
+    uint            n = map.GetCrittersHex(hexX, hexY, radius, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters);
+    uint            num = 0;
+    for(uint i = 0; i < n; i++)
+        if(_CritHasExtMode(critters[i], MODE_EXT_GUARD))
+        {
+            crits.insertLast(critters[i]);
+            num++;
+        }
+    return num;
+}
+
+/**
+ * Gets all faction guards in a radius around given hex.
+ */
+uint GetNearFactionGuards(Map@ map, uint16 hexX, uint16 hexY, uint radius, uint faction, array<Critter@>@ crits)
+{
+    array<Critter@> critters;
+    uint            n = map.GetCrittersHex(hexX, hexY, radius, FIND_LIFE_AND_KO | FIND_ONLY_NPC, critters);
+    uint            num = 0;
+    for(uint i = 0; i < n; i++)
+        if(critters[i].Stat[ST_TEAM_ID] == int(faction) && critters[i].Stat[ST_FACTION_MODE] > 0 && critters[i].Stat[ST_FACTION_MODE] < 5)
+        {
+            crits.insertLast(critters[i]);
+            num++;
+        }
+    return num;
+}
+
+/**
+ * Arm the best weapon available to the NPC.
+ * @remarks Firstly, weapons of the best skill of the NPC is tried, then in the following order: SK_BIG_GUNS, SK_ENERGY_WEAPONS, SK_SMALL_GUNS, SK_THROWING, SK_MELEE_WEAPONS
+ */
+Item@ ArmBestWeapon(Critter& critter)
+{
+    uint bestskill = GetBestWeaponSkill(critter);
+    int[] skills = { bestskill, SK_BIG_GUNS, SK_ENERGY_WEAPONS, SK_SMALL_GUNS, SK_THROWING, SK_MELEE_WEAPONS };
+
+    array<Item@> items;
+    uint         num = critter.GetItems(SLOT_INV, items);
+
+    for(uint i = 0; i < skills.length(); i++)
+    {
+        for(uint y = 0; y < num; y++)
+        {
+            if(items[y].GetType() == ITEM_TYPE_WEAPON && GetProtoItem(items[y].GetProtoId()).Weapon_Skill_0 == skills[i])
+            {
+                if(CanUseWeapon(critter, items[y]))
+                {
+                    _CritMoveItem(critter, items[y], SLOT_HAND1);
+                    critter.SetFavoriteItem(SLOT_HAND1, items[y].GetProtoId());
+                    return items[y];
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Tries to arm NPC with its favorite weapon.
+ */
+Item@ ArmFavoriteWeapon(Critter& critter)
+{
+    uint16 pid = critter.GetFavoriteItem(SLOT_HAND1);
+
+    Item@  weapon = critter.GetItem(pid, -1);
+
+    if(valid(weapon))
+    {
+        critter.MoveItem(weapon.Id, 1, SLOT_HAND1);
+    }
+
+    return weapon;
+}
+
+#define _FreeHex      (map.IsHexPassed(hx, hy) && @ (map.GetCritter(hx, hy)) == null)
+#define _AddHex                                                                  \
+    do { coordsX.insertLast(hx); coordsY.insertLast(hy); free++; if(free == num) \
+             return; } while(false)
+#define _OldHex       (hx == px && hy == py)
+
+void FindFreeHexes(Map@ map, uint16 hexX, uint16 hexY, int& num, array<uint16>& coordsX, array<uint16>& coordsY)
+{
+    if(num == 0)
+        return;
+    int    free = 0;
+    uint16 hx = hexX;
+    uint16 hy = hexY;
+    uint16 px = 0;
+    uint16 py = 0;
+    if(_FreeHex)
+        _AddHex;
+    for(uint8 dir = 0; dir < 6; dir++)
+    {
+        hx = hexX;
+        hy = hexY;
+        px = hx;
+        py = hy;
+        map.MoveHexByDir(hx, hy, dir, 1);
+        if(_OldHex || !_FreeHex)
+            continue;
+        _AddHex;
+    }
+
+    for(uint8 dir = 0; dir < 6; dir++)
+    {
+        hx = hexX;
+        hy = hexY;
+        px = hx;
+        py = hy;
+        map.MoveHexByDir(hx, hy, dir, 1);
+        if(_OldHex)
+            continue;
+        px = hx;
+        py = hy;
+        map.MoveHexByDir(hx, hy, dir, 1);
+        if(_OldHex || !_FreeHex)
+            continue;
+        _AddHex;
+    }
+
+    for(uint8 dir = 0; dir < 6; dir++)
+    {
+        hx = hexX;
+        hy = hexY;
+        px = hx;
+        py = hy;
+        map.MoveHexByDir(hx, hy, dir, 1);
+        if(_OldHex)
+            continue;
+        px = hx;
+        py = hy;
+        map.MoveHexByDir(hx, hy, (dir + 1) % 6, 1);
+        if(_OldHex || !_FreeHex)
+            continue;
+        _AddHex;
+    }
+    num = free;
+}
+
+#define _ReturnHex    outX = hx; outY = hy; return true
+// search near area for free hex
+bool FindNearestFreeHex(Map@ map, uint16 hexX, uint16 hexY, uint16& outX, uint16& outY)
+{
+    uint16 hx = hexX;
+    uint16 hy = hexY;
+    uint16 px = 0;
+    uint16 py = 0;
+    if(_FreeHex)
+    {
+        _ReturnHex;
+    }
+    for(uint8 dir = 0; dir < 6; dir++)
+    {
+        for(uint i = 1; i <= 2; i++)
+        {
+            hx = hexX;
+            hy = hexY;
+            px = hx;
+            py = hy;
+            map.MoveHexByDir(hx, hy, dir, i);
+            if(_OldHex || !_FreeHex)
+                continue;
+            _ReturnHex;
+        }
+    }
+    return false;
+}
+
+bool Flee(Critter& cr)
+{
+    return Flee(cr, true);
+}
+
+/**
+ * Flee to worldmap via closest exitgrid
+ */
+bool Flee(Critter& cr, bool Run)
+{
+    uint16 hx = cr.HexX;
+    uint16 hy = cr.HexY;
+
+    // follower.Say(SAY_SHOUT, "I'm outta here!");
+
+    if(FindPreferredGridApprox(cr.GetMap(), hx, hy))
+    {
+        cr.ErasePlane(AI_PLANE_WALK, true);
+        cr.ErasePlane(AI_PLANE_ATTACK, true);
+        DLog("Found exit at: " + hx + "," + hy);
+        return AddWalkPlane(cr, 60, PLANE_GOTO_EXIT, 0, hx, hy, 0xFF, Run, 1);
+    }
+    else
+        Log("Unable to find exitgrid to flee to on map PID " + cr.GetMapProtoId() + "!");
+
+    return false;
+}
+
+/**
+ * Issue random walk for a critter to a hex in stepDist distance, as long as the actual distance
+ * to home pos is less than maxDist. In this case, it issues walkplane closely to homepos.
+ *
+ * @param maxDist Max distance in hexes.
+ * @param stepDist Step distance, the actual distance of single move
+ */
+void MoveRandom(Critter& npc, uint maxDist)
+{
+    MoveRandom(npc, maxDist, maxDist / 2, false);
+}
+
+void MoveRandom(Critter& npc, uint maxDist, bool Run)
+{
+    MoveRandom(npc, maxDist, maxDist / 2, false);
+}
+
+void MoveRandom(Critter& npc, uint maxDist, uint stepDist, bool Run)
+{
+    uint   dummy;
+    uint8  dummy2;
+    uint16 hx = 0, hy = 0;
+    // home position
+    npc.GetHomePos(dummy, hx, hy, dummy2);
+
+    // don't get too far away
+    uint16 dist = GetDistantion(npc.HexX, npc.HexY, hx, hy);
+    if(dist < maxDist)
+        AddWalkPlane(npc, 0, PLANE_WANDER, 0, npc.HexX + Random(-stepDist, stepDist), npc.HexY + Random(-stepDist, stepDist), 0xff, Run, 0);
+    else
+    {
+        // come a lil' bit closer
+        AddWalkPlane(npc, 0, PLANE_WANDER, 0, hx + Random(-maxDist, maxDist), hy + Random(-maxDist, maxDist), 0xff, Run, 0);
+    }
+}
+
+
+
+/**
+ * Checks if a critter can use a weapon (has an animation for it).
+ * @param critter Critter handle.
+ * @param proto Proto Id of the weapon to check.
+ */
+bool CanUseWeapon(Critter& critter, uint proto)
+{
+    ProtoItem@ item = GetProtoItem(proto);
+    if(valid(item))
+        return critter.IsAnim1(item.Weapon_Anim1);
+    return false;
+}
+
+/**
+ * Checks if a critter can use a weapon (has an animation for it).
+ * @param critter Critter handle.
+ * @param weapon Weapon to check.
+ */
+bool CanUseWeapon(Critter& critter, Item@ weapon)
+{
+    return CanUseWeapon(critter, weapon.GetProtoId());
+}
+
+/**
+ * Checks if a critter can't use a weapon from a specific bag.
+ * @param critter Critter handle.
+ * @param bag BagId to check.
+ * @return If no weapons are found at all, or if all weapons are usable, true. Otherwise, false.
+ * @remarks Usable here refers to them having the animations needed to use the weapon.
+ */
+bool HasUnusableWeapon(Critter& critter, uint bag)
+{
+    return HasUnusableWeapon(critter.GetProtoId(), bag);
+}
+
+
+/**
+ * Checks if a critter can't use a weapon in his inventory.
+ * @param critter Critter handle.
+ * @return If no weapons are found at all, or if all weapons are usable, true. Otherwise, false.
+ * @remarks Usable here refers to them having the animations needed to use the weapon.
+ */
+bool HasUnusableWeapon(Critter& critter)
+{
+    array<Item@> items;
+    uint         num = critter.GetItems(-1, items);
+
+    for(uint i = 0; i < num; i++)
+    {
+        if(items[i].GetType() == ITEM_TYPE_WEAPON && !CanUseWeapon(critter.GetProtoId(), items[i].GetProtoId()))
+            return true;
+    }
+    return false;
+}
+
+
+/**
+ * Checks if a critter PID can't use a weapon from a specific bag.
+ * @param crpid Critter PID.
+ * @param bag BagId to check.
+ * @return If no weapons are found at all, or if all weapons are usable, true. Otherwise, false.
+ * @remarks Usable here refers to them having the animations needed to use the weapon.
+ */
+bool HasUnusableWeapon(uint crpid, uint bag)
+{
+    uint          crtype = GetCrType(crpid);
+
+    array<uint>   mincounts, maxcounts;
+    array<int>    slots;
+    array<uint16> pids;
+    uint          num = GetBagItems(bag, pids, mincounts, maxcounts, slots);
+    for(uint y = 0; y < num; y++)
+    {
+        ProtoItem@ item = GetProtoItem(pids[y]);
+        if(item.Type == ITEM_TYPE_WEAPON && !CanUseWeapon(crtype, pids[y]))
+            return true;
+    }
+    return false;
+}
+
+/**
+ * The critter will wait for the specified time without getting busy (it can speak to players).
+ * @param critter Critter handle.
+ * @param waittime Time in ms.
+ */
+void AddWaitPlan(Critter& critter, uint waittime)
+{
+    AddMiscPlane(critter, 0, AFTER(REAL_MS(waittime)), null);
+}
+
+// report attack/death in encounter etc.
+void TryReportOffense(Critter@ cr, Critter@ offender, int reputationdrop)
+{
+    if(!valid(cr) || !valid(offender))
+        return;
+    if(valid(_CritGetItemHandExt(cr)) && _CritGetItemHandExt(cr).GetProtoId() == PID_RADIO)
+        SubReputation(offender, _GroupIndex(cr), reputationdrop);
+}
+
+string GetStoredFirstName(Critter& critter)
+{
+    GameVar@ first = GetLocalVar(LVAR_npc_name_first, critter.Id);
+    if(first != -1)
+        return GetFirstName(critter.Stat[ST_GENDER], first.GetValue());
+    return "";
+}
+
+// Get name stored in lvars
+string GetStoredName(Critter& critter)
+{
+    GameVar@ first = GetLocalVar(LVAR_npc_name_first, critter.Id);
+    GameVar@ gnick = GetLocalVar(LVAR_npc_name_nicktype, critter.Id);
+    GameVar@ nick = GetLocalVar(LVAR_npc_name_nick, critter.Id);
+    GameVar@ surname = GetLocalVar(LVAR_npc_name_surname, critter.Id);
+
+    string   crName = "";
+    if(first != -1)
+        crName += GetFirstName(critter.Stat[ST_GENDER], first.GetValue()) + " ";
+    if(nick != -1)
+        crName += GetNick(critter.Stat[ST_GENDER], nick.GetValue(), (gnick.GetValue() == 1 ? true : false)) + " ";
+    if(surname != -1)
+        crName += GetSurname(surname.GetValue());
+    return crName;
+}
+
+// Generate a new name and save it
+string GenerateNewName(Critter& critter)
+{
+    string crName = "";
+
+    int    firstname = -1;
+    bool   gendernick = false;
+    int    nick = -1;
+    int    surname = -1;
+
+    switch(critter.Stat[ST_BODY_TYPE])
+    {
+    case BT_MEN:
+    case BT_WOMEN:
+        crName = GetRandomFullName(critter.Stat[ST_GENDER], firstname, gendernick, nick, surname);
+        break;
+    case BT_GHOUL:
+    case BT_SUPER_MUTANT:
+        crName = GetRandomFirstName(critter.Stat[ST_GENDER], firstname);
+        break;
+    default:
+        break;
+    }
+
+    // save indices
+    GameVar@ varfirst = GetLocalVar(LVAR_npc_name_first, critter.Id);
+    varfirst = firstname;
+    GameVar@ vargnick = GetLocalVar(LVAR_npc_name_nicktype, critter.Id);
+    vargnick = (gendernick ? 1 : 0);
+    GameVar@ varnick = GetLocalVar(LVAR_npc_name_nick, critter.Id);
+    varnick = nick;
+    GameVar@ varsurname = GetLocalVar(LVAR_npc_name_surname, critter.Id);
+    varsurname = surname;
+    return crName;
+}
+
+/**
+ * Gather all critters from a map that share the given script, and comply to the search parameters.
+ * @param map Map to take the critters from.
+ * @param pid Critters pid, 0 to take all.
+ * @param findType Critters type and state, same as for generic find functions.
+ * @param scriptName Name of the script, if module is not given then current is used.
+ * @param funcDeclaration Declaration of the function in format retval %s(args).
+ * @param critters Array of critters to be filled with critters, or a null handle.
+ * @return Number of critters found.
+ */
+uint GetCrittersWithScript(Map& map, uint16 pid, uint findType, string& scriptName, string& funcDeclaration, array<Critter@>@ critters)
+{
+    uint id = GetScriptId(scriptName, funcDeclaration);
+    if(id == 0)
+        return 0;
+    bool            validCritters = valid(critters);
+    array<Critter@> crits;
+    uint            n = 0;
+    for(uint i = 0, j = map.GetCritters(pid, findType, crits); i < j; i++)
+    {
+        Critter@ cr = crits[i];
+        if(cr.GetScriptId() == id)
+        {
+            if(validCritters)
+                critters.insertLast(cr);
+            n++;
+        }
+    }
+    return n;
+}
+
+uint GetCrittersLoc(Location& loc, uint16 pid, uint findType, array<Critter@>@ critters)
+{
+    uint        num = 0;
+    array<Map@> maps;
+    for(uint i = 0, j = loc.GetMaps(maps); i < j; i++)
+    {
+        num += maps[i].GetCritters(pid, findType, critters);
+    }
+    return num;
+}
+
+void SetDeleteEvent(Critter& cr, uint time)   // time is in game seconds
+{
+    cr.AddTimeEvent("cte_Delete", time, CTE_DELETE, 0);
+}
+
+void DropDeleteEvent(Critter& cr)
+{
+    cr.EraseTimeEvents(CTE_DELETE);
+}
+
+uint cte_Delete(Critter& cr, int identifier, uint& rate)
+{
+    if(valid(cr.GetCurPlane()) || cr.IsKnockout())
+        return REAL_SECOND(10);
+    if(cr.IsDead())
+        return 0;
+
+    // todo: true global walk away plane
+    DeleteNpc(cr);
+    return 0;
+}
+
+/**
+ * \~english @name Dialog functions
+ *
+ * \~ @weight 420
+ */
+// @{
+
+void r_MoveRandom(Critter& player, Critter@npc, int val)
+{
+    npc.MoveRandom();
+}
+
+/**
+ * Checks if a party has specified numbers of members.
+ * @param num The amount of players to check for.
+ * @remarks A player is considered to be in the party if he has tagged the leader and is within 8 hexes of the leader.
+ */
+bool d_HasNumPlayersInParty(Critter& leader, Critter@npc, int num)
+{
+    #ifdef __DEBUG__
+    return true;
+    #endif
+    #ifndef __DEBUG__
+    int             nearmembers = 0;
+
+    array<Critter@> crits;
+    uint            number = leader.GetFollowGroup(FIND_ALL, crits);
+    for(uint i = 0; i < number; i++)
+    {
+        if((GetCrittersDistantion(leader, crits[i]) < 8))
+            nearmembers++;
+    }
+
+    return(nearmembers >= num);
+    #endif
+}
+
+/**
+ * Checks if a party has NOT specified numbers of members.
+ * @param num The amount of players to check for.
+ * @remarks A player is considered to be in the party if he has tagged the leader and is within 8 hexes of the leader.
+ */
+bool d_HasNotNumPlayersInParty(Critter& leader, Critter@npc, int val)
+{
+    return !(d_HasNumPlayersInParty(leader, npc, val));
+}
+// @}
+
+
+/*@}*/
+
+void TransferToNPCMap(Critter& critter)
+{
+    Map@ npcmap = GetMapByPid(MAP_BufferMap, 0);
+    Map@ map = critter.GetMap();
+
+    if(!valid(npcmap))
+    {
+        Log("NPC map is invalid! Couldn't transfer NPC to buffer map");
+        return;
+    }
+
+    if(critter.GetMapId() != npcmap.Id)
+    {
+        DLog("Transfering to NPC map");
+        critter.TransitToMap(npcmap.Id, 0);
+        ClearEnemyStack(critter);
+    }
+}
+
+// Event that removes flag from certain location after some time, instead of removing on death
+uint e_UnsetIllegalFlag(array<uint>@ values)
+{
+    UnsetCritterIllegalFlag(values[0], values[1]);
+    return 0;
+}
+#endif

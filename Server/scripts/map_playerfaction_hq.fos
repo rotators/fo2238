@@ -1,0 +1,167 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_playerfaction_hq.fos
+//
+
+#include "_macros.fos"
+
+#include "factions_h.fos"
+#include "factions_bases_h.fos"
+#include "utils_h.fos"
+#include "mapdata_h.fos"
+
+//
+// Generic map script for player factions locations
+//
+
+//
+// Initialize map
+//
+void map_init(Map& map, bool firstTime)
+{
+    // this have to be set before
+    uint factionId = map.GetData(MAP_DATA_FACTION);
+    if(factionId == 0)
+    {
+        Log("ERR: Faction id hasn't been assigned for map");
+    }
+
+    // create IFactionBase object
+    IFactionBase@ base = GetFactionBaseByLocId(map.GetLocation().Id);
+    if(!valid(base))
+    {
+        AddFactionBase(map.GetLocation().Id);
+    }
+
+    // assign event handlers
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnInCritter");
+    map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_Dead");
+    map.SetEvent(MAP_EVENT_FINISH, "_Finish");
+}
+
+// removes data associated with faction base if map is going to be deleted
+void _Finish(Map& map, bool todelete)
+{
+    if(todelete)
+    {
+        IFactionBase@ base = GetFactionBaseByLocId(map.GetLocation().Id);
+        if(valid(base))
+        {
+            base.Remove();
+        }
+    }
+}
+// set this location as visible to player when he enters
+// but only when he is friend of the faction
+void _OnInCritter(Map& map, Critter& crit)
+{
+    if(!crit.IsPlayer())
+        return;
+
+    uint faction = map.GetData(MAP_DATA_FACTION);
+    int  status = GetStatus(faction, crit.Id);
+    uint locId = map.GetLocation().Id;
+
+    if(status == STATUS_FRIEND && !crit.IsKnownLoc(true, locId))
+    {
+        crit.Say(SAY_NETMSG, "You've entered area of group who consider you a friend.");
+        crit.Say(SAY_NETMSG, "You now know the way to that location.");
+        crit.SetKnownLoc(true, locId);
+        DLog("Setting KnownLoc " + locId + " for player " + crit.Id);
+    }
+    // for players that forgot a way to location due to various circumstances (clear db, anyone?)
+    if(IsMember(faction, crit) && !crit.IsKnownLoc(true, locId))
+    {
+        crit.Say(SAY_NETMSG, "You now know the way to your gang hideout.");
+        crit.SetKnownLoc(true, locId);
+        DLog("Setting KnownLoc " + locId + " for player " + crit.Id);
+    }
+}
+
+//
+// If faction member killed leader on faction ground,
+// and there is someone who claimed leadership
+// the leader cease to be leader, so that claimee can claim leadership
+// if claimee dies on the faction ground, he cease to be claimee too
+//
+// If not member is killed by member or follower of member, he no longer can see the location
+// If a faction friend/invited person kills a faction member inside faction base, he is removed from faction friends/invited
+void _Dead(Map& map, Critter& player, Critter@ killer)
+{
+    if(player.IsNpc())   // hehe
+        return;
+    uint faction = GetGroupIndex(player);
+    // if(faction == FACTION_NONE || faction == FACTION_UNKNOWN)
+    //    return;
+    uint mapFaction = map.GetData(MAP_DATA_FACTION);
+    // check if player was slain on his own territory
+    if(mapFaction > 1 && mapFaction == faction)
+    {
+        DLog("Member died on faction ground");
+
+        // If a faction friend or invited player kills a faction member in the base, the player loses the friend/invited status.
+        if(GetGroupIndex(killer) != faction)
+        {
+            uint status = GetStatus(mapFaction, killer.Id);
+            if(status == STATUS_FRIEND)
+            {
+                ModifyStatus(mapFaction, killer.Id, STATUS_UNKNOWN);
+                killer.Say(SAY_NETMSG, "You killed a member of the faction on his faction ground. You are no longer considered a friend of the faction.");
+            }
+            else if(status == STATUS_INVITED)
+            {
+                ModifyStatus(mapFaction, killer.Id, STATUS_UNKNOWN);
+                killer.Say(SAY_NETMSG, "You killed a member of the faction on his faction ground. You are no longer invited to the faction.");
+            }
+        }
+
+        if(player.Id == GetLeaderId(faction))
+        {
+            DLog("Leader killed on his faction ground");
+            if(GetClaimId(faction) != 0)
+            {
+                DLog("There is claim, so leader loses his leadership");
+                ChangeRank(faction, player.Id, RANK_ACCEPTED);
+                SetLeaderId(faction, 0);
+                // add news
+                AddFactionNews(faction, player.Id, 0, NEWS_OVERTHROWN);
+            }
+        }
+        if(player.Id == GetClaimId(faction))
+        {
+            DLog("Claimee killed on his faction ground, he loses his claim");
+            SetClaimId(faction, 0);
+        }
+
+
+
+    }
+    // non-member, he won't be able to access map again if killed by member or follower of member
+    else
+    {
+        DLog("Non-member died on faction ground.");
+        uint locId = map.GetLocation().Id;
+        if(player.IsKnownLoc(true, locId))
+        {
+            if((killer.Param[ST_TEAM_ID] > 1 && uint(killer.Param[ST_TEAM_ID]) == mapFaction) ||
+               (killer.Param[FV_FACTION] > 1 && uint(killer.Param[FV_FACTION]) == mapFaction))
+            {
+                player.UnsetKnownLoc(true, locId);
+                player.Say(SAY_NETMSG, "You were slain on faction ground by a member of the faction. You no longer can access this area.");
+                uint status = GetStatus(mapFaction, player.Id);
+                if(status == STATUS_FRIEND)
+                {
+                    ModifyStatus(mapFaction, player.Id, STATUS_UNKNOWN);
+                    player.Say(SAY_NETMSG, "You are no longer considered a friend of the faction.");
+                }
+                else if(status == STATUS_INVITED)
+                {
+                    ModifyStatus(mapFaction, player.Id, STATUS_UNKNOWN);
+                    player.Say(SAY_NETMSG, "You are no longer invited to the faction.");
+                }
+            }
+        }
+    }
+}

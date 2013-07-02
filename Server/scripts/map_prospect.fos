@@ -1,0 +1,29 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_prospect.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+//
+// Map data:
+// 0 - prospect owner (only for 1st map within location, see prospects.fos)
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_CritterDead");
+}
+
+// this removes npcs items because main script won't do this as prospects are not technically towns
+void _CritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+    if(cr.IsNpc() && !_IsFollower(cr))
+    {
+        array<Item@> items;
+        cr.GetItems(-1, items);
+        DeleteItems(items);
+    }
+}

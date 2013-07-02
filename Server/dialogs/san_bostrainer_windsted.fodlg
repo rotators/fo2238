@@ -1,0 +1,255 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+75 1010 D _var p q_bos_initiatequest_start } 27 #
+70 1020 D _var p q_bos_initiatequest_start = 26 #
+60 1030 D _var p q_bos_initiatequest_start = 20 #
+18 1040 D _var p q_bos_initiatequest_start } 15 D _var p q_bos_initiatequest_start { 19 D or D _var p q_bos_initiatequest_start } 21 D _var p q_bos_initiatequest_start { 25 #
+50 1050 D _var p faction_bos_quartermaster = 2 #
+24 1060 D _var p q_bos_initiatequest_start = 14 #
+20 1070 D _var p q_bos_initiatequest_start = 12 D _param p ST_LUCK } 9 #
+18 1080 D _var p q_bos_initiatequest_start = 12 D or D _var p q_bos_initiatequest_start = 13 #
+9 1090 D _script dialog@d_IsNotMemberOf 1 FACTION_BOS #
+6 1100 D _var p q_bos_initiatequest_start ! 0 D _var p q_bos_initiatequest_start ! 11 #
+12 1110 D _var p q_bos_initiatequest_start = 11 #
+3 1120 D _var p faction_bos_home ! 1 D _var p faction_bos_home ! 2 R _var p q_bos_initiatequest_start = 0 R _var p faction_bos_home = 3 @
+3 2000 None 0 #
+4 2010 #
+5 2020 @
+4 3000 None 0 #
+0 3010 R _var p q_bos_initiatequest_start = 1 #
+5 3020 @
+5 4000 None 0 @
+6 5000 None 0 #
+7 5010 D _item p PID_SCORPION_TAIL } 10 R _param p REPUTATION_BOS + 300 R _param p ST_EXPERIENCE + 300 R _var p q_bos_initiatequest_start = 11 R _item p PID_SCORPION_TAIL - 10 #
+10 5020 D _var p q_bos_initiatequest_start { 10 D _item p PID_SCORPION_TAIL } 1 R _var p q_bos_initiatequest_start + 1 R _item p PID_SCORPION_TAIL - 1 #
+10 5030 D _var p q_bos_initiatequest_start { 6 D _item p PID_SCORPION_TAIL } 5 R _var p q_bos_initiatequest_start + 5 R _item p PID_SCORPION_TAIL - 5 #
+11 5040 @
+7 6000 None 0 #
+13 6010 @
+8 7000 None 0 @
+9 8000 Attack 0 @
+10 9000 None 0 #
+7 9010 D _var p q_bos_initiatequest_start = 11 R _param p REPUTATION_BOS + 300 R _param p ST_EXPERIENCE + 300 #
+11 9020 D _var p q_bos_initiatequest_start < 11 @
+11 10000 None 0 @
+12 11000 None 0 #
+13 11010 @
+13 12000 None 0 #
+14 12010 @
+14 13000 None 0 #
+15 13010 @
+15 14000 None 0 #
+16 14010 #
+16 14020 #
+0 14030 R _var p q_bos_initiatequest_start = 12 @
+16 15000 None 0 #
+17 15010 R _var p q_bos_initiatequest_start = 12 @
+17 16000 None 0 @
+18 17000 None 0 #
+19 17010 D _var p q_bos_initiatequest_start = 13 R _var p q_bos_initiatequest_start = 14 R _param p REPUTATION_BOS + 500 R _param p ST_EXPERIENCE + 750 #
+54 17020 D _var p q_bos_initiatequest_start = 16 #
+55 17030 D _var p q_bos_initiatequest_start = 17 #
+56 17040 D _var p q_bos_initiatequest_start = 18 #
+57 17050 D _var p q_bos_initiatequest_start = 19 #
+64 17060 D _var p q_bos_initiatequest_start = 22 #
+65 17070 D _var p q_bos_initiatequest_start = 23 #
+66 17080 D _var p q_bos_initiatequest_start = 24 #
+67 17090 D _var p q_bos_initiatequest_start = 25 #
+22 17100 @
+19 18000 None 0 #
+0 18010 @
+20 19000 None 0 #
+23 19010 R _var p q_bos_initiatequest_start = 14 R _param p REPUTATION_BOS + 500 R _param p ST_EXPERIENCE + 750 @
+22 20000 None 0 @
+23 21000 None 0 #
+0 21010 @
+24 22000 None 0 #
+0 22010 @
+50 23000 None 0 #
+51 23010 @
+51 24000 None 0 #
+52 24010 @
+52 25000 None 0 #
+53 25010 @
+53 26000 None 0 #
+0 26010 R _var p q_bos_initiatequest_start = 15 @
+54 27000 None 0 #
+58 27010 R _var p q_bos_initiatequest_start = 20 R _var p factions_points_bos + 200 @
+55 28000 None 0 #
+59 28010 R _var p q_bos_initiatequest_start = 20 R _var p factions_points_bos + 300 @
+56 29000 None 0 #
+58 29010 R _var p q_bos_initiatequest_start = 20 R _var p factions_points_bos + 200 R _param p REPUTATION_BOS + 300 @
+57 30000 None 0 #
+59 30010 R _var p q_bos_initiatequest_start = 20 R _var p factions_points_bos + 300 R _param p REPUTATION_BOS + 300 @
+58 31000 None 0 #
+61 31010 #
+0 31020 @
+59 32000 None 0 #
+61 32010 #
+0 32020 @
+60 33000 None 0 #
+61 33010 @
+61 34000 None 0 #
+62 34010 @
+62 35000 None 0 #
+63 35010 @
+63 36000 None 0 #
+0 36010 R _var p q_bos_initiatequest_start = 21 @
+64 37000 None 0 #
+68 37010 @
+65 38000 None 0 #
+69 38010 @
+66 39000 None 0 #
+68 39010 @
+67 40000 None 0 #
+69 40010 @
+68 41000 None 0 #
+70 41010 R _var p factions_points_bos + 500 R _var p q_bos_initiatequest_start = 26 R _param p ST_EXPERIENCE + 750 R _param p REPUTATION_BOS + 500 @
+69 42000 None 0 #
+70 42010 R _var p factions_points_bos + 750 R _var p q_bos_initiatequest_start = 26 R _param p ST_EXPERIENCE + 1000 R _param p REPUTATION_BOS + 750 @
+70 43000 None 0 #
+71 43010 #
+0 43020 @
+71 44000 None 0 #
+72 44010 @
+72 45000 None 0 #
+73 45010 @
+73 46000 None 0 #
+74 46010 R _var p q_bos_initiatequest_start = 27 R _item p PID_PULSE_GRENADE + 2 R _script quest_bos_initiate@r_SpawnBunker 0  @
+74 47000 None 0 #
+0 47010 @
+75 48000 None 0 &
+
+[engl]
+{100}{}{Paladin Windsted}
+{200}{}{You see Paladin Windsted.}
+{210}{}{You see Paladin Windsted of the Brotherhood of Steel.}
+{240}{}{You see a dead Brotherhood Paladin.}
+{260}{}{You see a slain Brotherhood Paladin.}
+{1000}{}{Predialogue installations}
+{1010}{}{Done here}
+{1020}{}{Final senior initiate mission}
+{1030}{}{1/2 senior initiate}
+{1040}{}{Recon/supply quests}
+{1050}{}{Senior initiate}
+{1060}{}{Ready for first promotion}
+{1070}{}{2nd quest, Lucky}
+{1080}{}{2nd quest started}
+{1090}{}{Not BoS member.}
+{1100}{}{Not ugly. Quest in progress.}
+{1110}{}{Not ugly. First quest completed.}
+{1120}{}{Not ugly. First quest not started.}
+{2000}{}{You interested in helping out the Brotherhood @sex@|boy||girl|?}
+{2010}{}{Yes sir! Here to serve the Brotherhood.}
+{2020}{}{Nope. I'm just here for the title.}
+{3000}{}{For a grunt like you, you get exactly what you deserve, grunt work. Pretty basic stuff...Bring me back ten radscorpion tails to prove you're worth my time.}
+{3010}{}{On it sir!}
+{3020}{}{I don't think so...}
+{4000}{}{Why do we keep scum like you around?}
+{5000}{}{Have you filled my request, grunt?}
+{5010}{}{Yes sir! I have all of them.}
+{5020}{}{I have one, sir!}
+{5030}{}{I have five, sir!}
+{5040}{}{No sir. I'm working on it now.}
+{6000}{}{Good job. But there's still work to be done so quit standing around!}
+{6010}{}{I'm ready, sir.}
+{7000}{}{I don't have anything for you to do. Quit bothering me.}
+{8000}{}{How did you get in here? Brothers, kill this spy!}
+{9000}{}{Well?}
+{9010}{}{I'm finished, sir!}
+{9020}{}{I'll get back to work...}
+{10000}{}{Can't even finish the job....Damn right you're getting back to work. And stop being so useless!}
+{11000}{}{Are you ready for your next test, Recruit?}
+{11010}{}{Ready, sir!}
+{12000}{}{Good. Your first assignment tested your combat skills. This one will test both your loyalty and your ability to obtain information. You are to travel to Navarro, the headquarters of the Enclave, and retrieve information.}
+{12010}{}{[continue]}
+{13000}{}{At the entrance to their base, there is an old, rundown gas station where their lookout lives. Gain access to the area surrounded by chain link fence. A suspicious red device is contained there.}
+{13010}{}{[continue]}
+{14000}{}{ In doing this, you are to use any means necessary, but DO NOT KILL HIM. We cannot raise any suspicions among the Enclave. Identify the red object and return to me when you've identified it.}
+{14010}{}{A suspicious red device? What the hell is this crap? You don't have anything better for me to do?}
+{14020}{}{Sir, if I may, isn't there something more worthwhile the Brotherhood would have me do?}
+{14030}{}{Absolutely, sir!}
+{15000}{}{I understand your concern, but as a Recruit of the Brotherhood of Steel, you are to follow orders without question. Is this clear?}
+{15010}{}{Yes sir! Consider it done!}
+{16000}{}{Good. Now get on it.}
+{17000}{}{What's the status of your mission?}
+{17010}{}{That Nuka-Cola Machine hasn't been touched since the war, sir.}
+{17020}{}{I've investigated and there's nothing but an empty farm.}
+{17030}{}{I've investigated and there's a colony of people living in an old underground bunker.}
+{17040}{}{Eldridge apologized and said that the caravan he sent out was robbed. The money is being returned. }
+{17050}{}{There was a slight delay, but I helped Eldridge's caravan get back on track. They should be here soon.}
+{17060}{}{I've delivered the parts, sir.}
+{17070}{}{I was able to repair the hummer, sir.}
+{17080}{}{I was able to get Snyder moving again, sir.}
+{17090}{}{I was able to patch up Snyder's leg, sir.}
+{17100}{}{I have yet to locate the objective.}
+{18000}{}{Well done. You've proven yourself to the Brotherhood. Speak to our quartermaster for additional orders.}
+{18010}{}{Will do, sir.}
+{19000}{}{Have you found the Nuka-Cola Machine yet? Oh God damn it!}
+{19010}{}{...}
+{20000}{}{Well what are you doing here? Get back on your mission!}
+{21000}{}{Eh, what the hell. Not like I can send you back out. I'll consider your mission completed for catching me off-guard. Speak to our quartermaster for additional orders.}
+{21010}{}{Will do, sir.}
+{22000}{}{Finish your business with the quartermaster and then I may have something else for you to do.}
+{22010}{}{Goodbye, sir.}
+{23000}{}{You've received your weapon and armor, now you're ready for real missions.}
+{23010}{}{I am, sir!}
+{24000}{}{Because the missions each require one person, I'll give you a choice of which to complete. I'd suggest you choose based on your abilities.}
+{24010}{}{What are my missions, sir?}
+{25000}{}{There's an area northeast of Modoc that the locals call the Ghost Farm. I want you to go up there and collect any information you can about the area.}
+{25010}{}{And the other mission, sir?}
+{26000}{}{The quartermaster has informed me that our latest shipment of weapons hasn't arrived on time, and we'd like to know why not. Visit the gun shop in New Reno and either return with his word that they're coming, or bring our caps back.}
+{26010}{}{I won't let you down, sir.}
+{27000}{}{I guess those locals must be drinking irradiated water. Mission accomplished.}
+{27010}{}{Thank you, sir.}
+{28000}{}{A settlement of people living below a farm? We'll take over from here. Well done, brother.}
+{28010}{}{Thank you, sir.}
+{29000}{}{Sending the money back? We'll have to find a different supplier for small arms. Mission accomplished.}
+{29010}{}{Thank you, sir.}
+{30000}{}{Yes, they came in while you were away. Excellent work.}
+{30010}{}{Thank you, sir.}
+{31000}{}{You will receive 200 faction points for completing your mission. You may use them now or hold on to them for later.}
+{31010}{}{I'm ready for my next mission, sir.}
+{31020}{}{[Exit] Thank you, sir.}
+{32000}{}{For excelling in your task, you will receive 300 faction points. You may use them immediately or hold on to them for the future.}
+{32010}{}{I'm ready for my next mission, sir.}
+{32020}{}{[Exit] Thank you, sir.}
+{33000}{}{Are you ready for your next missions?}
+{33010}{}{Yes, sir.}
+{34000}{}{Again we have multiple objectives. Choose one and handle it. }
+{34010}{}{[continue]}
+{35000}{}{One of our hummers has broken down between Reno and Gordon's Gas Station. You need to visit the brothers watching the vehicle, and help them get to Gordon's. }
+{35010}{}{And the other mission, sir?}
+{36000}{}{One of our brothers was separated from his patrol recently, and we've just received word that he is injured and needs assistance. Find him near Mariposa, and get him back on his feet.}
+{36010}{}{I'm on the move, sir.}
+{37000}{}{So the hummer has arrived at Gordon's. Well done.}
+{37010}{}{Thank you, sir.}
+{38000}{}{The brothers contacted me and explained your ingenuity in helping to fix the hummer. Outstanding work.}
+{38010}{}{Thank you, sir.}
+{39000}{}{Apprentice Snyder has returned safely. Good work.}
+{39010}{}{Thank you, sir.}
+{40000}{}{Apprentice Snyder has told of your medical expertise. Excellent job.}
+{40010}{}{Thank you, sir.}
+{41000}{}{You have been awarded 500 faction points.}
+{41010}{}{Thank you, sir.}
+{42000}{}{For outstanding performance, you receive 750 faction points. }
+{42010}{}{Thank you, sir.}
+{43000}{}{Your next mission will be your last as an Initiate. I suggest you prepare yourself well.}
+{43010}{}{Always prepared, sir.}
+{43020}{}{I need time to prepare, sir.}
+{44000}{}{Aside from this location, the two other city outposts, and our headquarters at Lost Hills, the Brotherhood has secret bunkers scattered across the wastes, often inhabited by one or two members.}
+{44010}{}{[continue]}
+{45000}{}{One of these such bunkers recently went offline near Necropolis, trapping our brothers inside. Right before radio communication was lost, there was mention of robobrains, leading us to believe that the security system must have been activated, which put the lower levels of the base on lockdown.}
+{45010}{}{[continue]}
+{46000}{}{Make your way through the bunker, eliminate any threats, evacuate any survivors, and download the information from their terminal to your pipboy. Take these pulse grenades to handle the robot.}
+{46010}{}{[continue]}
+{47000}{}{Deliver your status to Lost Hills after leaving the bunker. You've made me quite proud and I know you won't disappoint. Dismissed.}
+{47010}{}{It's been an honor, sir.}
+{48000}{}{I don't have any more work for you. Carry on, brother.}
+

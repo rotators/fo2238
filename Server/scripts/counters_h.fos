@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// counters_h.fos
+//
+
+#ifndef __COUNTERS__
+#define __COUNTERS__
+
+// Performance counters
+
+#ifndef __COUNTERS_MODULE__
+import void  CounterStart(uint counter) from "counters";
+import void  CounterEnd(uint counter) from "counters";
+import float GetCounter(uint counter) from "counters";
+#endif
+
+#define COUNTER_CRITTER_IDLE                 (0)
+#define COUNTER_MAIN_LOOP                    (1)
+#define COUNTER_GLOBAL_PROCESS               (2)
+#define COUNTER_GLOBAL_INVITE                (3)
+#define COUNTER_CRITTER_ATTACK               (4)
+#define COUNTER_CRITTER_ATTACKED             (5)
+#define COUNTER_NPC_PLANE_END                (6)
+#define COUNTER_NPC_PLANE_RUN                (7)
+#define COUNTER_CHECK_LOOK                   (8)
+#define COUNTER_TRACE_WALL                   (9)
+#define COUNTER_CHECK_OCCLUDER               (10)
+#define COUNTER_MAP_ENCOUNTER_INIT           (11)
+#define COUNTER_GLOBAL_PROCESS_NPC_IDLE      (12)
+#define COUNTER_GLOBAL_PROCESS_ENTER         (13)
+#define COUNTER_GLOBAL_PROCESS_MOVE          (14)
+#define COUNTER_GLOBAL_PROCESS_START         (15)
+#define COUNTER_GLOBAL_PROCESS_START_FAST    (16)
+#define COUNTER_GLOBAL_PROCESS_SET_MOVE      (17)
+#define COUNTER_GLOBAL_PROCESS_STOPPED       (18)
+#define COUNTER_MAX                          (19)
+#endif // __COUNTERS__

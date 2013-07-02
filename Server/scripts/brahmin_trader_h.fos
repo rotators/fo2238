@@ -1,0 +1,65 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_trader_h.fos
+//
+
+shared interface IBrahminTrader
+{
+    IBrahminTrader@ SellPrice(uint price);
+    IBrahminTrader@ BuyPrice(uint price);
+    IBrahminTrader@ Modifier(uint price);
+    IBrahminTrader@ BrahminPen(uint penid);
+
+    uint GetSellPrice();
+    uint GetBuyPrice();
+    uint GetModifier();
+    uint GetPenID();
+};
+
+shared class CBrahminTrader : IBrahminTrader
+{
+    // Base prices
+    uint buyprice;
+    uint sellprice;
+    // Price modifier dependant on number of brahmins
+    uint modifier;
+    uint penid;
+
+    uint GetSellPrice() { return sellprice; }
+    uint GetBuyPrice()  { return buyprice; }
+    uint GetModifier()  { return modifier; }
+    uint GetPenID()     { return penid; }
+
+    CBrahminTrader()
+    {
+        this.buyprice = 0;
+        this.sellprice = 0;
+        this.modifier = 0;
+        this.penid = 0;
+    }
+
+    IBrahminTrader@ BrahminPen(uint penid)
+    {
+        this.penid = penid;
+        return this;
+    }
+
+    IBrahminTrader@ SellPrice(uint price)
+    {
+        this.sellprice = price;
+        return this;
+    }
+    IBrahminTrader@ BuyPrice(uint price)
+    {
+        this.buyprice = price;
+        return this;
+    }
+
+    IBrahminTrader@ Modifier(uint price)
+    {
+        this.modifier = price;
+        return this;
+    }
+};

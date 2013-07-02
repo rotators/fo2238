@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_dogtags_h.fos
+//
+
+// Dog tags header
+
+// used by client_interface
+#define DT_TYPE_BLANK       (0)
+#define DT_TYPE_MILITARY    (1)
+#define DT_TYPE_CUSTOM      (2)
+
+#define _DogTagType         # (i)        (i.Val6)
+
+#ifdef __SERVER
+
+# define _DogTagFaction     # (i)      (i.Val5)
+
+# ifndef __DOGTAGS__
+// main
+// spawn dogtag with cr info in his/her inv
+import Item@ DogTag(Critter@ cr) from "item_dogtags";
+// (cr1, cr2) spawn dogtag with cr2 info in cr1 inv
+// (cr, null) spawn dogtag with random info in cr inv (with chance for blank)
+import Item@ DogTag(Critter@ holder, Critter@ target) from "item_dogtags";
+// spawn blank dogtag in cr inv
+import Item@ DogTagBlank(Critter@ holder) from "item_dogtags";
+
+// ~run item_dogtags spawn -1 0 0		blank dogtag
+// ~run item_dogtags spawn 0 0 0		random dogtag
+// ~run item_dogtags spawn crId 0 0		cr dogtag
+# endif // !__DOGTAGS
+
+// #ifdef __DOGTAGS__
+// #include "npc_names_h.fos"
+// #endif
+#endif // __SERVER

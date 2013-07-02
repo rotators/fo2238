@@ -1,0 +1,135 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// triggers.fos
+//
+
+#ifndef __TRIGGERS__
+#define __TRIGGERS__
+
+// More advanced triggers
+
+#include "_macros.fos"
+#include "triggers_h.fos"
+#include "triggers_funcs.fos"
+
+
+//  Trigger initialization
+//
+void _Trigger(Item& tr, bool firstTime)
+{
+    tr.SetEvent(ITEM_EVENT_WALK, "_TriggerStep");
+}
+
+
+void TriggerInit(Item@ tr, uint funcId, uint settings, uint delay, uint nextTick)
+{
+    tr.SetEvent(ITEM_EVENT_WALK, "_TriggerStep");
+    SetTriggerFunction(tr, funcId);
+    SETFLAG(GetTriggerSettings(tr), settings);
+    SetTriggerDelay(tr, delay);
+    SetTriggerNextTick(tr, nextTick);
+}
+
+
+//  Returns true if hex has a trigger of specific type
+//
+bool hexHasTrigger(Map@ map, uint16 x, uint16 y, int func, int settings)
+{
+    if(!valid(map))
+        return false;
+
+    array<Item@> triggers;
+    uint         triggersNum = map.GetItems(x, y, 0, PID_TRIGGER, triggers);
+    for(uint i = 0; i < triggersNum; i += 1)
+    {
+        if((GetTriggerFunction(triggers[i]) == func) && (GetTriggerSettings(triggers[i]) == settings))
+            return true;
+    }
+    return false;
+}
+
+
+//  Called when critter steps on a trigger
+//
+void _TriggerStep(Item& tr, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered)
+    {
+        // Stop if it's a player/follower/true npc and the trigger ignores them
+        //
+        if(cr.IsPlayer() && FLAG(GetTriggerSettings(tr), TRIGGER_IGNORE_PLAYERS))
+            return;
+        if(_IsFollower(cr) && FLAG(GetTriggerSettings(tr), TRIGGER_IGNORE_FOLLOWERS))
+            return;
+        if(_IsTrueNpc(cr) && FLAG(GetTriggerSettings(tr), TRIGGER_IGNORE_TRUE_NPCS))
+            return;
+
+        // Stop if the trigger isn't standalone and critter steps from hex containing identical trigger
+        //
+        if(!FLAG(GetTriggerSettings(tr), TRIGGER_STANDALONE))
+        {
+            Map@   map = cr.GetMap();
+            uint16 prevHexX = cr.HexX;
+            uint16 prevHexY = cr.HexY;
+            map.MoveHexByDir(prevHexX, prevHexY, _TurnAround(dir), 1);
+            if(hexHasTrigger(map, prevHexX, prevHexY, GetTriggerFunction(tr), GetTriggerSettings(tr)))
+                return;
+        }
+
+        array<uint> values = { tr.Id, cr.Id, uint(dir), 0 };
+        CreateTimeEvent(AFTER(REAL_SECOND(GetTriggerDelay(tr))), "e_TriggerTick", values, true);
+    }
+}
+
+
+//  Trigger tick - calling the trigger function
+//
+uint e_TriggerTick(array<uint>@ values)
+{
+    Item@ tr = GetItem(values[VALUE_TRIGGER_ID]);
+    if(!valid(tr))
+        return 0;
+
+    Critter@ cr = GetCritter(values[VALUE_CRITTER_ID]);
+    if(valid(cr) || FLAG(GetTriggerSettings(tr), TRIGGER_CRITTERLESS))
+    {
+        bool repeat = false;
+
+        if(FLAG(GetTriggerSettings(tr), TRIGGER_KEEP_TICKING))
+        {
+            repeat = TriggerFuncs[GetTriggerFunction(tr)] (tr, cr, values[VALUE_DIR], values[VALUE_COUNT], values);
+            values[VALUE_COUNT] += 1;
+        }
+        else if(valid(cr))
+        {
+            if(hexHasTrigger(cr.GetMap(), cr.HexX, cr.HexY, GetTriggerFunction(tr), GetTriggerSettings(tr)))
+            {
+                repeat = TriggerFuncs[GetTriggerFunction(tr)] (tr, cr, values[VALUE_DIR], values[VALUE_COUNT], values);
+                values[VALUE_COUNT] += 1;
+            }
+        }
+
+        if(FLAG(GetTriggerSettings(tr), TRIGGER_RUN_ONCE))
+        {
+            DeleteItem(tr);
+            return 0;
+        }
+
+        if(repeat && GetTriggerDelay(tr) == 0 && values[VALUE_COUNT] == 1 && GetTriggerNextTick(tr) > 0)
+        {
+            CreateTimeEvent(AFTER(REAL_SECOND(GetTriggerNextTick(tr))), "e_TriggerTick", values, true);
+            return 0;
+        }
+        else
+        {
+            if(repeat && GetTriggerNextTick(tr) > 0)
+                return REAL_SECOND(GetTriggerNextTick(tr));
+            else
+                return 0;
+        }
+    }
+    return 0;
+}
+#endif // __TRIGGERS__

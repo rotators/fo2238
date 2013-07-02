@@ -1,0 +1,178 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D no_recheck _script arena@d_HasContract 0  R _script arena@r_DirectToContractNode 0  #
+22 1020 D no_recheck _script arena@d_IsRoomBusy 0  #
+2 1030 @
+2 2000 None 1 #
+5 2010 R _script arena@r_ContractCreate 0  #
+8 2020 D no_recheck _script arena@d_ClosedContractExists 0  #
+0 2030 @
+3 3000 None 1 #
+0 3010 #
+10 3020 R _script arena@r_ContractCancel 0  @
+4 4000 None 1 #
+0 4010 #
+10 4020 R _script arena@r_ContractCancel 0  @
+5 5000 None 1 #
+6 5010 R _script arena@r_ContractSetType 1 0 #
+6 5020 D _script dialog@d_IsMemberOfSomeFaction 0  R _script arena@r_ContractSetType 1 1 #
+65505 5030 R _script arena@r_ContractCancel 0  @
+6 6000 arena@dlg_ArenaName 1 #
+7 6010 D no_recheck _script arena@d_IsArenaFree 1 0 R _script arena@r_ContractSetArena 1 0 #
+7 6020 D no_recheck _script arena@d_IsArenaFree 1 1 R _script arena@r_ContractSetArena 1 1 #
+7 6030 D no_recheck _script arena@d_IsArenaFree 1 2 R _script arena@r_ContractSetArena 1 2 #
+7 6040 D no_recheck _script arena@d_IsArenaFree 1 3 R _script arena@r_ContractSetArena 1 3 #
+2 6050 D no_recheck _script arena@d_IsNoArenaFree 0  R _script arena@r_ContractCancel 0  @
+7 7000 arena@dlg_ContractRule 1 #
+23 7010 #
+24 7020 #
+11 7030 R _script arena@r_ContractClose 0  @
+23 8000 arena@dlg_ContractRule 0 #
+23 8010 R _script arena@r_ContractSetRule 2 0 0 #
+23 8020 R _script arena@r_ContractSetRule 2 0 1 #
+23 8030 R _script arena@r_ContractSetRule 2 0 2 #
+7 8040 @
+24 9000 arena@dlg_ContractRule 0 #
+24 9010 R _script arena@r_ContractSetRule 2 1 0 #
+24 9020 R _script arena@r_ContractSetRule 2 1 1 #
+24 9030 R _script arena@r_ContractSetRule 2 1 2 #
+24 9040 R _script arena@r_ContractSetRule 2 1 3 #
+7 9050 @
+8 10000 None 1 #
+9 10010 D no_recheck _script arena@d_ClosedContractExists 1 0 R _script arena@r_PrepareContractList 1 0 #
+16 10020 D _script dialog@d_IsMemberOfSomeFaction 0  D no_recheck _script arena@d_ClosedContractExists 1 1 R _script arena@r_PrepareContractList 1 1 #
+65505 10030 @
+9 11000 arena@dlg_PvPName 1 #
+12 11010 D no_recheck _script arena@d_IsContract 2 0 0 R _script arena@r_ContractAccept 2 0 0 #
+12 11020 D no_recheck _script arena@d_IsContract 2 0 1 R _script arena@r_ContractAccept 2 0 1 #
+12 11030 D no_recheck _script arena@d_IsContract 2 0 2 R _script arena@r_ContractAccept 2 0 2 #
+12 11040 D no_recheck _script arena@d_IsContract 2 0 3 R _script arena@r_ContractAccept 2 0 3 #
+65505 11050 @
+10 12000 None 0 #
+0 12010 @
+11 13000 None 0 #
+0 13010 @
+12 14000 arena@dlg_ContractRule2 0 #
+2 14010 #
+0 14020 R _script arena@r_StartCombat 0  @
+13 15000 None 0 #
+0 15010 @
+14 16000 None 0 #
+0 16010 @
+15 17000 None 0 #
+2 17010 @
+16 18000 arena@dlg_FvFName 0 #
+17 18010 D no_recheck _script arena@d_IsContract 2 1 0 R _script arena@r_ContractAccept 2 1 0 #
+17 18020 D no_recheck _script arena@d_IsContract 2 1 1 R _script arena@r_ContractAccept 2 1 1 #
+17 18030 D no_recheck _script arena@d_IsContract 2 1 2 R _script arena@r_ContractAccept 2 1 2 #
+17 18040 D no_recheck _script arena@d_IsContract 2 1 3 R _script arena@r_ContractAccept 2 1 3 @
+17 19000 arena@dlg_ContractRule2 0 #
+2 19010 #
+0 19020 R _script arena@r_StartCombat 0  @
+18 20000 None 0 #
+2 20010 @
+19 21000 None 0 #
+2 21010 @
+20 22000 None 0 #
+2 22010 @
+21 23000 None 0 #
+0 23010 @
+22 24000 None 0 #
+0 24010 @
+100 25000 None 0 @
+30 26000 None 0 #
+0 26010 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{Pick up on setting existing contract}
+{1020}{}{Room is busy}
+{1030}{}{No contract}
+{2000}{}{What do you want to do?}
+{2010}{}{I want to create a new match.}
+{2020}{}{I want to see if there's any current matches open.}
+{2030}{}{[Exit]}
+{3000}{}{You have a PVP match created.}
+{3010}{}{Ok.}
+{3020}{}{Cancel match.}
+{4000}{}{You have a FVF match created.}
+{4010}{}{Ok.}
+{4020}{}{Cancel match.}
+{5000}{}{Select match type.}
+{5010}{}{PVP Match.}
+{5020}{}{FVF Match.}
+{5030}{}{[Back]}
+{6000}{}{Select an arena.}
+{6010}{}{@lex arena0@}
+{6020}{}{@lex arena1@}
+{6030}{}{@lex arena2@}
+{6040}{}{@lex arena3@}
+{6050}{}{[Back] No arenas available.}
+{7000}{}{Select which rules you want for your match, current rules: @lex rules@}
+{7010}{}{Change weapon rules.}
+{7020}{}{Change armor rules.}
+{7030}{}{Looks fine!}
+{8000}{}{Change weapon rules. Current rules: @lex rulesweapon@}
+{8010}{}{All weapons allowed.}
+{8020}{}{Only Unarmed.}
+{8030}{}{Only Melee.}
+{8040}{}{[Back]}
+{9000}{}{Change armor rules. Current rules: @lex rulesarmor@}
+{9010}{}{All armor allowed.}
+{9020}{}{Only light armor.}
+{9030}{}{Only medium armor.}
+{9040}{}{Only heavy armor.}
+{9050}{}{[Back]}
+{10000}{}{What kind of matches are you looking for?}
+{10010}{}{PVP match.}
+{10020}{}{FVF match.}
+{10030}{}{[Back]}
+{11000}{}{Who's the match hoster?}
+{11010}{}{@lex pvp0@}
+{11020}{}{@lex pvp1@}
+{11030}{}{@lex pvp2@}
+{11040}{}{@lex pvp3@}
+{11050}{}{[Back]}
+{12000}{}{Match was cancelled.}
+{12010}{}{[Exit]}
+{13000}{}{Match opened! Now you'll have to wait for some opponent(s).}
+{13010}{}{Alright.}
+{14000}{}{The match will take place in @lex arena@ with the following rules: @lex rules@}
+{14010}{}{Nevermind, I'm not interested.}
+{14020}{}{Yes, bring it on!}
+{15000}{}{THESE ARE COOL NEWS}
+{15010}{}{AH OK}
+{16000}{}{Rule criteria are not met. Make sure you or your team mates don't have any items on you that aren't allowed.}
+{16010}{}{Alright!}
+{17000}{}{The arena was just taken.}
+{17010}{}{Damn!}
+{18000}{}{Who are the opposing faction?}
+{18010}{}{@lex fvf0@}
+{18020}{}{@lex fvf1@}
+{18030}{}{@lex fvf2@}
+{18040}{}{@lex fvf3@}
+{19000}{}{The match will take place in @lex arena@ with the following rules: @lex rules@}
+{19010}{}{Nevermind, I'm not interested.}
+{19020}{}{Yes, bring it on!}
+{20000}{}{Match already joined.}
+{20010}{}{I see.}
+{21000}{}{Match was cancelled.}
+{21010}{}{Crap!}
+{22000}{}{But that is your faction!}
+{22010}{}{Are you sure?}
+{23000}{}{Wrong room!}
+{23010}{}{Oops!}
+{24000}{}{This room is already used by another group.}
+{24010}{}{[Exit]}
+{25000}{}{FATAL ERROR!}
+{26000}{}{A match using this terminal has already been created!}
+{26010}{}{Oops.}
+

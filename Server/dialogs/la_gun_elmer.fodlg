@@ -1,0 +1,83 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+7 1010 D _param p ST_CHARISMA > 99 #
+20 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var n name_mem_npc_player = 0 #
+4 1040 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 #
+3 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 R _var n name_mem_npc_player = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+6 4020 D _var n acquaintance = 0 R _var n acquaintance = 1 #
+80 4030 D _var n acquaintance = 1 D _param p PE_PROFESSION_ENERGY_EXPERT < 1 #
+0 4040 @
+5 5000 None 0 #
+65505 5010 #
+6 5020 D _var n acquaintance = 0 R _var n acquaintance = 1 #
+0 5030 @
+6 6000 None 0 #
+80 6010 D _param p PE_PROFESSION_ENERGY_EXPERT < 1 #
+0 6020 @
+20 7000 None 0 @
+80 8000 None 0 #
+81 8010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckEnergyExpert0 1 0 #
+0 8020 @
+81 9000 None 0 #
+82 9010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_DEANS_ELECTRONICS + 1 R _param p PE_PROFESSION_ENERGY_EXPERT = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 9020 @
+82 10000 None 0 #
+0 10010 @
+7 11000 None 0 &
+
+[engl]
+{100}{}{Elmer}
+{200}{}{You see a person in combat armor.}
+{210}{}{You see Elmer.}
+{210}{}{You see a squat man wearing squalid clothing. He has a toothpick in his mouth and is covered in grease. His fingernails are dirty.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Dumb}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{2000}{}{Hey, easy! Watch your step, we've got some advanced pieces of technology around here.}
+{2010}{}{Who are you?}
+{2020}{}{What is this place?}
+{2030}{}{Nothing. Bye.}
+{3000}{}{I'm Elmer and this is the Gunnrunners base. And who are you?}
+{3010}{}{I am @pname@. Can I ask you a few questions, Elmer?}
+{3020}{}{Nobody. [Leave]}
+{4000}{}{Yes, what do you need?}
+{4010}{}{Can you tell me more about this place?}
+{4020}{}{What are you doing here?}
+{4030}{}{Let's talk about energy production and storage.}
+{4040}{}{Bye.}
+{5000}{}{You better talk to someone else about that, I'm really not into that kind of stuff.}
+{5010}{}{Good, let me ask you something else then.}
+{5020}{}{And into what kind of stuff are you?}
+{5030}{}{Got it, I'll talk to him then. Bye!}
+{6000}{}{I'm a production technician. One can say I'm overseeing the gun production here. We don't produce much, but we do have some really hi-tech equipment, I'm proud to say. Energy weapons and cells, you know?}
+{6010}{}{Then you must be the person I'm looking for! I had a few questions about energy production and storage...}
+{6020}{}{I see. Well, gotta go now, bye!}
+{7000}{}{Just stay away.@@Nothing for you around here.@@Get lost, I'm busy.}
+{8000}{}{Energy production and storage? You hit the right place. Anyway, what did you want to know exactly?}
+{8010}{}{I'm currently interested in energy cells and... [You explain everything to Elmer]}
+{8020}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{9000}{}{I see... Well, if you want me to teach you something about it, you better bring me ... 1500 caps should do the trick. Hell, for that money you'll even get one of these Deans Electronics manuals for free!}
+{9010}{}{Alright. I've got that much here. [Give him $1500]}
+{9020}{}{Okay, let me fetch it for you... Be right back.}
+{10000}{}{Well, glad to see you got everything we need! Okay, let's start with it then. [Elmer explains you everything you wanted to know. It takes a while.]}
+{10010}{}{Thank you for sharing that knowledge with me, Elmer. See you around!}
+{11000}{}{Who let the freak in here?@@Boys, we got a uh... something on our hands.@@Sheeee-it.@@::spits::}
+

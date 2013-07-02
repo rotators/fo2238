@@ -1,0 +1,31 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+60 1010 D _var p factions_player_faction = 6 D _var p factions_player_rank > 2 D _script dialog@d_CheckNight 0  #
+61 1020 D _script dialog@d_CheckNight 0  R _script dialog@r_Alert 0  #
+2 1030 D _var p factions_player_faction = 6 D _var p factions_player_rank > 2 #
+61 1040 R _script dialog@r_Alert 0  @
+2 2000 None 0 @
+60 3000 None 0 @
+61 4000 None 0 @
+62 5000 None 0 &
+
+[engl]
+{100}{}{Gregory}
+{200}{}{You see Proconsul Gregory.}
+{210}{}{You see a grim-looking bureaucrat with a narrow face and thick eyebrows.}
+{1000}{}{Predialogue installations}
+{1010}{}{important citizen night}
+{1020}{}{all others night}
+{1030}{}{important citizen day}
+{1040}{}{all others day}
+{2000}{}{Good day, Citizen.@@Vault City prevails, Citizen.@@Lists, lists, lists... how I love lists!@@Compile form 5632 into the list server...@@Make a list of lists 43A through 121B... then enter them into the List Archive...@@It's a beautiful day to be compiling lists.}
+{3000}{}{Come back in the morning. I should be done with these lists by then.@@Still need to finish these lists before I retire for the evening...}
+{4000}{}{An intruder! Guards! Guards!}
+{5000}{}{That's it! Citizen or not, you're out of here. And I'm revoking your Citizenship. Guards!}
+

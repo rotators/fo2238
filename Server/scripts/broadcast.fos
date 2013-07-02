@@ -1,0 +1,779 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// broadcast.fos
+//
+
+// Unified broadcast system
+
+#ifndef __BROADCAST__
+#define __BROADCAST__
+
+#include "_macros.fos"
+#include "logging_h.fos"
+#include "utils_h.fos"
+
+#include "broadcast_h.fos"
+
+#include "gmtools_h.fos"
+
+#define BROADCAST_SCRIPT        "client_broadcast@_Receive"
+#define BROADCAST_SCRIPTDUMP    "client_broadcast@_ReceiveDump"
+
+#ifdef __DEBUG__
+# define BroadcastDebugSay      # (text)       Say(SAY_NETMSG, "Broadcast: " + text)
+#endif
+#ifndef __DEBUG__
+# define BroadcastDebugSay      # (text);
+#endif
+
+#pragma bindfunc "int string::replaceText(string@+,string@+) -> Utils.dll String_ReplaceText"
+
+import bool GodOfTheRealm(uint id) from "cheats";
+import int  GetFactionNameMsg(uint faction) from "factions";
+import void PlayMusic(Critter& cr, string& musicName, uint pos, uint repeat) from "media";
+
+class CBroadcastBuffer : IBroadcastBuffer
+{
+    // for RunClientScript
+    int        type;
+    int        time;
+    int        setup;
+    string     message;
+    array<int> data;
+    // internal
+    int        started;                 /*< time when message was created. negative value = permament */
+    int        lifetime;
+    int        filters;
+    int        filter_level;
+    int        filter_location;
+    int        filter_map;
+    int        filter_faction;
+    int        gm;
+    bool       toDelete;
+
+    CBroadcastBuffer(int type, int time, int setup, string message, array<int> data, int lifetime, int filters)
+    {
+        this.type                       = type;
+        this.time                       = time;
+        this.setup                      = setup;
+        this.message            = message;
+        this.data                       = data;
+        this.started            = ELAPSED_TIME;
+        this.lifetime           = lifetime;
+        this.filters            = filters;
+        this.filter_level       = 0;
+        this.filter_location = 0;
+        this.filter_map         = 0;
+        this.gm                         = 0;
+        this.toDelete           = false;
+    }
+
+    // client stuff
+
+    string GetString()
+    {
+        string result = "";
+        string sdata = "";
+        if(data.length() > 0)
+        {
+            for(uint d = 0; d < this.data.length(); d++)
+            {
+                if(d > 0)
+                    sdata += BROADCAST_SEPARATOR_DATA;
+                sdata += "" + data[d];
+            }
+        }
+        return(
+            this.type + BROADCAST_SEPARATOR_ARGS +
+            this.time + BROADCAST_SEPARATOR_ARGS +
+            this.setup + BROADCAST_SEPARATOR_ARGS +
+            this.message + BROADCAST_SEPARATOR_ARGS +
+            sdata
+            );
+    }
+
+    void SetType(int type)
+    {
+        this.type = type;
+    }
+
+    int GetType()
+    {
+        return(this.type);
+    }
+
+    void SetTime(int time)
+    {
+        this.time = time;
+    }
+
+    int GetTime()
+    {
+        return(this.time);
+    }
+
+    void SetSetup(int setup)
+    {
+        this.setup = setup;
+    }
+
+    int GetSetup()
+    {
+        return(this.setup);
+    }
+
+    void SetMessage(string message)
+    {
+        this.message = message;
+    }
+
+    void AppendMessage(string message)
+    {
+        this.message = this.message + message;
+    }
+
+    string GetMessage()
+    {
+        return(this.message);
+    }
+
+    void SetData(array<int> data)
+    {
+        this.data = data;
+    }
+
+    void SetStart(int time)
+    {
+        this.started = time;
+    }
+
+    void ResetStart()
+    {
+        this.started = ELAPSED_TIME;
+    }
+
+    void SetLifetime(int lifetime)
+    {
+        this.lifetime = lifetime;
+    }
+
+    void SetFilters(int filters)
+    {
+        this.filters = filters;
+    }
+
+    void SetFilter(int filter)
+    {
+        SETFLAG(this.filters, filter);
+    }
+
+    void SetFilter(int filter, int data)
+    {
+        this.SetFilter(filter);
+        if(FLAG(filter, BROADCAST_FILTER_LEVEL))
+            this.filter_level = data;
+        if(FLAG(filter, BROADCAST_FILTER_LOCATION))
+            this.filter_location = data;
+        if(FLAG(filter, BROADCAST_FILTER_MAP))
+            this.filter_map = data;
+        if(FLAG(filter, BROADCAST_FILTER_FACTION))
+            this.filter_faction = data;
+    }
+
+    void UnsetFilter(int filter)
+    {
+        UNSETFLAG(this.filters, filter);
+    }
+
+    bool Filter(int filter)
+    {
+        if(FLAG(this.filters, filter))
+            return(true);
+        else
+            return(false);
+    }
+
+    bool CheckFilters(Critter@ player)
+    {
+        if(this.type == BROADCAST_NONE || this.toDelete || this.started < 0)
+            return(false);
+
+        if(!valid(player))
+            return(false);
+
+        if(!player.IsPlayer())
+            return(false);
+
+        if(this.filters > 0)
+        {
+            if(this.Filter(BROADCAST_FILTER_TESTER) && player.GetAccess() < ACCESS_TESTER)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_MODER) && player.GetAccess() < ACCESS_MODER)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_ADMIN) && player.GetAccess() < ACCESS_ADMIN)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_GOD) && !GodOfTheRealm(player.Id))
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_MORTAL) && GodOfTheRealm(player.Id))
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_FEMALE) && player.Param[ST_GENDER] != GENDER_FEMALE)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_MALE) && player.Param[ST_GENDER] != GENDER_MALE)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_WORLDMAP) && valid(player.GetMap()))
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_ANYMAP) && !valid(player.GetMap()))
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_LEVEL) && player.Param[ST_LEVEL] < this.filter_level)
+                return(false);
+            if(this.Filter(BROADCAST_FILTER_LOCATION))
+            {
+                if(!valid(player.GetMap()))
+                    return(false);
+
+                if(int(player.GetMap().GetLocation().Id) != this.filter_location)
+                    return(false);
+            }
+            if(this.Filter(BROADCAST_FILTER_NOTLOCATION))
+            {
+                if(!valid(player.GetMap()))
+                    return(true);
+
+                if(int(player.GetMap().GetLocation().Id) == this.filter_location)
+                    return(false);
+            }
+            if(this.Filter(BROADCAST_FILTER_MAP))
+            {
+                if(!valid(player.GetMap()))
+                    return(false);
+
+                else if(int(player.GetMap().Id) != this.filter_map)
+                    return(false);
+            }
+            if(this.Filter(BROADCAST_FILTER_FACTION) && player.Param[ST_TEAM_ID] != this.filter_faction)
+                return(false);
+        }
+        return(true);
+    }
+
+    bool Send(Critter@ player)
+    {
+        if(this.type == BROADCAST_NONE || this.toDelete || this.started < 0)
+            return(false);
+
+        if(!valid(player))
+        {
+            Log("Invalid critter");
+            return(false);
+        }
+
+        if(!player.IsPlayer())
+        {
+            Log("Not a player: critter<" + player.Id + ">");
+            return(false);
+        }
+
+        if(this.CheckFilters(player))
+        {
+            player.RunClientScript(BROADCAST_SCRIPT, this.type, this.time, this.setup, this.message, this.data);
+            return(true);
+        }
+        else
+            return(false);
+    }
+
+    uint SendToAll()
+    {
+        if(this.type == BROADCAST_NONE || this.toDelete || this.started < 0)
+            return(0);
+
+        array<Critter@> player;
+        uint            num = GetAllOnlinePlayers(player);
+        uint            count = 0;
+        for(uint p = 0; p < num; p++)
+        {
+            if(!valid(player[p]))
+                continue;
+
+            if(this.Send(player[p]))
+                count++;
+        }
+        return(count);
+    }
+
+    void SetGM(int id)
+    {
+        this.gm = id;
+    }
+
+    void UnsetGM()
+    {
+        this.gm = 0;
+    }
+
+    void ToDelete()
+    {
+        this.toDelete = true;
+    }
+};
+array<CBroadcastBuffer> BroadcastBuffer;
+
+IBroadcastBuffer@ AddBroadcastBuffer(int t, int i, int s, string& m, array<int>& d, int l, int f)
+{
+    BroadcastBuffer.insertLast(CBroadcastBuffer(t, i, s, m, d, l, f));
+    int idx =  BroadcastBuffer.length() - 1;
+    return(BroadcastBuffer[idx]);
+}
+
+void DumpBroadcastBuffer(Critter@ player)
+{
+    if(BroadcastBuffer.length() == 0)
+        return;
+
+    if(!valid(player))
+    {
+        Log("Invalid player");
+        return;
+    }
+
+    string dump = "";
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(b > 0)
+            dump += BROADCAST_SEPARATOR_MAIN;
+
+        dump += BroadcastBuffer[b].GetString();
+    }
+    DLog("BroadcastBuffer dump(" + player.Name + "): " + dump);
+    array<int> data;
+    player.RunClientScript(BROADCAST_SCRIPTDUMP, 0, 0, 0, dump, data);
+
+}
+
+void dump(Critter& player, int, int, int)
+{
+    DumpBroadcastBuffer(player);
+}
+
+uint FindBroadcastBufferByType(int type, array<IBroadcastBuffer@>& buf)
+{
+    if(BroadcastBuffer.length() == 0)
+        return(0);
+
+    uint count = 0;
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].type == type)
+        {
+            buf.insertLast(BroadcastBuffer[b]);
+            count++;
+        }
+    }
+    return(count);
+}
+
+uint FindBroadcastBufferByGM(int id, array<IBroadcastBuffer@>& buf)
+{
+    if(BroadcastBuffer.length() == 0)
+        return(0);
+
+    uint count = 0;
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].gm == id)
+        {
+            buf.insertLast(BroadcastBuffer[b]);
+            count++;
+        }
+    }
+    return(count);
+}
+
+void UpdateBroadcast()
+{
+    if(BroadcastBuffer.length() == 0)
+        return;
+
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].toDelete ||
+           ((BroadcastBuffer[b].type == BROADCAST_TC && int(ELAPSED_TIME) >= BroadcastBuffer[b].lifetime) ||
+            (BroadcastBuffer[b].type != BROADCAST_TC && int(ELAPSED_TIME) >= BroadcastBuffer[b].started + BroadcastBuffer[b].lifetime)) &&
+           BroadcastBuffer[b].started >= 0)
+        {
+            Log("BroadcastBuffer cleanup" + (BroadcastBuffer.length() - 1 > 0 ? ", " + (BroadcastBuffer.length() - 1) + " message(s) left" : ""));
+            BroadcastBuffer.removeAt(b);
+            b = 0;
+        }
+    }
+}
+
+// locations that shouldn't be faked via ~runscript/GMT, mostly TC cities
+bool LockState = true;
+uint[] LockedLocations =
+{
+    // TC
+    LOCATION_Klamath,
+    LOCATION_Modoc,
+    LOCATION_Gecko,
+    LOCATION_BrokenHills,
+    LOCATION_TheDen,
+    LOCATION_Redding
+};
+
+bool IsLocked(uint location_pid)
+{
+    if(LockState == false)
+        return(false);
+
+    if(Present(location_pid, LockedLocations))
+        return(true);
+
+    return(false);
+}
+
+void tclock(Critter& player, int one, int two, int lock)
+{
+    if((one * two) == 1613759)         // JIC
+    {
+        if(lock == 0)
+            LockState = false;
+        else if(lock == 1)
+            LockState = true;
+        player.Say(SAY_NETMSG, "Broadcast TC lock: " + (LockState ? "en" : "dis") + "abled");
+    }
+}
+
+// Server messages
+
+IBroadcastBuffer@ Broadcast_Message(string& message, int time, int filters, bool send)   // Export
+{
+    array<int>        data;
+    IBroadcastBuffer@ msg = AddBroadcastBuffer(BROADCAST_MESSAGE, time, 0, message, data, time, filters);
+    if(send)
+        msg.SendToAll();
+    return(msg);
+}
+
+IBroadcastBuffer@ Broadcast_Message(string& message, int time, int filters)   // Export
+{
+    return(Broadcast_Message(message, time, filters, true));
+}
+
+
+IBroadcastBuffer@ Broadcast_Message(string& message, int& time)   // Export
+{
+    return(Broadcast_Message(message, time, BROADCAST_FILTER_NONE, true));
+}
+
+IBroadcastBuffer@ Broadcast_Message(string& message, bool send)      // Export
+{
+    int time = REAL_MINUTE(1) + REAL_MS(100 * message.length());     // client-like
+    return(Broadcast_Message(message, time, BROADCAST_FILTER_NONE, send));
+}
+
+IBroadcastBuffer@ Broadcast_Message(string& message)                 // Export
+{
+    int time = REAL_MINUTE(1) + REAL_MS(100 * message.length());     // client-like
+    return(Broadcast_Message(message, time, BROADCAST_FILTER_NONE, true));
+}
+
+// Town Control
+
+IBroadcastBuffer@ GetTownControlBuffer(int location)
+{
+    if(BroadcastBuffer.length() == 0)
+        return(null);
+
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].type == BROADCAST_TOWN_CONTROL && BroadcastBuffer[b].data.length() > 0 &&
+           BroadcastBuffer[b].data[0] == location)
+        {
+            DLog("Broadcast:TC for location <" + location + "> found, idx <" + b + ">");
+            return(BroadcastBuffer[b]);
+        }
+    }
+    return(null);
+}
+
+void Broadcast_TownControl_Set(string& message, int location, int time, int faction)
+{
+    if(time <= 0)
+    {
+        Broadcast_TownControl_Stop(location);
+        return;
+    }
+
+    IBroadcastBuffer@ tc = GetTownControlBuffer(location);
+
+    int[] data = { location, GetFactionNameMsg(faction) };
+    if(valid(tc))
+    {
+        Log("Overwriting Broadcast:TC buffer for location <" + location + ">: faction<" + faction + "> time<" + time + ">");
+        tc.SetTime(time);
+        tc.SetData(data);
+        tc.SetMessage(message);
+        tc.SetLifetime(time);
+        tc.ResetStart();
+    }
+    else
+    {
+        Log("New Broadcst:TC buffer for location <" + location + ">: faction<" + faction + "> time<" + time + ">");
+        @tc = AddBroadcastBuffer(BROADCAST_TC, time, BROADCAST_SETUP_TC_SET, message, data, time, BROADCAST_FILTER_NONE);
+    }
+    tc.SendToAll();
+}
+
+void Broadcast_TownControl_Set(int location, int time, int faction)
+{
+    Broadcast_TownControl_Set(" ", location, time, faction);
+}
+
+void Broadcast_TownControl_Stop(int location)
+{
+    IBroadcastBuffer@ tc = GetTownControlBuffer(location);
+    if(valid(tc))
+    {
+        DLog("Stopping Broadcast:TC for location <" + location + ">");
+        int[] data = { location };
+        tc.SetTime(0);
+        tc.SetSetup(BROADCAST_SETUP_TC_STOP);
+        tc.SetData(data);
+        tc.SetFilters(BROADCAST_FILTER_NONE);           // JIC
+
+        tc.SendToAll();
+
+        tc.ResetStart();
+        tc.SetLifetime(0);
+        tc.ToDelete();
+
+        UpdateBroadcast();
+    }
+}
+
+GMTServerFunc(tc, player, location, time, faction, unused1, unused2)
+{
+    if(location <= 0)
+    {
+        player.Say(SAY_NETMSG, "Wrong location pid.");
+        return;
+    }
+
+    if(IsLocked(location))
+    {
+        player.Say(SAY_NETMSG, "Location <" + location + "> is locked, can't be modified.");
+        return;
+    }
+
+    Broadcast_TownControl_Set(location, AFTER(REAL_SECOND(time)), faction);
+}
+
+// Influence
+
+IBroadcastBuffer@ GetInfluenceBuffer(int location)
+{
+    if(BroadcastBuffer.length() == 0)
+        return(null);
+
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].type == BROADCAST_INFLUENCE && BroadcastBuffer[b].data.length() > 0 &&
+           BroadcastBuffer[b].data[0] == location)
+        {
+            DLog("Broadcast:Influence for location <" + location + "> found, idx <" + b + ">");
+            return(BroadcastBuffer[b]);
+        }
+    }
+    return(null);
+}
+
+IBroadcastBuffer@ Broadcast_Influence(int location, int time, string& message)
+{
+    IBroadcastBuffer@ influence = GetInfluenceBuffer(location);
+    if(valid(influence))
+    {
+        influence.ResetStart();
+        influence.SetLifetime(0);
+        influence.ToDelete();
+
+        UpdateBroadcast();
+    }
+    int[] data = { location };
+    @influence = AddBroadcastBuffer(BROADCAST_INFLUENCE, time * 2, 0, message, data, time, BROADCAST_FILTER_NONE);
+
+    return(influence);
+}
+
+GMTServerFunc(influence, player, location, time, unused1, unused2, unused3)
+{
+    IBroadcastBuffer@ influence = Broadcast_Influence(location, time, "Influence " + __FullSecond);
+
+    influence.Send(player);
+}
+
+// RequestHelp, returns id of a GM who received the broadcast
+//
+uint Broadcast_RequestHelp(Critter@ player, string& message)
+{
+    if(!valid(player))
+        return 0;
+
+    Critter@   gm = GetOnlineGM();
+
+    array<int> data;
+    if(valid(gm))
+    {
+        // we have a GM online - prepare the message and inform the player
+        IBroadcastBuffer@ req = AddBroadcastBuffer(BROADCAST_REQUESTHELP, REAL_MINUTE(1), 0,
+                                                   GetCritterInfo(player) + BROADCAST_SEPARATOR_MAIN + message, data, 0, BROADCAST_FILTER_AUTHENTICATED);
+
+        player.Say(SAY_NETMSG, "Sending help request. If a GM won't appear within a few minutes, you can try #2238help: |0x00FFFF http://fonline2238.net/help/");
+        FLog(LOG_GM_HELP, player.Name + " Asking the GM/Admin " + gm.Name + " to assist.");
+
+        if(req.Send(gm) == true)
+        {
+            // broadcast send, now push message into GM client log
+            gm.Say(SAY_NETMSG, "|4294901760 " + "GM help requested: the character " + GetCritterInfo(player) + " has requested help. Message:");
+            gm.Say(SAY_NETMSG, "|4294901760 " + message);
+
+            PlayMusic(gm, "requesthelp.ogg", 0, 0);
+
+            // take care of player
+            SetRequestedHelp(player, 15);
+
+            // and inform all other authenticated chars
+            req.SetSetup(1);               // used by client_broadcast@BroadcastDraw
+            req.SetMessage(GetCritterInfo(player) + BROADCAST_SEPARATOR_MAIN + GetCritterInfo(gm));
+
+            array<Critter@> auth;
+            uint            all = GetAuthenticatedPlayers(auth);
+            for(uint a = 0; a < all; a++)
+            {
+                if(auth[a].Id == gm.Id)
+                    continue;
+                req.SetTime(REAL_SECOND(Random(25, 35)));
+                req.Send(auth[a]);
+            }
+            req.ToDelete();
+        }
+        else
+        {
+            player.Say(SAY_NETMSG, "Error during sending request. Report it.");
+            SetRequestedHelp(player, 5);
+        }
+
+        // let the UpdateBroadcast() take care of message deleting
+        return gm.Id;
+    }
+    else
+    {
+        string msg = message;
+        SetRequestedHelp(player, 10);
+
+        IBroadcastBuffer@ req = AddBroadcastBuffer(BROADCAST_REQUESTHELP, REAL_MINUTE(1), 0,
+                                                   GetCritterInfo(player) + BROADCAST_SEPARATOR_MAIN + msg, data, REAL_MINUTE(30),
+                                                   BROADCAST_FILTER_AUTHENTICATED);
+
+        player.Say(SAY_NETMSG, "Sending help request. If a GM won't appear within a few minutes, you can try #2238help: |0x00FFFF http://fonline2238.net/help/");
+        return 0;
+    }
+}
+
+void Broadcast_CheckRequestHelpBuffer(Critter@ gm)
+{
+    if(BroadcastBuffer.length() == 0)
+        return;
+
+    if(!valid(gm))
+    {
+        Log("GM invalid");
+        return;
+    }
+
+    int count = 0;
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].type == BROADCAST_REQUESTHELP)
+            count++;
+    }
+
+    if(count > 0)
+    {
+        if(GodOfTheRealm(gm.Id)
+           #ifdef __DEBUG__
+           || gm.Id == 1
+           #endif
+           )
+        {
+            array<int>        data;
+            IBroadcastBuffer@ info = AddBroadcastBuffer(BROADCAST_MESSAGE, REAL_SECOND(40), 0,
+                                                        "Awaiting requests: " + count + " - use `getrequests to read", data, 0,
+                                                        // can't use AUTHENTICATED filter here - function is called before access change happens
+                                                        BROADCAST_FILTER_NONE);
+            if(info.Send(gm))
+                info.ToDelete();
+        }
+        else
+        {
+            Broadcast_DumpRequestHelpBuffer(gm);
+        }
+    }
+}
+
+void Broadcast_DumpRequestHelpBuffer(Critter @gm)
+{
+    if(BroadcastBuffer.length() == 0)
+        return;
+
+    if(!valid(gm))
+    {
+        Log("GM invalid");
+        return;
+    }
+
+    for(uint b = 0; b < BroadcastBuffer.length(); b++)
+    {
+        if(BroadcastBuffer[b].type == BROADCAST_REQUESTHELP)
+        {
+            // can't use AUTHENTICATED filter here - function is called before access change happens
+            BroadcastBuffer[b].SetFilters(BROADCAST_FILTER_NONE);
+            if(BroadcastBuffer[b].Send(gm))
+            {
+                BroadcastBuffer[b].ToDelete();
+                array<string@>@ msg = split(BroadcastBuffer[b].GetMessage(), BROADCAST_SEPARATOR_MAIN);
+                int id = 0;
+                gm.Say(SAY_NETMSG, "|4294901760 " + "GM help requested: the character " +
+                       (msg.length() > 0 && (valid(msg[0])) ? msg[0] : "?") +
+                       " has requested help. Message:");
+                gm.Say(SAY_NETMSG, "|4294901760 " + (msg.length() > 1 && (valid(msg[1])) ? msg[1] : ""));
+            }
+            else
+            {
+                Log("Dumping +requesthelp failed");
+                return;
+            }
+        }
+    }
+    return;
+}
+
+GMTServerFunc(req, player, unused1, unused2, unused3, unused4, unused5)
+{
+    Broadcast_RequestHelp(player, "help my");
+}
+
+GMTServerFunc(reqclear, player, unused1, unused2, unused3, unused4, unused5)
+{
+    SetRequestedHelp(player, 0);
+}
+
+void wipe(Critter& player, int, int, int)
+{
+    array<int> data;
+    AddBroadcastBuffer(BROADCAST_MESSAGE, ELAPSED_TIME * 10, 0, "Everything is dead or dying.", data, ELAPSED_TIME * 10, BROADCAST_FILTER_NONE)
+    .SendToAll();
+}
+#endif /* __BROADCAST__ */

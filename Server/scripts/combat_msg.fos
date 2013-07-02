@@ -1,0 +1,114 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// combat_msg.fos
+//
+
+#define PTR_NULL                    (-1)
+
+// message specs
+// note: CMSG_AIMED_HIT must be CMSG_HIT+1, CMSG_CRIT_AIMED_HIT must be CMSG_CRIT_HIT+1
+#define CMSG_MISS                   (1)  // length 2: 1   WHO_ID
+#define CMSG_CRIT_MISS              (2)  // length 3: 2   WHO_ID  EFF
+#define CMSG_CRIT_MISS_DAMAGE       (3)  // length 4: 3   WHO_ID  EFF     DAMAGE
+#define CMSG_HIT                    (4)  // length 3: 4   WHO_ID  DAMAGE
+#define CMSG_AIMED_HIT              (5)  // length 4: 5   WHO_ID  LOC     DAMAGE
+#define CMSG_CRIT_HIT               (6)  // length 5: 6   WHO_ID  DAMAGE  EFF     MESSAGE
+#define CMSG_CRIT_AIMED_HIT         (7)  // length 6: 7   WHO_ID  LOC     DAMAGE  EFF      MESSAGE
+#define CMSG_HIT_DEAD               (8)  // length 3: 8   WHO_ID  DAMAGE
+#define CMSG_AIMED_HIT_DEAD         (9)  // length 4: 9   WHO_ID  LOC     DAMAGE
+#define CMSG_CRIT_HIT_DEAD          (10) // length 4: 10  WHO_ID  DAMAGE  MESSAGE
+#define CMSG_CRIT_AIMED_HIT_DEAD    (11) // length 5: 11  WHO_ID  LOC     DAMAGE  MESSAGE
+#define CMSG_OOPS                   (12) // length 3: 12  WH1_ID  WH2_ID
+#define CMSG_HIT_RANDOMLY           (13) // length 2: 13  WHO_ID
+
+#define FlushResults                # (tree)  runTree(tree, 0)
+
+shared class CombatRes
+{
+    array<uint> Res;
+    Critter@    Crit;
+    int         Left;
+    int         Right;
+
+    CombatRes()
+    {
+        Res.resize(1);
+        Res[0] = 1; // This will hold length of the message for client (so it can verify the length)
+        Left = PTR_NULL;
+        Right = PTR_NULL;
+    }
+};
+
+void AddEff(Critter@ crit, array<uint>& eff, array<CombatRes>& combatResults)
+{
+    int ptr = 0;
+
+    // find or create the node:
+    if(combatResults.length() == 0)
+    {
+        combatResults.resize(1);
+        @combatResults[0].Crit = crit;
+    }
+
+    while(combatResults[ptr].Crit.Id != crit.Id)
+    {
+        if(crit.Id < combatResults[ptr].Crit.Id)
+        {
+            if(combatResults[ptr].Left != PTR_NULL)
+                ptr = combatResults[ptr].Left;
+            else
+            {
+                uint last = combatResults.length();
+                combatResults.resize(last + 1);
+                combatResults[ptr].Left = last;
+                ptr = last;
+                @combatResults[last].Crit = crit;
+            }
+        }
+        else
+        {
+            if(combatResults[ptr].Right != PTR_NULL)
+                ptr = combatResults[ptr].Right;
+            else
+            {
+                uint last = combatResults.length();
+                combatResults.resize(last + 1);
+                combatResults[ptr].Right = last;
+                ptr = last;
+                @combatResults[last].Crit = crit;
+            }
+        }
+    }
+
+    // add the effect:
+    uint len = eff.length();
+    combatResults[ptr].Res.resize(combatResults[ptr].Res[0] + len);
+    for(uint i = 0; i < len; i++)
+        combatResults[ptr].Res[i + combatResults[ptr].Res[0]] = eff[i];
+
+    combatResults[ptr].Res[0] += len;
+}
+
+void runTree(array<CombatRes>& combatResults, int ptr)
+{
+    if(ptr == 0)
+        if(combatResults.length() == 0)
+            return;
+    /*if (@combatResults[ptr].Crit == null)
+       {
+       Log("tree fail, ptr="+ptr+" in "+where);
+       return false;
+       }*/
+    combatResults[ptr].Crit.SendCombatResult(combatResults[ptr].Res);
+
+    /*if (combatResults[ptr].Left  != PTR_NULL)
+       if (!runTree(combatResults, combatResults[ptr].Left, where)) return false;
+       if (combatResults[ptr].Right != PTR_NULL)
+       if (!runTree(combatResults, combatResults[ptr].Right, where)) return false;*/
+    if(combatResults[ptr].Left  != PTR_NULL)
+        runTree(combatResults, combatResults[ptr].Left);
+    if(combatResults[ptr].Right != PTR_NULL)
+        runTree(combatResults, combatResults[ptr].Right);
+}

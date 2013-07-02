@@ -1,0 +1,80 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+14 1010 D _script dialog@d_IsNotLocationOwner 0  #
+13 1020 D _var p q_bos_injured = 4 #
+10 1030 D _var p q_bos_injured = 3 D _item p PID_SUPER_STIMPAK } 1 #
+12 1040 D _var p q_bos_injured = 3 D _item p PID_SUPER_STIMPAK = 0 #
+9 1050 D _var p q_bos_injured = 1 #
+2 1060 D _var p q_bos_initiatequest_start = 21 D _script dialog@d_IsLocationOwner 0  D _var p q_bos_injured = 0 @
+2 2000 None 0 #
+3 2010 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 #
+0 4020 R _var p q_bos_injured = 3 #
+6 4030 D _param p SK_DOCTOR } 75 D or D _param p SK_FIRST_AID } 115 @
+5 5000 None 0 #
+0 5010 R _var p q_bos_injured = 3 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+8 7010 @
+8 8000 None 0 #
+0 8010 R _var p q_bos_injured = 1 R _script quest_bos_initiate@r_HealSoldier 1 80 @
+9 9000 None 0 #
+0 9010 R _var p q_bos_initiatequest_start = 25 R _var p q_bos_injured = 4 R _script quest_bos_initiate@r_RetireMap 0  @
+10 10000 None 0 #
+11 10010 D _item p PID_SUPER_STIMPAK } 1 R _item p PID_SUPER_STIMPAK - 1 R _script quest_bos_initiate@r_HealSoldier 1 40 @
+11 11000 None 0 #
+0 11010 R _var p q_bos_injured = 4 R _var p q_bos_initiatequest_start = 24 R _script quest_bos_initiate@r_RetireMap 0  @
+12 12000 None 0 #
+0 12010 @
+13 13000 None 0 @
+14 14000 None 0 &
+
+[engl]
+{100}{}{Snyder}
+{200}{}{You see Apprentice Snyder.}
+{210}{}{You see a severely wounded Brotherhood of Steel apprentice with the name Snyder on his dogtags.}
+{1000}{}{Predialogue installations}
+{1010}{}{Not Involved}
+{1020}{}{Finished}
+{1030}{}{Found super stim.}
+{1040}{}{Stims not found}
+{1050}{}{Fixed the leg.}
+{1060}{}{Default}
+{2000}{}{W-who are you?}
+{2010}{}{I was sent by the Brotherhood. What happened out here?}
+{3000}{}{I am Apprentice Snyder. We were ambushed by some mutants. I was the only one who survived the attack. I got all of them but one, and he started to run at me. I tried to shoot him but my gun jammed right as he swung at my leg. I must have unjammed it when I hit the ground, because his head wasn't there anymore.}
+{3010}{}{Well, today's your lucky day. I'm getting you out of here.}
+{4000}{}{Great. Only thing is that my leg is definitely broken. I can't walk out of here, and you sure as hell didn't bring a hummer. Go check the other guys in my patrol. See if any of them have any super stims.}
+{4010}{}{Just wondering, how are you not in excruciating pain right now? You seem surprisingly calm for having a broken leg.}
+{4020}{}{Yeah I'll look.}
+{4030}{}{[You raise an eyebrow.] You've taken a lot of Med-X. haven't you?}
+{5000}{}{Lots and lots of Med-X before the fight. It does wonders against the ones with hammers.}
+{5010}{}{Ah. Let me go look for those stims.}
+{6000}{}{Yeah, right before the fight. How'd you know?}
+{6010}{}{You say your leg was just broken by a sledgehammer. You are in no visible pain, and you are as calm as if you were sitting in a bar right now. As weak as your body is, the combination of Med-X and Super Stimpaks could put you into a coma, or even kill you.}
+{7000}{}{Well what do you suggest, 'Doc'?}
+{7010}{}{[You grab whatever you can around you, and fashion a splint in record time.]}
+{8000}{}{[He looks at it skeptically.] And this will hold?}
+{8010}{}{Get up and walk around on it.}
+{9000}{}{I'm honestly impressed. Even the little bit of pain I could feel with the drugs is gone. Can we get out of here now?}
+{9010}{}{Yeah, let's go.}
+{10000}{}{Please tell me you found something...}
+{10010}{}{Yeah I got one right here. Hold still. [You stab him with the needle and push the contents into his leg.]}
+{11000}{}{Oh god that feels better. We have to hurry though. The side effects of these super stims are pretty strong, and they don't take too long to hit you.}
+{11010}{}{Alright, let's start moving.}
+{12000}{}{Do you have the stims?}
+{12010}{}{No, I'm still looking.}
+{13000}{}{Let's get out of here before we start talking.}
+{14000}{}{This...aahhh....doesn't concern you.}
+

@@ -1,0 +1,60 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_client.fos
+//
+
+#ifndef __FOART_CLIENT__
+#define __FOART_CLIENT__
+
+// inlined in foart.fos
+
+#ifdef _MSC_VER
+# include "foart.fos"
+#endif
+
+#include "buffer_h.fos"
+#include "buffer_lazy_h.fos"
+
+bool FOArt_SendFile(string& filename, bool spawnFast)
+{
+    if(filename.length() == 0)
+    {
+        Message("FOArt: missing filename");
+        return(false);
+    }
+
+    if(filename.length() < 7 || substring(filename, filename.length() - 6, filename.length()) != ".foart")
+        filename += ".foart";
+
+    // load file
+    FOArt@ foart = LoadFOArtFile(filename);
+    if(!valid(foart))
+    {
+        Message("FOArt: cannot load <" + filename + ">");
+        return(false);
+    }
+
+    // prepare for sending
+    Buffer@ buff = NewBuffer();
+    if(!foart.Save(buff))
+    {
+        Message("FOArt: cannot prepare buffer (ERR1)");
+        return(false);
+    }
+    array<int32> data;
+    buff >> >= data;
+    if(data.length() == 0)
+    {
+        Message("FOArt: cannot prepare buffer (ERR2)");
+        return(false);
+    }
+
+    // done and done
+    RunLazyScriptUnsafe(
+        FOART_MODULE + "@unsafe_spawn" + (spawnFast ? "Fast" : "Slow"),
+        0, 0, 0, filename, data);
+    return(true);
+}
+#endif // __FOART_CLIENT__ //

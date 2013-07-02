@@ -1,0 +1,31 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+0 2010 R _script dialog@r_TeleportToMap 2 227 0 R _var p hub_arena_inside = 1 R _script dialog@r_TransferItemsToContainer 4 227 30 128 1 #
+3 2020 #
+0 2030 @
+3 3000 None 0 #
+0 3010 R _script dialog@r_TeleportToMap 2 227 0 R _var p hub_arena_inside = 1 R _script dialog@r_TransferItemsToContainer 4 227 30 128 1 #
+0 3020 &
+
+[engl]
+{100}{}{Arena Manager}
+{200}{}{You see arena manager.}
+{210}{}{You see the Hub arena manager.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Do you want to fight in the arena? Yes or no, fast, time is money and the longer we talk, the more time we need, the less money I get. }
+{2010}{}{Yes, I want to fight in the arena.}
+{2020}{}{What is the arena?}
+{2030}{}{No, I don't have time as well.}
+{3000}{}{The arena is under the Hub. Folks can fight there under specific conditions. What now, you want to go there or not? }
+{3010}{}{Yes, I want to fight in the arena.}
+{3020}{}{Nah, sounds boring. Bye.}
+

@@ -1,0 +1,51 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_raiders_cave.fos
+//
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "messages_h.fos"
+#include "mapdata_h.fos"
+
+#define NORMAL_ENTRANCE    (0) // For everyone
+#define CAVE_ENTRANCE      (1) // For raiders only
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_RAIDERS);
+    }
+}
+
+//
+// Area triggers
+//
+
+// This is bad. Very bad.
+void t_EnterBase(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(GetGroupIndex(critter) != FACTION_RAIDERS)
+    {
+        critter.SendMessage(MSG_RAIDER_AREA_NOT_ALLOWED, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+    else
+        return;
+}
+
+bool entrance_cave(Location& Loc, array<Critter@>& critters, uint8 entrance)
+{
+    if(entrance == NORMAL_ENTRANCE)
+        return true;
+
+    if(IsMember(FACTION_RAIDERS, critters[0]))
+        return true;
+    return false;
+}

@@ -1,0 +1,125 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_corsican_brothers.fos
+//
+
+#include "_macros.fos"
+#include "_vars.fos"
+#include "_maps.fos"
+#include "utils_h.fos"
+#include "world_common_h.fos"
+#include "ITEMPID.H"
+
+#define STR_BODY_BURRIED    (20000)
+#define STR_BODY_FUELED     (20001)
+#define STR_BODY_BURNED     (20002)
+
+// New Reno - Corsican Brothers Quests
+
+// QUEST #1
+void _DeadbodyInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOnDeadbody");
+}
+
+// get rid of the body
+bool _UseItemOnDeadbody(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(!valid(usedItem))
+        return false;
+
+    GameVar@ questvar = GetLocalVar(LVAR_q_nr_corsican_initiate, cr.Id);
+    uint     locpid = cr.GetMap().GetLocation().GetProtoId();
+    uint     pid = usedItem.GetProtoId();
+
+    if((pid == PID_FLAMETHROWER_FUEL) || (pid == PID_FLAMETHROWER_FUEL_MK_II))            // fuel the body
+    {
+        cr.Say(SAY_NETMSG, "You have poured some fuel on the body.");
+        SETFLAG(item.Flags, ITEM_ALWAYS_VIEW);
+        cr.DeleteItem(pid, 1);
+        return true;
+    }
+    else if((pid == PID_SHOVEL) || (pid == PID_OLD_SHOVEL))                       // burry the body
+    {
+        questvar = 7;
+
+        if(locpid == LOCATION_Golgotha)         //
+            questvar = 3;
+
+        cr.Say(SAY_NETMSG, "You have burried the body.");
+        DeleteItem(item);
+        return true;
+    }
+    else if(pid == PID_LIGHTER)           // burn the body
+    {
+        if FLAG(item.Flags, ITEM_ALWAYS_VIEW)
+        {
+            questvar = 7;
+
+            if(locpid == LOCATION_Golgotha)
+                questvar = 4;
+
+            cr.Say(SAY_NETMSG, "Using the lighter, you set the body on fire.");
+            UNSETFLAG(item.Flags, ITEM_ALWAYS_VIEW);
+            UNSETFLAG(item.Flags, ITEM_CAN_PICKUP);
+            item.PicMap = GetStrHash("art\\items\\QuestBurningBody.fofrm");
+            item.Update();
+            item.Animate(0, 21);
+            uint[] values = { item.Id, 0 };
+            CreateTimeEvent(AFTER(REAL_SECOND(5)), "e_RemoveRests", values, false);
+        }
+        else
+            cr.Say(SAY_NETMSG, "Burning down the body using only this lighter seems next to impossible.");
+
+        return true;
+    }
+
+    return false;
+}
+
+uint e_RemoveRests(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+
+    item.PicMap = GetStrHash("art\\items\\QuestBurningBodySingle.fofrm");
+    item.Update();
+    DeleteItem(item);
+    return 0;
+}
+
+// QUEST #2
+// check out dialog@r_SetCorsicanBrothersTatoo and dialog@d_HaveCorsicanBrothersTatoo
+// also dialog_factions@r_AddMember
+
+// QUEST #3
+// sets a questvar to a random value in the passed interval
+void r_QuestVarRandom(Critter& cr, Critter@ npc, int lvar, int min, int max)
+{
+    if(valid(cr))
+    {
+        GameVar@ qvar = GetLocalVar(lvar, cr.Id);
+        qvar = Random(min, max);
+    }
+}
+
+void r_FollowMcGee(Critter& cr, Critter@ npc)
+{}
+
+// REWARDS
+
+// REWARD #1
+void r_RewardOne(Critter& cr, Critter@ npc)
+{
+    uint[] items = { PID_COMBAT_SHOTGUN, PID_SHOTGUN_SHELLS, PID_STIMPAK };
+    uint[] quant = { 1, 400, 3 };
+    for(uint i = 0; i < items.length(); i++)
+        cr.AddItem(items[i], quant[i]);
+
+}
+
+// REWARD #2
+// WIP

@@ -1,0 +1,40 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+10 1010 D _param p ST_INTELLECT < 4 #
+2 1020 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+500 3010 D _script perks@d_PerkCheck 1 332 R _param p PE_MR_FIXIT = 1 #
+0 3020 @
+10 4000 None 0 @
+500 5000 None 0 #
+2 5010 #
+0 5020 &
+
+[engl]
+{100}{}{Smitty}
+{200}{}{You see a greasy old coot.}
+{210}{}{You see Smitty the mechanic and junkyard owner.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{normal}
+{2000}{}{What can old Smitty do ya for?}
+{2010}{}{I was just wondering what you do here?}
+{2020}{}{I was just looking around a bit. See you later, Smitty.}
+{3000}{}{Mostly I just keep watching over all this old junk, repair a thingy or two, if it's worth it... Nothin' else to tell, really.}
+{3010}{}{Jeez, you gotta some crazy junk around here! And you repair it too? How do you do that? [Mr. Fixit]}
+{3020}{}{Alright, bye.}
+{4000}{}{Hey, stay away from this place before you break something!@@This is not a place for you, git!}
+{5000}{}{You interested in repairing? At last! Nobody here in Den is interested in that, worthless bastards! Okay, let's take something -- here, this part. Now, we can make... [Smitty shows you a few pointers about repairing stuff]}
+{5010}{}{Thanks Smitty! Let me ask you something else now.}
+{5020}{}{Thanks Smitty, that knowledge is quite precious nowadays. Bye!}
+

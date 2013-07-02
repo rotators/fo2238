@@ -1,0 +1,101 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// crippling.fos
+//
+
+// The script for periodic crippling and damaging of npcs in towns.
+#include "_macros.fos"
+#include "utils_h.fos"
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+void ProcessCrippling()
+{
+    array<Map@>     maps;
+    uint            n = GetAllMaps(0, maps);
+    array<Critter@> crits;
+    for(uint i = 0; i < n; i++)
+        if(maps[i].GetLocation().IsTown())
+            maps[i].GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, crits);
+    uint crippled = 0;
+    for(uint i = 0, j = crits.length(); i < j; i++)
+    {
+        if(!ValidCripple(crits[i]))
+        {
+            crits.removeAt(i);
+            j--;
+            continue;
+        }
+        if(_CritIsInjured(crits[i]))
+            crippled++;
+    }
+    uint total = crits.length();
+    total = (12 * total) / 100;
+    if(crippled < total)
+    {
+        array<uint> values;
+        for(uint i = crippled; i < total; i++)
+        {
+            uint idx = Random(0, crits.length() - 1);
+            values.insertLast(crits[idx].Id);
+            crits.removeAt(i);
+        }
+        CreateTimeEvent(AFTER(REAL_MINUTE(3)), "e_ProcessCrippling", values, false);
+    }
+    else
+        CreateTimeEvent(AFTER(REAL_MINUTE(30)), "e_ProcessCrippling", false);
+}
+
+uint e_ProcessCrippling(array<uint>@ values)
+{
+    if(valid(values))
+    {
+        uint len = values.length();
+        if(len > 0)
+        {
+            len--;
+            CrippleCritter(values[len]);
+            values.resize(len);
+            return REAL_MINUTE(3);
+        }
+    }
+    ProcessCrippling();
+    return 0;
+}
+
+void CrippleCritter(uint crId)
+{
+    Critter@ cr = GetCritter(crId);
+    if(!valid(cr))
+        return;
+    uint dam = Random(0, 3);
+    if(dam == 0)
+        dam = 1;
+    for(uint i = 0; i < dam; i++)
+        cr.DamageBase[Random(DAMAGE_EYE, DAMAGE_LEFT_LEG)] = 1;
+    if(cr.Stat[ST_CURRENT_HP] > 0)
+        InjureCritter(cr, cr.Stat[ST_CURRENT_HP] / 2, DAMAGE_UNCALLED, cr.Dir, 0);
+    cr.ToKnockout(KNOCKOUT_ANIM2_DEFAULT(Random(0, 1) == 0), 20, cr.HexX, cr.HexY);
+    switch(Random(0, 3))
+    {
+    case 0:
+        cr.Say(SAY_NORM_ON_HEAD, "Ouch!");
+        break;
+    case 1:
+        cr.Say(SAY_NORM_ON_HEAD, "Awwww...");
+        break;
+    case 2:
+        cr.Say(SAY_NORM_ON_HEAD, "It hurts, damnit!");
+        break;
+    case 3:
+        cr.Say(SAY_NORM_ON_HEAD, "My... my...");
+        break;
+    }
+}
+
+bool ValidCripple(Critter@ cr)
+{
+    return IsHumanoid(cr) && !_IsFollower(cr) && cr.Mode[MODE_NO_LOOSE_LIMBS] == 0;
+}

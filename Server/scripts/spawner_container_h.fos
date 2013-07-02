@@ -1,0 +1,180 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// spawner_container_h.fos
+//
+
+#ifndef __SPAWNER_CONTAINER_H__
+#define __SPAWNER_CONTAINER_H__
+
+#define SPAWNER_CONTAINER_GLOW_BG             (0)
+#define SPAWNER_CONTAINER_GLOW_EW             (1)
+#define SPAWNER_CONTAINER_GLOW_SG             (2)
+#define SPAWNER_CONTAINER_GLOW_GRENADES       (3)
+#define SPAWNER_CONTAINER_GLOW_AMMO           (4)
+#define SPAWNER_CONTAINER_GLOW_CA             (5)
+#define SPAWNER_CONTAINER_GLOW_EC             (6)
+#define SPAWNER_CONTAINER_GLOW_HTH            (7)
+#define SPAWNER_CONTAINER_GLOW_DRUG           (8)
+#define SPAWNER_CONTAINER_GLOW_ELECTRO        (9)
+
+#define SPAWNER_CONTAINER_ENCOUNTER_LOW       (10)
+#define SPAWNER_CONTAINER_ENCOUNTER_MEDIUM    (11)
+#define SPAWNER_CONTAINER_ENCOUNTER_HIGH      (12)
+
+#define SPAWNER_CONTAINER_GRAVE_LOW           (13)
+#define SPAWNER_CONTAINER_GRAVE_HIGH          (14)
+
+#define SPAWNER_CONTAINER_BLUEPRINT_LOW       (15)
+#define SPAWNER_CONTAINER_BLUEPRINT_MED       (16)
+#define SPAWNER_CONTAINER_BLUEPRINT_HIGH      (17)
+
+#define SPAWNER_CONTAINER_SEWER_TRASH         (18)
+
+#define SPAWNER_RESERVED_MAX                  (30)
+// above that can be used runtime
+
+//		One time spawners
+// Weapons and Ammo
+
+#define ONCE_CONTAINER_SG_LOW                 (31)
+#define ONCE_CONTAINER_SG_MED                 (32)
+#define ONCE_CONTAINER_SG_HIGH                (33)
+
+#define ONCE_CONTAINER_BG_MED                 (34)
+#define ONCE_CONTAINER_BG_HIGH                (35)
+
+#define ONCE_CONTAINER_EW_MED                 (36)
+#define ONCE_CONTAINER_EW_HIGH                (37)
+
+#define ONCE_CONTAINER_THROWING_LOWMED        (38)
+#define ONCE_CONTAINER_THROWING_HIGH          (39)
+
+#define ONCE_CONTAINER_HTH_LOWMED             (40)
+#define ONCE_CONTAINER_HTH_HIGH               (41)
+
+
+// Drugs, medication and med tools
+
+#define ONCE_CONTAINER_MEDS_LOW               (42)
+#define ONCE_CONTAINER_MEDS_MED               (43)
+#define ONCE_CONTAINER_MEDS_HIGH              (44)
+
+#define ONCE_CONTAINER_MEDS_TOOLS             (45)
+
+
+// Armors
+
+#define ONCE_CONTAINER_ARMOR_LOW              (46)
+#define ONCE_CONTAINER_ARMOR_MED              (47)
+#define ONCE_CONTAINER_ARMOR_HIGH             (48)
+
+
+// Blueprints
+
+#define ONCE_CONTAINER_BP_MECH_LOW            (49)              // mech = mechanical ( weapons, ammo, armor, NOT drugs)
+#define ONCE_CONTAINER_BP_MECH_MED            (50)
+#define ONCE_CONTAINER_BP_MECH_HIGH           (51)
+
+#define ONCE_CONTAINER_BP_CHEM_LOW            (52)              // chem = chemicals,drugs only
+#define ONCE_CONTAINER_BP_CHEM_MED            (53)
+#define ONCE_CONTAINER_BP_CHEM_HIGH           (54)
+
+#define ONCE_CONTAINER_BP_MECH_ALL            (55)
+#define ONCE_CONTAINER_BP_CHEM_ALL            (56)
+
+
+
+//		Continuous spawning
+// Weapons and Ammo
+
+#define CONTINUOUS_CONTAINER_SG_LOW           (57)
+#define CONTINUOUS_CONTAINER_SG_MED           (58)
+#define CONTINUOUS_CONTAINER_SG_HIGH          (59)
+
+#define CONTINUOUS_CONTAINER_BG_MED           (60)
+#define CONTINUOUS_CONTAINER_BG_HIGH          (61)
+
+#define CONTINUOUS_CONTAINER_EW_MED           (62)
+#define CONTINUOUS_CONTAINER_EW_HIGH          (63)
+
+#define CONTINUOUS_CONTAINER_THROWING_LOWMED(64)
+#define CONTINUOUS_CONTAINER_THROWING_HIGH    (65)
+
+#define CONTINUOUS_CONTAINER_HTH_LOWMED       (66)
+#define CONTINUOUS_CONTAINER_HTH_HIGH         (67)
+
+
+// Drugs, medication and med tools
+
+#define CONTINUOUS_CONTAINER_MEDS_LOW         (68)
+#define CONTINUOUS_CONTAINER_MEDS_MED         (69)
+#define CONTINUOUS_CONTAINER_MEDS_HIGH        (70)
+
+#define CONTINUOUS_CONTAINER_MEDS_TOOLS       (71)
+
+
+// Armors
+
+#define CONTINUOUS_CONTAINER_ARMOR_LOW        (72)
+#define CONTINUOUS_CONTAINER_ARMOR_MED        (73)
+#define CONTINUOUS_CONTAINER_ARMOR_HIGH       (74)
+
+
+// Blueprints
+
+#define CONTINUOUS_CONTAINER_BP_MECH_LOW      (75)
+#define CONTINUOUS_CONTAINER_BP_MECH_MED      (76)
+#define CONTINUOUS_CONTAINER_BP_MECH_HIGH     (77)
+
+#define CONTINUOUS_CONTAINER_BP_CHEM_LOW      (78)
+#define CONTINUOUS_CONTAINER_BP_CHEM_MED      (79)
+#define CONTINUOUS_CONTAINER_BP_CHEM_HIGH     (80)
+
+#define CONTINUOUS_CONTAINER_BP_MECH_ALL      (81)
+#define CONTINUOUS_CONTAINER_BP_CHEM_ALL      (82)
+
+
+//              Other
+
+// se_factory -  one time spawners
+
+#define FACTORY_TBLMATERIAL_CONTAINER         (83)
+#define FACTORY_TBLCOMPONENTS_CONTAINER       (84)
+#define FACTORY_MATERIAL_CONTAINER            (85)
+
+// se_hospital - one time spawners
+
+#define HOSPITAL_CONTAINER_LOW                (86)
+#define HOSPITAL_CONTAINER_MED                (87)
+#define HOSPITAL_CONTAINER_HIGH               (88)
+
+// talchem - continuous spawning
+
+#define TALCHEM_MINOR                         (89)
+#define TALCHEM_LOW                           (90)
+#define TALCHEM_MED                           (91)
+#define TALCHEM_HIGH                          (92)
+
+#define TALCHEM_MATERIALS_LOWER               (93)
+#define TALCHEM_MATERIALS_HIGHER              (94)
+
+#define GHOST_TOWN_HIGH                       (95) // This is for "the end"
+
+shared interface IItemSpawner
+{
+    IItemSpawner@ Lock(uint16 min, uint16 max);
+    IItemSpawner@ SpawnTime(uint min, uint max);
+    IItemSpawner@ AddItem(uint16 pid, uint chance, uint min, uint max);
+    IItemSpawner@ AddItem(uint16 pid, uint chance);
+    IItemSpawner@ SetSeparate(bool separate);
+    IItemSpawner@ Clear();
+};
+
+#ifndef __SPAWNER_CONTAINER_MODULE__
+import void          MakeSpawnerContainer(Item& item, uint type) from "spawner_container";
+import IItemSpawner@ GetSpawner(uint num) from "spawner_container";
+import IItemSpawner@ MakeSpawner(uint num) from "spawner_container";
+#endif
+#endif

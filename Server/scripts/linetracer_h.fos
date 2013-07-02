@@ -1,0 +1,20 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// linetracer_h.fos
+//
+
+#ifndef __LINE_TRACER__
+#define __LINE_TRACER__
+
+shared interface ITraceContext
+{
+    bool Exec(Map& map, uint16 hx, uint16 hy);     // return true to stop tracing
+};
+
+#ifndef __LINETRACER_MODULE__
+import uint LineTracerHex(uint16 hx, uint16 hy, uint16 tx, uint16 ty, Map& map, uint dist, ITraceContext@ context) from "linetracer";
+import uint LineTracerSquare(uint16 hx, uint16 hy, uint16 tx, uint16 ty, Map& map, uint dist, ITraceContext@ context) from "linetracer";
+#endif
+#endif

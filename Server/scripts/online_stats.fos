@@ -1,0 +1,529 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// online_stats.fos
+//
+
+#ifndef __ONLINE_STATS__
+#define __ONLINE_STATS__
+
+#include "_macros.fos"
+#include "MsgStr.h"
+
+#include "config_file_h.fos"
+
+#define __ONLINE_STATS_MODULE__
+#include "online_stats_h.fos"
+
+#pragma bindfunc "void OnlineStats_CharSave(Critter@+,int,string@+) -> online_stats.dll OnlineStats_CharSave"
+#pragma bindfunc "void OnlineStats_CharDelete(Critter@+, string@+)  -> online_stats.dll OnlineStats_CharDelete"
+
+#define OS_CONFIG         "config\\OnlineStats.cfg"
+#define OS_SCRIPT         "client_online_stats@_Setup"
+#define XF_SCRIPT         "client_online_stats@_XFire"
+
+bool   OS_Disabled = false;
+bool   OS_Initialized = false;
+string OS_Directory = "";
+
+void OnlineStats_Init()
+{
+    if(OS_Disabled || OS_Initialized)
+        return;
+
+    LoadConfig(OS_CONFIG);
+    IConfigFile@ config = GetConfigFile(OS_CONFIG);
+    if(!valid(config))
+    {
+        Log("ONLINE_STATS CONFIG NOT LOADED, please panic.");
+        OS_Disabled = true;
+        return;
+    }
+
+    string@ tmp = GetConfigValue(OS_CONFIG, "VTDB", "DataBaseDirectory");
+    if(!valid(tmp))
+    {
+        Log("VTDB : DataBaseDirectory not set");
+        OS_Disabled = true;
+        return;
+    }
+
+    OS_Directory = tmp;
+    OS_Initialized = true;
+    return;
+}
+
+void OnlineStats_TrySave(Critter& target)   // Export
+{
+    if(OS_Disabled)
+        return;
+
+    OnlineStats_Init();
+
+    if(target.IsNpc())       // no GM tricks, please
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_online_stats, target.Id);
+    if(valid(var))
+    {
+        int flags = var.GetValue();
+        OnlineStats_CharDelete(target, OS_Directory);           // dll
+        if(flags == 0)
+            return;
+        else
+        {
+            Log("VTDB : " + target.Name + "<" + target.Id + ">");
+            OnlineStats_CharSave(target, flags, OS_Directory);               // dll
+        }
+    }
+    else
+        Log("VTDB : error " + target.Name + "<" + target.Id + "> LVAR_online_stats<" + LVAR_online_stats + "> not found");
+}
+
+/**
+ * Send LVAR copy to client
+ * @sa: unsafe_setup
+ */
+void OnlineStats_SendSetup(Critter& target)   // Export
+{
+    unsafe_setup(target, 0, -1, 0, " ", null);
+}
+
+/**
+ * Send/get LVAR to/from client, strip unknown flags.
+ */
+void unsafe_setup(Critter& target, int flags, int mode, int, string@, array<int>@)
+{
+    int      retflags = 0;
+    GameVar@ var = GetLocalVar(LVAR_online_stats, target.Id);
+
+    if(mode < 0)
+    {
+        target.RunClientScript(OS_SCRIPT, var.GetValue(), 0, 0, " ", null);
+        XFireClient_ClearInfo(target);
+        XFireClient_Update(target);
+        return;
+    }
+
+    // check flags send by client, remove all unknown/not needed
+
+    #define _checkflag    # (c, f, r) if(FLAG(c, f)) { SETFLAG(r, f); }
+    // mod: vtdb
+    if(FLAG(flags, OS_VTDB_ALL))
+    {
+        SETFLAG(retflags, OS_VTDB_ALL);
+    }
+    else
+    {
+        _checkflag(flags, OS_VTDB_SPECIAL, retflags);
+        _checkflag(flags, OS_VTDB_XP, retflags);
+        _checkflag(flags, OS_VTDB_LIFE, retflags);
+        _checkflag(flags, OS_VTDB_STATS, retflags);
+        _checkflag(flags, OS_VTDB_SKILLS, retflags);
+        _checkflag(flags, OS_VTDB_TRAITS, retflags);
+        _checkflag(flags, OS_VTDB_PERKS, retflags);
+        _checkflag(flags, OS_VTDB_PROFESSIONS, retflags);
+        _checkflag(flags, OS_VTDB_KARMA, retflags);
+        _checkflag(flags, OS_VTDB_ADDICTIONS, retflags);
+        _checkflag(flags, OS_VTDB_REPUTATION, retflags);
+        _checkflag(flags, OS_VTDB_KILLS, retflags);
+        _checkflag(flags, OS_VTDB_POSITION, retflags);
+    }
+
+    // mod: xfire
+    if(FLAG(flags, OS_XFIRE_ALL))
+    {
+        SETFLAG(retflags, OS_XFIRE_ALL);
+    }
+    else
+    {
+        _checkflag(flags, OS_XFIRE_CHARNAME, retflags);
+        _checkflag(flags, OS_XFIRE_CHARLEVEL, retflags);
+        _checkflag(flags, OS_XFIRE_LOCATION, retflags);
+        _checkflag(flags, OS_XFIRE_AWARDS, retflags);
+    }
+
+    if(var.GetValue() != retflags)
+        Log("VTDB : updating " + target.Name + "<" + target.Id + "> " + var.GetValue() + " -> " + retflags + (retflags != flags ? " (was " + flags + ")" : ""));
+    var = retflags;
+
+    target.RunClientScript(OS_SCRIPT, retflags, 1, 0, " ", null);
+    OnlineStats_TrySave(target);
+    XFireClient_ClearInfo(target);
+    XFireClient_Update(target);
+}
+/* debug aka cheating */
+
+// just some verbose around *TrySave
+void charsave(Critter& player, int param0, int param1, int param2)
+{
+    Critter@ target = GetCritter(param0);
+    if(!valid(target))
+    {
+        player.Say(SAY_NETMSG, "Invalid target: " + param0);
+        return;
+    }
+    ;
+
+    if(target.IsNpc())
+    {
+        player.Say(SAY_NETMSG, "Not for NPCs");
+        return;
+    }
+    ;
+
+    GameVar@ var = GetLocalVar(LVAR_online_stats, target.Id);
+    if(valid(var))
+    {
+        Log("VTDB manual : " + target.Name + "<" + target.Id + ">");
+        OnlineStats_TrySave(target);
+    }
+    else
+    {
+        string msg = target.Name + "<" + target.Id + ">: LVAR_online_stats (" + LVAR_online_stats + ") not found";
+        player.Say(SAY_NETMSG, "" + msg);
+        Log("VTDB : " + msg);
+    }
+}
+
+void get(Critter& player, int, int, int)
+{
+    OnlineStats_SendSetup(player);
+}
+
+void v_showflags(Critter& player)
+{
+    player.Say(SAY_NETMSG, "1  = OS_VTDB_SPECIAL");
+    player.Say(SAY_NETMSG, "2  = OS_VTDB_XP");
+    player.Say(SAY_NETMSG, "3  = OS_VTDB_LIFE");
+    player.Say(SAY_NETMSG, "4  = OS_VTDB_STATS");
+    player.Say(SAY_NETMSG, "5  = OS_VTDB_SKILLS");
+    player.Say(SAY_NETMSG, "6  = OS_VTDB_TRAITS");
+    player.Say(SAY_NETMSG, "7  = OS_VTDB_PERKS");
+    player.Say(SAY_NETMSG, "8  = OS_VTDB_PROFESSIONS");
+    player.Say(SAY_NETMSG, "9  = OS_VTDB_KARMA");
+    player.Say(SAY_NETMSG, "10 = OS_VTDB_ADDICTIONS");
+    player.Say(SAY_NETMSG, "11 = OS_VTDB_REPUTATION");
+    player.Say(SAY_NETMSG, "12 = OS_VTDB_KILLS");
+    player.Say(SAY_NETMSG, "13 = OS_VTDB_POSITION");
+    player.Say(SAY_NETMSG, "14 = OS_XFIRE_CHARNAME");
+    player.Say(SAY_NETMSG, "15 = OS_XFIRE_CHARLEVEL");
+    player.Say(SAY_NETMSG, "16 = OS_XFIRE_LOCATION");
+    player.Say(SAY_NETMSG, "17 = OS_XFIRE_AWARDS");
+
+    return;
+};
+
+void showflags(Critter& player, int param0, int param1, int param2)
+{
+    player.Say(SAY_NETMSG, "Valid flags:");
+    v_showflags(player);
+
+    return;
+};
+
+void getflags(Critter& player, int param0, int param1, int param2)
+{
+    Critter@ target = GetCritter(param0);
+    if(!valid(target))
+    {
+        player.Say(SAY_NETMSG, "Invalid target: " + param0);
+        return;
+    }
+    ;
+
+    if(target.IsNpc())
+    {
+        player.Say(SAY_NETMSG, "Not for NPCs");
+        return;
+    }
+    ;
+
+    GameVar@ var = GetLocalVar(LVAR_online_stats, target.Id);
+    if(valid(var))
+    {
+        int flags = var.GetValue();
+        player.Say(SAY_NETMSG, "Flags for " + target.Name + " (" + target.Id + "): " + flags);
+        if(flags == 0)
+        {
+            player.Say(SAY_NETMSG, " None");
+        }
+        else
+        {
+            // mod: vtdb
+            if(FLAG(flags, OS_VTDB_SPECIAL))
+                player.Say(SAY_NETMSG, "  OS_VTDB_SPECIAL");
+            if(FLAG(flags, OS_VTDB_XP))
+                player.Say(SAY_NETMSG, "  OS_VTDB_XP");
+            if(FLAG(flags, OS_VTDB_LIFE))
+                player.Say(SAY_NETMSG, "  OS_VTDB_LIFE");
+            if(FLAG(flags, OS_VTDB_STATS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_STATS");
+            if(FLAG(flags, OS_VTDB_SKILLS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_SKILLS");
+            if(FLAG(flags, OS_VTDB_TRAITS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_TRAITS");
+            if(FLAG(flags, OS_VTDB_PERKS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_PERKS");
+            if(FLAG(flags, OS_VTDB_PROFESSIONS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_PROFESSIONS");
+            if(FLAG(flags, OS_VTDB_KARMA))
+                player.Say(SAY_NETMSG, "  OS_VTDB_KARMA");
+            if(FLAG(flags, OS_VTDB_KARMA))
+                player.Say(SAY_NETMSG, "  OS_VTDB_ADDICTIONS");
+            if(FLAG(flags, OS_VTDB_REPUTATION))
+                player.Say(SAY_NETMSG, "  OS_VTDB_REPUTATION");
+            if(FLAG(flags, OS_VTDB_KILLS))
+                player.Say(SAY_NETMSG, "  OS_VTDB_KILLS");
+            if(FLAG(flags, OS_VTDB_POSITION))
+                player.Say(SAY_NETMSG, "  OS_VTDB_POSITION");
+            // mod: xfire
+            if(FLAG(flags, OS_XFIRE_CHARNAME))
+                player.Say(SAY_NETMSG, "  OS_XFIRE_CHARNAME");
+            if(FLAG(flags, OS_XFIRE_CHARLEVEL))
+                player.Say(SAY_NETMSG, "  OS_XFIRE_CHARLEVEL");
+            if(FLAG(flags, OS_XFIRE_LOCATION))
+                player.Say(SAY_NETMSG, "  OS_XFIRE_LOCATION");
+            if(FLAG(flags, OS_XFIRE_AWARDS))
+                player.Say(SAY_NETMSG, "  OS_XFIRE_AWARDS");
+        };
+    }
+    else
+        player.Say(SAY_NETMSG, target.Name + "(" + target.Id + "): LVAR_online_stats (" + LVAR_online_stats + ") not found");
+
+    return;
+};
+
+void setflag(Critter& player, int param0, int param1, int param2)
+{
+    Critter@ target = GetCritter(param0);
+    if(!valid(target))
+    {
+        player.Say(SAY_NETMSG, "Invalid target: " + param0);
+        return;
+    }
+    ;
+
+    if(target.IsNpc())
+    {
+        player.Say(SAY_NETMSG, "Not for NPCs");
+        return;
+    }
+    ;
+
+    GameVar@ var = GetLocalVar(LVAR_online_stats, target.Id);
+    if(valid(var))
+    {
+        int flag = 0;
+
+        switch(param1)
+        {
+        case 1:
+            flag = OS_VTDB_SPECIAL;
+            break;
+        case 2:
+            flag = OS_VTDB_XP;
+            break;
+        case 3:
+            flag = OS_VTDB_LIFE;
+            break;
+        case 4:
+            flag = OS_VTDB_STATS;
+            break;
+        case 5:
+            flag = OS_VTDB_SKILLS;
+            break;
+        case 6:
+            flag = OS_VTDB_TRAITS;
+            break;
+        case 7:
+            flag = OS_VTDB_PERKS;
+            break;
+        case 8:
+            flag = OS_VTDB_PROFESSIONS;
+            break;
+        case 9:
+            flag = OS_VTDB_KARMA;
+            break;
+        case 10:
+            flag = OS_VTDB_ADDICTIONS;
+            break;
+        case 11:
+            flag = OS_VTDB_REPUTATION;
+            break;
+        case 12:
+            flag = OS_VTDB_KILLS;
+            break;
+        case 13:
+            flag = OS_VTDB_POSITION;
+            break;
+        case 14:
+            flag = OS_XFIRE_CHARNAME;
+            break;
+        case 15:
+            flag = OS_XFIRE_CHARLEVEL;
+            break;
+        case 16:
+            flag = OS_XFIRE_LOCATION;
+            break;
+        case 17:
+            flag = OS_XFIRE_AWARDS;
+            break;
+        default:
+            player.Say(SAY_NETMSG, "Invalid flag");
+            v_showflags(player);
+            return;
+        }
+        ;
+
+        uint tmp = var.GetValue();
+        if(param2 <= 0)
+        {
+            player.Say(SAY_NETMSG, "Flag unset");
+            UNSETFLAG(tmp, flag);
+        }
+        else if(param2 >= 1)
+        {
+            player.Say(SAY_NETMSG, "Flag set");
+            SETFLAG(tmp, flag);
+        }
+        ;
+        var = tmp;
+
+        getflags(player, target.Id, 0, 0);
+
+        // inform player about changes
+        player.RunClientScript(OS_SCRIPT, tmp, 1, 0, " ", null);
+    }
+    else
+    {
+        string msg = target.Name + "(" + target.Id + "): LVAR_online_stats (" + LVAR_online_stats + ") not found";
+        player.Say(SAY_NETMSG, "" + msg);
+        Log("VTDB : " + msg);
+    };
+};
+
+void setflags(Critter& player, int param0, int param1, int param2)
+{
+    setflag(player, param0, param1, param2);
+};
+
+/*
+ * XFire
+ */
+
+void XFireClient_SetInfo(Critter& player, string& name, string& value)   // Export
+{
+    if(valid(name) && name != "")
+    {
+        if(!valid(value))
+            value = "";
+
+        DLog("XFire(" + player.Name + ")SetInfo : " + name + " = " + value);
+        player.RunClientScript(XF_SCRIPT, XFIRE_SET, 0, 0, name + "=" + value, null);
+    }
+}
+
+void XFireClient_SetInfoRaw(Critter& player, string& raw)   // Export
+{
+    if(valid(raw))
+    {
+        DLog("XFire(" + player.Name + ")SetInfoRaw : " + raw);
+        player.RunClientScript(XF_SCRIPT, XFIRE_SET, 0, 0, raw, null);
+    }
+}
+
+void XFireClient_SetInfoMsg(Critter& player, string& name, int msg, int id)   // Export
+{
+    if(valid(name) && name != "" && msg >= 0 && id > 0)
+    {
+        #ifdef __DEBUG__
+        Log("XFire(" + player.Name + ")SetInfoMsg : " + name + " " + msg + " " + id);
+        player.Say(SAY_NETMSG, "XF:SetInfoMsg: " + name + "," + msg + "," + id);
+        #endif
+        player.RunClientScript(XF_SCRIPT, XFIRE_MSG, msg, id, name, null);
+    }
+}
+
+void XFireClient_ClearInfo(Critter& player)   // Export
+{
+    player.RunClientScript(XF_SCRIPT, XFIRE_CLEAR, 0, 0, " ", null);
+}
+
+bool HaveOSFlag(Critter& player, int flag)
+{
+    GameVar@ var = GetLocalVar(LVAR_online_stats, player.Id);
+    if(valid(var))
+    {
+        int flags = var.GetValue();
+        if(FLAG(flags, flag))
+            return(true);
+        else
+            return(false);
+    }
+    else
+        return(false);
+}
+
+void XFireClient_Update(Critter& player)
+{
+    XFireClient_SetInfoMsg(player, "Server", TEXTMSG_GAME, STR_VERSION_INFO);
+
+    if(HaveOSFlag(player, OS_XFIRE_ALL) || HaveOSFlag(player, OS_XFIRE_CHARNAME))
+    {
+        string char = player.Name;
+        if(HaveOSFlag(player, OS_XFIRE_ALL) || HaveOSFlag(player, OS_XFIRE_CHARLEVEL))
+            char += " (" + player.Param[ST_LEVEL] + ")";
+        XFireClient_SetInfo(player, "Character", char);
+    }
+
+    if(HaveOSFlag(player, OS_XFIRE_ALL) || HaveOSFlag(player, OS_XFIRE_LOCATION))
+    {
+        Map@ map = player.GetMap();
+        if(valid(map))
+        {
+            Location@ loc = map.GetLocation();
+            if(valid(loc))
+            {
+                #define _STR_GM_NAME    # (pid)      ((pid + 100) * 1000 + 0)
+                uint16 locpid = loc.GetProtoId();
+                XFireClient_SetInfoMsg(player, "Location", TEXTMSG_GM, _STR_GM_NAME(locpid));
+            }
+            else
+            {
+                XFireClient_SetInfo(player, "Location", "Unknown");
+            }
+        }
+        else
+        {
+            XFireClient_SetInfo(player, "Location", "Worldmap");
+        }
+    }
+}
+
+#ifdef __DEBUG__
+
+# include "MsgStr.h"
+
+void test1(Critter& player, int param0, int param1, int param2)
+{
+    XFireClient_SetInfo(player, "abc", "def");
+}
+
+void test2(Critter& player, int param0, int param1, int param2)
+{
+    XFireClient_SetInfo(player, "Character", player.Name);
+}
+
+void test3(Critter& player, int param0, int param1, int param2)
+{
+    XFireClient_SetInfoMsg(player, "Server", TEXTMSG_GAME, STR_VERSION_INFO);
+}
+
+void testend(Critter& player, int param0, int param1, int param2)
+{
+    XFireClient_ClearInfo(player);
+}
+#endif /* __DEBUG__ */
+#endif /* __ONLINE_STATS__ */

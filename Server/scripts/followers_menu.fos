@@ -1,0 +1,160 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// followers_menu.fos
+//
+
+#include "_macros.fos"
+#include "follower_common_h.fos"
+#include "follower_h.fos"
+#include "npc_planes_h.fos"
+
+// The code in this file handles the functions from the follower menu (alt + mouse 1)
+
+void unsafe_Attack(Critter& player, int crId, int high, int param2, string@ param3, array<int>@ param4)
+{
+    Critter@ cr = GetCritter(crId);
+    if(!valid(cr))
+        return;
+    if(!player.IsSee(cr))
+        return;
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+
+    array<Critter@> crits;
+    int             n = GetFollowers(player, map, crits);
+    if(n < 0)
+        return;
+    for(int i = 0; i < n; i++)
+        if(player.IsSee(crits[i]))
+        {
+            uint priority = 0;
+            if(high == 1)
+            {
+                array<NpcPlane@> crPlanes(0);
+                if(crits[i].GetPlanes(crPlanes) > 0)
+                    priority = crPlanes[0].Priority + 1;
+            }
+            AddAttackPlane(crits[i], priority, cr);
+        }
+}
+
+void MoveTo(Critter& player, int high, int hexX, int hexY, bool clearPlanes, bool manualMode)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+
+    array<Critter@> crits;
+    int             n = GetFollowers(player, map, crits, true);
+    if(n < 0)
+        return;
+
+    array<uint16> coordsX;
+    array<uint16> coordsY;
+
+    FindFreeHexes(map, hexX, hexY, n, coordsX, coordsY);   // k can be changed here
+
+    int i = 0;                                             // processed
+    int j = 0;                                             // index
+
+    while(i < n && j < n)
+    {
+        if(@crits[j] == null)
+        {
+            j++;
+            continue;
+        }
+        uint priority = 0;
+        if(high == 1)
+        {
+            array<NpcPlane@> crPlanes(0);
+            if(crits[j].GetPlanes(crPlanes) > 0)
+                priority = crPlanes[0].Priority + 1;
+        }
+        crits[j].ModeBase[MODE_GECK] = 1;
+        if(manualMode)
+            crits[j].FollowerVarBase[FV_MODE] = FOLLOWMODE_FOLLOW_CONTROL;
+        else
+            crits[j].FollowerVarBase[FV_MODE] = FOLLOWMODE_FOLLOW;
+
+        if(clearPlanes)
+        {
+            crits[j].ErasePlane(AI_PLANE_WALK, true);
+            crits[j].ErasePlane(AI_PLANE_ATTACK, true);
+        }
+        AddWalkPlane(crits[j], priority, coordsX[i], coordsY[i], GetDirection(crits[j].HexX, crits[j].HexY, hexX, hexY), true, 0);
+        crits[j].SetHomePos(coordsX[i], coordsY[i], GetDirection(crits[j].HexX, crits[j].HexY, hexX, hexY));
+        i++;
+        j++;
+    }
+}
+
+void unsafe_MoveTo(Critter& player, int high, int hexX, int hexY, string@ param3, array<int>@ param4)
+{
+    MoveTo(player, high, hexX, hexY, false, true);
+}
+
+void unsafe_Regroup(Critter& player, int, int, int, string@, array<int>@)
+{
+    MoveTo(player, 1, player.HexX, player.HexY, true, false);
+}
+
+void unsafe_SwitchMode(Critter& player, int mode, int param1, int param2, string@ param3, array<int>@ param4)
+{
+    if((mode > 1) || (mode < 0))
+        return;
+
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+
+    array<Critter@> crits;
+    int             n = GetFollowers(player, map, crits);
+    for(int i = 0; i < n; i++)
+        if(player.IsSee(crits[i]))
+        {
+            if(crits[i].FollowerVar[FV_MODE] < FOLLOWMODE_GUARD)   // Only if following
+                crits[i].FollowerVarBase[FV_MODE] = mode;
+        }
+
+}
+
+void unsafe_Flee(Critter& player, int, int, int, string@, array<int>@)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+
+    array<Critter@> crits;
+    int             n = GetFollowers(player, map, crits);
+
+    if(n < 0)
+        return;
+    for(int i = 0; i < n; i++)
+        if(player.IsSee(crits[i]))
+        {
+            crits[i].ModeBase[MODE_GECK] = 1;
+            Flee(crits[i]);
+        }
+}
+
+void unsafe_Stop(Critter& player, int param0, int param1, int param2, string@ param3, array<int>@ param4)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return;
+
+    array<Critter@> crits;
+    int             n = GetFollowers(player, map, crits);
+
+    if(n < 0)
+        return;
+    for(int i = 0; i < n; i++)
+        if(player.IsSee(crits[i]))
+        {
+            crits[i].DropPlanes();
+        }
+}

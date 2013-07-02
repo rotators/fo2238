@@ -1,0 +1,411 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_followers_menu.fos
+//
+
+#define SKIP_PRAGMAS    // deleteme as soon the pragma bug is fixed
+// Compile with -client switch
+#define __CLIENT
+
+#ifndef __CLIENT_FOLLOWERS_MENU__
+# define __CLIENT_FOLLOWERS_MENU__
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+# include "client_gui_h.fos"
+# include "lexems_h.fos"
+
+bool  movemanual; // 1 = move manual, 0 = move automaticly
+
+class CFollowersAttackButton : CContextButton
+{
+    CFollowersAttackButton()
+    {
+        super("Attack");
+    }
+
+    //
+    // Performs action depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("followers_menu@unsafe_Attack", crId, 0, 0, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersAttackHPButton : CContextButton
+{
+    CFollowersAttackHPButton()
+    {
+        super("Attack (high priority)");
+    }
+
+    //
+    // Performs action depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("followers_menu@unsafe_Attack", crId, 1, 0, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersMoveToButton : CContextButton
+{
+    CFollowersMoveToButton()
+    {
+        super("Move to");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_MoveTo", 0, hexX, hexY, null, null);
+        movemanual = true;
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersMoveToHPButton : CContextButton
+{
+    CFollowersMoveToHPButton()
+    {
+        super("Move to (high priority)");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_MoveTo", 1, hexX, hexY, null, null);
+        movemanual = true;
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersStopButton : CContextButton
+{
+    CFollowersStopButton()
+    {
+        super("Stop all actions");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_Stop", 0, hexX, hexY, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersFollowButton : CContextButton
+{
+    CFollowersFollowButton()
+    {
+        super("Follow me");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_Follow", 0, hexX, hexY, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersRegroupButton : CContextButton
+{
+    CFollowersRegroupButton()
+    {
+        super("Regroup");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_Regroup", 0, 0, 0, null, null);
+        movemanual = false;
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersFleeButton : CContextButton
+{
+    CFollowersFleeButton()
+    {
+        super("Flee");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_Flee", 0, 0, 0, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersMoveManualButton : CContextButton
+{
+    CFollowersMoveManualButton()
+    {
+        super("Switch to manual move");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_SwitchMode", 1, hexX, hexY, null, null);
+        movemanual = true;
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersMoveAutoButton : CContextButton
+{
+    CFollowersMoveAutoButton()
+    {
+        super("Switch to auto move");
+    }
+
+    void Click()
+    {
+        RunServerScriptUnsafe("followers_menu@unsafe_SwitchMode", 0, hexX, hexY, null, null);
+        movemanual = false;
+        FollowersMenu.HideWindow();
+    }
+};
+
+class CFollowersPushButton : CContextButton
+{
+    CFollowersPushButton()
+    {
+        super("Push");
+    }
+
+    //
+    // Performs action depending on attached critter/item
+    //
+    void Click()
+    {
+        if(crId != 0)
+            RunServerScriptUnsafe("unsafe_client@unsafe_PushCritter", crId, 0, 0, null, null);
+        FollowersMenu.HideWindow();
+    }
+};
+
+//
+// Right-click context menu
+//
+class CFollowersContextMenu : Window
+{
+    CButton@                    title;
+    CFollowersAttackButton@     attack;
+    CFollowersAttackHPButton@   attackHP;
+    CFollowersMoveToButton@     moveTo;
+    CFollowersMoveToHPButton@   moveToHP;
+    CFollowersStopButton@       stop;
+    // CFollowersFollowButton@ follow;
+    CFollowersRegroupButton@    regroup;
+    CFollowersFleeButton@       flee;
+    CFollowersMoveManualButton@ moveManual;
+    CFollowersMoveAutoButton@   moveAuto;
+    CFollowersPushButton@       pushcr;
+
+    void Init()
+    {
+        int top = 0;
+
+        @title = CButton(0, top += 30, "<<Followers>>");
+        title.Disable();
+        AddControl(@title);
+        // this order determine displaying order
+        @attack = CFollowersAttackButton();
+        AddControl(@attack);
+        @attackHP = CFollowersAttackHPButton();
+        AddControl(@attackHP);
+        @flee = CFollowersFleeButton();
+        AddControl(@flee);
+        @moveTo = CFollowersMoveToButton();
+        AddControl(@moveTo);
+        @moveToHP = CFollowersMoveToHPButton();
+        AddControl(@moveToHP);
+        @regroup = CFollowersRegroupButton();
+        AddControl(@regroup);
+        @stop = CFollowersStopButton();
+        AddControl(@stop);
+        /*@follow =CFollowersFollowButton();
+           AddControl(@follow);*/
+        @moveManual = CFollowersMoveManualButton();
+        AddControl(@moveManual);
+        @moveAuto = CFollowersMoveAutoButton();
+        AddControl(@moveAuto);
+        @pushcr = CFollowersPushButton();
+        AddControl(@pushcr);
+        Window::Init();
+    }
+    int Width() { return title.Width(); }
+
+    //
+    // Shows drop down for given coords
+    //
+    void OnShow()
+    {
+        uint       x = Left();
+        uint       y = Top();
+        CritterCl@ cr = GetMonitorCritter(x, y);
+        CritterCl@ chosen = GetChosen();
+
+        // set visible controls
+
+        // hide all for a start
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            controls[i].Disable();
+            controls[i].Hide();
+        }
+        title.Show();
+        // "loop" through all buttons, choose what should be displayed depending on context
+        // critter context
+        if(valid(cr))
+        {
+            if(cr.IsChosen())
+                title.SetCaption("<<You - " + cr.Id + ">>");
+            else if(cr.IsPlayer())
+            {
+                string text = "<<Player - " + cr.Id + ">>";
+
+                if(IsLexem(cr, "$@"))
+                {
+                    string lex = GetLexem(cr, "$@");
+                    if(lex == "" || lex == " ")
+                        text = "<<Critter>>";
+                    else
+                        text = "<<Player - ???>>";
+                }
+
+                title.SetCaption(text);
+            }
+            else
+                title.SetCaption("<<Critter>>");
+
+            if(!cr.IsChosen())
+            {
+                attack.SetCritter(cr);
+                attack.Show();
+                attackHP.SetCritter(cr);
+                attackHP.Show();
+                if(GetCrittersDistantion(GetChosen(), cr) == 1)
+                {
+                    pushcr.SetCritter(cr);
+                    pushcr.Show();
+                }
+            }
+        }
+        // ground context
+        else
+        {
+            uint16 hexX = 0;
+            uint16 hexY = 0;
+            GetMonitorHex(x, y, hexX, hexY);
+            title.SetCaption("<<Hex>>");
+
+            flee.Show();
+
+            moveTo.SetHex(hexX, hexY);
+            moveTo.Show();
+            moveToHP.SetHex(hexX, hexY);
+            moveToHP.Show();
+        }
+
+        regroup.Show();
+
+        // always:
+        stop.Show();
+        // follow.Show();
+
+        if(movemanual)
+            moveAuto.Show();
+        else
+            moveManual.Show();
+
+        // arrange all controls
+        int top = -30;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible())
+            {
+                controls[i].Enable();
+                controls[i].Show(0, top += 30);
+            }
+        }
+        title.Disable();
+        screen.Size(Width(), top + 30);
+    }
+};
+
+CFollowersContextMenu FollowersMenu;
+
+void InitFollowersMenu()
+{
+    GUI_CreateScreen(CLIENT_SCREEN_FOLLOWERSMENU, null)
+    .Control(FollowersMenu)
+    .SetCallbackFocus(FollowersMenu)
+    .SetCallbackShow(FollowersMenu)
+    .CanMove(true)
+    .Modal(false)
+    .Multiinstance(false);
+
+}
+
+///////////////////
+//
+// DevMenu manager
+//
+///////////////////
+/*class CFollowersMenu : CGuiManager
+   {
+        string text;
+        bool altPressed;
+
+        CFollowersContextMenu@ context;
+        //CTextBox@ testBox;
+        CFollowersMenu()
+        {
+                altPressed = false;
+
+                @context = CFollowersContextMenu(this);
+                RegisterControl(@context);
+        }
+
+        void Draw()
+        {
+                CGuiManager::Draw();
+        }
+
+        bool MouseDown(int x, int y, int click)
+        {
+                if(altPressed)
+                {
+                        CritterCl@ cr = GetMonitorCritter(x, y);
+                        //ItemCl@ item = GetMonitorItem(x, y);
+                        Message("Showing context for: " + x +"," + y);
+                        context.Show(cr, x, y);
+                        return true;
+                }
+
+                return CGuiManager::MouseDown(x, y, click);
+        }
+
+        bool KeyDown(uint8 key)
+        {
+    if (key == DIK_LMENU) altPressed=true;
+                return CGuiManager::KeyDown(key);
+        }
+        bool KeyUp(uint8 key)
+        {
+                if(key == DIK_LMENU)
+                {
+                        altPressed = false;
+                        return true;
+                }
+                return CGuiManager::KeyUp(key);
+        }
+   }*/
+#endif // __FOLLOWERS_DEV_MENU__

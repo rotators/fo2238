@@ -1,0 +1,50 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// triggers_h.fos
+//
+
+#ifndef __TRIGGERS_H__
+#define __TRIGGERS_H__
+
+#define GetTriggerFunction          # (tr) (tr.Val0)
+#define SetTriggerFunction          # (tr, val)tr.Val0 = val
+
+#define GetTriggerSettings          # (tr) (tr.Val1)
+#define SetTriggerSettings          # (tr, val)tr.Val1 = val
+
+#define GetTriggerGroup             # (tr) (GetTriggerSettings(tr) & 0xFF)
+#define SetTriggerGroup             # (tr, val)SetTriggerSettings(tr, ((GetTriggerSettings(tr) & 0xFFFFFF00) | ((val) & 0xFF)))
+
+#define GetTriggerDelay             # (tr) ((GetTriggerSettings(tr) >> 16) & 0xFF)
+#define SetTriggerDelay             # (tr, val)SetTriggerSettings(tr, ((GetTriggerSettings(tr) & 0xFF00FFFF) | (((val) & 0xFF) << 16)))
+
+#define GetTriggerNextTick          # (tr) ((GetTriggerSettings(tr) >> 24) & 0xFF)
+#define SetTriggerNextTick          # (tr, val)SetTriggerSettings(tr, ((GetTriggerSettings(tr) & 0x00FFFFFF) | (((val) & 0xFF) << 24)))
+
+#define TRIGGER_STANDALONE          (0x00000100)
+#define TRIGGER_IGNORE_PLAYERS      (0x00000200)
+#define TRIGGER_IGNORE_FOLLOWERS    (0x00000400)
+#define TRIGGER_IGNORE_TRUE_NPCS    (0x00000800)
+#define TRIGGER_RUN_ONCE            (0x00001000)
+#define TRIGGER_KEEP_TICKING        (0x00002000)
+#define TRIGGER_CRITTERLESS         (0x00004000) // Run TRIGGER_FUNC even if critter who started trigger isn't available anymore
+#define TRIGGER_RESERVED            (0x00008000)
+
+funcdef bool TRIGGER_FUNC(Item& tr, Critter@ cr, uint dir, uint count, array<uint>@ values);
+
+#define VALUE_TRIGGER_ID            (0)
+#define VALUE_CRITTER_ID            (1)
+#define VALUE_DIR                   (2)
+#define VALUE_COUNT                 (3)
+
+#define TRIGGER_FUNC_DEFAULT        (0)
+#define TRIGGER_FUNC_ANTIBLOCK      (1)
+#define TRIGGER_FUNC_AGGRAVATE      (2)
+#define TRIGGER_FUNC_TELEPORT       (3)
+
+#ifndef __TRIGGERS__
+import void TriggerInit(Item@ tr, uint funcId, uint settings, uint delay, uint nextTick) from "triggers";
+#endif // __TRIGGERS__
+#endif // __TRIGGERS_H__

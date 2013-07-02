@@ -1,0 +1,18 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_utils_h.fos
+//
+
+#ifndef __MAPPER_UTILS_H__
+#define __MAPPER_UTILS_H__
+
+#ifndef __MAPPER_UTILS_
+import MapperMap@ GetActiveMap() from "mapper_utils";
+import void       HexOffset(uint8 dir, int& x, int& y) from "mapper_utils";
+import uint       GetHexWidth() from "mapper_utils";
+import uint       GetZoom() from "mapper_utils";
+import bool       GetMonitorHexSigh(int x, int y, uint16& hx, uint16& hy, bool ignoreInterface = false) from "mapper_utils";
+#endif // __MAPPER_UTILS_ //
+#endif // __MAPPER_UTILS_H__ //

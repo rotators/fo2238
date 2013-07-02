@@ -1,0 +1,1125 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// economy.fos
+//
+
+#include "_macros.fos"
+#include "_math.fos"
+#include "_vars.fos"
+#include "entire.fos"
+#include "serializator.fos"
+#include "utils_h.fos"
+
+#define __ECONOMY__
+
+#include "economy_h.fos"
+#include "economy_bank.fos"
+
+import int WorldmapGetTotalValue() from "worldmap";
+
+file       f;
+array<int> itempids;
+
+/**
+ * \~english @defgroup EconomyGroup Economy
+ * Global functions to interact with the economy. Mostly bank functions.
+ * Include economy_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+/**
+ * \~english @name Initialization
+ *
+ * \~ @weight 510
+ */
+// @{
+
+/**
+ * Initialize the economy. The only call you'll really need to run, as it'll call other initializers.
+ */
+void InitEconomy()
+{
+    _BankLog("Initializing economy...");
+
+    if(!InitBanks())
+    {
+        Log("Economy failed to initialize.");
+        return;
+    }
+
+    InitItemsLevels();
+
+    _BankLog("The bank in Vault City has $" + BankGetTotalMoney(BANK_VAULTCITY));
+    _BankLog("The bank in Redding has $" + BankGetTotalMoney(BANK_REDDING));
+    _BankLog("The bank in Broken Hills has $" + BankGetTotalMoney(BANK_BROKENHILLS));
+    _BankLog("The bank in San Francisco $" + BankGetTotalMoney(BANK_SANFRANCISCO));
+    _BankLog("The bank in NCR has $" + BankGetTotalMoney(BANK_NCR));
+    _BankLog("The bank in Hub has $" + BankGetTotalMoney(BANK_HUB));
+
+    GameVar@ var = GetGlobalVar(GVAR_bank_interest_event);
+    if(valid(var) && var.GetValue() == 0)
+    {
+        _BankLog("Creating bank interest event");
+        CreateTimeEvent(AFTER(INTEREST_UPDATE_INTERVAL), "e_UpdateInterest", true);
+        var = 1;
+    }
+    else
+    {
+        _BankLog("Bank interest event already exists");
+    }
+
+    if(!ReadPids(itempids, true))
+        _BankLog("Unable to read itempids.");
+
+    GameVar@ var2 = GetGlobalVar(GVAR_economy_event);
+    if(!valid(var2) || var2.GetValue() == 0)
+    {
+        _BankLog("Setting item prices after proto.");
+        InitPrices();
+
+        _BankLog("Creating economy event");
+        CreateTimeEvent(AFTER(ECONOMY_UPDATE_INTERVAL), "e_UpdateEconomy", true);
+        var2 = 1;
+    }
+    else
+    {
+        _BankLog("Economy event already exists");
+    }
+
+    Log("Economy initialized successfully.");
+}
+
+// @}
+
+/**
+ * \~english @name Prices
+ *
+ * \~ @weight 505
+ */
+// @{
+
+// Only used when calculating buying (from trader POV) price.
+uint GetItemPrice(uint pid)
+{
+    return(GetLvar(pid, LVAR_economy_prices));
+}
+
+int GetBaseModifier(Critter& player, Critter& trader, bool buy)   // buy means "player is buying"
+{
+    int traderGroup = _GroupIndex(trader);
+
+    int barter_factor = buy ? ((trader.Skill[SK_BARTER] * 25) / player.Skill[SK_BARTER]) : ((player.Skill[SK_BARTER] * 25) / trader.Skill[SK_BARTER]);
+    barter_factor = CLAMP(barter_factor, 0, 25);
+
+    int rep_factor = 25;   // half of maximum is default
+    if(_IsTrader(trader) && _ValidReputationIndex(traderGroup))
+    {
+        int reputation = player.Reputation[traderGroup];
+        if(player.Perk[PE_NEGOTIATOR] != 0 && reputation < 0)
+            reputation = 0;
+        reputation = CLAMP(reputation, -1000, 1000);
+        rep_factor = ((reputation + 1000) * 50) / 2000;
+        rep_factor = CLAMP(rep_factor, 0, 50);
+    }
+
+    if(buy)
+        return 150 + barter_factor - rep_factor;
+    else
+        return 25 + barter_factor + rep_factor;
+}
+
+// Calculate modifier which modifies how much the trader will buy the item for
+int GetItemSellModifier(Critter& player, Critter& trader)
+{
+    return CLAMP(GetBaseModifier(player, trader, false), 5, 95);
+}
+
+// Calculate modifier which modifies how much trader will sell the item for
+int GetItemBuyModifier(Critter& player, Critter& trader)
+{
+    return CLAMP(GetBaseModifier(player, trader, true), 105, 195);
+}
+
+// @}
+
+/**
+ * \~english @name Banks
+ *
+ * \~ @weight 500
+ */
+// @{
+
+/**
+ * Add money divided among all banks
+ *
+ * @param amount How much money to add to reserves, the money will be splittled evenly among the banks
+ *
+ */
+void BanksAddMoney(uint amount)
+{
+    uint splitted = amount / BANK_COUNT;
+    DLog("Adding $" + amount + " divided among all " + BANK_COUNT + " banks");
+
+    for(int i = 0; i < BANK_COUNT; i++)
+    {
+        BankAddMoney(i, splitted);
+    }
+    BankAddMoney(Random(0, BANK_COUNT - 1), amount % BANK_COUNT);
+}
+
+/**
+ * Remove money divided among all banks
+ *
+ * @param amount How much money to remove from reserves, the money will be taken as evenly as possible among the banks
+ *
+ */
+void BanksRemoveMoney(uint amount)
+{
+    uint splitted = amount / BANK_COUNT;
+    _BankLog("Removing $" + amount + " divided among all " + BANK_COUNT + " banks");
+    uint cantafford = 0;
+
+    for(int i = 0; i < BANK_COUNT; i++)
+    {
+        if((splitted + cantafford) > BankGetTotalMoney(i))
+        {
+            cantafford += splitted;
+        }
+        else
+        {
+            BankRemoveMoney(i, splitted + cantafford);
+            if(cantafford > 0)
+                cantafford -= splitted;
+        }
+    }
+
+    if(cantafford > 0)
+    {
+        // not entirely true :P
+        _BankLog("Warning, banks can't fully remove " + amount + ". Amount doesn't exists in their combined reserves");
+    }
+}
+
+/**
+ * Get total money stored in all banks combined.
+ *
+ * @return Total money stored in all banks combined.
+ *
+ */
+uint BanksGetTotalMoney()
+{
+    uint money = 0;
+    for(int i = 0; i < BANK_COUNT; i++)
+    {
+        money += BankGetTotalMoney(i);
+    }
+    return money;
+}
+
+bool BanksTransferToCritter(Critter& critter, uint amount, uint type, bool virtual)
+{
+    string reason;
+    switch(type)
+    {
+    case (TRANSACTION_DEFAULT):
+        reason = "unknown";
+        break;
+    case (TRANSACTION_BRAHMINSHOVEL):
+        reason = "shovelling crap";
+        break;
+    case (TRANSACTION_MERCSELL):
+        reason = "selling a merc";
+        break;
+    default:
+        reason = "unknown";
+        break;
+    }
+
+    _BankLog("Transfering $" + amount + " to " + critter.Name + ". Reason: " + reason);
+
+    if(BanksGetTotalMoney() > amount)
+    {
+        BanksRemoveMoney(amount);
+        if(virtual)
+        {
+            GameVar@ var = GetLocalVar(LVAR_virtual_money, critter.Id);
+            if(valid(var))
+                var = var.GetValue() + amount;
+            else
+            {
+                _BankLog("LVAR_virtual_money for critter with id " + critter.Id + " not valid");
+            }
+        }
+        else
+            critter.AddItem(PID_BOTTLE_CAPS, amount);
+    }
+    else
+    {
+        _BankLog("Not enough money to transfer $" + amount + " to " + critter.Name);
+        return false;
+    }
+    return true;
+}
+
+string GetTransferReason(uint type)
+{
+    switch(type)
+    {
+    case (TRANSACTION_DEFAULT):
+        return "unknown";
+    case (TRANSACTION_BRAHMINSHOVEL):
+        return "shovelling crap";
+    case (TRANSACTION_MERCBUY):
+        return "buying a merc";
+    case (TRANSACTION_MERCPAY):
+        return "paying merc wage";
+    case (TRANSACTION_BASE):
+        return "buying a base/faction";
+    case (TRANSACTION_MINE):
+        return "buying a mine";
+    case (TRANSACTION_GUARDLOOT):
+        return "guard loot";
+    default:
+        return "unknown";
+    }
+    return "unknown";
+}
+
+bool BanksTransferFromCritter(Critter& critter, uint amount, uint type, bool virtual)
+{
+    string reason = GetTransferReason(type);
+    _BankLog("Transfering $" + amount + " to banks, from " + critter.Name + ". Reason: " + reason);
+
+    if(virtual)
+    {
+        GameVar@ var = GetLocalVar(LVAR_virtual_money, critter.Id);
+
+        if(uint(var.GetValue()) < amount)
+        {
+            _BankLog(critter.Name + " doesn't have $" + amount);
+            return false;
+        }
+        var -= amount;
+    }
+    else
+    {
+        if(_CritCountItem(critter, PID_BOTTLE_CAPS) < amount)
+        {
+            _BankLog(critter.Name + " doesn't have $" + amount);
+            return false;
+        }
+        _CritDeleteItem(critter, PID_BOTTLE_CAPS, amount);
+    }
+    BanksAddMoney(amount);
+    return true;
+}
+
+/**
+ * Add some money to the specified bank's reserve.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     amount     How much money to add to reserves
+
+ * @return    Returns operation status
+ */
+bool BankAddMoney(uint bankid, uint amount)
+{
+    return banks[bankid].AddMoney(amount);
+}
+
+/**
+ * Remove some money from the specified bank's reserve.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     amount     How much money to remove from reserves
+
+ * @return    Returns operation status
+ */
+bool BankRemoveMoney(uint bankid, uint amount)
+{
+    return banks[bankid].RemoveMoney(amount);
+}
+
+/**
+ * Set the total money of the specified bank.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     amount     Set amount amount of money in reserves. Can't be negative
+
+ * @return    Returns operation status
+ */
+bool BankSetMoney(uint bankid, uint amount)
+{
+    return banks[bankid].SetMoney(amount);
+}
+
+bool BankTransferFromCritter(uint bankId, Critter& critter, uint amount, uint type, bool virtual)
+{
+    string reason = GetTransferReason(type);
+    _BankLog("Transfering $" + amount + " to bank " + bankId + ", from " + critter.Name + ". Reason: " + reason);
+
+    if(virtual)
+    {
+        GameVar@ var = GetLocalVar(LVAR_virtual_money, critter.Id);
+
+        if(uint(var.GetValue()) < amount)
+        {
+            _BankLog(critter.Name + " doesn't have $" + amount);
+            return false;
+        }
+        var -= amount;
+    }
+    else
+    {
+        if(_CritCountItem(critter, PID_BOTTLE_CAPS) < amount)
+        {
+            _BankLog(critter.Name + " doesn't have $" + amount);
+            return false;
+        }
+        _CritDeleteItem(critter, PID_BOTTLE_CAPS, amount);
+    }
+    BankAddMoney(bankId, amount);
+    return true;
+}
+
+/**
+ * Remove some amount of money from the specified account in the bank.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     account    Account ID
+ * @param     amount     Sum to remove from account
+
+ * @return    Returns operation status
+ */
+bool BankAccountRemoveMoney(uint bankid, uint account, uint amount)
+{
+    return banks[bankid].AccountRemoveMoney(account, amount);
+}
+
+/**
+ * Create an account for a specific player.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     playerid   ID of the player critter that the bankaccount should be created for
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankCreateAccount(uint bankid, uint playerid)
+{
+    Critter@ cr = GetCritter(playerid);
+    if(valid(cr))
+        _BankLog(cr.Name + "(" + playerid + ") wants to create account in bank " + bankid);
+
+    return banks[bankid].CreateBankAccount(playerid);
+}
+
+/**
+ * Deposit some specified amount of money to the specified account in the bank.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     playerid   ID of the player critter that deposits the money
+ * @param     account    ID of the account that the player deposits money to
+ * @param     amount     Amount of money that the player wants to deposit
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankDepositMoney(uint bankid, uint playerid, uint account, int amount)
+{
+    Critter@ cr = GetCritter(playerid);
+    uint     res = banks[bankid].DepositMoney(playerid, account, amount);
+    if(valid(cr) && res == FD_BANK_RESULT_SUCCESS)
+        _BankLog(cr.Name + "(" + playerid + ") is depositing $" + amount + " to account " + account + " in bank " + bankid);
+    return res;
+}
+
+/**
+ * Withdraw some specified amount of money from the specified account in the bank.
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ * @param     playerid   ID of the player critter that withdraws the money
+ * @param     account    ID of the account that the player withdraw money from
+ * @param     amount     Amount of money that the player wants to withdraw
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankWithdrawMoney(uint bankid, uint playerid, uint account, int amount)
+{
+    Critter@ cr = GetCritter(playerid);
+    uint     res = banks[bankid].WithdrawMoney(playerid, account, amount);
+    if(valid(cr) && res == FD_BANK_RESULT_SUCCESS)
+        _BankLog(cr.Name + "(" + playerid + ") is withdrawing $" + amount + " from account " + account + " in bank " + bankid);
+    return res;
+}
+
+/**
+ * Transfer some specified amount of money from one account to another account in the bank.
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     fromaccount ID of the account from which money is tranferred
+ * @param     toaccount   ID of the account to which money is tranferred
+ * @param     amount      Amount of money that should be transferred
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankTransferMoney(uint bankid, uint fromaccount, uint toaccount, uint amount)
+{
+    return banks[bankid].TransferMoney(fromaccount, toaccount, amount);
+}
+
+/**
+ * Get owner of the specified account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return Returns critter.Id of the owner of the specified account
+ */
+uint BankGetAccountOwner(uint bankid, uint account)
+{
+    return banks[bankid].GetOwner(account);
+}
+
+/**
+ * Get balance of the specified account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return Returns account balance
+ */
+int BankGetAccountBalance(uint bankid, uint account)
+{
+    return banks[bankid].GetAccountBalance(account);
+}
+
+/**
+ * Get AccountID of specified players account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     playerid    Player ID
+
+ * @return Returns Account ID if found, -1 if none is found
+ */
+int BankGetAccountID(uint bankid, uint playerid)
+{
+    return banks[bankid].GetAccountID(playerid);
+}
+
+/**
+ * Check if an account exists in the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return Returns true if the account exists
+ */
+bool BankAccountExists(uint bankid, uint account)
+{
+    return banks[bankid].AccountExists(account);
+}
+
+/**
+ * Check if a player has access to an account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     playerid    Player ID
+
+ * @return Returns true if the specified player has access to the account
+ */
+bool BankHasAccess(uint bankid, uint account, uint playerid)
+{
+    return banks[bankid].HasAccess(account, playerid);
+}
+
+/**
+ * Check the amount of additional players that have access to a specific account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return Returns the amount of additional players that have access to the bank, can at minimum be 0 (only owner has access)
+ */
+uint BankGetAccessCount(uint bankid, uint account)
+{
+    return banks[bankid].GetAccessCount(account);
+}
+
+/**
+ * Check the account type
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return Returns a value defined by the ACCOUNT_TYPE_* define in _economy.fos
+ */
+uint BankGetAccountType(uint bankid, uint account)
+{
+    return banks[bankid].GetAccountType(account);
+}
+
+/**
+ * Set the account type
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     accounttype a value matching any of the ACCOUNT_TYPE_* defines in _economy.fos
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankSetAccountType(uint bankid, uint account, uint accounttype)
+{
+    return banks[bankid].SetAccountType(account, accounttype);
+}
+
+/**
+ * Set the credit rating, currently doesn't effect anything.
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     rating      a value matching any of the CREDITVALUE_* defines in _economy.fos
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankSetCreditRating(uint bankid, uint account, uint rating)
+{
+    return banks[bankid].SetCreditRating(account, rating);
+}
+
+/**
+ * Get the credit rating, currently doesn't effect anything.
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return a value matching any of the CREDITVALUE_* defines in _economy.fos
+ */
+uint BankGetCreditRating(uint bankid, uint account)
+{
+    return banks[bankid].GetCreditRating(account);
+}
+
+/**
+ * Set the loan amount
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     loan        The amount of loaned money
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankSetLoan(uint bankid, uint account, uint loan)
+{
+    return banks[bankid].SetLoan(account, loan);
+}
+
+/**
+ * Get the loan amount
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+
+ * @return The amount of loaned money
+ */
+uint BankGetLoan(uint bankid, uint account)
+{
+    return banks[bankid].GetLoan(account);
+}
+
+/**
+ * Give player access to a joint (shared) account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     playerid    Player ID
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankAddAccess(uint bankid, uint account, uint playerid)
+{
+    return banks[bankid].AddAccess(account, playerid);
+}
+
+/**
+ * Revoke player access to a joint (shared) account
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     playerid    Player ID
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankRemoveAccess(uint bankid, uint account, uint playerid)
+{
+    return banks[bankid].RemoveAccess(account, playerid);
+}
+
+/**
+ * Get the current loan interest of the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+
+ * @return Loan interest in percent
+ */
+uint BankGetLoanInterest(uint bankid)
+{
+    return banks[bankid].GetLoanInterest();
+}
+
+/**
+ * Set the current loan interest of the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     interest    Loan interest in percent
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankSetLoanInterest(uint bankid, uint interest)
+{
+    return banks[bankid].SetLoanInterest(interest);
+}
+
+/**
+ * Get the current save interest of the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+
+ * @return Save interest in percent
+ */
+float BankGetSaveInterest(uint bankid)
+{
+    return banks[bankid].GetSaveInterest();
+}
+
+/**
+ * Set the current save interest of the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     interest    Loan interest in percent
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankSetSaveInterest(uint bankid, float interest)
+{
+    return banks[bankid].SetSaveInterest(interest);
+}
+
+/**
+ * Get total amount of money in the bank
+ *
+ * @param     bankid     Bank ID, see _economy.fos
+ *
+ * @return Total amount of money in the bank
+ */
+uint BankGetTotalMoney(uint bankid)
+{
+    return banks[bankid].GetTotalMoney();
+}
+
+/**
+ * Get sum of balances of all accounts in the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+
+ * @return Returns accounts balance
+ */
+uint BankGetTotalBalance(uint bankid)
+{
+    return banks[bankid].GetTotalBalance();
+}
+
+/**
+ * Get ratio of bank reserve vs total balance
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+
+ * @return Returns reserve ratio
+ */
+float BankGetReserveRatio(uint bankid)
+{
+    return banks[bankid].GetReserveRatio();
+}
+
+
+
+/**
+ * Take a loan with specified account and amount
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+ * @param     account     Account ID
+ * @param     amount      Amount of money to loan
+
+ * @return Bank error code FD_BANK_RESULT_* defined in _economy.fos
+ */
+uint BankTakeLoan(uint bankid, uint account, uint amount)
+{
+    return banks[bankid].TakeLoan(account, amount);
+}
+
+/**
+ * Get total number of accounts created in the bank
+ *
+ * @param     bankid      Bank ID, see _economy.fos
+
+ * @return Total number of accounts in the bank
+ */
+uint BankGetNumberOfAccounts(uint bankid)
+{
+    return banks[bankid].GetNumberOfAccounts();
+}
+// @}
+
+
+/*@}*/
+
+// Functions under this is hidden from documentation
+
+/**
+ * Initialize Bank objects
+ */
+bool InitBanks()
+{
+    for(int i = 0; i < BANK_COUNT; i++)
+    {
+        Bank bank;
+        banks.insertLast(bank);
+        if(!banks[i].Init("bank_" + i))
+            return false;
+    }
+    return true;
+}
+
+// Set base prices, first time
+void InitPrices()
+{
+    for(uint i = 0; i < itempids.length(); i++)
+    {
+        uint       pid = itempids[i];
+
+        ProtoItem@ proto = GetProtoItem(i);
+        if(!valid(proto))
+            continue;
+
+        _BankLog("Setting protoprice for PID " + i + " to " + proto.Cost);
+        SetLvar(i, LVAR_economy_prices, proto.Cost);
+    }
+}
+
+
+// Only used when calculating buying (from trader POV) price.
+// WIP, need to check crafted items per cycle instead of items available on traders.
+void UpdatePrices()
+{
+    for(uint i = 0; i < itempids.length(); i++)
+    {
+        uint       pid = itempids[i];
+
+        ProtoItem@ proto = GetProtoItem(pid);
+        if(!valid(proto))
+            continue;
+
+        int price = GetLvar(pid, LVAR_economy_prices);
+        if(price == 0)
+            continue;
+
+        uint count = 1;
+        uint last_count = GetLvar(pid, LVAR_economy_prices_last_count);
+        int  delta = (last_count - count);
+        if((delta == 0) && (count != 0))
+            delta = -1;
+
+        int pcost = proto.Cost;
+        int change = delta * (pcost / 10);
+        // To counter big changes in price.
+        change = CLAMP(change, -(pcost / 2), pcost / 2);
+
+        _BankLog("Calculating new price for PID " + i + ". " + price + "+(" + delta + "*" + (pcost / 10) + ")=" + (price + change));
+
+        price += change;
+        price = CLAMP(price, 0, int(proto.Cost));
+        if(price < 0)
+            price = 1;
+
+        SetLvar(pid, LVAR_economy_prices, price);
+        SetLvar(pid, LVAR_economy_prices_last_count, count);
+    }
+}
+
+#define PROCESS_AMOUNT    (250) // accounts per cycle
+uint e_UpdateInterestAccounts(array<uint>@ values)
+{
+    Log("Processing interests, bank " + values[0] + ", index " + values[1] + "-" + values[1] + PROCESS_AMOUNT);
+    if(banks[values[0]].UpdateInterestAccounts(values[1], PROCESS_AMOUNT))
+        return 0;
+    values[1] += PROCESS_AMOUNT;
+    return REAL_SECOND(BANK_COUNT);
+}
+
+/**
+ * Update interest see _economy.fos for the value of INTEREST_UPDATE_INTERVAL
+ */
+uint e_UpdateInterest(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    _BankLog("Updating bank interest");
+
+    for(int i = 0; i < BANK_COUNT; i++)
+    {
+        banks[i].UpdateInterest();
+        uint[] data = { i, 0 };
+        CreateTimeEvent(AFTER(REAL_SECOND(1 + i)), "e_UpdateInterestAccounts", data, true);        // background processing to eliminate lag
+    }
+    _TIMEEND;
+    return INTEREST_UPDATE_INTERVAL;
+}
+
+uint e_UpdateEconomy(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    _BankLog("Running economy update cycle.");
+
+    array<float> ratios(BANK_COUNT);
+    for(uint i = 0; i < BANK_COUNT; i++)
+    {
+        ratios[i] = BankGetReserveRatio(i);
+        _BankLog("Bank " + i + " ratio is " + int(1000 * ratios[i]));
+    }
+    uint maxid = 0;
+    uint minid = 0;
+
+    for(uint i = 1; i < BANK_COUNT; i++)
+    {
+        if(ratios[i] < ratios[minid])
+            minid = i;
+        if(ratios[i] > ratios[maxid])
+            maxid = i;
+    }
+    if(maxid != minid)
+    {
+        uint transfer = BankGetTotalMoney(maxid) / 20;
+        BankRemoveMoney(maxid, transfer);
+        BankAddMoney(minid, transfer);
+        _BankLog("Transferring " + transfer + " from " + maxid + " to " + minid);
+    }
+
+    #ifdef DYNAMIC_PRICES
+    UpdatePrices();
+    #endif
+    _TIMEEND;
+    return ECONOMY_UPDATE_INTERVAL;
+}
+
+// trader levels, and price modifiers
+#include "prices_server_client.fos"
+
+uint GetTraderLevel(Critter@ npc, uint type)
+{
+    return ((npc.Mode[MODE_TRADER_ITEM_LEVELS]) >> (2 * type)) % 4;
+}
+
+array<int> GetTraderLevels(Critter@ npc)
+{
+    array<int> levels;
+    levels.resize(ITEMTYPE_MAX);
+    for(uint i = 0; i < ITEMTYPE_MAX; i++)
+        levels[i] = GetTraderLevel(npc, i);
+    return levels;
+}
+
+void SetTraderLevel(Critter@ npc, uint type, uint level)
+{
+    uint perk = npc.Mode[MODE_TRADER_ITEM_LEVELS];
+    perk |= (3 << (2 * type));
+    perk ^= (3 << (2 * type));
+    perk |= (level << (2 * type));
+    npc.ModeBase[MODE_TRADER_ITEM_LEVELS] = perk;
+}
+
+void SetTraderLevels(Critter@ npc, array<uint>& levels)
+{
+    if(levels.length() < ITEMTYPE_MAX)
+        return;
+    uint perk = 0;
+    for(int i = ITEMTYPE_MAX - 1; i >= 0; i--)
+    {
+        perk <<= 2;
+        perk += (levels[i]) % 4;
+    }
+    npc.ModeBase[MODE_TRADER_ITEM_LEVELS] = perk;
+}
+
+void GetTraderLevels(Critter@ npc, array<uint>& levels)
+{
+    levels.resize(ITEMTYPE_MAX);
+    uint perk = npc.Mode[MODE_TRADER_ITEM_LEVELS];
+    for(int i = 0; i < ITEMTYPE_MAX; i++)
+    {
+        levels[i] = perk % 4;
+        perk >>= 2;
+    }
+}
+
+// vanilla style data punching!
+
+// {base_level_0, base_level_1, base_level_2, base_level3} for each item type
+uint[] TraderBaseCapacity =
+{
+    0,    10000, 30000, 50000,                           // ITEMTYPE_WEAPON_SMALL
+    0,    10000, 30000, 50000,                           // ITEMTYPE_WEAPON_BIG
+    0,    10000, 30000, 50000,                           // ITEMTYPE_WEAPON_ENERGY
+    0,    10000, 30000, 50000,                           // ITEMTYPE_ARMOR
+    0,     5000, 15000, 25000,                           // ITEMTYPE_DRUG
+    0,     5000, 15000, 25000,                           // ITEMTYPE_MEDICINE
+    0,     5000, 15000, 25000,                           // ITEMTYPE_MISC
+};
+
+uint[] TraderCapacityPercentage =
+{
+    33, 33, 34,                                  // for a trader level 0, for misc items
+    100,  0,  0,                                 // for a trader level 1
+    33, 67,  0,                                  // for a trader level 2
+    20, 30, 50                                   // for a trader level 3
+};
+
+uint TraderCapacity(Critter@ npc, uint type, uint itemlevel)
+{
+    uint traderlevel = GetTraderLevel(npc, type);
+    return (TraderBaseCapacity[4 * type + traderlevel] * npc.Skill[SK_BARTER] * TraderCapacityPercentage[3 * traderlevel + itemlevel - 1]) / 10000;
+}
+
+uint TraderCapacity(Critter@ npc)   // total, regardless the type and level. That determines his total, constant amount of wealth (set to in ever cycle)
+{
+    array<uint> traderlevels;
+    GetTraderLevels(npc, traderlevels);
+    uint        total = 0;
+    for(int i = 0; i < ITEMTYPE_MAX; i++)
+        total += TraderBaseCapacity[4 * i + traderlevels[i]];
+    return (total * npc.Skill[SK_BARTER]) / 100 + TraderMoneyCapacity(npc);
+}
+
+uint TraderMoneyCapacity(Critter@ npc)
+{
+    return (2 * npc.Skill[SK_BARTER] * npc.Skill[SK_BARTER]) / 30;
+}
+
+array<Bank> banks;
+
+void SaveBankData()
+{
+    for(uint i = 0; i < banks.length(); i++)
+        banks[i].SaveData();
+}
+
+// list of pids to log
+array<uint16> PIDs;   // hello, PIDs
+
+/**
+ * Items/virtualmoney log.
+ */
+uint e_LogEconomy(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    // check time
+    IDateTime@ dt = GetCurrentDateTime();
+    // log per real-world hour
+    if(values[0] == 0)
+    {
+        values[0] = 1;
+        _TIMEEND;
+        return REAL_MINUTE(60 - dt.Minute);
+    }
+
+    file f;
+    f.open("logs/economy.log", "a");
+
+    f.writeString("; ----------------------------------------- ; ");
+    f.writeString("\n; Starting economy log: " + dt.ToString());
+    f.writeString("\n; @year,month,day,hour,minute");
+    f.writeString("\n; pid,instances,totalCount(loop version),totalCount2(WorldItemCount),BaseItemValue(pid),totalBaseValue, number at npcs, value at npcs, number at traders, value at traders, number at players invs, value at players invs, number at logged players invs, value at logged players invs, number at followers, value at followers");
+    f.writeString("\n; $BankMoney,EncounterStore");
+    f.writeString("\n; ----------------------------------------- ; ");
+
+    f.writeString("\n@" + dt.Year + "," + dt.Month + "," + dt.Day + "," + dt.Hour + "," + dt.Minute);
+
+    for(uint i = 0, len = itempids.length(); i < len; i++)
+    {
+        uint16     pid = itempids[i];
+        ProtoItem@ proto = GetProtoItem(pid);
+        if(!valid(proto))
+            continue;
+        if(proto.Type == ITEM_TYPE_WEAPON ||
+           proto.Type == ITEM_TYPE_ARMOR ||
+           proto.Type == ITEM_TYPE_AMMO ||
+           proto.Type == ITEM_TYPE_DRUG ||
+           proto.Type == ITEM_TYPE_MISC)
+        {
+            array<Item@> items;
+            uint         totalNum = 0;
+            uint         totalValue = 0;
+            uint         totalTradersNum = 0;     // number of items at traders
+            uint         totalTradersValue = 0;   // value of items at traders
+            uint         totalNpcsNum = 0;        // number of those items belonging to all npcs
+            uint         totalNpcsValue = 0;      // value of items belonging to all npcs
+            uint         totalPlayersNum = 0;
+            uint         totalPlayersValue = 0;
+            uint         totalLoggedPlayersNum = 0;
+            uint         totalLoggedPlayersValue = 0;
+            uint         totalFollowersNum = 0;
+            uint         totalFollowersValue = 0;
+            uint         num = GetAllItems(pid, items);
+            if(num > 0)               // count number of items, not Item instances
+            {
+                for(uint i = 0; i < num; i++)
+                {
+                    uint count = items[i].IsStackable() ? items[i].GetCount() : 1;
+                    uint value = BaseItemValue(items[i]);
+                    totalNum += count;
+                    totalValue += value;
+                    if(items[i].Accessory == ACCESSORY_CRITTER)
+                    {
+                        Critter@ cr = GetCritter(items[i].CritId);
+                        if(valid(cr) && _IsTrueNpc(cr))
+                        {
+                            totalNpcsNum += count;
+                            totalNpcsValue += value;
+                        }
+                        if(valid(cr) && _IsTrueNpc(cr) && _IsTrader(cr))
+                        {
+                            totalTradersNum += count;
+                            totalTradersValue += value;
+                        }
+                        if(valid(cr) && _IsFollower(cr))
+                        {
+                            totalFollowersNum += count;
+                            totalFollowersValue += value;
+                        }
+                        // players
+                        if(valid(cr) && cr.IsPlayer())
+                        {
+                            totalLoggedPlayersNum += count;
+                            totalLoggedPlayersValue += value;
+                        }
+                        if(items[i].CritId < NPC_BASE_ID)
+                        {
+                            totalPlayersNum += count;
+                            totalPlayersValue += value;
+                        }
+                    }
+                }
+            }
+
+            f.writeString("\n" + pid + "," + num + "," + totalNum + "," + WorldItemCount(pid) + "," + BaseItemValue(pid, false) + "," + totalValue +
+                          "," + totalNpcsNum + "," + totalNpcsValue + "," + totalTradersNum + "," + totalTradersValue +
+                          "," + totalPlayersNum + "," + totalPlayersValue + "," + totalLoggedPlayersNum + "," + totalLoggedPlayersValue +
+                          "," + totalFollowersNum + "," + totalFollowersValue);
+        }
+    }
+    f.writeString("\n$" + BanksGetTotalMoney() + "," + WorldmapGetTotalValue());
+    f.writeString("\n");
+    f.close();
+    _TIMEEND;
+    return REAL_HOUR(1);
+}

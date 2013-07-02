@@ -1,0 +1,134 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script follower@d_IsOwner 1 1 R _script follower@r_SetFaction 0  #
+8 1020 @
+2 2000 follower@dlg_ShowLoyality 0 #
+6 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_CanStay 0  R _script follower@r_FollowMode 1 2 #
+5 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_CanLeadMoreFollowers 0  D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+7 2030 D _script follower@d_IsGuarding 1 1 R _script follower@r_Rotate 1 0 #
+7 2040 R _script npc_common@r_MoveRandom 1 0 #
+3 2050 #
+4 2060 #
+18 2070 #
+9 2080 D _script town@d_CanBecomeMilitia 0  R _script town_militia@r_BecomeMilitia 0  #
+2 2090 R _script follower@r_TellWeaponSkill 0  #
+7 2100 R _script follower@r_ArmBestWeapon 0  #
+7 2110 R _script follower@r_PutDownWeapon 0  #
+65506 2120 #
+0 2130 @
+3 3000 None 0 #
+2 3010 R _script follower@r_Distance 1 0 #
+2 3020 R _script follower@r_Distance 1 1 #
+2 3030 R _script follower@r_Distance 1 2 @
+4 4000 None 0 #
+2 4010 R _script follower@r_AttackPolicy 1 0 #
+2 4020 R _script follower@r_AttackPolicy 1 7 #
+2 4030 R _script follower@r_AttackPolicy 1 6 #
+2 4040 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 1 #
+2 4050 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 2 #
+2 4060 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 3 #
+2 4070 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 4 #
+2 4080 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 5 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 @
+8 8000 None 0 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 @
+11 11000 None 0 #
+2 11010 @
+12 12000 None 0 #
+2 12010 @
+13 13000 None 0 #
+2 13010 @
+14 14000 None 0 #
+2 14010 @
+15 15000 None 0 #
+2 15010 @
+16 16000 None 0 #
+2 16010 @
+17 17000 None 0 @
+18 18000 follower@dlg_ShowMercPayCost 0 #
+17 18010 D _script follower@d_CanPayMerc 0  D _script follower@d_IsNotLoyalityMax 0  R _script follower@r_PayMerc 0  #
+2 18020 D _script follower@d_IsLoyalityMax 0  #
+2 18030 &
+
+[engl]
+{100}{}{Mercenary}
+{200}{}{You see @lex name@.}
+{210}{}{You see a Mercenary.}
+{240}{}{You see a dead @lex name@.}
+{250}{}{You see a dead @lex name@.}
+{260}{}{You see a dead @lex name@.}
+{270}{}{You see a dead @lex name@.}
+{1000}{}{Predialogue installations}
+{1010}{}{ Is owner}
+{1020}{}{Not owner}
+{2000}{}{Yeah, whaddaya need?
+@lex loyality@@@Yes boss?
+@lex loyality@@@I'm getting bored, I want to shoot something!
+@lex loyality@}
+{2010}{}{Stay here.}
+{2020}{}{Let's get going.}
+{2030}{}{I need you to rotate for me.}
+{2040}{}{I need you to move, you're blocking my way.}
+{2050}{}{I want to talk to you about distance.}
+{2060}{}{I want to talk about combat.}
+{2070}{}{I want to talk about your payment.}
+{2080}{}{I want you to join the local militia to protect this town.}
+{2090}{}{What kind of weapons are you most proficient with?}
+{2100}{}{Arm yourself.}
+{2110}{}{Put down your weapon.}
+{2120}{}{Here, I've got something for ya.}
+{2130}{}{Nevermind.}
+{3000}{}{Sure, how far do you want me to be?}
+{3010}{}{Stay close to me.}
+{3020}{}{Stick at medium range.}
+{3030}{}{Keep your distance, try and snipe them.}
+{4000}{}{I see, and what is it you want me to do?}
+{4010}{}{Protect me. Attack anyone who attacks us, unless it's our friend.}
+{4020}{}{Protect me and my land. We don't take kindly to strangers lurking 'bout.}
+{4030}{}{Stay out of combat. Flee if hostile contacts are spotted.}
+{4040}{}{Kill any wastelander you stumble across.  (disabled)}
+{4050}{}{Kill any NPC you see.  (disabled)}
+{4060}{}{Kill anyone, but don't touch me or my friends.  (disabled)}
+{4070}{}{Attack enemies of our faction. (disabled)}
+{4080}{}{Attack anyone who isn't a member of our faction (disabled)}
+{5000}{}{Goddamn it, finally. Let's get going.}
+{5010}{}{Alright.}
+{6000}{}{You're shittin' me, right? Fine. I guess I'll just wait here, then.}
+{6010}{}{See you later.}
+{7000}{}{Oh, well, if you really need me to...@@Damn, not again}
+{8000}{}{Talk to the boss@@You couldn't afford me, honey@@This is all just business@@Can you believe they pay me to do this?@@No sudden moves!}
+{9000}{}{I'll do my best sir. I'll be pleased to serve this town!}
+{9010}{}{See you around then.}
+{10000}{}{Don't touch me and you'll be alright.@@Yeah, yeah. Move along.@@I've heard of you. Watch it.@@I'll be keeping an eye on you.}
+{11000}{}{I prefer using my knuckles to beat the shit out of folks.}
+{11010}{}{Alright}
+{12000}{}{Give me a spear or a sledgehammer and I'm happy}
+{12010}{}{Alright.}
+{13000}{}{I like using shotguns, pistols and assault rifles. That sort of stuff.}
+{13010}{}{Alright.}
+{14000}{}{There's nothing better than seeing burning foes dance! Give me flamethrower or rocket launcher and I'm sold.}
+{14010}{}{Haha, I see.}
+{15000}{}{If I could, I'd rather zap my enemies with a laser pistol or something similar.}
+{15010}{}{Alright.}
+{16000}{}{Do I need to tell you that I love the smell of frag granades in the morning?}
+{16010}{}{Alright.}
+{17000}{}{Keep paying me and I'll do whatever you want, boss!@@Finally payday!@@Hooray!@@*dances*}
+{18000}{}{Yes, what?}
+{18010}{}{Hey, here's your pay [Give @lex payment@]}
+{18020}{}{Hey, I've already paid you.}
+{18030}{}{Nevermind.}
+{100000001}{}{Time to kick some asses . . .@@Is it time again?@@It's time again!@@I am . . . so powerful . . .@@I feel stronger.@@Past experience has helped me to advance.@@I have reached another stage in my life.}
+

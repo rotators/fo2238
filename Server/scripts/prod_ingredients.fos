@@ -1,0 +1,120 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_ingredients.fos
+//
+
+#ifndef __PROD_INGREDIENTS__
+#define __PROD_INGREDIENTS__
+
+// shared!
+
+#include "_defines.fos"
+
+#include "prod_ingredients_h.fos"
+#ifdef __SERVER
+# include "utils_h.fos"
+#endif
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+#ifdef __CLIENT
+# define Item    ItemCl
+#endif
+
+bool HaveAnyIngredient(Item& item)
+{
+    if((item.Proto.Ingredient_Type_1 > 0) ||
+       (item.Proto.Ingredient_Type_2 > 0) ||
+       (item.Proto.Ingredient_Type_3 > 0))
+        return(true);
+
+    return(false);
+}
+
+bool HaveIngredient(Item& item, uint8 ingredient)
+{
+    if((item.Proto.Ingredient_Type_1 == ingredient) ||
+       (item.Proto.Ingredient_Type_2 == ingredient) ||
+       (item.Proto.Ingredient_Type_3 == ingredient))
+        return(true);
+
+    return(false);
+}
+
+// can be zero!
+uint16 GetIngredientReturnItem(Item& item, uint8 ingredient)
+{
+    if(HaveIngredient(item, ingredient))
+    {
+        if(item.Proto.Ingredient_Type_1 == ingredient)
+            return(item.Proto.Ingredient_Returns_1);
+        if(item.Proto.Ingredient_Type_2 == ingredient)
+            return(item.Proto.Ingredient_Returns_1);
+        if(item.Proto.Ingredient_Type_3 == ingredient)
+            return(item.Proto.Ingredient_Returns_3);
+    }
+
+    return(0);
+}
+
+string IngredientName(uint8 ingredient)
+{
+    if(EnumContains("Ingredients", int(ingredient)))
+    {
+        array<string@> names;
+        array<int>     values;
+        uint           count = GetEnum("Ingredients", names, values);
+        for(uint e = 0; e < count; e++)
+        {
+            if(values[e] == int(ingredient))
+            {
+                string result = names[e];
+                stringReplaceText(result, "INGREDIENT_", "");
+                stringReplaceText(result, "_", " ");
+                return(strlwr(result));
+            }
+        }
+    }
+
+    return("");
+}
+
+uint IngredientsNames(Item& item, array<string>& names)
+{
+    uint result = 0;
+
+    if(item.Proto.Ingredient_Type_1 > 0)
+    {
+        string name1 = IngredientName(item.Proto.Ingredient_Type_1);
+        if(name1.length() > 0)
+        {
+            result++;
+            names.insertLast(name1);
+        }
+    }
+
+    if(item.Proto.Ingredient_Type_2 > 0)
+    {
+        string name2 = IngredientName(item.Proto.Ingredient_Type_2);
+        if(name2.length() > 0)
+        {
+            result++;
+            names.insertLast(name2);
+        }
+    }
+
+    if(item.Proto.Ingredient_Type_3 > 0)
+    {
+        string name3 = IngredientName(item.Proto.Ingredient_Type_3);
+        if(name3.length() > 0)
+        {
+            result++;
+            names.insertLast(name3);
+        }
+    }
+
+    return(result);
+}
+#endif // __PROD_INGREDIENTS__ //

@@ -1,0 +1,434 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// lockers.fos
+//
+
+// Doors and keys stuff.
+#include "_macros.fos"
+#include "MsgStr.h"
+#include "backend_h.fos"
+#include "multihex_h.fos"
+#include "utils_h.fos"
+
+#define LOCKER_SOUND_RADIUS    (15)
+
+import void TryPickupContainer(Critter& cr, Item& locker) from "movable_container";
+import void TryRotateContainer(Critter& cr, Item& locker) from "movable_container";
+
+bool UseItemOnLocker(Critter& cr, Item& locker, Item& item)   // Export
+{
+    return true;
+}
+
+bool UseSkillOnLocker(Critter& cr, Item& locker, int skill)   // Export
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+        return true;
+    }
+
+    if(skill == SKILL_PICK_ON_GROUND)
+    {
+        return HandleLocker(cr, map, locker, false);
+    }
+    else if(skill == SK_STEAL)
+    {
+        if(locker.GetType() == ITEM_TYPE_CONTAINER && FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+            cr.ShowContainer(null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP);
+        else
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    }
+    else if(skill == SK_LOCKPICK)
+    {
+        // NoOpen
+        /*if(!locker.Proto.Container_Changeble)
+           {
+                cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_USE_NOTHING);
+                return true;
+           }*/
+
+        if(cr.Timeout[TO_SK_LOCKPICK] > 0)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+            return true;
+        }
+
+        if(locker.LockerId == 0 || FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+            return true;
+        }
+
+        int    base = cr.Skill[SK_LOCKPICK] - locker.LockerComplexity;
+        uint8  mode = 0;
+        uint16 activePid = cr.GetSlotProto(SLOT_HAND1, mode).ProtoId;
+        Item@  lockpicks = _CritGetItemHand(cr);
+        if(valid(lockpicks) && lockpicks.Proto.Misc_ToolSkillNum == SK_LOCKPICK)
+        {
+            base += lockpicks.Proto.Misc_ToolSkillBonus;
+            if(Random(0, 30) == 0)
+                cr.DeleteItem(lockpicks.GetProtoId(), 1);
+        }
+        // Todo: PID_ELECTRONIC_LOCKPICKS, PID_ELEC_LOCKPICK_MKII
+
+        base = CLAMP(base, 0, 95);
+        if(base >= Random(1, 100))
+        {
+            if(locker.Proto.Container_Changeble && !LockerOpen(locker))
+                Log("ERR: something wrong with this locker: " + locker.MapId + "," + locker.HexX + "," + locker.HexY + " pid " + locker.GetProtoId());
+            locker.LockerId = 0;
+            locker.LockerComplexity = 0;
+            // TODO: OnOpen ??
+            if(locker.GetType() == ITEM_TYPE_CONTAINER)
+                cr.ShowContainer(null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP);
+            cr.StatBase[ST_EXPERIENCE] += 50;
+            LogExperience(cr, 50, SK_LOCKPICK, "Locker", locker.GetProtoId());
+            AddScore(cr, SCORE_CRACKER, 1);
+        }
+        else
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_LOCKPICK_FAIL);
+        }
+        _SetTimeout(cr, TO_SK_LOCKPICK, LOCKPICK_TIMEOUT(cr));
+    }
+    else if(skill == SK_SCIENCE)
+    {
+        if(cr.IsPlayer() && cr.GetAccess() >= ACCESS_MODER)
+            cr.Say(SAY_NETMSG, "Complexity: " + locker.LockerComplexity + ", id: " + locker.LockerId);
+
+        TryPickupContainer(cr, locker);
+    }
+    else if(skill == SK_REPAIR)
+    {
+        TryRotateContainer(cr, locker);
+    }
+    else if(skill == SKILL_TAKE_ALL_CONT)
+    {
+        return false;
+    }
+    else
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+    }
+    return true;
+}
+
+bool HandleLocker(Critter& cr, Map@ map, Item& locker, bool disregardKey)   // export
+{
+    if(locker.GetType() == ITEM_TYPE_DOOR)
+    {
+
+        // NoOpen
+        if(!locker.Proto.Container_Changeble)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_USE_NOTHING);
+            return true;
+        }
+
+        // Check if something is blocking the door
+        if(FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+        {
+            if(DoorIsBlocked(locker))
+            {
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_DOORWAY_BLOCKED);
+                return true;
+            }
+        }
+
+        // Check key
+        if(!FLAG(locker.LockerCondition, LOCKER_ISOPEN) && locker.LockerId != 0 &&
+           !FLAG(locker.LockerCondition, LOCKER_BROKEN) && !IsKeyAviable(cr, locker.LockerId) && !_CritHasExtMode(cr, MODE_EXT_TC_LEADER) && !disregardKey)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY);
+            LockerBudge(locker);
+            return true;
+        }
+
+        // Change state
+        if(FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+        {
+            LockerClose(locker);
+            OnClose(locker);
+        }
+        else
+        {
+            if(IsMultihex(locker))
+            {
+                if(IsMultihexBlocked(locker))
+                {
+                    cr.Say(SAY_NETMSG, "Something or someone is blocking the door.");
+                    LockerBudge(locker);
+                    return true;
+                }
+                ;
+            }
+
+
+            LockerOpen(locker);
+            if(IsAutoDoor(locker))
+                OnOpenAutoDoor(locker);
+            else
+                OnOpenDoor(locker);
+        }
+    }
+    else if(locker.GetType() == ITEM_TYPE_CONTAINER)
+    {
+        // Check key
+        if(!FLAG(locker.LockerCondition, LOCKER_ISOPEN) && locker.LockerId != 0 &&
+           !FLAG(locker.LockerCondition, LOCKER_BROKEN) && !IsKeyAviable(cr, locker.LockerId) && !disregardKey)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_ITEM_LOCKER_NEED_KEY);
+            LockerBudge(locker);
+            return true;
+        }
+
+        // Is changeble
+        if(locker.Proto.Container_Changeble)
+        {
+            // Change state
+            if(FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+            {
+                LockerClose(locker);
+                OnClose(locker);
+            }
+            else
+            {
+                LockerOpen(locker);
+                OnOpenContainer(locker);
+                cr.ShowContainer(null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP);
+            }
+        }
+        // No changeble
+        else
+        {
+            cr.ShowContainer(null, locker, locker.Proto.GroundLevel ? TRANSFER_HEX_CONT_DOWN : TRANSFER_HEX_CONT_UP);
+        }
+    }
+    return true;
+}
+
+bool IsKeyAviable(Critter& cr, uint lockerId)   // Export
+{
+    if(lockerId == 0)
+        return true;
+    if(_CritFingersDoorId(cr.Id) == lockerId || _CritEyesDoorId(cr.Id) == lockerId)
+        return true;
+    array<Item@> keys;
+    for(uint i = 0, j = cr.GetItemsByType(ITEM_TYPE_KEY, keys); i < j; i++)
+        if(keys[i].LockerId == lockerId)
+            return true;
+    if(_CritHasExtMode(cr, MODE_EXT_TC_LEADER))
+        return true;
+    return false;
+}
+
+uint GetKeyId(Critter& cr, uint lockerId)   // Export
+{
+    if(lockerId == 0 || _CritFingersDoorId(cr.Id) == lockerId || _CritEyesDoorId(cr.Id) == lockerId)
+        return 0;
+    array<Item@> keys;
+    for(uint i = 0, j = cr.GetItemsByType(ITEM_TYPE_KEY, keys); i < j; i++)
+        if(keys[i].LockerId == lockerId)
+            return keys[i].Id;
+    return 0;
+}
+
+void SwitchState(Item& locker)   // Export
+{
+    // Todo: show messages
+
+    if(locker.GetType() == ITEM_TYPE_DOOR || locker.GetType() == ITEM_TYPE_CONTAINER)
+    {
+        // Check open aviability
+        if(locker.Proto.Container_Changeble)
+        {
+            // Change state
+            if(FLAG(locker.LockerCondition, LOCKER_ISOPEN))
+                LockerClose(locker);
+            else
+                LockerOpen(locker);
+        }
+    }
+}
+
+// Automatic door handling
+
+//
+// Checks whether door with given pid should be closed automatically
+//
+// TODO: fill this list with others
+bool IsAutoDoor(Item& door)
+{
+    uint pid = door.GetProtoId();
+    // VC doors
+    return(pid == 3387 || pid == 3388 || pid == 3389 || pid == 3390 || pid == 3391 || pid == 3392
+           // VC gate
+           || pid == 3337
+           // Vault doors
+           || pid == 2018 || pid == 2019
+           // bos doors
+           || pid == 2151 || pid == 2152 || pid == 2153
+           // elevator doors
+           || pid == 2421 || pid == 2470
+           // wall-secret door
+           || pid == 2195);
+
+}
+
+//
+// Checks if item is container with doors
+//
+bool IsOpenableContainer(uint pid)
+{
+    return pid == 42 || pid == 43 || pid == 44 ||
+           (pid >= 128 && pid <= 139) ||
+           (pid >= 188 && pid <= 189) ||
+           pid == 245 ||
+           (pid >= 367 && pid <= 370) ||
+           pid == 501 || pid == 502;
+}
+
+
+// Returns true if the door is blocked by something (typically a critter)
+//
+bool DoorIsBlocked(Item@ door)
+{
+    if(!valid(door))
+        return false;
+
+    uint16 doorX = 0;
+    uint16 doorY = 0;
+    Map@   doorMap = door.GetMapPosition(doorX, doorY);
+
+    if(!valid(doorMap))
+        return false;
+
+    if(IsMultihex(door))
+    {
+        return IsMultihexBlocked(door);
+    }
+    else
+    {
+        if(!doorMap.IsHexPassed(doorX, doorY))
+            return true;
+    }
+    return false;
+}
+
+//
+// Spawns event that will close door
+//
+void OnOpenAutoDoor(Item@ targetItem)
+{
+    if(targetItem.Val5 != 0)
+        EraseTimeEvent(targetItem.Val5);
+    // // we don't store info about this event for now,
+    // // server can't load event handler, don't know why)
+    targetItem.Val5 = CreateTimeEvent(AFTER(REAL_SECOND(Random(10, 20))),
+                                      "e_CloseDoor", targetItem.Id, true);
+}
+
+//
+// Spawns event that will close normal door (long time)
+//
+void OnOpenDoor(Item@ targetItem)
+{
+    if(targetItem.Val5 != 0)
+        EraseTimeEvent(targetItem.Val5);
+
+    Map@ map = GetMap(targetItem.MapId);
+    if(valid(map) &&
+       (map.GetLocation().IsTown() ||
+        map.GetLocation().IsTCTown() ||
+        map.GetLocation().IsReplication()))
+    {
+        targetItem.Val5 = CreateTimeEvent(AFTER(REAL_MINUTE(Random(3, 6))),
+                                          "e_CloseDoor", targetItem.Id, true);
+    }
+}
+
+//
+// Removes event
+//
+void OnClose(Item@ targetItem)
+{
+    if(targetItem.Val5 != 0)
+        EraseTimeEvent(targetItem.Val5);
+}
+
+void OnOpenContainer(Item@ targetItem)
+{
+    if(targetItem.Val5 != 0)
+        EraseTimeEvent(targetItem.Val5);
+    targetItem.Val5 = CreateTimeEvent(AFTER(REAL_MINUTE(Random(3, 6))),
+                                      "e_CloseDoor", targetItem.Id, true);
+}
+
+//
+// Event handler that closes automatic doors
+//
+uint e_CloseDoor(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    uint16 x = 0, y = 0;
+    Map@   map = item.GetMapPosition(x, y);
+    if(!valid(map))
+        return 0;
+
+    // Door are blocked by something
+    //
+    if(item.GetType() == ITEM_TYPE_DOOR && DoorIsBlocked(item))
+        return REAL_SECOND(3);
+
+    LockerClose(item);
+    item.Val5 = 0;
+    _TIMEEND;
+    return 0;
+}
+
+bool LockerClose(Item& item)   // export
+{
+    if(!item.LockerClose())
+        return false;
+    if(IsMultihex(item))
+        MultihexClose(item);
+    Map@ map = GetMap(item.MapId);
+    if(!valid(map))
+        return true;
+    string sound = item.GetType() == ITEM_TYPE_DOOR ? "SCDOORSA.ACM" : "ICCNTNRA.ACM";
+    sound[7] = item.Proto.SoundId;
+    map.PlaySound(sound, item.HexX, item.HexY, LOCKER_SOUND_RADIUS);
+    return true;
+}
+
+bool LockerOpen(Item& item)   // export
+{
+    if(!item.LockerOpen())
+        return false;
+    if(IsMultihex(item))
+        MultihexOpen(item);
+    Map@ map = GetMap(item.MapId);
+    if(!valid(map))
+        return true;
+    string sound = item.GetType() == ITEM_TYPE_DOOR ? "SODOORSA.ACM" : "IOCNTNRA.ACM";
+    sound[7] = item.Proto.SoundId;
+    map.PlaySound(sound, item.HexX, item.HexY, LOCKER_SOUND_RADIUS);
+    return true;
+}
+
+void LockerBudge(Item& item)   // export
+{
+    Map@ map = GetMap(item.MapId);
+    if(!valid(map))
+        return;
+    string sound = item.GetType() == ITEM_TYPE_DOOR ? "SLDOORSA.ACM" : "ILCNTNRA.ACM";
+    sound[7] = item.Proto.SoundId;
+    map.PlaySound(sound, item.HexX, item.HexY, LOCKER_SOUND_RADIUS);
+}

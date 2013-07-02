@@ -1,0 +1,685 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart.fos
+//
+
+#ifndef __FOART__
+#define __FOART__
+
+#include "_defines.fos"
+#include "_macros.fos"
+
+// FOART file format, version 1
+//  1. Header
+//  1.1 File signature and version
+//      uint8[] SIGNATURE   = { 0x46, 0x4F, 0x41, 0x52, 0x54, 0x00, 0x17, 0x14 };
+//      uint8 VERSION
+// 1.2 Format data
+//     uint16 MAP_PID
+//     bool HEXES_RELATIVE
+//     uint32 DEFINITIONS_COUNT
+// 2. Item definitions
+//    uint16 ITEM_PID
+//    uint32 HEXES_COUNT\n
+//    (
+//        int16 HEX_X
+//        int16 HEX_Y
+//    )
+//    uint8 ADDONS_COUNT\n
+//    (
+//        uint8   ADDON_ID\n
+//        uint32  ADDON_DATA_LENGTH\n
+//        uint8[] ADDON_DATA\n
+//    )
+
+uint8[] FOART_SIGNATURE = { 0x46, 0x4F, 0x41, 0x52, 0x54, 0x00, 0x17, 0x14 };
+
+#include "foart_h.fos"
+
+#include "foart_addons.fos"
+
+// #define FOART_DEBUG
+
+#ifdef FOART_DEBUG
+# ifdef __CLIENT
+#  define DebugLog    # (text) { Log("FOArt: " + text); Message("FOArt: " + text); }
+# endif
+# ifdef __MAPPER
+#  define DebugLog    # (text) { Log("FOArt: " + text); Message("FOArt: " + text); }
+# endif
+# ifdef __SERVER
+#  define DebugLog    # (text) { Log("FOArt: " + text); }
+# endif
+#endif
+#ifndef FOART_DEBUG
+# define DebugLog     # (text) {}
+#endif
+
+class FOArt_Base : FOArt
+{
+    uint8 version;
+    uint16 map_pid;
+    bool hexes_relative;
+
+    array<FOArtDefinition@> definitions;
+
+    FOArt_Base(uint8 version = 0, uint16 map_pid = 0, bool hexes_relative = false)
+    {
+        this.version        = version;
+        this.map_pid        = map_pid;
+        this.hexes_relative = hexes_relative;
+        this.definitions.resize(0);
+    }
+
+    uint8 Version()
+    {
+        return(this.version);
+    }
+
+// load/save
+
+    bool Load(array<uint8> data)
+    {
+        Buffer@ buff = NewBuffer();
+
+        for(uint d = 0, dLen = data.length(); d < dLen; d++)
+        {
+            buff << uint8(data[d]);
+        }
+        -buff;
+
+        uint8 version = 0;
+        buff >> version;
+
+        if(version == 0)
+        {
+            Log("version not defined");
+            return(false);
+        }
+
+        DebugLog("version " + version);
+
+        if(version == 1)
+        {
+            this.version = version;
+            uint32 definitions_count = 0;
+
+            buff >> this.map_pid >> this.hexes_relative >> definitions_count;
+
+            DebugLog("map:" + map_pid + " relative:" + this.hexes_relative + " definitions:" + definitions_count);
+
+            for(uint def = 0; def < definitions_count; def++)
+            {
+                DebugLog("definition " + def);
+
+                FOArtDefinition@ definition = NewFOArtDefinition();
+                if(!valid(definition))
+                {
+                    DebugLog("definition " + def + " not valid");
+                    continue;
+                }
+
+                DebugLog("Load()");
+                definition.Load(buff);
+                DebugLog("AddDefinition()");
+                this.AddDefinition(definition);
+            }
+
+            return(true);
+        }         // version == 1
+        else
+        {
+            DebugLog("unknown version: " + version);
+        }
+        return(false);
+    }
+
+    bool Save(Buffer& buff)
+    {
+        buff << this.version;
+
+        if(this.version == 1)
+        {
+            uint32 definitions_count = definitions.length();
+
+            buff << this.map_pid << this.hexes_relative << definitions_count;
+
+            for(uint def = 0; def < definitions_count; def++)
+            {
+                definitions[def].Save(buff);
+            }
+            return(true);
+        }
+        return(false);
+    }
+
+    bool Save(array<uint8>& data)
+    {
+        Buffer@ buff = NewBuffer();
+
+        if(this.Save(buff))
+        {
+            -buff;
+            while(buff.IsRaw(1))
+            {
+                uint8 char = 0;
+                buff >> char;
+                data.insertLast(char);
+            }
+            return(true);
+        }
+        else
+        {
+            return(false);
+        }
+    }
+
+// definitions
+
+    bool AddDefinition(FOArtDefinition@ definition)
+    {
+        if(!valid(definition))
+        {
+            Log("AddDefinition: definition not valid");
+            return(false);
+        }
+
+        this.definitions.insertLast(@definition);
+        return(true);
+    }
+
+    FOArtDefinition@ GetDefinition(uint index)
+    {
+        if(index > this.definitions.length() - 1)
+            return(null);
+
+        return(this.definitions[index]);
+    }
+
+    uint GetDefinitions(array<FOArtDefinition@>& output)
+    {
+        output = this.definitions;
+        return(this.definitions.length());
+    }
+
+    uint GetDefinitionsCount()
+    {
+        return(this.definitions.length());
+    }
+
+// relative
+
+    bool Relative()
+    {
+        return(this.hexes_relative);
+    }
+
+    void Relative(bool hexes_relative)
+    {
+        this.hexes_relative = hexes_relative;
+    }
+
+    #ifdef __SERVER
+// spawning
+
+    int Spawn(Map& map, uint16 centerX, uint16 centerY)
+    {
+        AddonsInit();
+
+        // if foart is designed for specific map, don't use it anywhere else
+        if(this.map_pid > 0 && map.GetProtoId() != this.map_pid)
+        {
+            Log("Wrong map");
+            return(-1);
+        }
+
+        int count = 0;
+        for(uint def = 0, defLen = this.definitions.length(); def < defLen; def++)
+        {
+            if(!valid(this.definitions[def]))
+            {
+                Log("definitions[" + def + "] not valid");
+                continue;                 // break?
+            }
+
+            DebugLog("FOArt: Definition::Spawn " + def);
+            int spawned = definitions[def].Spawn(map, this.hexes_relative, centerX, centerY);
+            if(spawned > 0)
+                count += spawned;
+        }
+
+        return(count);
+    }
+    #endif
+};
+
+class FOArt_Definition : FOArtDefinition
+{
+    uint16 item_pid;
+
+    uint16 get_ItemPid()
+    {
+        return(this.item_pid);
+    }
+
+    array<int16> hexes;
+
+    array<FOArt_AddonData@> addon_data;
+
+    FOArt_Definition(uint16 item_pid)
+    {
+        this.item_pid = item_pid;
+        this.RemoveHexes();
+    }
+
+    void Load(Buffer& buff)
+    {
+        buff >> this.item_pid;
+
+        this.LoadHexes(buff);
+        this.LoadAddons(buff);
+    }
+
+    // Save definition into Buffer
+    void Save(Buffer& buff)
+    {
+        buff << this.item_pid;
+
+        this.SaveHexes(buff);
+        this.SaveAddons(buff);
+    }
+
+// hexes
+
+    void LoadHexes(Buffer& buff)
+    {
+        this.RemoveHexes();
+
+        uint32 hex_count = 0;
+        buff >> hex_count;
+
+        for(uint hex = 0; hex < hex_count; hex++)
+        {
+            int16 hexX = 0;
+            int16 hexY = 0;
+
+            buff >> hexX >> hexY;
+            if(hexX == 0 && hexY == 0)
+            {
+                Log("hex 0,0 !!!");
+                break;
+            }
+            this.AddHex(hexX, hexY);
+        }
+    }
+
+    void SaveHexes(Buffer& buff)
+    {
+        uint32 hex_count = this.hexes.length();
+        uint32 hex_count_2 = hex_count / 2;
+
+        buff << hex_count_2;
+
+        for(uint h = 0; h < hex_count; h++)
+        {
+            buff << int16(this.hexes[h]);
+        }
+    }
+
+    void AddHex(int16 hex_x, int16 hex_y)
+    {
+        this.hexes.insertLast(hex_x);
+        this.hexes.insertLast(hex_y);
+    }
+
+    bool GetHex(uint index, int16& hex_x, int16& hex_y)
+    {
+        uint wantedPosition = index * 2;
+
+        if(this.hexes.length() == 0 || this.hexes.length() < wantedPosition + 2)
+            return(false);
+
+        hex_x = this.hexes[wantedPosition++];
+        hex_y = this.hexes[wantedPosition];
+
+        return(true);
+    }
+
+    uint GetHexes(array<int16>& hexes)
+    {
+        hexes = this.hexes;
+        return(this.hexes.length());
+    }
+
+    uint GetHexesCount()
+    {
+        return(this.hexes.length() / 2);
+    }
+
+    bool RemoveHex(int16 hex_x, int16 hex_y)
+    {
+        for(uint h = 0, hLen = this.hexes.length(); h < hLen; h++)
+        {
+            if(this.hexes[h] == hex_x && this.hexes[h + 1] == hex_y)
+            {
+                this.hexes.removeAt(h);
+                this.hexes.removeAt(h);
+
+                return(true);
+            }
+        }
+
+        return(false);
+    }
+
+    void RemoveHexes()
+    {
+        this.hexes.resize(0);
+    }
+
+// addons
+
+    void LoadAddons(Buffer& buff)
+    {
+        uint8 addon_count = 0;
+        buff >> addon_count;
+
+        for(uint addon = 0; addon < addon_count; addon++)
+        {
+            FOArt_AddonData@ new_addon_data = FOArt_AddonData(0);
+            new_addon_data.Load(buff);
+            this.SetAddonData(new_addon_data.id, new_addon_data.buffer);
+        }
+    }
+
+    void SaveAddons(Buffer& buff)
+    {
+        uint8 addons_count = this.addon_data.length();
+        buff << addons_count;
+
+        for(uint addon = 0; addon < addons_count; addon++)
+        {
+            this.addon_data[addon].Save(buff);
+        }
+    }
+
+    void SetAddonData(uint8 addon_id, Buffer& buff)
+    {
+        for(uint ad = 0, adLen = this.addon_data.length(); ad < adLen; ad++)
+        {
+            if(this.addon_data[ad].id == addon_id)
+            {
+                DebugLog("overwriting addon data<" + addon_id + ">");
+                this.addon_data[ad].Copy(buff);
+                return;
+            }
+        }
+
+        DebugLog("adding addon data<" + addon_id + ">");
+        FOArt_AddonData@ newAddonData = FOArt_AddonData(addon_id);
+        newAddonData.Copy(buff);
+        this.addon_data.insertLast(@newAddonData);
+    }
+
+    void RemoveAddonData(uint8 addon_id)
+    {
+        for(uint ad = 0, adLen = this.addon_data.length(); ad < adLen; ad++)
+        {
+            if(this.addon_data[ad].id == addon_id)
+            {
+                DebugLog("removing addon data<" + addon_id + ">");
+                this.addon_data.removeAt(ad);
+                return;
+            }
+        }
+    }
+
+    #ifdef __SERVER
+// spawning
+
+    int Spawn(Map& map, bool relative, uint16 centerX, uint16 centerY)
+    {
+        AddonsInit();
+
+        // definitions without item_pid set are most likely addon-based
+        if(this.item_pid != 0)
+        {
+            ProtoItem@ proto = GetProtoItem(this.item_pid);
+            if(!valid(proto))
+            {
+                return(-10);
+            }
+        }
+
+        if(this.hexes.length() % 2 != 0)
+        {
+            Log("Wrong Definition::hexes length (%2 != 0), cannot continue");
+            return(-11);
+        }
+
+        int count = 0;
+        for(uint hex = 0, hexLen = hexes.length(); hex < hexLen; hex += 2)
+        {
+            uint16 hexX = this.hexes[hex];
+            uint16 hexY = this.hexes[hex + 1];
+
+            if(relative)
+            {
+                hexX += centerX;
+                hexY += centerY;
+            }
+
+            if(this.Spawn(map, hexX, hexY) > 0)
+                count++;
+        }
+        return(count);
+    }
+
+    uint Spawn(Map& map, uint16 hexX, uint16 hexY)
+    {
+        AddonsInit();
+
+        if(hexX > map.GetWidth() || hexY > map.GetHeight())
+        {
+            Log("Hex " + hexX + "," + hexY + " out of map");
+            return(0);
+        }
+
+        for(uint ad = 0, adLen = this.addon_data.length(); ad < adLen; ad++)
+        {
+            FOArtAddon@ addon = GetFOArtAddon(this.addon_data[ad].id);
+            if(valid(addon))
+            {
+                addon.PreSpawn(addon_data[ad].buffer, this.item_pid, hexX, hexY);
+            }
+        }
+
+        Item@ item = map.AddItem(hexX, hexY, this.item_pid, 1);
+        if(!valid(item))
+        {
+            Log("Item not spawned");
+            return(0);
+        }
+
+        for(uint ad = 0, adLen = this.addon_data.length(); ad < adLen; ad++)
+        {
+            FOArtAddon@ addon = GetFOArtAddon(this.addon_data[ad].id);
+            if(valid(addon))
+            {
+                addon.PostSpawn(addon_data[ad].buffer, item);
+            }
+        }
+
+        item.Update();
+
+        return(item.Id);
+    }
+    #endif
+};
+
+class FOArt_AddonData
+{
+    uint8   id;
+    Buffer@ buffer;
+
+    FOArt_AddonData(uint8 id)
+    {
+        this.id = id;
+        @this.buffer = NewBuffer();
+    }
+
+    void Load(Buffer& buff)
+    {
+        DebugLog("AddonData::Load");
+
+        uint32 addon_data_length = 0;
+
+        ~this.buffer;
+
+        buff >> this.id;
+        DebugLog(" id: " + this.id);
+
+        buff >> addon_data_length;
+        DebugLog(" length: " + addon_data_length);
+
+        // paranoic copy
+        for(uint d = 0; d < addon_data_length; d++)
+        {
+            uint8 tmp = 0;
+            buff >> tmp;
+            this.buffer << tmp;
+        }
+
+        -this.buffer;
+    }
+
+    void Save(Buffer& buff)
+    {
+        array<uint8> addon_data;
+
+        this.buffer >> >= addon_data;
+
+        buff << this.id;
+        buff << uint32(addon_data.length());
+
+        // paranoic copy
+        for(uint d = 0, dLen = addon_data.length(); d < dLen; d++)
+        {
+            buff << uint8(addon_data[d]);
+        }
+    }
+
+    void Copy(Buffer& buff)
+    {
+        array<uint8> addon_data;
+
+        ~this.buffer;
+
+        buff >> >= addon_data;
+
+        for(uint d = 0, dLen = addon_data.length(); d < dLen; d++)
+        {
+            this.buffer << uint8(addon_data[d]);
+        }
+
+        -this.buffer;
+    }
+};
+
+// Create FOArt object
+FOArt@ NewFOArt(uint8 version, uint16 map_pid = 0, bool hexes_relative = false)
+{
+    return(@FOArt_Base(version, map_pid, hexes_relative));
+}
+
+// Create FOArtDefinition object
+FOArtDefinition@ NewFOArtDefinition(uint16 pid = 0)
+{
+    return(@FOArt_Definition(pid));
+}
+
+// Load .foart file
+FOArt@ LoadFOArtFile(string& filename)
+{
+    if(filename.length() < 6)
+        return(null);
+
+    else if(substring(filename, filename.length() - 6, filename.length()) != ".foart")
+    {
+        Log(filename + ": invalid");
+        return(null);
+    }
+    file artFile;
+
+    if(artFile.open(filename, "r") >= 0)
+    {
+        DebugLog(filename + ": opened");
+        array<uint8> data;
+
+        uint         count = artFile.readData(0, data);
+        artFile.close();
+
+        if(count < FOART_SIGNATURE.length())
+        {
+            Log(filename + ": file corrupted");
+            return(null);
+        }
+
+        for(uint sig = 0, sigLen = FOART_SIGNATURE.length(); sig < sigLen; sig++)
+        {
+            if(data[sig] != FOART_SIGNATURE[sig])
+            {
+                Log(filename + ": wrong signature [" + sig + "]");
+                return(null);
+            }
+        }
+
+        for(uint sig = 0, sigLen = FOART_SIGNATURE.length(); sig < sigLen; sig++)
+            data.removeFirst();
+
+        FOArt@ art = NewFOArt(0);
+        if(art.Load(data))
+            return(art);
+        else
+            Log(filename + ": not loaded");
+    }
+    else
+    {
+        Log(filename + ": can't open");
+    }
+    return(null);
+}
+
+// Save .foart file
+bool SaveFOArtFile(FOArt& art, string& filename)
+{
+    file artFile;
+    if(artFile.open(filename, "w") >= 0)
+    {
+        array<uint8> data;
+        for(uint sig = 0, sigLen = FOART_SIGNATURE.length(); sig < sigLen; sig++)
+        {
+            data.insertLast(FOART_SIGNATURE[sig]);
+        }
+        art.Save(data);
+        artFile.writeData(data, 0);
+        artFile.close();
+        return(true);
+    }
+    return(false);
+}
+
+#ifdef __CLIENT
+# include "foart_client.fos"
+#endif
+
+#ifdef __MAPPER
+# include "foart_mapper.fos"
+#endif
+
+#ifdef __SERVER
+# include "foart_server.fos"
+#endif
+#endif // __FOART__ //

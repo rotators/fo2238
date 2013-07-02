@@ -1,0 +1,28 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// companion_h.fos
+//
+
+#include "_maps.fos"
+#include "_bags.fos"
+
+#define COMPANIONS_UPDATE_INTERVAL    (REAL_HOUR(1))
+#define COMPANION_DIALOG_ID           (9320)
+#define COMPANION_DIALOG_PRE_ID       (9321)
+#define COMPANION_INITIAL_SPAWNS      (5)
+
+#define COMPANION_TYPE_MELEE          (0)
+#define COMPANION_TYPE_SG             (1)
+#define COMPANION_TYPE_BG             (2)
+#define COMPANION_TYPE_ENERGY         (3)
+#define COMPANION_TYPE_THROW          (4)
+
+uint[] companion_map_pids = { MAP_DenBusiness, MAP_Junktown, MAP_HubDowntown, MAP_NCR }; // Add any new maps here, they should contain at least one entire of each type, see _entires.fos
+uint[] companion_pids = { 23, 24, 36, 37, 40, 41 };                                      // Critter pids used when spawning new companions
+uint[] companion_bags_melee = { 150, 151, 152, };                                        // Bags for melee type
+uint[] companion_bags_sg = { 166, 167, 170, 171, 172, 173, 182, 195, 212 };              // Bags for small guns type
+uint[] companion_bags_bg = { 1 };                                                        // Bags for big guns type
+uint[] companion_bags_energy = { 1 };                                                    // Bags for energy weapon type
+uint[] companion_bags_throw = { 210 };                                                   // Bags for throw type

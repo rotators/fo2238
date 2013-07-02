@@ -1,0 +1,44 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 @
+20 2000 None 0 #
+2 2010 #
+4 2020 D _var p q_spawn_hub = 1 #
+3 2030 #
+0 2040 @
+2 3000 None 0 #
+0 3010 @
+3 4000 None 0 #
+2 4010 #
+0 4020 @
+4 5000 None 0 #
+5 5010 R _script dialog@r_AddMoney 1 20 R _param p ST_EXPERIENCE + 200 R _var p q_spawn_hub = 2 @
+5 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{Mitch}
+{200}{}{You see Mitch.}
+{1000}{}{Predialogue installations}
+{1010}{}{bereits gesprochen}
+{2000}{}{Hello and welcome to the Far Go Traders. How can I help you?}
+{2010}{}{I'm looking for work.}
+{2020}{}{I've got a message from J.D. to you.}
+{2030}{}{What is it that you do here?}
+{2040}{}{You can't. Bye.}
+{3000}{}{We don't hire in the moment. Check back later.}
+{3010}{}{Fine.}
+{4000}{}{We trade wares between all the different settlements. Sounds simple? But it isn't.}
+{4010}{}{I'm looking for work.}
+{4020}{}{Have to go. Bye.}
+{5000}{}{Yes? What is it? His caravan is too late already.}
+{5010}{}{Well, that's actually the message. They are too late, and will show up here in like one or two days. A sand storm delayed the trip.}
+{6000}{}{Damn, that's already the second time. Oh well... thank you for scouting. Here, I'll give you 'few Hubbucks.}
+{6010}{}{Thanks. That's all what my job was about. See you.}
+

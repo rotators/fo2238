@@ -1,0 +1,98 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_greet.fos
+//
+
+#ifndef __MAP_GREET__
+#define __MAP_GREET__
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_vars.fos"
+
+#include "utils_h.fos"
+
+class CGreet
+{
+    uint   map_pid;
+    uint   lvar;
+    string message;
+
+    CGreet(uint map, uint var, string & message)
+    {
+        this.map_pid    = map;
+        this.lvar               = var;
+        this.message    = message;
+    }
+};
+array<CGreet> Greet;
+
+
+bool GreetInitialized = false;
+
+void AddGreet(uint map, uint var, string& message)
+{
+    Greet.insertLast(CGreet(map, var, message));
+};
+
+void InitGreet()
+{
+    // Main city locations
+    AddGreet(MAP_NCR, LVAR_greet_ncr, "You have entered Shady Sands, the capital of the New California Republic. Its streets are busy and filled with traders and travelers of various kind.");
+    AddGreet(MAP_Redding, LVAR_greet_redding, "You have entered the mining community of Redding. A glimmer of western city-feeling wafts into your face with the hot desert wind.");
+    AddGreet(MAP_HubDowntown, LVAR_greet_hub, "You have entered the dusty streets of the Hub, the main stopoff point for every caravan that is on its way to the north or the south.");
+    AddGreet(MAP_Gunrunner, LVAR_greet_gunrunner, "You have entered the territory of the Gun Runners. A strange feeling of peace by oversized weapons is surrounding you...");
+    AddGreet(MAP_Library, LVAR_greet_library, "From the distance you can see the old public library that serves as the headquarter of the Follower of the Apocalypse. In the west of it, a small settlement build from self made tents adorns the skyline.");
+    AddGreet(MAP_Adytum, LVAR_greet_adytum, "You have entered the small town of New Adytum. It is surrounded by walls of fences, which provides protection from outside threats.");
+
+    // Train stations
+    AddGreet(MAP_SanFransiscoTrainStation, LVAR_greet_train1, "You have encountered the San Francisco train station.");
+    AddGreet(MAP_BoneyardTrainStation, LVAR_greet_train2, "You have encountered the Angel's Boneyard train station.");
+    AddGreet(MAP_NCRTrainStation, LVAR_greet_train3, "You have encountered the New California Republic train station.");
+    AddGreet(MAP_VaultCityTrainStation, LVAR_greet_train4, "You have encountered the Vault City train station.");
+
+    // Mining locations
+
+    // Quest locations
+    AddGreet(MAP_QBrahminWillow, LVAR_greet_q_ncr_brahmin, "You have entered the wide brahmin willow close to the Westin Ranch. It for sure is a peaceful place.");
+
+    // Other locations
+
+    Log("Greetings: " + Greet.length());
+    GreetInitialized = true;
+};
+
+void GreetPlayer(Critter@ player, Map@ map)
+{
+    if(!GreetInitialized)
+        InitGreet();
+
+    if(!valid(player) || !player.IsPlayer() || !valid(map))
+        return;
+
+    for(uint g = 0; g < Greet.length(); g++)
+    {
+        if(Greet[g].map_pid == map.GetProtoId())
+        {
+            if(GetLvar(player, Greet[g].lvar) == 0)
+            {
+                #ifdef __DEBUG__
+                player.Say(SAY_NETMSG, "Greet: first time");
+                #endif
+
+                player.Say(SAY_NETMSG, Greet[g].message);
+                SetLvar(player, Greet[g].lvar, 1);
+            }
+            else
+            {
+                #ifdef __DEBUG__
+                player.Say(SAY_NETMSG, "Greet: not a first time");
+                #endif
+            }
+            return;
+        }
+    }
+};
+#endif // __MAP_GREET__ //

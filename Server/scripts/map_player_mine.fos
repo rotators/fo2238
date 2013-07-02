@@ -1,0 +1,66 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_player_mine.fos
+//
+
+#include "_macros.fos"
+#include "utils_h.fos"
+#include "mine_h.fos"
+#include "mapdata_h.fos"
+
+import bool IsMineDepleted(Map& map) from "production";
+import int  GetFollowers(Critter& player, Map@ map, array<Critter@>& followers) from "follower_common";
+
+// Map script for starter locations
+void map_init(Map& map, bool firstTime)
+{
+    // map.SetEvent(MAP_EVENT_OUT_CRITTER, "_OnLeaveMap");
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_OnEnterMap");
+
+    // On enter - information
+    // Set up random mobs on spot
+    // Set up map data - time of creation
+}
+
+void _OnEnterMap(Map& map, Critter& cr)
+{
+    uint ownerId = GetRootMapData(map, MAP_DATA_OWNER);
+    if(ownerId > 0)
+    {
+        uint lastTime = uint(GetLvar(ownerId, LVAR_mine_bought_time));
+        if(ELAPSED_TIME > (lastTime + MINE_TIME))
+        {
+            cr.Say(SAY_NETMSG, "This mine is depleted and the owner can buy a new one (this location will disappear when a new mine is bought).");
+        }
+    }
+}
+
+/*
+   void _OnLeaveMap(Map& map, Critter& cr)
+   {
+    if (cr.IsNpc())
+        return;
+
+    Location@ loc = map.GetLocation();
+    if (valid(loc))
+    {
+        if (GetLvar(cr, LVAR_mine_id)!=int(loc.Id))
+            return;
+
+        Map@ map2 = loc.GetMapByIndex(1);
+        if (IsMineDepleted(map2) && IsMineDepleted(map))
+        {
+            array<Critter@> crits;
+            GetFollowers(cr, map, crits);
+            GetFollowers(cr, map2, crits);
+            for(uint i=0;i<crits.length();i++)
+                crits[i].TransitToGlobalGroup(cr.Id);
+
+            DeleteLocation(loc.Id);
+            SetLvar(cr, LVAR_mine_id, 0);
+        }
+    }
+   }
+ */

@@ -1,0 +1,113 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+41 1010 D _var n acquaintance > 2 #
+40 1020 D _param p ST_KARMA > 99 R _var n acquaintance + 1 #
+2 1030 D _var n name_mem_npc_player = 0 D _param p ST_KARMA < 100 #
+50 1040 D _item p PID_DOGTAGS > 0 D _script item_dogtags@d_HasFactionDogtags 2 FACTION_NCR_RANGERS 1 #
+8 1050 D _var n name_mem_npc_player = 1 D _param p ST_KARMA < 100 #
+0 1060 @
+2 2000 None 0 #
+3 2010 R _var n name_mem_npc_player = 1 #
+65507 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+0 3030 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+4 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+4 8010 #
+5 8020 #
+0 8030 @
+9 9000 None 0 #
+8 9010 #
+0 9020 @
+40 10000 None 0 @
+41 11000 Attack 0 @
+50 12000 None 0 #
+51 12010 #
+0 12020 @
+51 13000 None 0 #
+52 13010 D _item p PID_DOGTAGS } 1 D _script item_dogtags@d_HasFactionDogtags 2 FACTION_NCR_RANGERS 1 R _script item_dogtags@r_RemoveFactionDogtags 2 FACTION_NCR_RANGERS 1 R _script dialog@r_AddReputationDogtags 2 FACTION_RAIDERS 1 #
+53 13020 D _item p PID_DOGTAGS } 3 D _script item_dogtags@d_HasFactionDogtags 2 FACTION_NCR_RANGERS 3 R _script item_dogtags@r_RemoveFactionDogtags 2 FACTION_NCR_RANGERS 3 R _script dialog@r_AddReputationDogtags 2 FACTION_RAIDERS 3 #
+54 13030 D _item p PID_DOGTAGS } 5 D _script item_dogtags@d_HasFactionDogtags 2 FACTION_NCR_RANGERS 5 R _script item_dogtags@r_RemoveFactionDogtags 2 FACTION_NCR_RANGERS 5 R _script dialog@r_AddReputationDogtags 2 FACTION_RAIDERS 5 #
+55 13040 D _item p PID_DOGTAGS } 10 D _script item_dogtags@d_HasFactionDogtags 2 FACTION_NCR_RANGERS 10 R _script item_dogtags@r_RemoveFactionDogtags 2 FACTION_NCR_RANGERS 10 R _script dialog@r_AddReputationDogtags 2 FACTION_RAIDERS 10 #
+56 13050 @
+52 14000 None 0 @
+53 15000 None 0 @
+54 16000 None 0 @
+55 17000 None 0 @
+56 18000 None 0 &
+
+[engl]
+{100}{}{Heurelho Gomes}
+{200}{}{You see Gomes.}
+{200}{}{You see Heurelho.}
+{210}{}{You see Heurelho Gomes. He is in charge of the outside camp.}
+{210}{}{You see a tough-looking raider who is evidently in charge of proceedings.}
+{210}{}{You see a Khan with powerful biceps and a fatalistic expression.}
+{1000}{}{Predialogue installations}
+{1010}{}{Attack if you bother him}
+{1020}{}{Hostile to good people}
+{1030}{}{First talk.}
+{1040}{}{If player brings NCR Ranger (or some other) Dogtags}
+{1050}{}{Known.}
+{1060}{}{Slaver (should go to #7 when slavers implemented)}
+{2000}{}{I know you?}
+{2010}{}{Don't think so. I'm @pname@.}
+{2020}{}{No, and you never will. Prepare to die, dickshit.}
+{2030}{}{Sorry, wrong person. Bye.}
+{3000}{}{I'm Gomes. What are you doing here?}
+{3010}{}{Just looking for work.}
+{3020}{}{Just chewing the fat. What do you do here?}
+{3030}{}{Just hanging out. Take it easy now. Bye Gomes.}
+{4000}{}{We're good for hired help right now. If you want some dishonest work, go check out the Den. Metzger always needs people.}
+{4010}{}{Metzger, okay. Thanks for the tip.}
+{5000}{}{I make sure no stupid shit happens. Annoyingly, it's more work than you might think.}
+{5010}{}{Yeah?}
+{6000}{}{Well, we get all sorts here. Mostly Khans, sure, but we get regular visits from slavers, unscrupulous traders, a whole bunch of various criminals, and a few wastelanders who just don't like civilised society. Not everyone gets along all the time, especially with that moonshine Augustus serves every hour of the day.}
+{6010}{}{Makes sense. Well, you need a hand?}
+{6020}{}{Makes sense. Well, nice talking to you.}
+{7000}{}{Howdy slaver. If you got goods to sell, talk to Ashdown near the pen.}
+{7010}{}{Actually I wanted to ask you something else.}
+{7020}{}{Thanks, I'll go check her out.}
+{8000}{}{Well, what do you want?}
+{8010}{}{Just looking for work.}
+{8020}{}{Just chewing the fat. What do you do here?}
+{8030}{}{Just hanging out. Take it easy now. Bye Gomes.}
+{9000}{}{Good to see you again, @pname@.}
+{9010}{}{Yeah you too. Can I ask you something?}
+{9020}{}{Yeah you too. Goodbye Heurelho.}
+{10000}{}{What the fuck are ya doin' here, man? Get lost before someone shoots ya!@@We don't like your kind here. You better get the fuck outta here, before getting bullet in the back.@@Man, I would dissapear from this place if I were you.}
+{11000}{}{That's it man, you're history!}
+{12000}{}{Hey, wait! What's that?}
+{12010}{}{This? I just killed some Ranger Dogs a while ago, they were sqealing for mercy as I busted their guts all over the sand, man! Picked up a souvenir or two, just in case more of them show up -- they'll know their end is nigh.}
+{12020}{}{Nothing special, really. [Leave]}
+{13000}{}{Gimme that, there's people around here who'll be happy to see such souvenirs! And if you have any more of these, bring'em over here and I'll put a good word for ya among the crowd.}
+{13010}{}{Sure, there you go. [Give him 1 dogtag]}
+{13020}{}{Sure, there you go. [Give him 3 dogtags]}
+{13030}{}{Sure, there you go. [Give him 5 dogtags]}
+{13040}{}{Sure, there you go. [Give him 10 dogtags]}
+{13050}{}{I think I'll keep them for a while longer. [Leave]}
+{14000}{}{Just one? Better than nothing, I guess. Now, beat it!}
+{15000}{}{Yeah, three is good.}
+{16000}{}{Five, gimme five for this! **clap**}
+{17000}{}{Ten is some serious shit, man! I'll tell everyone we've gotta new champ around here, yeah!}
+{18000}{}{Beat it, ya little punk!@@Wasting my time, little@sex@|fucker||bitch|...}
+

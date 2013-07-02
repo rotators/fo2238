@@ -1,0 +1,104 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+63 2010 D _var p q_cock_fuelcontroller = 1 D _item p PID_CAR_FUEL_CELL_CONTROLLER > 0 #
+63 2020 D _var p q_cock_fuelcontroller = 2 D _item p PID_CAR_FUEL_CELL_CONTROLLER > 0 #
+60 2030 D _var p q_cock_fuelcontroller = 0 #
+10 2040 R _script car_seller@r_CheckCar 1 0 #
+30 2050 #
+0 2060 @
+5 3000 None 0 #
+0 3010 @
+6 4000 None 0 @
+7 5000 None 0 #
+0 5010 @
+8 6000 None 0 #
+0 6010 @
+10 7000 car_seller@dlg_SellCar 0 #
+11 7010 R _script car_seller@r_SellCar 1 0 #
+0 7020 @
+11 8000 None 0 #
+0 8010 @
+30 9000 None 0 #
+2 9010 #
+65505 9020 @
+37 10000 None 0 #
+0 10010 @
+40 11000 None 0 @
+100 12000 None 0 @
+101 13000 None 0 @
+102 14000 None 0 @
+103 15000 None 0 @
+60 16000 None 0 #
+61 16010 @
+61 17000 None 0 #
+0 17010 R _var p q_cock_fuelcontroller = 1 #
+62 17020 @
+62 18000 None 0 #
+61 18010 #
+0 18020 @
+63 19000 car_seller@dlg_PrepareBuy 0 #
+63 19010 D _script car_seller@d_CanAffordCockroach 0  D _item p PID_CAR_FUEL_CELL_CONTROLLER > 0 R _script car_seller@r_BuyCockroach 1 0 R _item p PID_CAR_FUEL_CELL_CONTROLLER - 1 R _var p q_cock_fuelcontroller = 2 #
+0 19020 D _script car_seller@d_CanNotAffordCockroach 0  #
+64 19030 @
+64 20000 None 0 #
+0 20010 &
+
+[engl]
+{100}{}{Junkyard Todd}
+{200}{}{You see a smuddly looking man.}
+{210}{}{You see Junkyard Todd. He lives alone here since many years.}
+{1000}{}{Preddialogue settings}
+{1010}{}{2}
+{2000}{}{Hey. Who's there? I am Todd. What do you want? You know, just tell me. }
+{2010}{}{I have the fuel controller for you.}
+{2020}{}{I've got another fuel controller for you.}
+{2030}{}{This looks like a great place with much junk. Can you build me a car?}
+{2040}{}{Hey, I want to sell my car. Are you interested in this wreck?}
+{2050}{}{Do you offer any other services?}
+{2060}{}{I'll just be going now.}
+{3000}{}{Yeah. I mean. You don't have the caps. You know, I can't give it to you then. Sorry.}
+{3010}{}{What shit is that? Okay, I come back when I actually have the caps...}
+{4000}{}{My garage is a little full right now, you know. Come back when we got a little more room. That would be pretty cool.}
+{5000}{}{(He throws you the keys) She's waiting for you in the garage. You want it repaired or modified, you come back to us, y'hear?}
+{5010}{}{Thanks, Todd. Bye.}
+{6000}{}{(He throws you the keys) She's waiting for you in the garage. You want it repaired or modified, you come back to us, y'hear?}
+{6010}{}{Thanks, Todd. Bye.}
+{7000}{}{Dunno. I mean. Yeah. Maybe. Let me see it... [He is checking out your wreck.] ...Yeah. I mean. It's cool and I'll take it. For @lex sell_cost@. Deal?}
+{7010}{}{Sounds good to me.}
+{7020}{}{Not today. I'll hang onto it for now.}
+{8000}{}{You know. I think you've made a great deal here. [He takes the key from you.]}
+{8010}{}{Maybe. See you.}
+{9000}{}{Do I look like a repair station or what?}
+{9010}{}{Uhm. Yeah, somehow.}
+{9020}{}{I was just curious. I wanted something else.}
+{10000}{}{Yeah. I mean. You don't have the caps. You know, I can't give it to you then. Sorry.}
+{10010}{}{What shit is that. Okay, I come back when I actually have the caps...}
+{11000}{}{You know. I think you don't have a car here. Now I can't buy it from you, yeah? See. Come back when you got a car.}
+{12000}{}{Hey, eh. Yeah. You know, I have stuff to do in the moment.}
+{13000}{}{You know. It would be cool if you could show me the car key. Let me see it. Yeah?}
+{14000}{}{Where is your car? You know. I can't see it.}
+{15000}{}{You know. It would be cool if you could show me the car key. Let me see it. Yeah?}
+{16000}{}{Yeah. Maybe. I mean. You know, I can build you something. But, you know. You have to do something for it first.}
+{16010}{}{What is it then?}
+{17000}{}{If you can bring me a fuel controller, I can build a pretty car for you. You know. This will be cool. But you have to give me some money then too. }
+{17010}{}{Sure thing. I will be back with such a fuel controller. Guess I will stumble across one sooner or later. Bye.}
+{17020}{}{Do I look bored? You can search it by yourself.@@I changed my mind. Don't want this anymore.@@Ok, you can do it alone.@@Meh, I have other business to do in the moment.}
+{18000}{}{Well. You know, I can't build you a car then.}
+{18010}{}{I changed my mind again. What is it again, that you need to have?}
+{18020}{}{Bye.}
+{19000}{}{You know, that's pretty cool! Give it to me. Also give me the money... That's @lex cockroach@ caps and I'll assemble the car.}
+{19010}{}{That's cool. Here are the caps and the fuel controller...}
+{19020}{}{I gotta get some more caps. I'll be back.}
+{19030}{}{Meh. No, maybe next time.}
+{20000}{}{Your choice, you know.}
+{20010}{}{Yes, I know. Bye.}
+

@@ -1,0 +1,43 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _param p ST_INTELLECT > 3 #
+10 1020 D _param p ST_INTELLECT < 4 @
+3 2000 None 0 #
+500 2010 #
+0 2020 @
+10 3000 None 0 @
+500 4000 None 0 #
+501 4010 D _script perks@d_PerkCheck 1 406 R _param p PE_THIEF = 1 #
+501 4020 D _script perks@d_PerkCheck 1 334 R _param p PE_MASTER_THIEF = 1 #
+501 4030 D _script perks@d_PerkCheck 1 338 R _param p PE_PICKPOCKET = 1 #
+0 4040 @
+501 5000 None 0 #
+0 5010 &
+
+[engl]
+{100}{}{Shadow}
+{200}{}{You see a shadowy character. If it was any darker, you probably wouldn't notice him at all.}
+{210}{}{It's Shadow.}
+{210}{}{He doesn't appear to be armed, with weapons or wit.}
+{1000}{}{Predialogue installations}
+{1010}{}{normal}
+{1020}{}{dumb}
+{2000}{}{What may be the reason for such a disturbance?}
+{2010}{}{If you're as half skilled as you talk, then I may be on the right place.}
+{2020}{}{I don't want any trouble, forget it. [Leave]}
+{3000}{}{I can't help you... You better leave.@@There's the door, don't miss it.@@I have no idea what you're talking about.}
+{4000}{}{The place is right if you know what to do once you're there...}
+{4010}{}{To acquire something illegally or not; that is the question! [Thief]}
+{4020}{}{Whatever there is to do, I wanna do it the best way possible. [Master Thief]}
+{4030}{}{Empty pockets don't talk. But you can always talk about empty pockets. [Pickpocket]}
+{4040}{}{Well, not sure where I should begin... I'll drop by later!}
+{5000}{}{Okay, you made your point. Pay attention then, I can't be bothered to do this twice. [The lesson takes a while, but you feel like it was well worth it]}
+{5010}{}{That was as shady as it gets. I guess we could meet each other again soon. Farewell, Shadow.}
+

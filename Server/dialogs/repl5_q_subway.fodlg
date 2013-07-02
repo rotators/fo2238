@@ -1,0 +1,91 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+15 1010 D _var p q_frisco_subway = 5 #
+14 1020 D _var p q_frisco_subway = 4 #
+13 1030 D _var p q_frisco_subway > 1 #
+2 1040 @
+2 2000 None 1 #
+3 2010 #
+11 2020 D _var p q_frisco_subway = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 R _var p q_frisco_subway = 1 #
+0 3020 @
+4 4000 None 0 #
+5 4010 D _param p ST_LEVEL < 4 #
+7 4020 D _param p ST_LEVEL } 4 #
+0 4030 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 R _script quest_frisco_subway@r_SpawnLocation 0  R _var p q_frisco_subway = 2 #
+0 7020 @
+13 8000 None 0 #
+18 8010 D _var p q_frisco_subway = 3 #
+16 8020 R _script quest_frisco_subway@r_TeleportToBasement 0  #
+17 8030 @
+14 9000 None 1 @
+15 10000 None 1 @
+16 11000 None 0 #
+0 11010 @
+17 12000 None 0 @
+18 13000 None 0 #
+19 13010 R _item p PID_14MM_PISTOL + 1 R _param p REPUTATION_COMMUNISTS + 250 R _var p q_frisco_subway = 4 R _item p PID_14MM_AP + 15 R _param p ST_EXPERIENCE + 250 #
+20 13020 R _param p REPUTATION_COMMUNISTS + 250 R _script dialog@r_AddMoney 1 1000 R _var p q_frisco_subway = 4 R _param p ST_EXPERIENCE + 250 @
+19 14000 None 0 #
+0 14010 @
+20 15000 None 0 #
+0 15010 &
+
+[engl]
+{100}{}{Chen}
+{200}{}{You see Chen.}
+{210}{}{A hobo with a shotgun.}
+{1000}{}{Initial preferences}
+{1010}{}{quest failed}
+{1020}{}{quest done}
+{1030}{}{quest running}
+{1040}{}{---}
+{2000}{}{Oh come on! I don't have time to talk, get out of my sight!}
+{2010}{}{What is going on here?}
+{2020}{}{Tell me about the situation again.}
+{2030}{}{Goodbye.}
+{3000}{}{I told your friends already, the subway tunnel are closed off! As long as nobody is going to get down there, we will not open the gates!}
+{3010}{}{Wait, you guys actually got a working subway station down here?}
+{3020}{}{Fine by me. See you around.}
+{4000}{}{What? No! The squatters live down there. Well, they had, until the radscorpion family broke into it and is now housing there. You are not one of them? }
+{4010}{}{Maybe I can help you with those radscorpions.}
+{4020}{}{Maybe I can help you with those radscorpions.}
+{4030}{}{That sounds horrible! Anyway, have to go now...}
+{5000}{}{You like to make unfunny jokes, do you? That scorpions are big and dangerous. Someone fresh one like you, they will rip apart.}
+{5010}{}{You are sure?}
+{6000}{}{Pretty much, yes.}
+{6010}{}{Then I might consider to come back later. So long, bye.}
+{7000}{}{That would be a tough job to do, but hey... maybe you could pull it off, I don't know. You want to try it? Fine by me.}
+{7010}{}{[Continue]}
+{7020}{}{Maybe later, can't do it right now. Bye.}
+{8000}{}{And? What's the status?}
+{8010}{}{The radscorpions down in the tunnels are dead.}
+{8020}{}{I forgot something and have to go back into the subway station.}
+{8030}{}{Don't have much time right now. Will come back to you later.}
+{9000}{}{Glad you came along to help us.@@Thanks for helping us.@@Thanks again for the help.}
+{10000}{}{The damn radscorpions have finally taken over all subway tunnels. We can't get down there anymore without spending a lot manpower on it... thanks for the help.}
+{11000}{}{If you say so...}
+{11010}{}{[Continue]}
+{12000}{}{You really are helpful!}
+{13000}{}{That's... impressive! Thought you would die down there, just like the other ones who tried so far... Can't give you much, though. How about this: The last one trying to help was poisoned so bad, he died a short time after. He got this 14mm pistol... [He shows you the gun.] ... You can have it, if you want to.}
+{13010}{}{Give me the gun, that's fine.}
+{13020}{}{I don't need weapons. Give me caps instead!}
+{14000}{}{Hope this one will keep you going! [He hands you over the heavy looking 14mm pistol and some ammunition for it.]}
+{14010}{}{Goodbye.}
+{15000}{}{If that suits you better... Here, take some caps. Still, thanks a lot for your help.}
+{15010}{}{Goodbye.}
+

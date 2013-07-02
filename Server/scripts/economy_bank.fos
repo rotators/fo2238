@@ -1,0 +1,411 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// economy_bank.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "utils_h.fos"
+#include "serializator.fos"
+
+#include "economy_bankaccount.fos"
+
+#define BANK_ACCOUNT_MAX    (100000)     // Number of accounts per bank.
+
+// Class for handling a single bank
+class Bank
+{
+    uint               owner;             // The id of the bankowner
+    uint               totalmoney;        // The total amount of money in the bank
+    uint               numaccounts;       // Number of accounts in the bank
+    uint               loaninterest;      // Percentage of loan interest
+    float              savingsinterest;   // Percentage of savings interest
+    bool               initialized;       // Is it the first time the bank is initialized ?
+
+    string             name;              // This is used for data retrieval
+
+    array<BankAccount> bankaccounts;      // An array with all the bankaccounts
+    Serializator       serializer;
+
+    bool InitAccounts()
+    {
+        WLog("banks", "Found " + GetNumberOfAccounts() + " accounts...");
+        WLog("banks", "Loading accounts...");
+        for(uint i = 0; i < GetNumberOfAccounts(); i++)
+        {
+            BankAccount account;
+            uint        dataid;
+            if(!account.Init(name + "_acc_" + i))
+                return false;
+            bankaccounts.insertLast(account);
+        }
+        return true;
+    }
+
+
+    // Load data from database and set the variables
+    bool LoadData()
+    {
+        serializer.Clear();
+        if(!serializer.Load(this.name))
+            return false;
+        serializer.Get(owner).Get(totalmoney).Get(loaninterest)
+        .Get(savingsinterest).Get(initialized).Get(numaccounts);
+        return true;
+    }
+
+    // Save data to the database
+    bool SaveData()
+    {
+        for(uint i = 0; i < bankaccounts.length(); i++)
+            bankaccounts[i].SaveData();
+
+        serializer.Clear();
+        return serializer.Set(owner).Set(totalmoney).Set(loaninterest)
+               .Set(savingsinterest).Set(initialized).Set(numaccounts).Save(this.name);
+    }
+
+    bool Init(string name)
+    {
+        WLog("banks", "Initializing bank with the name " + name);
+
+        this.name = name;
+
+        this.owner = this.totalmoney = this.numaccounts =
+                                           this.loaninterest = this.savingsinterest = 0; // Initialize all variables and set them to 0
+        this.initialized = false;
+
+        if(!LoadData())
+            if(!SaveData())
+                return false;
+
+        if(!InitAccounts())
+            return false;
+
+        // If this is the first time, add account 0 (owner account) and add startmoney
+        if(!initialized)
+        {
+            if(CreateBankAccount(0) != FD_BANK_RESULT_SUCCESS)
+                return false;
+            if(!AddMoney(BANK_START_MONEY))
+                return false;
+            SetLoanInterest(BANK_START_LOAN_INTEREST);
+            SetSaveInterest(BANK_START_SAVING_INTEREST);
+
+            initialized = true;
+        }
+
+        if(!SaveData())
+            return false;
+        return true;
+    }
+
+    // Add a sum of money to the bank, this money is not stored in any account
+    bool AddMoney(int amount)
+    {
+        if((totalmoney + amount) > BANK_MAX_MONEY)
+            return false;
+
+        if(amount < 0)
+            return false;
+
+        totalmoney += amount;
+        return true;
+    }
+
+    // Remove money from the bank
+    bool RemoveMoney(int amount)
+    {
+        if((totalmoney - amount) < 0)
+            return false;
+
+        if(amount < 0)
+            return false;
+
+        totalmoney -= amount;
+        return true;
+    }
+
+    // Set the sum of money in the bank
+    bool SetMoney(uint amount)
+    {
+        totalmoney = amount;
+        return true;
+    }
+
+    // Remove money from specified account
+    bool AccountRemoveMoney(uint accountid, int amount)
+    {
+        if((bankaccounts[accountid].GetBalance() - amount) < 0)
+            return false;
+
+        if(amount < 0)
+            return false;
+
+        return bankaccounts[accountid].RemoveMoney(amount);
+    }
+
+    // Get accountid of specified player.
+    // If he doesn't have an account in this bank, the function returns -1
+    int GetAccountID(uint playerid)
+    {
+        for(uint i = 0; i < GetNumberOfAccounts(); i++)
+        {
+            if(bankaccounts[i].GetOwner() == playerid)
+                return i;
+        }
+        return -1;
+    }
+
+    // Get account balance of specified account
+    int GetAccountBalance(uint account)
+    {
+        return bankaccounts[account].GetBalance();
+    }
+
+    // Get owner of specified accounti
+    uint GetOwner(uint account)
+    {
+        return bankaccounts[account].GetOwner();
+    }
+
+    // Check if the with the specified id exists.
+    bool AccountExists(uint account)
+    {
+        if(account < GetNumberOfAccounts())
+            return true;
+        return false;
+    }
+
+    uint GetLoanInterest()
+    {
+        return loaninterest;
+    }
+
+    uint SetLoanInterest(uint interest)
+    {
+        loaninterest = interest;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    float GetSaveInterest()
+    {
+        return savingsinterest;
+    }
+
+    uint SetSaveInterest(float interest)
+    {
+        savingsinterest = interest;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint CreateBankAccount(int playerid)
+    {
+        if(GetNumberOfAccounts() == BANK_ACCOUNT_MAX)
+            return FD_BANK_RESULT_TOO_MANY_ACCOUNTS;
+
+        if(GetAccountID(playerid) != -1)
+        {
+            return FD_BANK_RESULT_ALREADY_HAS_ACCOUNT;
+        }
+
+        WLog("banks", "Creating bank account with account id " + (GetNumberOfAccounts()));
+
+        BankAccount account;
+        if(!account.Init(name + "_acc_" + GetNumberOfAccounts()))
+            return FD_BANK_RESULT_DATA_ERROR;
+        account.SetOwner(playerid);
+
+        bankaccounts.insertLast(account);
+
+        numaccounts++;
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint DepositMoney(int playerid, uint account, int amount)
+    {
+        if(!AccountExists(account))
+            return FD_BANK_RESULT_NO_ACCOUNT;
+
+        if((totalmoney + amount) > BANK_MAX_MONEY)
+            return FD_BANK_RESULT_BANK_FULL;
+
+        uint ret = bankaccounts[account].DepositMoney(amount, playerid);
+
+        if(ret == FD_BANK_RESULT_SUCCESS)
+            return this.AddMoney(amount) ? FD_BANK_RESULT_SUCCESS : FD_BANK_RESULT_DATA_ERROR;
+        else
+            return ret;
+    }
+
+    uint WithdrawMoney(int playerid, uint account, int amount)
+    {
+        if(!AccountExists(account))
+            return FD_BANK_RESULT_NO_ACCOUNT;
+
+        if((totalmoney - amount) < 0)
+            return FD_BANK_RESULT_BANK_EMPTY;
+
+        uint ret = bankaccounts[account].WithdrawMoney(amount, playerid);
+
+        if(ret == FD_BANK_RESULT_SUCCESS)
+        {
+            if(!this.RemoveMoney(amount))
+                return FD_BANK_RESULT_DATA_ERROR;
+        }
+        else
+        {
+            return ret;
+        }
+
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint TransferMoney(uint accountfrom, uint accountto, uint amount)
+    {
+        if((!AccountExists(accountfrom)) || (!AccountExists(accountto)))
+            return FD_BANK_RESULT_NO_ACCOUNT;
+
+        if(amount < 0)
+            return FD_BANK_RESULT_INVALID_INPUT;
+
+        if(bankaccounts[accountfrom].GetBalance() < int(amount))
+            return FD_BANK_RESULT_NOT_ENOUGH_MONEY;
+
+        if(!(bankaccounts[accountfrom].RemoveMoney(amount)))
+            return FD_BANK_RESULT_DATA_ERROR;
+        if(!(bankaccounts[accountto].AddMoney(amount)))
+            return FD_BANK_RESULT_DATA_ERROR;
+
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint TakeLoan(uint account, uint amount)
+    {
+        if(GetTotalMoney() < amount)
+            return FD_BANK_RESULT_BANK_EMPTY;
+
+        if(!bankaccounts[account].AddMoney(amount))
+            return FD_BANK_RESULT_DATA_ERROR;
+        if(!bankaccounts[account].AddLoan(amount))
+            return FD_BANK_RESULT_DATA_ERROR;
+
+        return FD_BANK_RESULT_SUCCESS;
+    }
+
+    uint GetNumberOfAccounts()
+    {
+        return numaccounts;
+    }
+
+    uint GetTotalMoney()
+    {
+        return totalmoney;
+    }
+
+    // Get total balance of all accounts
+    uint GetTotalBalance()
+    {
+        int sum = 0;
+        for(uint i = 0, j = GetNumberOfAccounts(); i < j; i++)
+            sum += bankaccounts[i].GetBalance();
+        return sum;
+    }
+
+    float GetReserveRatio()
+    {
+        float balance = GetTotalBalance();
+        balance = MAX(0.01f, balance);
+        return float(GetTotalMoney()) / balance;
+    }
+
+    uint SetCreditRating(uint accountid, uint rating)
+    {
+        return bankaccounts[accountid].SetCreditRating(rating);
+    }
+
+    uint GetCreditRating(uint accountid)
+    {
+        return bankaccounts[accountid].GetCreditRating();
+    }
+
+    uint SetLoan(uint accountid, uint loan)
+    {
+        return bankaccounts[accountid].SetLoan(loan);
+    }
+
+    uint GetLoan(uint accountid)
+    {
+        return bankaccounts[accountid].GetLoan();
+    }
+
+    uint GetAccountType(uint accountid)
+    {
+        return bankaccounts[accountid].GetAccountType();
+    }
+
+    uint SetAccountType(uint accountid, uint accounttype)
+    {
+        return bankaccounts[accountid].SetAccountType(accounttype);
+    }
+
+    uint AddAccess(uint accountid, uint playerid)
+    {
+        return bankaccounts[accountid].AddAccess(playerid);
+    }
+
+    uint RemoveAccess(uint accountid, uint playerid)
+    {
+        return bankaccounts[accountid].RemoveAccess(playerid);
+    }
+
+    bool HasAccess(uint accountid, uint playerid)
+    {
+        return bankaccounts[accountid].HasAccess(playerid);
+    }
+
+    uint GetAccessCount(uint accountid)
+    {
+        return bankaccounts[accountid].GetAccessCount();
+    }
+
+    bool UpdateInterestAccounts(uint startIndex, uint amount)
+    {
+        for(uint i = startIndex, j = startIndex + amount; i < j; i++)
+        {
+            if(i == GetNumberOfAccounts())           // done
+                return true;
+
+            int balance = bankaccounts[i].GetBalance();
+            if((balance > 0) && (GetSaveInterest() != 0))
+            {
+                // DLog("Savings interest rate: " + GetSaveInterest() + "%");
+                // DLog("Balance before: " + balance);
+                float fmoney = float((balance / 100) * GetSaveInterest());
+                uint  imoney = fmoney;
+                // DLog("Balance after: " + (balance + money));
+                bankaccounts[i].AddMoney(imoney);
+            }
+        }
+        return false;
+    }
+
+    void UpdateInterest()
+    {
+        float ratio = GetReserveRatio();
+        if(ratio <= SAVING_INTEREST_MIN_RESERVE_RATIO)
+            SetSaveInterest(0.0f);
+        else if(ratio >= 1.0)
+            SetSaveInterest(SAVING_INTEREST_MAX);
+        else
+        {
+            float interests = (4.0f * ratio + SAVING_INTEREST_MIN_RESERVE_RATIO) / 5.0f; // new, smaller but still safe ratio: weighted av of ratio and SAVING_INTEREST_MIN_RESERVE_RATIO (more weight on ratio)
+            interests = 100.0f * (ratio / interests - 1.0);                              // value of interests that would be needed to reach this new ratio
+            if(interests > SAVING_INTEREST_MAX)
+                interests = SAVING_INTEREST_MAX;                                         // cap if too much
+            SetSaveInterest(interests);
+        }
+    }
+};

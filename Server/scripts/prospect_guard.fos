@@ -1,0 +1,35 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prospect_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "npc_common_h.fos"
+
+
+#include "guard_h.fos"
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+
+    GuardInit(guard);
+}
+
+void _Idle(Critter& guard)
+{
+    if(Random(0, 2) == 0)
+        MoveRandom(guard, 4);
+    guard.Wait(Random(5000, 20000));
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+}

@@ -1,0 +1,27 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// floyd.fos
+//
+
+// Floyd.
+
+#include "_macros.fos"
+
+#define DIALOG_ID    (1111)
+
+void critter_init(Critter& floyd, bool firstTime)
+{
+    floyd.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+void _Idle(Critter& floyd)
+{
+    if(Random(0, 2) == 0)
+        floyd.MoveRandom();
+    if(Random(0, 3) == 0)
+        floyd.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_ID, 1));
+    // till next move
+    floyd.Wait(Random(500, 20000));
+}

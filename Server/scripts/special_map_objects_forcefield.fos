@@ -1,0 +1,1310 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// special_map_objects_forcefield.fos
+//
+
+// forceField flags
+#define FORCEFIELD_ON                          (0x01)
+#define FORCEFIELD_HALF_INTEGRITY              (0x02)
+#define FORCEFIELD_DESTROYED                   (0x04)
+#define FORCEFIELD_DISRUPTED                   (0x08)
+#define FORCEFIELD_FLICKERED                   (0x10)
+#define FORCEFIELD_REPAIRABLE_WHENOFF          (0x20)
+
+// forceField values
+#define FORCEFIELD_FULL_OFF                    (0x00)
+#define FORCEFIELD_FULL_ON                     (0x01)
+#define FORCEFIELD_HALVED_OFF                  (0x02)
+#define FORCEFIELD_HALVED_ON                   (0x03)
+
+#define FORCEFIELD_DEFAULT_RESPAWN_INTERVAL    (120)
+
+#define EMITTER_COMPLEXITY                     # (emitter) (emitter.Val1)
+#define DEFAULT_EMITTER_COMPLEXITY             (60)
+
+#define FORCEFIELD_BACKAGAIN_INTERVAL          (10)
+
+// protos
+#define FORCEFIELD1_SPAWNER_PID                (10002)
+#define FORCEFIELD1_FULL_PID                   (PID_FORCEFIELD_YELLOW_1)
+#define FORCEFIELD1_HALVED_PID                 (10000)
+
+#define FORCEFIELD2_SPAWNER_PID                (10003)
+#define FORCEFIELD2_FULL_PID                   (PID_FORCEFIELD_YELLOW_2)
+#define FORCEFIELD2_HALVED_PID                 (10001)
+
+#define FORCEFIELD_TYPE_1                      (0)
+#define FORCEFIELD_TYPE_2                      (1)
+
+#define FORCEFIELD_DAMAGE                      (Random(15, 30))
+
+uint blankHash = GetStrHash("art/items/blank.png");
+
+uint[] emitterNSPids = { 10018, 10019, 10020 };
+uint[] emitterNSBrokenPids = { 10024, 10025, 10026 };
+uint[] emitterNSMapperPids = { 10007, 10008, 10009 };
+uint[] emitterWEPids = { 10015, 10016, 10017 };
+uint[] emitterWEBrokenPids = { 10021, 10022, 10023 };
+uint[] emitterWEMapperPids = { 10004, 10005, 10006 };
+
+
+uint[] ffSpawnerPids = { FORCEFIELD1_SPAWNER_PID, FORCEFIELD2_SPAWNER_PID };
+uint[] ffFullPids = { FORCEFIELD1_FULL_PID, FORCEFIELD2_FULL_PID };
+uint[] ffHalvedPids = { FORCEFIELD1_HALVED_PID, FORCEFIELD2_HALVED_PID };
+
+///// mapper objects inits
+void _InitNSEmitter(Item& emitter, bool first)
+{
+    uint[] values = { emitter.Id };
+    CreateTimeEvent(__FullSecond + REAL_SECOND(1), "e_InitNSEmitter", values, true);
+}
+
+
+uint e_InitNSEmitter(array<uint>@ values)     // delayed item initialization
+{
+    Item@ emitter = GetItem(values[0]);
+    if(!valid(emitter) || emitter.MapId == 0)
+        return 0;
+    Map@ map = GetMap(emitter.MapId);
+    if(!valid(map))
+        return 0;
+    for(uint i = 0, j = emitterNSMapperPids.length(); i < j; i++)
+    {
+        if(emitter.GetProtoId() == emitterNSMapperPids[i])
+        {
+            uint16 hexX = emitter.HexX;
+            uint16 hexY = emitter.HexY;
+            Item@  spawner = map.AddItem(hexX, hexY, FORCEFIELD2_SPAWNER_PID, 1);
+            spawner.Val0 = emitter.Val0;
+            spawner.Val1 = emitter.Val1;
+            spawner.Val2 = emitter.Val2 & 0x0000FFFF;
+            spawner.Val3 = emitter.Val3;
+            spawner.Val4 = emitter.Val4;
+            DeleteItem(emitter);
+            if(!valid(spawner))
+                return 0;
+            map.MoveHexByDir(hexX, hexY, 5, 2);
+            Item@ realEmitter;
+            if(FLAG(spawner.Val2, FORCEFIELD_DESTROYED))
+                @realEmitter = map.AddItem(hexX, hexY, emitterNSBrokenPids[i], 1);
+            else
+                @realEmitter = map.AddItem(hexX, hexY, emitterNSPids[i], 1);
+            if(!valid(realEmitter))
+                return 0;
+            realEmitter.Val0 = spawner.Id;
+            int complexity = (emitter.Val2 >> 16) & 0x0000FFFF;
+            realEmitter.Val1 = ((complexity > 0) ? complexity : DEFAULT_EMITTER_COMPLEXITY);
+            realEmitter.SetEvent(ITEM_EVENT_SKILL, "_ForceFieldEmitterUse");
+            return 0;
+        }
+    }
+    DeleteItem(emitter);
+    return 0;
+}
+
+void _InitWEEmitter(Item& emitter, bool first)
+{
+    uint[] values = { emitter.Id };
+    CreateTimeEvent(__FullSecond + REAL_SECOND(1), "e_InitWEEmitter", values, true);
+}
+
+uint e_InitWEEmitter(array<uint>@ values)     // delayed item initialization
+{
+    Item@ emitter = GetItem(values[0]);
+    if(!valid(emitter) || emitter.MapId == 0)
+        return 0;
+    Map@ map = GetMap(emitter.MapId);
+    if(!valid(map))
+        return 0;
+    for(uint i = 0, j = emitterWEMapperPids.length(); i < j; i++)
+    {
+        if(emitter.GetProtoId() == emitterWEMapperPids[i])
+        {
+            uint16 hexX = emitter.HexX;
+            uint16 hexY = emitter.HexY;
+            Item@  spawner = map.AddItem(hexX, hexY, FORCEFIELD1_SPAWNER_PID, 1);
+            spawner.Val0 = emitter.Val0;
+            spawner.Val1 = emitter.Val1;
+            spawner.Val2 = emitter.Val2;
+            spawner.Val3 = emitter.Val3;
+            spawner.Val4 = emitter.Val4;
+            DeleteItem(emitter);
+            if(!valid(spawner))
+                return 0;
+            map.MoveHexByDir(hexX, hexY, 0, 1);
+            map.MoveHexByDir(hexX, hexY, 1, 1);
+            Item@ realEmitter;
+            if(FLAG(spawner.Val2, FORCEFIELD_DESTROYED))
+                @realEmitter = map.AddItem(hexX, hexY, emitterWEBrokenPids[i], 1);
+            else
+                @realEmitter = map.AddItem(hexX, hexY, emitterWEPids[i], 1);
+            if(!valid(realEmitter))
+                return 0;
+            realEmitter.Val0 = spawner.Id;
+            return 0;
+        }
+    }
+    DeleteItem(emitter);
+    return 0;
+}
+
+
+/////
+
+
+class CForceFieldSearcher : ISearchingCallback
+{
+    uint FindTogglableSMOs(array<ITogglableSMO@>& list, Map& map, int globalId)
+    {
+        uint         origLength = list.length();
+        array<Item@> spawners;
+        array<uint> typeCounts(ffSpawnerPids.length());
+        uint         spawnerCount = 0;
+        for(uint fi = 0, fm = ffSpawnerPids.length(); fi < fm; fi++)
+        {
+            typeCounts[fi] = map.GetItems(ffSpawnerPids[fi], spawners);
+            spawnerCount += typeCounts[fi];
+        }
+        uint searchedSpawnerCount = 0;
+
+        array<bool> spawnerValidity(spawnerCount);
+
+        for(uint i = 0; i < spawnerCount; i++)
+        {
+            if(globalId == -1 || globalId == spawners[i].Val1)
+            {
+                spawnerValidity[i] = true;
+                searchedSpawnerCount++;
+            }
+            else
+                spawnerValidity[i] = false;
+        }
+
+        list.resize(origLength + searchedSpawnerCount);
+        for(uint i = 0, j = origLength, fi = 0, k = 0; i < spawnerCount; i++)
+        {
+            while(k >= typeCounts[fi])
+            {
+                k = 0;
+                fi++;
+            }
+            if(spawnerValidity[i])
+            {
+                @list[j] = MapForceFieldObject(spawners[i], map, ffFullPids[fi], ffHalvedPids[fi]);
+                j++;
+            }
+            k++;
+        }
+        return searchedSpawnerCount;
+    }
+
+    uint FindForceFieldObjects(array<MapForceFieldObject@>& list, Map& map, int id)
+    {
+        uint         origLength = list.length();
+        array<Item@> spawners;
+        array<uint> typeCounts(ffSpawnerPids.length());
+        uint         spawnerCount = 0;
+        for(uint fi = 0, fm = ffSpawnerPids.length(); fi < fm; fi++)
+        {
+            typeCounts[fi] = map.GetItems(ffSpawnerPids[fi], spawners);
+            spawnerCount += typeCounts[fi];
+        }
+        uint searchedSpawnerCount = 0;
+
+        array<bool> spawnerValidity(spawnerCount);
+
+        for(uint i = 0; i < spawnerCount; i++)
+        {
+            if(id == -1 || id == spawners[i].Val0)
+            {
+                spawnerValidity[i] = true;
+                searchedSpawnerCount++;
+            }
+            else
+                spawnerValidity[i] = false;
+        }
+
+        list.resize(origLength + searchedSpawnerCount);
+        for(uint i = 0, j = origLength, fi = 0, k = 0; i < spawnerCount; i++)
+        {
+            while(k >= typeCounts[fi])
+            {
+                k = 0;
+                fi++;
+            }
+            if(spawnerValidity[i])
+            {
+                @list[j] = MapForceFieldObject(spawners[i], map, ffFullPids[fi], ffHalvedPids[fi]);
+                j++;
+            }
+            k++;
+        }
+        return searchedSpawnerCount;
+    }
+
+    MapForceFieldObject@ FindSingleForceField(Map& map, int id)
+    {
+        for(uint fi = 0, fm = ffSpawnerPids.length(); fi < fm; fi++)
+        {
+            array<Item@> spawners;
+            uint         spawnerCount = map.GetItems(ffSpawnerPids[fi], spawners);
+
+            for(uint i = 0; i < spawnerCount; i++)
+            {
+                if(id == spawners[i].Val0)
+                {
+                    return MapForceFieldObject(spawners[i], map, ffFullPids[fi], ffHalvedPids[fi]);
+                }
+            }
+
+        }
+        return null;
+    }
+};
+
+CForceFieldSearcher@ ForceFieldSearcher = CForceFieldSearcher();
+
+Item@ GetEmitterOnHex(Map& map, uint16 hexX, uint16 hexY)
+{
+    for(uint i = 0, j = emitterNSPids.length(); i < j; i++)
+    {
+        Item@ emitter = map.GetItem(hexX, hexY, emitterNSPids[i]);
+        if(valid(emitter))
+            return emitter;
+    }
+    for(uint i = 0, j = emitterWEPids.length(); i < j; i++)
+    {
+        Item@ emitter = map.GetItem(hexX, hexY, emitterWEPids[i]);
+        if(valid(emitter))
+            return emitter;
+    }
+    return null;
+}
+
+void ExplodeEmitterOnHex(Map& map, uint16 hexX, uint16 hexY)
+{
+    Item@ emitter = GetEmitterOnHex(map, hexX, hexY);
+    if(!valid(emitter))
+        return;
+
+    Item@ spawner = GetItem(emitter.Val0);
+    if(!valid(spawner))
+        return;
+
+    int type = GetForceFieldTypeBySpawnerPid(spawner.GetProtoId());
+    if(type == -1)
+        return;
+
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, ffFullPids[type], ffHalvedPids[type]);
+    forceField.Explode(emitter);
+}
+
+// init functions
+
+void _InitForceFieldSpawner1(Item& spawner, bool firstTime)
+{
+    InitForceFieldSpawner(spawner, firstTime, FORCEFIELD1_FULL_PID, FORCEFIELD1_HALVED_PID);
+}
+
+void _InitForceFieldSpawner2(Item& spawner, bool firstTime)
+{
+    InitForceFieldSpawner(spawner, firstTime, FORCEFIELD2_FULL_PID, FORCEFIELD2_HALVED_PID);
+}
+
+void _InitHalvedField(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_WALK, "_HalvedFieldWalk");
+}
+
+void _HalvedFieldWalk(Item& trap, Critter& cr, bool entered, uint8 dir)
+{
+    if(entered)
+    {
+        InjureCritter(cr, FORCEFIELD_DAMAGE, DAMAGE_ELECTR, cr.Dir, 0);
+    }
+}
+
+// functions for emmiters
+
+int GetForceFieldTypeBySpawnerPid(uint pid)
+{
+    for(uint i = 0, j = ffSpawnerPids.length(); i < j; i++)
+    {
+        if(ffSpawnerPids[i] == pid)
+            return i;
+    }
+    return -1;
+}
+
+uint GetBrokenEmitterPid(uint workingPid)
+{
+    for(uint i = 0, j = emitterNSPids.length(); i < j; i++)
+    {
+        if(emitterNSPids[i] == workingPid)
+            return emitterNSBrokenPids[i];
+    }
+    for(uint i = 0, j = emitterWEPids.length(); i < j; i++)
+    {
+        if(emitterWEPids[i] == workingPid)
+            return emitterWEBrokenPids[i];
+    }
+    return uint(-1);
+}
+
+uint GetWorkingEmitterPid(uint brokenPid)
+{
+    for(uint i = 0, j = emitterNSBrokenPids.length(); i < j; i++)
+    {
+        if(emitterNSBrokenPids[i] == brokenPid)
+            return emitterNSPids[i];
+    }
+    for(uint i = 0, j = emitterWEBrokenPids.length(); i < j; i++)
+    {
+        if(emitterWEBrokenPids[i] == brokenPid)
+            return emitterWEPids[i];
+    }
+    return uint(-1);
+}
+
+void DisableForceFieldTemporarily(Map@ map, Item& emitter)
+{
+    if(!valid(map))
+        return;
+    Item@ spawner = GetItem(emitter.Val0);
+    if(!valid(spawner))
+        return;
+
+    array<uint> values(3);
+    int type = GetForceFieldTypeBySpawnerPid(spawner.GetProtoId());
+    if(type == -1)
+        return;
+
+    values[0] = type;
+    values[1] = map.Id;
+    values[2] = spawner.Id;
+
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, ffFullPids[type], ffHalvedPids[type]);
+
+    if(forceField.IsOn())
+    {
+        forceField.TurnOff();
+        uint eventId = CreateTimeEvent(__FullSecond + REAL_SECOND(FORCEFIELD_BACKAGAIN_INTERVAL), "e_TurnOnAgain", values, true);
+        forceField.spawner.Val4 = eventId;
+    }
+
+}
+
+void _InitEmitter(Item& item, bool first)
+{
+    item.SetEvent(ITEM_EVENT_SKILL, "_ForceFieldEmitterUse");
+}
+
+bool _ForceFieldEmitterUse(Item& emitter, Critter& player, int skill)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return false;
+    Item@ spawner = GetItem(emitter.Val0);
+    if(!valid(spawner))
+        return false;
+
+    // array<uint>values(3);
+    int type = GetForceFieldTypeBySpawnerPid(spawner.GetProtoId());
+    if(type == -1)
+        return false;
+
+    // values[0]=type;
+    // values[1]=map.Id;
+    // values[2]=spawner.Id;
+
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, ffFullPids[type], ffHalvedPids[type]);
+    return forceField.UseDisruptSkill(player, skill, EMITTER_COMPLEXITY(emitter));
+    /*if(player.IsPlayer() && skill==SK_REPAIR)
+       {
+            if(player.Timeout[TO_SK_REPAIR]>0)
+            {
+                    player.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_SKILL_WEARINESS);
+                    return true;
+            }
+            _SetTimeout(player,TO_SK_REPAIR,REPAIR_TIMEOUT(player));
+
+            int repair=player.Skill[SK_REPAIR];
+            CLAMP(repair,1,95);
+            if(Random(1,100)>repair) return true;
+
+            Map@ map=player.GetMap();
+            DisableForceFieldTemporarily(map, item);
+            return true;
+       }
+       return false;*/
+    // MapForceFieldObject(Item@ spawner, Map@ map, uint fullFieldPid, uint halvedFieldPid)
+}
+
+uint e_TurnOnAgain(array<uint>@ values)
+{
+    uint fullPid = ffFullPids[values[0]];
+    uint halvedPid = ffHalvedPids[values[0]];
+    Map@ map = GetMap(values[1]);
+    if(!valid(map))
+        return 0;
+
+    Item@ spawner = GetItem(values[2]);
+    if(!valid(spawner))
+        return 0;
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, fullPid, halvedPid);
+    forceField.TurnOn();
+    spawner.Val4 = 0;
+    return 0;
+}
+
+
+/********************************************************************************/
+/*********************FORCEFIELD DIALOG FUNCTIONS******************************/
+/******************************************* *************************************/
+// forceField dialog demand functions
+
+bool d_IsForceFieldOn(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    return IsForceFieldOn(map, id);
+}
+
+bool d_IsForceFieldOn(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsForceFieldOn(map, id);
+}
+
+bool d_IsForceFieldOff(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    return IsForceFieldOff(map, id);
+}
+
+bool d_IsForceFieldOff(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsForceFieldOff(map, id);
+}
+
+bool d_IsForceFieldFullIntegrity(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    return IsForceFieldFullIntegrity(map, id);
+}
+
+bool d_IsForceFieldFullIntegrity(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsForceFieldFullIntegrity(map, id);
+}
+
+bool d_IsForceFieldHalvedIntegrity(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    return IsForceFieldHalvedIntegrity(map, id);
+}
+
+bool d_IsForceFieldHalvedIntegrity(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    return IsForceFieldHalvedIntegrity(map, id);
+}
+
+// forceField dialog result functions
+
+void r_ForceFieldToggle(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    ToggleForceField(map, id);
+}
+
+void r_ForceFieldToggle(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleForceField(map, id);
+}
+
+void r_ForceFieldOn(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldOn(map, id);
+}
+
+void r_ForceFieldOn(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldOn(map, id);
+}
+
+void r_ForceFieldOff(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldOff(map, id);
+}
+
+void r_ForceFieldOff(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldOff(map, id);
+}
+
+void r_ForceFieldFullIntegrity(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldFullIntegrity(map, id);
+}
+
+void r_ForceFieldFullIntegrity(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldFullIntegrity(map, id);
+}
+
+void r_ForceFieldHalvedIntegrity(Critter& player, Critter@ npc, int id)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldHalvedIntegrity(map, id);
+}
+
+void r_ForceFieldHalvedIntegrity(Critter& player, Critter@ npc, int id, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldHalvedIntegrity(map, id);
+}
+
+// forceField dialog result all-on-this-map functions
+
+void r_ForceFieldAllToggle(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    ToggleForceField(map, -1);
+}
+
+void r_ForceFieldAllToggle(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    ToggleForceField(map, -1);
+}
+
+void r_ForceFieldAllOn(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldOn(map, -1);
+}
+
+void r_ForceFieldAllOn(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldOn(map, -1);
+}
+
+void r_ForceFieldAllOff(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldOff(map, -1);
+}
+
+void r_ForceFieldAllOff(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldOff(map, -1);
+}
+
+void r_ForceFieldAllFullIntegrity(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldFullIntegrity(map, -1);
+}
+
+void r_ForceFieldAllFullIntegrity(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldFullIntegrity(map, -1);
+}
+
+void r_ForceFieldAllHalvedIntegrity(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    SetForceFieldHalvedIntegrity(map, -1);
+}
+
+void r_ForceFieldAllHalvedIntegrity(Critter& player, Critter@ npc, int mapPid)
+{
+    Location@ loc = GetLocationOf(player);
+    Map @ map;
+    if(valid(loc))
+        @map = loc.GetMap(mapPid);
+    SetForceFieldHalvedIntegrity(map, -1);
+}
+
+//
+// the real work is done down from here
+//
+
+
+void InitForceFieldSpawner(Item& spawner, bool firstTime, uint fullForceFieldPid, uint halvedForceFieldPid)
+{
+    if(!firstTime)
+        return;
+    uint[] values = { spawner.Id, fullForceFieldPid, halvedForceFieldPid };
+    CreateTimeEvent(__FullSecond + REAL_SECOND(1), "e_StartUpForceField", values, true);
+}
+
+uint e_StartUpForceField(array<uint>@ values)     // delayed item initialization
+{
+    Item@ spawner = GetItem(values[0]);
+    if(!valid(spawner) || spawner.MapId == 0)
+        return 0;
+    uint fullForceFieldPid = values[1];
+    uint halvedForceFieldPid = values[2];
+
+    spawner.Val5 = spawner.Val2;
+
+    uint16 hexX, hexY;
+    Map@   map = spawner.GetMapPosition(hexX, hexY);
+    if(!valid(map))
+        return 0;
+
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, fullForceFieldPid, halvedForceFieldPid);
+
+    if(forceField.IsOn() && forceField.IsNotDestroyed())
+    {
+        forceField.ForceOn();
+    }
+    return 0;
+}
+
+void ToggleForceField(Map@ map, int id)
+{
+    if(!valid(map))
+        return;
+
+    array<MapForceFieldObject@> forceFields;
+    for(uint i = 0, j = ForceFieldSearcher.FindForceFieldObjects(forceFields, map, id); i < j; i++)
+    {
+        forceFields[i].Toggle();
+    }
+}
+
+void SetForceFieldOn(Map@ map, int id)
+{
+    if(!valid(map))
+        return;
+
+    array<MapForceFieldObject@> forceFields;
+    for(uint i = 0, j = ForceFieldSearcher.FindForceFieldObjects(forceFields, map, id); i < j; i++)
+    {
+        forceFields[i].TurnOn();
+    }
+}
+
+void SetForceFieldOff(Map@ map, int id)
+{
+    if(!valid(map))
+        return;
+
+    array<MapForceFieldObject@> forceFields;
+    for(uint i = 0, j = ForceFieldSearcher.FindForceFieldObjects(forceFields, map, id); i < j; i++)
+    {
+        forceFields[i].TurnOff();
+    }
+}
+
+void SetForceFieldFullIntegrity(Map@ map, int id)
+{
+    if(!valid(map))
+        return;
+
+    array<MapForceFieldObject@> forceFields;
+    for(uint i = 0, j = ForceFieldSearcher.FindForceFieldObjects(forceFields, map, id); i < j; i++)
+    {
+        forceFields[i].SetFull();
+    }
+}
+
+void SetForceFieldHalvedIntegrity(Map@ map, int id)
+{
+    if(!valid(map))
+        return;
+
+    array<MapForceFieldObject@> forceFields;
+    for(uint i = 0, j = ForceFieldSearcher.FindForceFieldObjects(forceFields, map, id); i < j; i++)
+    {
+        forceFields[i].SetHalved();
+    }
+}
+
+
+bool IsForceFieldOn(Map@ map, int id)
+{
+    if(!valid(map) || id == -1)
+        return false;
+
+    MapForceFieldObject@ forceField = ForceFieldSearcher.FindSingleForceField(map, id);
+    if(valid(forceField))
+        return forceField.IsOn();
+
+    return false;
+}
+
+bool IsForceFieldOff(Map@ map, int id)
+{
+    if(!valid(map) || id == -1)
+        return false;
+
+    MapForceFieldObject@ forceField = ForceFieldSearcher.FindSingleForceField(map, id);
+    if(valid(forceField))
+        return forceField.IsOff();
+
+    return false;
+}
+
+bool IsForceFieldFullIntegrity(Map@ map, int id)
+{
+    if(!valid(map) || id == -1)
+        return false;
+
+    MapForceFieldObject@ forceField = ForceFieldSearcher.FindSingleForceField(map, id);
+    if(valid(forceField))
+        return forceField.IsFull();
+
+    return false;
+}
+
+bool IsForceFieldHalvedIntegrity(Map@ map, int id)
+{
+    if(!valid(map) || id == -1)
+        return false;
+
+    MapForceFieldObject@ forceField = ForceFieldSearcher.FindSingleForceField(map, id);
+    if(valid(forceField))
+        return forceField.IsHalved();
+
+    return false;
+}
+
+
+// class
+
+uint e_Flicker(array<uint>@ values)
+{
+    uint fullPid = ffFullPids[values[0]];
+    uint halvedPid = ffHalvedPids[values[0]];
+    Map@ map = GetMap(values[1]);
+    if(!valid(map))
+        return 0;
+
+    Item@ spawner = GetItem(values[2]);
+    if(!valid(spawner))
+        return 0;
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, fullPid, halvedPid);
+    if(values[4] < __FullSecond)
+    {
+        spawner.Val4 = 0;
+        forceField.Respawn(null);
+        return 0;
+    }
+    else
+        forceField.Flicker(values[3]);
+
+    return REAL_MS(Random(200, 1000));
+}
+
+uint e_Respawn(array<uint>@ values)
+{
+    uint fullPid = ffFullPids[values[0]];
+    uint halvedPid = ffHalvedPids[values[0]];
+    Map@ map = GetMap(values[1]);
+    if(!valid(map))
+        return 0;
+
+    Item@ spawner = GetItem(values[2]);
+    if(!valid(spawner))
+        return 0;
+    MapForceFieldObject@ forceField = MapForceFieldObject(spawner, map, fullPid, halvedPid);
+    spawner.Val4 = 0;
+    if(values[3] != 0)
+    {
+        Item@ emitter = GetItem(values[3]);
+        forceField.Respawn(emitter);
+    }
+    else
+        forceField.Respawn(null);
+    return 0;
+}
+
+class MapForceFieldObject : ITogglableSMO
+{
+    Item@ spawner;
+    Map@  map;
+    uint  fullFieldPid;
+    uint  halvedFieldPid;
+
+    MapForceFieldObject(Item@ spawner, Map@ map, uint fullFieldPid, uint halvedFieldPid)
+    {
+        @this.spawner = spawner;
+        @this.map = map;
+        this.fullFieldPid = fullFieldPid;
+        this.halvedFieldPid = halvedFieldPid;
+    }
+
+    uint GetRespawnInterval()
+    {
+        return spawner.Val3;
+    }
+
+    bool IsOn()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_ON);
+    }
+
+    bool IsOff()
+    {
+        return !FLAG(spawner.Val2, FORCEFIELD_ON);
+    }
+
+    bool IsFlickered()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_FLICKERED);
+    }
+
+    bool IsDisrupted()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_DISRUPTED);
+    }
+
+    bool IsNotDisrupted()
+    {
+        return !FLAG(spawner.Val2, FORCEFIELD_DISRUPTED);
+    }
+
+    bool IsDestroyed()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_DESTROYED);
+    }
+
+    bool IsNotDestroyed()
+    {
+        return !FLAG(spawner.Val2, FORCEFIELD_DESTROYED);
+    }
+
+    bool IsFull()
+    {
+        return !FLAG(spawner.Val2, FORCEFIELD_HALF_INTEGRITY);
+    }
+
+    bool IsHalved()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_HALF_INTEGRITY);
+    }
+
+    bool IsRepairableWhenOff()
+    {
+        return FLAG(spawner.Val2, FORCEFIELD_REPAIRABLE_WHENOFF);
+    }
+
+    void IsRepairableWhenOff(bool repairable)
+    {
+        if(repairable)
+            SETFLAG(spawner.Val2, FORCEFIELD_REPAIRABLE_WHENOFF);
+        else
+            UNSETFLAG(spawner.Val2, FORCEFIELD_REPAIRABLE_WHENOFF);
+    }
+
+    uint GetCurPid()
+    {
+        return(IsHalved() ? halvedFieldPid : fullFieldPid);
+    }
+
+    void Toggle()
+    {
+
+        if(IsOff())
+        {
+            TurnOn();
+            // map.AddItem(spawner.HexX, spawner.HexY, GetCurPid(), 1);
+            // SETFLAG(spawner.Val2, FORCEFIELD_ON);
+        }
+        else
+        {
+            TurnOff();
+            // Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, GetCurPid());
+            // if(valid(forceFieldItem))DeleteItem(forceFieldItem);
+            // UNSETFLAG(spawner.Val2, FORCEFIELD_ON);
+        }
+    }
+
+    void ForceOn()
+    {
+        map.AddItem(spawner.HexX, spawner.HexY, GetCurPid(), 1);
+        SetRespawnEvent(null);
+        SETFLAG(spawner.Val2, FORCEFIELD_ON);
+        DamageCritter();
+    }
+
+    void TurnOn()
+    {
+        if(IsOff())
+        {
+            Undisrupt();
+            if(IsNotDestroyed())
+                ForceOn();
+        }
+    }
+
+    void TurnOff()
+    {
+        if(IsOn())
+        {
+            Undisrupt();
+            if(IsNotDestroyed())
+            {
+                SetRespawnEvent(null);
+                Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, GetCurPid());
+                if(valid(forceFieldItem))
+                    DeleteItem(forceFieldItem);
+            }
+            UNSETFLAG(spawner.Val2, FORCEFIELD_ON);
+
+            // if(spawner.Val4!=0)
+            // {
+            //	EraseTimeEvent(spawner.Val4);
+            //	spawner.Val4=0;
+            // }
+        }
+    }
+
+    bool UseDisruptSkill(Critter& player, int skill, int complexity)
+    {
+        if(skill != SK_SCIENCE && skill != SK_REPAIR)
+            return false;
+        if(IsDestroyed())
+        {
+            player.Say(SAY_NETMSG, "The emitter is beyond repair.");
+            return true;
+        }
+        if((IsOn() && IsFull()) || (IsOff() && IsRepairableWhenOff()))
+        {
+            bool success = true;
+            int  base;
+            if(skill == SK_REPAIR)
+            {
+                if(player.Timeout[TO_SK_REPAIR] > 0)
+                {
+                    player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                    return true;
+                }
+                base = player.Skill[SK_REPAIR];
+                _SetTimeout(player, TO_SK_REPAIR, REPAIR_TIMEOUT(player));
+            }
+            else if(skill == SK_SCIENCE)
+            {
+                if(player.Timeout[TO_SK_SCIENCE] > 0)
+                {
+                    player.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                    return true;
+                }
+                base = player.Skill[SK_SCIENCE];
+                _SetTimeout(player, TO_SK_SCIENCE, SCIENCE_TIMEOUT(player));
+            }
+            base -= complexity;
+            CLAMP(base, 0, 95);
+            success = (Random(1, 100) <= base);
+
+
+            if(IsOff())
+            {
+                if(success)
+                {
+                    TurnOn();
+                    player.Say(SAY_NETMSG, "You managed to turn on the forcefield.");
+                }
+                else
+                    player.Say(SAY_NETMSG, "You failed to turn on the forcefield.");
+            }
+            else if(IsDisrupted())
+            {
+                if(success)
+                {
+                    Undisrupt();
+                    SetRespawnEvent(null);
+                    player.Say(SAY_NETMSG, "You managed to repair the forcefield.");
+                }
+                else
+                    player.Say(SAY_NETMSG, "You failed to repair the forcefield.");
+            }
+            else
+            {
+                if(success)
+                {
+                    Disrupt();
+                    player.Say(SAY_NETMSG, "You managed to disrupt the forcefield.");
+                }
+                else
+                    player.Say(SAY_NETMSG, "You failed to disrupt the forcefield.");
+            }
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+    void Disrupt()
+    {
+        if(IsNotDisrupted())
+        {
+            if(spawner.Val4 != 0)
+            {
+                EraseTimeEvent(spawner.Val4);
+                spawner.Val4 = 0;
+            }
+
+            array<uint> values(5);
+            int type = GetForceFieldTypeBySpawnerPid(spawner.GetProtoId());
+            if(type == -1)
+                return;
+
+            values[0] = type;
+            values[1] = map.Id;
+            values[2] = spawner.Id;
+
+            Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, fullFieldPid);
+            if(!valid(forceFieldItem))
+                return;
+            values[3] = forceFieldItem.Id;
+            uint respawnInterval = GetRespawnInterval();
+            values[4] = __FullSecond + REAL_SECOND((respawnInterval == 0) ? FORCEFIELD_DEFAULT_RESPAWN_INTERVAL : respawnInterval);
+            Flicker(values[3]);
+            spawner.Val4 = CreateTimeEvent(__FullSecond + REAL_MS(Random(200, 1000)), "e_Flicker", values, true);
+            SETFLAG(spawner.Val2, FORCEFIELD_DISRUPTED);
+        }
+    }
+
+    void Undisrupt()
+    {
+        if(IsDisrupted())
+        {
+            if(spawner.Val4 != 0)
+            {
+                EraseTimeEvent(spawner.Val4);
+                spawner.Val4 = 0;
+            }
+
+            if(IsFlickered())
+            {
+                Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, fullFieldPid);
+                forceFieldItem.PicMap = 0;
+                UNSETFLAG(forceFieldItem.Flags, ITEM_NO_BLOCK);
+                SETFLAG(forceFieldItem.Flags, ITEM_LIGHT);
+                forceFieldItem.Update();
+                UNSETFLAG(spawner.Val2, FORCEFIELD_FLICKERED);
+                DamageCritter();
+            }
+            UNSETFLAG(spawner.Val2, FORCEFIELD_DISRUPTED);
+        }
+    }
+
+    void Flicker(uint id)
+    {
+        Item@ forceFieldItem = GetItem(id);
+        if(!valid(forceFieldItem))
+            return;
+        if(IsFlickered())
+        {
+            forceFieldItem.PicMap = 0;
+            UNSETFLAG(forceFieldItem.Flags, ITEM_NO_BLOCK);
+            SETFLAG(forceFieldItem.Flags, ITEM_LIGHT);
+            forceFieldItem.Update();
+            UNSETFLAG(spawner.Val2, FORCEFIELD_FLICKERED);
+            DamageCritter();
+        }
+        else
+        {
+            forceFieldItem.PicMap = blankHash;
+            SETFLAG(forceFieldItem.Flags, ITEM_NO_BLOCK);
+            UNSETFLAG(forceFieldItem.Flags, ITEM_LIGHT);
+            forceFieldItem.Update();
+            SETFLAG(spawner.Val2, FORCEFIELD_FLICKERED);
+        }
+    }
+
+    void DamageCritter()
+    {
+        Critter@ cr = map.GetCritter(spawner.HexX, spawner.HexY);
+        if(valid(cr) && cr.IsLife())
+        {
+            InjureCritter(cr, FORCEFIELD_DAMAGE, DAMAGE_ELECTR, cr.Dir, 0);
+            if(cr.IsLife())
+                cr.MoveRandom();
+        }
+    }
+
+    void Explode(Item& emitter)
+    {
+        if(IsNotDestroyed())
+        {
+            Undisrupt();
+            Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, GetCurPid());
+            if(valid(forceFieldItem))
+                DeleteItem(forceFieldItem);
+
+            SetRespawnEvent(emitter);
+            SETFLAG(spawner.Val2, FORCEFIELD_DESTROYED);
+
+            emitter.ChangeProto(GetBrokenEmitterPid(emitter.GetProtoId()));
+            emitter.Update();
+        }
+    }
+
+    void SetRespawnEvent(Item@ emitter)
+    {
+        if(spawner.Val4 != 0)
+        {
+            EraseTimeEvent(spawner.Val4);
+            spawner.Val4 = 0;
+        }
+
+        uint respawnInterval = GetRespawnInterval();
+        if(respawnInterval != 0)
+        {
+            array<uint> values(4);
+            int type = GetForceFieldTypeBySpawnerPid(spawner.GetProtoId());
+            if(type == -1)
+                return;
+            values[0] = type;
+            values[1] = map.Id;
+            values[2] = spawner.Id;
+            values[3] = ((valid(emitter)) ? emitter.Id : 0);
+            spawner.Val4 = CreateTimeEvent(__FullSecond + REAL_SECOND(respawnInterval), "e_Respawn", values, true);
+        }
+    }
+
+    void Respawn(Item@ emitter)
+    {
+        Undisrupt();
+        if(IsDestroyed() && !FLAG(spawner.Val5, FORCEFIELD_DESTROYED))
+        {
+            if(spawner.Val4 != 0)
+            {
+                EraseTimeEvent(spawner.Val4);
+                spawner.Val4 = 0;
+            }
+
+            if(IsOn())
+                ForceOn();
+
+            if(valid(emitter))
+            {
+                emitter.ChangeProto(GetWorkingEmitterPid(emitter.GetProtoId()));
+                emitter.Update();
+            }
+        }
+        if((IsOn() && !FLAG(spawner.Val5, FORCEFIELD_ON)) || (IsOff() && FLAG(spawner.Val5, FORCEFIELD_ON)))
+        {
+            Toggle();
+        }
+        if(IsFull() && FLAG(spawner.Val5, FORCEFIELD_HALF_INTEGRITY))
+        {
+            SetHalved();
+        }
+        else if(IsHalved() && !FLAG(spawner.Val5, FORCEFIELD_HALF_INTEGRITY))
+        {
+            SetFull();
+        }
+        spawner.Val2 = spawner.Val5;
+
+        if(spawner.Val4 != 0)
+        {
+            EraseTimeEvent(spawner.Val4);
+            spawner.Val4 = 0;
+        }
+    }
+
+    void SetFull()
+    {
+        if(IsHalved())
+        {
+            Undisrupt();
+            if(IsNotDestroyed())
+            {
+                SetRespawnEvent(null);
+
+                if(IsOn())
+                {
+                    Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, halvedFieldPid);
+                    if(valid(forceFieldItem))
+                        DeleteItem(forceFieldItem);
+                    map.AddItem(spawner.HexX, spawner.HexY, fullFieldPid, 1);
+                    DamageCritter();
+                }
+            }
+
+            UNSETFLAG(spawner.Val2, FORCEFIELD_HALF_INTEGRITY);
+        }
+    }
+
+    void SetHalved()
+    {
+        if(IsFull())
+        {
+            Undisrupt();
+            if(IsNotDestroyed())
+            {
+                SetRespawnEvent(null);
+
+                if(IsOn())
+                {
+                    Item@ forceFieldItem = map.GetItem(spawner.HexX, spawner.HexY, fullFieldPid);
+                    if(valid(forceFieldItem))
+                        DeleteItem(forceFieldItem);
+                    map.AddItem(spawner.HexX, spawner.HexY, halvedFieldPid, 1);
+                }
+            }
+
+            SETFLAG(spawner.Val2, FORCEFIELD_HALF_INTEGRITY);
+        }
+    }
+};

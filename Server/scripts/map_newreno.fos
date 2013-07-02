@@ -1,0 +1,151 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_newreno.fos
+//
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "_maps.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+
+#include "elevators_h.fos"
+
+#define  SHARC_DOOR_DIALOG        (774)
+#define  SALVATORE_DOOR_DIALOG    (775)
+#define  DESPERADO_DOOR_DIALOG    (776)
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+    }
+}
+
+// ===============================
+// Casino doors are locked.
+// Using them will teleport the player inside / outside the casino if they aren't in combat mode.
+// ===============================
+void _CasinoDoor(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOnDoor");
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillOnDoor");
+}
+
+bool _UseItemOnDoor(Item& item, Critter& crit, Item@ usedItem)
+{
+    return true;
+}
+
+void r_TransferWeapons(Critter& cr, Critter@ npc, int to)
+{
+    if(to == 0)
+        TransferItemsFromContOnMap(cr, GetMapByPid(MAP_NewReno1, 0), ENTIRE_CASINO_WEAPONS, PID_FOOTLOCKER_CLEAN_LEFT);
+    else
+        TransferItemsToContOnMap(cr, GetMapByPid(MAP_NewReno1, 0), ENTIRE_CASINO_WEAPONS, PID_FOOTLOCKER_CLEAN_LEFT, ITEMTRANSFER_WEAPONS);
+}
+
+bool _UseSkillOnDoor(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        crit.StatBase[ST_VAR9] = item.Val0;
+
+        // ===============================
+        // Sharc Club
+        // ===============================
+        if((item.GetProtoId() == 3491 || item.GetProtoId() == 3492) && crit.Timeout[TO_BATTLE] <= 0)
+        {
+            RunDialog(crit, SHARC_DOOR_DIALOG, item.HexX, item.HexY, false);
+        }
+        // ===============================
+        // Salvatore's Bar
+        // ===============================
+        else if((item.GetProtoId() == 2954) && crit.Timeout[TO_BATTLE] <= 0)
+        {
+            RunDialog(crit, SALVATORE_DOOR_DIALOG, item.HexX, item.HexY, false);
+        }
+        // ===============================
+        // Desperado
+        // ===============================
+        else if((item.GetProtoId() == 3479 || item.GetProtoId() == 3480) && crit.Timeout[TO_BATTLE] <= 0)
+        {
+            RunDialog(crit, DESPERADO_DOOR_DIALOG, item.HexX, item.HexY, false);
+        }
+    }
+    return true;
+}
+
+/*
+   void _CheckDoor(Item& item, Critter& crit, Item@ usedItem)
+   {
+        GameVar@ var = GetLocalVar(LVAR_newr_incasino, crit.Id);
+        //Map@ map = GetMapByPid(mappid, 0);
+
+        crit.Say(SAY_NETMSG, "The heavy wooden door is locked.");
+        return true;
+
+        if (skill == -1)
+        {
+
+                //===============================
+                // Sharc Club
+                //===============================
+                //if((usedItem.GetProtoId() == 3491 || usedItem.GetProtoId() == 3492) && crit.Timeout[TO_BATTLE]<=0)
+                //{
+                        if(var.GetValue() == 0)
+                        {
+                                var == 1;
+                                // teleport inside
+                                crit.Say(SAY_NETMSG, "You enter the Sharc Club.");
+                        }
+                        else
+                        {
+                                var == 0;
+                                // teleport outside
+                                crit.Say(SAY_NETMSG, "You exit the Sharc Club.");
+                        }
+                //}
+                //===============================
+                // Salvatore's Bar
+                //===============================
+                else if((usedItem.GetProtoId() == 2954) && crit.Timeout[TO_BATTLE]<=0)
+                {
+                        if(var.GetValue() == 0)
+                        {
+                                var == 1;
+                                // teleport inside
+                                crit.Say(SAY_NETMSG, "You enter Salvatore's Bar.");
+                        }
+                        else
+                        {
+                                var == 0;
+                                // teleport outside
+                                crit.Say(SAY_NETMSG, "You exit Salvatore's Bar.");
+                        }
+                }
+                //===============================
+                // Desperado
+                //===============================
+                else if((usedItem.GetProtoId() == 3479 || usedItem.GetProtoId() == 3480) && crit.Timeout[TO_BATTLE]<=0)
+                {
+                        if(var.GetValue() == 0)
+                        {
+                                var == 1;
+                                // teleport inside
+                                crit.Say(SAY_NETMSG, "You enter the Desperado.");
+                        }
+                        else
+                        {
+                                var == 0;
+                                // teleport outside
+                                crit.Say(SAY_NETMSG, "You exit the Desperado.");
+                        }
+                }
+        }
+        return true;
+   }
+ */

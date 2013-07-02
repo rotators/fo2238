@@ -1,0 +1,178 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+200 1010 D _script dialog@d_IsBusy 0  #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+7 1040 D _var n name_mem_npc_player = 1 #
+10 1050 D _var p loyality < 0 #
+15 1060 D _param p ST_KARMA < -100 @
+2 2000 None 0 #
+3 2010 #
+3 2020 #
+8 2030 #
+6 2040 #
+0 2050 @
+3 3000 None 0 #
+4 3010 #
+5 3020 #
+6 3030 #
+11 3040 D _var n acquaintance = 0 R _var n acquaintance = 1 #
+80 3050 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+0 3060 @
+4 4000 None 0 #
+7 4010 #
+0 4020 @
+5 5000 None 0 #
+7 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+5 7020 #
+6 7030 #
+11 7040 D _var n acquaintance = 0 R _var n acquaintance = 1 #
+60 7050 #
+80 7060 D _param p PE_PROFESSION_DEMOLITION_EXPERT < 2 #
+0 7070 @
+8 8000 None 0 #
+7 8010 #
+9 8020 R _var p loyality - 10 #
+0 8030 @
+9 9000 None 0 #
+0 9010 @
+10 10000 None 0 @
+11 11000 None 0 #
+65506 11010 #
+12 11020 #
+7 11030 #
+0 11040 @
+12 12000 None 0 #
+65506 12010 #
+7 12020 #
+0 12030 @
+15 13000 None 0 #
+65507 13010 #
+0 13020 @
+50 14000 None 0 #
+51 14010 #
+51 14020 @
+51 15000 None 0 #
+0 15010 @
+80 16000 None 0 #
+81 16010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDemolitionExpert0 1 0 #
+82 16020 D _script dialog@d_CheckDemolitionExpert1 1 0 #
+0 16030 @
+81 17000 None 0 #
+83 17010 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 1 #
+0 17020 @
+82 18000 None 0 #
+83 18010 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_DEMOLITION_EXPERT = 2 #
+0 18020 @
+83 19000 None 0 #
+0 19010 @
+200 20000 None 0 @
+60 21000 None 0 #
+61 21010 D _item p PID_BOTTLE_CAPS > 499 R _script dialog@r_RemoveMoney 1 500 R _item p PID_URANIUM_ORE + 1 #
+61 21020 D _item p PID_BOTTLE_CAPS > 2499 R _script dialog@r_RemoveMoney 1 2500 R _item p PID_URANIUM_ORE + 5 #
+61 21030 D _item p PID_BOTTLE_CAPS > 9999 R _script dialog@r_RemoveMoney 1 10000 R _item p PID_URANIUM_ORE + 20 #
+0 21040 @
+61 22000 None 0 #
+0 22010 &
+
+[engl]
+{100}{}{Zaius}
+{200}{}{You see a tough-looking old mutant.}
+{210}{}{You see Zaius, the mine foreman.}
+{210}{}{On closer examination, you see a tough old mutant with a pickaxe and miner’s helmet.}
+{1000}{}{Predialogue installations}
+{1010}{}{Busy}
+{1020}{}{Idiot}
+{1030}{}{Unknown}
+{1040}{}{Known}
+{1050}{}{Hated}
+{1060}{}{Low karma}
+{2000}{}{You new in town?}
+{2010}{}{That’s right.}
+{2020}{}{Yeah, rolled in a little while back.}
+{2030}{}{No, genius, I’ve been living here all along and you never noticed me.}
+{2040}{}{What can you tell me about this place?}
+{2050}{}{Yeah, gotta run though. Bye.}
+{3000}{}{Right. Well, I’m Zaius. Now that we’re introduced… what can I do for you?}
+{3010}{}{How are things?}
+{3020}{}{You get along all right with the humans?}
+{3030}{}{Can you tell me about the town?}
+{3040}{}{What is this place, anyway?}
+{3050}{}{You're a miner right? Then you must know how to blow things up.}
+{3060}{}{Nothing, I was just leaving.}
+{4000}{}{I’d have to say they’re all right. Still… they could always be better.}
+{4010}{}{Uh, okay, I had some more questions.}
+{4020}{}{Maybe things will look up. See ya.}
+{5000}{}{Well, as the mutants are not only getting old and senile -- the gas keeps them young, or something -- I’d have to say things are pretty good. I mean, we don’t want to kill everyone, and as far as I can tell, the humans don’t think too poorly of us. ‘Course, that’s not including the humans from the other places around here… now those are some bastards.}
+{5010}{}{Interesting. Let me ask you something else.}
+{5020}{}{Gotta go, bye.}
+{6000}{}{Well, the best person to talk to about that would be the Sheriff, over at the bank, or Steve, the greeter for the town.}
+{6010}{}{Heh. Thanks for all the information. Few more thanks I wanna ask, though.}
+{6020}{}{Hmm. All right, thanks.}
+{7000}{}{What can I do you for?}
+{7010}{}{How’re things?}
+{7020}{}{You get along all right with the humans?}
+{7030}{}{Can you tell me about the town?}
+{7040}{}{What is this place, anyway?}
+{7050}{}{Can I buy some Uranium Ore from you?}
+{7060}{}{You must be one of the experts when it comes to blowing things up.}
+{7070}{}{Nothing for me, see you around.}
+{8000}{}{Ha. Ha. Funny. Nothing better than having a smartass around.}
+{8010}{}{I had a couple questions.}
+{8020}{}{The main problem here is that you’re an idiot.}
+{8030}{}{Right. Bye Zaius.}
+{9000}{}{The main problem is that I’m an idiot. I’m repeating this because I don’t believe that your asshole just spouted something that sounded like words. Get out of my sight, maggot.}
+{9010}{}{Fuck you, then.}
+{10000}{}{Get out of here, pissant.}
+{11000}{}{This place is the Mining Foreman's Office, I manage the activities of our mine from here. Also, this is the only known place where one can buy Uranium ore. If there is another one, we never heard of it.}
+{11010}{}{Great, I'd like to buy some Uranium ore.}
+{11020}{}{Sounds like an important place.}
+{11030}{}{Right. One more question, please.}
+{11040}{}{That's all for now, bye!}
+{12000}{}{If it wasn't for that mine out there, there would be no Broken Hills now. Or ever. It keeps the town alive, not sure for how long though.}
+{12010}{}{I see. Let's trade now.}
+{12020}{}{Right. One more question, please.}
+{12030}{}{That's all for now, bye!}
+{13000}{}{We've heard about you and your kind, and we don't want nothing to do with it. You best get your ass out of here.}
+{13010}{}{Oh yeah? Maybe I should free the world from your pathetic existence instead.}
+{13020}{}{Fine.}
+{14000}{}{You new in town?}
+{14010}{}{Eek, oog og!}
+{14020}{}{New! Me! Town!}
+{15000}{}{Can’t understand you, pal. Why not head on down to the saloon? Hell, maybe Francis will
+ arm-wrestle with you.}
+{15010}{}{Wessle? O-KAY!}
+{16000}{}{Well, it's not quite as simple as all that. Those methods are quite rare these days. But yes, I can still "blow things up". What were you interested in?}
+{16010}{}{Zaius, I want to know how to make a bigger explosion whilst using less explosives.}
+{16020}{}{Just wanted to know how to make some fancy exploding thingies... [You explain everything to Zaius]}
+{16030}{}{Ahm... I'm not quite sure. Maybe I should be back later when I get ready for this.}
+{17000}{}{That will be no problem, but I need something in return. You see, my miners are a pretty hungry bunch of fellas. How about you bring me $1500 so we can stock up on brahmin meat rations? You bring me that and then we can talk explosives, okay?}
+{17010}{}{It's already taken care of, here you go. [You give him the $1500]}
+{17020}{}{Got it. I'll be on my way then.}
+{18000}{}{That can be arranged, I guess... But, you see, my miners really like to have a party after they finish their shift. I think $3000 should be enough to manage a small budget for these kinds of things -- how about you bring me the caps and I show you some tricks right away?}
+{18010}{}{They go as they come... Here you go. [You give him $3000]}
+{18020}{}{Got it. I'll be on my way then.}
+{19000}{}{Ah, nice! Let me just put this over there -- okay, you have earned your lesson, now listen carefully... [Zaius explains to you everything you wanted to know]}
+{19010}{}{You really helped me a lot, thanks for that. I have to go now, bye!}
+{20000}{}{Can't you see I'm busy ?}
+{21000}{}{Sure, thats what we do. They are $500 each, if you're interested.}
+{21010}{}{I'll take a chunk then. [Give him $500]}
+{21020}{}{Count me in for 5 chunks.}
+{21030}{}{I'll need some more than usually. Give me 20 chunks.}
+{21040}{}{Ah, too much for me sorry, I'll come back later.}
+{22000}{}{Here's your Ore. Come back if you need any more.}
+{22010}{}{Yeah, sure.}
+

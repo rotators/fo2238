@@ -1,0 +1,157 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// rq_cave.fos
+//
+
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+#include "_math.fos"
+#include "reputations_h.fos"
+#include "backend_h.fos"
+
+#define CAVE_STATUS_NONE         (0)
+#define CAVE_STATUS_BRIEFED      (1)
+#define CAVE_STATUS_ONGOING      (2)
+#define CAVE_STATUS_COMPLETED    (3)
+
+uint[] CaveLocations =
+{
+    LOCATION_CavernEncounter0,
+    LOCATION_CavernEncounter1,
+    LOCATION_CavernEncounter2,
+    LOCATION_CavernEncounter3,
+    LOCATION_CavernEncounter4,
+    LOCATION_CavernEncounter5,
+    LOCATION_CavernEncounter6
+};
+
+uint[] find_pids = { PID_FUZZY_PAINTING, PID_MOTOR, PID_TAPE_RECORDER, PID_URN };
+uint[] find_nodes = { 100, 200, 300, 400 };
+
+int[] reward_bags = { 80, 90, 100, 110, 430, 431, 432 };
+
+bool d_None(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) == CAVE_STATUS_NONE);
+}
+
+bool d_CanAsk(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) > 0);
+}
+
+bool d_Briefed(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) == CAVE_STATUS_BRIEFED);
+}
+
+bool d_OnGoing(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) == CAVE_STATUS_ONGOING);
+}
+
+bool d_Completed(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) == CAVE_STATUS_COMPLETED);
+}
+
+bool d_NotCompleted(Critter& player, Critter@ npc)
+{
+    return(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) != CAVE_STATUS_COMPLETED);
+}
+
+bool d_HasStuff(Critter& player, Critter@ npc)
+{
+    if(GetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id) != CAVE_STATUS_ONGOING)
+        return false;
+
+    uint  pid = GetUvar(UVAR_q_rq_cave_pid, npc.Id, player.Id);
+    Item@ item = player.GetItem(pid, -1);
+    if(!valid(item))
+        return false;
+    return(uint(item.Val1) == player.Id);
+}
+
+void r_ReceiveReward(Critter& player, Critter@ npc)
+{
+    player.AddItem(PID_BOTTLE_CAPS, Random(200, 500));
+    GiveBag(random_from_array(reward_bags), player);
+}
+
+void r_CompleteQuest(Critter& player, Critter@ npc)
+{
+    SetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id, CAVE_STATUS_COMPLETED);
+    uint pid = GetUvar(UVAR_q_rq_cave_pid, npc.Id, player.Id);
+    player.DeleteItem(pid, 1);
+    player.StatBase[ST_EXPERIENCE] += 500;
+    LogQuestExperience(player, 500, "rq_cave");
+
+    AddReputation(player, ReputationIndex(player.GetMap().GetLocation().GetProtoId()), 75, REP_CAVE_QUEST_CAP);
+
+    Location@ loc = GetLocation(GetUvar(UVAR_q_rq_cave_loc, npc.Id, player.Id));
+    if(valid(loc))
+    {
+        DLog("Location deleted");
+        DeleteLocation(loc.Id);
+    }
+    else
+        DLog("Location already deleted");
+}
+
+void r_AcceptQuest(Critter& player, Critter@ npc)
+{
+    SetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id, CAVE_STATUS_ONGOING);
+
+    uint locid = SpawnLoc(player, npc);
+    SetUvar(UVAR_q_rq_cave_loc, npc.Id, player.Id, locid);
+
+    Location@ loc = GetLocation(locid);
+
+    Map@      map = loc.GetMapByIndex(1);
+    if(!valid(map))
+    {
+        Log("ERR: Can't find cave map of quest location");
+        return;
+    }
+    map.SetData(MAP_DATA_CAVE_RQ_PID, GetUvar(UVAR_q_rq_cave_pid, npc.Id, player.Id));
+    map.SetData(MAP_DATA_CAVE_RQ_PLAYER, player.Id);
+}
+
+uint r_ShowQuest(Critter& player, Critter@ npc)
+{
+    return GetUvar(UVAR_q_rq_cave_node, npc.Id, player.Id);
+}
+
+// Generate and show quest
+uint r_GenerateQuest(Critter& player, Critter@ npc)
+{
+    uint pid = 0;
+    uint node = 0;
+
+    node = Random(0, find_nodes.length() - 1);
+    pid = find_pids[node];
+    int force = find_nodes[node];
+
+    SetUvar(UVAR_q_rq_cave_status, npc.Id, player.Id, CAVE_STATUS_BRIEFED);
+    SetUvar(UVAR_q_rq_cave_pid, npc.Id, player.Id, pid);
+    SetUvar(UVAR_q_rq_cave_node, npc.Id, player.Id, node);
+    return force;
+}
+
+uint SpawnLoc(Critter@ player, Critter& npc)
+{
+    double dist = double(Random(50, 120));
+    uint   x = npc.WorldX + int(dist * sin(double(Random(0, 359)) * DEG2RAD));
+    uint   y = npc.WorldY + int(dist * cos(double(Random(0, 359)) * DEG2RAD));
+
+    Critter@[] crits = { player };
+    int loc = CreateLocation(random_from_array(CaveLocations), x, y, crits);
+    if(player.Mode[MODE_DEFAULT_COMBAT] == COMBAT_MODE_TURN_BASED)
+        SetTurnBasedAvailability(GetLocation(loc));
+
+    // update the quest data
+    return loc;
+}

@@ -1,0 +1,173 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapdata_h.fos
+//
+
+#ifndef __MAPDATA__
+#define __MAPDATA__
+
+// include this in any script using Map::GetData or Map::SetData
+// data number 0-19 is reserved for global use (faction owning the map etc.)
+
+// globals
+#define MAP_DATA_FACTION                        (0)  // faction owning the map
+#define MAP_DATA_CREATED_ON                     (1)  // for dynamically spawned maps
+#define MAP_DATA_BANK                           (2)  // bank id
+#define MAP_DATA_TOWN                           (3)  // for the TG feature
+#define MAP_DATA_OWNER                          (5)  // id of player 'owning' map (instance)
+#define MAP_DATA_LAST_ENTERED                   (6)  // timestap of last player enter
+#define MAP_DATA_ALERT_INDEX                    (7)
+#define MAP_DATA_ACTIVE_COUNTDOWN               (8)  // 1 = true, 0 = false
+#define MAP_DATA_SPAWNER                        (9)  // GM who created map
+#define MAP_DATA_MAP_MODES                      (10) // Spectation mode and so on
+#define MAP_DATA_LOCATION_WEALTH                (11) // Wealth of all items on all maps in the location; stored in map index 0
+#define MAP_DATA_MOB_WAVE                       (12) // Id of event periodically spawning mobs in the location
+
+#define _MapHasMode                             # (map, mode)((map.GetData(MAP_DATA_MAP_MODES) & (mode)) != 0)
+#define _MapSetMode                             # (map, mode)map.SetData(MAP_DATA_MAP_MODES, map.GetData(MAP_DATA_MAP_MODES) | (mode))
+#define _MapUnsetMode                           # (map, mode)map.SetData(MAP_DATA_MAP_MODES, map.GetData(MAP_DATA_MAP_MODES) & (~(mode)))
+
+#define MAP_MODE_EVENT                          (0x00000001) // Map is used in event.
+#define MAP_MODE_SPECTATE_FREELY                (0x00000002) // Any player can choose to enable/disable spectation on this map. Mode is turned off on map exit.
+#define MAP_MODE_SPECTATE_ENTER                 (0x00000004) // Every player is turned into a spectator when entering map. Mode is turned off on map exit.
+#define MAP_MODE_REPLICATION                    (0x00000008) // Critter replicates on map if died here.
+#define MAP_MODE_TBRT_ITEMS                     (0x00000010) // Turn based/Real time items found on the map
+#define MAP_MODE_NO_PVP                         (0x00000020) // No violence
+#define MAP_MODE_NO_DISMANTLING                 (0x00000040) // No littering
+#define MAP_MODE_NO_GRIDS                       (0x00000080) // Useless exit grids
+
+// tent
+#define MAP_DATA_TENT_OWNER                     (20)
+
+// caves
+#define MAP_DATA_CAVE_INIT                      (20)
+#define MAP_DATA_CAVE_RQ_PID                    (21)
+#define MAP_DATA_CAVE_RQ_PLAYER                 (22)
+
+// slaveruns
+#define MAP_DATA_SLAVERUN_INIT                  (20)
+#define MAP_DATA_SLAVERUN_PLAYER                (21)
+#define MAP_DATA_SLAVERUN_COMBAT                (22)
+
+// skum pitt state
+#define MAP_DATA_SKUMPITT                       (20)
+
+// redding guttersnipes leader chosen
+#define MAP_DATA_LEADER                         (20)
+
+// base building site
+#define MAP_DATA_SITE_BASETYPE                  (20)
+
+// ==============================================
+//	QUEST LOCATIONS
+// ==============================================
+// raiders farmhome quest
+#define MAP_DATA_WELL                           (20)
+#define MAP_DATA_PEN                            (21)
+#define MAP_DATA_SHED                           (22)
+#define MAP_DATA_KILL                           (23)
+#define MAP_DATA_FREE                           (24)
+#define MAP_DATA_FOOD                           (25)
+#define MAP_DATA_GUY                            (26)
+#define MAP_DATA_GUYTALKED                      (27)
+
+// railgang quest
+#define MAP_DATA_RAILGANG_OWNER                 (20)
+#define MAP_DATA_RAILGANG_THUGS                 (21)
+
+// rail raider encounter
+#define MAP_DATA_RAILRAIDER_OWNER               (20)
+#define MAP_DATA_RAILRAIDER_THUGS               (21)
+
+// la warehouse quest
+#define MAP_DATA_WAREHOUSE_OWNER                (20)
+#define MAP_DATA_WAREHOUSE_PUNKS                (21)
+
+// cathedral basement quest
+#define MAP_DATA_CATH_BASEMENT_OWNER            (20)
+#define MAP_DATA_CATH_BASEMENT_PLANTS           (21)
+
+// ant lair quest
+// #define MAP_DATA_ANTLAIR_OWNER		(20)
+#define MAP_DATA_ANTLAIR_ANTS                   (21)
+#define MAP_DATA_ANTLAIR_ALIVE                  (22)
+
+// Caesars Legion train quest
+#define MAP_DATA_TRAIN_CAMP_OWNER               (20)
+
+// tanker quest
+#define MAP_DATA_VALVES                         (20)
+#define MAP_DATA_HANDYS                         (21)
+#define MAP_DATA_STRANDEDTANKER_OWNER           (22)
+
+// bos bunker quest
+#define MAP_DATA_FORCEFIELD                     (20)
+#define MAP_DATA_ROPE                           (21)
+
+// Gun Runners Caravan quest
+#define MAP_DATA_GUNRUNNER_CARAVAN_OWNER        (20)
+
+// Frisco Replication map quest
+#define MAP_DATA_FRISCO_SUBWAY_OWNER            (20)
+#define MAP_DATA_FRISCO_SUBWAY_SCORPIONS        (21)
+
+// NCR Westin Ranch Quest 1
+#define MAP_DATA_NCR_BRAHMIN_WILLOW_OWNER       (20)
+#define MAP_DATA_NCR_BRAHMIN_WILLOW_CHILDREN    (21)
+
+// Junktown Scorpion Quest - Sneakeater Perk
+#define MAP_DATA_JT_SNEAKEATER_OWNER            (20)
+
+// Ruined Military Base Quest
+#define MAP_DATA_Q_MB_OWNER                     (20)
+#define MAP_DATA_Q_MB_ENC_SPAWNED               (21)
+
+// prospects - yes, I know they will probably never get in
+#define MAP_DATA_SELLER                         (20)
+
+// domination, this is in 'local' category because outposts maps are unique
+#define MAP_DATA_OUTPOST_INDEX                  (20)
+
+// glow, time for elevator work
+#define MAP_DATA_ELEVATOR_TIME                  (20)
+
+// talchem
+#define MAP_LAST_DOOR_GROUP                     (22)
+
+// sha-enin encounter
+#define MAP_DATA_SHA_ENIN_OWNER                 (20)
+#define MAP_DATA_SHA_ENIN_BANDITS_COUNT         (21)
+
+
+/**
+ * Retrieves map data for root-map of the location the given map is in.
+ */
+int GetRootMapData(Map& map, uint index)
+{
+    return map.GetLocation().GetMapByIndex(0).GetData(index);
+}
+/**
+ * Stores map data for root-map within location of given map.
+ */
+void SetRootMapData(Map& map, uint index, int val)
+{
+    map.GetLocation().GetMapByIndex(0).SetData(index, val);
+}
+
+/**
+ * Retrieves map data for root-map of the location.
+ */
+int GetRootMapData(Location& loc, uint index)
+{
+    return loc.GetMapByIndex(0).GetData(index);
+}
+/**
+ * Stores map data for root-map within the location.
+ */
+void SetRootMapData(Location& loc, uint index, int val)
+{
+    loc.GetMapByIndex(0).SetData(index, val);
+}
+#endif __MAPDATA__

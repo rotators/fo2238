@@ -1,0 +1,70 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// strtoint.fos
+//
+
+// mapper, client and server script
+bool StrToInt(string@ s, uint64& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, uint& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, uint16& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, uint8& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, int64& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, int16& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}
+
+bool StrToInt(string@ s, int8& inout val)
+{
+    int temp = 0;
+    if(!StrToInt(s, temp))
+        return false;
+    val = temp;
+    return true;
+}

@@ -1,0 +1,1873 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// perks_data.fos
+//
+
+// This file has been generated with the Perk Editor. All manual changes will be lost.
+
+int[][] PerksData =
+{
+    { 300, 2, 1 }, // Bookworm, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 301, 1, 1 }, // Awareness, Support, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 302, 0, 1 }, // Bonus HtH Attacks, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 18, // Level at least 18
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 303, 0, 1 }, // Bonus HtH Damage, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        10, 1, 7,  // Melee Damage increased by 7
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 304, 0, 1 }, // Bonus Move, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        5, 1, 6,   // Agility at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        87, 1, 2,  //  increased by 2
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 305, 0, 2 }, // Bonus Ranged Damage, Levelling, 2 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+    },
+    {              // level 2 requirements
+        77, 1, 12, // Level at least 12
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 306, 0, 1 }, // Bonus Rate of Fire, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 18, // Level at least 18
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 307, 0, 1 }, // Earlier Sequence, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        1, 1, 5,   // Perception at least 5
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        12, 1, 2,  // Sequence increased by 2
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 308, 1, 1 },  // Faster Healing, Support, 1 ranks
+    {               // level 1 requirements
+        4, 1, 6,    // Intelligence at least 6
+        207, 1, 75, // Doctor at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+        13, 1, 5,   // Healing Rate increased by 5
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 309, 0, 1 }, // More Critical, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        14, 1, 5,  // Critical Chance increased by 5
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 310, 2, 1 }, // Night Vision, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 311, 2, 1 }, // Presence, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 312, 1, 1 },   // Rad Resistance, Support, 1 ranks
+    {                // level 1 requirements
+        4, 1, 7,     // Intelligence at least 7
+        207, 1, 100, // Doctor at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+        31, 1, 20,   // Poison Resistance increased by 20
+        30, 1, 30,   // Radiation Resistance increased by 30
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 313, 0, 1 }, // Toughness, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+        2, 1, 4,   // Endurance at least 4
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        16, 1, 2,  // Damage Threshold increased by 2
+        23, 1, 5,  // Damage Resistance increased by 5
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 314, 0, 1 },    // Strong Back, Levelling, 1 ranks
+    {                 // level 1 requirements
+        77, 1, 6,     // Level at least 6
+        2, 1, 6,      // Endurance at least 6
+    },
+    #ifdef __SERVER
+    {                 // level 1 perk up effects
+        11, 1, 22650, // Carry Weight increased by 22650
+    },
+    {                 // level 1 perk down effects
+        -1            // Just revert
+    },
+    #endif
+
+    { 315, 0, 1 }, // Sharpshooter, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 316, 0, 1 },   // Silent Running, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 6,    // Level at least 6
+        208, 1, 100, // Sneak at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 317, 2, 1 },   // Survivalist, Disabled, 1 ranks
+    {                // level 1 requirements
+        217, 1, 125, // Outdoorsman at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 318, 2, 1 }, // Master Trader, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 319, 1, 1 },   // Educated, Support, 1 ranks
+    {                // level 1 requirements
+        4, 1, 8,     // Intelligence at least 8
+        212, 1, 100, // Science at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 320, 0, 1 },  // Healer, Levelling, 1 ranks
+    {               // level 1 requirements
+        77, 1, 3,   // Level at least 3
+        206, 1, 75, // First aid at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 321, 2, 1 }, // Fortune Finder, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 322, 0, 1 }, // Better Critical, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 323, 2, 1 }, // Empathy, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 324, 2, 1 }, // Slayer, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 325, 2, 1 }, // Sniper, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 326, 0, 1 },   // Silent Death, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 15,   // Level at least 15
+        208, 1, 175, // Sneak at least 175
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 327, 0, 2 }, // Action Boy, Levelling, 2 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        5, 1, 6,   // Agility at least 6
+    },
+    {              // level 2 requirements
+        77, 1, 15, // Level at least 15
+        5, 1, 6,   // Agility at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        8, 1, 1,   // Maximum Action Points increased by 1
+    },
+    {              // level 2 perk up effects
+        8, 1, 1,   // Maximum Action Points increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 328, 2, 1 }, // Mental Block, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 329, 0, 3 }, // Lifegiver, Levelling, 3 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        2, 1, 5,   // Endurance at least 5
+    },
+    {              // level 2 requirements
+        77, 1, 15, // Level at least 15
+        2, 1, 6,   // Endurance at least 6
+    },
+    {              // level 3 requirements
+        77, 1, 18, // Level at least 18
+        2, 1, 7,   // Endurance at least 7
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        7, 1, 20,  // Maximum Hit Points increased by 20
+    },
+    {              // level 2 perk up effects
+        7, 1, 30,  // Maximum Hit Points increased by 30
+    },
+    {              // level 3 perk up effects
+        7, 1, 40,  // Maximum Hit Points increased by 40
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 330, 0, 1 }, // Dodger, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        5, 1, 8,   // Agility at least 8
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        9, 1, 20,  // Armor Class increased by 20
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 331, 1, 1 },  // Snakeater, Support, 1 ranks
+    {               // level 1 requirements
+        2, 1, 6,    // Endurance at least 6
+        217, 1, 75, // Outdoorsman at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+        31, 1, 30,  // Poison Resistance increased by 30
+        30, 1, 20,  // Radiation Resistance increased by 20
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 332, 1, 1 },   // Mr. Fixit, Support, 1 ranks
+    {                // level 1 requirements
+        213, 1, 150, // Repair at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 333, 0, 1 },   // Medic, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 15,   // Level at least 15
+        206, 1, 175, // First aid at least 175
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 334, 1, 1 },   // Master Thief, Support, 1 ranks
+    {                // level 1 requirements
+        210, 1, 150, // Steal at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 335, 1, 1 },   // Speaker, Support, 1 ranks
+    {                // level 1 requirements
+        214, 1, 125, // Speech at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 336, 0, 1 },   // Heave Ho!, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 6,    // Level at least 6
+        205, 1, 100, // Throwing at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 337, 2, 1 }, // Friendly Foe, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 338, 1, 1 },   // Pickpocket, Support, 1 ranks
+    {                // level 1 requirements
+        210, 1, 175, // Steal at least 175
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 339, 0, 1 },   // Ghost, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 12,   // Level at least 12
+        208, 1, 150, // Sneak at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 340, 2, 1 }, // Cult of Personality, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 341, 2, 1 }, // Scrounger, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 342, 1, 1 },   // Explorer, Support, 1 ranks
+    {                // level 1 requirements
+        217, 1, 150, // Outdoorsman at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 343, 2, 1 }, // Flower Child, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 344, 1, 1 },   // Pathfinder, Support, 1 ranks
+    {                // level 1 requirements
+        217, 1, 175, // Outdoorsman at least 175
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 345, 2, 1 }, // Animal Friend, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 346, 1, 1 },   // Scout, Support, 1 ranks
+    {                // level 1 requirements
+        217, 1, 150, // Outdoorsman at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 347, 2, 1 }, // Mysterious Stranger, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 348, 1, 1 },   // Ranger, Support, 1 ranks
+    {                // level 1 requirements
+        217, 1, 100, // Outdoorsman at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 349, 0, 1 }, // Quick Pockets, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        5, 1, 5,   // Agility at least 5
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 350, 2, 1 }, // Smooth Talker, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 351, 1, 1 },  // Swift Learner, Support, 1 ranks
+    {               // level 1 requirements
+        4, 1, 6,    // Intelligence at least 6
+        212, 1, 50, // Science at least 50
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 352, 2, 1 }, // Tag!, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 353, 2, 1 }, // Mutate!, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 354, 1, 3 }, // Profession: Armorer, Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 355, 1, 3 }, // Profession: Gunsmith (Small Guns), Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 356, 1, 3 }, // Profession: Gunsmith (Big Guns), Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 357, 1, 3 }, // Profession: Energy Expert, Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 358, 1, 3 }, // Profession: Demolition Expert, Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 359, 1, 3 }, // Profession: Doctor, Support, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 360, 2, 3 }, // Profession: Mordino's Druggist, Disabled, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 361, 2, 3 }, // Profession: Thief, Disabled, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 362, 2, 3 }, // Profession: Librarian, Disabled, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 363, 2, 3 }, // Profession: Scout, Disabled, 3 ranks
+    {              // level 1 requirements
+    },
+    {              // level 2 requirements
+    },
+    {              // level 3 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 2 perk up effects
+    },
+    {              // level 3 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    {              // level 2 perk down effects
+        -1         // Just revert
+    },
+    {              // level 3 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 380, 0, 1 }, // Adrenaline Rush, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        0, 1, 5,   // Strength at least 5
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 381, 1, 1 },   // Cautious Nature, Support, 1 ranks
+    {                // level 1 requirements
+        1, 1, 6,     // Perception at least 6
+        217, 1, 100, // Outdoorsman at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 382, 2, 1 }, // Comprehension, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 383, 1, 1 },   // Demolition Expert, Support, 1 ranks
+    {                // level 1 requirements
+        211, 1, 125, // Traps at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 384, 2, 1 }, // Gambler, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 385, 0, 1 }, // Gain Strength, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        0, 0, 9,   // Strength at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        0, 1, 1,   // Strength increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 386, 0, 1 }, // Gain Perception, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        1, 0, 9,   // Perception at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        1, 1, 1,   // Perception increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 387, 0, 1 }, // Gain Endurance, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        2, 0, 9,   // Endurance at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        2, 1, 1,   // Endurance increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 388, 0, 1 }, // Gain Charisma, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        3, 0, 9,   // Charisma at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        3, 1, 1,   // Charisma increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 389, 0, 1 }, // Gain Intelligence, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        4, 0, 9,   // Intelligence at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        4, 1, 1,   // Intelligence increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 390, 0, 1 }, // Gain Agility, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        5, 0, 9,   // Agility at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        5, 1, 1,   // Agility increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 391, 0, 1 }, // Gain Luck, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        6, 0, 9,   // Luck at most 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        6, 1, 1,   // Luck increased by 1
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 392, 1, 1 },   // Harmless, Support, 1 ranks
+    {                // level 1 requirements
+        3, 1, 6,     // Charisma at least 6
+        210, 1, 125, // Steal at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 393, 2, 1 }, // Here and Now, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 394, 0, 1 }, // HtH Evade, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 395, 2, 1 }, // Kama Sutra Master, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 396, 2, 1 }, // Karma Beacon, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 397, 1, 1 },  // Light Step, Support, 1 ranks
+    {               // level 1 requirements
+        211, 1, 50, // Traps at least 50
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 398, 0, 1 },   // Living Anatomy, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 12,   // Level at least 12
+        206, 1, 150, // First aid at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 399, 1, 1 },   // Magnetic Personality, Support, 1 ranks
+    {                // level 1 requirements
+        214, 1, 100, // Speech at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 400, 1, 1 },   // Negotiator, Support, 1 ranks
+    {                // level 1 requirements
+        215, 1, 150, // Barter at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 401, 0, 1 }, // Pack Rat, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        4, 1, 6,   // Intelligence at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 402, 0, 2 },   // Pyromaniac, Levelling, 2 ranks
+    {                // level 1 requirements
+        77, 1, 9,    // Level at least 9
+        201, 1, 100, // Big Guns at least 100
+    },
+    {                // level 2 requirements
+        77, 1, 15,   // Level at least 15
+        201, 1, 150, // Big Guns at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 2 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    {                // level 2 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 403, 0, 1 }, // Quick Recovery, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        5, 1, 6,   // Agility at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 404, 2, 1 },  // Salesman, Disabled, 1 ranks
+    {               // level 1 requirements
+        215, 1, 75, // Barter at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 405, 0, 1 }, // Stonewall, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+        0, 1, 6,   // Strength at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 406, 1, 1 },   // Thief, Support, 1 ranks
+    {                // level 1 requirements
+        210, 1, 100, // Steal at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 407, 0, 1 }, // Weapon Handling, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 408, 2, 1 }, // Vault City Training, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 417, 2, 1 }, // Expert Excrement Expeditor, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 419, 2, 1 }, // Jinxed, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 420, 2, 1 }, // Terminator, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 421, 0, 1 }, // Tree Trunk Thighs, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+        2, 1, 6,   // Endurance at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 422, 0, 1 }, // Iron Grip, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+        0, 1, 8,   // Strength at least 8
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 423, 0, 1 }, // Man of Steel, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 15, // Level at least 15
+        2, 1, 8,   // Endurance at least 8
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 424, 0, 1 }, // Even More Criticals, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        14, 1, 10, // Critical Chance increased by 10
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 425, 0, 1 }, // Right Between the Eyes, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 15, // Level at least 15
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 426, 0, 1 }, // Fast Reload, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 427, 0, 1 }, // Spray and Pray, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 428, 0, 1 }, // More Ranged Damage, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 15, // Level at least 15
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 429, 0, 1 }, // Livewire, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 3,  // Level at least 3
+        5, 1, 6,   // Agility at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 430, 1, 1 },  // Gecko Skinning, Support, 1 ranks
+    {               // level 1 requirements
+        217, 1, 50, // Outdoorsman at least 50
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 431, 2, 1 }, // Vault City Inoculations, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 432, 2, 1 }, // Dermal Impact Armor, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 433, 2, 1 }, // Dermal Impact Asslt. Enhance., Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 434, 2, 1 }, // Phoenix Armor Implants, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 435, 2, 1 }, // Phoenix Assault Enhancement, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 436, 0, 1 }, // HtH Evade+, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 437, 0, 1 }, // Dodger+, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 15, // Level at least 15
+        5, 1, 10,  // Agility at least 10
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        9, 1, 40,  // Armor Class increased by 40
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 438, 0, 1 }, // Even Tougher, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+        2, 1, 6,   // Endurance at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+        16, 1, 3,  // Damage Threshold increased by 3
+        23, 1, 10, // Damage Resistance increased by 10
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 439, 0, 1 },   // Healer+, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 6,    // Level at least 6
+        206, 1, 100, // First aid at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 440, 0, 1 },   // Blessed are the Weak, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 9,    // Level at least 9
+        206, 1, 125, // First aid at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 441, 2, 1 },  // Night Person, Disabled, 1 ranks
+    {               // level 1 requirements
+        77, 1, 3,   // Level at least 3
+        208, 1, 75, // Sneak at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 442, 2, 1 },   // Melt Into Shadow, Disabled, 1 ranks
+    {                // level 1 requirements
+        77, 1, 9,    // Level at least 9
+        208, 1, 125, // Sneak at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 443, 0, 1 }, // Bonus HtH Damage+, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 6,  // Level at least 6
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 444, 0, 1 }, // In Your Face!, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 9,  // Level at least 9
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 445, 0, 1 }, // Hit the Gaps, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 12, // Level at least 12
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 446, 0, 1 }, // HtH Criticals, Levelling, 1 ranks
+    {              // level 1 requirements
+        77, 1, 15, // Level at least 15
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 447, 0, 1 },   // Heave Ho!!, Levelling, 1 ranks
+    {                // level 1 requirements
+        77, 1, 9,    // Level at least 9
+        205, 1, 150, // Throwing at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 448, 2, 1 },   // Junk Merchant, Disabled, 1 ranks
+    {                // level 1 requirements
+        215, 1, 100, // Barter at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 449, 2, 1 },   // Bulk Trader, Disabled, 1 ranks
+    {                // level 1 requirements
+        215, 1, 125, // Barter at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 450, 1, 1 },  // Sex Appeal, Support, 1 ranks
+    {               // level 1 requirements
+        214, 1, 75, // Speech at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 451, 2, 1 },   // Born Leader, Disabled, 1 ranks
+    {                // level 1 requirements
+        214, 1, 150, // Speech at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 452, 2, 1 }, // Trapper, Disabled, 1 ranks
+    {              // level 1 requirements
+    },
+    #ifdef __SERVER
+    {              // level 1 perk up effects
+    },
+    {              // level 1 perk down effects
+        -1         // Just revert
+    },
+    #endif
+
+    { 453, 2, 1 },   // Hand Loader, Disabled, 1 ranks
+    {                // level 1 requirements
+        213, 1, 125, // Repair at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 454, 1, 1 },   // Stealth Girl, Support, 1 ranks
+    {                // level 1 requirements
+        208, 1, 100, // Sneak at least 100
+        213, 1, 100, // Repair at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 455, 1, 1 },  // Best of a Bad Lot, Support, 1 ranks
+    {               // level 1 requirements
+        213, 1, 75, // Repair at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 456, 1, 1 },   // Dismantler, Support, 1 ranks
+    {                // level 1 requirements
+        212, 1, 150, // Science at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 457, 2, 1 },   // Vigilant Recycler, Disabled, 1 ranks
+    {                // level 1 requirements
+        212, 1, 125, // Science at least 125
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 458, 2, 1 },  // Retention, Disabled, 1 ranks
+    {               // level 1 requirements
+        4, 1, 7,    // Intelligence at least 7
+        212, 1, 75, // Science at least 75
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+
+    { 459, 1, 1 },   // Treasure Hunter, Support, 1 ranks
+    {                // level 1 requirements
+        209, 1, 150, // Lockpick at least 150
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 460, 2, 1 },   // reserved, Disabled, 1 ranks
+    {                // level 1 requirements
+        209, 1, 100, // Lockpick at least 100
+    },
+    #ifdef __SERVER
+    {                // level 1 perk up effects
+    },
+    {                // level 1 perk down effects
+        -1           // Just revert
+    },
+    #endif
+
+    { 461, 1, 1 },  // Dead Man Walking, Support, 1 ranks
+    {               // level 1 requirements
+        4, 1, 5,    // Intelligence at least 5
+        207, 1, 50, // Doctor at least 50
+    },
+    #ifdef __SERVER
+    {               // level 1 perk up effects
+    },
+    {               // level 1 perk down effects
+        -1          // Just revert
+    },
+    #endif
+    { -1, -1, -1 }
+};

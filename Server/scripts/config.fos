@@ -1,0 +1,374 @@
+// Script for use in client, server, and a mapper - in start functions
+
+#include "_defines.fos"
+#include "_animation.fos"
+
+///
+/// Server and client initialization
+///
+
+#ifndef __MAPPER
+
+# include "_macros.fos"
+
+void InitializeGame()                  // Export
+{
+    /// Init global vars
+    __ScriptRunSuspendTimeout = 10000; // In milliseconds
+    __ScriptRunMessageTimeout = 80;    // In milliseconds
+    __LoggingVars = false;
+    __DisableTcpNagle = true;
+    __DisableZlibCompression = false;
+    __FloodSize = 2048;   // In bytes
+    __NoAnswerShuffle = true;
+    __FixBoyDefaultExperience = 0;
+    __SneakDivider = 6;
+    __LevelCap = 24;
+    __LevelCapAddExperience = false;
+    __LookNormal = 20;
+    __LookMinimum = 3;
+    __CritterIdleTick = 10000;
+    __TurnBasedTick = 30000;
+    __Breaktime = 1200;
+    __TimeoutTransfer = 0;
+    __ApRegeneration = 4000;
+    __RtApCostCritterWalk = 0;  // 1 AP == 100, maximim 255
+    __RtApCostCritterRun = 0;   // 1 AP == 100, maximim 255
+    __RtApCostMoveItemContainer = 0;
+    __RtApCostMoveItemInventory = 2;
+    __RtApCostPickItem = 2;
+    __RtApCostDropItem = 1;
+    __RtApCostReloadWeapon = 3;
+    __RtApCostPickCritter = 4;
+    __RtApCostUseItem = 3;
+    __RtApCostUseSkill = 5;
+    __RtAlwaysRun = true;
+    __TbApCostCritterMove = 1;
+    __TbApCostMoveItemContainer = 0;
+    __TbApCostMoveItemInventory = 2;
+    __TbApCostPickItem = 3;
+    __TbApCostDropItem = 2;
+    __TbApCostReloadWeapon = 2;
+    __TbApCostPickCritter = 3;
+    __TbApCostUseItem = 3;
+    __TbApCostUseSkill = 3;
+    __TbAlwaysRun = true;
+    __ApCostAimEyes = 2;
+    __ApCostAimHead = 2;
+    __ApCostAimGroin = 2;
+    __ApCostAimTorso = 1;
+    __ApCostAimArms = 1;
+    __ApCostAimLegs = 1;
+    __HitAimEyes = 60;
+    __HitAimHead = 40;
+    __HitAimGroin = 30;
+    __HitAimTorso = 0;
+    __HitAimArms = 30;
+    __HitAimLegs = 20;
+
+    __RunOnCombat = true;
+    __RunOnTransfer = true;
+    __GlobalMapWidth = 42;      // max 100
+    __GlobalMapHeight = 60;     // max 100
+    __GlobalMapZoneLength = 50; // max 500
+    __GlobalMapMaxGroupCount = 10;
+
+    __DeadHitPoints = -40;      // -40 only with perk, -20 otherwise
+    __BagRefreshTime = 20000;
+    __WisperDist = 2;
+    __ShoutDist = 100;
+
+    # ifdef __CLIENT
+    __RunModMul = 0;
+    __RunModDiv = 1;
+    __RunModAdd = 0;
+    # endif
+
+    // Look modifiers
+    __LookChecks = 0;                                 // See Look checks in _defines.fos
+    SETFLAG(__LookChecks, LOOK_CHECK_DIR);            // Nerfe look by directions of look
+    __LookDir0 = 0;                                   // Nerf 0% of look radius with direct look
+    __LookDir1 = 20;                                  // Nerf 20% of look radius with front side look
+    __LookDir2 = 40;                                  // Nerf 40% of look radius with back side look
+    __LookDir3 = 60;                                  // Nerf 60% of look radius with back look
+    __LookDir4 = 60;                                  // UNUSED. Nerfe 60% of look radius with back look (Square geometry)
+    SETFLAG(__LookChecks, LOOK_CHECK_SNEAK_DIR);      // Nerfe opponent sneak by directions of look
+    __LookSneakDir0 = 72;                             // Nerf %dp% of opponent sneak with direct look
+    __LookSneakDir1 = 36;                             // Nerf %dp% of opponent sneak with front side look
+    __LookSneakDir2 = 12;                             // Nerf %dp% of opponent sneak with back side look
+    __LookSneakDir3 = 0;                              // Nerf %d% of opponent sneak with back look
+    __LookSneakDir4 = 0;                              // UNUSED. Nerf 0% of opponent sneak with back look (Square geometry)
+
+    SETFLAG(__LookChecks, LOOK_CHECK_SNEAK_WEIGHT);   // Nerfe sneak by current weight
+    __LookWeight = 1000;                              // Lost 1 sneak point per 1000 gramm
+    SETFLAG(__LookChecks, LOOK_CHECK_TRACE);          // Tracing for wall aviablility
+    SETFLAG(__LookChecks, LOOK_CHECK_SCRIPT);         // Allow bool check_look(...) in main.fos, all other defines ignored
+    SETFLAG(__LookChecks, LOOK_CHECK_ITEM_SCRIPT);    // Allow bool check_look(...) in main.fos, all other defines ignored
+
+    __CustomItemCost = true;
+    __RegistrationTimeout = 5 * 60;                   // In real seconds, 0 to disable
+    __AccountPlayTime = 10 * 60;                      // In real seconds, 0 to disable
+
+    # ifdef __DEBUG__
+    __RegistrationTimeout = 0;
+    __AccountPlayTime = 0;
+    # endif
+
+    __TalkDistance = 3;
+    __NpcMaxTalkers = 1;
+    __MinNameLength = 4;   // Minimum 1
+    __MaxNameLength = 12;  // Maximum 30
+    __DlgTalkMinTime = 45000;
+    __DlgBarterMinTime = 30000;
+    __GlobalMapMoveTime         = 250;
+    __EncounterTime             = 5000;
+    __MinimumOfflineTime        = 180000;     // 3 minutes
+
+    // Range of values for client engine
+    __AbsoluteOffsets = true;
+    __SkillBegin = 200;
+    __SkillEnd = 217;
+    __TimeoutBegin = 230;
+    __TimeoutEnd = 249;
+    __KillBegin = 260;
+    __KillEnd = 282;
+    __PerkBegin = 300;
+    __PerkEnd = 462;
+    __AddictionBegin = 470;
+    __AddictionEnd = 478;
+    __KarmaBegin = 480;
+    __KarmaEnd = 496;
+    __DamageBegin = 500;
+    __DamageEnd = 506;
+    __TraitBegin = 550;
+    __TraitEnd = 565;
+    __ReputationBegin = 600;
+    __ReputationEnd = 691;
+
+    __ReputationLoved = 1500;
+    __ReputationLiked = 900;
+    __ReputationAccepted = 300;
+    __ReputationNeutral = -299;
+    __ReputationAntipathy = -899;
+    __ReputationHated = -1499;
+
+    // Registation values
+    __StartSpecialPoints  = 40;
+    __StartTagSkillPoints = 3;
+
+    // Skill modifiers
+    __SkillMaxValue = 300;
+    __SkillModAdd2  = 100;
+    __SkillModAdd3  = 125;
+    __SkillModAdd4  = 150;
+    __SkillModAdd5  = 175;
+    __SkillModAdd6  = 200;
+
+    /// Client specific definitions
+    # ifdef __CLIENT
+    __RoofAlpha = 255;
+    __HideCursor = false;
+    __DisableLMenu = false;
+    __DisableMouseEvents = false;
+    __ShowNpcNames = true;   // see client_interface@critter_description
+    __DisableKeyboardEvents = false;
+    __HidePassword          = true;
+    __PlayerOffAppendix = "|0x44ffffff  (off)";
+    __SpritesZoomMax = 2.5f;
+    __SpritesZoomMin = 0.2f;
+
+    __AlwaysRunMoveDist = 1;
+    __AlwaysRunUseDist = 1;
+
+    __CritterFidgetTime     = 50000;
+    __Anim2CombatBegin      = ANIM2_BEGIN_COMBAT;
+    __Anim2CombatIdle       = ANIM2_IDLE_COMBAT;
+    __Anim2CombatEnd        = ANIM2_END_COMBAT;
+
+    // Next vars defined in client config file, if you want override it, than uncomment need vars
+    __Animation3dSmoothTime = 250; // In milliseconds
+    __Animation3dFPS = 0;          // Zero to disable and use Smoothing
+    # endif                        // __CLIENT
+
+    # ifndef __CLIENT
+    string dllName = "parameters.dll@";
+    # endif
+    # ifdef __CLIENT
+    string dllName = "client_parameters.dll@";
+    # endif
+
+    SetParameterGetBehaviour(ST_STRENGTH, dllName + "getParam_Strength");
+    SetParameterGetBehaviour(ST_PERCEPTION, dllName + "getParam_Perception");
+    SetParameterGetBehaviour(ST_ENDURANCE, dllName + "getParam_Endurance");
+    SetParameterGetBehaviour(ST_CHARISMA, dllName + "getParam_Charisma");
+    SetParameterGetBehaviour(ST_INTELLECT, dllName + "getParam_Intellegence");
+    SetParameterGetBehaviour(ST_AGILITY, dllName + "getParam_Agility");
+    SetParameterGetBehaviour(ST_LUCK, dllName + "getParam_Luck");
+    SetParameterGetBehaviour(ST_CURRENT_HP, dllName + "getParam_Hp");
+    SetParameterGetBehaviour(ST_MAX_LIFE, dllName + "getParam_MaxLife");
+    SetParameterGetBehaviour(ST_ACTION_POINTS, dllName + "getParam_MaxAp");
+    SetParameterGetBehaviour(ST_CURRENT_AP, dllName + "getParam_Ap");
+    SetParameterGetBehaviour(ST_MAX_MOVE_AP, dllName + "getParam_MaxMoveAp");
+    SetParameterGetBehaviour(ST_MOVE_AP, dllName + "getParam_MoveAp");
+    SetParameterGetBehaviour(ST_CARRY_WEIGHT, dllName + "getParam_MaxWeight");
+    SetParameterGetBehaviour(ST_MELEE_DAMAGE, dllName + "getParam_MeleeDmg");
+    SetParameterGetBehaviour(ST_SEQUENCE, dllName + "getParam_Sequence");
+    SetParameterGetBehaviour(ST_HEALING_RATE, dllName + "getParam_HealingRate");
+    SetParameterGetBehaviour(ST_CRITICAL_CHANCE, dllName + "getParam_CriticalChance");
+    SetParameterGetBehaviour(ST_MAX_CRITICAL, dllName + "getParam_MaxCritical");
+    SetParameterGetBehaviour(ST_ARMOR_CLASS, dllName + "getParam_Ac");
+    SetParameterGetBehaviour(ST_RADIATION_RESISTANCE, dllName + "getParam_RadiationResist");
+    SetParameterGetBehaviour(ST_POISON_RESISTANCE, dllName + "getParam_PoisonResist");
+    for(uint i = ST_NORMAL_RESIST; i <= ST_EXPLODE_RESIST; i++)
+        SetParameterGetBehaviour(i, dllName + "getParam_DamageResistance");                                                   // changed roundings
+    for(uint i = ST_NORMAL_ABSORB; i <= ST_EXPLODE_ABSORB; i++)
+        SetParameterGetBehaviour(i, dllName + "getParam_DamageThreshold");                                                    // changed roundings
+    for(uint i = TIMEOUT_BEGIN; i <= TIMEOUT_END; i++)
+        SetParameterGetBehaviour(i, dllName + "getParam_Timeout");
+    SetParameterGetBehaviour(TO_SLEEPY, dllName + "getParam_SleepinessTimeout");
+    for(uint i = REPUTATION_BEGIN; i <= REPUTATION_END; i++)
+        SetParameterGetBehaviour(i, dllName + "getParam_Reputation");
+    // for(uint i=REPUTATION_BEGIN;i<=REPUTATION_END;i++) SetParameterChangeBehaviour(i,dllName+"changedParam_Reputation");
+
+    # ifndef __CLIENT
+    SetParameterChangeBehaviour(ST_CURRENT_HP, "parameters@changedParam_Hp");           // updating health level
+    SetParameterChangeBehaviour(ST_EXPERIENCE, "parameters@changedParam_Experience");   // logging exp
+    SetParameterChangeBehaviour(ST_LEVEL, "parameters@changedParam_Level");             // followers level up message
+    for(uint i = PERK_BEGIN; i <= PERK_END; i++)
+        SetParameterChangeBehaviour(i, "parameters@changedParam_Perks");
+    SetParameterChangeBehaviour(MODE_HIDE, "parameters@changedParam_Hide");
+    SetParameterChangeBehaviour(TRAIT_FAST_SHOT, "parameters@changedParam_FastShot");
+    for(uint i = REPUTATION_BEGIN; i <= REPUTATION_END; i++)
+        SetParameterDialogGetBehaviour(i, "parameters@getParamDialog_Reputation");
+    # endif    // !__CLIENT
+
+    # ifdef __CLIENT
+    // for(uint i=GOOD_EVIL_LIST_BEGIN;i<=GOOD_EVIL_LIST_END;i++) SetParameterChangeBehaviour(i,"parameters@changedParam_GoodEvilList"); (not used)
+    SetParameterChangeBehaviour(ST_LEVEL, "parameters@changedParam_Level");
+    SetParameterChangeBehaviour(ST_EXPERIENCE, "parameters@changedParam_Experience");
+    SetParameterChangeBehaviour(ST_UNSPENT_PERKS, "parameters@changedParam_UnspentPerks");
+    SetParameterChangeBehaviour(MODE_HIDE, "parameters@changedParam_Hide");
+    # endif    // __CLIENT
+
+    /// Registration parameters
+    for(uint i = ST_STRENGTH; i <= ST_LUCK; i++)
+        SetRegistrationParameter(i, true);
+    for(uint i = TAG_SKILL1; i <= TAG_SKILL3; i++)
+        SetRegistrationParameter(i, true);
+    for(uint i = TRAIT_BEGIN; i <= TRAIT_END; i++)
+        SetRegistrationParameter(i, true);
+    SetRegistrationParameter(ST_AGE, true);
+    SetRegistrationParameter(ST_GENDER, true);
+    # ifdef PLAYERS_3D
+    SetRegistrationParameter(ST_BASE_CRTYPE, true);
+    SetRegistrationParameter(ST_ANIM3D_LAYERS + ANIM3D_LAYER_SKIN, true);
+    SetRegistrationParameter(ST_ANIM3D_LAYERS + ANIM3D_LAYER_HAIR, true);
+    SetRegistrationParameter(ST_ANIM3D_LAYERS + ANIM3D_LAYER_MUSTACHE, true);
+    SetRegistrationParameter(ST_ANIM3D_LAYERS + ANIM3D_LAYER_PONYTAIL, true);
+    SetRegistrationParameter(ST_ANIM3D_LAYERS + ANIM3D_LAYER_BEARD, true);
+    # endif    // PLAYERS_3D
+
+    // New slots
+    AllowSlot(SLOT_HEAD, "InvHead");
+
+    # ifdef __SERVER
+    AllowSlot(SLOT_TROPHY, "InvTrophy");
+    # endif
+
+    InitializeGeometry();
+}
+#endif // !__MAPPER
+
+//
+// Mapper
+//
+#ifdef __MAPPER
+
+void InitializeGame() // Export
+{
+    __RoofAlpha             = 255;
+    __SpritesZoomMax        = 10.0f;
+    __SpritesZoomMin        = 0.2f;
+    __Anim2CombatBegin      = ANIM2_BEGIN_COMBAT;
+    __Anim2CombatIdle       = ANIM2_IDLE_COMBAT;
+    __Anim2CombatEnd        = ANIM2_END_COMBAT;
+    __SplitTilesCollection  = true;
+
+    InitializeGeometry();
+}
+#endif // __MAPPER
+
+//
+// Geometry
+//
+void InitializeGeometry()
+{
+    // Geometry customization
+    // GEOMETRY_FALLOUT
+    // GEOMETRY_TACTICS
+    // GEOMETRY_ARCANUM
+    __GeometryType = GEOMETRY_FALLOUT;
+
+    // __MapHexagonal     true - hexagonal, false - square;
+    // __MapHexWidth      hex/square width;
+    // __MapHexHeight     hex/square height;
+    // __MapHexLineHeight hex/square line height;
+    // __MapTileOffsX/Y   tile default offsets;
+    // __MapRoofOffsX/Y   roof default offsets;
+    // __MapRoofSkipSize  default length (in hexes/squares) of roof tiles;
+    // __MapCameraAngle   angle for 3d critters rendering;
+    // __MapSmoothPath    enable pathfinding path smoothing;
+    // __MapDataPrefix    path and prefix for names used for geometry sprites.
+
+    switch(__GeometryType)
+    {
+    case GEOMETRY_FALLOUT:
+        __MapHexagonal     = true;
+        __MapHexWidth      = 32;
+        __MapHexHeight     = 16;
+        __MapHexLineHeight = 12;
+        __MapTileOffsX     = -8;
+        __MapTileOffsY     = 34;
+        __MapRoofOffsX     = -8;
+        __MapRoofOffsY     = -64;
+        __MapRoofSkipSize  = 2;
+        __MapCameraAngle   = 25.7f;
+        __MapSmoothPath    = true;
+        __MapDataPrefix    = "art/geometry/fallout_";
+        break;
+
+    case GEOMETRY_TACTICS:
+        __MapHexagonal     = false;
+        __MapHexWidth      = 36;
+        __MapHexHeight     = 18;
+        __MapHexLineHeight = 9;
+        __MapTileOffsX     = 18;
+        __MapTileOffsY     = 18;
+        __MapRoofOffsX     = 18;
+        __MapRoofOffsY     = -72;
+        __MapRoofSkipSize  = 2;
+        __MapCameraAngle   = 30.0f;
+        __MapSmoothPath    = false;
+        __MapDataPrefix    = "art/geometry/tactics_";
+        break;
+
+    case GEOMETRY_ARCANUM:
+        __MapHexagonal     = false;
+        __MapHexWidth      = 78;
+        __MapHexHeight     = 40;
+        __MapHexLineHeight = 20;
+        __MapTileOffsX     = 39;
+        __MapTileOffsY     = 40;
+        __MapRoofOffsX     = 39;
+        __MapRoofOffsY     = -44;
+        __MapRoofSkipSize  = 1;
+        __MapCameraAngle   = 30.0f;
+        __MapSmoothPath    = true;
+        __MapDataPrefix    = "art/geometry/arcanum_";
+        break;
+
+    default:
+        Log("Wrong geometry type value.");
+        break;
+    }
+}

@@ -1,0 +1,123 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_KARMA < -99 R _item n PID_DEANS_ELECTRONICS - 1 #
+2 1020 D _var n name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+50 1030 D _var n acquaintance = -1 R _item n PID_DEANS_ELECTRONICS - 1 #
+3 1040 D _var n name_mem_npc_player = 1 R _item n PID_DEANS_ELECTRONICS - 1 @
+2 2000 None 0 #
+5 2010 R _var n name_mem_npc_player = 1 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 #
+20 4020 #
+100 4030 D _var p factions_q_vc_kohl_books = 11 D _var n acquaintance = 0 D _param p ST_KARMA > -1 #
+110 4040 D _var n acquaintance = 0 D _var p factions_q_vc_kohl_books = 11 D _param p ST_KARMA < 0 R _var n acquaintance = -1 #
+0 4050 @
+5 5000 None 0 #
+6 5010 #
+7 5020 #
+9 5030 #
+4 5040 @
+6 6000 None 0 #
+7 6010 #
+9 6020 #
+4 6030 @
+7 7000 None 0 #
+8 7010 #
+6 7020 #
+9 7030 #
+4 7040 @
+8 8000 None 0 #
+4 8010 @
+9 9000 None 0 #
+6 9010 #
+7 9020 #
+4 9030 @
+20 10000 None 0 #
+21 10010 #
+4 10020 @
+21 11000 None 0 #
+4 11010 #
+0 11020 @
+50 12000 None 0 @
+100 13000 None 0 #
+101 13010 R _var n acquaintance = 1 R _item p PID_DEANS_ELECTRONICS + 1 #
+4 13020 @
+101 14000 None 0 #
+0 14010 #
+0 14020 #
+0 14030 #
+4 14040 @
+110 15000 None 0 #
+65507 15010 R _item n PID_DEANS_ELECTRONICS + 1 #
+0 15020 &
+
+[engl]
+{100}{}{Vic}
+{200}{}{You see Vic.}
+{210}{}{You see Vic, one of Klamath's traders.}
+{1000}{}{Predialogue installations}
+{1010}{}{bad}
+{1020}{}{unknown}
+{1030}{}{suspicious}
+{1040}{}{known}
+{2000}{}{Well hey there buddy, I'm Vic, who might you be?}
+{2010}{}{Hi Vic, my name is @pname@. What are you doing here?}
+{2020}{}{Ooops! Sorry, wrong person.}
+{3000}{}{Oh, look! It's @pname@ again. What do you need now?}
+{3010}{}{Just a few questions, if I may...}
+{3020}{}{Nothing, I'm leaving.}
+{4000}{}{I've got enough time for chit-chat. What's on your mind?}
+{4010}{}{Mind telling me what you're doing here, Vic?}
+{4020}{}{What's there to do in Klamath?}
+{4030}{}{Your daughter Valerie sends you her greetings... she's doing well.}
+{4040}{}{I was talking to your daughter Valerie in Vault City, she says she wants her copy of Dean's Electronics back.}
+{4050}{}{That's about it, thanks. Bye!}
+{5000}{}{Well, this is my place, I live here. You might even call it a home, heh-heh. A while ago I used to be a trader, was travelling a lot, never had enough time to take care of this old place. I stopped travelling a couple years back, and I've kinda settled myself in.}
+{5010}{}{You used to be a trader?}
+{5020}{}{You did a lot of travelling?}
+{5030}{}{What are you doing now?}
+{5040}{}{Let me ask you something else then.}
+{6000}{}{Yes, you see... I bought and sold all kinds of junk all over the wasteland. But my age and health don't let me wander round so much these days, I can barely make it to the Den.}
+{6010}{}{You did a lot of travelling?}
+{6020}{}{What are you doing now?}
+{6030}{}{Let me ask you something else then.}
+{7000}{}{You betcha. First as a trader, and then side-by-side with an adventurer like yourself. They called him the Chosen One, he was a descendant from a village a little ways west of here. Ah, those were the days...}
+{7010}{}{You must be having some pretty good stories, huh?}
+{7020}{}{You used to be a trader?}
+{7030}{}{What are you doing now?}
+{7040}{}{Let me ask you something else then.}
+{8000}{}{Stories you wouldn't believe, pal. But you ain't gonna hear them from me. I got sick of people not believing me. You try telling someone that you... well, nevermind. I gave up on it. No more of my travelling stories, no sirree.}
+{8010}{}{Let me ask you something else then.}
+{9000}{}{I repair stuff and collect valuable junk most of the time... though my customers give me a bit of hassle, saying it takes me longer to repair something than it does to build a new one. I could care less. Fast ain't always better than slow, y'know.}
+{9010}{}{You used to be a trader?}
+{9020}{}{You were travelling a lot?}
+{9030}{}{Let me ask you something else then.}
+{10000}{}{Well, if you're new to our little community, then you've come to the right place to pick up a few pointers. First, there's the Buckner place, right by the entrance to the town. You can trade there, or in the Golden Gecko, run by Sajag.}
+{10010}{}{What else?}
+{10020}{}{Let me ask you something else.}
+{11000}{}{Trapper Town's just south of here and the canyon's to the west - a big ol' flying machine crashed there a few years ago... a vertibird. By now it's pretty much one of the town's attractions, heh. Finally, there's the bathhouse, one of my favourites. @sex@|Nice girls, fresh clean water and [wink] - the best service, if you know what I mean.|| You might be a lady yourself, but if you don't mind being, ahem, "served" by another lady... you should pay it a visit.|}
+{11010}{}{Thanks for the info, but I had another question.}
+{11020}{}{That's all I needed to know, thanks!}
+{12000}{}{I don't have time to chat right now.@@Please, come later.@@I have to finish this first.@@Can't you see I'm busy right now?}
+{13000}{}{Oh, my little Val... good to hear everything's fine with her.}
+{13010}{}{Say... she needs that Deans Electronics manual she gave you a long time ago. You still got it?}
+{13020}{}{Yes, it is. One more question, please.}
+{14000}{}{Oh yes, it should be somewhere here... Found it! [He gives you the manual]}
+{14010}{}{Thanks. I'll send your greetings to Val.}
+{14020}{}{Thanks. I'll send your greetings to Valerie.}
+{14030}{}{Thanks. I'll send your greetings to whatever.}
+{14040}{}{Thanks. I had a few more questions for you...}
+{15000}{}{Somehow... I don't believe you. Please, excuse me for a moment. [He turns back to his work]}
+{15010}{}{Give me that manual, you stupid old man! [You draw your weapon]}
+{15020}{}{Fine. Forget it. I'm leaving.}
+

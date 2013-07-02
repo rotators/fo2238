@@ -1,0 +1,72 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+10 1010 D _param p ST_INTELLECT < 4 #
+3 1020 D _var n name_mem_npc_player = 0 #
+2 1030 @
+2 2000 None 0 #
+80 2010 D _script dialog@d_CheckProfession 1 1 D _script dialog@d_CheckArmorer0 1 1 #
+81 2020 D _script dialog@d_CheckArmorer1 1 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+4 3020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+80 3030 D _var n name_mem_npc_player = 1 D _script dialog@d_CheckProfession 1 1 D _script dialog@d_CheckArmorer0 1 1 #
+81 3040 D _script dialog@d_CheckArmorer1 1 1 D _var n name_mem_npc_player = 1 #
+0 3050 @
+4 4000 None 0 #
+80 4010 D _script dialog@d_CheckProfession 1 1 D _script dialog@d_CheckArmorer0 1 1 #
+81 4020 D _script dialog@d_CheckArmorer1 1 1 #
+0 4030 @
+10 5000 None 0 @
+80 6000 None 0 #
+82 6010 D _item p PID_BOTTLE_CAPS > 1499 R _param p PE_PROFESSION_ARMORER = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 6020 @
+81 7000 None 0 #
+83 7010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_ARMORER = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 7020 @
+82 8000 None 0 #
+0 8010 @
+83 9000 None 0 #
+0 9010 &
+
+[engl]
+{100}{}{Simon}
+{200}{}{It's Simon, one of the Blades' members.}
+{210}{}{A tall, muscular man who looks and smells of grease.}
+{1000}{}{Predialogue installations}
+{1010}{}{Idiot}
+{1020}{}{unknown}
+{1030}{}{known}
+{2000}{}{Oh, it's you again. What brings you here this time?}
+{2010}{}{Maybe you could show me how to make armors?}
+{2020}{}{Could you teach me how to improve armors?}
+{2030}{}{Erhm... Wrong door, I guess. [Leave]}
+{3000}{}{Hello, my name’s Simon. Can I help you?}
+{3010}{}{What is this place?}
+{3020}{}{What are you doing here?}
+{3030}{}{I bet you made that shiny armor by yourself. Could you teach me how to do it?}
+{3040}{}{Could you teach me something more about armors?}
+{3050}{}{Just looking, thanks.}
+{4000}{}{This is the place where old stuff comes in, and something useful comes out. We do repairs mostly, or trying to make something useful of the junk we find out there.}
+{4010}{}{I bet you made that shiny armor by yourself. Could you teach me how to do it?}
+{4020}{}{Could you teach me something more about armors?}
+{4030}{}{Interesting. I have to be going  now, bye!}
+{5000}{}{Get outta here, you idiot.@@Been out in the sun too long?@@Shoo!}
+{6000}{}{Of course I can. [Looking carefully at you] Hmmm, interested in expanding your skills, eh? OK, you look like you know some basics... I can give you some tips, but it'll cost you fifteen hundred.}
+{6010}{}{Fifteen hundred caps. Here, it better be worth it!}
+{6020}{}{Sorry, that's too much for me. I might be back later, though.}
+{7000}{}{Well, I think there is something I could show you... for three grand.}
+{7010}{}{I just happen to have 3000$ ready for you... [You give him the money] Let's get to it.}
+{7020}{}{Sorry, that's too much for me. I might be back later, though.}
+{8000}{}{Good, now pay attention... [Simon shows you how to make armors and take care of them]}
+{8010}{}{Thanks Simon, I'll do my best to put this knowledge to good use.}
+{9000}{}{Good, now pay attention... [Simon shows you the essence of his skill]}
+{9010}{}{Thanks Simon, I'll do my best to put this knowledge to good use.}
+

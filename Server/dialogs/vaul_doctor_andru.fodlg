@@ -1,0 +1,327 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+47 1010 D _var p q_vc_train_doc > 0 D _var p q_vc_train_doc < 6 #
+85 1020 D _param p ST_CHARISMA > 99 #
+6 1030 D _script dialog@d_HpVeryLow 0  #
+5 1040 D _script dialog@d_HpLow 0  #
+4 1050 D _script dialog@d_HpAverage 0  #
+3 1060 D _script dialog@d_HpHigh 0  #
+50 1070 D _param p ST_INTELLECT < 4 #
+2 1080 @
+2 2000 None 0 #
+7 2010 D _script dialog@d_IsToHeal 0  #
+11 2020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+11 2030 D _var n name_mem_npc_player = 1 #
+65506 2040 #
+80 2050 D _param p PE_PROFESSION_DOCTOR < 2 #
+0 2060 @
+3 3000 None 0 #
+2 3010 D _param p ST_INTELLECT > 3 #
+50 3020 D _param p ST_INTELLECT < 4 @
+4 4000 None 0 #
+2 4010 D _param p ST_INTELLECT > 3 #
+50 4020 D _param p ST_INTELLECT < 4 @
+5 5000 None 0 #
+2 5010 D _param p ST_INTELLECT > 3 #
+50 5020 D _param p ST_INTELLECT < 4 @
+6 6000 None 0 #
+2 6010 D _param p ST_INTELLECT > 3 #
+50 6020 D _param p ST_INTELLECT < 4 @
+7 7000 dialog@dlg_ShowHealingPrice 0 #
+8 7010 D _script dialog@d_HealingMoney 0  #
+10 7020 #
+0 7030 @
+8 8000 None 0 #
+9 8010 R _script dialog@r_DocHeal 0  @
+9 9000 None 0 #
+20 9010 D _param p ST_INTELLECT > 3 #
+52 9020 D _param p ST_INTELLECT < 4 @
+10 10000 None 0 #
+65505 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 #
+40 11020 D _var p q_vc_train_doc = 0 #
+20 11030 #
+0 11040 @
+12 12000 None 0 #
+20 12010 #
+0 12020 @
+20 13000 None 0 #
+2 13010 D _script dialog@d_IsToHeal 0  #
+11 13020 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+11 13030 D _var n name_mem_npc_player = 1 #
+65506 13040 #
+80 13050 D _param p PE_PROFESSION_DOCTOR < 2 #
+30 13060 #
+0 13070 @
+30 14000 None 0 #
+31 14010 D _item p PID_BOTTLE_CAPS > 999 R _item p PID_FIRST_AID_KIT + 1 R _script dialog@r_RemoveMoney 1 1000 #
+31 14020 D _item p PID_BOTTLE_CAPS > 1999 R _item p PID_FIELD_MEDIC_KIT + 1 R _script dialog@r_RemoveMoney 1 2000 #
+0 14030 @
+31 15000 None 0 #
+0 15010 @
+50 16000 None 0 #
+51 16010 D _script dialog@d_IsToHeal 0  #
+0 16020 @
+51 17000 dialog@dlg_ShowHealingPrice 0 #
+8 17010 D _script dialog@d_HealingMoney 0  #
+0 17020 @
+52 18000 None 0 #
+0 18010 @
+80 19000 None 0 #
+81 19010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDoctor0 1 0 #
+81 19020 D _script dialog@d_CheckDoctor1 1 0 #
+0 19030 @
+81 20000 None 0 #
+82 20010 D _script dialog@d_CheckDoctor0 1 1 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_FIRST_AID_BOOK + 1 R _script dialog@r_RemoveMoney 1 1500 R _param p PE_PROFESSION_DOCTOR = 1 #
+83 20020 D _script dialog@d_CheckDoctor1 1 1 D _item p PID_BOTTLE_CAPS > 2999 R _script dialog@r_RemoveMoney 1 3000 R _param p PE_PROFESSION_DOCTOR = 2 #
+0 20030 @
+82 21000 None 0 #
+0 21010 @
+83 22000 None 0 #
+0 22010 @
+85 23000 None 0 @
+40 24000 None 0 #
+41 24010 #
+41 24020 #
+0 24030 @
+41 25000 None 0 #
+42 25010 #
+42 25020 #
+42 25030 @
+42 26000 None 0 #
+43 26010 #
+0 26020 @
+43 27000 None 0 #
+44 27010 #
+44 27020 #
+0 27030 @
+44 28000 None 0 #
+45 28010 #
+46 28020 @
+45 29000 None 0 #
+48 29010 R _var p q_vc_train_doc = 1 R _script dialog@r_ShowLocation 1 355 @
+46 30000 None 0 @
+47 31000 None 0 #
+0 31010 #
+60 31020 D _var p q_vc_train4 = 4 #
+61 31030 D _var p q_vc_train3 = 4 #
+62 31040 D _var p q_vc_train2 = 4 #
+63 31050 D _var p q_vc_train1 = 4 #
+68 31060 D _var p q_vc_train1 = 5 D _var p q_vc_train2 = 5 D _var p q_vc_train3 = 5 D _var p q_vc_train4 = 5 #
+2 31070 @
+48 32000 None 0 #
+0 32010 @
+60 33000 None 0 #
+64 33010 R _var p q_vc_train4 = 5 R _param p ST_EXPERIENCE + 100 #
+0 33020 @
+61 34000 None 0 #
+65 34010 R _var p q_vc_train3 = 5 R _param p ST_EXPERIENCE + 100 #
+0 34020 @
+62 35000 None 0 #
+66 35010 R _var p q_vc_train2 = 5 R _param p ST_EXPERIENCE + 100 #
+0 35020 @
+63 36000 None 0 #
+67 36010 R _var p q_vc_train1 = 5 R _param p ST_EXPERIENCE + 100 #
+0 36020 @
+64 37000 None 0 #
+47 37010 #
+68 37020 D _var p q_vc_train1 = 5 D _var p q_vc_train2 = 5 D _var p q_vc_train3 = 5 D _var p q_vc_train4 = 5 @
+65 38000 None 0 #
+47 38010 #
+68 38020 D _var p q_vc_train1 = 5 D _var p q_vc_train2 = 5 D _var p q_vc_train3 = 5 D _var p q_vc_train4 = 5 @
+66 39000 None 0 #
+47 39010 #
+68 39020 D _var p q_vc_train1 = 5 D _var p q_vc_train2 = 5 D _var p q_vc_train3 = 5 D _var p q_vc_train4 = 5 @
+67 40000 None 0 #
+47 40010 #
+68 40020 D _var p q_vc_train1 = 5 D _var p q_vc_train2 = 5 D _var p q_vc_train3 = 5 D _var p q_vc_train4 = 5 @
+68 41000 None 0 #
+69 41010 D _script dialog@d_IsNotMemberOf 1 FACTION_VAULT_CITY #
+72 41020 D _script dialog@d_IsMemberOf 1 FACTION_VAULT_CITY #
+0 41030 @
+69 42000 None 0 #
+0 42010 R _script dialog@r_AddMoney 1 300 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 750 #
+70 42020 D _param p SK_BARTER > 90 R _script dialog@r_AddMoney 1 400 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 900 #
+71 42030 D _param p SK_BARTER < 91 R _script dialog@r_AddMoney 1 300 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 750 #
+2 42040 R _script dialog@r_AddMoney 1 300 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 750 @
+70 43000 None 0 #
+0 43010 #
+2 43020 @
+71 44000 None 0 #
+0 44010 #
+2 44020 @
+72 45000 None 0 #
+0 45010 R _script dialog@r_AddMoney 1 300 R _item p PID_STIMPAK + 5 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 800 #
+2 45020 R _script dialog@r_AddMoney 1 300 R _item p PID_STIMPAK + 5 R _var p q_vc_train_doc = 6 R _param p ST_EXPERIENCE + 800 &
+
+[engl]
+{100}{}{Doctor}
+{200}{}{You see a scruffy-looking man in a dirty brown shirt. His arms are covered with a bright red rash, which he scratches frequently.}
+{210}{}{You see "Doctor" Andrew.}
+{210}{}{You see a dirty man wearing brown shorts. His hands are covered with the red rash, he scratches them from time to time.}
+{1000}{}{Predialogue installations}
+{1010}{}{train quest active}
+{1020}{}{ugly}
+{1030}{}{up to 1/4 HP}
+{1040}{}{up to 2/4 HP}
+{1050}{}{up to 3/4 HP}
+{1060}{}{up to 4/4 HP}
+{1070}{}{Full HP dumb}
+{1080}{}{Full HP normal}
+{2000}{}{You here to get patched up?}
+{2010}{}{Yeah, I could use some medical attention.}
+{2020}{}{What is this place?}
+{2030}{}{Uh, what is this place again?}
+{2040}{}{Could I buy some medical supplies?}
+{2050}{}{No, nothing like that. Actually, I am quite interested in medicine myself, and this is the reason I am visiting you today. My hopes are that you could share some of your knowledge and experience with me...}
+{2060}{}{No, I'm fine. Just stopping by.}
+{3000}{}{Looks like you've seen some fighting, friend.}
+{3010}{}{[Continue]}
+{3020}{}{[Continue]}
+{4000}{}{Whoa...looks like you've seen some serious action, friend.}
+{4010}{}{[Continue]}
+{4020}{}{[Continue]}
+{5000}{}{Whoa...looks like you've been in some heavy fighting, friend.}
+{5010}{}{[Continue]}
+{5020}{}{[Continue]}
+{6000}{}{Holy...! You're bleeding all over the floor!}
+{6010}{}{[Continue]}
+{6020}{}{[Continue]}
+{7000}{}{All right...from the looks of it, it's gonna cost you @lex price@$ bucks. You got the cash, then you're good to go.}
+{7010}{}{Well... all right. That sounds fair.}
+{7020}{}{That's pretty steep. How about a discount?}
+{7030}{}{No, thanks. Maybe some other time.}
+{8000}{}{Remember, no guarantees with the ol' Doctor in the back room, of course... Let's get to it, then. I'll just hook you up to the ol' Doctor here... slip your arms into the slots there, and I'll tighten the braces and secure the clamps...}
+{8010}{}{[Wait]}
+{9000}{}{All right! Knew the ol' Doctor wouldn't let me down.}
+{9010}{}{I feel much better, thanks.}
+{9020}{}{Me wanna ride agin! Agin!}
+{10000}{}{Hell, no! The last time I gave someone a discount, that idiot brought a pack of his friends with him! There was a ghoul, a mutant... damn freaks, there was a deathclaw too! Forget it. So, you wanna get patched or what?}
+{10010}{}{Yeah, right.}
+{10020}{}{No, thanks. Maybe some other time.}
+{11000}{}{This here's the common body shop for Vault City. Me an' the ol' Doctor in the back patch up whoever needs some attention.}
+{11010}{}{"Ol' Doctor?"}
+{11020}{}{Do you have any job for me?}
+{11030}{}{I see. Say, I had some other questions for you...}
+{11040}{}{Hmmm. Maybe I'll be back when I need your services.}
+{12000}{}{Yeah, the "Auto-Doctor" in the back room there. It's a loaner from the city. It can be a little ornery sometimes, but mostly it does its job. Mostly.}
+{12010}{}{Forget it then. I needed something else...}
+{12020}{}{Whatever. I'm leaving.}
+{13000}{}{Yes... was there something else I could help you with?}
+{13010}{}{I could use some medical attention.}
+{13020}{}{What is this place?}
+{13030}{}{Uh, what is this place again?}
+{13040}{}{Could I buy some medical supplies?}
+{13050}{}{Well, I am quite interested into medicine myself and was hoping that you could share some of your knowledge and experience with me...}
+{13060}{}{Do you sell First Aid or Field Medic Kits?}
+{13070}{}{Nothing, thanks. Goodbye.}
+{14000}{}{Got some right here, but it'll cost you... $1000 for the First Aid Kit, and $2000 for the Field Medic. You up to it or what?}
+{14010}{}{I'll take the First Aid Kit. [Give $1000]}
+{14020}{}{Let me have one of these Field Medic Kits, doc. [Give $2000]}
+{14030}{}{That's a bit too expensive for my current budget, maybe I'll come back later.}
+{15000}{}{Pleasure doing business with ya, goodbye.}
+{15010}{}{Goodbye.}
+{16000}{}{You here to get patched up?}
+{16010}{}{Patssshh.}
+{16020}{}{Nup.}
+{17000}{}{All right...from the looks of it, it's gonna cost you @lex price@$ bucks. You got the cash, then you're good to go.}
+{17010}{}{Patshhh? Patshh! Take moneee, fixx leaks.}
+{17020}{}{Bye-bye.}
+{18000}{}{Uh, well now, that might not be the safest thing for you, friend. Seems like you already took a few trips in the ol' Doctor from the way you talk.}
+{18010}{}{Okee... Buyhye.}
+{19000}{}{Oh, a colleague! It's not that I meet colleagues every day, you know... The reason more to say that I'm very pleased to have you here. So, what did you want us to talk about then?}
+{19010}{}{I was hoping you can show me how to perform simple surgeries and... [You explain what you need]}
+{19020}{}{Well, I was interested in more complex methods of saving human lives, which would consider... [You explain him what you need]}
+{19030}{}{I, erhm... Not quite sure where to start from. Maybe I should drop a little bit later. [Leave]}
+{20000}{}{Sure, sure... We can already arrange something, I guess. But I would like to have something in return, a kind of compensation for my time and work. It's not that I'm trying to earn something out of this, but a help from a colleague like you would be quite appreciated. I'll keep it short then -- I would need $1500 for a short lesson or $3000 for one with more details.}
+{20010}{}{You don't have to worry, my appreciated colleague, I have $1500 right here! [You give him $1500]}
+{20020}{}{You don't have to worry, my appreciated colleague, I have $3000 right here! [You give him $3000]}
+{20030}{}{Well, I better start gathering some healing herbs then. See you again, doctor Andrew!}
+{21000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Andrew starts to show you his healing and surgery methods. After the session, you get a book from him.]}
+{21010}{}{Thank you very much, doctor Andrew! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{22000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Andrew starts to show you his healing and surgery methods.]}
+{22010}{}{Thank you very much, doctor Andrew! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{23000}{}{Haha, goddamn, them guards are gonna think you're a ghoul.@@I can't believe you got past the gates.@@You're gonna be out on your ass the second the guards get a good look at you.}
+{24000}{}{Uh, depends. There might be something. I need some help with some... research work.}
+{24010}{}{Research work?}
+{24020}{}{Go on, tell me more.}
+{24030}{}{ZZZZZzzzzz. That sounds boring. Bye.}
+{25000}{}{Did you heard about the newly opened train stations all over the area?}
+{25010}{}{No, tell me more.}
+{25020}{}{Only half-arsed informations. Tell me more.}
+{25030}{}{Yes, I've heard about it.}
+{26000}{}{The NCR is working very hard on fixing the old rail lines. You know, a train is way faster than a brahmin caravan and also much more secure. I've heard that there now several more or less public train stations opened. }
+{26010}{}{What do you want me to do?}
+{26020}{}{Interesting-- Not. Bye...}
+{27000}{}{I am very much interested about how or if some diseases are spreading because of the newly opened train stations.}
+{27010}{}{So what should I do?}
+{27020}{}{You want me to get ill or what?}
+{27030}{}{Bio-shit is uncool. I am out of this. Bye.}
+{28000}{}{You look like someone who get's around a lot. So your job would be to go to everyone of the new train stations and ask around between the people. Ask them how they feel or if they have been ill in the last time and so on and so on. It's simple, see?}
+{28010}{}{Indeed, it's simple. I will do it.}
+{28020}{}{Yes, it's simple. But also boring. Bye...}
+{29000}{}{Very good. I will pay you when you are done. Come back as soon as possible and tell me everything you could find out.}
+{29010}{}{Where should I start?}
+{30000}{}{A shame. Then I have to wait for someone else.}
+{31000}{}{You! Could you find out somethin already?}
+{31010}{}{Not yet. I will come back later.}
+{31020}{}{About the Vault City train station...}
+{31030}{}{About the NCR train station...}
+{31040}{}{About the Boneyard train station...}
+{31050}{}{About the San Francisco train station...}
+{31060}{}{I've visited all available train stations.}
+{31070}{}{Actually, I have something else...}
+{32000}{}{I know that the Vault City station is a bit in the south west of the town. I guess it would be a good place to start your research.}
+{32010}{}{I will. See ya.}
+{33000}{}{Yes, I am listening.@@What do you want to tell me?@@Yes, report.}
+{33010}{}{Everything looks okay there. Nobody talked about any issues.}
+{33020}{}{Nevermind. Have to go...@@Nevermind. I was wrong... Bye.@@Ah, nothing. Bye.}
+{34000}{}{Yes, I am listening.@@What do you want to tell me?@@Yes, report.}
+{34010}{}{As far as I could see, all are fine. One or two people don't look that strong, but I think it's more the daily desert sand...}
+{34020}{}{Nevermind. Have to go...@@Nevermind. I was wrong... Bye.@@Ah, nothing. Bye.}
+{35000}{}{Yes, I am listening.@@What do you want to tell me?@@Yes, report.}
+{35010}{}{Some people are reporting headachs and other issues. Not many, but it's not like there is nothing going on.}
+{35020}{}{Nevermind. Have to go...@@Nevermind. I was wrong... Bye.@@Ah, nothing. Bye.}
+{36000}{}{Yes, I am listening.@@What do you want to tell me?@@Yes, report.}
+{36010}{}{The people I've talked to reported that either they or other people are seriously ill. Feels like a pandemia is going on down there.}
+{36020}{}{Nevermind. Have to go...@@Nevermind. I was wrong... Bye.@@Ah, nothing. Bye.}
+{37000}{}{That's what I thought. The supply and general accommodation in this area is pretty much improved, compared to other regions. Thank you for informing me about this. }
+{37010}{}{About the other train stations...}
+{37020}{}{I've visited all available train stations.}
+{38000}{}{As far as my information goes, the NCR is as well good developed in medical provision. So this might be not unnatural. Thank you for checking this out for me. }
+{38010}{}{About the other train stations...}
+{38020}{}{I've visited all available train stations.}
+{39000}{}{This doesn't sound very good, but is understandable. We have to take care that no disease will start from there. It could bring many problems over all train stations and the surrounding area.}
+{39010}{}{About the other train stations...}
+{39020}{}{I've visited all available train stations.}
+{40000}{}{Oh my! This for sure are horrible news. It's very important to do some further steps in this. Good that you've informed me about this.}
+{40010}{}{About the other train stations...}
+{40020}{}{I've visited all available train stations.}
+{41000}{}{Your information have been very useful for me. I will write a report and send it to the council. We have to take care that diseases will not spread too wide. This will only make more problems and it isn't as if we don't have already enough of it, hah!}
+{41010}{}{Very good. What about my reward now?}
+{41020}{}{Very good. What about my reward now?}
+{41030}{}{That's what I am doing. You don't have to give me anything, it's what I am doing... See you.}
+{42000}{}{You have helped me a lot, I can't thank you more. I can give you 300 caps. Hope it will help you in the outside. }
+{42010}{}{Thank you. It was interesting to work for a real doctor. But I have to go now, checking out other issues.}
+{42020}{}{300 caps? Isn't it a bit less for what I have done?}
+{42030}{}{300 caps? Isn't it a bit less for what I have done?}
+{42040}{}{Thanks. Before I leave, I have something else that I want to ask.}
+{43000}{}{You are right. How could I just... Here, I give you 100 caps more. I can't thank you enough for what you have done for me and Vault City.}
+{43010}{}{No problem. I am busy with something else now. Bye.}
+{43020}{}{Thanks. Before I leave, I have something else I want to ask.}
+{44000}{}{I am sorry, but I can't give you any more.}
+{44010}{}{Oh well then... Guess I should go.}
+{44020}{}{Thanks... Not. Before I leave, I have something else I want to ask about.}
+{45000}{}{You have helped me a lot, I can't thank you more. I can give you 400 caps and a few Stimpaks. Hope it will help you in the outside. }
+{45010}{}{Thank you. It was interesting to work for a real doctor. But I have to go now, checking out other issues.}
+{45020}{}{Thanks. Before I leave, I have something else that I want to ask.}
+

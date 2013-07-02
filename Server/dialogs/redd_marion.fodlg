@@ -1,0 +1,240 @@
+[comment]
+For now this dilaog is only for bounty purposes.
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _script bounties@d_HasInfo 1 0 #
+2 1020 D _var p name_mem_npc_player = 1 #
+5 1030 D _param p ST_INTELLECT < 4 #
+6 1040 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+100 2010 D _param p ST_INTELLECT > 1000 #
+110 2020 D _param p ST_INTELLECT > 1000 R _script bounties@r_ShowFirstBounty 1 111 #
+120 2030 D _script bounties@d_HasProof 1 0 D _param p ST_INTELLECT > 1000 R _script bounties@r_CheckBounty 1 121 #
+4 2040 #
+7 2050 #
+2 2060 D _script town@d_IsNotControllingTown 1 1 D _script dialog@d_IsGangMember 0  D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+220 2070 D _script town@d_IsControllingTown 1 1 #
+0 2080 #
+50 2090 D _script town@d_CanRecruitMilitia 0  #
+500 2100 D _script town@d_CanChangeLaws 0  @
+3 3000 bounties@dlg_ShowHunter 0 #
+2 3010 #
+0 3020 @
+100 4000 bounties@dlg_ChoosePlayer 0 #
+101 4010 R _script bounties@r_PlayerChosen 1 100 #
+0 4020 @
+101 5000 None 0 #
+102 5010 D _item p PID_BOTTLE_CAPS > 999 R _script bounties@r_SetBounty 1 1000 R _script dialog@r_RemoveMoney 1 1000 #
+102 5020 D _item p PID_BOTTLE_CAPS > 4999 R _script bounties@r_SetBounty 1 5000 R _script dialog@r_RemoveMoney 1 5000 #
+102 5030 D _item p PID_BOTTLE_CAPS > 9999 R _script bounties@r_SetBounty 1 10000 R _script dialog@r_RemoveMoney 1 10000 #
+0 5040 @
+102 6000 None 0 #
+0 6010 @
+110 7000 bounties@dlg_ShowBounty 0 #
+110 7010 R _script bounties@r_ShowNextBounty 1 111 #
+0 7020 @
+111 8000 None 0 #
+0 8010 @
+120 9000 None 0 #
+0 9010 R _script bounties@r_FetchBounty 1 1 @
+121 10000 None 0 #
+0 10010 @
+201 11000 None 0 #
+202 11010 #
+2 11020 @
+5 12000 None 0 @
+6 13000 None 0 #
+7 13010 #
+2 13020 #
+0 13030 @
+7 14000 None 0 #
+8 14010 #
+2 14020 @
+8 15000 None 0 #
+9 15010 #
+2 15020 #
+0 15030 #
+201 15040 @
+9 16000 None 0 #
+2 16010 #
+0 16020 @
+4 17000 None 0 #
+10 17010 @
+10 18000 None 0 #
+11 18010 @
+11 19000 None 0 #
+12 19010 @
+12 20000 None 0 #
+13 20010 #
+0 20020 @
+13 21000 None 0 #
+2 21010 #
+0 21020 @
+50 22000 town@dlg_ShowMilitiaCost 0 #
+50 22010 R _script town@r_RecruitMilitia 0  #
+2 22020 @
+202 23000 None 0 #
+2 23010 #
+0 23020 D _param p SK_SCIENCE > 80 #
+0 23030 @
+302 24000 None 0 #
+0 24010 #
+130 24020 D _script town@d_MembersAlmost 1 1 R _script town@r_TakeoverCheck 1 0 @
+301 25000 None 0 #
+0 25010 #
+130 25020 D _script town@d_PresentAlmost 1 1 R _script town@r_TakeoverCheck 1 0 @
+130 26000 None 0 #
+0 26010 #
+65507 26020 @
+310 27000 None 0 #
+0 27010 R _script town@r_GainControl 1 0 #
+0 27020 @
+320 28000 None 0 #
+0 28010 R _script town@r_GainControl 1 0 #
+0 28020 @
+220 29000 None 0 #
+2 29010 @
+500 30000 town@dlg_ShowPolicies 0 #
+500 30010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 30020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 30030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 30040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 30050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 30060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+2 30070 @
+410 31000 None 0 #
+0 31010 @
+420 32000 None 0 #
+0 32010 @
+430 33000 None 0 #
+0 33010 @
+440 34000 None 0 @
+450 35000 None 0 #
+0 35010 @
+330 36000 None 0 &
+
+[engl]
+{100}{}{Sheriff}
+{200}{}{You see a strong black man.}
+{210}{}{You see Earl Marion, Redding Sheriff.}
+{210}{}{You see a powerfully built man looking at you intently.}
+{1000}{}{Predialogue installations}
+{1010}{}{info}
+{1020}{}{default}
+{1030}{}{Idiot}
+{1040}{}{New}
+{2000}{}{What can Sheriff Marion do for you?}
+{2010}{}{I want to place a bounty on someone's head. Think you can set me up? *DEV NOTE: Deactivated for now*}
+{2020}{}{What bounties are currently on offer? *DEV NOTE: Deactivated for now*}
+{2030}{}{I'm here to claim a bounty, Sheriff. *DEV NOTE: Deactivated for now*}
+{2040}{}{What's going on in town, Sheriff?}
+{2050}{}{What do you do as Sheriff?}
+{2060}{}{How about give me and my team an honest job? Hard to make a straight living in the wastes.}
+{2070}{}{How about the promised booze and smokes?}
+{2080}{}{I won't make any trouble. I was just leaving. Goodbye.}
+{2090}{}{We need some volunteers to secure the town.}
+{2100}{}{Let's discuss the law a little.}
+{3000}{}{Hi there, I've got some good news for you. The bounty you set on @lex bountee@ was claimed by @lex hunter@. Poor bastard is six feet under by now. Or less, bounty hunters don't dig deep graves.}
+{3010}{}{Glad they got what was coming to them. I've got a few other questions.}
+{3020}{}{Great, I gotta go}
+{4000}{}{You bet we can. Who's the poor corpse-to-be?}
+{4010}{}{[continue]}
+{4020}{}{[Leave] I've changed my mind}
+{5000}{}{And how much are you willing to pay to put this person in the ground?}
+{5010}{}{$1,000.}
+{5020}{}{$5,000.}
+{5030}{}{$10,000.}
+{5040}{}{Nevermind.}
+{6000}{}{Okay, just hand me the cash, and... (he fills out some forms). Yep, that's all set up. Check back later, I'll tell you if someone's claimed it by then.}
+{6010}{}{Farewell.}
+{7000}{}{There's $@lex bounty@ for @lex player@.}
+{7010}{}{More}
+{7020}{}{Leave}
+{8000}{}{Sorry pal, there aren't any bounties set now.}
+{8010}{}{Dang.}
+{9000}{}{Good work, you're a natural. Here's the cash.}
+{9010}{}{It was a pleasure.}
+{10000}{}{Sorry, there's no bounty for 'em. I can't pay you. Maybe someone already claimed it.}
+{10010}{}{Argh!}
+{11000}{}{Where do you think? New Reno. They keep this town awash with booze and chems If you want to know more, just ask the caravan drivers.}
+{11010}{}{The Mordinos are responsible for most of Redding's Jet?}
+{11020}{}{What a dang shame. I've got some other questions.}
+{12000}{}{You're about a taco short of a combination plate.@@No hand-outs here. Now git!@@Move along, little doggy.@@Move along.}
+{13000}{}{Howdy there. My name's Earl Marion. I'm the Sheriff in these here parts. Sounds downright picturesque, don't it? Well, that's my job.}
+{13010}{}{As the Sheriff, what do you do here in town?}
+{13020}{}{I just had a couple questions, Sheriff.}
+{13030}{}{I won't make any trouble. I was just leaving. Goodbye.}
+{14000}{}{Keep the peace, mostly. Stop them miners for tearing each other's damn heads off, keep folks from hassling Doc Johnson for their daily jet, and rally a defense when them raiders get greedy.}
+{14010}{}{Who's Doc Johnson?}
+{14020}{}{Sounds like tough work. I've got a couple questions, though.}
+{15000}{}{Good ole Painless Doc Johnson's our town doc. You have a toothache or a broken bone, he'll set you to right. He also sells medicine. All kinds of medicine, if you get my drift. For *whatever* ails ya.}
+{15010}{}{Sounds like a helpful guy to have around. Where is he here in town?}
+{15020}{}{Interesting. Let me ask you something else, Sheriff Marion.}
+{15030}{}{Thanks. I'll see you around. Goodbye.}
+{15040}{}{Where does this town's jet come from, anyway?}
+{16000}{}{The Doc's office is at the west end of downtown here. He's just about always happy to see new patients.}
+{16010}{}{I see. Let me ask you something else.}
+{16020}{}{Maybe I'll go visit with him for a while. Goodbye, Sheriff.}
+{17000}{}{Well we're getting all kinds of external pressures, as always. Keeps a man up at night, worrying about Redding's future.}
+{17010}{}{Redding's future? What do you mean?}
+{18000}{}{Sure. Redding can't stand alone forever. At some point we're going to need a friend. I just want to make sure we've got a friend when we need one. The *right* friend.}
+{18010}{}{There are wrong friends?}
+{19000}{}{You bet there are. New Reno would just gut Redding for our gold, and Vault City would keep us as second class citizens rather than make us real partners.}
+{19010}{}{You think the NCR would be different?}
+{20000}{}{I know it would be. The NCR is the future of the wastes. Working together for a bigger tomorrow. Just like their posters say. They want us to join them, not submit to them.}
+{20010}{}{I see. How can you influence Redding, though?}
+{20020}{}{Everyone's got an angle, all right. Goodbye, Sheriff.}
+{21000}{}{Well, the time's not right yet for a real move. But I let people know who they'll be able to count on when push comes to shove. That's enough…for now.}
+{21010}{}{Interesting. Let me ask you something else.}
+{21020}{}{Hmm, something to think about, anyhow. Goodbye.}
+{22000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{22010}{}{Sounds good, here's @lex cost@ caps.}
+{22020}{}{Nah, I think we're doing fine as it is now.}
+{23000}{}{Yeah, they got themselves whole teams of science types to whip up batches of jet ever since that kid working for 'em up and disappeared. You'd have to be stupid to give up such a sweet gig.}
+{23010}{}{Pretty stupid. I got a couple questions.}
+{23020}{}{Maybe they can use someone with my expertise... uh, bye Sheriff.}
+{23030}{}{I guess those science guys are useful for something. Bye Sheriff.}
+{24000}{}{I can sympathise, but we've got big problems here in Redding, and we'd need a bigger team than yours to help us handle them.}
+{24010}{}{I see.}
+{24020}{}{I don't see your team any place, Marion. But you're enough to be in charge around here on your own, right? Well so am I! We're not your regular chumps with guns, we're the elite models.}
+{25000}{}{Hmmm..[scratches chin.] There might be something. Go round up all your boys so I can get a good look at you.}
+{25010}{}{Alright, I'll come back with more of my gang.}
+{25020}{}{This is all you need right here. Take a good look. Don't you see the essence of pure bad-assery dripping from our perfect forms?}
+{26000}{}{[A deep, sincere and unplanned frown spreads across Marion's face.] Look...no.  Just no. I think you got the wrong idea about this job, son.}
+{26010}{}{Right. Sorry.}
+{26020}{}{You're not my dad, dickhead. If you were, I wouldn't be about to kill you.}
+{27000}{}{You bet. Well, I'm proud that you want to do some good out here, so I can give you work: help me uphold the law here in Redding, and I'll help you stay in booze and smokes. No fighting, no shooting, no killing, and no cussing. Alright?}
+{27010}{}{You've got yourself a deal, Marion.}
+{27020}{}{No cussing? Fuck that! I'm outta here.}
+{28000}{}{[Breathes in slowly, thinking what you said over and studying you.] Alright, you got yourself a deal: help me uphold the law here in Redding, and I'll help you stay in booze and smokes. No fighting, no shooting, no killing, and no cussing. Alright?}
+{28010}{}{You've got yourself a deal, Marion.}
+{28020}{}{No cussing? Fuck that! I'm outta here.}
+{29000}{}{Visit the nearby room and check the locker there.}
+{29010}{}{I will, Sheriff.}
+{30000}{}{Here's the current laws in Redding:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{30010}{}{I want it to be legal to carry weapons openly.}
+{30020}{}{I want it to be illegal to carry weapons openly.}
+{30030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{30040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{30050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{30060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{30070}{}{Ok, looks good.}
+{31000}{}{Alright, there you go.}
+{31010}{}{Right.}
+{32000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{32010}{}{Ok.}
+{33000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{33010}{}{Yeah, yeah...}
+{34000}{}{Error. Report this.}
+{35000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{35010}{}{Uh, sure!}
+{36000}{}{Guards, get those retards!}
+

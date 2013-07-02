@@ -1,0 +1,351 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions.fos
+//
+
+#include "_macros.fos"
+#include "backend_h.fos"
+#define __FACTIONS_MODULE__
+#include "factions_h.fos"
+#include "factions_bases_h.fos"
+
+// lure old functionality into new module
+#include "faction_data.fos"
+
+#include "logging_h.fos"
+
+#define UPDATE_FACTIONS_INTERVAL    (2000)
+
+// "faction name" -> idx
+// string -> int
+dictionary NameIndices;
+// faction id -> idx (in hoping lookup times would be optimal)
+dictionary IdIndices;
+
+// the above indices point us to following array:
+array<IFaction@> Factions;
+// and this is the id number of last faction in that array
+int              LastId;
+
+// some switches helping us to orchestrate this async fest
+bool GettingFactions = false; // factions documents retrieval in progress
+
+// ok, basic Faction info is here
+class Faction : IFaction
+{
+    int    id;
+    string name;
+    string database;
+
+    // number describing last change in database
+    int update_seq;
+
+    // underlying FactionData object - used till we scrap it in favor of external db
+    FactionData@ data;
+
+    Faction(int id, const string &name, const string &database_name, int update_seq)
+    {
+        this.id = id;
+        this.name = name;
+        this.database = database_name;
+        this.update_seq = update_seq;
+        @this.data = null;
+    }
+
+    int    get_Id() const       { return this.id; }
+    string get_Name() const     { return this.name; }
+    int    get_StringId() const { return this.data.stringId; }
+    string get_Database() const { return this.database; }
+    // int get_UpdateSeq() const { return this.update_seq; }
+    // void set_UpdateSeq(int val) { this.update_seq = val; }
+    int  get_UpdateSeq() const  { return this.data.update_seq; }
+    void set_UpdateSeq(int val) { this.data.update_seq = val; }
+
+    int GetRank(int cr_id) const
+    {
+        GameVar@ var = GetUnicumVar(UVAR_faction_rank, cr_id, this.id);
+        if(!valid(var))
+            return(RANK_UNKNOWN);
+        else
+            return var.GetValue();
+    }
+    void SetRank(int cr_id, int rank)
+    {
+        GameVar@ var = GetUnicumVar(UVAR_faction_rank, cr_id, this.id);
+        var = rank;
+    }
+    int GetStatus(int cr_id) const
+    {
+        GameVar@ var = GetUnicumVar(UVAR_faction_status, cr_id, this.id);
+        if(!valid(var))
+            return(STATUS_UNKNOWN);
+        else
+            return var.GetValue();
+    }
+    void SetStatus(int cr_id, int status)
+    {
+        GameVar@ var = GetUnicumVar(UVAR_faction_status, cr_id, this.id);
+        var = status;
+    }
+
+    int GetMembers(array<uint>& members) const
+    {
+        return data.GetMembers(members);
+    }
+    int GetRecords(array<uint>& records) const
+    {
+        return data.GetRecords(records);
+    }
+
+    void AddKnownFaction(int faction_id)
+    {
+        data.AddFaction(faction_id);
+    }
+    int GetKnownFactions(array<int>& factions) const
+    {
+        return data.GetFactions(factions);
+    }
+
+    void Remove()
+    {
+        // clear data from members
+        array<uint> members;
+        data.GetMembers(members);
+        for(uint i = 0, j = members.length(); i < j; i++)
+            ExpelMember(id, members[i]);
+        data.RemoveData();
+    }
+};
+
+//////////////////
+
+IFaction@ GetFaction(int id)
+{
+    int idx = 0;
+    if(IdIndices.get("" + id, idx))
+        return Factions[idx];
+    else
+        return null;
+}
+IFaction@ GetFaction(const string& name)
+{
+    int idx = 0;
+    if(NameIndices.get(name, idx))
+        return Factions[idx];
+    else
+        return null;
+}
+IFaction@ GetFactionByIdx(int idx)
+{
+    if(idx < 0 || idx > int(Factions.length() - 1))
+        return(null);
+    else
+        return(Factions[idx]);
+}
+void AddFaction(IFaction& faction)
+{
+    Factions.resize(Factions.length() + 1);
+    int idx = Factions.length() - 1;
+    @Factions[idx] = faction;
+    NameIndices.set(faction.Name, idx);
+    IdIndices.set("" + faction.Id, idx);
+    FLog(LOG_FACTIONS, "Added faction: " + faction.Name + "(" + faction.Id + ", " + faction.Database + ", " + faction.UpdateSeq + ")");
+}
+/**
+ * Removes faction with given id.
+ */
+bool RemoveFaction(uint faction_id)
+{
+    IFaction@ faction = GetFaction(faction_id);
+    if(!valid(faction))
+        return false;
+    faction.Remove();
+    int idx;
+    NameIndices.get(faction.Name, idx);
+    NameIndices.delete(faction.Name);
+    IdIndices.delete(faction.Name);
+    Factions.removeAt(idx);
+    return RebuildList();
+}
+
+/**
+ * For other modules willing to work with/sniff all factions.
+ */
+
+uint GetFactionsCount()
+{
+    return(Factions.length());
+}
+
+// Initializes last faction id, fetches factions from 'factions' view
+// which has to contain 'id' field
+void InitFactions()
+{
+    InitFactionData();
+}
+
+/**
+ * Initialize FactionData objects
+ */
+void InitFactionData()
+{
+    InitFactionsNames();
+
+    WLog("factions", "### Initializing faction data objects ###");
+
+    Serializator@ list = @Serializator();
+
+    if(list.Load("FactionsList"))
+    {
+        // read names of registered factions
+        string name;
+        for(uint i = 0; i < FACTION_COUNT; i++)
+        {
+            @list = list.Get(name);
+            int id = -1;
+            list.Get(id);
+
+            WLog("factions", "DEBUG: faction " + i + ": '" + name + "'");
+            if(name == "" || id == -1)
+                continue;
+            else // read faction
+            {
+                if(IsAnyData("Faction: " + name))
+                {
+                    WLog("factions", "Faction: " + name);
+                    Faction@ faction = Faction(id, name, "", 0);
+                    @faction.data = FactionData(name);
+                    AddFaction(faction);
+                    /*if(Databases[i].IsPlayerDriven()) // todo: fixme!
+                       {
+                            // check garbaging
+                            uint lastUsed = Databases[i].GetLastUsed();
+                            if(i >= FACTION_PLAYER_START && lastUsed < ELAPSED_TIME && ELAPSED_TIME- lastUsed > __FactionGarbagerTime)
+                            {
+                                    Log("Faction garbager, removing: " + Databases[i].factionName);
+                                    //RemoveFaction(i);
+                            }
+                       }*/
+                }
+                else
+                {
+                    WLog("factions", "ERR: Couldn't read faction " + id + ": " + name, DEBUG_ERROR);
+                }
+            }
+        }
+    }
+
+    // two "fake" databases, used only for stringId
+    RegisterFaction(0, "Unknown", false);
+    RegisterFaction(1, "None", false);
+}
+
+// checks every faction, and if some of them got updated
+// after player was last time synchronized, we issue fetch for his
+// document at that faction
+void UpdateFactionsInfo(Critter& player)
+{
+    // check if we need to fetch potentially updated document
+    if(uint(player.Stat[ST_FACTION_UPDATE_SEQ]) < ELAPSED_TIME)
+    {
+        // player.Say(SAY_NETMSG, "UpdateFactionsInfo");
+        for(uint i = 2, j = Factions.length(); i < j; i++)           // omit 'none' and 'unknown'
+        {
+            if(valid(Factions[i]))
+            {
+                /*
+                   note - this got simplified because of lot of garbage that UVAR used
+                   have to rewrite it some time?
+                 */
+
+                IFaction@ faction = Factions[i];
+                // update bases visibility
+                UpdateBasesVisibility(faction, player);
+
+            }
+        }
+        player.StatBase[ST_FACTION_UPDATE_SEQ] = ELAPSED_TIME + REAL_SECOND(30);
+    }
+}
+// updates bases visibility info basing on players rank and status within a faction
+void UpdateBasesVisibility(IFaction@ faction, Critter& player)
+{
+    if(!valid(faction))
+        return;
+    // assert (because we still have those attributes on critter and in terminal
+    GameVar@ var = GetLocalVar(LVAR_factions_player_faction, player.Id);
+    if(player.Stat[ST_TEAM_ID] != var.GetValue())
+        FLog(LOG_FACTIONS, "Membership not in sync: " + player.Stat[ST_TEAM_ID] + " vs " + var.GetValue() + ", for: " + player.Id);
+    if(faction.Id == 0)
+        FLog(LOG_FACTIONS, "Faction with id 0: " + faction.Name);
+    array<IFactionBase@> bases;
+    uint                 num = GetFactionBases(faction.Id, bases);
+    for(uint b = 0; b < num; b++)
+    {
+        IFactionBase@ base = bases[b];
+
+        UpdateOneBaseVisibility(faction, player, base);
+    }
+}
+
+void UpdateOneBaseVisibility(IFaction@ faction, Critter& player, IFactionBase@ base)
+{
+    if(valid(base) && valid(faction))
+    {
+        // if member
+        if(player.Stat[ST_TEAM_ID] == faction.Id)
+        {
+            // check if rank allowed
+            int rank = faction.GetRank(player.Id);
+            if(base.IsRankAllowed(rank))
+                base.Show(player);
+            else
+                base.Hide(player);
+        }
+        else
+        {
+            // if not member, then maybe status allowance
+            int status = faction.GetStatus(player.Id);
+            if(base.IsStatusAllowed(status))
+                base.Show(player);
+            else
+                base.Hide(player);
+        }
+    }
+}
+
+/**
+ * Checks the integrity of faction and rank lvars with teamid. Updates if necessary.
+ */
+void UpdateGroupVars(Critter& player)
+{
+    if(!valid(player))
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_factions_player_faction, player.Id);
+    if(GetGroupIndex(player) != uint(var.GetValue()))
+        SetGroupIndex(player, uint(var.GetValue()));
+    @var = GetLocalVar(LVAR_factions_player_rank, player.Id);
+    if(GetGroupRank(player) != uint(var.GetValue()))
+        SetGroupRank(player, uint(var.GetValue()));
+}
+
+///////////////
+// Compatibility pack
+// i.e. stuff moved from faction_data only because it's not needed to remove it after factions
+// are finally reworked to external db
+///////////////
+
+/**
+ * Gets name of the faction presented as string
+ */
+bool GetFactionNameStr(uint faction_id, string& out name)
+{
+    IFaction@ faction = GetFaction(faction_id);
+    if(!valid(faction))
+        return false;
+    name = faction.Name;
+    return true;
+}

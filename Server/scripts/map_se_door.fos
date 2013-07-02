@@ -1,0 +1,83 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_se_door.fos
+//
+
+#include "_macros.fos"
+
+void _DoorInit(Item& item, bool firstTime)
+{
+    if(firstTime)
+    {
+        if(Random(0, 1) == 1)
+        {
+            item.SetEvent(ITEM_EVENT_SKILL, "_RequireCrowbar");
+            item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseCrowbar");
+        }
+        else
+        {
+            item.SetEvent(ITEM_EVENT_SKILL, "_RequireTool");
+            item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseTool");
+        }
+    }
+}
+
+bool _RequireCrowbar(Item& item, Critter& player, int skill)
+{
+    if(skill == -1)
+    {
+        if(player.CountItem(PID_CROWBAR) > 0)
+        {
+            item.SetEvent(ITEM_EVENT_SKILL, "");
+            item.SetEvent(ITEM_EVENT_USE_ON_ME, "");
+            player.Say(SAY_NETMSG, "You pry the door open with crowbar.");
+            return false;
+        }
+        player.Say(SAY_NETMSG, "The door is stuck.");
+        return true;
+
+    }
+    return false;
+}
+bool _UseCrowbar(Item& item, Critter& player, Item@ usedItem)
+{
+    if(valid(usedItem) && usedItem.GetProtoId() == PID_CROWBAR)
+    {
+        player.Say(SAY_NETMSG, "You pry the door open with crowbar.");
+        item.LockerOpen();
+        item.SetEvent(ITEM_EVENT_SKILL, "");
+        item.SetEvent(ITEM_EVENT_USE_ON_ME, "");
+        return true;
+    }
+    return false;
+}
+
+bool _RequireTool(Item& item, Critter& player, int skill)
+{
+    if(skill == -1)
+    {
+        if(player.CountItem(PID_MULTI_TOOL) > 0)
+        {
+            item.SetEvent(ITEM_EVENT_SKILL, "");
+            item.SetEvent(ITEM_EVENT_USE_ON_ME, "");
+            player.Say(SAY_NETMSG, "You get rid of the jammed lock with tool.");
+            return false;
+        }
+        player.Say(SAY_NETMSG, "The lock seems to be jammed.");
+        return true;
+    }
+    return false;
+}
+bool _UseTool(Item& item, Critter& player, Item@ usedItem)
+{
+    if(valid(usedItem) && usedItem.GetProtoId() == PID_MULTI_TOOL)
+    {
+        player.Say(SAY_NETMSG, "You get rid of the jammed lock with tool.");
+        item.SetEvent(ITEM_EVENT_SKILL, "");
+        item.SetEvent(ITEM_EVENT_USE_ON_ME, "");
+        return true;
+    }
+    return false;
+}

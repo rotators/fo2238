@@ -1,0 +1,32 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_planes_h.fos
+//
+
+// instead of importing functions from npc_planes module and scatter them throughout the codebase
+// just include this file. Should be easier if some function will change
+
+#ifndef __NPC_PLANES_H__
+#define __NPC_PLANES_H__
+#include "_defines.fos"
+
+import bool AddMiscPlane(Critter& npc, uint priority, uint waitMinute, string@ funcName) from "npc_planes";
+import bool AddMiscPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint waitSecond, string@ funcName) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, uint critId, int minHp) from "npc_planes";
+import bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint16 protoId, uint useItemId, bool toOpen) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen) from "npc_planes";
+import bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen, bool run) from "npc_planes";
+import bool AddHealCritterPlane(Critter& npc, uint priority, Critter@ target, bool run) from "npc_planes";
+import bool AddDoctorCritterPlane(Critter& npc, uint priority, Critter@ target, bool run) from "npc_planes";
+// import bool AddPushCritterPlane(Critter& npc, uint priority, Critter@ target, bool run) from "npc_planes";
+import uint EraseAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";
+import uint EraseAttackPlane(Critter& npc, uint priority, uint critId) from "npc_planes";
+#endif

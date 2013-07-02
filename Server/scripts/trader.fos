@@ -1,0 +1,1057 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// trader.fos
+//
+
+//
+// Generic trader script
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "trader_h.fos"
+#include "utils_h.fos"
+
+import void InjectValue(uint x, uint y, uint amount, uint from) from "worldmap";
+
+// Send relevant prices to client
+bool _OnBarter(Critter& cr, Critter& player, bool attach, uint barterCount)
+{
+    if(!attach)
+        return false;
+
+    /*int[] data;
+       int[] ammo; // additional ammo array that will be appended on the end
+       Item@[] items;
+       uint itemCount = cr.GetItems(SLOT_INV, items);
+        uint pitemCount = player.GetItems(SLOT_INV, items);
+
+       itemCount+= pitemCount;
+
+       for(uint i = 0; i < itemCount; i++)
+       {
+                if(items[i].GetProtoId() == PID_BOTTLE_CAPS)
+                        continue;
+
+                bool found = false;
+                for(uint j = 0, k = data.length(); j < k; j+=2)
+                {
+                        if(data[j] == items[i].GetProtoId())
+                        {
+                                found = true;
+                                break;
+                        }
+                }
+                if(!found)
+                {
+                        uint idx = data.length();
+                        data.resize(data.length()+2);
+                        data[idx] = items[i].GetProtoId();
+                        data[idx+1] = items[i].Proto.Cost;
+                        DLog("Price of PID " + data[idx] + ": " + data[idx+1]);
+                }
+
+                // if trader has a weapon with no ammo for example, and player has same weapon with some ammo, the weapon with no ammo is already found, problem is that when it searched the first gun,
+                // it didn't contain ammo, so it didn't send ammo price and blocks all other item of same type.
+                // that's why code needs to be here
+                if (items[i].GetType() == ITEM_TYPE_WEAPON && items[i].AmmoPid>0 && items[i].AmmoPid!=65535)
+        {
+            DLog("AmmoPid: " + items[i].AmmoPid);
+            found = false;
+            for(uint j = 0, k = ammo.length(); j < k; j+=2)
+            {
+                if(ammo[j] == items[i].AmmoPid)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found)
+            {
+                uint idx = ammo.length();
+                ammo.resize(ammo.length()+2);
+                ammo[idx] = items[i].AmmoPid;
+                ammo[idx+1] = BaseItemValue(items[i].AmmoPid, false);
+            }
+        }
+
+       }
+        DLog("Prepared: " + data.length()/2 + " item prices and " + ammo.length()/2 + " ammo prices.");
+        // concatenate arrays
+        append_array(data, ammo);*/
+
+    DLog("buymod: " + GetItemBuyModifier(player, cr));
+    DLog("sellmod: " + GetItemSellModifier(player, cr));
+
+    DLog("Sending barter prices to client");
+    player.RunClientScript("_BarterInit", GetItemBuyModifier(player, cr), GetItemSellModifier(player, cr), 0, "", null /*data*/);
+    player.RunClientScript("_BarterTraderLevels", 0, 0, 0, "", GetTraderLevels(cr));
+    return true;
+}
+
+/*void critter_init(Critter& npc, bool firstTime)
+   {
+        uint dummy;
+        if(MapType(npc.Stat[ST_NPC_ROLE], null, dummy))
+        {
+                _CritSetMode(npc,MODE_NO_STEAL);
+                _CritUnsetMode(npc, MODE_NO_BARTER);
+                _CritSetExtMode(npc, MODE_EXT_TRADER);
+
+                npc.SetEvent(CRITTER_EVENT_BARTER, "_OnBarter");
+
+                npc.SetBagRefreshTime(50000);
+                int bag_bug = npc.GetBagRefreshTime();
+
+                npc.SkillBase[SK_BARTER] = 50;
+
+                CreateTimeEvent(AFTER(TRADER_UPDATE_TIME), "e_Update", npc.Id, false);
+        }
+        else
+        {
+                Log("ERR: Npc is not a trader, please change script.");
+                _CritSetMode(npc, MODE_NO_BARTER);
+                _CritUnsetExtMode(npc, MODE_EXT_TRADER);
+        }
+   }
+ */
+
+
+/**
+ * Updates trader inventory.
+ */
+uint e_Update(array<uint>@ values)
+{
+    // _TIMEBEGIN;
+    Critter@ npc = GetCritter(values[0]);
+    if(!valid(npc))
+        return 0;
+
+    file f;
+    f.open("logs/traders.log", "a");
+    f.writeString(GetCurrentDateTimeString() + "> Updating trader: " + GetScriptName(npc.GetScriptId()) + "\n");
+
+    array<Item@> items;
+    uint         totalValue = 0;
+    // removing old items (new way)
+    uint         num = npc.GetItems(SLOT_INV, items);
+    #ifdef __DEBUG__
+    uint         v = 0;
+    for(uint i = 0; i < num; i++)
+        v += BaseItemValue(items[i]);
+    npc.Say(SAY_NORM, "pre: " + v);
+    #endif
+
+    array<int> tvalues;
+    tvalues.resize(ITEMTYPE_MAX * 3);
+    for(uint i = 0, j = tvalues.length(); i < j; i++)
+        tvalues[i] = TraderCapacity(npc, i / 3, i % 3 + 1);
+
+    array<uint> deleted;
+    array<uint> deleted_counts;
+    for(uint i = 0; i < num; i++)
+    {
+        if(items[i].GetProtoId() == PID_BOTTLE_CAPS)
+            continue;
+
+        // average one day per trader's level for that item
+        int time = GetTraderLevel(npc, TradingItemType(items[i])) * REAL_DAY(1);
+        #ifdef __DEBUG__
+        time = GetTraderLevel(npc, TradingItemType(items[i])) * REAL_MINUTE(1);
+        #endif
+        if(Random(0, time / AVG_UPDATE_TIME) == 0)
+        {
+            deleted.insertLast(items[i].GetProtoId());
+            deleted_counts.insertLast(MAX(1, items[i].GetCount()));
+            DeleteItem(items[i]);
+        }
+        else
+        {
+            int val = BaseItemValue(items[i]);
+            tvalues[TradingItemType(items[i]) * 3 + ItemLevel(items[i]) - 1] -= val;
+        }
+    }
+    for(uint i = 0, j = tvalues.length(); i < j; i++)
+        if(tvalues[i] < 0)
+            tvalues[i] = 0;
+
+    for(uint i = 0, j = deleted.length(); i < j; i++)
+    {
+        if(i > 0)
+            f.writeString(",");
+        f.writeString("" + deleted[i] + ":" + deleted_counts[i]);
+    }
+    f.writeString("\n");
+    for(uint i = 0, j = tvalues.length(); i < j; i++)
+    {
+        if(i > 0)
+            f.writeString(",");
+        f.writeString("" + tvalues[i]);
+    }
+    f.writeString("\n");
+    // fill in some useful items
+    array<Item@> added;
+    AddItems(npc, tvalues, added);
+    for(uint i = 0, j = added.length(); i < j; i++)
+    {
+        if(i > 0)
+            f.writeString(",");
+        f.writeString("" + added[i].GetProtoId() + ":" + MAX(1, added[i].GetCount()));
+    }
+    f.writeString("\n");
+    f.close();
+
+    #ifdef __DEBUG__
+    num = npc.GetItems(SLOT_INV, items);
+    v = 0;
+    for(uint i = 0; i < num; i++)
+        if(!items[i].IsNotValid)
+            v += BaseItemValue(items[i]);
+    npc.Say(SAY_NORM, "post: " + v);
+    #endif
+    // _TIMEEND;
+    return TRADER_UPDATE_TIME;
+}
+
+// helper
+/*void Update(Critter& npc, uint type, uint level)
+   {
+        //npc.Say(SAY_NORM, "Checking items " + type + "/" + level);
+        // get all items in trader inventory
+    array<Item@> allItems;
+    uint num = npc.GetItems(SLOT_INV, allItems);
+        if(num == 0) return;
+
+        // take only items we're interested in, sort them while building array (from cheapest to expensive)
+
+        // this will be total value of those items
+        uint totalValue = 0;
+        uint itemsSize=0;
+        for(uint i = 0; i < num; i++) // first pass - only count items
+        {
+                if(allItems[i].GetProtoId() == PID_BOTTLE_CAPS)
+                        continue;
+
+                if(TradingItemType(allItems[i]) == type && ItemLevel(allItems[i]) == level)
+                {
+                        totalValue += BaseItemValue(allItems[i]);
+                        itemsSize++;
+                }
+        }
+
+        array<Item@> items(itemsSize); // no reallocations needed
+
+        for(uint i = 0; i < num; i++) // second pass - put them in array
+        {
+                if(allItems[i].GetProtoId() == PID_BOTTLE_CAPS)
+                        continue;
+
+                if(TradingItemType(allItems[i]) == type && ItemLevel(allItems[i]) == level)
+                        InsertItem(allItems[i], items);
+        }
+
+        if(totalValue == 0)
+                return;
+        num = items.length();
+        // now check if total value exceeds trader capacity
+        int diff = totalValue - TraderCapacity(npc, type, level);
+        //npc.Say(SAY_NORM, "Type/level diff: " + diff);
+        // remove items if level is exceeding capacity, starting from cheapest ones
+        uint i = 0;
+        while(diff > 0)
+        {
+                //npc.Say(SAY_NORM, "Removing exceeding item with price: " + BaseItemValue(items[i]));
+                diff -= BaseItemValue(items[i]);
+                npc.AddItem(PID_BOTTLE_CAPS, BaseItemValue(items[i]));
+                DeleteItem(items[i++]);
+        }
+   }
+
+   // another helper, sorts items price-wise as they're inserted
+   void InsertItem(Item@ item, array<Item@>& items)
+   {
+        item.Val0=BaseSingleItemValue(item);
+        for(uint i = items.length()-1; i > 0; i--)
+        {
+                if(item.Val0 >= items[i-1].Val0)
+                {
+                        @items[i] = item;
+                        return;
+                }
+                else
+                        @items[i] = @items[i-1];
+        }
+        @items[0] = item;
+   }*/
+
+import void SetTraderLevels(Critter@ npc, array<uint>& levels) from "economy";
+
+void _DenFlick(Critter& npc, bool firstTime)   // junkie house, general and weapons
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* DenFlick */ uint[] levels =
+    {
+        1, 1, 0, 1, 1, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 65;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _DenFrank(Critter& npc, bool firstTime)   // the hole man? drugs, general
+{
+    /* DenFrank */ uint[] levels =
+    {
+        0, 0, 0, 0, 0, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 50;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _DenMom(Critter& npc, bool firstTime)   // Mom's, general
+{
+    /* DenMom */ uint[] levels = { 0, 0, 0, 0, 0, 1, 1 };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 60;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _DenRebecca(Critter& npc, bool firstTime)   // gambling house, general
+{
+
+    /* DenRebecca */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 50;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _DenTubby(Critter& npc, bool firstTime)   // near entrance, general and weapons
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* DenTubby */ uint[] levels =
+    {
+        2, 2, 1, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 80;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _KlamathBuckner(Critter& npc, bool firstTime)   // Buckner's house, general
+{
+    //                                     1  2  3  4  5  6  A  D  A  G  M  C
+    /* KlamathBuckner */ uint[] levels =
+    {
+        1, 0, 0, 0, 0, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 40;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _ModocGrishem(Critter& npc, bool firstTime)   // near entrance, general
+{
+    //                                   1  2  3  4  5  6  A  D  A  G  M  C
+    /* ModocGrishem */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 60;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _ModocJo(Critter& npc, bool firstTime)   // JO! general, maybe weapons
+{
+    //                              1  2  3  4  5  6  A  D  A  G  M  C
+    /* ModocJo */ uint[] levels =
+    {
+        2, 0, 1, 0, 0, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 100;
+    DefaultTraderInit(npc, firstTime);
+    _CritSetMode(npc, MODE_DLG_SCRIPT_BARTER);
+}
+
+void _ModocBalthas(Critter& npc, bool firstTime)   // near well, armour
+{
+    //                                   1  2  3  4  5  6  A  D  A  G  M  C
+    /* ModocBalthas */ uint[] levels =
+    {
+        0, 0, 0, 1, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _ModocMook(Critter& npc, bool firstTime)   // maintenance center, general?
+{
+
+    /* ModocMook */ uint[] levels =
+    {
+        0, 1, 0, 0, 0, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 75;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCAmenities(Critter& npc, bool firstTime)
+{
+    /* void_VCAmenities */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 100;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCSubAmenitiesA(Critter& npc, bool firstTime)
+{
+    /* void_VCSubAmenitiesA */ uint[] levels =
+    {
+        3, 0, 0, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 120;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCSubAmenitiesB(Critter& npc, bool firstTime)
+{
+    //                                           1  2  3  4  5  6  A  D  A  G  M  C
+    /* void_VCSubAmenitiesB */ uint[] levels =
+    {
+        0, 0, 0, 2, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 140;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCHappyHarry(Critter& npc, bool firstTime)   // near main gate, general, weapons, ammo, armour
+{
+    //                                   1  2  3  4  5  6  A  D  A  G  M  C
+    /* VCHappyHarry */ uint[] levels =
+    {
+        1, 1, 1, 0, 0, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 90;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCMacRae(Critter& npc, bool firstTime)   // cassidy, general
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* VCMacRae */ uint[] levels =
+    {
+        2, 0, 0, 0, 1, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _VCDoctorAndrew(Critter& npc, bool firstTime)   // courtyard, drugs
+{
+    //                                     1  2  3  4  5  6  A  D  A  G  M  C
+    /* VCDoctorAndrew */ uint[] levels =
+    {
+        0, 0, 0, 0, 0, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _GeckoSkeeter(Critter& npc, bool firstTime)   // old reactor, general, weapons, ammo, armours, stuff
+{
+    //                                   1  2  3  4  5  6  A  D  A  G  M  C
+    /* GeckoSkeeter */ uint[] levels =
+    {
+        1, 0, 2, 0, 1, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _GeckoPercy(Critter& npc, bool firstTime)   // old reactor, general
+{
+
+    /* GeckoPercy */ uint[] levels =
+    {
+        0, 0, 0, 0, 1, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 50;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _GeckoWooz(Critter& npc, bool firstTime)   // The Harp, bartender
+{
+    //                             1  2  3  4  5  6  A  D  A  G  M  C
+    /* GeckoWooz */ uint[] levels =
+    {
+        0, 0, 0, 0, 0, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 80;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _ReddingAscorti(Critter& npc, bool firstTime)   // gambling house, general
+{
+    //                                     1  2  3  4  5  6  A  D  A  G  M  C
+    /* ReddingAscorti */ uint[] levels =
+    {
+        2, 0, 1, 0, 0, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 105;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _ReddingDocJohnson(Critter& npc, bool firstTime)   // painless at redding AND the doc in NCR! drugs
+{
+    //                                        1  2  3  4  5  6  A  D  A  G  M  C
+    /* ReddingDocJohnson */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _BrokenDocHolliday(Critter& npc, bool firstTime)   // uh, doc. drugs.
+{
+    //                                        1  2  3  4  5  6  A  D  A  G  M  C
+    /* BrokenDocHolliday */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _BrokenLiz(Critter& npc, bool firstTime)   // northern trader, general, armour, weapon
+{
+
+    /* BrokenLiz */ uint[] levels =
+    {
+        2, 1, 0, 2, 0, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _BrokenPhil(Critter& npc, bool firstTime)   // ghoul bartender, general, drugs
+{
+
+    /* BrokenPhil */ uint[] levels =
+    {
+        0, 0, 0, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 50;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _BrokenBill(Critter& npc, bool firstTime)   // central trader, general, armour, weapon
+{
+
+    /* BrokenBill */ uint[] levels =
+    {
+        2, 1, 2, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 110;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _BrokenJacob(Critter& npc, bool firstTime)   // southern trader, general, drugs
+{
+    //                                  1  2  3  4  5  6  A  D  A  G  M  C
+    /* BrokenJacob */ uint[] levels =
+    {
+        0, 0, 0, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 80;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _RenoJules(Critter& npc, bool firstTime)   // entrance guy, drugs
+{
+
+    /* RenoJules */ uint[] levels =
+    {
+        0, 0, 0, 0, 1, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 65;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _RenoEldridge(Critter& npc, bool firstTime)   // Eldridge! weapons, ammo
+{
+    //                                   1  2  3  4  5  6  A  D  A  G  M  C
+    /* RenoEldridge */ uint[] levels =
+    {
+        3, 2, 0, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 130;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _RenoRenesco(Critter& npc, bool firstTime)   // drugs, general
+{
+    //                                  1  2  3  4  5  6  A  D  A  G  M  C
+    /* RenoRenesco */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 110;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _RenoBartender(Critter& npc, bool firstTime)   // several bartenders, general
+{
+    //                                    1  2  3  4  5  6  A  D  A  G  M  C
+    /* RenoBartender */ uint[] levels =
+    {
+        0, 0, 0, 0, 1, 1, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 50;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _NCRBuster(Critter& npc, bool firstTime)   // bazaar, weapons, armours, ammo
+{
+
+    /* NCRBuster */ uint[] levels =
+    {
+        2, 2, 1, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 125;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _NCRDusty(Critter& npc, bool firstTime)   // cantina, bartender, general
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* NCRDusty */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 65;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _NCRMiria(Critter& npc, bool firstTime)   // bazaar pub bartender, general
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* NCRMiria */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 65;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _NCRShaNine(Critter& npc, bool firstTime)   // bazaar trader, general
+{
+
+    /* NCRShaNine */ uint[] levels =
+    {
+        1, 0, 0, 2, 0, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 90;
+    DefaultTraderInit(npc, firstTime);
+}
+
+
+void _SFChiang(Critter& npc, bool firstTime)   // two main traders. weapons, armour, drugs, ammo
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* SFChiang */ uint[] levels =
+    {
+        3, 0, 2, 0, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 160;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _SFDrFung(Critter& npc, bool firstTime)   // dr. drugs
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* SFDrFung */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 100;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _SFJenny(Critter& npc, bool firstTime)   // tanker trader. guns, general, ammo?
+{
+    //                              1  2  3  4  5  6  A  D  A  G  M  C
+    /* SFJenny */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 1, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 125;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _SFKarl(Critter& npc, bool firstTime)   // tanker trader, definitely guns, ammo, armour?
+{
+    //                             1  2  3  4  5  6  A  D  A  G  M  C
+    /* SFKarl */ uint[] levels =
+    {
+        0, 2, 0, 2, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 140;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _SFSlim(Critter& npc, bool firstTime)   // tanker, bar, bartender. general.
+{
+    //                             1  2  3  4  5  6  A  D  A  G  M  C
+    /* SFSlim */ uint[] levels =
+    {
+        1, 0, 0, 0, 2, 2, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 70;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Killian(Critter& npc, bool firstTime)   // darkwater's in junktown, general, maybe guns, ammo, armour etc.
+{
+    //                              1  2  3  4  5  6  A  D  A  G  M  C
+    /* Killian */ uint[] levels =
+    {
+        1, 1, 0, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 110;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Mitch(Critter& npc, bool firstTime)   // dwarf hub trader, general+stuff
+{
+    //                            1  2  3  4  5  6  A  D  A  G  M  C
+    /* Mitch */ uint[] levels =
+    {
+        1, 0, 0, 0, 2, 0, 2
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 100;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Beth(Critter& npc, bool firstTime)   // lady in hub, general, weapons, ammo
+{
+    //                           1  2  3  4  5  6  A  D  A  G  M  C
+    /* Beth */ uint[] levels =
+    {
+        0, 0, 1, 0, 1, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 120;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Jacob(Critter& npc, bool firstTime)   // old town hub, weapons, ammo
+{
+    //                            1  2  3  4  5  6  A  D  A  G  M  C
+    /* Jacob */ uint[] levels =
+    {
+        0, 2, 1, 2, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 145;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _CathShop(Critter& npc, bool firstTime)   // cathedral, general. maybe guns and armour, drugs?
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* CathShop */ uint[] levels =
+    {
+        0, 0, 2, 0, 0, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 140;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Gunsmith(Critter& npc, bool firstTime)   // audytum, weapons
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* Gunsmith */ uint[] levels =
+    {
+        2, 0, 0, 1, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 130;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Gunrunner(Critter& npc, bool firstTime)   // oh the obviousness
+{
+
+    /* Gunrunner */ uint[] levels =
+    {
+        3, 2, 2, 2, 0, 0, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 170;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _Taylor(Critter& npc, bool firstTime)   // some audytum underground guy, general?
+{
+    //                             1  2  3  4  5  6  A  D  A  G  M  C
+    /* Taylor */ uint[] levels =
+    {
+        1, 0, 0, 0, 1, 0, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 60;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _KhansArt(Critter& npc, bool firstTime)   // caravan guy from raiders base, weapons, armour, ammo
+{
+    //                               1  2  3  4  5  6  A  D  A  G  M  C
+    /* KhansArt */ uint[] levels =
+    {
+        3, 0, 0, 1, 0, 1, 1
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 110;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _KhansAugustus(Critter& npc, bool firstTime)   // bartender guy from raiders base, general, drugs
+{
+    //                                    1  2  3  4  5  6  A  D  A  G  M  C
+    /* KhansAugustus */ uint[] levels =
+    {
+        0, 0, 0, 0, 2, 2, 0
+    };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 60;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void _GasStationGordon(Critter& npc, bool firstTime)   // in the general store
+{
+    //                                        1  2  3  4  5  6  A  D  A  G  M  C
+    /* GasStationGordon */ uint[] levels = { 0,     0,      0,      0,      1,      1,      1, };
+    SetTraderLevels(npc, levels);
+    npc.SkillBase[SK_BARTER] = 80;
+    DefaultTraderInit(npc, firstTime);
+}
+
+void DefaultTraderInit(Critter& npc, bool firstTime)
+{
+    _CritSetMode(npc, MODE_NO_STEAL);
+    _CritSetMode(npc, MODE_NO_LOOT);
+    _CritSetMode(npc, MODE_NO_DROP);
+    _CritUnsetMode(npc, MODE_NO_BARTER);
+    _CritSetExtMode(npc, MODE_EXT_TRADER);
+
+    npc.SetEvent(CRITTER_EVENT_BARTER, "_OnBarter");
+
+    npc.SetBagRefreshTime(uint(-1));
+    int bag_bug = npc.GetBagRefreshTime();
+
+    // fill it with starting stuff
+    if(firstTime)
+        AddStarterItems(npc);
+
+    CreateTimeEvent(ELAPSED_TIME + TRADER_UPDATE_TIME, "e_Update", npc.Id, false);
+}
+
+// import int[] knapsack (int[] weights, int W) from "utils";
+
+void AddStarterItems(Critter@ npc) { AddItems(npc, null, null); }
+// refills the items from the lists, basing on the values needed (ideally it should use list of demanded items?)
+// tvalues - values of the items that got removed, sorted by types/levels
+void AddItems(Critter@ npc, array<int>@ tvalues, array<Item@>@ items)
+{
+    // _TIMEBEGIN;
+    array<int> levels = GetTraderLevels(npc);
+    int        caps = 0;
+    for(int type = 0; type < ITEMTYPE_MAX; type++)
+    {
+        if(levels[type] == 0 && !valid(tvalues))
+            continue;
+
+        for(int level = 1; level <= 3; level++)
+        {
+            int cap = TraderCapacity(npc, type, level);
+            if(valid(tvalues))
+            {
+                cap = tvalues[type * 3 + level - 1];
+                if(levels[type] == 0)
+                {
+                    caps += cap; // he removed some notlisted items, turn it into caps
+                    continue;
+                }
+            }
+            if(cap == 0)
+                continue;
+            // Log(""+npc.Id+","+type+","+level+" SI start for "+cap);
+            int                 tval = 0;
+            array<array<uint> > list = lists[type * 3 + level - 1];
+            int                 len = list.length();
+            if(len == 0)
+                continue;
+            array<int> vals(len);
+            for(int i = 0; i < len; i++)
+                vals[i] = MAX(1, BaseItemValue(list[i][0], true) * list[i][1]);
+
+            for(int i = 0, j = list.length(); i < j; i++)
+            {
+                int maxi = i;
+                for(int k = i; k < j; k++)
+                    if(vals[maxi] > vals[k])
+                        maxi = k;
+                if(maxi != i)
+                {
+                    array<uint> temp = list[i];
+                    list[i] = list[maxi];
+                    list[maxi] = temp;
+                    int tmp2 = vals[i];
+                    vals[i] = vals[maxi];
+                    vals[maxi] = tmp2;
+                }
+            }
+
+
+            // for (int i=0; i < len; i++) Log(""+npc.Id+","+type+","+level+" ["+i+"] "+list[i]+","+vals[i]);
+
+            int last = -1;
+            while(last < (len - 1) && (vals[last + 1] < cap))
+                last++;
+            int rnd = 0;
+            while(last >= 0)
+            {
+                rnd = Random(0, last);
+                Item@ it = npc.AddItem(list[rnd][0], list[rnd][1]);
+                if(valid(items))
+                    items.insertLast(it);
+                cap -= vals[rnd];
+                tval += vals[rnd];
+                while(last >= 0 && vals[last] > cap)
+                    last--;
+            }
+
+            // Log(""+npc.Id+","+type+","+level+" SI end with "+tval);
+        }
+    }
+    if(caps > 0)     // these caps come from not-listed items
+    {
+        Item@ it = npc.AddItem(PID_BOTTLE_CAPS, caps);
+        items.insertLast(it);
+    }
+
+    caps = npc.CountItem(PID_BOTTLE_CAPS);
+    if(caps < int(TraderMoneyCapacity(npc)))
+    {
+        Item@ it = npc.AddItem(PID_BOTTLE_CAPS, TraderMoneyCapacity(npc) - caps);
+        if(valid(items))
+            items.insertLast(it);
+    }
+    // Log(""+npc.Id+" SI end with "+TraderMoneyCapacity(npc)+" caps, barter "+npc.Skill[SK_BARTER]);
+    // uint __endZZZ=GetTick(); Log("I am being executed for a very long time! ("+(__endZZZ-__nowZZZ)+" ms)");
+}
+/*
+   void SortItemArrays()
+   {
+   for (int index = 0, lists_length = lists.length(); index < lists_length; index++)
+   {
+    //uint[] list = lists[index];
+    uint[] vals(lists[index].length());
+    for (int i=0, j=lists[index].length(); i < j; i++)
+      vals[i]=BaseItemValue(lists[index][i], true);
+
+    //for (int i=0, j=lists[index].length(); i < j; i++)
+      //Log("index "+index+" SA PRE: "+lists[index][i]+","+vals[i]);
+
+
+
+    //for (int i=0, j=lists[index].length(); i < j; i++)
+      //Log("index "+index+" SA post "+i+": "+lists[index][i]+","+vals[i]);
+
+    }
+
+    for (int i=0, j=lists[index].length(); i < j; i++)
+      Log("index "+index+" SA: "+lists[index][i]+","+vals[i]);
+
+   }
+   }
+ */
+// starting lists
+uint[][] sg1 = { { PID_10MM_PISTOL, 1 }, { PID_44_MAGNUM_REVOLVER, 1 }, { PID_DESERT_EAGLE, 1 }, { PID_9MM_MAUSER, 1 }, { PID_RED_RYDER_BB_GUN, 1 }, { PID_HUNTING_RIFLE, 1 }, { PID_TOMMY_GUN, 1 }, { PID_SHOTGUN, 1 }, { PID_SAWED_OFF_SHOTGUN, 1 }, { PID_GREASE_GUN, 1 },
+                 { PID_BBS, 50 }, { PID_44_MAGNUM_JHP, 50 }, { PID_10MM_JHP, 50 }, { PID_9MM_BALL, 50 }, { PID_SHOTGUN_SHELLS, 50 }, { PID_45_CALIBER_AMMO, 50 } };
+
+uint[][] sg2 = { { PID_14MM_PISTOL, 1 }, { PID_ASSAULT_RIFLE, 1 }, { PID_10MM_SMG, 1 }, { PID_COMBAT_SHOTGUN, 1 }, { PID_SHOTGUN_SHELLS, 50 }, { PID_5MM_JHP, 50 }, { PID_14MM_AP, 100 } };
+uint[][] sg3 = { { PID_SNIPER_RIFLE, 1 }, { PID_HK_CAWS, 1 }, { PID_223_PISTOL, 1 }, { PID_INDEPENDENT, 1 }, { PID_HK_P90C, 1 }, { PID_PANCOR_JACKHAMMER, 1 },
+                 { PID_22_AMMO, 100 }, { PID_5MM_AP, 100 }, { PID_SHOTGUN_SHELLS, 50 }, { PID_10MM_AP, 50 } };
+
+uint[][] bg1 = { { PID_FLAMER, 1 }, { PID_ROCKET_LAUNCHER, 1 }, { PID_FLAMETHROWER_FUEL, 10 }, { PID_EXPLOSIVE_ROCKET, 1 } };
+uint[][] bg2 = { { PID_5MM_AP, 100 }, { PID_ADV_SUPERBURN, 40 }, { PID_ROCKET_AP, 5 }, { PID_5MM_JHP, 50 },
+                 { PID_MINIGUN, 1 }, { PID_LIGHT_SUPPORT_WEAPON, 1 } };
+uint[][] bg3 = {};
+
+uint[][] en1 = { { PID_LASER_PISTOL, 1 }, { PID_LASER_RIFLE, 1 }, { PID_CATTLE_PROD, 1 }, { PID_SMALL_ENERGY_CELL, 50 } };
+uint[][] en2 = { { PID_PLASMA_RIFLE, 1 }, { PID_RIPPER, 1 }, { PID_PLASMA_PISTOL, 1 }, { PID_POWER_FIST, 1 }, { PID_MICRO_FUSION_CELL, 100 }, { PID_PLASMA_GRENADE, 5 } };
+uint[][] en3 = {};
+
+uint[][] arm1 = { { PID_SAND_ROBE, 1 }, { PID_LEATHER_JACKET, 1 }, { PID_LEATHER_ARMOR, 1 }, { PID_LEATHER_ARMOR_MK_II, 1 }, { PID_CURED_LEATHER_ARMOR, 1 }, { PID_GECKO_PELT, 1 }, { PID_GOLDEN_GECKO_PELT, 1 }, { PID_BRAHMIN_HIDE, 1 } };
+uint[][] arm2 = { { PID_TESLA_ARMOR, 1 }, { PID_COMBAT_ARMOR, 1 }, { PID_METAL_ARMOR, 1 }, { PID_METAL_ARMOR_MK_II, 1 } };
+uint[][] arm3 = {};
+
+uint[][] drug1 = { { PID_BUFFOUT, 1 }, { PID_MENTATS, 1 }, { PID_PSYCHO, 1 }, { PID_RADAWAY, 1 }, { PID_RAD_X, 1 } };
+uint[][] drug2 = {};
+uint[][] drug3 = {};
+
+uint[][] med1 = { { PID_STIMPAK, 1 }, { PID_SUPER_STIMPAK, 1 }, { PID_HEALING_POWDER, 1 }, { PID_ANTIDOTE, 1 } };
+uint[][] med2 = {};
+uint[][] med3 = {};
+
+uint[][] misc1 = { { PID_BRASS_KNUCKLES, 1 }, { PID_KNIFE, 10 }, { PID_SPEAR, 1 }, { PID_THROWING_KNIFE, 10 }, { PID_SLEDGEHAMMER, 1 }, { PID_ROPE, 1 }, { PID_RADIO, 1 }, { PID_GECKO_PELT, 1 }, { PID_GOLDEN_GECKO_PELT, 1 }, { PID_BRAHMIN_HIDE, 1 }, { PID_MOLOTOV_COCKTAIL, 10 },
+                   { PID_AXE, 1 }, { PID_WATERBAG_EMPTY, 1 }, { PID_SHOVEL, 1 }, { PID_RADIO, 1 }, { PID_LOCKPICKS, 1 }, { PID_LOCK, 1 }, { PID_HOLODISK, 1 } };
+uint[][] misc2 = { { PID_SUPER_SLEDGE, 1 }, { PID_FRAG_GRENADE, 5 }, { PID_SPIKED_KNUCKLES, 1 }, { PID_COMBAT_KNIFE, 1 }, { PID_RADIO, 1 }, { PID_GECKO_PELT, 1 }, { PID_GOLDEN_GECKO_PELT, 1 }, { PID_BRAHMIN_HIDE, 1 }, { PID_FRAG_GRENADE, 5 } };
+uint[][] misc3 = {};
+
+uint[][] @[] lists = { sg1, sg2, sg3, bg1, bg2, bg3, en1, en2, en3, arm1, arm2, arm3, drug1, drug2, drug3, med1, med2, med3, misc1, misc2, misc3 };

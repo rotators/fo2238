@@ -1,0 +1,510 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// bounties.fos
+//
+
+#include "_macros.fos"
+#include "lexems_h.fos"
+#include "serializator.fos"
+
+#include "bounties_h.fos"
+
+import string@ GetSafePlayerName(uint id) from "utils";
+
+//
+// Script for handling bounties and stuff
+//
+
+// it uses player.Vars to hold temporary dialog values
+
+
+// if player was bounty-hunted, his replication timeout should be longer
+// so that he feels 'punished'
+#define BOUNTIED_REPL_TIME    (REAL_MINUTE(6))     // 6 real time minutes
+
+array<IBountyRecord@> Records;
+
+//
+// Assigns the array with the record to the given npc
+// keeps id at var1
+//
+// if you don't call this function, var1 will be equal to zero, maybe this could be used for shared bounty man?
+//
+
+void InitBountyRecord(Critter& npc)
+{
+    DLog("Initializing bounty record for npc: " + npc.Id);
+    DLog("Records.length(): " + Records.length());
+    Records.insertLast(BountyRecord(npc.Id));
+    DLog("Records.length(): " + Records.length());
+    npc.StatBase[ST_VAR1] = Records.length() - 1;
+    DLog("Index in global array: " + npc.Stat[ST_VAR1]);
+}
+
+IBountyRecord@ GetRecord(Critter@ npc)
+{
+    DLog("Retrieving bounty record at index: " + npc.Stat[ST_VAR1] + ", length: " + Records.length());
+    return Records[npc.Stat[ST_VAR1]];
+}
+
+//
+// UVAR_bounty tricky tricks
+//
+
+//
+// Checks if player1 knows about bounty for player2
+//
+bool PlayerKnowsAboutBounty(uint player1Id, uint player2Id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, player1Id, player2Id);
+    if(var.GetValue() == 0)
+    {
+        DLog(GetSafePlayerName(player1Id) + " doesn't know about bounty for " + GetSafePlayerName(player2Id));
+    }
+    else
+        DLog(GetSafePlayerName(player1Id) + " knows about bounty for " + GetSafePlayerName(player2Id));
+    return var.GetValue() == 1;
+}
+
+//
+// Player get to know about specific bounty
+//
+void PlayerLearnsAboutBounty(uint player1Id, uint player2Id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, player1Id, player2Id);
+    DLog(GetSafePlayerName(player1Id) + " learns about bounty for " + GetSafePlayerName(player2Id));
+    var = 1;
+}
+
+//
+// Player don't know about specific bounty anymore
+//
+void ResetBountyKnowledge(uint player1Id, uint player2Id)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, player1Id, player2Id);
+    DLog("Reseting bounty knowledge: " + GetSafePlayerName(player1Id) + "/" + GetSafePlayerName(player2Id));
+    var = 0;
+}
+
+//
+// Remembers that player set bounty for bountee at npc
+//
+void RememberWhoSetBounty(uint npcId, uint playerId, uint bounteeId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, playerId, npcId);
+    var = bounteeId;
+    DLog("Npc remembers that " + GetSafePlayerName(playerId) + " set bounty for " + GetSafePlayerName(bounteeId));
+}
+
+//
+// Remembers that hunter claimed bounty set by player at npc
+//
+void RememberWhoClaimedBounty(uint npcId, uint hunterId, uint bounteeId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, npcId, bounteeId);
+    var = hunterId;
+    DLog("Npc remembers that " + GetSafePlayerName(hunterId) + " claimed bounty for " + GetSafePlayerName(bounteeId));
+}
+
+//
+// Gets the id of the player, that player 'orderer'
+// set the bounty for, at npc
+//
+uint GetBountee(uint npcId, uint ordererId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, ordererId, npcId);
+    return var.GetValue();
+}
+
+//
+// Clears the bounty set by player 'orderer'
+// this needs to be set when player will get the info that his bounty was fullfiled
+//
+void ClearBountee(uint npcId, uint ordererId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, ordererId, npcId);
+    DLog("Clearing bountied player: " + GetSafePlayerName(var.GetValue()) + " for " + GetSafePlayerName(ordererId));
+    var = 0;
+}
+
+//
+// Gets the id of the hunter, i.e. player that claimed the bounty for bountee
+//
+uint GetHunter(uint npcId, uint bounteeId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, npcId, bounteeId);
+    return var.GetValue();
+}
+
+//
+// Clears the info about who claimed bounty
+// this needs to be set when player will get the info that his bounty was fullfiled
+//
+void ClearHunter(uint npcId, uint bounteeId)
+{
+    GameVar@ var = GetUnicumVar(UVAR_bounty, npcId, bounteeId);
+    DLog("Clearing hunter: " + GetSafePlayerName(var.GetValue()) + " for " + GetSafePlayerName(bounteeId));
+    var = 0;
+}
+
+//
+// Check if the killer is bounty hunter
+//
+void CheckBountyHunters(Critter& cr, Critter@ killer)
+{
+    if(!valid(killer) || !cr.IsPlayer())
+        return;
+
+    DLog("Checking bounty hunting");
+    bool knows = false;
+    // check if killer, knows about bounty
+    if(PlayerKnowsAboutBounty(killer.Id, cr.Id))
+    {
+        DLog("Killer knows about bounty");
+        knows = true;
+    }
+    else
+    {
+        // or maybe someone from his team
+        array<Critter@> followers;
+        uint            num = killer.GetFollowGroup(FIND_ALL, followers);
+        if(num == 0)
+        {
+            DLog("Killer is not leader, checking team");
+            Critter@ leader = killer.GetFollowLeader();
+            if(valid(leader))
+                num = leader.GetFollowGroup(FIND_ALL, followers);
+        }
+        if(num > 0)
+            DLog("Team found, checking every team member");
+        for(uint i = 0; i < num; i++)
+        {
+            if(PlayerKnowsAboutBounty(followers[i].Id, cr.Id))
+            {
+                DLog(GetSafePlayerName(followers[i].Id) + " knows about bounty");
+                knows = true;
+                break;
+            }
+        }
+    }
+
+    if(knows)
+    {
+        Item@ ear = cr.AddItem(PID_BOUNTY_DOG_TAG, 1);
+        ear.Val5 = cr.Id;
+        SetLexem(ear, "$name", cr.Name);
+        cr.Say(SAY_NETMSG, "You've been hunted");
+        _SetTimeout(cr, TO_REPLICATION, BOUNTIED_REPL_TIME);
+    }
+}
+
+//
+// Choose the player to set bounty for, stores his id in player.Stat[ST_VAR0]
+//
+void dlg_ChoosePlayer(Critter& player, Critter@ npc, string@ name)
+{
+    if(IS_DIALOG_GENERATED(name))
+        player.StatBase[ST_VAR0] = 0;
+    if(IS_DIALOG_SAY_MODE(name))
+    {
+        uint id = GetPlayerId(name);
+        if(id == 0)
+            player.Say(SAY_DIALOG, "Wrong name");
+        else if(id == player.Id)
+            player.Say(SAY_DIALOG, "Are you out of your mind?");
+        else
+        {
+            player.Say(SAY_DIALOG, "[Press continue]");
+            player.StatBase[ST_VAR0] = id;
+        }
+    }
+}
+
+//
+// If player to set bounty is not chosen, jumps to the node specified in val(current node most likely)
+// otherwise do nothing (dialog will jump as specified in dialog file)
+//
+uint r_PlayerChosen(Critter& player, Critter@ npc, int val)
+{
+    if(player.Stat[ST_VAR0] == 0)
+        return val;
+    return 0;
+}
+
+//
+// Sets the bounty for a chosen player
+// Chosen player id is stored in player.Stat[ST_VAR0] variable
+//
+void r_SetBounty(Critter& player, Critter@ npc, int amount)
+{
+    IBountyRecord@ record = GetRecord(npc);
+    if(player.Stat[ST_VAR0] == 0)
+    {
+        Log("ERR: Player haven't been chosen in order to set bounty");
+    }
+    else
+    {
+        record.AddBounty(player.Stat[ST_VAR0], amount);
+        // player itself knows about bounty, so he can claim it itself
+        PlayerLearnsAboutBounty(player.Id, player.Stat[ST_VAR0]);
+        // remember the player who sets bounty
+        RememberWhoSetBounty(npc.Id, player.Id, player.Stat[ST_VAR0]);
+    }
+}
+
+//
+// Sets the index to be used in dlg_ShowBounty
+// (index is stored in Var0)
+// if record is empty, goes to the node specified by val
+uint r_ShowFirstBounty(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+    if(record.GetCount() == 0)
+    {
+        return val;
+    }
+    uint id, amount;
+    record.GetBounty(0, id, amount);
+    // if first bounty is set for player itself, hide it
+    if(id == player.Id)
+    {
+        if(record.GetCount() == 1)
+        {
+            return val;
+        }
+        player.StatBase[ST_VAR0] = 1;
+    }
+    else
+        player.StatBase[ST_VAR0] = 0;
+    return 0;
+}
+
+//
+// Sets the index to be used in dlg_ShowBounty
+// (index is stored in Var0)
+// if record is empty, goes to the node specified by val
+uint r_ShowNextBounty(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+    if(record.GetCount() == 0)
+    {
+        return val;
+    }
+    if(player.Stat[ST_VAR0] + 1 < int(record.GetCount()))
+    {
+        uint id, amount;
+        record.GetBounty(player.Stat[ST_VAR0] + 1, id, amount);
+        // if next bounty is on player itself, jump over it if possible
+        if(id == player.Id)
+        {
+            if(player.Stat[ST_VAR0] + 2 < int(record.GetCount()))
+                player.StatBase[ST_VAR0] += 2;
+            // otherwise do nothing
+        }
+        else
+            player.StatBase[ST_VAR0]++;
+    }
+    return 0;
+}
+
+//
+// Gets the index of the bounty to be used with record
+// and displays it, also make it so the player knows about this bounty
+//
+void dlg_ShowBounty(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    IBountyRecord@ record = GetRecord(npc);
+    uint           id = 0, amount = 0;
+    DLog("kurwa");
+    if(!record.GetBounty(player.Stat[ST_VAR0], id, amount))
+    {
+        DLog("No bounties");
+        player.Say(SAY_DIALOG, "Couldn't get bounty for index: " + player.Stat[ST_VAR0]);
+    }
+    else
+    {
+        text += "$bounty" + amount;
+        text += "$player" + GetSafePlayerName(id);
+        // set the uvar
+        PlayerLearnsAboutBounty(player.Id, id);
+    }
+}
+
+//
+// Checks if player has proof to claim bounty
+// proof has to be put in one of the hands slots
+//
+bool d_HasProof(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+
+    uint           id = 0, amount = 0;
+
+    Item@          proof = _CritGetItemHand(player);
+
+    if(!valid(proof))
+        return false;
+
+    return proof.GetProtoId() == PID_BOUNTY_DOG_TAG;
+}
+
+//
+// Checks if the proof player helds, can be paid off
+// goes to the node specified by val if not
+// Removes proof
+// stores id of the bountied player at player.Stat[ST_VAR0]
+//
+uint r_CheckBounty(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+
+    uint           id = 0, amount = 0;
+
+    Item@          proof = _CritGetItemHand(player);
+
+    // proto has to be checked before!!!
+
+    DLog("record.GetCount(): " + record.GetCount());
+    for(uint i = 0; i < record.GetCount(); i++)
+    {
+        record.GetBounty(i, id, amount);
+        DLog("proof.Val5: " + proof.Val5 + ", id: " + id);
+        if(uint(proof.Val5) == id)
+        {
+            // ok
+            player.StatBase[ST_VAR0] = id;
+            // remove item
+            DeleteItem(proof);
+            return 0;
+        }
+    }
+    // go to "I want pay you node"
+    return val;
+}
+
+//
+// Fetch teh bounty for player at index stored at player.Stat[ST_VAR0]
+//
+void r_FetchBounty(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+
+    uint           amount = record.FetchBounty(player.Stat[ST_VAR0]);
+    if(amount == 0)
+    {
+        Log("ERR: No bounty to fetch");
+        return;
+    }
+    // give cash
+    player.AddItem(PID_BOTTLE_CAPS, amount);
+    // set it so that player "doesn't know about bounty for that player"
+    ResetBountyKnowledge(player.Id, player.Stat[ST_VAR0]);
+    // and so that npc has info for player who set the bounty
+    RememberWhoClaimedBounty(npc.Id, player.Id, player.Stat[ST_VAR0]);
+
+    // if it was player itself who claimed his own bounty, don't mention about it later
+
+    uint bounteeId = GetBountee(npc.Id, player.Id);
+    uint hunterId = GetHunter(npc.Id, bounteeId);
+    if(player.Id == hunterId)
+    {
+        DLog(GetSafePlayerName(player.Id) + " claimed his own bounty");
+        // clear the value that indicates our player set bounty for someone
+        ClearBountee(npc.Id, player.Id);
+        // clear the value that indicates that player x claimed that bounty
+        ClearHunter(npc.Id, bounteeId);
+    }
+}
+
+//
+// Checks if the bounty set by player was claimed, so npc can tell about it
+//
+bool d_HasInfo(Critter& player, Critter@ npc, int val)
+{
+    GameVar@ var;
+
+    DLog("Checking info");
+
+    // id of the player that our player set bounty for
+    uint bounteeId = GetBountee(npc.Id, player.Id);
+
+    if(bounteeId == 0)
+        return false;
+    else
+        DLog("Bountied player: " + GetSafePlayerName(bounteeId));
+
+    // id of the player that claimed that bounty
+    uint hunterId = GetHunter(npc.Id, bounteeId);
+
+    if(hunterId == 0)
+        return false;
+    else
+        DLog("Hunter: " + GetSafePlayerName(hunterId));
+
+    return true;
+}
+
+//
+// Fills the lexem that allows npc to say who claimed bounty that was set by player
+//
+void dlg_ShowHunter(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    GameVar@ var;
+
+    // id of the player that our player set bounty for
+    uint bounteeId = GetBountee(npc.Id, player.Id);
+
+    if(bounteeId == 0)
+    {
+        player.Say(SAY_DIALOG, "ERR: You haven't set any bounty");
+        return;
+    }
+    // id of the player that claimed that bounty
+    uint hunterId = GetHunter(npc.Id, bounteeId);
+
+    if(hunterId == 0)
+    {
+        player.Say(SAY_DIALOG, "ERR: Your bounty has not been claimed yet");
+        return;
+    }
+    text += "$bountee" + GetSafePlayerName(bounteeId);
+    text += "$hunter" + GetSafePlayerName(hunterId);
+
+    // clear the value that indicates our player set bounty for someone
+    ClearBountee(npc.Id, player.Id);
+    // clear the value that indicates that player x claimed that bounty
+    ClearHunter(npc.Id, bounteeId);
+}
+
+// debug
+void r_LogBounties(Critter& player, Critter@ npc, int val)
+{
+    IBountyRecord@ record = GetRecord(npc);
+
+    uint           id = 0, amount = 0;
+    DLog("record.GetCount(): " + record.GetCount());
+    for(uint i = 0; i < record.GetCount(); i++)
+    {
+        record.GetBounty(i, id, amount);
+        Log("id: " + id + ", amount: " + amount);
+    }
+}
+
+///////////////
+// CRITTER SCRIPT
+// If you don't need any special functionality.
+//////////////
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    InitBountyRecord(npc);
+    // InitBountyPosters(npc, npc.GetMap());
+}

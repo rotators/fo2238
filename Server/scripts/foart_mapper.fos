@@ -1,0 +1,115 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// foart_mapper.fos
+//
+
+#ifndef __FOART_MAPPER__
+#define __FOART_MAPPER__
+
+#include "_mapper_defines.fos"
+#include "_macros.fos"
+
+#include "foart_h.fos"
+
+#define CHECK_ACTIVE_MAP            \
+    # (_name_) { if(!valid(_name_)) \
+                     return ("No active map."); }
+
+// helper
+MapperMap@ FOArt_GetActiveMap()
+{
+    array<MapperMap@> maps;
+    int               cur = GetLoadedMaps(maps);
+    if(cur == -1)
+        return null;
+    return maps[cur];
+}
+
+// #foart@saveselected
+string saveselected(string arg)
+{
+    MapperMap@ map = FOArt_GetActiveMap();
+    CHECK_ACTIVE_MAP(map);
+
+    if(arg.length() == 0)
+        return("No arguments\n" +
+               "Usage: saveselected [filename]\n");
+
+    array<MapperObject@> objects;
+    uint                 count = GetSelectedObjects(objects);
+
+    if(count == 0)
+        return("Nothing selected");
+
+    FOArt@ art = NewFOArt(1, 0, true);
+
+    int16  hx = 0, hy = 0;
+    for(uint o = 0; o < count; o++)
+    {
+        uint16 pid = objects[o].ProtoId;
+        if(objects[o].MapObjType == MAP_OBJECT_CRITTER)
+            continue;
+        else if(objects[o].MapObjType == MAP_OBJECT_SCENERY)
+        {
+            // disguise scenery as an item
+            pid = 820;             /*PID_UNVISIBLE_BLOCK*/
+        }
+
+        FOArtDefinition@ def = NewFOArtDefinition(pid);
+
+        if(art.GetDefinitionsCount() == 0)
+        {
+            hx = objects[o].MapX;
+            hy = objects[o].MapY;
+            def.AddHex(0, 0);
+        }
+        else
+        {
+            def.AddHex(objects[o].MapX - hx, objects[o].MapY - hy);
+        }
+
+        // verify
+        if(objects[o].MapObjType == MAP_OBJECT_ITEM)
+        {
+            Buffer@ buff = NewBuffer();
+            if(GetProtoItem(objects[o].ProtoId).Stackable &&
+               objects[o].Item_Count > 1)
+            {
+                ~buff;
+                buff << uint32(objects[o].Item_Count);
+                def.SetAddonData(FOART_ADDON_STACK, buff);
+            }
+
+            if(objects[o].OffsetX != 0 || objects[o].OffsetY != 0)
+            {
+                ~buff;
+                buff << int16(objects[o].OffsetX);
+                buff << int16(objects[o].OffsetY);
+                def.SetAddonData(FOART_ADDON_OFFSET, buff);
+            }
+            art.AddDefinition(def);
+        }
+        else if(objects[o].MapObjType == MAP_OBJECT_SCENERY)
+        {
+            Buffer@ buff = NewBuffer();
+            buff << objects[o].PicMap;
+            buff << objects[o].PicInv;
+            def.SetAddonData(FOART_ADDON_IMAGE, buff);
+
+            ~buff;
+            buff << uint32(ITEM_ALWAYS_VIEW);               // flags to add
+            buff << uint32(ITEM_FLAT);                      // flags to remove
+            def.SetAddonData(FOART_ADDON_FLAGS, buff);
+
+            art.AddDefinition(def);
+        }
+    }
+
+    Message("Saving");
+    SaveFOArtFile(art, arg);
+
+    return("");
+}
+#endif // __FOART_MAPPER__ //

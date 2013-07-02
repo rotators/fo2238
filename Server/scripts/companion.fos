@@ -1,0 +1,390 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// companion.fos
+//
+
+#include "_ai.fos"
+#include "_entires.fos"
+#include "_macros.fos"
+#include "companion_h.fos"
+#include "entire.fos"
+#include "follower_common_h.fos"
+#include "follower_h.fos"
+#include "npc_planes_h.fos"
+#include "serializator.fos"
+#include "utils_h.fos"
+#include "logging_h.fos"
+
+/**
+ * \~english @defgroup FollowerGroup Follower
+ * Companion module. use #define DEBUG_COMPANION for debug-purposes.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+// #define DEBUG_COMPANION
+
+array<uint>  Companions;
+
+Serializator serializer;
+
+void SpawnCompanion(Critter& cr, int, int, int)
+{
+    CreateCompanion();
+}
+
+void EnumerateCompanionList(Critter& cr, int, int, int)
+{
+    for(uint i = 0; i < Companions.length(); i++)
+    {
+        Critter@ npc = GetCritter(Companions[i]);
+        if(valid(npc))
+            cr.Say(SAY_NETMSG, npc.GetMapId() + ": " + npc.HexX + "," + npc.HexY);
+    }
+}
+
+void CreateCompanion()
+{
+    Map@ map = GetMapByPid(MAP_BufferMap, 0);
+    uint type = Random(0, 4);
+    uint bag = 1;
+    uint aipack = 0;
+    if(type == COMPANION_TYPE_MELEE)
+    {
+        bag = random_from_array(companion_bags_melee);
+        aipack = AIPACKET_2238_MERC_MELEE;
+    }
+    else if(type == COMPANION_TYPE_SG)
+    {
+        bag = random_from_array(companion_bags_sg);
+        aipack = AIPACKET_2238_MERC_RANGED;
+    }
+    else if(type == COMPANION_TYPE_BG)
+    {
+        bag = random_from_array(companion_bags_bg);
+        aipack = AIPACKET_2238_MERC_RANGED;
+    }
+    else if(type == COMPANION_TYPE_ENERGY)
+    {
+        bag = random_from_array(companion_bags_energy);
+        aipack = AIPACKET_2238_MERC_RANGED;
+    }
+    else if(type == COMPANION_TYPE_THROW)
+    {
+        bag = random_from_array(companion_bags_throw);
+        aipack = AIPACKET_2238_MERC_RANGED;
+    }
+    Critter@ cr = AddNpc(map, random_from_array(companion_pids), 0, 0, 0, COMPANION_DIALOG_PRE_ID, "companion@CompanionInit", aipack, bag, 0, false, Random(1, 3));
+    GenerateNewName(cr);
+    switch(type)
+    {
+    case COMPANION_TYPE_MELEE:
+        cr.SkillBase[SK_MELEE_WEAPONS] = Random(125, 150);
+        break;
+    case COMPANION_TYPE_SG:
+        cr.SkillBase[SK_SMALL_GUNS] = Random(125, 150);
+        break;
+    case COMPANION_TYPE_BG:
+        cr.SkillBase[SK_BIG_GUNS] = Random(125, 150);
+        break;
+    case COMPANION_TYPE_ENERGY:
+        cr.SkillBase[SK_ENERGY_WEAPONS] = Random(125, 150);
+        break;
+    case COMPANION_TYPE_THROW:
+        cr.SkillBase[SK_THROWING] = Random(125, 150);
+        break;
+    default:
+        break;
+    }
+
+    for(uint i = 0; i <= ST_LUCK; i++)
+        cr.StatBase[i] = Random(1, 10);
+
+    // perks?
+
+    Companions.insertLast(cr.Id);
+    uint MapPid = random_from_array(companion_map_pids);
+    Map@ SomeMap = GetMapByPid(MapPid, 0);
+    if(!valid(SomeMap))
+    {
+        Log("Invalid map pid " + MapPid);
+    }
+
+    cr.TransitToMap(SomeMap.Id, 0);
+    if(!MoveToFreeHex(cr))
+        DeleteNpc(cr);
+    #ifdef DEBUG_COMPANION
+    DLog("Created companion with id " + cr.Id + " moving to map " + MapPid);
+    #endif
+}
+
+bool PositionTaken(uint16 hx, uint16 hy)
+{
+    for(uint i = 0; i < Companions.length(); i++)
+    {
+        Critter@ comp = GetCritter(Companions[i]);
+        if(!valid(comp))
+            continue;
+        uint   map;
+        uint16 cx;
+        uint16 cy;
+        uint8  dir;
+        cx = cy = dir = 0;
+        comp.GetHomePos(map, cx, cy, dir);
+        if(hx == cx && hy == cy)
+            return true;
+    }
+    #ifdef DEBUG_COMPANION
+    DLog("Position " + hx + "," + hy + " taken");
+    #endif
+    return false;
+}
+
+bool MoveToFreeHex(Critter& cr)
+{
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+    PutAwayItems(cr);
+
+    uint8[] entires = { 0, 1, 2, 3, 4, 5, 6 };
+    shuffle_array(entires, uint8);
+    uint8  dir;
+    uint16 x, y;
+    x = y = dir = 0;
+
+    for(uint i = 0; i < entires.length(); i++)
+    {
+        if(entires[i] == 0)
+            dir = Random(0, 5);
+        else
+            dir = entires[i] - 1;
+
+        if(GetEntireFreeHex(cr.GetMap(), ENTIRE_COMPANION + entires[i], x, y))
+        {
+            if(PositionTaken(x, y))
+                continue;
+
+            #ifdef DEBUG_COMPANION
+            DLog("Found home position " + x + "," + y + " ,walking there now.");
+            #endif
+            cr.SetHomePos(x, y, dir);
+            return true;
+        }
+    }
+    return false;
+}
+
+int _PlaneEnd(Critter& cr, NpcPlane& plane, int reason, Critter@ someCr, Item@ someItem)
+{
+    if(plane.Identifier == PLANE_GOTO_EXIT)
+    {
+        if(reason == REASON_SUCCESS)
+        {
+            cr.TransitToGlobal(false);
+            return PLANE_DISCARD;
+        }
+        // If the exit grid is blocked try to find grid close to the entire 0
+        else if(reason == REASON_HEX_BUSY_RING || reason == REASON_HEX_BUSY)
+        {
+            uint16 hx = plane.Walk_HexX;
+            uint16 hy = plane.Walk_HexY;
+            Map@   map = cr.GetMap();
+            if(valid(map) && map.GetEntireCoords(0, 0, hx, hy) && FindPreferredGridApprox(map, hx, hy))
+            {
+                plane.Walk_HexX = hx;
+                plane.Walk_HexY = hy;
+            }
+            else
+                return PLANE_DISCARD;
+        }
+    }
+    return PLANE_RUN_GLOBAL;
+}
+
+void ForceUpdate(Critter& cr, int, int, int)
+{
+    array<uint> data;
+    data.insertLast(1);
+    e_UpdateCompanions(data);
+}
+
+uint e_UpdateCompanions(array<uint>@ values)
+{
+    #ifdef DEBUG_COMPANION
+    DLog("Updating companions...");
+    #endif
+
+    if(Random(0, 2) == 0)
+        CreateCompanion();
+
+    for(uint i = 0; i < Companions.length(); i++)
+    {
+        Critter@ cr = GetCritter(Companions[i]);
+        if(!valid(cr))
+        {
+            #ifdef DEBUG_COMPANION
+            DLog(Companions[i] + " is no longer valid, removing from array.");
+            #endif
+            Companions.removeAt(i);
+        }
+        #ifdef DEBUG_COMPANION
+        else
+        {
+            DLog(Companions[i] + ":");
+            DLog("   Map Id: " + cr.GetMapId());
+            DLog("   x: " + cr.HexX);
+            DLog("	 y: "+ cr.HexY);
+        }
+        #endif
+    }
+
+    for(uint i = 0; i < Companions.length(); i++)
+    {
+        Critter@ cr = GetCritter(Companions[i]);
+        if(!valid(cr))
+            continue;
+
+        if(Random(0, 2) == 0)
+        {
+            if(cr.GetMapId() == 0)             // Enter town
+            {
+                Map@ map = GetMapByPid(random_from_array(companion_map_pids), 0);
+                cr.TransitToMap(map.Id, ENTIRE_DEFAULT);
+                #ifdef DEBUG_COMPANION
+                DLog(cr.Id + " is entering town " + map.Id);
+                #endif
+                if(!MoveToFreeHex(cr))
+                    DeleteNpc(cr);
+            }
+            else             // Leave town
+            {
+
+                uint16 hx = cr.HexX;
+                uint16 hy = cr.HexY;
+                if(FindPreferredGridApprox(cr.GetMap(), hx, hy))
+                {
+                    AddWalkPlane(cr, 60, PLANE_GOTO_EXIT, 0, hx, hy, 0xFF, false, 1);
+                    cr.SetEvent(CRITTER_EVENT_PLANE_END, "_PlaneEnd");
+                    #ifdef DEBUG_COMPANION
+                    DLog(cr.Id + " is leaving town " + cr.GetMapId() + ", walking to " + hx + "," + hy);
+                    #endif
+                }
+                else
+                {
+                    #ifdef DEBUG_COMPANION
+                    DLog(cr.Id + ": can't find any exit grid nearby on map " + cr.GetMapId());
+                    #endif
+                }
+
+            }
+        }
+    }
+    if(valid(values) && values.length() > 0 && values[0] == 1)
+        return 0;
+    return COMPANIONS_UPDATE_INTERVAL;
+}
+
+void InitCompanions()
+{
+    if(IS_FIRST_TIME)
+    {
+        for(uint i = 0; i < COMPANION_INITIAL_SPAWNS; i++)
+            CreateCompanion();
+        CreateTimeEvent(AFTER(COMPANIONS_UPDATE_INTERVAL), "e_UpdateCompanions", true);
+    }
+    else
+        LoadCompanionData();
+}
+
+void LoadCompanionData()
+{
+    serializer.Clear();
+    if(!serializer.Load("companions"))
+        return;
+    serializer.Get(Companions);
+}
+
+void SaveCompanionData()
+{
+    serializer.Clear();
+    serializer.Set(Companions).Save("companions");
+}
+
+
+void _Idle(Critter& cr)
+{
+    if(Random(0, 99) == 0)
+        MoveToFreeHex(cr);
+    else
+        cr.Wait(1000);
+}
+
+void CompanionInit(Critter& cr, bool firstTime)
+{
+    cr.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+string GetPlace(uint id)
+{
+    switch(id % 10)
+    {
+    case 0:
+        return "Den";
+    case 1:
+        return "Modoc";
+    case 2:
+        return "Redding";
+    case 3:
+        return "Klamath";
+    case 4:
+        return "Broken Hills";
+    case 5:
+        return "Gecko";
+    case 6:
+        return "Necropolis";
+    case 7:
+        return "Hub";
+    case 8:
+        return "Shady Sands";
+    case 9:
+        return "Glow";
+    default:
+        return "";
+    }
+    return "";
+}
+
+void dlg_ShowPreInfo(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$place" + GetPlace(npc.Id);
+    text += "$name" + GetStoredFirstName(npc);
+}
+
+void r_BefriendCompanion(Critter& player, Critter@ npc)
+{
+    uint index = FindInArray(Companions, npc.Id);
+    Companions.removeAt(index);
+    MakeFollower(npc, FOLLOWER_TYPE_COMPANION, "follower@FollowerBaseInit", COMPANION_DIALOG_ID, player, true);
+    npc.SetEvent(CRITTER_EVENT_FINISH, "_FinishCompanionOff");
+}
+
+void _FinishCompanionOff(Critter& cr, bool deleted)
+{
+    string str = "Hey! Mayck you remember how you wanted to see some uberhidden glitch that makes companions disapear? Well, I found it!";
+    str = str + "The companion's id was " + cr.Id + ((deleted) ? " and was deleted." : ("but wasn't deleted for some wierd reason."));
+    Map@   map = cr.GetMap();
+    if(valid(map))
+    {
+        str = str + " The map's id he was on was " + map.Id + " btw.";
+    }
+    str = str + " The master's id is " + cr.Param[FV_MASTER] + ", mode was " + cr.Param[FV_MODE] + " and attack policy " + cr.Param[FV_ATTACK_POLICY] + ". Oh, I almost forgot about loyality " + cr.Param[FV_LOYALITY] + " and respawn place " + cr.Param[FV_RESPAWN_PLACE] + " or base " + cr.Param[FV_RESPAWN_BASE_ID] + ". Well that's it... see ya.";
+    ILog("debug", str);
+}
+
+/*@}*/

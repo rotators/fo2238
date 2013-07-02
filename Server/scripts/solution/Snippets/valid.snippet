@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<CodeSnippets>
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>valid</Title>
+			<Shortcut>valid</Shortcut>
+			<Description>(AngelScript) Code snippet for handle (in)validity check</Description>
+			<Author>Atom</Author>
+			<SnippetTypes>
+				<SnippetType>Expansion</SnippetType>
+				<SnippetType>SurroundsWith</SnippetType>
+			</SnippetTypes>
+		</Header>
+		<Snippet>
+			<Declarations>
+				<Literal>
+					<ID>ptr</ID>
+					<Default>handle</Default>
+					<ToolTip>Handle to check</ToolTip>
+				</Literal>
+			</Declarations>
+			<Code Language="cpp"><![CDATA[if(!valid($ptr$)) $selected$$end$ ]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

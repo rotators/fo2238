@@ -1,0 +1,78 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+4 2010 D _param p ST_INTELLECT > 3 #
+5 2020 D _param p ST_INTELLECT < 4 #
+0 2030 D _param p ST_INTELLECT > 3 #
+0 2040 D _param p ST_INTELLECT < 4 @
+3 3000 None 0 @
+4 4000 companion@dlg_ShowPreInfo 0 #
+4 4010 R _script follower@r_TellWeaponSkill 0  #
+3 4020 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 4030 @
+5 5000 None 0 #
+0 5010 @
+11 6000 None 0 #
+3 6010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 6020 @
+12 7000 None 0 #
+3 7010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 7020 @
+13 8000 None 0 #
+3 8010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 8020 @
+14 9000 None 0 #
+3 9010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 9020 @
+15 10000 None 0 #
+3 10010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 10020 @
+16 11000 None 0 #
+3 11010 D _script follower@d_CanHaveMoreFollowers 1 1 R _script companion@r_BefriendCompanion 0  #
+0 11020 &
+
+[engl]
+{100}{}{Traveller}
+{200}{}{You see a traveller.}
+{210}{}{They seem to have been on the road a long time.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{Hi there, who are you?@@Hello there stranger.@@Who might you be?@@What do you want?@@What are you staring at?@@Excuse me, but why are you looking at me like that?@@Hey, are you looking for trouble or what?@@What are you looking for?@@Don't bother me. I've got enough of scattered thoughts already.@@What brings you here?}
+{2010}{}{My name's @pname@@@I go by the name of @pname@.@@Pleased to meet you, my name is @pname@. Hi there, who are you?@@You look like someone familiar.@@Who might you be?@@Are you new around here?}
+{2020}{}{Me name @pname@.@@Ugh... ugh @pname@@@I haved name off... @pname@@@Me name no know@@Name?@@Me like name}
+{2030}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{2040}{}{Ugh.}
+{3000}{}{Let's get out of this place.@@I'm ready to rock!@@Fine, let's go!}
+{4000}{}{Pleased to meet you, my name is @lex name@ and I'm your ordinary wastelander, looking for a little something to do, here and there.@@I just arrived from @lex place@ a while ago, not sure if I want to go back there anytime soon.}
+{4010}{}{By your look I can tell you have been in combat already. What kind of weapons are you most proficient with?}
+{4020}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{4030}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{5000}{}{Are you some kind of retard?@@You ain't so bright, are you?@@I feel sorry for you.@@You can't be fun having around...@@I'm sorry for your parents, I really am.@@Not interested.@@No retards allowed here!@@Bugger off.@@Why do I always have to deal with these idiots...@@Go somewhere else pal.}
+{5010}{}{Me no stoopid!@@Me smart!@@Me no like yoo@@Yoo stoopid!}
+{6000}{}{I prefer using my knuckles to beat the shit out of folks.}
+{6010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{6020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{7000}{}{Give me a spear or a sledgehammer and I'm happy}
+{7010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{7020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{8000}{}{I like using shotguns, pistols and assault rifles. That sort of stuff.}
+{8010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{8020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{9000}{}{There's nothing better than seeing burning foes dance! Give me flamethrower or rocket launcher and I'm sold.}
+{9010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{9020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{10000}{}{If I could, I'd rather zap my enemies with a laser pistol or something similar.}
+{10010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{10020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+{11000}{}{Do I need to tell you that I love the smell of frag granades in the morning?}
+{11010}{}{Why don't we join together?@@Band up with me!@@I think you and I could achieve a lot of great things together!}
+{11020}{}{See you later.@@Nevermind.@@Sorry to disturb you.@@Didn't mean to bother you.@@[Walk away]@@Wrong person, sorry.@@Nevermind, I thought you looked a bit like a friend@@Gotta go.@@You sound terribly uninteresting, bye.}
+

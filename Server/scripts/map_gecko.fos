@@ -1,0 +1,21 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_gecko.fos
+//
+
+#include "_macros.fos"
+#include "_town.fos"
+#include "mapdata_h.fos"
+
+import bool AddMilitia(Map@ map) from "town";
+import void SpawnInitMilitia(Map@ map) from "town";
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetData(MAP_DATA_TOWN, TOWN_GECKO);
+
+    if(firstTime)
+        SpawnInitMilitia(map);
+}

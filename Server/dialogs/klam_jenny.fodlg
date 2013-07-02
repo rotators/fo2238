@@ -1,0 +1,107 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+9 1010 D _var p sex_exp > 500 D _param p ST_GENDER = 1 D _var p klam_sally_pay > 0 #
+8 1020 D _var p sex_exp > 100 D _param p ST_GENDER = 1 D _var p klam_sally_pay > 0 #
+7 1030 D _param p ST_GENDER = 1 D _var p sex_exp < 101 D _var p klam_sally_pay > 0 #
+6 1040 D _var p sex_exp > 500 D _var p klam_sally_pay > 0 #
+5 1050 D _var p sex_exp > 100 D _var p klam_sally_pay > 0 #
+4 1060 D _var p sex_exp < 101 D _var p klam_sally_pay > 0 #
+10 1070 #
+11 1080 D _param p ST_INTELLECT < 4 @
+4 2000 None 0 #
+0 2010 R _var p klam_sally_pay = 0 @
+5 3000 None 0 #
+0 3010 R _var p klam_sally_pay = 0 @
+6 4000 None 0 #
+0 4010 R _var p klam_sally_pay = 0 @
+7 5000 None 0 #
+0 5010 R _var p klam_sally_pay = 0 @
+8 6000 None 0 #
+0 6010 R _var p klam_sally_pay = 0 @
+9 7000 None 0 #
+0 7010 R _var p klam_sally_pay = 0 @
+10 8000 None 0 #
+13 8010 #
+14 8020 #
+0 8030 @
+11 9000 None 0 #
+12 9010 @
+12 10000 None 0 #
+0 10010 @
+13 11000 None 0 #
+0 11010 @
+14 12000 None 0 #
+15 12010 #
+16 12020 #
+17 12030 #
+0 12040 @
+15 13000 None 0 #
+14 13010 #
+0 13020 @
+16 14000 None 0 #
+14 14010 #
+0 14020 @
+17 15000 None 0 #
+14 15010 #
+0 15020 &
+
+[engl]
+{100}{}{Jenny}
+{200}{}{You see an attractive, but tired, young woman.}
+{210}{}{You see Jenny, the bath attendant.}
+{1000}{}{Predialogue installations}
+{1010}{}{Sex Master Female}
+{1020}{}{Reasonable Female}
+{1030}{}{Bad Female}
+{1040}{}{Sex Master}
+{1050}{}{Reasonable}
+{1060}{}{Bad}
+{1070}{}{Generic Greetings}
+{1080}{}{Dumb}
+{2000}{}{Gee, mister, that was pretty quick. You must be pretty new at this sort of thing. Just relax a bit and you’ll enjoy it more.}
+{2010}{}{Thanks, Jenny; I guess I need some more practice at this.}
+{3000}{}{That was nice. You seem like you know your way around a woman better than most men your age.}
+{3010}{}{I’m glad that you had as much fun as I did.}
+{4000}{}{You really have a lot of staying power. That’s the nice thing about younger men. Sure wish there were more like you in town.}
+{4010}{}{I sure enjoyed that bath, Jenny. I could go for a little more if I didn’t have other things
+ that I had to do.}
+{5000}{}{Well, that was different. I hope you come back; I think I’d like to experiment with some ideas of my own next time.}
+{5010}{}{It’s nice being with someone who understands what I need for a change.}
+{6000}{}{That sure was fun. You could be a real knockout if we got you out of that stupid jumpsuit. I wouldn’t mind having you stick around for a while, sister. Ever considered a career change?}
+{6010}{}{I enjoyed myself, too. I have a lot of things to do before I could consider settling down just
+ yet. But, thanks anyway.}
+{7000}{}{That sure was fun. You could be a real knockout if we got you out of that stupid jumpsuit. I wouldn’t mind having you stick around for a while, sister. Ever considered a career change?}
+{7010}{}{I enjoyed myself, too. I have a lot of things to do before I could consider settling down just
+ yet. But, thanks anyway.}
+{8000}{}{Hello there, mister. My name's Jenny. Looking for a good scrub-down?}
+{8010}{}{Actually, I could use a bit of a rub (nudge, nudge, wink, wink).}
+{8020}{}{Well, actually, I just had a few questions that I wanted to ask you if you don’t mind.}
+{8030}{}{Uh, no thanks; I was just looking around.}
+{9000}{}{You look a little confused. My name’s Jenny; can I help you?}
+{9010}{}{Enny? Goo heh heh heh. (smile)}
+{10000}{}{Hmm, I think you just better clear out of here before Big Nose Sally finds you. She doesn’t take kindly to idjits in her place.}
+{10010}{}{Mommy?}
+{11000}{}{Well then, you better talk to Big Nose Sally. She makes all the business arrangements for us and she doesn’t take kindly to any freelance work.}
+{11010}{}{I'll go find her. Bye.}
+{12000}{}{What would you like to know?}
+{12010}{}{Tell me about trappers.}
+{12020}{}{What's the deal with that Vic guy?}
+{12030}{}{Do you happen to know how to get to the Den from here?}
+{12040}{}{Nothing. Bye.}
+{13000}{}{Well, there’s not much to tell about the trappers, really. They get a few gecko pelts...or get lucky with a few golden geckos...and then they come in to blow off some steam. Quick and not too demanding —- just the way I like ‘em.}
+{13010}{}{Interesting; let me ask you about something else.}
+{13020}{}{I guess that’s all I need to know for now.}
+{14000}{}{You’re interested in Vic, huh? He always had extra money to blow, at least when he worked he did. Then one day he upped and left, came back damn near a year later, pockets full of cash, hollering about how him and his 'boss' done saved the world. 'Course, we don't take kindly to liars in this town, so eventually he gave up on them tall tales. I feel sorry for how we treated him back then, though.}
+{14010}{}{Poor guy. Let me ask about something else.}
+{14020}{}{Well that's enough tall tales for me too, I'm out of here.}
+{15000}{}{The Den is a hive of scum and villainy southeast of here. I guess about a week or so? Don’t remember too clearly. Anyhow, it’s an exciting place. Dangerous, but exciting. Sorry to leave there,
+ in a way.}
+{15010}{}{Thanks, I had some other questions.}
+{15020}{}{Maybe I'll go check it out. See you later.}
+

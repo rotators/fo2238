@@ -1,0 +1,30 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p hub_job_waterboy { 10 D _script dialog@d_QuestTimeoutReady 0  D _var p hub_job_waterboy } 1 #
+2 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _item p PID_WATERBAG > 0 R _var p hub_job_waterboy + 1 R _script dialog@r_QuestTimeout 1 15 R _item p PID_WATERBAG_EMPTY + 1 R _item p PID_WATERBAG - 1 #
+0 3020 @
+4 4000 None 0 &
+
+[engl]
+{100}{}{Hub Farmer}
+{200}{}{You see a farmer.}
+{240}{}{You see a dead farmer.}
+{260}{}{You see a slain farmer.}
+{1000}{}{Predialogue installations}
+{1010}{}{got water job}
+{1020}{}{-}
+{2000}{}{Hi there, stranger. Like my crops?@@Good day to you!@@Nice day, isn't it?@@This soil is much healthier than it looks.@@I'm trying to save these trees and I think it's working.@@There should be a fertilizer caravan. Now there's some money.@@Come on in, there's plenty of room.@@It's a little chilly out there; have a seat.@@Farming suits me.@@Did you know plants grow better when you're nice to them?@@I wish I had a little more land.@@Did you know there used to be large bodies of drinkable water?@@I've read about rivers. I sure wish I had one next to my fields.@@I wish the days were longer; there's so much to do.}
+{3000}{}{What's up?@@Yeh?@@What?}
+{3010}{}{I've got some water for you.@@Here, some water for you.}
+{3020}{}{Nothing, bye.}
+{4000}{}{Thanks!@@Thank you.@@Great!@@About time!@@They should bring us some more water to the fields.}
+

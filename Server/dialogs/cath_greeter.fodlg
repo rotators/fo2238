@@ -1,0 +1,44 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script dialog@d_WeaponInHand 0  #
+500 1020 D _script perks@d_PerkCheck 1 335 #
+3 1030 @
+2 2000 None 0 @
+3 3000 None 0 @
+500 4000 None 0 #
+501 4010 #
+0 4020 @
+501 5000 None 0 #
+502 5010 R _param p PE_SPEAKER = 1 #
+502 5020 R _param p PE_SPEAKER = 1 #
+0 5030 @
+502 6000 None 0 #
+0 6010 &
+
+[engl]
+{100}{}{Greeter}
+{200}{}{You see the Cathedral Greeter.}
+{210}{}{He is the official greeter of the Cathedral. You wonder if they also have a hunchback somewhere around here.}
+{1000}{}{Initial preferences}
+{1010}{}{weapons}
+{1020}{}{Speaker Perk ** DO NOT CHANGE THE POSITION OF ANY ANSWERS IN THIS NODE **}
+{1030}{}{normal+dumb}
+{2000}{}{Please lay down your weapons. This is a peaceful place.}
+{3000}{}{Hello.@@Hello, please come in.@@Are you a lost soul?}
+{4000}{}{Ah, but you my child! Hold it right there! There is something you seek here, if I may make the observation.}
+{4010}{}{I certainly do! I want to learn how to spread a word, like no one before me did!}
+{4020}{}{Nope, this looks just like any other sinkhole in the wasteland. See ya later, grandpa!}
+{5000}{}{And would you be ready to spread our word as well, my child?}
+{5010}{}{Why not? The words spoken here deserve to be echoed out there! [Truth] [Speaker]}
+{5020}{}{If there are words to be heard out there, those are the ones of the Cathedral! [Lie] [Speaker]}
+{5030}{}{That far I could not go. But thank you for your time nonetheless. Farewell.}
+{6000}{}{Then listen and learn. [The Greeter takes you aside to a room. It takes a while before he's finished explaining everything he knows about the arts of speaking.]}
+{6010}{}{For this lesson I will be forever grateful to you. Farewell.}
+

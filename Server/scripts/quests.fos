@@ -1,0 +1,290 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quests.fos
+//
+
+#include "_macros.fos"
+#include "serializator.fos"
+#include "changes_queue_h.fos"
+
+#define GQ_LIFE_TIME         (REAL_DAY(7))
+#define GQ_FAILED_STATE      (100)
+#define GQ_ANYDATA_PREFIX    ("GroupQuest")
+
+class GroupQuest
+{
+    uint        Id;
+    uint        LeaderId;
+    uint        StringsLvar;
+    uint        TimeStamp;
+    array<uint> GroupIds;
+    GroupQuest()
+    {
+        Id = uint(-1);
+        LeaderId = 0;
+        StringsLvar = 0;
+        TimeStamp = 0;
+        GroupIds.resize(0);
+    }
+    GroupQuest(uint id)
+    {
+        Id = uint(-1);
+        LeaderId = 0;
+        StringsLvar = 0;
+        TimeStamp = 0;
+        GroupIds.resize(0);
+        string anydata_name = GQ_ANYDATA_PREFIX + id;
+        if(!IsAnyData(anydata_name))
+        {
+            Id = uint(-1);
+            return;
+        }
+        Serializator serializer;
+        serializer.Load(anydata_name);
+        Id = id;
+        serializer.Get(LeaderId);
+        serializer.Get(StringsLvar);
+        serializer.Get(TimeStamp);
+        serializer.Get(@GroupIds);
+    }
+
+    bool Valid() { return Id != uint(-1); }
+    bool Alive() { return TimeStamp + GQ_LIFE_TIME > ELAPSED_TIME; }
+    uint GetId() { return Id; }
+
+    void Save()
+    {
+        if(!Valid())
+            return;
+        string       anydata_name = GQ_ANYDATA_PREFIX + Id;
+        Serializator serializer;
+        serializer.Set(LeaderId);
+        serializer.Set(StringsLvar);
+        serializer.Set(TimeStamp);
+        serializer.Set(@GroupIds);
+        serializer.Save(anydata_name);
+    }
+
+    void Delete()
+    {
+        string anydata_name = GQ_ANYDATA_PREFIX + Id;
+        EraseAnyData(anydata_name);
+    }
+
+    void UpdateState(uint state)
+    {
+        for(uint i = 0, j = GroupIds.length(); i < j; i++)
+        {
+            GameVar@ var = GetLocalVar(StringsLvar, GroupIds[i]);
+            var = state;
+        }
+        TimeStamp = ELAPSED_TIME;
+    }
+};
+
+class GroupQuestManager
+{
+    uint        NextId;
+    array<uint> CurrentIds;
+
+    void Init()
+    {
+        CurrentIds.resize(0);
+        NextId = 0;
+        string anydata_name = GQ_ANYDATA_PREFIX + "Data";
+        if(!IsAnyData(anydata_name))
+            return;
+        Serializator serializer;
+        serializer.Load(anydata_name);
+        serializer.Get(NextId);
+        serializer.Get(@CurrentIds);
+        for(uint i = 0, j = CurrentIds.length(); i < j;)
+        {
+            GroupQuest quest(CurrentIds[i]);
+            if(!quest.Valid())
+            {
+                remove_from_array(CurrentIds, i);
+                j--;
+                continue;
+            }
+
+            if(!quest.Alive())               // todo || player with id LeaderId deleted
+            {
+                quest.UpdateState(GQ_FAILED_STATE);
+                quest.Delete();
+                remove_from_array(CurrentIds, i);
+                j--;
+                continue;
+            }
+            i++;
+        }
+    }
+
+    void Save()
+    {
+        Serializator serializer;
+        string       anydata_name = GQ_ANYDATA_PREFIX + "Data";
+        serializer.Set(@CurrentIds);
+        serializer.Set(NextId);
+        serializer.Load(anydata_name);
+    }
+
+    GroupQuest@ NewQuest(uint strings_var, uint leader_id, array<uint>@ group_ids)
+    {
+        GroupQuest@ quest;
+        quest.Id = NextId;
+        CurrentIds.insertLast(NextId);
+        NextId++;
+        quest.LeaderId = leader_id;
+        quest.GroupIds = group_ids;
+        quest.TimeStamp = ELAPSED_TIME;
+        quest.Save();
+        return quest;
+    }
+
+    bool EndQuest(uint id)
+    {
+        GroupQuest quest(id);
+        if(!quest.Valid())
+            return false;
+        quest.Delete();
+        for(uint i = 0, j = CurrentIds.length(); i < j; i++)
+            if(CurrentIds[i] == id)
+            {
+                remove_from_array(CurrentIds, i);
+                return true;
+            }
+        Log("ERR: group quest existed, but not referenced.");
+        return true;
+    }
+};
+
+GroupQuestManager@ GroupQuestMngr;
+
+void GroupQuestInit()
+{
+    @GroupQuestMngr = @GroupQuestManager();
+    GroupQuestMngr.Init();
+}
+
+// wrappers for classes
+
+bool StartGroupQuest(uint control_lvar, uint strings_lvar, Critter& leader, array<Critter@>@ group, uint start_state)
+{
+    return StartGroupQuest(control_lvar, strings_lvar, leader, group, start_state, true);
+}
+
+bool StartGroupQuest(uint control_lvar, uint strings_lvar, Critter& leader, array<Critter@>@ group, uint start_state, bool safe)
+{
+    GameVar@ var = GetLocalVar(control_lvar, leader.Id);
+    if(safe && var.GetValue() != 0)
+        return false;                               // leader already started the quest
+
+    if(valid(group))
+        for(uint i = 0, j = group.length(); i < j; i++)
+        {
+            Critter@ cr = group[i];
+            if(!valid(cr))
+                continue;
+            @var = GetLocalVar(control_lvar, cr.Id);
+            if(var.GetValue() != 0)
+            {
+                if(safe)
+                    return false;
+                @group[i] = null;
+            }
+        }
+    array<uint> group_ids(0);
+    for(uint i = 0, j = group.length(); i < j; i++)
+        if(valid(group[i]))
+            group_ids.insertLast(group[i].Id);
+    GroupQuest@ quest = GroupQuestMngr.NewQuest(strings_lvar, leader.Id, group_ids);
+    for(uint i = 0, j = group.length(); i < j; i++)
+        if(valid(group[i]))
+        {
+            @var = GetLocalVar(control_lvar, group[i].Id);
+            var = quest.GetId();
+        }
+    quest.UpdateState(start_state);
+    return true;
+}
+
+bool EndGroupQuest(uint control_lvar, Critter& cr, int end_state)
+{
+    GameVar@ var = GetLocalVar(control_lvar, cr.Id);
+    GroupQuest quest(var.GetValue());
+    if(!quest.Valid())
+        return false;
+    quest.UpdateState(end_state);
+    return GroupQuestMngr.EndQuest(var.GetValue());
+}
+
+bool ResetGroupQuest(uint control_lvar, Critter& cr)
+{
+    GameVar@ var = GetLocalVar(control_lvar, cr.Id);
+    uint     var_value = var.GetValue();
+    GroupQuest quest(var_value);
+    if(!quest.Valid())
+        return false;
+    quest.UpdateState(0);
+    for(uint i = 0, j = quest.GroupIds.length(); i < j; i++)
+    {
+        @var = GetLocalVar(control_lvar, quest.GroupIds[i]);
+        var = 0;
+    }
+    return GroupQuestMngr.EndQuest(var_value);
+}
+
+bool ChangeGroupQuestParam(uint control_lvar, Critter& cr, int param, int value)
+{
+    GameVar@ var = GetLocalVar(control_lvar, cr.Id);
+    GroupQuest quest(var.GetValue());
+    if(!quest.Valid())
+        return false;
+    for(uint i = 0, j = quest.GroupIds.length(); i < j; i++)
+        DeferredChangeParam(quest.GroupIds[i], param, value);
+    return true;
+}
+
+bool UpdateGroupQuestState(uint control_lvar, Critter& cr, uint state)
+{
+    GameVar@ var = GetLocalVar(control_lvar, cr.Id);
+    GroupQuest quest(var.GetValue());
+    if(!quest.Valid())
+        return false;
+    quest.UpdateState(state);
+    return true;
+}
+
+// dialog wrappers
+
+bool d_IsGroupQuestLeader(Critter& player, Critter@ npc, int control_lvar)
+{
+    GameVar@ var = GetLocalVar(control_lvar, player.Id);
+    GroupQuest quest(var.GetValue());
+    if(!quest.Valid())
+        return false;
+    return player.Id == quest.LeaderId;
+}
+
+void r_ChangeGroupQuestParam(Critter& player, Critter@ npc, int control_lvar, int param, int value)
+{
+    ChangeGroupQuestParam(control_lvar, player, param, value);
+}
+
+void r_UpdateGroupQuestState(Critter& player, Critter@ npc, int control_lvar, int state)
+{
+    UpdateGroupQuestState(control_lvar, player, state);
+}
+
+void r_EndGroupQuest(Critter& player, Critter@ npc, int control_lvar, int end_state)
+{
+    EndGroupQuest(control_lvar, player, end_state);
+}
+
+void r_ResetGroupQuest(Critter& player, Critter@ npc, int control_lvar)
+{
+    ResetGroupQuest(control_lvar, player);
+}

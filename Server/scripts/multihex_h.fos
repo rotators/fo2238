@@ -1,0 +1,44 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// multihex_h.fos
+//
+
+// To the extent possible under law, the author(s) have dedicated all copyright
+// and related and neighboring rights to this script to the public domain.
+// This script is distributed without any warranty.
+
+#ifndef __MULTIHEX_H__
+#define __MULTIHEX_H__
+
+#define MHEX_MOVE             # (dir1, step1, dir2, step2)((((step2) & 0xFF) << 24) | (((dir2) & 0xFF) << 16) | (((step1) & 0xFF) << 8) | ((dir1) & 0xFF))
+
+#define MHEX_BLOCK_NOTHING    (ITEM_NO_BLOCK | ITEM_SHOOT_THRU | ITEM_LIGHT_THRU)
+#define MHEX_BLOCK_WALKING    (ITEM_SHOOT_THRU | ITEM_LIGHT_THRU)
+#define MHEX_BLOCK_ALL        (0)
+
+#define MHEX_PARENT           # (mhex) (mhex.Val0)
+#define MHEX_NEXT             # (mhex) (mhex.Val1)
+#define MHEX_STATE_1          # (mhex) (mhex.Val2)
+#define MHEX_STATE_2          # (mhex) (mhex.Val3)
+
+#define MHEX_SET_PARENT       # (mhex, parent)(mhex.Val0 = parent.Id)
+#define MHEX_SET_NEXT         # (mhex, next)(mhex.Val1 = next.Id)
+#define MHEX_SET_STATE_1      # (mhex, state)(mhex.Val2 = state)
+#define MHEX_SET_STATE_2      # (mhex, state)(mhex.Val3 = state)
+
+#define MHEX_ORPHANED         # (mhex) (MHEX_PARENT(mhex) == 0)
+
+#ifndef __MULTIHEX__
+
+import void MultihexSpawned(Item& item) from "multihex";
+import void MultihexDeleted(Item& item) from "multihex";
+
+import uint GetMHexes(Item@ item, array<Item@>@ mHexes) from "multihex";
+import bool IsMultihex(Item@ item) from "multihex";
+import bool IsMultihexBlocked(Item@ item) from "multihex";
+import void MultihexClose(Item@ item) from "multihex";
+import void MultihexOpen(Item@ item) from "multihex";
+#endif // __MULTIHEX__
+#endif // __MULTIHEX_H__

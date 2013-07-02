@@ -1,0 +1,342 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_planes.fos
+//
+
+// Export functions
+#include "_macros.fos"
+
+bool AddMiscPlane(Critter& npc, uint priority, uint waitSecond, string@ funcName)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_MISC;
+    plane.Priority = (priority == 0 ? AI_PLANE_MISC_PRIORITY : priority);
+    plane.Misc_WaitSecond = waitSecond;
+    if(valid(funcName) && !plane.Misc_SetScript(funcName))
+    {
+        Log("Set script <" + funcName + "> fail");
+        return false;
+    }
+    return npc.AddPlane(plane);
+}
+
+bool AddMiscPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint waitSecond, string@ funcName)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_MISC;
+    plane.Priority = (priority == 0 ? AI_PLANE_MISC_PRIORITY : priority);
+    plane.Identifier = identifier;
+    plane.IdentifierExt = identifierExt;
+    plane.Misc_WaitSecond = waitSecond;
+    if(valid(funcName) && !plane.Misc_SetScript(funcName))
+    {
+        Log("Set script <" + funcName + "> fail");
+        return false;
+    }
+    return npc.AddPlane(plane);
+}
+
+bool AddWalkPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut)
+{
+    if(!npc.IsCanWalk())
+        return false;
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_WALK;
+    plane.Priority = (priority == 0 ? AI_PLANE_WALK_PRIORITY : priority);
+    plane.Walk_HexX = hexX;
+    plane.Walk_HexY = hexY;
+    plane.Walk_Dir = dir;
+    plane.Run = run;
+    plane.Walk_Cut = cut;
+    return npc.AddPlane(plane);
+}
+
+bool AddWalkPlane(Critter& npc, uint priority, int identifier, uint identifierExt, uint16 hexX, uint16 hexY, uint8 dir, bool run, uint cut)
+{
+    if(!npc.IsCanWalk())
+        return false;
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_WALK;
+    plane.Priority = (priority == 0 ? AI_PLANE_WALK_PRIORITY : priority);
+    plane.Identifier = identifier;
+    plane.IdentifierExt = identifierExt;
+    plane.Walk_HexX = hexX;
+    plane.Walk_HexY = hexY;
+    plane.Walk_Dir = dir;
+    plane.Run = run;
+    plane.Walk_Cut = cut;
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, Critter& target)
+{
+    if(npc.IsPlayer())
+    {
+        Map@ map = npc.GetMap();
+        uint loc = 0;
+        if(valid(map))
+            loc = map.GetLocation().GetProtoId();
+        Log("ERR: adding attack plane to player, loc pid=" + loc);
+    }
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = __DeadHitPoints;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    #ifdef VANILLA
+    plane.Run = false;
+    #endif
+    #ifdef FO2238
+    plane.Run = true;
+    #endif
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, uint critId)
+{
+    Critter@ target = GetCritter(critId);
+    if(!valid(target))
+    {
+        Log("Target not found.");
+        return false;
+    }
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = __DeadHitPoints;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    #ifdef VANILLA
+    plane.Run = false;
+    #endif
+    #ifdef FO2238
+    plane.Run = true;
+    #endif
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = minHp;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexY = target.HexY;
+    plane.Attack_LastHexX = target.HexX;
+    #ifdef VANILLA
+    plane.Run = false;
+    #endif
+    #ifdef FO2238
+    plane.Run = true;
+    #endif
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, uint critId, int minHp)
+{
+    Critter@ target = GetCritter(critId);
+    if(!valid(target))
+    {
+        Log("Target not found.");
+        return false;
+    }
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = minHp;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    #ifdef VANILLA
+    plane.Run = false;
+    #endif
+    #ifdef FO2238
+    plane.Run = true;
+    #endif
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, Critter& target, bool run)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = __DeadHitPoints;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    plane.Run = run;
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, uint critId, bool run)
+{
+    Critter@ target = GetCritter(critId);
+    if(!valid(target))
+    {
+        Log("Target not found.");
+        return false;
+    }
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = __DeadHitPoints;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    plane.Run = run;
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, Critter& target, int minHp, bool run)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = minHp;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    plane.Run = run;
+    return npc.AddPlane(plane);
+}
+
+bool AddAttackPlane(Critter& npc, uint priority, uint critId, int minHp, bool run)
+{
+    Critter@ target = GetCritter(critId);
+    if(!valid(target))
+    {
+        Log("Target not found.");
+        return false;
+    }
+
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_ATTACK;
+    plane.Priority = (priority == 0 ? AI_PLANE_ATTACK_PRIORITY : priority);
+    plane.Attack_TargId = target.Id;
+    plane.Attack_MinHp = minHp;
+    plane.Attack_IsGag = false;
+    plane.Attack_GagHexX = 0;
+    plane.Attack_GagHexY = 0;
+    plane.Attack_LastHexX = target.HexX;
+    plane.Attack_LastHexY = target.HexY;
+    plane.Run = run;
+    return npc.AddPlane(plane);
+}
+
+bool AddPickPlane(Critter& npc, uint priority, uint16 hexX, uint16 hexY, uint16 protoId, uint useItemId, bool toOpen)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_PICK;
+    plane.Priority = (priority == 0 ? AI_PLANE_PICK_PRIORITY : priority);
+    plane.Pick_HexX = hexX;
+    plane.Pick_HexY = hexY;
+    plane.Pick_Pid = protoId;
+    plane.Pick_UseItemId = useItemId;
+    plane.Pick_ToOpen = toOpen;
+    plane.Run = false;
+    return npc.AddPlane(plane);
+}
+
+bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_PICK;
+    plane.Priority = (priority == 0 ? AI_PLANE_PICK_PRIORITY : priority);
+    plane.Pick_HexX = item.HexX;
+    plane.Pick_HexY = item.HexY;
+    plane.Pick_Pid = item.GetProtoId();
+    plane.Pick_UseItemId = useItemId;
+    plane.Pick_ToOpen = toOpen;
+    plane.Run = false;
+    return npc.AddPlane(plane);
+}
+
+bool AddPickPlane(Critter& npc, uint priority, Item@ item, uint useItemId, bool toOpen, bool run)
+{
+    NpcPlane@ plane = CreatePlane();
+    plane.Type = AI_PLANE_PICK;
+    plane.Priority = (priority == 0 ? AI_PLANE_PICK_PRIORITY : priority);
+    plane.Pick_HexX = item.HexX;
+    plane.Pick_HexY = item.HexY;
+    plane.Pick_Pid = item.GetProtoId();
+    plane.Pick_UseItemId = useItemId;
+    plane.Pick_ToOpen = toOpen;
+    plane.Run = run;
+    return npc.AddPlane(plane);
+}
+
+uint EraseAttackPlane(Critter& npc, uint priority, Critter& target)
+{
+    return EraseAttackPlane(npc, priority, target.Id);
+}
+
+uint EraseAttackPlane(Critter& npc, uint priority, uint critId)
+{
+    array<NpcPlane@> planes;
+    uint             count = npc.GetPlanes(planes);
+    if(count == 0)
+        return 0;
+    uint erased = 0;
+
+    for(uint i = 0; i < count; i++)
+    {
+        if(planes[i].Attack_TargId == critId && npc.ErasePlane(i - erased))
+            erased++;
+    }
+
+    return erased;
+}
+
+bool AddHealCritterPlane(Critter& npc, uint priority, Critter@ target, bool run)
+{
+    if(!valid(target))
+        return false;
+    return AddWalkPlane(npc, priority, PLANE_HEAL_CRITTER, target.Id, target.HexX, target.HexY, npc.Id == target.Id ? npc.Dir : 0xFF, run, 1);
+}
+
+bool AddDoctorCritterPlane(Critter& npc, uint priority, Critter@ target, bool run)
+{
+    if(!valid(target))
+        return false;
+    return AddWalkPlane(npc, priority, PLANE_DOCTOR_CRITTER, target.Id, target.HexX, target.HexY, npc.Id == target.Id ? npc.Dir : 0xFF, run, 1);
+}
+
+/*
+   bool AddPushCritterPlane(Critter& npc, uint priority, Critter@ target, bool run)
+   {
+   if (!valid(target)) return false;
+   return AddWalkPlane(npc, priority, PLANE_PUSH_CRITTER, target.Id, target.HexX, target.HexY, npc.Id==target.Id?npc.Dir:0xFF, run, 1);
+   }*/

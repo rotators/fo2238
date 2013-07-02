@@ -1,0 +1,144 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// groups_h.fos
+//
+
+// This file contains defines for team and faction numbers (ST_TEAM_ID).
+// Team ranges are as follows:
+// 0, 1      - Reserved (unknown, none).
+// 2..199    - Npc factions (joinable or not; includes groups like slaves, slavers, corsican brothers, ...).
+// 200..4095 - Player factions.
+// 5000-5009 - Encounter mobs. The first mob group is an encounter always has team 5000.
+//             It is assumed that mobs from different encounters will never meet.
+// 5010-5019 - Encounter critters. The first non-mob encounter group is an encounter always has team 5010.
+//             It is assumed that critters from different encounters will never meet.
+
+// Check guard.fos for related guards mechanics.
+
+#ifndef __GROUPS__
+#define __GROUPS__
+
+#define FACTION_UNKNOWN                 (0)
+#define FACTION_NONE                    (1)
+#define FACTION_BEGIN                   (2)
+#define FACTION_BOS                     (2)
+#define FACTION_ENCLAVE                 (3)
+#define FACTION_UNITY                   (4)
+#define FACTION_NCR                     (5)
+#define FACTION_VAULT_CITY              (6)
+#define FACTION_RAIDERS                 (7)
+#define FACTION_MORDINOS                (8)
+#define FACTION_SLAVERS_GUILD           (9)
+#define FACTION_SLAGS                   (10)
+#define FACTION_KOKOWEEF                (11)
+#define FACTION_MORNINGSTAR             (12)
+#define FACTION_BH_HUMANS               (13)
+#define FACTION_BH_MUTANTS              (14)
+#define FACTION_WRIGHTS                 (15)
+#define FACTION_BISHOPS                 (16)
+#define FACTION_SALVATORES              (17)
+#define FACTION_NCR_RANGERS             (18)
+#define FACTION_VORTIS_SLAVERS          (19)
+#define FACTION_COMMUNISTS              (20)
+#define FACTION_VAGRANTS                (21)
+#define FACTION_FOOLS                   (22)
+#define FACTION_CRYPTS                  (23)
+#define FACTION_HUB_CRIMINALS           (24)
+#define FACTION_CRIMSON_CARAVANS        (25)
+#define FACTION_FARGO_TRADERS           (26)
+#define FACTION_WATER_MERCHANTS         (27)
+#define FACTION_HEIGHTS                 (28)
+#define FACTION_REGULATORS              (29)
+#define FACTION_SCAVENGERS              (30)
+#define FACTION_GUNRUNNERS              (31)
+#define FACTION_FOLLOWERS               (32)
+#define FACTION_BOUNTY_HUNTERS          (33)
+#define FACTION_FREE_TRADERS            (34)
+#define FACTION_REDDING_GUTTERSNIPES    (35)
+#define FACTION_GUTTERSNIPES            (35)
+#define FACTION_FLC                     (36)
+#define FACTION_SLAVES                  (37)
+#define FACTION_LARAS_GANG              (38)
+#define FACTION_CHILDREN                (39)
+#define FACTION_NR_PIMPS                (40)
+#define FACTION_ELRONOLOGISTS           (41)
+#define FACTION_CATHEDRAL               (42)
+#define FACTION_CORSICAN_BROTHERS       (43)
+#define FACTION_KLAMATH                 (80)
+#define FACTION_DEN                     (81)
+#define FACTION_MODOC                   (82)
+#define FACTION_COURTYARD               (83)
+#define FACTION_GECKO                   (84)
+#define FACTION_REDDING                 (85)
+#define FACTION_BH_GHOULS               (86)
+#define FACTION_NEW_RENO                (87)
+#define FACTION_NECROPOLIS              (88)
+#define FACTION_JUNKTOWN                (89)
+#define FACTION_HUB                     (90)
+#define FACTION_LA                      (91)
+#define FACTION_END                     (92)
+
+#define FACTION_MODE_PASSIVE            (0)
+#define FACTION_MODE_ALWAYS             (1)
+#define FACTION_MODE_NPC_ONLY           (2)
+#define FACTION_MODE_PLAYER_ONLY        (3)
+#define FACTION_MODE_NEVER              (4)
+
+#define REP_ATK_PENALTY                 (25)   // penalty for attacking (each shot) a faction member, this is multiplied by member's rank (if positive)
+#define REP_FLAG_PENALTY                (100)  // penalty foe becoming flagged
+#define REP_STEAL_PENALTY               (100)
+#define REP_KILL_PENALTY                (150)  // penalty for killing a faction member, this is multiplied by member's rank (if positive)
+#define REP_DIFF                        (1400) // general purpose guards will not help the attacked if reputation difference between attacker and attacked is larger than this
+#define REP_LIMIT                       (2000) // maximum reputation
+#define REP_FEED_FACTOR                 (100)  // 1 point of rep per 100 points of modifier for 2 factions (if negative and lower than neutrality) (check FeedReputations)
+#define REP_DEFAULT_CAP                 (1000) // not used
+#define REP_TRADE_CAP                   (900)  // cap for reputation gain from trading items
+#define REP_FIRST_AID_CAP               (500)  // cap for reputation gain from using first aid on faction members
+#define REP_DOCTOR_CAP                  (700)  // cap for reputation gain from using doctor on faction members
+#define REP_CARAVAN_BOX_CAP             (300)  // cap for reputation gain from caravan box quest
+#define REP_CAVE_QUEST_CAP              (500)  // cap for reputation gain from cave fetcher quest
+#define REP_FETCHER_QUEST_CAP           (500)  // cap for reputation gain from cave fetcher quest, #2
+
+
+#define FACTION_NEUTRAL                 (0)
+#define FACTION_ALLY                    (1)
+#define FACTION_ENEMY                   (2)
+
+// uniforms
+
+#define UNIFORM_NONE                    (0)
+#define UNIFORM_BAD_HELMET              (1)
+#define UNIFORM_BODY_ONLY               (2)
+#define UNIFORM_FULL                    (3)
+
+
+// TEAM_Mob0 is used in utils_h.fos to denote unaffiliated team ids, this value must be the least from all unaffiliated ones
+// TEAM_Mob0_Worldmap and TEAM_Neutral0_Worldmap are dirty way of converting worldmap to new mechanics without turning worldmap upside-down
+#define TEAM_Mob                        (0)
+#define TEAM_Mob0                       (5000)
+#define TEAM_Mob1                       (5001)
+#define TEAM_Mob2                       (5002)
+#define TEAM_Mob3                       (5003)
+#define TEAM_Mob4                       (5004)
+#define TEAM_Mob5                       (5005)
+#define TEAM_Mob6                       (5006)
+#define TEAM_Mob7                       (5007)
+#define TEAM_Mob8                       (5008)
+#define TEAM_Mob9                       (5009)
+#define TEAM_Neutral                    (1)
+#define TEAM_Neutral0                   (5010)
+#define TEAM_Neutral1                   (5011)
+#define TEAM_Neutral2                   (5012)
+#define TEAM_Neutral3                   (5013)
+#define TEAM_Neutral4                   (5014)
+#define TEAM_Neutral5                   (5015)
+#define TEAM_Neutral6                   (5016)
+#define TEAM_Neutral7                   (5017)
+#define TEAM_Neutral8                   (5018)
+#define TEAM_Neutral9                   (5019)
+
+#define TEAM_Mob0_Worldmap              (24)
+#define TEAM_Neutral0_Worldmap          (34)
+#endif

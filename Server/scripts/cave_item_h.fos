@@ -1,0 +1,103 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cave_item_h.fos
+//
+
+#include "_macros.fos"
+#include "cave_h.fos"
+
+array<ICaveItem@> items;
+
+uint              cur_group;
+
+void InitItems()
+{
+
+    #include "cave_items.fos"
+}
+
+void AddCaveItem(uint pid, uint chance, uint luckrequirement)
+{
+    CaveItem item();
+    item.PID(pid).Chance(chance).LuckRequirement(luckrequirement).Group(cur_group);
+    items.insertLast(item);
+}
+
+void SetGroup(uint group)
+{
+    cur_group = group;
+}
+
+shared interface ICaveItem
+{
+    ICaveItem@ PID(uint pid);
+    ICaveItem@ Chance(uint chance);
+    ICaveItem@ LuckRequirement(uint luckrequirement);
+    ICaveItem@ Group(uint group);
+
+    uint GetLuckRequirement();
+    uint GetChance();
+    uint GetPID();
+    uint GetGroup();
+
+    void AddItemToMap(Map@ map, uint x, uint y);
+};
+
+class CaveItem : ICaveItem
+{
+    uint pid;
+    uint chance;
+    uint luckrequirement;
+    uint group;
+
+    CaveItem()
+    {
+        pid = 0;
+        chance = 0;
+        luckrequirement = 0;
+    }
+
+    ICaveItem@ PID(uint pid)
+    {
+        this.pid = pid;
+        return this;
+    }
+
+    ICaveItem@ Group(uint group)
+    {
+        this.group = group;
+        return this;
+    }
+
+    // Chance from 0-100
+    ICaveItem@ Chance(uint chance)
+    {
+        this.chance = chance;
+        return this;
+    }
+
+    // Min luck required to find item
+    ICaveItem@ LuckRequirement(uint luckrequirement)
+    {
+        this.luckrequirement = luckrequirement;
+        return this;
+    }
+
+    uint GetLuckRequirement() { return luckrequirement; }
+    uint GetChance()          { return chance; }
+    uint GetPID()             { return pid; }
+    uint GetGroup()           { return group; }
+
+    void AddItemToMap(Map@ map, uint x, uint y)
+    {
+        DLog("Placing item with PID " + pid + " on " + "x:" + x + " y:" + y);
+        Item@ item = map.AddItem(x, y, pid, 1);
+        if(valid(item) && item.IsDeteriorable())
+        {
+            SetMinWear(item, Random(20, 40));
+            SetWear(item, Random(65, 95));
+        }
+    }
+};

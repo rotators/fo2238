@@ -1,0 +1,112 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 #
+7 1020 @
+2 2000 None 0 #
+3 2010 #
+8 2020 D _var p q_jt_power_house > 0 D _var p q_jt_power_house < 5 D _var p q_jt_power_house_mp = 0 R _item p PID_TANKER_PUMPPART + 1 R _var p q_jt_power_house_mp = 1 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 R _var n name_mem_npc_player = 1 #
+0 4020 @
+5 5000 None 0 #
+6 5010 #
+0 5020 @
+6 6000 None 0 #
+500 6010 #
+80 6020 D _param p PE_PROFESSION_GUNSMITH_S < 2 #
+0 6030 @
+7 7000 None 0 #
+500 7010 #
+80 7020 D _param p PE_PROFESSION_GUNSMITH_S < 2 #
+8 7030 D _var p q_jt_power_house > 0 D _var p q_jt_power_house < 5 D _var p q_jt_power_house_mp = 0 R _var p q_jt_power_house_mp = 1 R _item p PID_TANKER_PUMPPART + 1 #
+0 7040 @
+8 8000 None 0 #
+9 8010 #
+0 8020 @
+9 9000 None 0 #
+0 9010 @
+80 10000 None 0 #
+81 10010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckGunsmithS0 1 0 #
+82 10020 D _script dialog@d_CheckGunsmithS1 1 0 #
+0 10030 @
+81 11000 None 0 #
+83 11010 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_GUNS_AND_BULLETS + 1 R _param p PE_PROFESSION_GUNSMITH_S = 1 R _script dialog@r_RemoveMoney 1 1500 #
+0 11020 @
+82 12000 None 0 #
+83 12010 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_GUNSMITH_S = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 12020 @
+83 13000 None 0 #
+0 13010 @
+500 14000 None 0 #
+501 14010 D _script perks@d_PerkCheck 1 455 R _param p PE_BEST_OF_A_BAD_LOT = 1 #
+501 14020 D _script perks@d_PerkCheck 1 456 R _param p PE_DISMANTLER = 1 #
+0 14030 @
+501 15000 None 0 #
+7 15010 #
+0 15020 &
+
+[engl]
+{100}{}{Boyce}
+{200}{}{You see Boyce.}
+{210}{}{You see a guy whose laugh is better not heard.}
+{1000}{}{Predialogue installations}
+{1010}{}{unknown}
+{1020}{}{known}
+{2000}{}{Yeah?}
+{2010}{}{And you are?}
+{2020}{}{Do you have spare machine parts for Thomas? He needs them in the power house.}
+{2030}{}{Nothing.}
+{3000}{}{What? Rumbling through the Junktown, popping up my place and ask stupid questions? Haven't you already heard for the Boyce, the former local used car dealer?}
+{3010}{}{Actually, no. You were the car dealer once?}
+{3020}{}{I think I heard enough. [Leave]}
+{4000}{}{Just what the... Are you gonna repeat my words or ask something meaningful, redneck?}
+{4010}{}{No, I mean, what are you doing now?}
+{4020}{}{I better be back later.}
+{5000}{}{That sounds like a question already. Well, I used to repair and sell cars before, but in the meantime everything useful that could be found around here is already scavenged and turned into cars. I can't sell anything more, except junk. Not that I really care, as long as I've gotta costumer, hehe.}
+{5010}{}{So, you still repair things?}
+{5020}{}{I see. Gotta go now, bye!}
+{6000}{}{Yeah, right to the point. I can fix almost anything, but lately I've been doing only firearms. Brings a lot of caps, and there's always enough guns to repair, with all these thugs running through the town...}
+{6010}{}{Hey, then you probably *are* the best person to talk about repairing antique stuff and salvaging all kind of junk.}
+{6020}{}{That's exactly what I wanted to hear, because I had some questions about firearms...}
+{6030}{}{Yes, that makes sense already. I have to go now, bye!}
+{7000}{}{What is it now, rumbler?}
+{7010}{}{I thought you must be the best person around here to talk about repairing antique stuff and salvaging all kind of junk.}
+{7020}{}{I had some questions about firearms...}
+{7030}{}{Do you have spare machine parts for Thomas? He needs them in the power house.}
+{7040}{}{Wrong place. [Leave]}
+{8000}{}{That took pretty long for him to ask for that... Told him before, he can have them. Anyway, here, get it. [After searching in a box, he throws a pair of clunky looking machine parts towards you.]}
+{8010}{}{Wait, you don't want me to do anything for you?}
+{8020}{}{Thanks and goodbye.}
+{9000}{}{What? No. Why should I? You want to do something for me?}
+{9010}{}{Uh, nevermind. Just wondered. See you around.}
+{10000}{}{Like what?}
+{10010}{}{I wanna learn how to make a gun... Nothing special, just the basics.}
+{10020}{}{Say, maybe you could show me how to make some good guns? I'm willing to learn.}
+{10030}{}{Erhm... Actually, nothing right now. I better be going.}
+{11000}{}{Wanna blow off your fingers, huh? Okay, just don't say later I didn't warn you... I guess I can teach you something useful, but it has its price. Let's say $1500. For that price I can give you this magazine as well, Guns & Bullets. Might come in handy once in a while.}
+{11010}{}{To hell with the money, I wanna learn it! [You give him $1500]}
+{11020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{12000}{}{Well, ain'tcha the next wasteland's top gunsmith! I guess I could show you some more for a mere sum of 3000 caps. Whaddya say?}
+{12010}{}{If the preaching justifies the price, then let's start with it, ol' man! [Give him $3000]}
+{12020}{}{Damn, it's too much for me right now. But I'll be back later, be sure about it.}
+{13000}{}{Now, now... Let's see what can be done with you. [Boyce takes to to the workbench and starts explaining]}
+{13010}{}{Thanks for your time, Boyce. I think I'm gonna try it out by myself now.}
+{14000}{}{You bet, @sex@|buddy||honey|! Anyway, what did you want to know?}
+{14010}{}{You can repair even those things that went FUBAR long time ago. How's that? [Best of a Bad Lot]}
+{14020}{}{How do you always get so much useful stuff from such a small heap of junk? [Dismantler]}
+{14030}{}{Uhm... I think I have no specific questions for this occasion. Maybe later!}
+{15000}{}{Look, if you were long enough in this business as I am, you'd know it yourself already. Now, all I usually do is... [Listen to Boyce and learn]}
+{15010}{}{Thanks, I really needed that. Now, I was about to ask you something else...}
+{15020}{}{Boyce, you're one big surprise! See you later, old chap!}
+

@@ -1,0 +1,176 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// utils_for_array.fos
+//
+
+// included in utils.fos, imports in header
+#ifndef __UTILS_FOR_ARRAY__
+#define __UTILS_FOR_ARRAY__
+// Auhtor: heX
+// ver 2.0
+// array utility functions
+
+#define AddToArray    # (A, V)ArrayPushBack(A, V)
+#define RemoveFromArray                                                                                                                 \
+    # (A, I)    do { uint __c__ = A.length(); if(__c__ != 0 && I < uint(__c__)) { for(uint __i__ = uint(I); __i__ < __c__ - 1; __i__++) \
+                                                                                      A[__i__] = A[__i__ + 1]; A.resize(__c__ - 1); } } while(false)
+#define RemoveFromArrayPtr                                                                                                           \
+    # (A, I) do { uint __c__ = A.length(); if(__c__ != 0 && I < uint(__c__)) { for(uint __i__ = uint(I); __i__ < __c__ - 1; __i__++) \
+                                                                                   @A[__i__] = @A[__i__ + 1]; A.resize(__c__ - 1); } } while(false)
+
+int FindInArray(array<int>& arr, int value)
+{
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+bool FindInArray(array<int>& arr, int id, int& index)
+{
+    for(uint i = 0; i < arr.length(); i++)
+    {
+        if(id == arr[i])
+        {
+            index = i;
+            return true;
+        }
+    }
+    index = -1;
+    return false;
+}
+
+int FindInArray(array<uint>& arr, uint value)
+{
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+bool FindInArray(array<uint>& arr, uint id, int& index)
+{
+    for(uint i = 0; i < arr.length(); i++)
+    {
+        if(id == arr[i])
+        {
+            index = i;
+            return true;
+        }
+    }
+    index = -1;
+    return false;
+}
+
+int FindInArray(array<uint16>& arr, uint16 value)
+{
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+int FindInArray(array<uint8>& arr, uint8 value)
+{
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+bool FindInArray(array<uint8>& arr, uint8 id, int& index)
+{
+    for(uint i = 0; i < arr.length(); i++)
+    {
+        if(id == arr[i])
+        {
+            index = i;
+            return true;
+        }
+    }
+    index = -1;
+    return false;
+}
+
+int FindInArray(array<string>& arr, string& value)
+{
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+int FindInArray(array<string@>@ arr, string& value)
+{
+    if(@arr == null || arr.length() == 0)
+        return(-1);
+
+    uint count = arr.length();
+    for(uint i = 0; i < count; i++)
+    {
+        if(@arr[i] == null)
+            continue;
+
+        if(arr[i] == value)
+            return i;
+    }
+    return -1;
+}
+
+bool Present(int what, array<int>& where)
+{
+    if(FindInArray(where, what) == -1)
+        return false;
+    else
+        return true;
+}
+
+bool Present(uint what, array<uint>& where)
+{
+    if(FindInArray(where, what) == -1)
+        return false;
+    else
+        return true;
+}
+
+bool Present(uint16 what, array<uint16>& where)
+{
+    if(FindInArray(where, what) == -1)
+        return false;
+    else
+        return true;
+}
+
+bool Present(string& what, array<string>& where)
+{
+    if(FindInArray(where, what) == -1)
+        return false;
+    else
+        return true;
+}
+
+bool Present(string& what, array<string@>@ where)
+{
+    if(FindInArray(where, what) == -1)
+        return false;
+    else
+        return true;
+}
+#endif // __UTILS_FOR_ARRAY__

@@ -1,0 +1,34 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// billboards.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "mapdata_h.fos"
+
+#define BILLBOARD_DIALOG_HUB       (10900)
+#define BILLBOARD_DIALOG_ADYTUM    (10901)
+#define BILLBOARD_DIALOG_NCR       (10902)
+
+bool s_Billboard(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != -1 || valid(item))
+        return false;
+    Location@ Loc = player.GetMap().GetLocation();
+    switch(Loc.GetProtoId())
+    {
+    case LOCATION_Hub:
+        RunDialog(player, BILLBOARD_DIALOG_HUB, terminal.HexX, terminal.HexY, false);
+        break;
+    case LOCATION_Boneyard:
+        RunDialog(player, BILLBOARD_DIALOG_ADYTUM, terminal.HexX, terminal.HexY, false);
+        break;
+    case LOCATION_NCR:
+        RunDialog(player, BILLBOARD_DIALOG_NCR, terminal.HexX, terminal.HexY, false);
+        break;
+    }
+    return true;
+}

@@ -1,0 +1,410 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// scypior_radiation.fos
+//
+
+//
+// Radiation effects
+//
+
+// No longer used in favour of radiation.fos
+
+#include "_macros.fos"
+
+#define RADIATION_DEATH_TIMEOUT    (REAL_SECOND(180))
+
+import void InjureCritter(Critter& cr, uint dmg, uint dmgType, uint8 dir, uint attackerId) from "combat";
+
+//
+// Irradiate/decrease radiation level of the critter
+//
+void Irradiate(Critter& cr, int dose)
+{
+    if(cr.Stat[ST_BODY_TYPE] == BT_ROBOT || cr.Stat[ST_BODY_TYPE] == BT_ALIEN)
+        return;
+    if(cr.IsDead() && dose > 0)
+        return;
+
+    uint prev = cr.RadiationLevel;
+
+    // irradiating
+    if(dose > 0)
+    {
+        DLog("Irradiating");
+        dose -= dose * float(cr.Stat[ST_RADIATION_RESISTANCE]) / 100;
+        cr.RadiationLevel += MAX(0, dose);   // don't want values to get crazy
+    }
+    // decreasing
+    else
+    {
+        if(cr.RadiationLevel == 0)
+            return;
+        DLog("Deradiating, from: " + cr.RadiationLevel);
+        cr.RadiationLevel += MAX(dose, -cr.RadiationLevel);
+    }
+    cr.SendStat(ST_RADIATION_LEVEL);
+    // update character page
+    if(cr.RadiationLevel >= 66)
+        cr.DamageBase[DAMAGE_RADIATED] = 1;
+    else
+        cr.DamageBase[DAMAGE_RADIATED] = 0;
+
+    // send message
+    if(cr.IsPlayer())
+    {
+        if(dose > 0)
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4000);
+        else if(dose < 0)
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4002);
+
+        #ifdef __DEBUG__
+        // cr.Say(SAY_NETMSG, "" + dose);
+        // cr.Say(SAY_NETMSG, "" + cr.RadiationLevel);
+        #endif
+    }
+    // handle direct effects
+    RadiationDirectEffects(cr, prev, cr.RadiationLevel);
+}
+
+//
+// Called after replication
+//
+void HealRadiation(Critter& cr)
+{
+    // cr.Say(SAY_SHOUT, "RADS: " + (-(cr.RadiationLevel-100)));
+    if(cr.RadiationLevel >= 100)
+        Irradiate(cr, -(cr.RadiationLevel - 100));
+}
+
+//
+// Effect regarding stat loss
+//
+class CEffect
+{
+    array<uint> stats;
+    array<int>  values;
+    // radiation level after which effect is applied
+    uint        level;
+    // message index
+    uint        message;
+
+    CEffect(uint level, uint msg)
+    {
+        this.level = level;
+        this.message = msg;
+    }
+
+    //
+    // Adds stat to the effect
+    //
+    CEffect@ Stat(uint stat, int val)
+    {
+        push_back(stats, stat);
+        push_back(values, val);
+
+        return this;
+    }
+    //
+    // Apply effect to given critter
+    //
+    void Apply(Critter& cr)
+    {
+        DLog("Applying radiation effect(" + level + ")");
+
+        for(uint i = 0; i < stats.length(); i++)
+            _apply(cr, stats[i], values[i], false);
+
+        // handle death
+        if(cr.RadiationLevel > 1000)
+        {
+            if(cr.IsPlayer())
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4015);
+            cr.ToDead(Random(0, 1) == 0 ? COND_DEAD_BURN : COND_DEAD_FUSED, null);
+            _SetTimeout(cr, TO_REPLICATION, RADIATION_DEATH_TIMEOUT);
+            return;
+        }
+        else
+        {
+            if(cr.IsPlayer())
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, message);
+        }
+    }
+    //
+    // Remove effect from given critter
+    //
+    void Remove(Critter& cr)
+    {
+        DLog("Removing radiation effect(" + level + ")");
+        for(uint i = 0; i < stats.length(); i++)
+            _apply(cr, stats[i], values[i], true);
+    }
+
+    //
+    // Helper
+    //
+    void _apply(Critter& cr, uint stat, int val, bool remove)
+    {
+        val = remove ? (-val) : val;
+        // DLog("_appply(" + stat + "): " + val);
+
+        if(stat < MAX_STATS_EXT)
+        {
+            cr.ChangeStatExt(stat, val);
+        }
+        else
+        {
+            Log("ERR: Radiation effect - unknown stat.");
+            return;
+        }
+    }
+};
+
+array<CEffect@> RadiationEffects;
+
+void list_levels(Critter& crit, int p0, int p1, int p2)
+{
+    for(uint i = 0; i < RadiationEffects.length(); i++)
+    {
+        crit.Say(SAY_NETMSG, "" + RadiationEffects[i].level);
+    }
+}
+
+//
+// Initializes radiation effects table;
+//
+void InitRadiationEffects()
+{
+    // Rem	Message	                    HR	CHP	ST	PE	EN	CH	IN	AG
+    // >0	"very nauseous"
+    // >150	"slightly fatigued"			        -1
+    // >300	"vomiting does not stop"	-3		-1					-1
+    // >450	"hair is falling out"	    -5	-5	-2		-1			-2
+    // >600	"skin is falling off"	    -10	-15	-4	-3	-3	-3	-1	-5
+    // >1000	"intense agony"	            -10	-20	-6	-5	-5	-5	-3	-6
+
+    push_back_handle(RadiationEffects,
+                     CEffect(0, 4010));
+    push_back_handle(RadiationEffects,
+                     CEffect(150, 4011).Stat(ST_STRENGTH, -1));
+    push_back_handle(RadiationEffects,
+                     CEffect(300, 4012).Stat(ST_HEALING_RATE, -3).Stat(ST_STRENGTH, -1)
+                     .Stat(ST_AGILITY, -1));
+    push_back_handle(RadiationEffects,
+                     CEffect(450, 4013).Stat(ST_HEALING_RATE, -5).Stat(ST_STRENGTH, -2)
+                     .Stat(ST_ENDURANCE, -1).Stat(ST_AGILITY, -2));
+    push_back_handle(RadiationEffects,
+                     CEffect(600, 4014).Stat(ST_HEALING_RATE, -10).Stat(ST_STRENGTH, -4)
+                     .Stat(ST_PERCEPTION, -3).Stat(ST_ENDURANCE, -3).Stat(ST_CHARISMA, -3)
+                     .Stat(ST_INTELLECT, -1).Stat(ST_AGILITY, -5));
+    push_back_handle(RadiationEffects,
+                     CEffect(1000, 4015).Stat(ST_HEALING_RATE, -10).Stat(ST_STRENGTH, -6)
+                     .Stat(ST_PERCEPTION, -5).Stat(ST_ENDURANCE, -5).Stat(ST_CHARISMA, -5)
+                     .Stat(ST_INTELLECT, -3).Stat(ST_AGILITY, -6));
+}
+
+//
+// Retrieves effect that should be applied for given level
+//
+CEffect@ GetEffect(uint level)
+{
+    // DLog("GetEffect:" + level + " from " + RadiationEffects.length() + " effects.");
+    if(level == 0)
+        return null;
+
+    for(uint i = 0; i < RadiationEffects.length() - 1; i++)
+    {
+        // DLog("" + level + ">" + RadiationEffects[i].level + "&&" + level + "<=" + RadiationEffects[i+1].level);
+        if(level > RadiationEffects[i].level && level <= RadiationEffects[i + 1].level)
+        {
+            // DLog("<"+RadiationEffects[i].level + " - " + RadiationEffects[i+1].level + ">");
+            return RadiationEffects[i];
+        }
+    }
+
+    return RadiationEffects[RadiationEffects.length() - 1];
+}
+
+//
+// Handles direct effects(stat loss etc)
+//
+// prevLevel - previous radiation level
+// currLevel - current radiation level
+void RadiationDirectEffects(Critter& cr, uint prevLevel, uint currLevel)
+{
+    DLog("Radiation direct effects: " + prevLevel + "->" + currLevel);
+    CEffect@ prev = GetEffect(prevLevel);
+    CEffect@ curr = GetEffect(currLevel);
+
+    if(valid(prev) && valid(curr))
+    {
+        // different effects
+        if(prev.level != curr.level)
+        {
+            // apply current effect and remove previous
+            prev.Remove(cr);
+            curr.Apply(cr);
+        }
+        else
+            // nothing happened
+            return;
+    }
+    // no previous effect
+    else if(valid(curr))
+        curr.Apply(cr);
+    // no current effect (clean)
+    else if(valid(prev))
+        prev.Remove(cr);
+}
+
+//
+// Damages critter basing on radiation level
+//
+void RadiationDamage(Critter& cr)
+{
+    uint dmg = Random(5, 5 + cr.RadiationLevel / 100);
+    cr.StatBase[ST_CURRENT_HP] -= dmg;
+    // cr.ToKnockout(true, 3, cr.HexX, cr.HexY);
+    if(cr.Stat[ST_CURRENT_HP] < 1)
+    {
+        if(cr.Stat[ST_CURRENT_HP] > __DeadHitPoints)
+        {
+            cr.ToKnockout(false, 3, cr.HexX, cr.HexY);
+        }
+        else
+        {
+            if(cr.IsPlayer())
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4015);
+            cr.ToDead(Random(0, 1) == 0 ? COND_DEAD_BURN : COND_DEAD_FUSED, null);
+            _SetTimeout(cr, TO_REPLICATION, RADIATION_DEATH_TIMEOUT);
+        }
+    }
+}
+
+//
+// Controls radiation side effects (which doesn't end up in stat loss etc)
+// Something like vomitting, CHP loss
+// (called every __CritterIdleTick time)
+//
+
+//
+// Determines whether side effect should occur
+// Period is average seconds interval, for the minimum effect threshold
+// period is shorter if radiation level is higher than effect threshold
+//
+bool SideEffectChance(Critter& cr, uint threshold, uint period)
+{
+    // DLog("Base period: " + period + ", for: " + threshold);
+    period /= MAX(10, (cr.RadiationLevel - threshold) / 100);
+    // DLog("Adjusted period: " + period + ", for: " + cr.RadiationLevel);
+    period = period * 1000 / __CritterIdleTick;
+    // DLog("Random(0, " + period);
+    return Random(0, period) == 0;
+}
+
+//
+// Barf, bile, rzygowiny
+//
+uint[] barf = { PID_BARF_1, PID_BARF_2 };
+void Vomit(Critter& cr)
+{
+    uint pid = barf[Random(0, 1)];
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return;
+
+    uint  x = cr.HexX;
+    uint  y = cr.HexY;
+    map.MoveHexByDir(x, y, cr.Dir, 1);
+    Item@ item = map.AddItem(x, y, pid, 1);
+    item.SetEvent(ITEM_EVENT_SKILL, "_BarfSkill");
+    item.SetEvent(ITEM_EVENT_WALK, "_BarfWalk");
+    // auto-removal
+    CreateTimeEvent(AFTER(GAME_MINUTE(Random(30, 180))), "e_BarfRemove", item, true);
+}
+void vomit_test(Critter& cr, int p0, int p1, int p2)
+{
+    Vomit(cr);
+}
+bool _BarfSkill(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        DeleteItem(item);
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4060);
+        crit.StatBase[ST_EXPERIENCE] += 1;
+        Irradiate(crit, 10);
+        return true;
+    }
+    else if(skill == SK_SCIENCE || skill == SK_DOCTOR)
+    {
+        if(crit.Skill[SK_SCIENCE] > 99 || crit.Skill[SK_DOCTOR] > 99)
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4061);
+        else
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4062);
+        return true;
+    }
+    return false;
+}
+void _BarfWalk(Item& item, Critter& crit, bool entered, uint8 dir)
+{
+    if(entered && crit.IsPlayer())
+    {
+        crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4063);
+    }
+}
+uint e_BarfRemove(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(valid(item))
+        DeleteItem(item);
+    return 0;
+}
+void RadiationSideEffects(Critter& cr)
+{
+    if(cr.IsDead())
+        return;
+    // vomiting
+    if(cr.RadiationLevel > 300 && SideEffectChance(cr, 300, 720))
+    {
+        cr.Say(SAY_NORM_ON_HEAD, "|4125012736 Uaaarghhh");
+        Vomit(cr);
+        RadiationDamage(cr);
+        cr.Animate(0, 0xff, ANIM2_SIT, 0xFF, 0, true, true, true);
+
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4033);
+        // notice nearby players
+        array<Critter@> crits;
+        uint            num = cr.GetCritters(false, FIND_ALL | FIND_ONLY_PLAYERS, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(GetCrittersDistantion(cr, crits[i]) < 3)
+            {
+                crits[i].SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4030, "$name" + GetPlayerName(cr.Id));
+            }
+        }
+        // return;
+    }
+    // damage
+    else if(cr.RadiationLevel > 500 && SideEffectChance(cr, 300, 360))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4034);
+        RadiationDamage(cr);
+
+        // return;
+    }
+    // hair
+    if(cr.RadiationLevel > 450 && SideEffectChance(cr, 300, 720))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4031);
+        // return;
+    }
+    // skin
+    if(cr.RadiationLevel > 600 && SideEffectChance(cr, 300, 720))
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 4032);
+        // return;
+    }
+}

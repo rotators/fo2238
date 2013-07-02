@@ -1,0 +1,71 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_sha_enin.fos
+//
+
+#include "_macros.fos"
+#include "npc_roles_h.fos"
+#include "mapdata_h.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    map.SetEvent(MAP_EVENT_CRITTER_DEAD, "_CritterDead");
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "_CritterIn");
+    map.SetEvent(MAP_EVENT_OUT_CRITTER, "_CritterOut");
+}
+
+bool d_BanditsIsDead(Critter& cr, Critter& npc)
+{
+    return(cr.GetMap().GetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT) == 0);
+}
+
+bool d_BanditsIsNotDead(Critter& cr, Critter& npc)
+{
+    return(cr.GetMap().GetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT) > 0);
+}
+
+void SetDeadShaEnin()
+{
+    Log("Uncomment code here!");
+//	GameVar@ var = GetLocalVar(LVAR_q_enc_rovering_trader, map.GetData(MAP_DATA_SHA_ENIN_OWNER));
+//	var=3;
+}
+
+void _CritterOut(Map& map, Critter& cr)
+{
+    if(cr.IsNpc() || uint(map.GetData(MAP_DATA_SHA_ENIN_OWNER)) != cr.Id)
+        return;
+
+    if(map.GetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT) > 0)
+        SetDeadShaEnin();
+}
+
+void _CritterIn(Map& map, Critter& cr)
+{
+    if(cr.IsPlayer() && map.GetData(MAP_DATA_SHA_ENIN_OWNER) == 0)
+        map.SetData(MAP_DATA_SHA_ENIN_OWNER, cr.Id);
+
+    uint            count = 0;
+    array<Critter@> critters;
+    uint            crCount = map.GetCritters(0, FIND_ONLY_NPC | FIND_LIFE, critters);
+    for(uint i = 0; i < crCount; i++)
+    {
+        if(critters[i].Stat[ST_NPC_ROLE] != ROLE_SHA_ENIN)
+            count++;
+    }
+    map.SetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT, count);
+}
+
+void _CritterDead(Map& map, Critter& cr, Critter@ killer)
+{
+    if(cr.Stat[ST_NPC_ROLE] == ROLE_SHA_ENIN)
+    {
+        SetDeadShaEnin();
+    }
+    else if(cr.IsNpc())       // bandit
+    {
+        map.SetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT, map.GetData(MAP_DATA_SHA_ENIN_BANDITS_COUNT) - 1);
+    }
+}

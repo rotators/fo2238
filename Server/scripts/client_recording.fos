@@ -1,0 +1,92 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_recording.fos
+//
+
+// Text messages recording
+// Compile with -client switch
+#define __CLIENT
+#include "_macros.fos"
+
+string FileName = "";
+bool   Active = false;
+
+void StartRecording(const string& filename)
+{
+    FileName = filename + ".rec";
+    file f;
+    f.open(FileName, "w");
+    f.close();
+    Active = true;
+}
+
+bool IsRecording() { return Active; }
+
+void Record(const string& message)
+{
+    if(!Active)
+        return;
+    file f;
+    f.open(FileName, "a");
+    f.writeString(message + "\n");
+    f.close();
+}
+
+void StopRecording()
+{
+    Active = false;
+}
+
+string@ GetRecord(const string& filename)
+{
+    file f;
+    if(f.open(filename + ".rec", "r") >= 0)
+    {
+        string str;
+        f.readString(f.getSize(), str);
+
+        // recursively substitute each inner play commands
+        array<string@>@ lines = split(str, "\n");
+        string ret;
+        for(uint i = 0, j = lines.length(); i < j; i++)
+        {
+            if(lines[i].length() < 5)             // either command... or `play.... TODO: comments??
+                continue;
+            if(lines[i].length() > 5 && substring(lines[i], 1, 4) == "play")
+            {
+                array<string@>@ command = split(lines[i], " ");
+                string@ rec = GetRecord(command[1]);
+                if(valid(rec))
+                    ret += rec;
+            }
+            else
+                ret += lines[i] + "\n";
+        }
+        return ret;
+    }
+    return null;
+}
+
+array<string@>@ Record;
+int Curr = -1;
+
+void StartReplay(string@ record)
+{
+    @Record = split(record, "\n");
+    Curr = 0;
+}
+
+void Replay()
+{
+    if(Curr < int(Record.length()))
+        RunServerScriptUnsafe("cheats@unsafe_ExecCommand", 0, 0, 0, Record[Curr++], null);
+    else
+        Curr = -1;
+}
+
+bool IsReplaying()
+{
+    return Curr != -1;
+}

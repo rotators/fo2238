@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<CodeSnippets>
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>iter</Title>
+			<Shortcut>iter</Shortcut>
+			<Description>(AngelScript) Code snippet for 'for' loop with array length as delimiter</Description>
+			<Author>Atom</Author>
+			<SnippetTypes>
+				<SnippetType>Expansion</SnippetType>
+				<SnippetType>SurroundsWith</SnippetType>
+			</SnippetTypes>
+		</Header>
+		<Snippet>
+			<Declarations>
+				<Literal>
+					<ID>index</ID>
+					<Default>i</Default>
+					<ToolTip>Index</ToolTip>
+				</Literal>
+				<Literal>
+					<ID>arr</ID>
+					<Default>arr</Default>
+					<ToolTip>Array name</ToolTip>
+				</Literal>
+			</Declarations>
+			<Code Language="cpp"><![CDATA[for (uint $index$ = 0; $index$ < $arr$.length(); $index$++)
+		{
+			$selected$ $end$
+		}]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

@@ -1,0 +1,68 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 @
+3 2000 None 0 #
+10 2010 D _param p ST_INTELLECT > 3 #
+0 2020 D _param p ST_INTELLECT > 3 #
+10 2030 D _param p ST_INTELLECT < 4 #
+0 2040 D _param p ST_INTELLECT < 4 @
+10 3000 None 0 #
+4 3010 D _param p ST_INTELLECT > 5 #
+4 3020 D _param p ST_INTELLECT > 3 D _param p ST_INTELLECT < 6 #
+4 3030 D _param p ST_INTELLECT < 4 #
+11 3040 @
+4 4000 merc_dialog@dlg_ShowDogCost 0 #
+6 4010 D _script merc_dialog@d_CanAffordMerc 1 8 R _script merc_dialog@r_HireMerc 1 8 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+3 8010 @
+9 9000 None 0 @
+11 10000 merc_dialog@dlg_ShowDog3Cost 0 #
+6 10010 D _script merc_dialog@d_CanAffordMerc 1 40 R _script merc_dialog@r_HireMerc 1 40 #
+0 10020 &
+
+[engl]
+{100}{}{Dog Trainer}
+{200}{}{You see the local dog trainer.}
+{210}{}{He is the man, when it comes to dogs.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{What do you want?}
+{2010}{}{Can I buy dogs from you?}
+{2020}{}{Nothing. Bye.@@Nevermind, bye.}
+{2030}{}{I can buy a wuff-wuff?}
+{2040}{}{Bye.}
+{3000}{}{If you can afford them... Yes, yes you can.}
+{3010}{}{Show me your trained canidae.}
+{3020}{}{Show me your dogs.}
+{3030}{}{Show me the wuff-wuffs.}
+{3040}{}{Do you have dogs that are more skilled in scouting?}
+{4000}{}{I've got the best dogs the Boneyard can offer. We get a deal for @lex price@ caps.}
+{4010}{}{I'm taking one. [You give him @lex price@ caps.]}
+{4020}{}{I can't afford anything right now.}
+{5000}{}{[He walks over to the dogs cage, opens the door and a fine trained animal jumps to the outside after he gave a wave-command with one of his hands.]}
+{5010}{}{Goodbye.}
+{6000}{}{Some error occured. Report this to admins.}
+{6010}{}{Yes, of course. I'll do it right away.}
+{7000}{}{Error, merc not found. Report this to admins.}
+{7010}{}{Yes, of course. I'll do it right away.}
+{8000}{}{|@sex@|Sorry man, but that's too expensive for you.||Sorry lady, but that's too expensive for you.|}
+{8010}{}{You're right...}
+{9000}{}{Oh please... leave me alone, douche.}
+{10000}{}{Got a few breeds of dog and prairie wolf available, if you are interested. They cost you @lex price@ caps each.}
+{10010}{}{Exactly what I am searching for! [You give him @lex price@ caps.]}
+{10020}{}{I can't afford that yet.}
+

@@ -1,0 +1,48 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// den_metzger_guard.fos
+//
+
+// See guard.fos for explanation of all guard stuff.
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "guard_h.fos"
+#include "town_h.fos"
+
+void r_SwitchFaction(Critter& player, Critter@ npc)
+{
+    ITown@ town = GetTown(RetrieveTownId(player));
+    if(valid(town))
+    {
+        array<Critter@> crits;
+        uint            num = npc.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+        for(uint i = 0; i < num; i++)
+        {
+            if(_CritHasExtMode(crits[i], MODE_EXT_GUARD))
+            {
+                SetGroupInfo(crits[i], town.GetControllingFaction(), 3, FACTION_MODE_ALWAYS);
+            }
+        }
+    }
+}
+
+void critter_init(Critter& guard, bool firstTime)
+{
+    guard.SetEvent(CRITTER_EVENT_MESSAGE, "_OnMessage");
+    guard.SetEvent(CRITTER_EVENT_SHOW_CRITTER, "_OnShowCritter");
+
+    GuardInit(guard);
+}
+
+void _OnMessage(Critter& npc, Critter& player, int num, int val)
+{
+    GuardOnMessage(npc, player, num, val);
+}
+
+void _OnShowCritter(Critter& guard, Critter& player)
+{
+    GuardOnShowCritter(guard, player);
+}

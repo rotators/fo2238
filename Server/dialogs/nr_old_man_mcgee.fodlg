@@ -1,0 +1,85 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+51 1010 D _var p q_nr_corsican_execution = 2 #
+2 1020 @
+2 2000 None 0 @
+10 3000 Attack 0 @
+50 4000 None 0 @
+51 5000 None 0 #
+52 5010 R _script dialog@r_StatRoll 2 Charisma 54 #
+52 5020 #
+10 5030 R _var p q_nr_corsican_execution = 8 #
+0 5040 @
+52 6000 None 0 #
+10 6010 R _var p q_nr_corsican_execution = 8 #
+53 6020 R _var p q_nr_corsican_execution = 4 #
+0 6030 R _var p q_nr_corsican_execution = 3 R _script quest_corsican_brothers@r_FollowMcGee 0  @
+53 7000 None 0 #
+10 7010 R _var p q_nr_corsican_execution = 8 #
+0 7020 R _var p q_nr_corsican_execution = 5 R _script quest_corsican_brothers@r_FollowMcGee 0  #
+0 7030 R _script quest_corsican_brothers@r_FollowMcGee 0  @
+54 8000 None 0 #
+55 8010 #
+0 8020 @
+55 9000 None 0 #
+56 9010 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+58 9020 D _item p PID_BOTTLE_CAPS < 20 R _var p q_nr_corsican_execution = 4 #
+58 9030 R _script quest_corsican_brothers@r_FollowMcGee 0  R _var p q_nr_corsican_execution = 4 @
+56 10000 None 0 #
+57 10010 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 #
+58 10020 D _item p PID_BOTTLE_CAPS < 20 R _var p q_nr_corsican_execution = 5 #
+58 10030 R _script quest_corsican_brothers@r_FollowMcGee 0  R _var p q_nr_corsican_execution = 5 @
+57 11000 None 0 #
+0 11010 R _script quest_corsican_brothers@r_FollowMcGee 0  @
+58 12000 None 0 &
+
+[engl]
+{100}{}{Gambler}
+{200}{}{You see an old casino patron.}
+{210}{}{You see one of the casino patrons. He looks old and tired.}
+{210}{}{You see one of the casino patrons. He has a golden gleam in his eye.}
+{210}{}{You see one of the casino patrons. He is cupping his face in his hands.}
+{210}{}{You see one of the casino patrons. He looks a little tipsy.}
+{210}{}{You see one of the casino patrons. He gives you a broad wink, then staggers off.}
+{210}{}{You see one of the casino patrons. He is trying to get the waitress's attention.}
+{1000}{}{Predialogue installations}
+{1010}{}{Corsican Brothers Quest #3}
+{1020}{}{normal}
+{2000}{}{Roll the bones.@@Baby needs a new pair of shoes...@@Damn lowrolling tourists…@@Dammit! I was up *53* chips, then…@@Of all the rotten luck…@@So close!@@I'm making bank.@@Me? I'm making bank. Watch me go.@@House was against me.@@Fortune's against me.@@Lady Luck, don't fail me now.@@The House ha'mercy on me.@@Between tips and these drunken spending sprees…@@Keep betting like that, and you're going to be calling Golgotha home…@@Waitress, another drink!@@Waiter, another drink!@@These drinks taste…odd.@@I got the fever!@@Are all my chips gone already?@@Luck's a fickle bitch, and so is my mother-in-law.@@More slavers in town recently.@@Wonder what goes on in the stables outside of town.@@Another feud may start soon.@@Damned crossroaders all over the place...@@Great, another low roller.@@I am SO money.@@I'll sleep when I'm dead.@@Man, I gotta piss. My teeth are swimming.@@Damn, they'll let anyone in here.@@C'mon 7!@@You've got moxy, baby.@@Who's the big winner tonight? Mikey!@@Don't crap out…c'mon…@@I've gotta 'jet'…if you know what I mean.@@This is SUCH bullshit.@@I only lost 60 chips. In the first five minutes, that is.@@Red 23! Red 23! C'mon…red 23…@@50 chips on Black 15…@@Round and round it goes…where it stops, nobody knows…}
+{3000}{}{What the-- now you're dead, y'hear me?}
+{4000}{}{- - - - - - - - - - - - - - - - - - - - CORSICAN BROTHERS QUEST #3 - - - - - - - - - - - - - - - - - - - -}
+{5000}{}{Roll the bones.@@Baby needs a new pair of shoes...@@Damn lowrolling tourists…@@Dammit! I was up *53* chips, then…@@Of all the rotten luck…@@So close!@@I'm making bank.@@Me? I'm making bank. Watch me go.@@House was against me.@@Fortune's against me.@@Lady Luck, don't fail me now.@@The House ha'mercy on me.@@Between tips and these drunken spending sprees…@@Keep betting like that, and you're going to be calling Golgotha home…@@Waitress, another drink!@@Waiter, another drink!@@These drinks taste…odd.@@I got the fever!@@Are all my chips gone already?@@Luck's a fickle bitch, and so is my mother-in-law.@@More slavers in town recently.@@Wonder what goes on in the stables outside of town.@@Another feud may start soon.@@Damned crossroaders all over the place...@@Great, another low roller.@@I am SO money.@@I'll sleep when I'm dead.@@Man, I gotta piss. My teeth are swimming.@@Damn, they'll let anyone in here.@@C'mon 7!@@You've got moxy, baby.@@Who's the big winner tonight? Mikey!@@Don't crap out…c'mon…@@I've gotta 'jet'…if you know what I mean.@@This is SUCH bullshit.@@I only lost 60 chips. In the first five minutes, that is.@@Red 23! Red 23! C'mon…red 23…@@50 chips on Black 15…@@Round and round it goes…where it stops, nobody knows…}
+{5010}{}{Hey, man! That's awesome, the way you're rolling that dice... I bet you'll win this round!}
+{5020}{}{You Old Man McGee?}
+{5030}{}{[Attack]}
+{5040}{}{[Leave him alone]}
+{6000}{}{And who the hell are you?}
+{6010}{}{I'm your Grim Reaper.}
+{6020}{}{There's a message for you from some people around here...}
+{6030}{}{Nobody, sorry for interrupting you.}
+{7000}{}{You're beyond my ken, @sex@|pal||sis|, I've no clue what you're babbling about. Beat it, before I run outta luck!}
+{7010}{}{[Grab his collar]}
+{7020}{}{We're not finished yet... see you around.}
+{7030}{}{[Leave]}
+{8000}{}{Whoa! It's red 23! I won, *I* won!!! How did you know I'll get this one, @sex@|buddy||honey|?}
+{8010}{}{Hey, we're alike! I can spot kindred spirit a mile away!}
+{8020}{}{Ooops, I thought you were someone else. Excuse me.}
+{9000}{}{Good to have someone like you around. Look, how about we play one together? It's 20 chips per round.}
+{9010}{}{Sure, let's roll!}
+{9020}{}{Hm, I don't have that much money on me right now.}
+{9030}{}{Sorry, I'm not interested. [Leave]}
+{10000}{}{[You find it strange, but Old Man McGee won again] This is incredible, we just won again! How about you order us a drink and I'll roll a few more rounds, okay?}
+{10010}{}{Sure, I'll be right back. [Go and get some drink]}
+{10020}{}{Hm, I don't have enough money for drink right now.}
+{10030}{}{Sorry, I'm not interested. [Leave]}
+{11000}{}{[After drinking a few beers and playing at the table for a while, Old Man McGee treats you like a good old friend of his. A bit drunk and quite happy for stumbling upon you, he invites you to walk the streets of New Reno and celebrate this fine occasion. Soon, you find yourself on the outskirts of New Reno.]}
+{11010}{}{[Continue]}
+{12000}{}{Kindred spirit my ass. You're a loser, you know? Get the fuck outta here!}
+

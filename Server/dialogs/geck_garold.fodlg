@@ -1,0 +1,236 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT < 4 #
+3 1020 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+4 1030 D _var p name_mem_npc_player = 1 @
+2 2000 None 0 @
+3 3000 None 0 #
+11 3010 #
+5 3020 #
+15 3030 #
+16 3040 #
+17 3050 #
+0 3060 @
+4 4000 None 0 #
+11 4010 #
+15 4020 #
+16 4030 #
+17 4040 #
+5 4050 #
+100 4060 D _script town@d_IsNotControllingTown 1 1 D _script dialog@d_IsGangMember 0  D _script town@d_CanTakeOver 0  #
+120 4070 D _script town@d_IsControllingTown 1 1 #
+50 4080 D _script town@d_CanRecruitMilitia 0  #
+500 4090 D _script town@d_CanChangeLaws 0  #
+0 4100 @
+5 5000 None 0 #
+7 5010 #
+6 5020 @
+6 6000 None 0 #
+7 6010 #
+4 6020 @
+7 7000 None 0 #
+8 7010 #
+0 7020 @
+8 8000 None 0 #
+9 8010 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+4 10010 #
+18 10020 #
+0 10030 @
+11 11000 None 0 #
+4 11010 #
+12 11020 #
+0 11030 @
+12 12000 None 0 #
+0 12010 #
+13 12020 @
+13 13000 None 0 #
+0 13010 #
+0 13020 @
+15 14000 None 0 #
+4 14010 #
+0 14020 @
+16 15000 None 0 #
+4 15010 #
+0 15020 @
+17 16000 None 0 #
+4 16010 #
+0 16020 @
+18 17000 None 0 #
+19 17010 #
+20 17020 #
+4 17030 #
+0 17040 @
+19 18000 None 0 #
+21 18010 @
+20 19000 None 0 #
+19 19010 #
+0 19020 @
+21 20000 None 0 #
+4 20010 #
+0 20020 @
+50 21000 town@dlg_ShowMilitiaCost 0 #
+50 21010 R _script town@r_RecruitMilitia 0  #
+4 21020 @
+100 22000 dialog@dlg_ShowFaction 0 #
+100 22010 R _script town@r_ClaimControl 1 0 @
+302 23000 dialog@dlg_ShowFaction 0 #
+0 23010 #
+130 23020 D _script town@d_MembersAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+301 24000 dialog@dlg_ShowFaction 0 #
+0 24010 #
+130 24020 D _script town@d_PresentAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+130 25000 None 0 #
+0 25010 @
+310 26000 None 0 #
+0 26010 D _script town@d_GainControl 1 1 @
+320 27000 None 0 #
+0 27010 D _script town@d_GainControl 1 1 @
+120 28000 None 0 #
+4 28010 @
+500 29000 town@dlg_ShowPolicies 0 #
+500 29010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 29020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 29030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 29040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 29050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 29060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+4 29070 @
+410 30000 None 0 #
+0 30010 @
+420 31000 None 0 #
+0 31010 @
+430 32000 None 0 #
+0 32010 @
+440 33000 None 0 @
+450 34000 None 0 #
+0 34010 @
+330 35000 None 0 &
+
+[engl]
+{100}{}{Harold}
+{110}{}{avatar_harold.png}
+{200}{}{You see a particularly leathery-looking Ghoul.}
+{200}{}{You see Harold.}
+{210}{}{You see a very old but still spry-looking ghoul.}
+{1000}{}{Predialogue installations}
+{1010}{}{Idiot}
+{1020}{}{Unknown}
+{1030}{}{Known}
+{2000}{}{I gotta tell ya, ol’ Harold’s a bit slow on the draw hisself. The two of us talkin’ wouldn’t get a whole lot done.@@Ahh, ain’t you cute.  I just don’t have time to try understanding ya right now.@@Heh heh, ain’t you a kick.}
+{3000}{}{Hello there, smoothskin. The name’s Harold. I help keep this town running.}
+{3010}{}{Smoothskin? Why did you call me that?}
+{3020}{}{Hello, Harold. What do you do here?}
+{3030}{}{Is there someplace I can barter or re-supply here?}
+{3040}{}{Is that a tree growing out of your head?}
+{3050}{}{Harold, I’d like to know where I can get some healing.}
+{3060}{}{Hello, Harold. Just passing through. Goodbye.}
+{4000}{}{Whatcha need, youngster?}
+{4010}{}{Why does everyone around here call me smoothskin?}
+{4020}{}{Is there someplace I can barter or re-supply here?}
+{4030}{}{Is that a tree growing out of your head?}
+{4040}{}{Harold, I’d like to know where I can get some healing.}
+{4050}{}{Hello, Harold. What do you do here?}
+{4060}{}{How about we talk about what you need? No offence, but your ghoul types aren't so good at keeping this place safe.}
+{4070}{}{Tell me, can you spare us some of your supplies?}
+{4080}{}{We need some volunteers to secure the town.}
+{4090}{}{Let's discuss the law a little.}
+{4100}{}{Just passing through. Goodbye.}
+{5000}{}{Wha-whatever it takes to keep this place together. Better job on it than me.}
+{5010}{}{This place is coming apart?}
+{5020}{}{You don’t sound so good.}
+{6000}{}{Yep, but I’m doing great for being dead! I never get tired of the looks when I tell that one.}
+{6010}{}{Ahh, right....So you say the place is falling apart?}
+{6020}{}{Dead, you say? Well, in that case you’re doing great. So good you can answer my next question.}
+{7000}{}{Well, sorta. Our atomic reactor’s a mite...sensitive. The people I got running it mean well, but... well, they are not the sharpest tools in the shed. If you know what I mean.}
+{7010}{}{What do you mean?}
+{7020}{}{Well, I’d love to stay and chat with you but I’ve got things to do and places to go. Good luck.}
+{8000}{}{Need a little time on the whetstone yourself, huh? I mean they are not too bright. Here’s an example. The other day I get a report. On it, it says the main coolant valve should be shut down. That woulda caused a meltdown that would make the Grand Canyon look like a pig wallow.}
+{8010}{}{That sounds bad.}
+{9000}{}{Uh, yeah, that would be bad. Now, I got things fixed up in time, but we came close to the end there. They need someone to watch out for ‘em.}
+{9010}{}{Good thing you’re here to help them.}
+{10000}{}{Who’d a thought I’d be making things right?  Although if we don’t get this plant working better quick, there is gonna be trouble.}
+{10010}{}{Hmm, sounds like a real problem all right. Let me ask you something else.}
+{10020}{}{Trouble? What kind of trouble?}
+{10030}{}{Well, I’ve taken enough of your valuable time. Goodbye.}
+{11000}{}{You cut with the dull edge of the knife, don’t ya?  You don’t look like an orange peel left in the sun all day. Your skin’s still soft and purty.}
+{11010}{}{Got me there. I’ll try to make my next question a little more worthwhile.}
+{11020}{}{You just better not be getting any funny ideas about my soft skin.}
+{11030}{}{Uh, well, I better be going. Goodbye.}
+{12000}{}{Funny ideas? Well, you mean like skinning you alive with a rusty, dull, old knife and then grafting your still-warm, wet, glistening, oh-so-soft, skin over my crusty-rotten gook?}
+{12010}{}{Hey! You just keep the hell away from me. I’m getting out of here while I still have my skin!}
+{12020}{}{Yeah, that’s exactly what I meant. Good call.}
+{13000}{}{More skin! ... Need more skin! (chuckles) What happ'n? Drop your sense of humor in the dust on the way into town?}
+{13010}{}{How ‘bout I change the subject with another question?}
+{13020}{}{Well, you just better keep your grubby mitts off my skin. Goodbye.}
+{14000}{}{Well, you might try talking to Wooz over in the Harp. You can’t miss it - it’s just across the way.}
+{14010}{}{Thanks. Let me ask you something else.}
+{14020}{}{That’s all I need to know for now. Goodbye.}
+{15000}{}{Jealous? His name’s Herbert. I talk to him when I get lonely... Heh heh. Just kiddin'... His name’s Bob.}
+{15010}{}{Right...Well, maybe you or Bob will know the answer to this.}
+{15020}{}{Thanks, that’s way more than I need to know for now. Goodbye.}
+{16000}{}{Just talk to my assistant, Lenny. He’ll be able to fix ya right up.}
+{16010}{}{Thanks. Let me ask you something else.}
+{16020}{}{Thanks, that’s all I need to know for now. Goodbye.}
+{17000}{}{We’re leaking radioactive coolant into the groundwater. Now that means, anyone using that water is not gunna need a night-light to take a midnight piss. Also, we need more fuel because our power plant is not burnin’ it very efficiently.}
+{17010}{}{What happens if you don’t fix the plant?}
+{17020}{}{Who do you buy your fuel from?}
+{17030}{}{Sorry to hear it. Let me ask you about something else.}
+{17040}{}{I think I’m going to have to leave you to your troubles for right now. Goodbye.}
+{18000}{}{If we don’t, you can bet those boneheads from Vault City will shut down our power plant, permanently.}
+{18010}{}{What will you do then?}
+{19000}{}{We get our fuel from the Broken Hills. That’s a mining community some ways south.}
+{19010}{}{What happens if you don’t fix the plant?}
+{19020}{}{Hmm, I think I should let you figure this out on your own. Goodbye.}
+{20000}{}{Take dirt naps. Vault City doesn’t play nice. They’ll just come up here and kill all of us if we don’t get things running smooth. Well, at least I’ll have a tree for a monument.}
+{20010}{}{Sounds like you need to fix the plant pretty badly. Let me ask you something else right now, though.}
+{20020}{}{Sounds like trouble. I need to run off and see what I can do. Bye.}
+{21000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{21010}{}{Sounds good, here's @lex cost@ caps.}
+{21020}{}{Nah, I think we're doing fine as it is now.}
+{22000}{}{Heh heh. They're all heart.}
+{22010}{}{So how about me and @lex faction@ help you keep the bad guys out of Gecko?}
+{23000}{}{Thanks for the offer, youngster, but I think our problems are a bit too big for you and...@lex faction@, was it? Maybe when you're a little bigger.}
+{23010}{}{Okay.}
+{23020}{}{You of all people should know appearances don't mean everything, Harold. One man's enough to make some real changes if he's the right man. And in @lex faction@, we're all the right man.}
+{24000}{}{Well I see you, but what about @lex faction@? Bring your friends down so I know you're serious about helping us folk.}
+{24010}{}{Okay.}
+{24020}{}{Wouldn't want to crowd your town with my heavies, Harold. I just brought enough people to keep Gecko safe without having them getting drunk and busting up The Harp.}
+{25000}{}{Well it sounds like your heart's in the right place, youngster. But I'm still gonna have to ask that you come back with a bigger gang. If I don't look out for all the ghouls here, well let's just say they ain't so good at doing that by themselves. I can't afford to make mistakes, or we'll all be taking dirtnaps, me included.}
+{25010}{}{I see,  Harold. Goodbye, then.}
+{26000}{}{Thanks for trying to help us out, stranger. Do us a good turn and we'll do you one right back.}
+{26010}{}{Thanks, Harold.}
+{27000}{}{Heh! You boys have a good attitude, I'll give you that. Hell, I'll give you a chance to help us out too.  Do right for these ghouls, and we'll do right by you.}
+{27010}{}{Thanks, Harold.}
+{28000}{}{In the locker, boy. Make a good use of it.}
+{28010}{}{Sure, thanks.}
+{29000}{}{Here's the current laws in Gecko:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{29010}{}{I want it to be legal to carry weapons openly.}
+{29020}{}{I want it to be illegal to carry weapons openly.}
+{29030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{29040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{29050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{29060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{29070}{}{Ok, looks good.}
+{30000}{}{Alright, there you go.}
+{30010}{}{Right.}
+{31000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{31010}{}{Ok.}
+{32000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{32010}{}{Yeah, yeah...}
+{33000}{}{Error. Report this.}
+{34000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{34010}{}{Uh, sure!}
+{35000}{}{Guards, get those retards!}
+

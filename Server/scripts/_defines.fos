@@ -1,0 +1,1759 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// _defines.fos
+//
+
+#ifndef __DEFINES__
+# define __DEFINES__
+
+# ifdef _MSC_VER
+#  ifndef __EXTENSIONS_SOLUTION__
+// here we put whatever will make intellisense smarter
+// it is advisable to comment out these lines while running ProjectCreator to reduce the processing time
+#   ifdef __SERVER
+#    include "solution/intellisense.h"
+#   endif
+#   ifdef __CLIENT
+#    include "solution/intellisense_client.h"
+#   endif
+#   ifdef __MAPPER
+#    include "solution/intellisense_mapper.h"
+#   endif
+#   define import                                extern
+#   define interface                             class
+#   define shared
+#   define private
+#   define final
+#  endif
+# endif
+
+# include "_basetypes.fos"
+
+// closed beta (if defined)
+// #define __TEST__
+// debug output
+# ifndef _MSC_VER
+//#define __DEBUG__
+# endif
+
+//#define __DEBUG_DISABLE_SQL__
+// #define PLAYERS_3D // Registration of 3d players / head slot / etc
+
+#ifndef SKIP_PRAGMAS
+# pragma globalvar "int  __GeometryType = 0"  // See GEOMETRY_* constants, assigned in config.fos InitializeGeometry()
+
+# pragma globalvar "uint __HitAimEyes  = 60"
+# pragma globalvar "uint __HitAimHead  = 40"
+# pragma globalvar "uint __HitAimGroin = 30"
+# pragma globalvar "uint __HitAimTorso =  0"
+# pragma globalvar "uint __HitAimArms  = 30"
+# pragma globalvar "uint __HitAimLegs  = 20"
+# pragma globalvar "uint __EncounterTime = 0" // Как часто пробовать создать энкаунтер, в миллисекундах
+#endif
+
+// Custom say types (multi target)
+// 0
+// Say types
+#define SAY_NORM                                 (1)
+#define SAY_NORM_ON_HEAD                         (2)
+#define SAY_SHOUT                                (3)
+#define SAY_SHOUT_ON_HEAD                        (4)
+#define SAY_EMOTE                                (5)
+#define SAY_EMOTE_ON_HEAD                        (6)
+#define SAY_WHISP                                (7)
+#define SAY_WHISP_ON_HEAD                        (8)
+#define SAY_SOCIAL                               (9)
+#define SAY_RADIO                                (10)
+#define SAY_NETMSG                               (11)
+#define SAY_DIALOG                               (12)
+#define SAY_APPEND                               (13)
+#define SAY_ENCOUNTER_ANY                        (14)                 // Activate dialog box on global map, using before encounter
+#define SAY_ENCOUNTER_RT                         (15)                 // Activate dialog box on global map, using before encounter
+#define SAY_ENCOUNTER_TB                         (16)                 // Activate dialog box on global map, using before encounter
+#define SAY_FIX_RESULT                           (17)
+#define SAY_DIALOGBOX_TEXT                       (18)
+#define SAY_DIALOGBOX_BUTTON                     # (b)   (19 + (b))   // Max 20 buttons (0..19)
+#define SAY_SAY_TITLE                            (39)
+#define SAY_SAY_TEXT                             (40)
+#define SAY_FLASH_WINDOW                         (41)                 // Only flash window in tray and beep
+// Custom say types (single target)
+// 42...254
+
+// SayEx() type
+#define SAYEX_VERBOSE_ACTION                     (1)
+#define SAYEX_MAX                                (2)
+
+// MapMessageEx() type
+#define FLOAT_ENFORCED                           (0) // always shown
+#define FLOAT_VERBOSE_ACTION                     (1) // (client configuration)
+#define FLOAT_EXPERIENCE                         (2) // (client configuration)
+#define FLOAT_MAX                                (3)
+
+// MapMessageEx() mode
+#define FLOAT_MODE_SINGLE                        (1) // only target; if target is follower, only master
+#define FLOAT_MODE_ALL                           (2) // all who can see target
+#define FLOAT_MODE_AROUND                        (3) // all who can see target, without target itself
+#define FLOAT_MODE_MAX                           (4)
+
+// Msg nums
+#define TEXTMSG_TEXT                             (0)
+#define TEXTMSG_DLG                              (1)
+#define TEXTMSG_ITEM                             (2)
+#define TEXTMSG_GAME                             (3)
+#define TEXTMSG_GM                               (4)
+#define TEXTMSG_COMBAT                           (5)
+#define TEXTMSG_QUEST                            (6)
+#define TEXTMSG_HOLO                             (7)
+#define TEXTMSG_CRAFT                            (8)
+#define TEXTMSG_INTERNAL                         (9)
+#define DLGSTR                                   # (dialogId, strNum)(1000000000 + (dialogId) * 100000 + (strNum))
+
+// Critter conditions
+#define COND_LIFE                                (1) // Криттер жив
+#define COND_KNOCKOUT                            (2) // Криттер упал
+#define COND_DEAD                                (3) // Криттер умер
+#define COND_NOT_IN_GAME                         (4) // Криттер не в игре
+
+// Gender
+#define GENDER_MALE                              (0)
+#define GENDER_FEMALE                            (1)
+#define GENDER_IT                                (2)
+
+// Items accessory
+#define ACCESSORY_NONE                           (0)
+#define ACCESSORY_CRITTER                        (1)
+#define ACCESSORY_HEX                            (2)
+#define ACCESSORY_CONTAINER                      (3)
+
+#define ITEM_TYPE_NONE                           (0)
+#define ITEM_TYPE_ARMOR                          (1)
+#define ITEM_TYPE_DRUG                           (2)
+#define ITEM_TYPE_WEAPON                         (3)
+#define ITEM_TYPE_AMMO                           (4)
+#define ITEM_TYPE_MISC                           (5)
+#define ITEM_TYPE_KEY                            (7)
+#define ITEM_TYPE_CONTAINER                      (8)
+#define ITEM_TYPE_DOOR                           (9)
+#define ITEM_TYPE_GRID                           (10)
+#define ITEM_TYPE_GENERIC                        (11)
+#define ITEM_TYPE_WALL                           (12)
+#define ITEM_TYPE_CAR                            (13)
+// User types
+#define ITEM_TYPE_SMO                            (14) // Special Map Objects (special_map_objects.fos)
+#define ITEM_TYPE_BLUEPRINT                      (20) // Item blueprints
+#define ITEM_TYPE_SPOT                           (21) // Hex markers: waypoints, spawnpoints, etc. which don't do anything on its own beside providing data.
+#define ITEM_TYPE_MAP_OBJECT                     (22) // Scripted map objects which don't fit in any other category.
+#define ITEM_TYPE_TRANSFER                       (23) // Objects transfering critter somewhere else when used somehow
+                                                      // or walked over: exit edges, ladders etc. (WIP, don't use).
+#define ITEM_TYPE_TRIGGER                        (24) // Activators which run a function when stepped over / out (WIP, don't use).
+
+// Item flags
+#define ITEM_HIDDEN                              (0x00000001)
+#define ITEM_FLAT                                (0x00000002)
+#define ITEM_NO_BLOCK                            (0x00000004)
+#define ITEM_SHOOT_THRU                          (0x00000008)
+#define ITEM_LIGHT_THRU                          (0x00000010)
+#define ITEM_MULTI_HEX                           (0x00000020) // Not used
+#define ITEM_WALL_TRANS_END                      (0x00000040) // Not used
+#define ITEM_TWO_HANDS                           (0x00000080)
+#define ITEM_BIG_GUN                             (0x00000100)
+#define ITEM_ALWAYS_VIEW                         (0x00000200)
+#define ITEM_HAS_TIMER                           (0x00000400)
+#define ITEM_BAD_ITEM                            (0x00000800)
+#define ITEM_NO_HIGHLIGHT                        (0x00001000)
+#define ITEM_SHOW_ANIM                           (0x00002000)
+#define ITEM_SHOW_ANIM_EXT                       (0x00004000)
+#define ITEM_LIGHT                               (0x00008000)
+#define ITEM_GECK                                (0x00010000)
+#define ITEM_TRAP                                (0x00020000)
+#define ITEM_NO_LIGHT_INFLUENCE                  (0x00040000)
+#define ITEM_NO_LOOT                             (0x00080000)
+#define ITEM_NO_STEAL                            (0x00100000)
+#define ITEM_GAG                                 (0x00200000)
+#define ITEM_COLORIZE                            (0x00400000)
+#define ITEM_COLORIZE_INV                        (0x00800000)
+#define ITEM_CAN_USE_ON_SMTH                     (0x01000000)
+#define ITEM_CAN_LOOK                            (0x02000000)
+#define ITEM_CAN_TALK                            (0x04000000)
+#define ITEM_CAN_PICKUP                          (0x08000000)
+#define ITEM_CAN_USE                             (0x10000000)
+#define ITEM_HOLODISK                            (0x20000000)
+#define ITEM_RADIO                               (0x40000000)
+#define ITEM_CACHED                              (0x80000000) // Not used
+
+// Grid Types
+#define GRID_EXITGRID                            (1)
+#define GRID_STAIRS                              (2)
+#define GRID_LADDERBOT                           (3)
+#define GRID_LADDERTOP                           (4)
+#define GRID_ELEVATOR                            (5)
+
+#define CRIPPLED_EYE                             (0x00000001)
+#define CRIPPLED_RIGHT_ARM                       (0x00000002)
+#define CRIPPLED_LEFT_ARM                        (0x00000004)
+#define CRIPPLED_RIGHT_LEG                       (0x00000008)
+#define CRIPPLED_LEFT_LEG                        (0x00000010)
+
+// Damage types
+#define DAMAGE_UNCALLED                          (0)
+#define DAMAGE_NORMAL                            (1)
+#define DAMAGE_LASER                             (2)
+#define DAMAGE_FIRE                              (3)
+#define DAMAGE_PLASMA                            (4)
+#define DAMAGE_ELECTR                            (5)
+#define DAMAGE_EMP                               (6)
+#define DAMAGE_EXPLODE                           (7)
+
+// Critter events, description see in templates.fos
+#define CRITTER_EVENT_IDLE                       (0)
+#define CRITTER_EVENT_FINISH                     (1)
+#define CRITTER_EVENT_DEAD                       (2)
+#define CRITTER_EVENT_RESPAWN                    (3)
+#define CRITTER_EVENT_SHOW_CRITTER               (4)
+#define CRITTER_EVENT_SHOW_CRITTER_1             (5)
+#define CRITTER_EVENT_SHOW_CRITTER_2             (6)
+#define CRITTER_EVENT_SHOW_CRITTER_3             (7)
+#define CRITTER_EVENT_HIDE_CRITTER               (8)
+#define CRITTER_EVENT_HIDE_CRITTER_1             (9)
+#define CRITTER_EVENT_HIDE_CRITTER_2             (10)
+#define CRITTER_EVENT_HIDE_CRITTER_3             (11)
+#define CRITTER_EVENT_SHOW_ITEM_ON_MAP           (12)
+#define CRITTER_EVENT_CHANGE_ITEM_ON_MAP         (13)
+#define CRITTER_EVENT_HIDE_ITEM_ON_MAP           (14)
+#define CRITTER_EVENT_ATTACK                     (15)
+#define CRITTER_EVENT_ATTACKED                   (16)
+#define CRITTER_EVENT_STEALING                   (17)
+#define CRITTER_EVENT_MESSAGE                    (18)
+#define CRITTER_EVENT_USE_ITEM                   (19)
+#define CRITTER_EVENT_USE_ITEM_ON_ME             (20)
+#define CRITTER_EVENT_USE_SKILL                  (21)
+#define CRITTER_EVENT_USE_SKILL_ON_ME            (22)
+#define CRITTER_EVENT_DROP_ITEM                  (23)
+#define CRITTER_EVENT_MOVE_ITEM                  (24)
+#define CRITTER_EVENT_KNOCKOUT                   (25)
+#define CRITTER_EVENT_SMTH_DEAD                  (26)
+#define CRITTER_EVENT_SMTH_STEALING              (27)
+#define CRITTER_EVENT_SMTH_ATTACK                (28)
+#define CRITTER_EVENT_SMTH_ATTACKED              (29)
+#define CRITTER_EVENT_SMTH_USE_ITEM              (30)
+#define CRITTER_EVENT_SMTH_USE_SKILL             (31)
+#define CRITTER_EVENT_SMTH_DROP_ITEM             (32)
+#define CRITTER_EVENT_SMTH_MOVE_ITEM             (33)
+#define CRITTER_EVENT_SMTH_KNOCKOUT              (34)
+#define CRITTER_EVENT_PLANE_BEGIN                (35)
+#define CRITTER_EVENT_PLANE_END                  (36)
+#define CRITTER_EVENT_PLANE_RUN                  (37)
+#define CRITTER_EVENT_BARTER                     (38)
+#define CRITTER_EVENT_TALK                       (39)
+#define CRITTER_EVENT_GLOBAL_PROCESS             (40)
+#define CRITTER_EVENT_GLOBAL_INVITE              (41)
+#define CRITTER_EVENT_TURN_BASED_PROCESS         (42)
+#define CRITTER_EVENT_SMTH_TURN_BASED_PROCESS    (43)
+#define CRITTER_EVENT_MAX                        (44)
+
+// 2238-specific
+#define CRITTER_EVENT_EXT_MAP_IN                 (0)
+#define CRITTER_EVENT_EXT_MAP_OUT                (1)
+#define CRITTER_EVENT_EXT_MAX                    (2)
+
+// Return values for CRITTER_EVENT_PLANE_ BEGIN/END/RUN events
+#define PLANE_RUN_GLOBAL                         (0)
+#define PLANE_KEEP                               (1)
+#define PLANE_DISCARD                            (2)
+
+// Map events, description see in templates.fos
+#define MAP_EVENT_FINISH                         (0)
+#define MAP_EVENT_LOOP_0                         (1)
+#define MAP_EVENT_LOOP_1                         (2)
+#define MAP_EVENT_LOOP_2                         (3)
+#define MAP_EVENT_LOOP_3                         (4)
+#define MAP_EVENT_LOOP_4                         (5)
+#define MAP_EVENT_IN_CRITTER                     (6)
+#define MAP_EVENT_OUT_CRITTER                    (7)
+#define MAP_EVENT_CRITTER_DEAD                   (8)
+#define MAP_EVENT_TURN_BASED_BEGIN               (9)
+#define MAP_EVENT_TURN_BASED_END                 (10)
+#define MAP_EVENT_TURN_BASED_PROCESS             (11)
+#define MAP_EVENT_MAX                            (12)
+
+// Item events, description see in templates.fos
+#define ITEM_EVENT_FINISH                        (0)
+#define ITEM_EVENT_ATTACK                        (1)
+#define ITEM_EVENT_USE                           (2)
+#define ITEM_EVENT_USE_ON_ME                     (3)
+#define ITEM_EVENT_SKILL                         (4)
+#define ITEM_EVENT_DROP                          (5)
+#define ITEM_EVENT_MOVE                          (6)
+#define ITEM_EVENT_WALK                          (7)
+#define ITEM_EVENT_MAX                           (8)
+
+// Item perks
+#define ITEM_PERK_ARMOR                          (1)
+#define ITEM_PERK_HELMET                         (2)
+
+#define WEAPON_PERK_LONG_RANGE                   (1)
+#define WEAPON_PERK_ACCURATE                     (2)
+#define WEAPON_PERK_PENETRATE                    (3)
+#define WEAPON_PERK_KNOCKBACK                    (4)
+#define WEAPON_PERK_SCOPE_RANGE                  (5)
+#define WEAPON_PERK_FAST_RELOAD                  (6)
+#define WEAPON_PERK_NIGHT_SIGHT                  (7)
+#define WEAPON_PERK_FLAMEBOY                     (8)
+#define WEAPON_PERK_ENHANCED_KNOCKOUT            (9)
+
+#define ARMOR_PERK_POWERED                       (1)    // +3 strength, +30 radiation resist
+#define ARMOR_PERK_COMBAT                        (2)    // +20 radiation resist
+#define ARMOR_PERK_ADVANCED_I                    (3)    // +4 strength, +60 radiation resist
+#define ARMOR_PERK_ADVANCED_II                   (4)    // +4 strength, +75 radiation resist
+
+#define HELMET_PERK_CHARISMA                     (1)    // +1 charisma
+#define HELMET_PERK_PERCEPTION_GLASSES           (2)    // PE1:+3, PE2:+2, PE3:+1, PE4+:0
+#define HELMET_PERK_PROTECT_EYES                 (3)    // when attacked, HIT_LOCATION_EYES changes to HIT_LOCATION_HEAD
+
+#define SLOT_PERK_COSMETIC_CASE                  (0x02) // +1 charisma to female
+#define SLOT_PERK_MOTION_SENSOR                  (0x04) // +20 outdoorsman
+#define SLOT_PERK_STEALTH_BOY                    (0x08) // +20 sneak
+
+// In SendMessage
+#define MESSAGE_TO_VISIBLE_ME                    (0)    // Отослать сообщения всем кто видет криттера.
+#define MESSAGE_TO_IAM_VISIBLE                   (1)    // Отослать сообщения всем кого видит криттер.
+#define MESSAGE_TO_ALL_ON_MAP                    (2)    // Отослать всем на карте.
+// more eng-friendly aliases
+#define MESSAGE_TO_WHO_SEES_ME                   (MESSAGE_TO_VISIBLE_ME)
+#define MESSAGE_TO_I_SEE                         (MESSAGE_TO_IAM_VISIBLE)
+
+// Critter actions
+// Flags for chosen:
+// l - hardcoded local call
+// s - hardcoded server call
+// for all others critters actions call only server
+//                                          flags    actionExt                                                      item
+#define ACTION_MOVE                              (0)   // l
+#define ACTION_RUN                               (1)   // l
+#define ACTION_MOVE_ITEM                         (2)   // l s      from slot                                                      +
+#define ACTION_MOVE_ITEM_SWAP                    (3)   // l s      from slot                                                      +
+#define ACTION_USE_ITEM                          (4)   // l s                                                                     +
+#define ACTION_DROP_ITEM                         (5)   // l s      from slot                                                      +
+#define ACTION_USE_WEAPON                        (6)   // l        fail attack 8 bit, use index (0-2) 4-7 bits, aim 0-3 bits      +
+#define ACTION_RELOAD_WEAPON                     (7)   // l s                                                                     +
+#define ACTION_USE_SKILL                         (8)   // l s      skill index (see SK_*)
+#define ACTION_PICK_ITEM                         (9)   // l s                                                                     +
+#define ACTION_PICK_CRITTER                      (10)  // l        0 - loot, 1 - steal, 2 - push
+#define ACTION_OPERATE_CONTAINER                 (11)  // l s      transfer type * 10 + [0 - get, 1 - get all, 2 - put]           + (exclude get all)
+#define ACTION_BARTER                            (12)  //   s      0 - item taken, 1 - item given                                 +
+#define ACTION_DODGE                             (13)  //          0 - front, 1 - back
+#define ACTION_DAMAGE                            (14)  //          0 - front, 1 - back
+#define ACTION_DAMAGE_FORCE                      (15)  //          0 - front, 1 - back
+#define ACTION_KNOCKOUT                          (16)  //   s      0 - knockout anim2begin
+#define ACTION_STANDUP                           (17)  //   s      0 - knockout anim2end
+#define ACTION_FIDGET                            (18)  // l
+#define ACTION_DEAD                              (19)  //   s      dead type anim2 (see Anim2 in _animation.fos)
+#define ACTION_CONNECT                           (20)  //
+#define ACTION_DISCONNECT                        (21)  //
+#define ACTION_RESPAWN                           (22)  //   s
+#define ACTION_REFRESH                           (23)  //   s
+
+// Slots
+#define SLOT_INV                                 (0)   // Inventory
+#define SLOT_HAND1                               (1)   // Weapon slot
+#define SLOT_HAND2                               (2)   // Extended slot
+#define SLOT_ARMOR                               (3)   // Armor slot
+#define SLOT_HEAD                                (4)   // Head slot
+#define SLOT_TROPHY                              (5)   // Animals skins, teeths, claws, etc.
+#define SLOT_GROUND                              (255) // Ground slot, used when critter drop/pick item
+
+// Critter timeevents identifiers
+#define CTE_DELETE                               (-1)
+#define CTE_POISON                               (1)
+#define CTE_RADIATION                            (2)
+#define CTE_TRADER                               (3)
+#define CTE_OBSERVING                            (4)
+#define CTE_AUTOKILL                             (5)
+#define CTE_FOLLOWER_LOYALITY                    (6)
+#define CTE_FOLLOWER_JOIN                        (7)
+#define CTE_AGE                                  (8)
+#define CTE_CUTSCENE                             (9)
+#define CTE_SCHEDULE                             (10)
+// Drugs time events                40 (PID_STIMPAK) .. 1000
+#define CTE_CHEAT_AURA                           (1337)
+
+// Parameters
+/// Stats
+#define STAT_BEGIN                               (0)
+#define STAT_END                                 (199)
+#define STAT_COUNT                               (STAT_END - STAT_BEGIN + 1)
+#define STAT_EXT_BEGIN                           (32)
+#define STAT_EXT_END                             (63)
+#define ST_STRENGTH                              (0) // Used in engine +++
+#define ST_PERCEPTION                            (1)
+#define ST_ENDURANCE                             (2)
+#define ST_CHARISMA                              (3)
+#define ST_INTELLECT                             (4)
+#define ST_AGILITY                               (5)
+#define ST_LUCK                                  (6)
+#define ST_MAX_LIFE                              (7)
+#define ST_ACTION_POINTS                         (8)
+#define ST_ARMOR_CLASS                           (9)
+#define ST_MELEE_DAMAGE                          (10)
+#define ST_CARRY_WEIGHT                          (11)
+#define ST_SEQUENCE                              (12)
+#define ST_HEALING_RATE                          (13)
+#define ST_CRITICAL_CHANCE                       (14)
+#define ST_MAX_CRITICAL                          (15)
+#define ST_NORMAL_ABSORB                         (16)
+#define ST_LASER_ABSORB                          (17)
+#define ST_FIRE_ABSORB                           (18)
+#define ST_PLASMA_ABSORB                         (19)
+#define ST_ELECTRO_ABSORB                        (20)
+#define ST_EMP_ABSORB                            (21)
+#define ST_EXPLODE_ABSORB                        (22)
+#define ST_NORMAL_RESIST                         (23)
+#define ST_LASER_RESIST                          (24)
+#define ST_FIRE_RESIST                           (25)
+#define ST_PLASMA_RESIST                         (26)
+#define ST_ELECTRO_RESIST                        (27)
+#define ST_EMP_RESIST                            (28)
+#define ST_EXPLODE_RESIST                        (29)
+#define ST_RADIATION_RESISTANCE                  (30)
+#define ST_POISON_RESISTANCE                     (31)
+#define ST_STRENGTH_EXT                          (32)
+#define ST_PERCEPTION_EXT                        (33)
+#define ST_ENDURANCE_EXT                         (34)
+#define ST_CHARISMA_EXT                          (35)
+#define ST_INTELLECT_EXT                         (36)
+#define ST_AGILITY_EXT                           (37)
+#define ST_LUCK_EXT                              (38)
+#define ST_MAX_LIFE_EXT                          (39)
+#define ST_ACTION_POINTS_EXT                     (40)
+#define ST_ARMOR_CLASS_EXT                       (41)
+#define ST_MELEE_DAMAGE_EXT                      (42)
+#define ST_CARRY_WEIGHT_EXT                      (43)
+#define ST_SEQUENCE_EXT                          (44)
+#define ST_HEALING_RATE_EXT                      (45)
+#define ST_CRITICAL_CHANCE_EXT                   (46)
+#define ST_MAX_CRITICAL_EXT                      (47)
+#define ST_NORMAL_ABSORB_EXT                     (48)
+#define ST_LASER_ABSORB_EXT                      (49)
+#define ST_FIRE_ABSORB_EXT                       (50)
+#define ST_PLASMA_ABSORB_EXT                     (51)
+#define ST_ELECTRO_ABSORB_EXT                    (52)
+#define ST_EMP_ABSORB_EXT                        (53)
+#define ST_EXPLODE_ABSORB_EXT                    (54)
+#define ST_NORMAL_RESIST_EXT                     (55)
+#define ST_LASER_RESIST_EXT                      (56)
+#define ST_FIRE_RESIST_EXT                       (57)
+#define ST_PLASMA_RESIST_EXT                     (58)
+#define ST_ELECTRO_RESIST_EXT                    (59)
+#define ST_EMP_RESIST_EXT                        (60)
+#define ST_EXPLODE_RESIST_EXT                    (61)
+#define ST_RADIATION_RESISTANCE_EXT              (62)
+#define ST_POISON_RESISTANCE_EXT                 (63) // Used in engine ---
+#define ST_TOXIC                                 (64)
+#define ST_RADIOACTIVE                           (65)
+#define ST_KILL_EXPERIENCE                       (66)
+#define ST_BODY_TYPE                             (67)
+#define ST_LOCOMOTION_TYPE                       (68) // See Locomotion types
+#define ST_DAMAGE_TYPE                           (69)
+#define ST_AGE                                   (70) // Used in engine
+#define ST_GENDER                                (71) // Used in engine
+#define ST_CURRENT_HP                            (72) // Used in engine
+#define ST_POISONING_LEVEL                       (73) // Used in engine
+#define ST_RADIATION_LEVEL                       (74) // Used in engine
+#define ST_CURRENT_AP                            (75) // Used in engine
+#define ST_EXPERIENCE                            (76) // Used in engine
+#define ST_LEVEL                                 (77) // Used in engine
+#define ST_UNSPENT_SKILL_POINTS                  (78) // Used in engine
+#define ST_UNSPENT_PERKS                         (79) // Used in engine
+#define ST_KARMA                                 (80) // Used in engine
+#define ST_FOLLOW_CRIT                           (81) // Used in engine
+#define ST_REPLICATION_MONEY                     (82) // Used in engine
+#define ST_REPLICATION_COUNT                     (83) // Used in engine
+#define ST_REPLICATION_TIME                      (84) // Used in engine
+#define ST_REPLICATION_COST                      (85) // Used in engine
+#define ST_TURN_BASED_AC                         (86) // Used in engine
+#define ST_MAX_MOVE_AP                           (87) // Used in engine
+#define ST_MOVE_AP                               (88) // Used in engine
+#define ST_NPC_ROLE                              (89) // Used in engine
+#define ST_VAR0                                  (90)
+#define ST_VAR1                                  (91)
+#define ST_VAR2                                  (92)
+#define ST_VAR3                                  (93)
+#define ST_VAR4                                  (94)
+#define ST_VAR5                                  (95)
+#define ST_VAR6                                  (96)
+#define ST_VAR7                                  (97)
+#define ST_VAR8                                  (98)
+#define ST_VAR9                                  (99)
+#define ST_PLAYER_KARMA                          (100)
+#define ST_BONUS_LOOK                            (101) // Used in engine
+#define ST_HANDS_ITEM_AND_MODE                   (102) // Used in engine
+#define ST_FREE_BARTER_PLAYER                    (103) // Used in engine
+#define ST_DIALOG_ID                             (104) // Used in engine
+#define ST_AI_ID                                 (105) // Used in engine
+#define ST_TEAM_ID                               (106) // Used in engine
+#define ST_BAG_ID                                (107) // Used in engine
+#define ST_LAST_STEAL_CR_ID                      (108)
+#define ST_STEAL_COUNT                           (109)
+#define ST_LAST_WEAPON_ID                        (110) // Used in engine
+#define ST_LAST_WEAPON_USE                       (111)
+#define ST_BASE_CRTYPE                           (112) // Used in engine
+#define ST_DEAD_BLOCKER_ID                       (113)
+#define ST_CURRENT_ARMOR_PERK                    (114)
+#define ST_TALK_DISTANCE                         (115) // Used in engine; if zero than taked __TalkDistance
+#define ST_SCALE_FACTOR                          (116) // Used in engine
+#define ST_WALK_TIME                             (117) // Hardcoded
+#define ST_RUN_TIME                              (118) // Hardcoded
+#define ST_MAX_TALKERS                           (119) // Hardcoded
+// 120..129 reserved for hardcoded values
+
+// post-wipe todo: move those to 130+ to avoid conflicts with new hardcoded values
+#define ST_FACTION_RANK                          (121) // Rank ranging from 0-5.
+#define ST_FACTION_MODE                          (122) // Npc faction guard mode.
+// 121..150
+#define ST_REP_DECAY                             (130) // for slow reputation decay in critter_idle
+#define ST_SCENARIO                              (131) // index of the scenario critter participates in actually (it was rather for some prototype, not used currently)
+#define ST_WEAPON_BLUEPRINTS                     (132)
+#define ST_ARMOR_BLUEPRINTS                      (133)
+#define ST_MISC_BLUEPRINTS                       (134)
+#define ST_EXT_SNEAK                             (135) // extra sneak from armour, for faster check_look
+#define ST_HEALTH_LEVEL                          (136) // critter damage level; updated on hp change, sent to process simple look clientside
+#define ST_SNEAK_FLAGS                           (137) // has stealth boy on
+#define ST_DESCRIPTION1                          (138)
+#define ST_DESCRIPTION2                          (139)
+#define ST_DEFAULT_ARMOR_PID                     (140)
+#define ST_DEFAULT_HELMET_PID                    (141)
+#define ST_OVERRIDE_CRTYPE                       (143)
+#define ST_TURN_BASED_HEX                        (144)
+#define ST_CURRENT_HELMET_PERK                   (145) // we're running out of space here :)
+#define ST_FACTION_UPDATE_SEQ                    (146)
+#define ST_MINIGAME_DATA                         (147) // custom minigame data (first byte is reserved to store minigame team and id)
+
+// Initial values of animation 3d layers
+#ifdef PLAYERS_3D
+# define ST_ANIM3D_LAYERS                        (150)
+#endif
+// 150..179 reserved for 30 layers
+// 180..199
+
+/// Skills
+#define SKILL_BEGIN                              (__SkillBegin)
+#define SKILL_END                                (__SkillEnd)
+#define SKILL_COUNT                              (SKILL_END - SKILL_BEGIN + 1)
+#define MAX_SKILL_VAL                            (__SkillMaxValue)
+#define SK_SMALL_GUNS                            (200) // Used in engine
+#define SK_BIG_GUNS                              (201) // Used in engine
+#define SK_ENERGY_WEAPONS                        (202) // Used in engine
+#define SK_UNARMED                               (203) // Used in engine
+#define SK_MELEE_WEAPONS                         (204) // Used in engine
+#define SK_THROWING                              (205) // Used in engine
+#define SK_FIRST_AID                             (206) // Used in engine
+#define SK_DOCTOR                                (207) // Used in engine
+#define SK_SNEAK                                 (208) // Used in engine
+#define SK_LOCKPICK                              (209) // Used in engine
+#define SK_STEAL                                 (210) // Used in engine
+#define SK_TRAPS                                 (211) // Used in engine
+#define SK_SCIENCE                               (212) // Used in engine
+#define SK_REPAIR                                (213) // Used in engine
+#define SK_SPEECH                                (214) // Used in engine
+#define SK_BARTER                                (215) // Used in engine
+#define SK_GAMBLING                              (216)
+#define SK_OUTDOORSMAN                           (217) // Used in engine
+// 218..225
+
+/// Tag skills
+#define TAG_BEGIN                                (226)
+#define TAG_END                                  (229)
+#define TAG_SKILL1                               (226) // Used in engine
+#define TAG_SKILL2                               (227) // Used in engine
+#define TAG_SKILL3                               (228) // Used in engine
+#define TAG_SKILL4                               (229) // Used in engine
+
+/// Timeouts
+#define TIMEOUT_BEGIN                            (__TimeoutBegin)
+#define TIMEOUT_END                              (__TimeoutEnd)
+#define TIMEOUT_COUNT                            (TIMEOUT_END - TIMEOUT_BEGIN + 1)
+#define TO_SK_FIRST_AID                          (230)
+#define TO_SK_DOCTOR                             (231)
+#define TO_SK_REPAIR                             (232) // Used in engine
+#define TO_SK_SCIENCE                            (233) // Used in engine
+#define TO_SK_LOCKPICK                           (234)
+#define TO_SK_STEAL                              (235)
+#define TO_WEAKENED                              (236)
+#define TO_FIXBOY                                (237)
+#define TO_BATTLE                                (238) // Used in engine
+#define TO_TRANSFER                              (239) // Used in engine
+#define TO_REMOVE_FROM_GAME                      (240) // Used in engine
+#define TO_REPLICATION                           (241)
+#define TO_KARMA_VOTING                          (242) // Used in engine
+#define TO_GATHERING                             (243)
+#define TO_SNEAK                                 (244)
+#define TO_HEALING                               (245)
+#define TO_SLEEPY                                (246)
+
+// 246..249
+#define TO_AGGRESSOR                             (249)
+#define TO_SLEEPY_STOPPED                        (250)
+#define TO_SLEEPY_CUMULATE                       (251)
+#define TO_IMMUNITY_TIME                         (252)
+
+// 253..259
+
+/// Kills
+// Reserved 260..299 (BT_MEN..BT_BIG_BAD_BOSS)
+#define KILL_BEGIN                               (__KillBegin)
+#define KILL_END                                 (__KillEnd)
+#define KILL_COUNT                               (KILL_END - KILL_BEGIN + 1)
+// 279..299
+
+/// Perks
+// legend:
+// implementation:
+// [no comment] - implemented in scripts (can be referenced in dlls as well)
+// Used in dll - implemented in a dll
+// Used in engine - the perk is implemented in the engine
+// Not implemented - completely unused and left for hypothetical reactivation
+// status:
+// [no comment] - active
+// Disabled - the perk cannot be taken
+// Nolevel - the perk is not available via levelling
+// todo: perk editor?
+#define PERK_BEGIN                               (__PerkBegin)
+#define PERK_END                                 (__PerkEnd)
+#define PERK_COUNT                               (PERK_END - PERK_BEGIN + 1)
+#define PE_BOOKWORM                              (300) // Not implemented
+#define PE_AWARENESS                             (301) // Nolevel
+#define PE_BONUS_HTH_ATTACKS                     (302) // Used in dll
+#define PE_BONUS_HTH_DAMAGE                      (303)
+#define PE_BONUS_MOVE                            (304)
+#define PE_BONUS_RANGED_DAMAGE                   (305)
+#define PE_BONUS_RATE_OF_FIRE                    (306) // Used in dll
+#define PE_EARLIER_SEQUENCE                      (307)
+#define PE_FASTER_HEALING                        (308) // Nolevel
+#define PE_MORE_CRITICALS                        (309)
+#define PE_NIGHT_VISION                          (310) // Not implemented
+#define PE_PRESENCE                              (311) // Not implemented
+#define PE_RAD_RESISTANCE                        (312) // Nolevel
+#define PE_TOUGHNESS                             (313)
+#define PE_STRONG_BACK                           (314)
+#define PE_SHARPSHOOTER                          (315)
+#define PE_SILENT_RUNNING                        (316) // Used in engine
+#define PE_SURVIVALIST                           (317) // Nolevel
+#define PE_MASTER_TRADER                         (318) // Disabled, Used in engine
+#define PE_EDUCATED                              (319) // Nolevel
+#define PE_HEALER                                (320)
+#define PE_FORTUNE_FINDER                        (321) // Not implemented
+#define PE_BETTER_CRITICALS                      (322)
+#define PE_EMPATHY                               (323) // Not implemented
+#define PE_SLAYER                                (324) // Disabled
+#define PE_SNIPER                                (325) // Disabled
+#define PE_SILENT_DEATH                          (326)
+#define PE_ACTION_BOY                            (327)
+#define PE_MENTAL_BLOCK                          (328) // Not implemented
+#define PE_LIFEGIVER                             (329)
+#define PE_DODGER                                (330)
+#define PE_SNAKEATER                             (331) // Nolevel
+#define PE_MR_FIXIT                              (332) // Nolevel
+#define PE_MEDIC                                 (333)
+#define PE_MASTER_THIEF                          (334) // Nolevel
+#define PE_SPEAKER                               (335) // Nolevel
+#define PE_HEAVE_HO                              (336) // In dll
+#define PE_FRIENDLY_FOE                          (337) // Not implemented
+#define PE_PICKPOCKET                            (338) // Nolevel
+#define PE_GHOST                                 (339) // In dll
+#define PE_CULT_OF_PERSONALITY                   (340) // Not implemented
+#define PE_SCROUNGER                             (341) // Not implemented
+#define PE_EXPLORER                              (342) // Nolevel
+#define PE_FLOWER_CHILD                          (343) // Not implemented
+#define PE_PATHFINDER                            (344) // Nolevel
+#define PE_ANIMAL_FRIEND                         (345) // Not implemented
+#define PE_SCOUT                                 (346) // Nolevel
+#define PE_MYSTERIOUS_STRANGER                   (347) // Not implemented
+#define PE_RANGER                                (348) // Nolevel
+#define PE_QUICK_POCKETS                         (349) // Used in engine
+#define PE_SMOOTH_TALKER                         (350) // Disabled, Used in engine
+#define PE_SWIFT_LEARNER                         (351) // Nolevel
+#define PE_TAG                                   (352) // Not implemented
+#define PE_MUTATE                                (353) // Not implemented
+/// Professions
+#define PE_PROFESSION_BEGIN                      (354) // same as following, for loop over all professions purpose
+#define PE_PROFESSION_ARMORER                    (354)
+#define PE_PROFESSION_GUNSMITH_S                 (355)
+#define PE_PROFESSION_GUNSMITH_B                 (356)
+#define PE_PROFESSION_ENERGY_EXPERT              (357)
+#define PE_PROFESSION_DEMOLITION_EXPERT          (358)
+#define PE_PROFESSION_DOCTOR                     (359)
+#define PE_PROFESSION_MORDINO_CHEMIST            (360)
+#define PE_PROFESSION_THIEF                      (361)
+#define PE_PROFESSION_LIBRARIAN                  (362)
+#define PE_PROFESSION_SCOUT                      (363)
+#define PE_PROFESSION_END                        (364)
+#define PE_PROFESSION_COUNT                      (PE_PROFESSION_END - PE_PROFESSION_BEGIN + 1)
+// 364...379
+#define PE_ADRENALINE_RUSH                       (380)
+#define PE_CAUTIOUS_NATURE                       (381) // Nolevel
+#define PE_COMPREHENSION                         (382) // Not implemented (implementation commented out)
+#define PE_DEMOLITION_EXPERT                     (383) // Nolevel
+#define PE_GAMBLER                               (384) // Disabled
+#define PE_GAIN_STRENGTH                         (385)
+#define PE_GAIN_PERCEPTION                       (386)
+#define PE_GAIN_ENDURANCE                        (387)
+#define PE_GAIN_CHARISMA                         (388)
+#define PE_GAIN_INTELLIGENCE                     (389)
+#define PE_GAIN_AGILITY                          (390)
+#define PE_GAIN_LUCK                             (391)
+#define PE_HARMLESS                              (392) // Nolevel
+#define PE_HERE_AND_NOW                          (393) // Disabled
+#define PE_HTH_EVADE                             (394)
+#define PE_KAMA_SUTRA_MASTER                     (395) // Not implemented
+#define PE_KARMA_BEACON                          (396) // Disabled
+#define PE_LIGHT_STEP                            (397) // Nolevel
+#define PE_LIVING_ANATOMY                        (398)
+#define PE_MAGNETIC_PERSONALITY                  (399) // Nolevel
+#define PE_NEGOTIATOR                            (400) // Nolevel
+#define PE_PACK_RAT                              (401)
+#define PE_PYROMANIAC                            (402)
+#define PE_QUICK_RECOVERY                        (403)
+#define PE_SALESMAN                              (404) // Nolevel
+#define PE_STONEWALL                             (405)
+#define PE_THIEF                                 (406) // Nolevel
+#define PE_WEAPON_HANDLING                       (407)
+#define PE_VAULT_CITY_TRAINING                   (408) // Not implemented
+#define PE_ALCOHOL_RAISED_HP                     (409) // Not implemented
+#define PE_ALCOHOL_RAISED_HP_II                  (410) // Not implemented
+#define PE_ALCOHOL_LOWERED_HP                    (411) // Not implemented
+#define PE_ALCOHOL_LOWERED_HP_II                 (412) // Not implemented
+#define PE_AUTODOC_RAISED_HP                     (413) // Not implemented
+#define PE_AUTODOC_RAISED_HP_II                  (414) // Not implemented
+#define PE_AUTODOC_LOWERED_HP                    (415) // Not implemented
+#define PE_AUTODOC_LOWERED_HP_II                 (416) // Not implemented
+#define PE_EXPERT_EXCREMENT                      (417) // Nolevel
+// 418
+#define PE_JINXED_II                             (419) // Disabled, Nolevel
+#define PE_TERMINATOR                            (420) // Disabled
+#define PE_TREE_TRUNK_THIGHS                     (421)
+#define PE_IRON_GRIP                             (422)
+#define PE_MAN_OF_STEEL                          (423)
+#define PE_EVEN_MORE_CRITICALS                   (424)
+#define PE_RIGHT_BETWEEN_THE_EYES                (425)
+#define PE_FAST_RELOAD                           (426)
+#define PE_SPRAY_AND_PRAY                        (427)
+#define PE_MORE_RANGED_DAMAGE                    (428)
+#define PE_LIVEWIRE                              (429)
+#define PE_GECKO_SKINNING                        (430)
+#define PE_VAULT_CITY_INOCULATIONS               (431) // Not implemented
+#define PE_DERMAL_IMPACT                         (432) // Not implemented
+#define PE_DERMAL_IMPACT_ENH                     (433) // Not implemented
+#define PE_PHOENIX_IMPLANTS                      (434) // Not implemented
+#define PE_PHOENIX_IMPLANTS_ENH                  (435) // Not implemented
+// 436..469
+#define PE_HTH_EVADE_II                          (436)
+#define PE_DODGER_II                             (437)
+#define PE_EVEN_TOUGHER                          (438)
+#define PE_HEALER_II                             (439)
+#define PE_BLESSED_ARE_THE_WEAK                  (440)
+#define PE_NIGHT_PERSON                          (441)
+#define PE_MELT_INTO_SHADOW                      (442)
+#define PE_BONUS_HTH_DAMAGE_II                   (443)
+#define PE_IN_YOUR_FACE                          (444)
+#define PE_HIT_THE_GAPS                          (445)
+#define PE_HTH_CRITICALS                         (446)
+#define PE_HEAVE_HO_II                           (447)
+#define PE_JUNK_MERCHANT                         (448)
+#define PE_BULK_TRADER                           (449)
+#define PE_SEX_APPEAL                            (450)
+#define PE_BORN_LEADER                           (451)
+#define PE_TRAPPER                               (452)
+#define PE_HAND_LOADER                           (453)
+#define PE_STEALTH_GIRL                          (454)
+#define PE_BEST_OF_A_BAD_LOT                     (455)
+#define PE_DISMANTLER                            (456)
+#define PE_VIGILANT_RECYCLER                     (457)
+#define PE_RETENTION                             (458)
+#define PE_TREASURE_HUNTER                       (459)
+#define PE_LOCKPICK_PERK_2                       (460)
+#define PE_DEAD_MAN_WALKING                      (461)
+// 462..469
+
+/// Addictions
+#define ADDICTION_BEGIN                          (__AddictionBegin)
+#define ADDICTION_END                            (__AddictionEnd)
+#define ADDICTION_COUNT                          (ADDICTION_END - ADDICTION_BEGIN + 1)
+#define ADDICTION_NUKA_COLA                      (470)
+#define ADDICTION_BUFFOUT                        (471)
+#define ADDICTION_MENTATS                        (472)
+#define ADDICTION_PSYCHO                         (473)
+#define ADDICTION_RADAWAY                        (474)
+#define ADDICTION_JET                            (475)
+#define ADDICTION_TRAGIC                         (476)
+#define ADDICTION_CIGARETTES                     (477)
+#define ADDICTION_BEER                           (478)
+// 479..479
+
+// TODO: maybe give more space for karmic perks and addictions?
+
+/// Karma perks
+#define KARMA_BEGIN                              (__KarmaBegin)
+#define KARMA_END                                (__KarmaEnd)
+#define KARMA_COUNT                              (KARMA_END - KARMA_BEGIN + 1)
+#define KARMA_BERSERKER                          (480)
+#define KARMA_CHAMPION                           (481)
+#define KARMA_CHILDKILLER                        (482)
+#define KARMA_SEXPERT                            (483)
+#define KARMA_PRIZEFIGHTER                       (484)
+#define KARMA_GIGOLO                             (485)
+#define KARMA_GRAVE_DIGGER                       (486)
+#define KARMA_MARRIED                            (487)
+#define KARMA_PORN_STAR                          (488)
+#define KARMA_SLAVER                             (489)
+#define KARMA_VIRGIN_WASTES                      (490)
+#define KARMA_MAN_SALVATORE                      (491)
+#define KARMA_MAN_BISHOP                         (492)
+#define KARMA_MAN_MORDINO                        (493)
+#define KARMA_MAN_WRIGHT                         (494)
+#define KARMA_SEPARATED                          (495)
+#define KARMA_NCR_RANGER                         (496)
+// 497..499
+
+/// Damages
+#define DAMAGE_BEGIN                             (__DamageBegin)
+#define DAMAGE_END                               (__DamageEnd)
+#define DAMAGE_COUNT                             (DAMAGE_END - DAMAGE_BEGIN + 1)
+#define DAMAGE_POISONED                          (500) // Used in engine
+#define DAMAGE_RADIATED                          (501) // Used in engine
+#define DAMAGE_EYE                               (502) // Used in engine
+#define DAMAGE_RIGHT_ARM                         (503) // Used in engine
+#define DAMAGE_LEFT_ARM                          (504) // Used in engine
+#define DAMAGE_RIGHT_LEG                         (505) // Used in engine
+#define DAMAGE_LEFT_LEG                          (506) // Used in engine
+// 507..509
+
+/// Modes
+#define MODE_BEGIN                               (510)
+#define MODE_END                                 (549)
+#define MODE_COUNT                               (MODE_END - MODE_BEGIN + 1)
+#define MODE_HIDE                                (510) // Состояние скрытности                                   Used in engine
+#define MODE_NO_STEAL                            (511) // Нельзя обворовать                                      Used in engine
+#define MODE_NO_BARTER                           (512) // Нельзя тоговать                                        Used in engine
+#define MODE_NO_ENEMY_STACK                      (513) // Нпц не запоминает врагов                               Used in engine
+#define MODE_NO_PVP                              (514) // Запрещает ПвП для игрока                               Used in engine
+#define MODE_END_COMBAT                          (515) // Согласен ли игрок закончить пошаговый бой              Used in engine
+#define MODE_DEFAULT_COMBAT                      (516) // Режим боя по-умолчанию                                 Used in engine
+#define MODE_NO_HOME                             (517) // Нпц не возвращается в домашнюю позицию автоматически   Used in engine
+#define MODE_GECK                                (518) // Локация не удаляется при наличии такого нпц            Used in engine
+#define MODE_NO_FAVORITE_ITEM                    (519) // Режим установки итемов по-умолчанию                    Used in engine
+#define MODE_NO_ITEM_GARBAGER                    (520) // Итемы не удаляются движком                             Used in engine
+#define MODE_DLG_SCRIPT_BARTER                   (521) // Возможно торговать при активном скрипте на диалоге     Used in engine
+#define MODE_UNLIMITED_AMMO                      (522) // Бесконечные патроны                                    Used in engine
+#define MODE_NO_DROP                             (523) // Нельзя сбрасывать предметы
+#define MODE_NO_LOOSE_LIMBS                      (524) // Не может терять конечности
+#define MODE_DEAD_AGES                           (525) // unused
+#define MODE_NO_HEAL                             (526) // Повреждения не излечиваются с течением времени         Used in engine
+#define MODE_INVULNERABLE                        (527) // Неуязвимый                                             Used in engine
+#define MODE_NO_FLATTEN                          (528) // Не помещать труп на задний план после смерти           Used in engine
+#define MODE_SPECIAL_DEAD                        (529) // unused
+#define MODE_RANGE_HTH                           (530) // Возможна рукопашная атака на расстоянии                Used in engine
+#define MODE_NO_KNOCK                            (531) // Не может быть сбит с ног
+#define MODE_NO_LOOT                             (532) // Нельзя лутать                                          Used in engine
+#define MODE_TRADER_ITEM_LEVELS                  (533)
+#define MODE_EXT                                 (534)
+#define MODE_KILLER_ADMIN                        (535)
+#define MODE_NO_PUSH                             (536) // Can't be pushed
+#define MODE_NO_UNARMED                          (537)
+#define MODE_NO_AIM                              (538) // Critter can't do aim attacks                           Hardcoded
+#define MODE_NO_WALK                             (539) // Critter can't walk                                     Hardcoded
+#define MODE_NO_RUN                              (540) // Critter can't run                                      Hardcoded
+#define MODE_NO_TALK                             (541) // Npc can't talk                                         Hardcoded
+#define MODE_NEGATE_CRIT_EFF                     (542) // Negates set critical hit Flags
+#define MODE_LAST_IP                             (543) // Stores previos IP player was logged in
+#define MODE_LAST_WPN_MODE                       (544)
+// 545..549
+
+// ext mode flags
+#define MODE_EXT_NO_SLAVE                        (0x00000001)
+#define MODE_EXT_NO_WALL_CHECK                   (0x00000002) // applies only when sneaking, used in dll
+#define MODE_EXT_MOB                             (0x00000004)
+#define MODE_EXT_GUARD                           (0x00000008)
+#define MODE_EXT_TRADER                          (0x00000010)
+#define MODE_EXT_FOLLOWER                        (0x00000020)
+#define MODE_EXT_PEN_BRAHMIN                     (0x00000040)
+#define MODE_EXT_SLAVE_HOSTILE                   (0x00000080)
+#define MODE_EXT_SLAVE_NORMAL                    (0x00000100)
+#define MODE_EXT_NO_DETERIORATION                (0x00000200) // used in dll
+#define MODE_EXT_EVENT                           (0x00000400) // Part of event
+#define MODE_EXT_NO_ATTACK_AUTH                  (0x00000800) // Don't attack authenticated players
+#define MODE_EXT_MILITIA                         (0x00001000) // TC Militia
+#define MODE_EXT_TC_LEADER                       (0x00002000) // TC Leader
+#define MODE_EXT_SLAVE                           (0x00004000) // to diferentiate slaves within other followers
+#define MODE_EXT_LOOK_ADMIN                      (0x00008000) // used in dll
+#define MODE_EXT_LOOK_INVISIBLE                  (0x00010000) // used in dll
+// don't use (0x00020000)
+#define MODE_EXT_LOOK_ALWAYS_VISIBLE             (0x00040000) // used in dll
+#define MODE_EXT_NO_HIT_ANIM                     (0x00080000) // Don't animate being hit
+
+/// Traits
+#define TRAIT_BEGIN                              (__TraitBegin)
+#define TRAIT_END                                (__TraitEnd)
+#define TRAIT_COUNT                              (TRAIT_END - TRAIT_BEGIN + 1)
+#define TRAIT_FAST_METABOLISM                    (550)
+#define TRAIT_BRUISER                            (551)
+#define TRAIT_SMALL_FRAME                        (552) // Used in engine
+#define TRAIT_ONE_HANDER                         (553)
+#define TRAIT_FINESSE                            (554)
+#define TRAIT_KAMIKAZE                           (555)
+#define TRAIT_HEAVY_HANDED                       (556)
+#define TRAIT_FAST_SHOT                          (557) // Used in engine
+#define TRAIT_BLOODY_MESS                        (558)
+#define TRAIT_JINXED                             (559)
+#define TRAIT_GOOD_NATURED                       (560)
+#define TRAIT_CHEM_RELIANT                       (561)
+#define TRAIT_CHEM_RESISTANT                     (562)
+#define TRAIT_BONEHEAD                           (563)
+#define TRAIT_SKILLED                            (564)
+#define TRAIT_LONER                              (565) // Used in engine
+// #define TRAIT_GIFTED              (566)
+
+// 567...579
+
+#define ACHIEVEMENT_BEGIN                        (580)
+#define ACHIEVEMENT_END                          (587)
+
+// 588...599
+
+/// Reputation
+// Used range in engine character screen __ReputationBegin..__ReputationEnd
+// Remains with + as indexing from 0 is foreign dependency (team ids)
+#define REPUTATION_BEGIN                         (__ReputationBegin)
+#define REPUTATION_END                           (__ReputationEnd)
+#define REPUTATION_COUNT                         (REPUTATION_END - REPUTATION_BEGIN + 1)
+// ..699
+
+/// Good / Evil list
+#define GOOD_EVIL_LIST_BEGIN                     (700)
+#define GOOD_EVIL_LIST_END                       (899)
+#define GOOD_EVIL_LIST_COUNT                     (GOOD_EVIL_LIST_END - GOOD_EVIL_LIST_BEGIN + 1)
+
+#define FOLLOWER_BEGIN                           (900) // 25 slots
+#define FOLLOWER_END                             (924) // In practice, not possible to utilize them all unless cheating
+// 910..924
+
+#define FV_BEGIN                                 (925)
+#define FV_END                                   (935)
+#define FV_MODE                                  (925)
+#define FV_ATTACK_POLICY                         (926)
+#define FV_CLAIMABLE                             (927)
+#define FV_DISTANCE                              (928)
+#define FV_FACTION                               (929)
+#define FV_MERCID                                (930)
+#define FV_SPAWNMAP                              (931)
+#define FV_TYPE                                  (932)
+#define FV_MASTER                                (933)
+#define FV_WM_IDLE                               (934) // When entered WM
+#define FV_WM_NEXT_TRY                           (935) // To not waste CPU in global_process
+#define FV_RESPAWN_PLACE                         (936)
+#define FV_LOYALITY                              (937)
+#define FV_LAST_DIALOG_ID                        (938) // DialogId before becoming enslaved.
+#define FV_DEFAULT_ARMOR                         (939) // For companions
+#define FV_WORN_ARMOR                            (940)
+#define FV_FLAGS                                 (941)
+#define FV_RESPAWN_BASE_ID                       (942) // Because of multiple faction bases
+
+#define FV_FLAG_MASTER_SPEAKER                   (0x1)
+#define FV_FLAG_FLED_BATTLE                      (0x2) // Has fled battle and is waiting on worldmap.
+
+//
+// 943..999
+//
+#define ST_EX_IDX                                (999)
+#define PARAMS_COUNT                             (1000)
+
+// Planes types
+#define AI_PLANE_MISC                            (0)
+#define AI_PLANE_ATTACK                          (1)
+#define AI_PLANE_WALK                            (2)
+#define AI_PLANE_PICK                            (3)
+#define AI_PLANE_PATROL                          (4) // WIP
+#define AI_PLANE_COURIER                         (5) // WIP
+
+// Planes default priority
+#define AI_PLANE_MISC_PRIORITY                   (10)
+#define AI_PLANE_ATTACK_PRIORITY                 (50)
+#define AI_PLANE_WALK_PRIORITY                   (20)
+#define AI_PLANE_PICK_PRIORITY                   (35)
+#define AI_PLANE_PATROL_PRIORITY                 (25)
+#define AI_PLANE_COURIER_PRIORITY                (30)
+
+// Plane identifiers
+#define PLANE_GOTO_EXIT                          (29)
+#define PLANE_LOOT                               (30) // loot dead critter and hex, then search for other loot targets
+#define PLANE_LOOT_EX                            (31) // loot without searching other targets
+#define PLANE_WANDER                             (32) // wandering ghoul, brahmin and such
+#define PLANE_HEAL_CRITTER                       (33)
+#define PLANE_DOCTOR_CRITTER                     (34)
+#define PLANE_GOTO_TRANSFER                      (35)
+#define PLANE_PUSH_CRITTER                       (36)
+#define PLANE_FOLLOWER_GOTO_MASTER               (37)
+#define PLANE_PICK_DROPPED_WPN                   (38)
+#define PLANE_FIRE_IN_THE_HOLE                   (39) // Run from a hex and wait for an explosion at safe distance
+#define PLANE_RETURN_WPN                         (40)
+#define PLANE_RAM_INTO_CRITTER                   (41) // Run to a hex and try to ram into the target critter (not a real attack but can KD/damage).
+
+// Plane begin/end/run reasons
+// Begin
+#define REASON_GO_HOME                           (10)
+#define REASON_FOUND_IN_ENEMY_STACK              (11)
+#define REASON_FROM_DIALOG                       (12)
+#define REASON_FROM_SCRIPT                       (13)
+#define REASON_RUN_AWAY                          (14)
+// End
+#define REASON_SUCCESS                           (30)
+#define REASON_HEX_TOO_FAR                       (31)
+#define REASON_HEX_BUSY                          (32)
+#define REASON_HEX_BUSY_RING                     (33)
+#define REASON_DEADLOCK                          (34)
+#define REASON_TRACE_FAIL                        (35)
+#define REASON_POSITION_NOT_FOUND                (36)
+#define REASON_FIND_PATH_ERROR                   (37)
+#define REASON_CANT_WALK                         (38)
+#define REASON_TARGET_DISAPPEARED                (39)
+#define REASON_USE_ITEM_NOT_FOUND                (40)
+#define REASON_GAG_CRITTER                       (41)
+#define REASON_GAG_ITEM                          (42)
+#define REASON_NO_UNARMED                        (43)
+// Run
+#define REASON_ATTACK_TARGET                     (50)
+#define REASON_ATTACK_WEAPON                     (51)
+#define REASON_ATTACK_DISTANTION                 (52)
+#define REASON_ATTACK_USE_AIM                    (53)
+
+// Locker
+#define LOCKER_ISOPEN                            (0x01) // Used in engine
+#define LOCKER_LOCKED                            (0x02)
+#define LOCKER_JAMMED                            (0x04)
+#define LOCKER_BROKEN                            (0x08)
+#define LOCKER_NOOPEN                            (0x10) // Hardcoded
+#define LOCKER_ELECTRO                           (0x20)
+
+// Timer
+#define TIMER_MIN_VALUE                          (1)
+#define TIMER_MAX_VALUE                          (599)
+
+// Timeouts in real seconds, generic values
+#define FIRST_AID_TIMEOUT                        # (cr)     ((REAL_MINUTE(100) / (((cr.Skill[SK_FIRST_AID]) > 3 ? cr.Skill[SK_FIRST_AID] : 3) * 100 / MAX_SKILL_VAL)) / (cr.Perk[PE_MEDIC] > 0 ? 2 : 1))           // Orig 3 time on day, 5 min - sk
+#define DOCTOR_TIMEOUT                           # (cr)        ((REAL_MINUTE(100) / (((cr.Skill[SK_DOCTOR]) > 3 ? cr.Skill[SK_DOCTOR] : 3) * 100 / MAX_SKILL_VAL)) / (cr.Perk[PE_MEDIC] > 0 ? 2 : 1))              // Orig 1 time on day, 20 min - sk
+#define REPAIR_TIMEOUT                           # (cr)        (REAL_MINUTE(1))                                                                                                                                    // Orig 4 time on day, 1 min
+#define SCIENCE_TIMEOUT                          # (cr)       (REAL_MINUTE(1))                                                                                                                                     // Orig 6 time on day, 1 min
+#define LOCKPICK_TIMEOUT                         # (cr)      (REAL_MINUTE(2))                                                                                                                                      // Orig 15 minutes, 2 min
+#define STEAL_TIMEOUT                            # (cr)         (cr.Perk[PE_MASTER_THIEF] != 0 ? REAL_SECOND(15) : REAL_SECOND(30))                                                                                // 30 seconds
+#define TRANSFER_TIMEOUT                         # (cr)      (REAL_SECOND(30))                                                                                                                                     // 1/2 min
+#define WEAKENED_TIMEOUT                         # (cr)          (REAL_MINUTE((16 - Random(1, cr.Stat[ST_LUCK])) / 2))
+#define HEALING_TIMEOUT                          # (cr) (cr.Trait[TRAIT_FAST_METABOLISM] > 0 ? REAL_SECOND(30) : REAL_SECOND(60))                                                                                  // 0.5 or 1 minute
+#define SLEEPY_TIMEOUT                           # (cr) (REAL_SECOND(150))
+#define IS_TURN_BASED_TIMEOUT                    # (cr) (cr.Timeout[TO_BATTLE] > 100000)
+#define MAXIMUM_TIMEOUT                          (10000000)                                                                                                                                                        // more than most expensive items timeouts
+#define SLEEPY_DEATH_IMMUNITY                    # (cr)     (REAL_SECOND(300))
+#define SLEEPY_BASE_IMMUNITY                     # (cr)      (REAL_SECOND(20))
+#define TOOL_TIMEOUT_DIV                         (2)
+
+// Transfer types
+#define TRANSFER_CLOSE                           (0)
+#define TRANSFER_HEX_CONT_UP                     (1)
+#define TRANSFER_HEX_CONT_DOWN                   (2)
+#define TRANSFER_SELF_CONT                       (3)
+#define TRANSFER_CRIT_LOOT                       (4)
+#define TRANSFER_CRIT_STEAL                      (5)
+#define TRANSFER_CRIT_BARTER                     (6)
+#define TRANSFER_FAR_CONT                        (7)
+#define TRANSFER_FAR_CRIT                        (8)
+
+// Scores
+#define SCORE_EVIL_OF_HOUR                       (0)
+#define SCORE_HERO_OF_HOUR                       (1)
+#define SCORE_KARMA_ON_HOUR                      (2)
+#define SCORE_SPEAKER                            (3)
+#define SCORE_TRADER                             (4)
+#define SCORE_ZOMBY                              (5)
+#define SCORE_PATY                               (6)
+#define SCORE_MANIAC                             (7)
+#define SCORE_SCAUT                              (8)
+#define SCORE_DOCTOR                             (9)
+#define SCORE_SHOOTER                            (10)
+#define SCORE_MELEE                              (11)
+#define SCORE_UNARMED                            (12)
+#define SCORE_THIEF                              (13)
+#define SCORE_DRIVER                             (14)
+#define SCORE_KILLER                             (15)
+#define SCORE_SNIPER                             (16)
+#define SCORE_ADVENTURER                         (17)
+#define SCORE_CRACKER                            (18)
+#define SCORE_UNARMED_DAMAGE                     (19)
+#define SCORE_RITCH                              (20)
+#define SCORE_CHOSEN_ONE                         (21)
+#define SCORE_EXPERT_EXCREMENT                   (22)
+
+#define SCORE_TC_MODOC                           (30)
+#define SCORE_TC_KLAMATH                         (31)
+#define SCORE_TC_GECKO                           (32)
+#define SCORE_TC_BH                              (33)
+#define SCORE_TC_DEN                             (34)
+#define SCORE_TC_REDDING                         (35)
+
+#define SCORE_SIERRA_CUR                         (40)
+#define SCORE_MARIPOSA_CUR                       (41)
+#define SCORE_CATHEDRAL_CUR                      (42)
+#define SCORE_SIERRA_BEST                        (43)
+#define SCORE_MARIPOSA_BEST                      (44)
+#define SCORE_CATHEDRAL_BEST                     (45)
+#define SCORE_SIERRA_ORG                         (46)
+#define SCORE_MARIPOSA_ORG                       (47)
+#define SCORE_CATHEDRAL_ORG                      (48)
+#define SCORE_BASE_BEST_ORG                      (49)
+#define SCORES_MAX                               (50)
+
+// Car flags
+#define CAR_BIO_ENGINE                           (0x0001)
+#define CAR_NO_LOCKPICK                          (0x0002)
+
+// Body types
+#define BT_MEN                                   (0)
+#define BT_WOMEN                                 (1)
+#define BT_CHILDREN                              (2)
+#define BT_SUPER_MUTANT                          (3)
+#define BT_GHOUL                                 (4)
+#define BT_BRAHMIN                               (5)
+#define BT_RADSCORPION                           (6)
+#define BT_RAT                                   (7)
+#define BT_FLOATER                               (8)
+#define BT_CENTAUR                               (9)
+#define BT_ROBOT                                 (10)
+#define BT_DOG                                   (11)
+#define BT_MANTI                                 (12)
+#define BT_DEADCLAW                              (13)
+#define BT_PLANT                                 (14)
+#define BT_GECKO                                 (15)
+#define BT_ALIEN                                 (16)
+#define BT_GIANT_ANT                             (17)
+#define BT_BIG_BAD_BOSS                          (18)
+#define BT_DESERT_STALKER                        (19)
+#define BT_MAN_TRAP                              (20)
+#define BT_RAD_TOAD                              (21)
+#define BT_THORNSLINGER                          (22)
+#define MAX_BODY_TYPES                           (23)
+
+// Locomotion types
+#define LOCOMOTION_BIPED                         (0)
+#define LOCOMOTION_QUADRUPED                     (1)
+#define LOCOMOTION_ROBOTIC                       (2)
+#define LOCOMOTION_FLY                           (3)
+
+// Other
+#define FLUSH_SCREEN_DEFAULT                     (1000) // Flush screen time
+
+// Dilalog functions
+#define IS_DIALOG_END                            # (str)        (not valid(str))
+#define IS_DIALOG_GENERATED                      # (str)  (valid(str) && str.length() == 0)
+#define IS_DIALOG_SAY_MODE                       # (str)   (valid(str) && str.length() > 0)
+
+// Time
+#define IS_MORNING                               # (hour)          ((hour) >= 7 && (hour) <= 11)     // 5 hours
+#define IS_AFTERNOON                             # (hour)        ((hour) >= 12 && (hour) <= 17)      // 6 hours
+#define IS_EVENING                               # (hour)          ((hour) >= 18 && (hour) <= 21)    // 4 hours
+#define IS_NIGHT                                 # (hour)            ((hour) >= 22 || (hour) <= 6)   // 9 hours
+
+// Item deterioration info
+#define MAX_DETERIORATION                        (10000)                                             // Hardcoded
+#define MAX_BROKENS                              (100)
+// Broken Information
+#define BI_LOWBROKEN                             (0x01)
+#define BI_NORMBROKEN                            (0x02)
+#define BI_HIGHBROKEN                            (0x04)
+#define BI_NOTRESC                               (0x08)
+#define BI_BROKEN                                (0x0F)        // Hardcoded
+#define BI_SERVICE                               (0x10)
+#define BI_SERVICE_EXT                           (0x20)
+#define BI_ETERNAL                               (0x40)
+
+// Combat modes
+#define COMBAT_MODE_ANY                          (0)
+#define COMBAT_MODE_REAL_TIME                    (1)
+#define COMBAT_MODE_TURN_BASED                   (2)
+
+// Show screen modes
+// Ouput: it is 'uint param' in Critter::ShowScreen.
+// Input: I - integer value 'uint answerI', S - string value 'string& answerS' in 'answer_' function.
+#define SCREEN_CLOSE                             (0)  // Close top window.
+#define SCREEN_TIMER                             (1)  // Timer box. Output: picture index in INVEN.LST. Input I: time in game minutes (1..599).
+#define SCREEN_DIALOGBOX                         (2)  // Dialog box. Output: buttons count - 0..20 (exit button added automatically). Input I: Choosed button - 0..19.
+#define SCREEN_SKILLBOX                          (3)  // Skill box. Input I: selected skill.
+#define SCREEN_BAG                               (4)  // Bag box. Input I: id of selected item.
+#define SCREEN_SAY                               (5)  // Say box. Output: all symbols - 0 or only numbers - any other number. Input S: typed string.
+#define SCREEN_ELEVATOR                          (6)  // Elevator. Output: look ELEVATOR_* macro. Input I: Choosed level button.
+#define SCREEN_INVENTORY                         (7)  // Inventory.
+#define SCREEN_CHARACTER                         (8)  // Character.
+#define SCREEN_FIXBOY                            (9)  // Fix-boy.
+#define SCREEN_PIPBOY                            (10) // Pip-boy.
+#define SCREEN_MINIMAP                           (11) // Mini-map.
+
+// Global map fog
+#define FOG_FULL                                 (0)
+#define FOG_HALF                                 (1)
+#define FOG_HALF_EX                              (2)
+#define FOG_NONE                                 (3)
+
+// Critter extra flags, only for read
+#define CRITTER_PLAYER                           (0x00010000) // Игрок.
+#define CRITTER_NPC                              (0x00020000) // Нпц.
+#define CRITTER_DISCONNECT                       (0x00080000) // В оффлайне.
+#define CRITTER_CHOSEN                           (0x00100000) // Криттер игрока. Используется только при отправке сообщения клиенту для идентификации его персонажа.
+#define CRITTER_RULEGROUP                        (0x00200000) // Рулевой в группе на глобале.
+
+// Hit locations
+#define HIT_LOCATION_NONE                        (0)
+#define HIT_LOCATION_HEAD                        (1)
+#define HIT_LOCATION_LEFT_ARM                    (2)
+#define HIT_LOCATION_RIGHT_ARM                   (3)
+#define HIT_LOCATION_TORSO                       (4)
+#define HIT_LOCATION_RIGHT_LEG                   (5)
+#define HIT_LOCATION_LEFT_LEG                    (6)
+#define HIT_LOCATION_EYES                        (7)
+#define HIT_LOCATION_GROIN                       (8)
+#define HIT_LOCATION_UNCALLED                    (9)
+
+// Sound types
+// Generic <Type Subtype SoundId SoundIdExt X X X X>
+// Weapon <Type Subtype SoundId SoundIdExt X X X [Random 1 or 2]>
+#define SOUND_WEAPON                             'W'
+#define SOUND_WEAPON_USE                         'A'
+#define SOUND_WEAPON_FLY                         'F'
+#define SOUND_WEAPON_MISS                        'H'
+#define SOUND_WEAPON_EMPTY                       'O'
+#define SOUND_WEAPON_RELOAD                      'R'
+// Door <Type Subtype D O O R S SoundId>
+#define SOUND_DOOR                               'S'
+#define SOUND_DOOR_OPEN                          'O'
+#define SOUND_DOOR_LOCK                          'L'
+#define SOUND_DOOR_CLOSE                         'C'
+#define SOUND_DOOR_NOT_OPEN                      'N'
+
+// Critter find types
+// Combine groups with | operator
+#define FIND_LIFE                                (0x01) // First group
+#define FIND_KO                                  (0x02)
+#define FIND_DEAD                                (0x04)
+#define FIND_LIFE_AND_KO                         (0x03)
+#define FIND_LIFE_AND_DEAD                       (0x05)
+#define FIND_KO_AND_DEAD                         (0x06)
+#define FIND_ALL                                 (0x0F)
+#define FIND_ONLY_PLAYERS                        (0x10) // Second group
+#define FIND_ONLY_NPC                            (0x20)
+
+// Elevators
+#define ELEVATOR_X                               # (elevator, current_level)((uint((current_level) & 0xFFFF) << 16) | (elevator) & 0xFFFF)
+#define ELEVATOR_BOS_1234                        # (current_level)         (ELEVATOR_X(0, current_level))
+#define ELEVATOR_BOS_01                          # (current_level)           (ELEVATOR_X(1, current_level))
+#define ELEVATOR_MASTER_123                      # (current_level)       (ELEVATOR_X(2, current_level))
+#define ELEVATOR_MASTER_34                       # (current_level)        (ELEVATOR_X(3, current_level))
+#define ELEVATOR_MILITARY_123                    # (current_level)     (ELEVATOR_X(4, current_level))
+#define ELEVATOR_MILITARY_34                     # (current_level)      (ELEVATOR_X(5, current_level))
+#define ELEVATOR_MILITARY_346                    # (current_level)     (ELEVATOR_X(6, current_level))     // Use 6 level as 5
+#define ELEVATOR_MILITARY_456                    # (current_level)     (ELEVATOR_X(7, current_level))
+#define ELEVATOR_VAULT_123                       # (current_level)        (ELEVATOR_X(8, current_level))
+
+// Dialog links
+#define DIALOG_END                               uint(-1)
+#define DIALOG_BACK                              uint(-2)
+#define DIALOG_BARTER                            uint(-3)
+#define DIALOG_ATTACK                            uint(-4)
+
+// Fix boy function call states
+#define FIXBOY_LIST                              (0)
+#define FIXBOY_BUTTON                            (1)
+#define FIXBOY_CRAFT                             (2)
+
+// Fix boy craft results
+#define FIXBOY_ALLOW_CRAFT                       (0x0001)
+#define FIXBOY_CHECK_TIMEOUT                     (0x0002)
+#define FIXBOY_SET_TIMEOUT                       (0x0004)
+#define FIXBOY_CHECK_PARAMS                      (0x0008)
+#define FIXBOY_CHECK_MATERIALS                   (0x0010)
+#define FIXBOY_CHECK_TOOLS                       (0x0020)
+#define FIXBOY_SUB_MATERIALS                     (0x0040)
+#define FIXBOY_ADD_CRAFT_ITEMS                   (0x0080)
+#define FIXBOY_ADD_EXPERIENCE                    (0x0100)
+#define FIXBOY_SEND_SUCC_MESSAGE                 (0x0200)
+#define FIXBOY_SEND_FAIL_MESSAGE                 (0x0400)
+#define FIXBOY_DEFAULT                           (0xFFFF)
+
+// Access levels
+#ifndef SKIP_PRAGMAS
+# define ACCESS_CLIENT                           (0)
+# define ACCESS_TESTER                           (1)
+# define ACCESS_MODER                            (2)
+# define ACCESS_ADMIN                            (3)
+#endif
+
+// Commands list
+#define COMMAND_EXIT                             (1)
+#define COMMAND_MYINFO                           (2)
+#define COMMAND_GAMEINFO                         (3)
+#define COMMAND_CRITID                           (4)
+#define COMMAND_MOVECRIT                         (5)
+#define COMMAND_KILLCRIT                         (6)
+#define COMMAND_DISCONCRIT                       (7)
+#define COMMAND_TOGLOBAL                         (8)
+#define COMMAND_RESPAWN                          (9)
+#define COMMAND_PARAM                            (10)
+#define COMMAND_GETACCESS                        (11)
+#define COMMAND_ADDITEM                          (12)
+#define COMMAND_CRASH                            (13)        // disabled, sadly
+#define COMMAND_ADDITEM_SELF                     (14)
+#define COMMAND_ADDNPC                           (15)
+#define COMMAND_ADDLOCATION                      (16)
+#define COMMAND_RELOADSCRIPTS                    (17)
+#define COMMAND_LOADSCRIPT                       (18)
+#define COMMAND_RELOAD_CLIENT_SCRIPTS            (19)
+#define COMMAND_RUNSCRIPT                        (20)
+#define COMMAND_RELOADLOCATIONS                  (21)
+#define COMMAND_LOADLOCATION                     (22)
+#define COMMAND_RELOADMAPS                       (23)
+#define COMMAND_LOADMAP                          (24)
+#define COMMAND_REGENMAP                         (25)
+#define COMMAND_RELOADDIALOGS                    (26)
+#define COMMAND_LOADDIALOG                       (27)
+#define COMMAND_RELOADTEXTS                      (28)
+#define COMMAND_RELOADAI                         (29)
+#define COMMAND_CHECKVAR                         (30)
+#define COMMAND_SETVAR                           (31)
+#define COMMAND_SETTIME                          (32)
+#define COMMAND_BAN                              (33)
+#define COMMAND_DELETE_ACCOUNT                   (34)
+#define COMMAND_CHANGE_PASSWORD                  (35)
+#define COMMAND_DROP_UID                         (36)
+#define COMMAND_LOG                              (37)
+
+#define REPLICATION_DELETE_FAST                  (-3)
+#define REPLICATION_DELETE                       (-2)
+#define REPLICATION_NEVER                        (-1)
+#define REPLICATION_DEFAULT                      (0)
+
+// Special skill values
+#define SKILL_PICK_ON_GROUND                     (-1)
+#define SKILL_PUT_CONT                           (-2)
+#define SKILL_TAKE_CONT                          (-3)
+#define SKILL_TAKE_ALL_CONT                      (-4)
+#define SKILL_LOOT_CRITTER                       (-5)
+#define SKILL_PUSH_CRITTER                       (-6)
+#define SKILL_TALK                               (-7)
+
+// Look checks
+#define LOOK_CHECK_DIR                           (0x01) // Nerfe look by directions of look
+#define LOOK_CHECK_SNEAK_DIR                     (0x02) // Nerfe opponent sneak by directions of look
+#define LOOK_CHECK_SNEAK_WEIGHT                  (0x04) // Nerfe sneak by current weight
+#define LOOK_CHECK_TRACE                         (0x08) // Tracing for wall aviablility
+#define LOOK_CHECK_SCRIPT                        (0x10) // Allow bool check_look(...) in main.fos, all other defines ignored
+#define LOOK_CHECK_ITEM_SCRIPT                   (0x20) // Allow bool check_trap_look(...) in main.fos, for items with ITEM_TRAP flag
+
+// Critter base types
+#ifdef PLAYERS_3D
+# define CRTYPE_MALE_DEFAULT                     (CRTYPE_3D_MALE_NORMAL)
+# define CRTYPE_FEMALE_DEFAULT                   (CRTYPE_3D_FEMALE_NORMAL)
+#endif
+#ifndef PLAYERS_3D
+# define CRTYPE_MALE_DEFAULT                     (CRTYPE_MALE_VAULTSUIT)
+# define CRTYPE_FEMALE_DEFAULT                   (CRTYPE_FEMALE_JUMPSUIT)
+#endif
+
+// Global map events
+#define GLOBAL_PROCESS_MOVE                      (0) // Called every __GlobalMapMoveTime
+#define GLOBAL_PROCESS_ENTER                     (1)
+#define GLOBAL_PROCESS_START_FAST                (2)
+#define GLOBAL_PROCESS_START                     (3)
+#define GLOBAL_PROCESS_SET_MOVE                  (4)
+#define GLOBAL_PROCESS_STOPPED                   (5)
+#define GLOBAL_PROCESS_NPC_IDLE                  (6)    // Called every __CritterIdleTick
+#define GLOBAL_PROCESS_KICK                      (7)
+#define GLOBAL_MAP_BASE_SPEED                    (6.0f) // Base speed, 6.0 pixels per second
+
+// Global map walk types
+#define GM_WALK_GROUND                           (0)
+#define GM_WALK_FLY                              (1)
+#define GM_WALK_WATER                            (2)
+
+// AngelScript properties
+#define AS_ALLOW_UNSAFE_REFERENCES               (1)  // true
+#define AS_OPTIMIZE_BYTECODE                     (2)  // true
+#define AS_COPY_SCRIPT_SECTIONS                  (3)  // true
+#define AS_MAX_STACK_SIZE                        (4)  // 0 (unlimited)
+#define AS_USE_CHARACTER_LITERALS                (5)  // false
+#define AS_ALLOW_MULTILINE_STRINGS               (6)  // false
+#define AS_ALLOW_IMPLICIT_HANDLE_TYPES           (7)  // false
+#define AS_BUILD_WITHOUT_LINE_CUES               (8)  // false
+#define AS_INIT_GLOBAL_VARS_AFTER_BUILD          (9)  // true
+#define AS_REQUIRE_ENUM_SCOPE                    (10) // false
+#define AS_SCRIPT_SCANNER                        (11) // 0
+#define AS_INCLUDE_JIT_INSTRUCTIONS              (12) // false
+#define AS_STRING_ENCODING                       (13) // 0 (ascii)
+
+// Item data masks
+#define ITEM_DATA_MASK_CHOSEN                    (0)
+#define ITEM_DATA_MASK_CRITTER                   (1)
+#define ITEM_DATA_MASK_CRITTER_EXT               (2)
+#define ITEM_DATA_MASK_CONTAINER                 (3)
+#define ITEM_DATA_MASK_MAP                       (4)
+
+// Light flags
+#define LIGHT_DISABLE_DIR                        # (dir)       (1 << CLAMP(dir, 0, 5))
+#define LIGHT_GLOBAL                             (0x40)
+#define LIGHT_INVERSE                            (0x80)
+
+// Radio
+// Flags, Item/ItemCl::RadioFlags
+#define RADIO_DISABLE_SEND                       (0x0001) // Hardcoded
+#define RADIO_DISABLE_RECV                       (0x0002) // Hardcoded
+#define RADIO_DISABLE_SHIFT_SEND                 (0x0100)
+#define RADIO_DISABLE_SHIFT_RECV                 (0x0200)
+#define RADIO_DISABLE_SHIFT_BC_SEND              (0x0400)
+#define RADIO_DISABLE_SHIFT_BC_RECV              (0x0800)
+#define RADIO_DISABLE_SHIFT_CHANNEL              (0x1000)
+// Broadcast, Item/ItemCl::RadioBroadcastSend/RadioBroadcastRecv, Hardcoded
+#define RADIO_BROADCAST_WORLD                    (0)                   // Send/recv in all world
+#define RADIO_BROADCAST_MAP                      (20)                  // Send/recv only on one map
+#define RADIO_BROADCAST_LOCATION                 (40)                  // Send/recv only on one location
+#define RADIO_BROADCAST_ZONE                     # (x)   (100 + (x))   // Send/recv only in x (1..100) zones radius on global map
+#define RADIO_BROADCAST_FORCE_ALL                (250)                 // Force send/recv in any place
+
+// Weapon calibers
+#define CALIBER_NONE                             (0)
+#define CALIBER_ROCKET                           (1)
+#define CALIBER_FLAMETHROWER_FUEL                (2)
+#define CALIBER_C_ENERGY_CELL                    (3)
+#define CALIBER_D_ENERGY_CELL                    (4)
+#define CALIBER_223                              (5)
+#define CALIBER_5MM                              (6)
+#define CALIBER_40                               (7)
+#define CALIBER_10MM                             (8)
+#define CALIBER_44                               (9)
+#define CALIBER_14MM                             (10)
+#define CALIBER_12_GAUGE                         (11)
+#define CALIBER_9MM                              (12)
+#define CALIBER_BB                               (13)
+#define CALIBER_45                               (14)
+#define CALIBER_2MM                              (15)
+#define CALIBER_4_7MM_CASELESS                   (16)
+#define CALIBER_HN_NEEDLER                       (17)
+#define CALIBER_7_62MM                           (18)
+#define CALIBER_22                               (19)
+
+// Geometry
+#define GEOMETRY_FALLOUT                         (0)
+#define GEOMETRY_TACTICS                         (1)
+#define GEOMETRY_ARCANUM                         (2)
+
+// Constants collections
+#define CONSTANTS_PARAM                          (0)
+#define CONSTANTS_ITEM                           (1)
+#define CONSTANTS_DEFINE                         (2)
+#define CONSTANTS_PICTURE                        (3)
+#define CONSTANTS_HASH                           (4)
+
+// Game images
+#define IMAGE_RELIEF                             (0) // Global map relief
+
+// Paths
+// Client and mapper paths
+#define PT_ROOT                                  (0)
+#define PT_DATA                                  (1)
+#define PT_ART                                   (2)
+#define PT_ART_CRITTERS                          (3)
+#define PT_ART_INTRFACE                          (4)
+#define PT_ART_INVEN                             (5)
+#define PT_ART_ITEMS                             (6)
+#define PT_ART_MISC                              (7)
+#define PT_ART_SCENERY                           (8)
+#define PT_ART_SKILLDEX                          (9)
+#define PT_ART_SPLASH                            (10)
+#define PT_ART_TILES                             (11)
+#define PT_ART_WALLS                             (12)
+#define PT_TEXTURES                              (13)
+#define PT_EFFECTS                               (14)
+#define PT_MAPS                                  (15)
+#define PT_SND_MUSIC                             (16)
+#define PT_SND_SFX                               (17)
+#define PT_SCRIPTS                               (18)
+#define PT_VIDEO                                 (19)
+#define PT_TEXTS                                 (20)
+#define PT_SAVE                                  (21)
+#define PT_FONTS                                 (22)
+#define PT_CACHE                                 (23)
+// Server paths
+#define PT_SERVER_ROOT                           (30)
+#define PT_SERVER_DATA                           (31)
+#define PT_SERVER_TEXTS                          (32)
+#define PT_SERVER_DIALOGS                        (33)
+#define PT_SERVER_MAPS                           (34)
+#define PT_SERVER_PRO_ITEMS                      (35)
+#define PT_SERVER_PRO_CRITTERS                   (36)
+#define PT_SERVER_SCRIPTS                        (37)
+#define PT_SERVER_SAVE                           (38)
+#define PT_SERVER_CLIENTS                        (39)
+#define PT_SERVER_BANS                           (40)
+// Other
+#define PT_MAPPER_DATA                           (45)
+
+#define ELEVATOR_BOS_1234                        (0)
+#define ELEVATOR_BOS_01                          (1)
+#define ELEVATOR_MASTER_123                      (2)
+#define ELEVATOR_MASTER_34                       (3)
+#define ELEVATOR_MILITARY_123                    (4)
+#define ELEVATOR_MILITARY_34                     (5)
+#define ELEVATOR_MILITARY_346                    (6)
+#define ELEVATOR_MILITARY_456                    (7)
+#define ELEVATOR_VAULT_123                       (8)
+#define ELEVATOR_MILITARY_12                     (9)
+// debug message for npcs
+#define MSG_DEBUG                                ((2 ^ 32 - 1) / 2)
+
+// traders' item types
+#define ITEMTYPE_SMALL_GUNS                      (0)
+#define ITEMTYPE_BIG_GUNS                        (1)
+#define ITEMTYPE_ENERGY                          (2)
+#define ITEMTYPE_ARMOR                           (3)
+#define ITEMTYPE_DRUG                            (4)
+#define ITEMTYPE_MEDICINE                        (5)
+#define ITEMTYPE_MISC                            (6)
+#define ITEMTYPE_MAX                             (7)
+
+// material types in item's proto (should be correct)
+#define MATERIAL_GLASS                           (0)
+#define MATERIAL_METAL                           (1)
+#define MATERIAL_PLASTIC                         (2)
+#define MATERIAL_WOOD                            (3)
+#define MATERIAL_DIRT                            (4)
+#define MATERIAL_STONE                           (5)
+#define MATERIAL_CEMENT                          (6)
+#define MATERIAL_LEATHER                         (7)
+
+// Directions
+#define DIR_NE                                   (0) // North-east
+#define DIR_E                                    (1) // East
+#define DIR_SE                                   (2) // South-east
+#define DIR_SW                                   (3) // South-west
+#define DIR_W                                    (4) // West
+#define DIR_NW                                   (5) // North-west
+
+#define NPC_BASE_ID                              (5000000)
+
+#define VAR_GLOBAL                               (0)
+#define VAR_LOCAL                                (1)
+#define VAR_UNICUM                               (2)
+#define VAR_LOCAL_LOCATION                       (3)
+#define VAR_LOCAL_MAP                            (4)
+#define VAR_LOCAL_ITEM                           (5)
+
+#define MAX_ITEM_PROTOTYPES                      (30000)
+#define MAX_MAP_PROTOTYPES                       (30000)
+#define MAX_LOCATION_PROTOTYPES                  (30000)
+
+#define INJECTVALUE_CHEATS                       (0)
+#define INJECTVALUE_TRADER                       (1)
+#define INJECTVALUE_RECYCLING                    (2) // encounters and players killed in guarded areas
+#define INJECTVALUE_ROOMS                        (3)
+#define INJECTVALUE_REWARD                       (4)
+#define INJECTVALUE_LIMBO                        (5)
+
+#define PROFESSIONS_MAX                          (666)
+
+#define ITEMTRANSFER_ALL                         (0)
+#define ITEMTRANSFER_WEAPONS                     (1)
+// add more
+
+// for some shared scripts:
+#define FO2238
+
+
+// ugly debug, deleteme!
+#define _TIMEBEGIN                               uint __nowZZZ = GetTick()
+#define _TIMEEND                                            \
+    uint __endZZZ = GetTick(); if(__endZZZ - __nowZZZ > 40) \
+        Log("I am being executed for a very long time! (" + (__endZZZ - __nowZZZ) + " ms)")
+// deleteme end
+
+// Extended methods
+#define CRITTER_EVENT_EXT_INDEX_START            (100)
+#ifndef SKIP_PRAGMAS
+
+# pragma crdata "Stat 0 199"
+# pragma crdata "Skill 200 217"
+# pragma crdata "TagSkill 226 229"
+# pragma crdata "Timeout 230 249"
+# pragma crdata "Kill 260 282"
+# pragma crdata "Perk 300 461"
+# pragma crdata "Addiction 470 478"
+# pragma crdata "Karma 480 496"
+# pragma crdata "Damage 500 506"
+# pragma crdata "Mode 510 549"
+# pragma crdata "Trait 550 565"
+# pragma crdata "Profession 570 580"
+# pragma crdata "Achievement 580 587"
+# pragma crdata "Reputation 600 691 +"
+# pragma crdata "GoodEvilList 700 899"
+# pragma crdata "Followers 900 924"
+# pragma crdata "FollowerVar 925 942"
+
+# ifdef __SERVER
+#  pragma bindfield "uint Critter::GlobalMapMoveCounter -> 0"
+#  pragma bindfield "uint Critter::UsedToolItemId       -> 4"
+
+// ext events
+#  pragma bindfield "const uint Critter::EventExtReservedMapIn         -> 100"
+#  pragma bindfield "const uint Critter::EventExtReservedMapOut        -> 104"
+#  pragma bindfield "const uint Critter::EventExtReservedId2           -> 108"
+#  pragma bindfield "const uint Critter::EventExtReservedId3           -> 112"
+#  pragma bindfield "const uint Critter::EventExtReservedId4           -> 116"
+#  pragma bindfield "const uint Critter::EventExtReservedId5           -> 120"
+#  pragma bindfield "const uint Critter::EventExtReservedId6           -> 124"
+
+// for cheats, add from end of range
+#  pragma bindfield "uint Critter::SpawnedBy			 -> 375"
+#  pragma bindfield "uint Critter::DisguisedBy		 -> 379"
+#  pragma bindfield "uint Critter::LastSpawnedItem	 -> 383"
+#  pragma bindfield "uint Critter::LastSpawnedCritter	 -> 387"
+#  pragma bindfield "uint Critter::LastSpawnedLocation -> 391"
+#  pragma bindfield "uint Critter::Reserved			 -> 395"
+
+/*
+   #pragma bindfield "uint Item::SpawnedBy				 -> 391"
+   #pragma bindfield "uint Item::Reserved				 -> 395"
+ */
+
+
+#  pragma bindfunc "bool Critter::IsInjured()     -> parameters.dll Critter_IsInjured   "
+#  pragma bindfunc "bool Critter::IsDmgEye()      -> parameters.dll Critter_IsDmgEye    "
+#  pragma bindfunc "bool Critter::IsDmgLeg()      -> parameters.dll Critter_IsDmgLeg    "
+#  pragma bindfunc "bool Critter::IsDmgTwoLeg()   -> parameters.dll Critter_IsDmgTwoLeg "
+#  pragma bindfunc "bool Critter::IsDmgArm()      -> parameters.dll Critter_IsDmgArm    "
+#  pragma bindfunc "bool Critter::IsDmgTwoArm()   -> parameters.dll Critter_IsDmgTwoArm "
+#  pragma bindfunc "bool Critter::IsAddicted()    -> parameters.dll Critter_IsAddicted  "
+#  pragma bindfunc "bool Critter::IsOverweight()  -> parameters.dll Critter_IsOverweight"
+#  pragma bindfunc "int Critter::GetAC(bool)      -> parameters.dll Critter_GetAC       "
+#  pragma bindfunc "int Critter::GetDR(uint,bool) -> parameters.dll Critter_GetDR       "
+#  pragma bindfunc "int Critter::GetDT(uint,bool) -> parameters.dll Critter_GetDT       "
+#  pragma bindfunc "int Critter::GetArmorDR(uint,bool) -> parameters.dll Critter_GetArmorDR  "
+#  pragma bindfunc "int Critter::GetArmorDT(uint,bool) -> parameters.dll Critter_GetArmorDT  "
+
+#  pragma bindfunc "bool Item::Weapon_IsHtHAttack(uint8 mode)    -> parameters.dll Item_Weapon_IsHtHAttack   "
+#  pragma bindfunc "bool Item::Weapon_IsGunAttack(uint8 mode)    -> parameters.dll Item_Weapon_IsGunAttack   "
+#  pragma bindfunc "bool Item::Weapon_IsRangedAttack(uint8 mode) -> parameters.dll Item_Weapon_IsRangedAttack"
+#  pragma bindfunc "void Item::SetMode(uint8 mode) -> parameters.dll Item_Weapon_SetMode"
+# endif // __SERVER
+
+# ifdef __CLIENT
+#  pragma bindfunc "bool CritterCl::IsInjured()     -> client_parameters.dll Critter_IsInjured   "
+#  pragma bindfunc "bool CritterCl::IsDmgEye()      -> client_parameters.dll Critter_IsDmgEye    "
+#  pragma bindfunc "bool CritterCl::IsDmgLeg()      -> client_parameters.dll Critter_IsDmgLeg    "
+#  pragma bindfunc "bool CritterCl::IsDmgTwoLeg()   -> client_parameters.dll Critter_IsDmgTwoLeg "
+#  pragma bindfunc "bool CritterCl::IsDmgArm()      -> client_parameters.dll Critter_IsDmgArm    "
+#  pragma bindfunc "bool CritterCl::IsDmgTwoArm()   -> client_parameters.dll Critter_IsDmgTwoArm "
+#  pragma bindfunc "bool CritterCl::IsAddicted()    -> client_parameters.dll Critter_IsAddicted  "
+#  pragma bindfunc "bool CritterCl::IsOverweight()  -> client_parameters.dll Critter_IsOverweight"
+#  pragma bindfunc "int CritterCl::GetAC(bool)      -> client_parameters.dll Critter_GetAC       "
+#  pragma bindfunc "int CritterCl::GetDR(uint,bool) -> client_parameters.dll Critter_GetDR       "
+#  pragma bindfunc "int CritterCl::GetDT(uint,bool) -> client_parameters.dll Critter_GetDT       "
+
+#  pragma bindfunc "bool ItemCl::Weapon_IsHtHAttack(uint8 mode)    -> client_parameters.dll Item_Weapon_IsHtHAttack   "
+#  pragma bindfunc "bool ItemCl::Weapon_IsGunAttack(uint8 mode)    -> client_parameters.dll Item_Weapon_IsGunAttack   "
+#  pragma bindfunc "bool ItemCl::Weapon_IsRangedAttack(uint8 mode) -> client_parameters.dll Item_Weapon_IsRangedAttack"
+#  pragma bindfunc "void ItemCl::SetMode(uint8 mode) -> client_parameters.dll Item_Weapon_SetMode"
+# endif // __CLIENT
+
+///
+/// Item prototypes fields
+///
+
+// Whole size for data - 500 bytes
+// Common
+# pragma bindfield "const int    ProtoItem::RevealSneakers -> 0"
+# pragma bindfield "const int    ProtoItem::NeedBlueprint  -> 4"
+# pragma bindfield "const int8	ProtoItem::CraftLevel     -> 8"
+
+// Misc - tools
+# pragma bindfield "const uint16 ProtoItem::Misc_ChargeStart    -> 46"
+# pragma bindfield "const uint16 ProtoItem::Misc_ChargeMax      -> 48"
+# pragma bindfield "const uint16 ProtoItem::Misc_ToolSkillNum   -> 50"
+# pragma bindfield "const int    ProtoItem::Misc_ToolSkillBonus -> 52"
+
+// Armor
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeMale   -> 100"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeFemale -> 104"
+# pragma bindfield "const int    ProtoItem::Armor_AC           -> 108"
+# pragma bindfield "const uint   ProtoItem::Armor_Perk         -> 112"
+# pragma bindfield "const int    ProtoItem::Armor_DRNormal     -> 116"
+# pragma bindfield "const int    ProtoItem::Armor_DRLaser      -> 120"
+# pragma bindfield "const int    ProtoItem::Armor_DRFire       -> 124"
+# pragma bindfield "const int    ProtoItem::Armor_DRPlasma     -> 128"
+# pragma bindfield "const int    ProtoItem::Armor_DRElectr     -> 132"
+# pragma bindfield "const int    ProtoItem::Armor_DREmp        -> 136"
+# pragma bindfield "const int    ProtoItem::Armor_DRExplode    -> 140"
+# pragma bindfield "const int    ProtoItem::Armor_DTNormal     -> 144"
+# pragma bindfield "const int    ProtoItem::Armor_DTLaser      -> 148"
+# pragma bindfield "const int    ProtoItem::Armor_DTFire       -> 152"
+# pragma bindfield "const int    ProtoItem::Armor_DTPlasma     -> 156"
+# pragma bindfield "const int    ProtoItem::Armor_DTElectr     -> 160"
+# pragma bindfield "const int    ProtoItem::Armor_DTEmp        -> 164"
+# pragma bindfield "const int    ProtoItem::Armor_DTExplode    -> 168"
+
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeMale2   -> 172"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeMale3   -> 176"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeMale4   -> 180"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeFemale2 -> 184"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeFemale3 -> 188"
+# pragma bindfield "const uint   ProtoItem::Armor_CrTypeFemale4 -> 192"
+
+# pragma bindfield "const int8   ProtoItem::Armor_CMCritChance  -> 196"
+# pragma bindfield "const int8   ProtoItem::Armor_CMCritPower   -> 197"
+
+// Weapon
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_0 -> 200"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_1 -> 204"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgType_2 -> 208"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_0   -> 212"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_1   -> 216"
+# pragma bindfield "const uint   ProtoItem::Weapon_Anim2_2   -> 220"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_0  -> 224"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_1  -> 228"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMin_2  -> 232"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_0  -> 236"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_1  -> 240"
+# pragma bindfield "const int    ProtoItem::Weapon_DmgMax_2  -> 244"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_0  -> 248"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_1  -> 250"
+# pragma bindfield "const uint16 ProtoItem::Weapon_Effect_2  -> 252"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_0  -> 254"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_1  -> 255"
+# pragma bindfield "const bool   ProtoItem::Weapon_Remove_2  -> 256"
+# pragma bindfield "const uint   ProtoItem::Weapon_ReloadAp  -> 260"
+# pragma bindfield "const int    ProtoItem::Weapon_UnarmedCriticalBonus -> 264"
+# pragma bindfield "const uint   ProtoItem::Weapon_CriticalFailture     -> 268"
+# pragma bindfield "const bool   ProtoItem::Weapon_UnarmedArmorPiercing -> 272"
+# pragma bindfield "const bool   ProtoItem::Weapon_NoRunning            -> 273"
+// Ammo
+# pragma bindfield "const int    ProtoItem::Ammo_AcMod   -> 300"
+# pragma bindfield "const int    ProtoItem::Ammo_DrMod   -> 304"
+# pragma bindfield "const uint   ProtoItem::Ammo_DmgMult -> 308"
+# pragma bindfield "const uint   ProtoItem::Ammo_DmgDiv  -> 312"
+# pragma bindfield "const uint8  ProtoItem::Ammo_DTDiv   -> 316"
+
+# pragma bindfield "const int16  ProtoItem::Blueprint_Param -> 317"
+# pragma bindfield "const uint8  ProtoItem::Blueprint_Id    -> 319"
+# pragma bindfield "const uint8  ProtoItem::Blueprint_Level -> 320"
+# pragma bindfield "const int8   ProtoItem::Blueprint_Type  -> 321"
+
+# pragma bindfield "const uint8  ProtoItem::Ingredient_Type_1     -> 322"
+# pragma bindfield "const uint16 ProtoItem::Ingredient_Returns_1  -> 323"
+# pragma bindfield "const uint8  ProtoItem::Ingredient_Type_2     -> 325"
+# pragma bindfield "const uint16 ProtoItem::Ingredient_Returns_2  -> 326"
+# pragma bindfield "const uint8  ProtoItem::Ingredient_Type_3     -> 328"
+# pragma bindfield "const uint16 ProtoItem::Ingredient_Returns_3  -> 329"
+#endif // SKIP_PRAGMAS
+#endif // __DEFINES__

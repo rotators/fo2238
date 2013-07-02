@@ -1,0 +1,25 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+0 2010 D _var p q_mb_location_known = 0 D _script quest_mb@d_MapNotSpawned 0  R _script quest_mb@r_SpawnMap 0  R _var p q_mb_location_known = 1 #
+0 2020 D _var p q_mb_location_known = 1 D _script quest_mb@d_MapNotSpawned 0  R _script quest_mb@r_DeleteMap 0  R _script quest_mb@r_SpawnMap 0  #
+0 2030 &
+
+[engl]
+{100}{}{Dead Body}
+{200}{}{You see a dead body in the sand.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{[A dead body in the desert sand, partly covered by an old, dead tree. You search his possessions, but can't find anything of use, except a small piece of paper, which looks like a hand-drawn map. It shows a location close to the western mountains with a big red cross and a black skull right next to it.]}
+{2010}{}{[You mark the location on your map.]}
+{2020}{}{You mark the location on your map.}
+{2030}{}{[Ignore the map.]}
+

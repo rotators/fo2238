@@ -1,0 +1,181 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+50 1020 D _param p ST_INTELLECT < 4 D _param p ST_INTELLECT > 999 #
+8 1030 D _script dialog@d_HpVeryLow 0  #
+5 1040 D _script dialog@d_HpLow 0  #
+4 1050 D _script dialog@d_HpAverage 0  #
+3 1060 D _script dialog@d_HpHigh 0  #
+2 1070 #
+2 1080 @
+2 2000 None 0 #
+14 2010 D _script dialog@d_IsToHeal 0  #
+7 2020 #
+6 2030 #
+80 2040 D _param p PE_PROFESSION_DOCTOR < 2 #
+60 2050 D _var p q_jt_sneakeater = 0 #
+63 2060 D _var p q_jt_sneakeater = 1 D _item p PID_SCORPION_EGG } 5 R _param p ST_EXPERIENCE + 250 R _var p q_jt_sneakeater = 3 R _item p PID_ANTIDOTE + 3 R _item p PID_SCORPION_EGG - 5 R _script quest_jt_scorpion@r_DeleteMap 0  R _script dialog@r_AddMoney 1 100 #
+64 2070 D _var p q_jt_sneakeater_perk = 0 D _var p q_jt_sneakeater = 3 #
+0 2080 @
+3 3000 None 0 #
+2 3010 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+2 5010 @
+6 6000 None 0 #
+7 6010 #
+80 6020 D _param p PE_PROFESSION_DOCTOR < 2 #
+0 6030 @
+7 7000 None 0 #
+6 7010 @
+8 8000 None 0 #
+2 8010 @
+14 9000 dialog@dlg_ShowHealingPrice 0 #
+18 9010 D _script dialog@d_HealingMoney 0  #
+17 9020 #
+0 9030 @
+15 10000 None 0 #
+16 10010 #
+0 10020 @
+16 11000 None 0 #
+6 11010 #
+0 11020 @
+17 12000 None 0 #
+6 12010 #
+0 12020 @
+18 13000 None 0 #
+0 13010 R _script dialog@r_DocHeal 0  @
+50 14000 None 0 @
+80 15000 None 0 #
+81 15010 D _script dialog@d_CheckProfession 1 0 D _script dialog@d_CheckDoctor0 1 0 #
+81 15020 D _script dialog@d_CheckDoctor1 1 0 #
+0 15030 @
+81 16000 None 0 #
+82 16010 D _script dialog@d_CheckDoctor0 1 1 D _item p PID_BOTTLE_CAPS > 1499 R _item p PID_FIRST_AID_BOOK + 1 R _param p PE_PROFESSION_DOCTOR = 1 R _script dialog@r_RemoveMoney 1 1500 #
+83 16020 D _script dialog@d_CheckDoctor1 1 1 D _item p PID_BOTTLE_CAPS > 2999 R _param p PE_PROFESSION_DOCTOR = 2 R _script dialog@r_RemoveMoney 1 3000 #
+0 16030 @
+82 17000 None 0 #
+0 17010 @
+83 18000 None 0 #
+0 18010 @
+60 19000 None 0 #
+61 19010 #
+0 19020 @
+61 20000 None 0 #
+62 20010 R _var p q_jt_sneakeater = 1 R _script quest_jt_scorpion@r_SpawnMap 0  #
+0 20020 @
+62 21000 None 0 #
+0 21010 @
+63 22000 None 0 #
+64 22010 D _var p q_jt_sneakeater_perk = 0 #
+2 22020 #
+0 22030 @
+64 23000 None 0 #
+65 23010 #
+0 23020 @
+65 24000 None 0 #
+66 24010 D _param p ST_ENDURANCE } 6 R _var p q_jt_sneakeater_perk = 1 R _param p ST_EXPERIENCE + 250 R _param p PE_SNAKEATER = 1 #
+66 24020 D _param p ST_ENDURANCE < 6 R _var p q_jt_sneakeater_perk = 1 R _param p ST_EXPERIENCE + 250 #
+2 24030 #
+0 24040 @
+66 25000 None 0 #
+2 25010 #
+0 25020 &
+
+[engl]
+{100}{}{Doc Larrikin}
+{200}{}{You see Doc Larrikin.}
+{210}{}{You see a thin, nervous-looking man.}
+{210}{}{You see the man with scalper in hands – it’s a Doctor.}
+{1000}{}{Predialogue installations}
+{1010}{}{ia ciaeii}
+{1020}{}{Dumb *DEV NOTE: Deactivated for now.*}
+{1030}{}{up to 1/4 HP}
+{1040}{}{up to 2/4 HP}
+{1050}{}{up to 3/4 HP}
+{1060}{}{up to 4/4 HP}
+{1070}{}{Full HP dumb}
+{1080}{}{Full HP normal}
+{2000}{}{What have you been getting yourself into? Let old Doc Larrikin take a look at ya.}
+{2010}{}{Thanks, Doc. How much will this cost?}
+{2020}{}{I just wanted to try to buy some supplies.}
+{2030}{}{I don't need healing right now so much as some answers to some questions.}
+{2040}{}{Actually, I am quite interested into medicine myself, and this is the reason I am visiting you today. My hopes are that you could share some of your knowledge and experience with me...}
+{2050}{}{Do you have any work you need done?}
+{2060}{}{Here are the scorpion eggs you've wanted.}
+{2070}{}{What can you tell me about the scorpions poison?}
+{2080}{}{Nice to meet you, but I don't think any healing's needed right now. Thanks anyway, Doc. Goodbye.}
+{3000}{}{Looks like you got caught on the short end of the stick. I can patch you up if you want.}
+{3010}{}{Well, I...}
+{4000}{}{Got yourself all scraped up, huh? Well, let me take a look at that. Easy now, I'm a professional.}
+{4010}{}{It ain't as bad as it looks. Okay, maybe it is. Be gentle.}
+{5000}{}{What have you been getting yourselves into? Gosh, that looks painful. Let me take a look at ya.}
+{5010}{}{I regret everything I've ever done.}
+{6000}{}{What would you like to know?}
+{6010}{}{Got any medical supplies you want to trade?}
+{6020}{}{I am quite interested into medicine myself, and I was hoping that you could share some of your knowledge and experience with me...}
+{6030}{}{I was just looking around. Goodbye, Doc.}
+{7000}{}{Then visit Jeremiah Darkwater's shop, @sex@|man||woman|.}
+{7010}{}{Okay. I have some questions, though.}
+{8000}{}{Gosh darn it! You're bleeding all over my floor!}
+{8010}{}{Wow, I sure do have a lot of blood in me, don't I Doc? Well. Used to.}
+{9000}{}{Well, I can try to fix you up and cure what ails you, but it's going to cost you $@lex price@. Want me to have at it?}
+{9010}{}{Yes, please. Here's your money, Doc.}
+{9020}{}{I can't afford that right now. Sorry, Doc Larrikin; maybe another time, when the sun shines brighter, eh?}
+{9030}{}{Maybe I'll have that done later. Goodbye, Doc.}
+{10000}{}{I'd sure like to help you, but you don't have enough to cover your bill. Medical supplies cost money.}
+{10010}{}{I don't have cash, but I have stuff to barter. Can I trade you something for your services?}
+{10020}{}{I'll come back when I have more money. Goodbye.}
+{11000}{}{What does this look like to you? A general store? No, I don't barter for medical services. I just want payment in honest golden caps, thank you very much. Come back when you have some.}
+{11010}{}{Uhm, if you say so. But I have some other questions.}
+{11020}{}{All right. I get the picture. Goodbye.}
+{12000}{}{Wouldn't let that go too long. Some wounds fester and start oozing puss. Then there's always gangrene. Course, lately, I haven't used my knives as much as I'd like. Getting a bit rusty. Tell you what: Go ahead and let it go as long as you want. Maybe I can get some practice later on.}
+{12010}{}{I see. While I'm festering, let me ask you about something.}
+{12020}{}{Uh, yeah, well I'll think about that. Goodbye, Doc.}
+{13000}{}{There you go. You're all set.}
+{13010}{}{Thanks doctor.}
+{14000}{}{Your head is larger than I would think.@@Your beetling brow confirms my suspicions.@@You have a very well developed sagittal crest.@@I wonder if it was long exposure to radiation that so reduced your cranial capacity.@@No food here. Go away!@@Shoo, shoo!@@Go back to the wilderness, you savage.}
+{15000}{}{Oh, a colleague! It is not that I meet colleagues every day, you know... The reason more to say that I am very pleased to have you here. So, what did you want us to talk about then?}
+{15010}{}{I was hoping you can show me how to perform simple surgeries and... [You explain what you need]}
+{15020}{}{Well, I was interested in more complex methods of saving human lives, which would consider... [You explain him what you need]}
+{15030}{}{I, erhm... Not quite sure where to start from. Maybe I should drop a little bit later. [Leave]}
+{16000}{}{Sure, sure... We can already arrange something, I guess. But I would like to have something in return, a kind of compensation for my time and work. It's not that I'm trying to earn something out of this, but a help from a colleague like you would be quite appreciated. I'll keep it short then -- I would need $1500 for a short lesson or $3000 for one with more details.}
+{16010}{}{You don't have to worry, my appreciated colleague, I have $1500 right here! [You give him $1500]}
+{16020}{}{You don't have to worry, my appreciated colleague, I have $3000 right here! [You give him $3000]}
+{16030}{}{Well, I should start gathering some healing herbs then. See you later, doctor Larrikin!}
+{17000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Larrikin starts to show you his healing and surgery methods. After the session, you get a book from him.]}
+{17010}{}{Thank you very much, Doctor Larrikin! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{18000}{}{Excellent! Then we should waste no more time, let's begin... [Doctor Larrikin starts to show you his healing and surgery methods]}
+{18010}{}{Thank you very much, Doctor Larrikin! I will do my best to put this knowledge to a good use, I assure you. Have a nice day!}
+{19000}{}{If you are asking, yes, there is something I could need some help with.}
+{19010}{}{Tell me about it.}
+{19020}{}{Oh well, I didn't thought you would say yes, so goodbye.}
+{20000}{}{The accidents with venomous scorpions are increasing lately and I can't produce as much antidote as I have new patients each day. Anyway... [He holds on for a second.] ... I'll need someone to gather a few scorpion eggs from a nerby radscorpion burrow. It's dangerous, but I can pay you in caps and antidotes.}
+{20010}{}{Good, I'll be back when I got the eggs.}
+{20020}{}{I might come back to it later. Bye.}
+{21000}{}{Be careful, the scorpions are extremely venomous!}
+{21010}{}{Goodbye.}
+{22000}{}{Ah! Give them to me, I'll see if I can start to work with them as fast as possible.... Regarding your reward. [He goes to his shelf and searches between the odds and ends.] As agreed on, here are your caps and a few bottles of antidote that I can spare.}
+{22010}{}{What can you tell me about the scorpions venom?}
+{22020}{}{There is still something else, Doc...}
+{22030}{}{That's all I need now. Goodbye.}
+{23000}{}{There are a lot different types of radscorpions out in the wasteland. Some are more dangerous than others because of their size and some are more dangerous because of their venom. The smaller Anuroctonus in the area around Junktown, also called Black Claw Radscorpion, is one of the more venomous creatures in the wastes... and even if you don't die from their venom, their sting for sure hurts a lot.}
+{23010}{}{[Listen]}
+{23020}{}{Good to know. See you later.}
+{24000}{}{Anyway. In case you are poisoned, you should wash the area clean and apply a cold compress or something of similar use. If you have been stung in the arm or leg, it is highly important, that you rise the limb to heart level. }
+{24010}{}{[Listen]}
+{24020}{}{[Listen]}
+{24030}{}{There is still something else, Doc...}
+{24040}{}{That's all I need to know for the moment. Goodbye.}
+{25000}{}{Now if you realize that you are developing various symptoms such as numbness or tingling of extremities or face, blurry vision, or muscle twitching, maybe even roving eye movements, you really have to get yourself antidote as fast as possible.}
+{25010}{}{Thanks for the information, Doc. There is still something else I have...}
+{25020}{}{That's all I need to know for the moment. See you later, Doc.}
+

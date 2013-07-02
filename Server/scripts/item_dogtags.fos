@@ -1,0 +1,314 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_dogtags.fos
+//
+
+// Dog tags, based on npc_names
+
+#ifndef __DOGTAGS__
+#define __DOGTAGS__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_vars.fos"
+
+#include "lexems_h.fos"
+#include "factions_h.fos"
+#include "npc_names_h.fos"
+
+#include "item_dogtags_h.fos"
+
+#define DT_OWNER_MILITARY    "$SURNAME, $NAME"
+#define DT_OWNER_CUSTOM      "$NAME $NICK_$SURNAME"
+#define DT_INFO_MILITARY     "$ID/$MOB/$YOB/$BLOOD"
+#define DT_INFO_CUSTOM       "$MOB/$YOB/$BLOOD"
+
+/*
+   import string GetBloodType( Critter@ cr ) from "utils";
+   import string GetBloodRandom() from "utils";
+   import int GetLvar(Critter& critter, uint lvar) from "utils";
+ */
+
+// still no ReplaceText() for server modules...
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+Item@ DogTag(Critter@ cr)
+{
+    if(valid(cr))
+        return(DogTag(cr, cr));
+    else
+        return(null);
+}
+
+Item@ DogTag(Critter@ holder, Critter@ target)
+{
+    if(!valid(holder))
+        return(null);
+
+    Item@ dogtag = holder.AddItem(PID_DOGTAGS, 1);
+    if(!valid(dogtag))
+        return(null);
+
+    string@ owner   = null;
+    string@ info    = null;
+
+    uint    gender  = (Random(0, 1) == 0 ? GENDER_MALE : GENDER_FEMALE);
+    uint    year    = __Year - Random(14, 80);
+    uint    month   = Random(1, 12);
+    string  blood   = GetBloodRandom();
+    uint    id              = 0;
+
+    if(valid(target))
+    {
+        year  = GetLvar(target, LVAR_birth_year);
+        month = GetLvar(target, LVAR_birth_month);
+        blood = GetBloodType(target);
+        if(target.Param[ST_GENDER] == GENDER_MALE || target.Param[ST_GENDER] == GENDER_FEMALE)
+            gender = target.Param[ST_GENDER];
+        else
+        {
+            DeleteItem(dogtag);
+            return(null);               // no dogtags for *things*, sorry!
+        }
+
+        if(target.IsPlayer())
+        {
+            id = target.Id;
+            @owner = "" + target.Name;
+        }
+        else
+            id = target.Id - NPC_BASE_ID;
+
+        if(IsSoldier(target) || IsRanger(target))
+        {
+            _DogTagType(dogtag) = DT_TYPE_MILITARY;
+            if(target.IsNpc())
+                @owner = DT_OWNER_MILITARY;
+            @info = DT_INFO_MILITARY;
+
+            if(IsSoldier(target) || IsRanger(target))
+            {
+                _DogTagFaction(dogtag) = target.Param[ST_TEAM_ID];
+            }
+        }
+        else
+        {
+            _DogTagType(dogtag) = DT_TYPE_CUSTOM;
+            if(target.IsNpc())
+                @owner = DT_OWNER_CUSTOM;
+            @info = DT_INFO_CUSTOM;
+        }
+    }
+    else
+    {
+        if(Random(1, 10) == 10)
+            _DogTagType(dogtag) = DT_TYPE_BLANK;
+        else
+        {
+            id = Random(100, 65535);
+
+            if(Random(1, 100) <= 15)
+            {
+                _DogTagType(dogtag) = DT_TYPE_MILITARY;
+                @owner = DT_OWNER_MILITARY;
+                @info = DT_INFO_MILITARY;
+
+                if(Random(1, 100) <= 7)
+                {
+                    array<uint8> factions = { FACTION_BOS, FACTION_ENCLAVE, FACTION_NCR, FACTION_NCR_RANGERS };
+                    _DogTagFaction(dogtag) = factions[Random(0, factions.length() - 1)];
+                }
+            }
+            else
+            {
+                _DogTagType(dogtag) = DT_TYPE_CUSTOM;
+                @owner = DT_OWNER_CUSTOM;
+                @info = DT_INFO_CUSTOM;
+            }
+        }
+    }
+
+    if(valid(owner))
+    {
+        if(valid(target) && target.IsNpc())
+        {
+            GameVar@ first = GetLocalVar(LVAR_npc_name_first, target.Id);
+            GameVar@ gnick = GetLocalVar(LVAR_npc_name_nicktype, target.Id);
+            GameVar@ nick = GetLocalVar(LVAR_npc_name_nick, target.Id);
+            GameVar@ surname = GetLocalVar(LVAR_npc_name_surname, target.Id);
+
+            if(first != -1)
+                stringReplaceText(owner, "$NAME", GetFirstName(target.Stat[ST_GENDER], first.GetValue()));
+            if(nick != -1)
+                stringReplaceText(owner, "$NICK_", GetNick(target.Stat[ST_GENDER], nick.GetValue(), (gnick.GetValue() == 1 ? true : false)) + " ");
+            if(surname != -1)
+                stringReplaceText(owner, "$SURNAME", GetSurname(surname.GetValue()));
+        }
+
+        stringReplaceText(owner, "$NAME", GetRandomFirstName(gender));
+        if(Random(1, 100) <= NICK_CHANCE)
+            stringReplaceText(owner, "$NICK_", GetRandomNick(gender) + " ");
+        else
+            stringReplaceText(owner, "$NICK_", "");
+        stringReplaceText(owner, "$SURNAME", GetRandomSurname());
+
+        string picture = "";
+        switch(_DogTagFaction(dogtag))
+        {
+        case FACTION_BOS:
+            picture = "tag_bos.png";
+            break;
+        case FACTION_ENCLAVE:
+            picture = "tag_enclave.png";
+            break;
+        case FACTION_NCR:
+            picture = "tag_ncr.png";
+            break;
+        case FACTION_NCR_RANGERS:
+            picture = "tag_rangers.png";
+            break;
+        }
+        if(picture.length() > 0)
+        {
+            dogtag.PicInv = GetStrHash("art\\inven\\" + picture);
+            dogtag.Update();
+        }
+    }
+    if(valid(info))
+    {
+        stringReplaceText(info, "$ID", "" + (id == 0 ? "(unreadable)" : "" + id));
+        stringReplaceText(info, "$MOB", "" + (month < 10 ? "0" : "") + month);
+        stringReplaceText(info, "$YOB", "" + year);
+        stringReplaceText(info, "$BLOOD", blood);
+    }
+
+    if(valid(owner) || valid(info))
+    {
+        SetLexem(dogtag, "$owner", (valid(owner) ? owner : ""));
+        SetLexem(dogtag, "$info",  (valid(info) ? info : ""));
+    }
+
+    dogtag.Update();
+    return(dogtag);
+}
+
+Item@ DogTagBlank(Critter@ holder)
+{
+    Item@ dogtag = holder.AddItem(PID_DOGTAGS, 1);
+    if(valid(dogtag))
+    {
+        _DogTagType(dogtag) = DT_TYPE_BLANK;
+        return(dogtag);
+    }
+    else
+        return(null);
+}
+
+// helpers
+
+bool IsSoldier(Critter@ cr)
+{
+    if(!valid(cr))
+        return(false);
+
+    if(cr.Param[ST_TEAM_ID] == FACTION_ENCLAVE ||
+       cr.Param[ST_TEAM_ID] == FACTION_NCR ||
+       cr.Param[ST_TEAM_ID] == FACTION_BOS)
+    {
+        // should be changed, or every ncr/anklafff/bos player will be "soldier"
+        // if( cr.Param[ST_FACTION_RANK] >= RANK_ROOKIE )
+        return(true);
+    }
+
+    return(false);
+}
+
+bool IsRanger(Critter@ cr)
+{
+    if(!valid(cr))
+        return(false);
+
+    if(cr.Param[ST_TEAM_ID] == FACTION_NCR_RANGERS)
+    {
+        // if( cr.Param[ST_FACTION_RANK] >= RANK_ROOKIE )
+        return(true);
+    }
+
+    return(false);
+}
+
+// dialogs
+
+bool d_HasFactionDogtags(Critter& player, Critter@ npc, int faction, int count)
+{
+    array<Item@> items;
+    int          have = player.GetItems(-1, items);
+    if(have < count)
+        return(false);
+
+    have = 0;
+    for(uint i = 0; i < items.length(); i++)
+    {
+        if(items[i].GetProtoId() == PID_DOGTAGS &&
+           _DogTagFaction(items[i]) == faction)
+        {
+            have++;
+
+            if(have >= count)
+                return(true);
+        }
+    }
+
+    return(false);
+}
+
+void r_RemoveFactionDogtags(Critter& player, Critter@ npc, int faction, int count)
+{
+    array<Item@> items;
+    player.GetItems(-1, items);
+
+    int removed = 0;
+    for(uint i = 0; i < items.length(); i++)
+    {
+        if(items[i].GetProtoId() == PID_DOGTAGS &&
+           _DogTagFaction(items[i]) == faction)
+        {
+            removed++;
+            DeleteItem(items[i]);
+
+            if(removed >= count)
+                return;
+        }
+    }
+}
+
+
+#ifdef __DEBUG__
+void spawn(Critter& holder, int id, int, int)
+{
+    if(id < 0)
+    {
+        holder.Say(SAY_NETMSG, "Spawning blank dogtag");
+        DogTagBlank(holder);
+    }
+    else if(id == 0)
+    {
+        holder.Say(SAY_NETMSG, "Spawning random dogtag");
+        DogTag(holder, null);
+    }
+    else
+    {
+        Critter@ target = GetCritter(id);
+        if(valid(target))
+        {
+            holder.Say(SAY_NETMSG, "Spawning dogtag for " + target.Name + "(" + target.Id + ")");
+            DogTag(holder, target);
+        }
+        else
+            holder.Say(SAY_NETMSG, "Invalid target.");
+    }
+}
+#endif
+#endif /* __DOGTAGS__ */

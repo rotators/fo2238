@@ -1,0 +1,209 @@
+[comment]
+
+Most of it is frm F2.
+My nodes are: #13, #14 and #15, the last sentence in #61
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+70 1010 D _param p ST_CHARISMA > 99 #
+40 1020 D _param p ST_INTELLECT < 4 D _var n name_mem_npc_player = 0 #
+44 1030 D _param p ST_INTELLECT < 4 D _var n name_mem_npc_player = 1 #
+50 1040 D _script dialog@d_CheckNight 0  #
+2 1050 D _script dialog@d_IsNotMember 0  D _var n name_mem_npc_player = 0 #
+16 1060 D _script dialog@d_IsNotMember 0  D _var n name_mem_npc_player = 1 #
+60 1070 @
+2 2000 None 0 #
+3 2010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+7 2020 #
+9 2030 D _var n name_mem_npc_player = 1 #
+0 2040 @
+3 3000 None 0 #
+4 3010 #
+7 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+8 4020 #
+0 4030 @
+5 5000 None 0 #
+6 5010 D _item p PID_BOTTLE_CAPS > 499 D _param p ST_CHARISMA > 4 D _script dialog@d_IsNotMember 0  R _var n acquaintance = 1 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 500 #
+6 5020 D _item p PID_BOTTLE_CAPS > 2999 R _var n acquaintance = 1 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 500 #
+45 5030 D _item p PID_BOTTLE_CAPS < 3000 #
+0 5040 D _item p PID_BOTTLE_CAPS < 500 #
+65507 5050 #
+16 5060 #
+0 5070 @
+6 6000 None 0 #
+16 6010 #
+0 6020 @
+7 7000 None 0 #
+4 7010 #
+9 7020 #
+0 7030 @
+8 8000 None 0 #
+5 8010 #
+5 8020 #
+5 8030 #
+0 8040 @
+9 9000 None 0 #
+10 9010 #
+11 9020 #
+12 9030 #
+16 9040 #
+0 9050 @
+10 10000 None 0 #
+11 10010 #
+12 10020 #
+16 10030 #
+0 10040 @
+11 11000 None 0 #
+10 11010 #
+12 11020 #
+16 11030 #
+0 11040 @
+12 12000 None 0 #
+10 12010 #
+11 12020 #
+16 12030 #
+0 12040 @
+13 13000 None 0 #
+14 13010 #
+0 13020 @
+14 14000 None 0 #
+15 14010 D _item p PID_BOTTLE_CAPS > 149 R _script dialog@r_ReceiveDayPass 0  R _script dialog@r_RemoveMoney 1 150 #
+0 14020 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+3 16010 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+7 16020 #
+9 16030 D _var n name_mem_npc_player = 1 #
+13 16040 D _var n acquaintance = 1 #
+0 16050 @
+40 17000 None 0 #
+41 17010 #
+0 17020 @
+41 18000 None 0 #
+42 18010 #
+43 18020 @
+42 19000 None 0 #
+43 19010 #
+43 19020 @
+43 20000 None 0 @
+44 21000 None 0 @
+45 22000 None 0 @
+50 23000 None 0 @
+60 24000 None 0 #
+61 24010 #
+0 24020 @
+61 25000 None 0 #
+0 25010 @
+70 26000 None 0 &
+
+[engl]
+{100}{}{Wallace}
+{200}{}{You see Wallace.}
+{210}{}{You see a thin man with a pinched face. He is wearing a sharply pressed Vault suit.}
+{210}{}{You see Wallace, Vault City's Customs Official.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{dumb unknown}
+{1030}{}{dumb known}
+{1040}{}{night}
+{1050}{}{non-faction unknown}
+{1060}{}{non-faction known}
+{1070}{}{faction VC}
+{2000}{}{Hello, traveler. Welcome to Vault City. Is there anything I can help you with?}
+{2010}{}{Who are you?}
+{2020}{}{What is this place?}
+{2030}{}{What kind of shipments do you receive here?}
+{2040}{}{Nothing today, thanks.}
+{3000}{}{Name's Wallace. I'm the Customs Officer for Vault City. I accommodate those who wish to conduct business within our great walls.}
+{3010}{}{I'd like to enter the city.}
+{3020}{}{"Accommodate?" What do you mean?}
+{3030}{}{I see. Thanks for the information.}
+{4000}{}{If you want to enter Vault City, then you'll need a good reason. Only a Vault Citizen has the right to come and go as they please. All others must procure a Day Pass.}
+{4010}{}{What's a Day Pass?}
+{4020}{}{It's very important you let me in to speak to your leader.}
+{4030}{}{I see. Thanks for the information.}
+{5000}{}{Those who wish to deal directly with the merchants or the representatives of Vault City require a Day Pass. Only those with Day Passes can enter the city, and there is a $500 fee for every Day Pass I issue.}
+{5010}{}{Excellent! You sound like just the person I was looking for. I need to speak with the representatives of Vault City. It's urgent.}
+{5020}{}{Well, I am here to trade. [You show him a bag full of caps]}
+{5030}{}{Well, I am here to trade. [You show him your bag with caps]}
+{5040}{}{Five hundred's a little more than I can afford right now. Maybe some other time.}
+{5050}{}{You'll let me in, and you'll let me in now, or you're gonna be in a hole in the ground, old man.}
+{5060}{}{Right. Can I ask you some other questions?}
+{5070}{}{Nevermind, then. I have to go now anyway.}
+{6000}{}{Well... you do look like you've got some important business to attend to. Very well, here is your Day Pass. It's only good during the day - at night you will be shot first, then if you survive, escorted out. It's got an identifying serial number on it, so you're the only person who can use it. Don't lose your Day Pass, or even think about selling it. Citizens also reserve the right to cancel Day Pass privileges at any time, so behave yourself.}
+{6010}{}{Understood. Can I ask you some other questions?}
+{6020}{}{Thanks.}
+{7000}{}{This is the Customs Office for Vault City. We're responsible for keeping a log of all the goods that come to us via the caravans and supervising all transactions. All merchants must pass through customs before entering the city.}
+{7010}{}{I'd like to enter the city.}
+{7020}{}{What goods do you receive from the caravans?}
+{7030}{}{I see. Thanks for the information.}
+{8000}{}{Well, of course. Everyone desires an audience with the First Citizen. You don't look important enough to warrant the precious time of the First Citizen, I'm afraid.}
+{8010}{}{That's why it's vital I speak to her. I'll be sure to throw in a good word about how efficiently the Customs Office is being run. But if you can't help me, then...}
+{8020}{}{The information I possess is really important. Really.}
+{8030}{}{If I were you, I'd watch that tone of yours. I said I need to see her. Now.}
+{8040}{}{Nevermind, then.}
+{9000}{}{Depends on where the caravan is from. We get shipments from many places... servants from the Den, uranium from Broken Hills, and metal ore from Redding.}
+{9010}{}{What can you tell me about the Den?}
+{9020}{}{What can you tell me about Broken Hills?}
+{9030}{}{What can you tell me about Redding?}
+{9040}{}{Can I ask you another question?}
+{9050}{}{I see. Thanks for the information.}
+{10000}{}{A delightful place, really. Killers, thieves... the usual Outsider scum. A place where one such as yourself would feel right at home.}
+{10010}{}{What can you tell me about Broken Hills?}
+{10020}{}{What can you tell me about Redding?}
+{10030}{}{I had some other questions for you...}
+{10040}{}{*Thanks.* Goodbye.}
+{11000}{}{Broken Hills is a mining town to the south. As I understand it, mutants mine the uranium, and they ship it here by caravan.}
+{11010}{}{What can you tell me about the Den?}
+{11020}{}{What can you tell me about the Redding?}
+{11030}{}{Uh, yeah... look, I had some other questions for you...}
+{11040}{}{Thanks for the information.}
+{12000}{}{It's a mining town far to the west. The caravans from there were the most pleasant to deal with, but recently the shipments of ore are fluctuating considerably in quantity. It has us a bit worried... we depend on their ore a great deal.}
+{12010}{}{What can you tell me about the Den?}
+{12020}{}{What can you tell me about Broken Hills?}
+{12030}{}{More questions...}
+{12040}{}{Thanks for the information. Goodbye.}
+{13000}{}{You were already issued with one, Outsider.}
+{13010}{}{I think I lost it. Maybe you could issue one more for me?}
+{13020}{}{Oh yep, so I did! Thanks for the reminder.}
+{14000}{}{Issuing another wouldn't exactly be setting a good precedent, but since this is the first time you've lost it... I think I can let you off. It'll cost you another $150, and do be more careful.}
+{14010}{}{Sure, not a problem. Won't happen again.}
+{14020}{}{Hmmm... That's a little steep. I'll pass for now.}
+{15000}{}{Excellent. Here you go... again, it is only good during the day - at night you will be shot first, then, if you survive, escorted out. There is an unique serial number on it, registered exclusively to you. Do not lose or give your Day Pass away, nobody else can use it. And don't forget, Citizens reserve the right to cancel the Day Pass privileges at any time, so behave yourself.}
+{15010}{}{Thanks. Can I ask you some other questions?}
+{15020}{}{Not a problem, I'll remember that.}
+{16000}{}{Yes, what can I do for you?}
+{16010}{}{Who are you?}
+{16020}{}{What is this place?}
+{16030}{}{What kind of shipments do you receive here?}
+{16040}{}{Can I get another Day Pass?}
+{16050}{}{Nothing today, thanks.}
+{17000}{}{Hello, traveler. Welcome to Vault City. Is there anything I can help you with?}
+{17010}{}{Frazz-urb-luuw!}
+{17020}{}{[Shamble off]}
+{18000}{}{Well, I see I'll have to have to have a talk with the guards in the Courtyard. They seem to be letting just about ANY Outsider get to the gates these days.}
+{18010}{}{Dayz. Daze? Daiseeee.}
+{18020}{}{[Shamble off]}
+{19000}{}{"Daiseee," you say? Fascinating. Why don't you go back to the Courtyard and tell the rest of your inbred Outsider friends all about it?}
+{19010}{}{Okee!}
+{19020}{}{Uh-kuh.}
+{20000}{}{Idiot.}
+{21000}{}{Don't waste any more of my time, Outsider. Leave.@@I suggest you leave now, or I will summon the guards.}
+{22000}{}{And what would you do with *that*? Buy a chewing gum? Stop wasting my time, savage.}
+{23000}{}{The Customs Office is closed for the evening. Come back in the morning.@@The Customs Office is closed for the evening. I'll be heading home after I tabulate all these lists.}
+{24000}{}{Hello, Citizen. Is there anything I can help you with?}
+{24010}{}{What is this place?}
+{24020}{}{Never mind.}
+{25000}{}{This is the Customs Office for Vault City. We're responsible for keeping a log of all the goods that come to us via the caravans and supervising all transactions. All merchants must pass through customs before entering the city. Since you are a Citizen, these regulations do not concern you.}
+{25010}{}{I see. Thanks for the information.}
+{26000}{}{Someone get this thing out of my office.@@Gah! What the hell are you?@@Another victim of wasteland mutation.@@I wonder if you can even understand me.@@Skeeve! Get in here, take a look at this thing!@@I can't tell if you're a ghoul or a human.}
+

@@ -1,0 +1,325 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mapper_crtypes.fos
+//
+
+// runtime armor/crtype matcher
+
+#include "_macros.fos"
+#include "mapper_gui.fos"
+#include "mapper_plugin_h.fos"
+
+#pragma bindfunc "int MapperObject::CritterCl_GetParam(uint16) -> MapperUtils.dll MapObject_CritterCl_GetParam"
+#pragma bindfunc "void MapperObject::CritterCl_SetBaseType(uint) -> MapperUtils.dll MapObject_CritterCl_SetBaseType"
+#pragma bindfunc "uint MapperObject::CritterCl_GetBaseType() -> MapperUtils.dll MapObject_CritterCl_SetBaseType"
+
+array<uint> UnarmoredTypesMale;
+array<uint> UnarmoredTypesFemale;
+
+#define SPR_HEIGHT    (100)
+#define SPR_WIDTH     (50)
+
+void SetUnarmoredCrtypes()
+{
+    UnarmoredTypesMale.insertLast(62);
+    UnarmoredTypesMale.insertLast(64);
+    UnarmoredTypesMale.insertLast(110);
+    UnarmoredTypesMale.insertLast(104);
+    UnarmoredTypesMale.insertLast(126);
+    UnarmoredTypesMale.insertLast(119);
+    UnarmoredTypesFemale.insertLast(61);
+    UnarmoredTypesFemale.insertLast(63);
+}
+
+bool AssertCrtypeReadiness(MapperObject@ critter)
+{
+    return critter.Critter_ParamIndex8 == ST_OVERRIDE_CRTYPE;
+}
+
+array<uint>@ GetValidCrtypes(MapperObject@ critter, uint16 pid)
+{
+    if(!AssertCrtypeReadiness(critter))
+        return @array<uint>();
+    int         gender = critter.CritterCl_GetParam(ST_GENDER);
+    array<uint> arr;
+    if(pid == 0)
+    {
+        int bt = critter.CritterCl_GetParam(ST_BODY_TYPE);
+        if(bt != BT_MEN && bt != BT_WOMEN)
+        {
+            arr.insertLast(critter.CritterCl_GetParam(ST_BASE_CRTYPE));
+            return @arr;
+        }
+        if(gender == GENDER_MALE)
+            return @UnarmoredTypesMale;
+        else
+            return @UnarmoredTypesFemale;
+    }
+    ProtoItem@ proto = GetProtoItem(pid);
+    if(gender == GENDER_MALE)
+    {
+        arr.insertLast(proto.Armor_CrTypeMale);
+        if(proto.Armor_CrTypeMale2 != 0)
+            arr.insertLast(proto.Armor_CrTypeMale2);
+        if(proto.Armor_CrTypeMale3 != 0)
+            arr.insertLast(proto.Armor_CrTypeMale3);
+        if(proto.Armor_CrTypeMale4 != 0)
+            arr.insertLast(proto.Armor_CrTypeMale4);
+    }
+    else
+    {
+        arr.insertLast(proto.Armor_CrTypeFemale);
+        if(proto.Armor_CrTypeFemale2 != 0)
+            arr.insertLast(proto.Armor_CrTypeFemale2);
+        if(proto.Armor_CrTypeFemale3 != 0)
+            arr.insertLast(proto.Armor_CrTypeFemale3);
+        if(proto.Armor_CrTypeFemale4 != 0)
+            arr.insertLast(proto.Armor_CrTypeFemale4);
+    }
+    return @arr;
+}
+
+uint16 GetArmorPid(MapperObject@ critter)
+{
+    array<MapperObject@> items;
+    uint                 n = critter.GetChilds(items);
+    for(uint i = 0; i < n; i++)
+    {
+        if(GetProtoItem(items[i].ProtoId).Type != ITEM_TYPE_ARMOR)
+            continue;
+        if(items[i].Item_ItemSlot != SLOT_ARMOR)
+            continue;
+        return items[i].ProtoId;
+    }
+    return critter.CritterCl_GetParam(ST_DEFAULT_ARMOR_PID);
+}
+
+void ChangeCrtype(MapperObject@ critter, uint crtype)
+{
+    critter.CritterCl_SetBaseType(crtype);
+    uint8 cond = critter.get_Critter_Cond();
+    bool  was_dead = cond == COND_DEAD;
+    if(was_dead)
+    {
+        critter.set_Critter_Cond(COND_LIFE);
+        critter.Update();
+        critter.set_Critter_Cond(COND_DEAD);
+    }
+    else
+    {
+        critter.set_Critter_Cond(COND_DEAD);
+        critter.Update();
+        critter.set_Critter_Cond(cond);
+    }
+    critter.Update();
+}
+
+void UpdateImplied(MapperObject@ critter, uint16 pid, uint& implied)
+{
+    if(!AssertCrtypeReadiness(critter))
+        return;
+    array<uint>@ types = GetValidCrtypes(critter, pid);
+    if(types.find(critter.Critter_ParamValue8) == -1)
+    {
+        critter.Critter_ParamValue8 = 0;
+        implied = types[0];
+    }
+}
+
+void NormalizeCrtype(MapperObject@ critter)
+{
+    if(!AssertCrtypeReadiness(critter))
+        return;
+    uint16 pid = GetArmorPid(critter);
+    uint   implied = critter.Critter_ParamValue8;
+    if(implied == 0)
+    {
+        if(pid == 0)
+            implied = critter.CritterCl_GetParam(ST_BASE_CRTYPE);
+        else
+        {
+            ProtoItem@ proto = GetProtoItem(pid);
+            implied = critter.CritterCl_GetParam(ST_GENDER) == GENDER_MALE ? proto.Armor_CrTypeMale : proto.Armor_CrTypeFemale;
+        }
+    }
+    UpdateImplied(critter, pid, implied);
+    if(implied != critter.CritterCl_GetBaseType())
+        ChangeCrtype(critter, implied);
+}
+
+class CCrButton : Control
+{
+    uint         Crtype;
+    bool         def;
+    int          index;
+    CCrtypeMenu@ menu;
+    CCrButton(uint crtype, int index, int x, int y)
+    {
+        super(x, y, SPR_WIDTH, SPR_HEIGHT);
+        def = false;
+        Crtype = crtype;
+        this.index = index;
+    }
+
+    void Draw()
+    {
+        array<int> draw;
+        draw.resize(12);
+        draw[0] = Right();
+        draw[1] = Top();
+        draw[2] = index % 2 == 0 ? 0xFF808080 : 0xFF404040;
+        draw[3] = Right();
+        draw[4] = Bottom();
+        draw[5] = index % 2 == 0 ? 0xFF808080 : 0xFF404040;
+        draw[6] = Left();
+        draw[7] = Top();
+        draw[8] = index % 2 == 0 ? 0xFF808080 : 0xFF404040;
+        draw[9] = Left();
+        draw[10] = Bottom();
+        draw[11] = index % 2 == 0 ? 0xFF808080 : 0xFF404040;
+        DrawPrimitive(DRAW_PRIMITIVE_TRIANGLESTRIP, draw);
+        DrawCritter2d(Crtype, ANIM1_UNARMED, ANIM2_IDLE, 2, Left() + 2, Top() + 2, Right() - 2, Bottom() - 2, true, false, 0xFFFFFFFF);
+        DrawText(def ? "0 (" + Crtype + ")" : "" + Crtype, Left() + 2, Bottom() - 10, Width() - 2, 10, COLOR_WHITE, FONT_FALLOUT, FT_BORDERED);
+    }
+
+    void Click()
+    {
+        Menu.Selected(Crtype, def);
+    }
+};
+
+class CCrtypeMenu : Control
+{
+    MapperObject@ critter;
+
+    CCrtypeMenu(IGuiManager@ manager)
+    {
+        super(0, 0, 4 * SPR_WIDTH, SPR_HEIGHT);
+        visible = false;
+        @critter = null;
+    }
+
+    void Fill(MapperObject@ obj)
+    {
+        @critter = obj;
+        controls.resize(0);
+
+        array<uint>@ types = GetValidCrtypes(obj, GetArmorPid(critter));
+        int l = 0;
+        width = SPR_WIDTH * types.length();
+        for(int i = 0, j = types.length(); i < j; i++)
+        {
+            CCrButton@ control = CCrButton(types[i], i, l, 0);
+            if(i == 0)
+                control.def = true;
+            AddControl(control);
+            l += SPR_WIDTH;
+        }
+    }
+
+    void Selected(uint crtype, bool def)
+    {
+        if(!AssertCrtypeReadiness(critter))
+            return;
+        if(!valid(critter))
+            return;
+        critter.Critter_ParamValue8 = def ? 0 : crtype;
+        ChangeCrtype(critter, crtype);
+        @critter = null;
+        Hide();
+    }
+
+    void Show(int x, int y)
+    {
+        Control::Show(x, y);
+        Enable();
+    }
+
+    bool MouseDown(int click)
+    {
+        if(!IsInside(__MouseX, __MouseY))
+        {
+            Hide();
+        }
+        return Control::MouseDown(click);
+    }
+};
+
+class CCrtypePlugin : CGuiManager, IMapperPlugin
+{
+    bool Alt;
+    int  LastIndex;
+
+    CCrtypePlugin()
+    {
+        Alt = false;
+        LastIndex = -1;
+        SetUnarmoredCrtypes();
+        @Menu = CCrtypeMenu(this);
+        RegisterControl(Menu);
+    }
+
+    bool KeyDown(uint8 key)
+    {
+        if(key == DIK_LMENU)
+            Alt = true;
+        if(key == DIK_C && Alt)
+        {
+            MapperObject@ obj = GetSelectedObject();
+            if(obj.MapObjType == MAP_OBJECT_CRITTER)
+            {
+                Menu.Fill(obj);
+                Menu.Show(__ScreenWidth - Menu.Width() - SPR_WIDTH, 100);
+            }
+        }
+        return CGuiManager::KeyDown(key);
+    }
+
+    bool KeyUp(uint8 key)
+    {
+        if(key == DIK_LMENU)
+            Alt = false;
+        return CGuiManager::KeyUp(key);
+    }
+
+    void InputLost() {}
+
+    void Loop()
+    {
+        array<MapperMap@> maps;
+        int               index = GetLoadedMaps(maps);
+        if(maps.length() == 0)
+            return;
+        MapperObject@ object = GetSelectedObject();
+        if(valid(object) && object.MapObjType == MAP_OBJECT_CRITTER)
+            NormalizeCrtype(object);
+        if(LastIndex == index)
+            return;
+        array<MapperObject@> crits;
+        uint                 n = maps[index].GetObjects(0, 0, 10 * (maps[index].Width + maps[index].Height), MAP_OBJECT_CRITTER, 0, crits);
+        for(uint i = 0, j = crits.length(); i < j; i++)
+            NormalizeCrtype(crits[i]);
+    }
+    void Render(uint layer)
+    {
+        if(layer == 2)
+            Menu.Draw();
+    }
+    bool Message(string&) { return false; }
+    void RenderMap()      {}
+};
+
+CCrtypeMenu@   Menu;
+CCrtypePlugin@ Plugin;
+
+void RegisterCrtypes()
+{
+    IMapperPlugin@ plugin = @CCrtypePlugin();
+    if(Plugins_Register(plugin))
+    {
+        Message("Crtypes registered.");
+        Message("Press Alt+C to display critter's available basetypes.");
+    }
+}

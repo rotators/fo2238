@@ -1,0 +1,84 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+20 1010 D _var p q_vc_train_doc > 0 D _var p q_vc_train4 < 4 #
+20 1020 D _var p q_la_train_caesar > 0 D _var p q_la_train4 < 4 #
+3 1030 D _script dialog@d_CheckNight 0  #
+2 1040 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+0 4010 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+20 7000 None 0 #
+21 7010 #
+0 7020 @
+21 8000 None 0 #
+23 8010 #
+24 8020 #
+22 8030 D _var n name_mem_npc_player = 0 D _var p q_vc_train_doc > 0 D _var p q_vc_train4 < 4 R _var p q_vc_train4 + 1 R _var n name_mem_npc_player + 1 #
+4 8040 D _var p q_la_train_caesar > 0 D _var n name_mem_player_npc = 0 D _var p q_la_train4 < 3 R _var p q_la_train4 + 1 R _var n name_mem_player_npc + 1 R _var p q_la_train_count + 1 #
+5 8050 D _var p q_la_train_caesar > 0 D _var n name_mem_player_npc = 0 D _var p q_la_train4 = 3 D _var p q_la_train_count < 15 R _var n name_mem_player_npc + 1 R _var p q_la_train4 = 4 R _var p q_la_train_count + 1 #
+6 8060 D _var p q_la_train_caesar > 0 D _var n name_mem_player_npc = 0 D _var p q_la_train1 = 4 D _var p q_la_train2 = 4 D _var p q_la_train3 = 4 D _var p q_la_train4 = 3 D _var p q_la_train_count > 14 R _var n name_mem_player_npc + 1 R _var p q_la_train_caesar = 2 R _var p q_la_train4 + 1 R _var p q_la_train_count + 1 #
+0 8070 @
+22 9000 None 0 #
+0 9010 D _var p q_vc_train4 < 4 #
+0 9020 D _var p q_vc_train4 < 4 #
+0 9030 D _var p q_vc_train4 > 3 R _var p q_vc_train_doc = 5 #
+0 9040 D _var p q_vc_train4 > 3 R _var p q_vc_train_doc = 5 @
+23 10000 None 0 #
+21 10010 #
+0 10020 @
+24 11000 None 0 #
+21 11010 #
+0 11020 &
+
+[engl]
+{100}{}{Train Station Peasant}
+{200}{}{You see a normal person.}
+{1000}{}{Predialogue installations}
+{1010}{}{Vault City Doctor quest is running. Player asks the NPC about stuff.}
+{1020}{}{caesars legion quest running}
+{1030}{}{dark outside}
+{1040}{}{normal}
+{2000}{}{You are in my way. Move.@@We get many outsiders here.@@Gotta get back to work.@@Keep your distance.@@So much trouble here all day long.@@The train is used by many people.@@Be careful or I’ll call the guards.@@I hope there will be first class seats.}
+{3000}{}{Gotta get back to work.@@Keep your distance.@@So much trouble here all day long.@@The train is used by many people.@@Be careful or I’ll call the guards.@@I hope there will be first class seats.@@Don't speak to me.@@Go away or I call the guards.}
+{4000}{}{No, I don't know this man. Keep your distance or I will call the guards!@@I don't know this man.@@No, leave me alone.}
+{4010}{}{Yeah, thanks...}
+{4020}{}{Very well, asshole.}
+{5000}{}{I think I know this man. Yes. He took the train to one of the next train stations.}
+{5010}{}{Very well. Thanks and bye.}
+{6000}{}{This man? He made a very bad appeal to me. Then he talked about the NCR train station and that he wanted to meet someone there. Someone in a leather jacket or so.}
+{6010}{}{NCR train station? Thank you very much for this information. It helps me a lot.}
+{7000}{}{Keep your distance, or I will call the guards!@@There is so much trouble here all day long. Isn't it?@@I don't trust you, outsider! Be careful or I’ll call the guards.}
+{7010}{}{Hello, could I ask a question?@@One question, if you don't mind.@@Can I ask you a question?@@One question, please.@@There is something I would like to talk about...}
+{7020}{}{Sorry, wrong door.}
+{8000}{}{What? My train is coming soon, I don't have time to talk.}
+{8010}{}{What are you doing here?}
+{8020}{}{Can you tell me when the next train arrives?}
+{8030}{}{I am doing some research for a doctor from Vault City about how healthy the people at the new train stations are feeling. Can you tell me if you have been ill or similar in the last time?}
+{8040}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8050}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8060}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{8070}{}{Nothing, bye...}
+{9000}{}{Do you mean doctor Andrew? I know him, he is a good man! I guess I feel pretty okay. Haven't been ill since a long time.@@What? Eh, whatever... I feel okay. Don't get me on my nerves, I don't have time.@@I feel good, now leave me alone.@@I've talked to doctor Andrew last week and I feel good. }
+{9010}{}{Thank you for the information. This is all I wanted to know.@@Thank you. This is all I wanted to know.}
+{9020}{}{Lucky bastard.}
+{9030}{}{Thank you for the information. This is all I wanted to know.@@Thank you. This is all I wanted to know.}
+{9040}{}{Lucky bastard.}
+{10000}{}{What does it looks like? I am waiting for the train to the NCR outpost!}
+{10010}{}{Interesting. I have another question.}
+{10020}{}{Good to know. Bye.}
+{11000}{}{You should better ask the conductor. He has all information.}
+{11010}{}{Interesting. I have another question.}
+{11020}{}{Good to know. Bye.}
+

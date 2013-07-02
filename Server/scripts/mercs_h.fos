@@ -1,0 +1,357 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// mercs_h.fos
+//
+
+#ifndef __MERCS_H__
+#define __MERCS_H__
+#include "_macros.fos"
+#include "lexems_h.fos"
+#include "utils_h.fos"
+#include "npc_common_h.fos"
+#include "npc_names_h.fos"
+#include "follower_h.fos"
+
+#include "serializator.fos"
+
+#ifndef __FOLLOWER_COMMON__
+import bool AddToFollowerlist(Critter& master, Critter& follower) from "follower_common";
+#endif
+
+// Deprecate this in the future, maybe now.
+uint e_DisableBagRefresh(array<uint>@ values)
+{
+    Critter@ cr = GetCritter(values[0]);
+    if(valid(cr))
+    {
+        cr.SetBagRefreshTime((uint(-1)));
+        DLog("Bag refresh = " + cr.GetBagRefreshTime());
+    }
+    return 0;
+}
+
+void NerfWeaponSkills(Critter& cr, uint primary, uint secondary)
+{
+    for(uint i = SK_SMALL_GUNS; i <= SK_THROWING; i++)
+    {
+        if(i != primary && i != secondary)
+        {
+            if(i == SK_BIG_GUNS)
+                cr.SkillBase[i] = -80;
+            else
+                cr.SkillBase[i] = -30;
+        }
+    }
+}
+
+shared interface IMerc
+{
+    IMerc@ Dialog(int dialogid);
+    IMerc@ Script(string& script);
+    IMerc@ AI(int aipack);
+    IMerc@ Bag(int bagid);
+    IMerc@ Team(int teamid);
+    IMerc@ Level(int level);
+    IMerc@ PID(int pid);
+    IMerc@ PID(array<int> npcpids);
+    IMerc@ Type(int type);
+    IMerc@ ID(int id);
+    IMerc@ Cost(int cost);
+    IMerc@ StartCost(int cost);
+    IMerc@ SellPrice(int price);
+    IMerc@ DynamicPrice();
+
+    bool       IsDynamicPrice();
+    int        GetDialog();
+    string@    GetScript();
+    int        GetAIPack();
+    int        GetBagID();
+    int        GetBagValue();
+    int        GetTeamID();
+    int        GetLevel();
+    int        GetLastPID();
+    array<int> GetPIDs();
+    uint       GetType();
+    int8       GetBaseType();
+    int        GetCost();
+    int        GetSellPrice();
+    uint       GetID();
+    string@    GetName();
+
+    bool Spawn(Critter& master);
+};
+
+// Base hireling
+class CMerc : IMerc
+{
+    bool         dynamicprice;
+    int          dir;
+    int          dialogid;
+    string       script;
+    int          aipack;
+    int8         basetype;
+    int          bagid;
+    int          teamid;
+    int          level;
+    int          respawnTime;
+    array<int>   npcpids;  // List of possible pids to choose from when creating npc.
+    int          npcpid;   // PID of last spawned critter
+    int          cost;
+    int          bagvalue; // Bag value
+    int          startcost;
+    uint         type;
+    int          sellprice;
+    uint         id;
+    string       name;
+
+    Serializator serializer;
+
+    CMerc()
+    {
+        dir = Random(0, 6);
+        dialogid = DIALOG_follower;
+        script = "follower@critter_init";
+        basetype = -1;
+        aipack = 0;
+        bagid = 0;
+        teamid = 0;
+        level = 1;
+        respawnTime = REPLICATION_DELETE;
+        cost = 0;
+        sellprice = 0;
+        id = 0;
+        type = 0;
+        dynamicprice = false;
+    }
+
+    bool Spawn(Critter& master)
+    {
+        npcpid = random_from_array(npcpids);
+
+        Critter@ SpawnedNpc = AddNpc(master.GetMap(), npcpid, master.HexX, master.HexY, dir, dialogid, script, aipack, bagid, teamid, false, level);   // TODO_TEAM: ask ghost what teamid + master.Id was meant to be, looked like bug
+        if(valid(SpawnedNpc))
+        {
+            SpawnedNpc.FollowerVarBase[FV_FACTION] = _GroupIndex(master);
+            SpawnedNpc.FollowerVarBase[FV_TYPE] = type;
+            SpawnedNpc.FollowerVarBase[FV_MERCID] = id;
+            basetype = SpawnedNpc.CrType;
+            SpawnedNpc.FollowerVarBase[FV_MASTER] = master.Id;
+            SpawnedNpc.StatBase[ST_REPLICATION_TIME] = respawnTime;
+
+            if(type == FOLLOWER_TYPE_DOG || type == FOLLOWER_TYPE_BRAHMIN || type == FOLLOWER_TYPE_SLAVE)
+                SpawnedNpc.StatBase[ST_FREE_BARTER_PLAYER] = master.Id;
+
+            switch(type)
+            {
+            case FOLLOWER_TYPE_MERC_HUMAN_MELEE:
+            case FOLLOWER_TYPE_MERC_GHOUL_MELEE:
+                NerfWeaponSkills(SpawnedNpc, SK_MELEE_WEAPONS, SK_UNARMED);
+                break;
+            case FOLLOWER_TYPE_MERC_HUMAN_SG:
+            case FOLLOWER_TYPE_MERC_GHOUL_SG:
+                NerfWeaponSkills(SpawnedNpc, SK_SMALL_GUNS, 0);
+                break;
+            case FOLLOWER_TYPE_MERC_HUMAN_BG:
+            case FOLLOWER_TYPE_MERC_MUTANT_BG:
+                NerfWeaponSkills(SpawnedNpc, SK_BIG_GUNS, 0);
+                break;
+            case FOLLOWER_TYPE_MERC_HUMAN_UNARMED:
+            case FOLLOWER_TYPE_MERC_MUTANT_UNARMED:
+                NerfWeaponSkills(SpawnedNpc, SK_UNARMED, SK_MELEE_WEAPONS);
+                break;
+            case FOLLOWER_TYPE_MERC_HUMAN_EW:
+                NerfWeaponSkills(SpawnedNpc, SK_ENERGY_WEAPONS, 0);
+                break;
+            default:
+                break;
+            }
+
+            SpawnedNpc.ChangeCrType(SpawnedNpc.StatBase[ST_BASE_CRTYPE]);
+
+            CreateTimeEvent(AFTER(GAME_MINUTE(3)), "e_DisableBagRefresh", SpawnedNpc.Id, true);
+            ArmBestWeapon(SpawnedNpc);
+
+            if(Random(0, 29 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_BONUS_RATE_OF_FIRE] += 1;
+            if(Random(0, 29 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_SHARPSHOOTER] += 1;
+            if(Random(0, 49 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_SNIPER] += 1;
+            if(Random(0, 49 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_TERMINATOR] += 1;
+            if(Random(0, 19 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_STONEWALL] += 1;
+            if(Random(0, 19 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_MORE_CRITICALS] += 1;
+            if(Random(0, 19 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_TOUGHNESS] += 1;
+            if(Random(0, 19 - master.Stat[ST_LUCK]) == 0)
+                SpawnedNpc.PerkBase[PE_DODGER] += 1;
+
+            for(uint i = 0; i <= 6; i++)
+                SpawnedNpc.StatBase[i] += Random(-1, 1);
+
+            if(master.Stat[ST_CHARISMA] > 8)
+                SpawnedNpc.StatBase[ST_MAX_LIFE] += (Random(7, 12) * master.Stat[ST_LUCK]);
+            else if(master.Stat[ST_CHARISMA] < 5)
+                SpawnedNpc.StatBase[ST_MAX_LIFE] -= (Random(10, 15) - master.Stat[ST_LUCK]);
+
+            SpawnedNpc.StatBase[ST_CURRENT_HP] = SpawnedNpc.Stat[ST_MAX_LIFE];
+
+            if(!AddToFollowerlist(master, SpawnedNpc))
+                Log("Failed to assign merc's id to master(" + master.Id + ") followerlist");
+
+            this.name = GenerateNewName(SpawnedNpc);
+
+            if(this.name.length() > 0)
+                SetLexem(SpawnedNpc, "$name", this.name);
+
+            return true;
+        }
+        else
+        {
+            Log("Failed to create mercenary of PID " + npcpid + " with mercid " + id + " on map id " + master.GetMapId());
+            master.Say(SAY_NETMSG, "Failed to create mercenary, report this error immediately");
+        }
+
+
+        return false;
+    }
+
+    IMerc@ Dialog(int dialogid)
+    {
+        this.dialogid = dialogid;
+        return this;
+    }
+
+    IMerc@ Script(string& script)
+    {
+        this.script = script;
+        return this;
+    }
+
+    IMerc@ AI(int aipack)
+    {
+        this.aipack = aipack;
+        return this;
+    }
+
+    IMerc@ Bag(int bagid)
+    {
+        this.bagid = bagid;
+
+        bagvalue = 0;
+        array<uint>   mincounts, maxcounts;
+        array<int>    slots;
+        array<uint16> pids;
+        uint          num = GetBagItems(bagid, pids, mincounts, maxcounts, slots);
+        uint          cost = 0;
+        for(uint i = 0; i < num; i++)
+        {
+            bagvalue += BaseItemValue(pids[i], 7, 80, true) * (mincounts[i] + maxcounts[i]) / 2;
+        }
+
+        return this;
+    }
+
+    IMerc@ Team(int teamid)
+    {
+        this.teamid = teamid;
+        return this;
+    }
+
+    IMerc@ Level(int level)
+    {
+        this.level = level;
+        return this;
+    }
+
+    IMerc@ PID(int npcpid)
+    {
+        this.npcpids.insertLast(npcpid);
+        return this;
+    }
+
+    IMerc@ PID(array<int> npcpids)
+    {
+        for(uint i = 0; i < npcpids.length(); i++)
+        {
+            this.npcpids.insertLast(npcpids[i]);
+        }
+        return this;
+    }
+
+    IMerc@ Type(int type)
+    {
+        this.type = type;
+        return this;
+    }
+
+    IMerc@ ID(int id)
+    {
+        this.id = id;
+        return this;
+    }
+
+    IMerc@ DynamicPrice()
+    {
+        dynamicprice = true;
+        return this;
+    }
+
+    bool IsDynamicPrice()
+    {
+        return dynamicprice;
+    }
+
+    IMerc@ StartCost(int cost)
+    {
+        serializer.Clear();
+        if(!serializer.Load("merc_" + id) || GetGvar(GVAR_merc_prices_init) == 0)
+        {
+            this.cost = cost;
+            serializer.Clear();
+            serializer.Set(this.cost).Save("merc_" + id);
+        }
+        else
+            serializer.Get(this.cost);
+
+        return this;
+    }
+
+    IMerc@ Cost(int cost)
+    {
+        DLog("Setting cost to: " + cost);
+        this.cost = cost;
+
+        serializer.Clear();
+        serializer.Set(this.cost).Save("merc_" + id);
+
+        return this;
+    }
+
+    IMerc@ SellPrice(int sellprice)
+    {
+        this.sellprice = sellprice;
+        return this;
+    }
+
+    int        GetDialog()    { return dialogid; }
+    string@    GetScript()    { return script; }
+    int8       GetBaseType()  { return basetype; }
+    int        GetAIPack()    { return aipack; }
+    int        GetBagID()     { return bagid; }
+    int        GetTeamID()    { return teamid; }
+    int        GetLevel()     { return level; }
+    int        GetLastPID()   { return npcpid; }
+    array<int> GetPIDs()      { return npcpids; }
+    int        GetCost()      { return cost; }
+    int        GetBagValue()  { return bagvalue; }
+    int        GetSellPrice() { return sellprice; }
+    uint       GetID()        { return id; }
+    uint       GetType()      { return type; }
+    string@    GetName()      { return name; }
+};
+#endif

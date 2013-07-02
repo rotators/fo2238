@@ -1,0 +1,56 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 D _var p q_redd_rats > 0 D _var p q_redd_rats < 3 #
+2 1020 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 D _var p q_redd_rats = 1 #
+6 3020 D _var p q_redd_rats = 2 D _item p PID_SCORPION_TAIL > 4 R _item p PID_SCORPION_TAIL - 5 #
+0 3030 R _var p q_redd_rats = 0 #
+0 3040 @
+4 4000 None 0 #
+0 4010 R _var p q_redd_rats = 2 #
+65507 4020 R _var p q_redd_rats = 5 #
+7 4030 @
+5 5000 None 0 #
+0 5010 R _var p q_redd_rats = 3 @
+6 6000 None 0 #
+0 6010 R _var p q_redd_rats = 3 @
+7 7000 None 0 #
+0 7010 R _var p q_redd_rats = 2 #
+65507 7020 R _var p q_redd_rats = 5 #
+0 7030 &
+
+[engl]
+{100}{}{Caminetto}
+{200}{}{You see a short, burly, miner with curly black hair.}
+{210}{}{You see Caminetto, a miner for the Kokoweef Mine.}
+{1000}{}{Predialogue installations}
+{1010}{}{I know about rat shit.}
+{1020}{}{I know nothing about rat shit.}
+{2000}{}{You got some nerve.@@Put up or shut up you, little shrimp.@@Think you might get lucky, huh?@@Piss off.}
+{3000}{}{What the hell do you want, shrimp? }
+{3010}{}{Your friend Marge sends me. I'm here to get your recommendation so she will let me in the mines to take care of the rat problem. }
+{3020}{}{Hey. I got 5 scorpion tails for you're looking for! }
+{3030}{}{Why the hell do you care, fuck face?!}
+{3040}{}{Uh. Nothing. Bye.}
+{4000}{}{God damn it! Another one? Fine... Kill 5 radscorpions and bring their tails for proof and maybe I'll put a good word on you. }
+{4010}{}{Right. I'll come back with the tails. Bye.}
+{4020}{}{MAYBE?! Maybe I'll prove my worth by kicking your sorry ass, instead.}
+{4030}{}{Listen, I made it all the way to Redding through the wastes. Is killing scorpions harder than that?}
+{5000}{}{Eh, I suppose you're right. Go speak with Marge. }
+{5010}{}{Thanks.}
+{6000}{}{Eh, I suppose you did pretty good. Go speak with Marge. }
+{6010}{}{Thanks.}
+{7000}{}{Who do you think you are, shrimp? Bring me five scorpion tails or leave it. It's up to you.}
+{7010}{}{Right. I'll come back with the tails. Bye.}
+{7020}{}{Why the hell do you care, fuck face?!}
+{7030}{}{Uh. Sorry, need to go.}
+

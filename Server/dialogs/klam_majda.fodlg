@@ -1,0 +1,194 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+18 1010 D _param p KARMA_SLAVER > 0 #
+20 1020 D _param p ST_CHARISMA > 99 #
+5 1030 D _param p ST_INTELLECT < 4 #
+2 1040 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+3 1050 D _var n name_mem_npc_player = 1 @
+2 2000 None 0 #
+6 2010 #
+8 2020 #
+9 2030 #
+15 2040 #
+19 2050 D _script dialog@d_QuestTimeoutReady 0  D _var p q_klam_maida_pelts = 0 #
+0 2060 @
+3 3000 None 0 #
+6 3010 #
+8 3020 #
+9 3030 #
+15 3040 #
+19 3050 D _script dialog@d_QuestTimeoutReady 0  D _var p q_klam_maida_pelts = 0 #
+21 3060 D _item p PID_GECKO_PELT > 3 D _var p q_klam_maida_pelts = 1 R _param p ST_EXPERIENCE + 100 R _script dialog@r_QuestTimeout 1 72 R _item p PID_GECKO_PELT - 4 #
+22 3070 D _item p PID_GOLDEN_GECKO_PELT > 3 D _var p q_klam_maida_pelts = 1 R _param p ST_EXPERIENCE + 200 R _script dialog@r_QuestTimeout 1 72 R _item p PID_GOLDEN_GECKO_PELT - 4 #
+0 3080 @
+4 4000 None 0 #
+2 4010 @
+5 5000 None 0 #
+4 5010 #
+4 5020 #
+4 5030 @
+6 6000 None 0 #
+14 6010 #
+10 6020 #
+0 6030 @
+7 7000 None 0 #
+14 7010 #
+10 7020 #
+0 7030 @
+8 8000 None 0 #
+7 8010 #
+0 8020 @
+9 9000 None 0 #
+65506 9010 #
+3 9020 #
+0 9030 @
+10 10000 None 0 #
+11 10010 #
+7 10020 #
+0 10030 @
+11 11000 None 0 #
+7 11010 #
+12 11020 @
+12 12000 None 0 #
+13 12010 @
+13 13000 None 0 #
+7 13010 #
+0 13020 @
+14 14000 None 0 #
+0 14010 #
+7 14020 @
+15 15000 None 0 #
+0 15010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 #
+17 15020 D _item p PID_BOTTLE_CAPS < 5 #
+16 15030 #
+6 15040 @
+16 16000 None 0 #
+6 16010 D _item p PID_BOTTLE_CAPS > 29 R _var p klam_bakner_beer = 1 R _script dialog@r_RemoveMoney 1 30 #
+17 16020 D _item p PID_BOTTLE_CAPS < 30 #
+15 16030 @
+17 17000 None 0 #
+6 17010 #
+0 17020 @
+18 18000 None 0 @
+19 19000 None 0 #
+0 19010 R _var p q_klam_maida_pelts = 1 #
+0 19020 @
+20 20000 None 0 @
+21 21000 None 0 #
+23 21010 D _item p PID_LEATHER_JACKET < 1 R _item p PID_LEATHER_JACKET + 1 #
+23 21020 D _item p PID_10MM_PISTOL < 1 R _item p PID_10MM_PISTOL + 1 R _item p PID_10MM_JHP + 25 #
+23 21030 D _item p PID_BOTTLE_CAPS < 1500 R _script dialog@r_AddMoney 1 100 #
+23 21040 D _item p PID_10MM_JHP < 100 R _item p PID_10MM_JHP + 20 #
+23 21050 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_AddMoney 1 50 @
+22 22000 None 0 #
+23 22010 D _item p PID_LEATHER_ARMOR < 1 R _item p PID_LEATHER_ARMOR + 1 #
+23 22020 D _item p PID_SAWED_OFF_SHOTGUN < 1 R _item p PID_SAWED_OFF_SHOTGUN + 1 R _item p PID_SHOTGUN_SHELLS + 20 #
+23 22030 D _item p PID_SHOTGUN_SHELLS < 100 R _item p PID_SHOTGUN_SHELLS + 20 #
+23 22040 D _item p PID_BOTTLE_CAPS < 1500 R _script dialog@r_AddMoney 1 200 #
+23 22050 D _item p PID_BOTTLE_CAPS > 1499 R _script dialog@r_AddMoney 1 80 @
+23 23000 None 0 #
+0 23010 &
+
+[engl]
+{100}{}{Maida Buckner}
+{200}{}{You see a plain looking, sturdily built young woman with a scowl on her face.}
+{200}{}{You see a plain looking, sturdily built young woman. She’s looking back at you with a scowl on
+ her face.}
+{210}{}{You see Maida Buckner, Mrs. Buckner’s daughter.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaver}
+{1020}{}{Ugly}
+{1030}{}{Idiot}
+{1040}{}{Unknown}
+{1050}{}{Known}
+{2000}{}{My name’s Maida Buckner; I take care of trading and drinks here. I don’t tolerate any travellers messing our family’s place up. So you just better watch your step here, what do you want?}
+{2010}{}{I have some questions for you.}
+{2020}{}{I was looking for someplace to stay.}
+{2030}{}{I need to buy some things.}
+{2040}{}{I’d like a drink.}
+{2050}{}{Got any work you need doing?}
+{2060}{}{I guess I don’t need anything right now. Goodbye}
+{3000}{}{Welcome back, what can I help you with, stranger?}
+{3010}{}{I have some questions for you.}
+{3020}{}{I was looking for someplace to stay.}
+{3030}{}{I need to buy some things.}
+{3040}{}{I’d like a drink.}
+{3050}{}{Got any work for me?}
+{3060}{}{I've brought you some silver gecko pelts.}
+{3070}{}{I got four golden pelts with your name on 'em.}
+{3080}{}{I guess I don’t need anything right now. Goodbye}
+{4000}{}{Hmm - seems as though your elevator doesn’t rise all the way to the top floor. Why don’t you talk to my brother, Torr? He’s a little closer to your speed. Goodbye.}
+{4010}{}{Ungh}
+{5000}{}{Hello there, my name’s Maida Buckner. I help my mother run Buckner house. Can I help you?}
+{5010}{}{Ungh?}
+{5020}{}{Me @pname@}
+{5030}{}{Unker Rouse?}
+{6000}{}{Questions, huh? Well get on with it, then. Talking to you doesn’t get my work any closer to being finished.}
+{6010}{}{Tell me about what’s going on here in Klamath.}
+{6020}{}{What other towns are nearby?}
+{6030}{}{I think that’s all I need to know for now. Goodbye.}
+{7000}{}{More questions? Well go on, then, and be quick about it.}
+{7010}{}{Tell me about what’s going on here in Klamath.}
+{7020}{}{What other towns are nearby?}
+{7030}{}{I think that’s all I need to know for now. Goodbye.}
+{8000}{}{My mother takes care of the rooms. You should talk to her about that.}
+{8010}{}{Ok, thanks. There’s something else that I wanted to know, though.}
+{8020}{}{I’ll talk to her about that then. Goodbye.}
+{9000}{}{You want to barter? I’m always looking for good quality gecko pelts, and I pay a fair price for them, too.}
+{9010}{}{Yes, I’d like to trade with you.}
+{9020}{}{I’m more interested in something else at the moment.}
+{9030}{}{I guess I don’t need to trade right now. Goodbye.}
+{10000}{}{There are only a couple of other towns nearby. There’s Redding far to the southwest, and the Den a few days south. But I wouldn’t go to the Den.}
+{10010}{}{Why wouldn’t you go to the Den?}
+{10020}{}{Thanks for the advice. Tell me something else though.}
+{10030}{}{That’s all I need to know about for now. Goodbye.}
+{11000}{}{The Den is a bad place to go. It’s a week or so south of here, but most folks that’ve gone there don’t come back.}
+{11010}{}{Interesting. Let me ask you something else, though.}
+{11020}{}{Any tribes nearby?}
+{12000}{}{Well, I didn’t count tribes when you asked about real towns. But I guess there’s a group of savages somewhere to the northwest, but I don't know why you'd want to go there.}
+{12010}{}{Why not?}
+{13000}{}{Well one tribal from that village up north, Arrow or something, came down here and caused a whole mess of trouble. Riled up them Duntons good and proper, and then took off with Sulik.}
+{13010}{}{Yeah. Tribals. Nothing but trouble. I've got a few other questions.}
+{13020}{}{Really? Wow, well, I gotta go.}
+{14000}{}{Well, you’d be better off asking momma about what’s going on right here in town.}
+{14010}{}{Well, maybe I'll go ask her. Bye.}
+{14020}{}{I'll ask her later, for now I've got more questions.}
+{15000}{}{You want a drink? That’ll be $5 for a glass of Buckner’s Best Brew.}
+{15010}{}{Okay, I'll take one. Hurry up, I've got to get going.}
+{15020}{}{I’d love a nice beer. Fill ‘er up.}
+{15030}{}{I’d like to buy a round of drinks for everyone here by way of introducing myself. I’m @pname@.}
+{15040}{}{I don’t think I need a beer after all. Maybe just some information will do.}
+{16000}{}{A round for everyone. My, my - aren’t you a generous one? That’ll be $30.}
+{16010}{}{Have one on me, folks. Now, how about some information as well?}
+{16020}{}{Uh, it seems I might've misplaced my wallet.}
+{16030}{}{Maybe I'll just get myself a drink.}
+{17000}{}{Looks as though you don’t have enough money for that.}
+{17010}{}{Uh, well, I guess I’ll settle for some information then.}
+{17020}{}{Oh, maybe I’ll come back when I have more. Goodbye.}
+{18000}{}{We've heard about you. And we know we don't want you here. We don't want no trouble, we're small town people. Just let yourself out.}
+{19000}{}{Yeah, we're always on the lookout for more gecko pelts. Bring us... say, four of the regular or them golden ones and we'll give you some of Dad's ol' adventurin' gear for your effort. Sounds good?}
+{19010}{}{Four pelts, huh? I'll bring some back for ya.}
+{19020}{}{Gecko pelts? Disgusting, I can't even stand their stench! Forget it.}
+{20000}{}{Mooom! Go get that broom!@@I will broom the heck out of you, so help me God.@@Quit drivin' off business!@@::Brandishes an old broom::@@Shoo! Shoo!}
+{21000}{}{Four pelts, huh? Alright, let me see what Mr. Buckner has left over for ya... [She hauls an old sack over to you] Take yer pick.}
+{21010}{}{I guess I'll take the leather jacket. The smell's gonna fade, right?}
+{21020}{}{I could use the 10mm pistol. Damn, this thing looks old.}
+{21030}{}{I'll just take this bag of caps. Looks like there's about a hundred in here.}
+{21040}{}{Twenty 10mm rounds. They'll do.}
+{21050}{}{Wow. Fifty caps. Like I wasn't already rich enough.}
+{22000}{}{Hoo-wee! Must've been tough wrasslin' up them gold ones, they sure are ornery. Alright, we found some of Dad's better stuff out back. [She hauls out an old sack] Anythin' take your eye?}
+{22010}{}{I could probably use the leather armour. Goddamn, this stinks.}
+{22020}{}{I'll take that shotgun off your hands.}
+{22030}{}{How about some of these shotgun shells? There's only twenty, you'll barely notice they're gone.}
+{22040}{}{Hey, this bag's got two hundred caps in. This'll do.}
+{22050}{}{Eighty caps. Now I can retire. Thank you.}
+{23000}{}{(She smiles.) Pleasure doin' business, stranger. Make sure you come back if you get another batch of 'em. Remember, I won't take less than four.}
+{23010}{}{Will do, thanks. See you around.}
+

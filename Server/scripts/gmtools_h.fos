@@ -1,0 +1,208 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// gmtools_h.fos
+//
+
+// Game Master Tools, header file
+
+#ifndef __GMTOOLS_H__
+#define __GMTOOLS_H__
+
+// open ~runscript functions to macros
+#define GMTServerFunc                                                           \
+    # (name, pX, p0, p1, p2, p3, p4)                                            \
+    void name(Critter & pX, int p0, int p1, int p2, string@ p3, array<int>@ p4) \
+    { name(pX, p0, p1, p2); }                                                   \
+    void name(Critter & pX, int p0, int p1, int p2)
+
+#define GMTOOLS_CONFIG_ENABLED                  // comment to totally disable feature, without breaking bindings etc.
+#define GMTOOLS_CONFIG_AUTHTIMER            (1) // interval between re-checking access level (minutes)
+
+#include "_defines.fos"
+#include "_colors.fos"
+
+#ifdef __DEBUG__
+# define GMTOOLS_CONFIG_AUTHTIMER           (15)
+#endif
+
+/***************************************************************************************************************/
+
+#define GMTOOLS_VERSION                     3107            // 3.1.7
+
+// access levels
+#define GMT_ACCESS_ANY                      (ACCESS_TESTER) // do NOT set to ACCESS_CLIENT :)
+#define GMT_ACCESS_POSSESS                  (ACCESS_TESTER)
+#define GMT_ACCESS_COMMAND                  (ACCESS_MODER)
+#define GMT_ACCESS_RUNSCRIPT                (ACCESS_ADMIN)  // used as flag for ACCESS_COMMAND
+#define GMT_ACCESS_RUNSCRIPT_UNSAFE         (ACCESS_TESTER) // used as flag for ACCESS_COMMAND
+#define GMT_ACCESS_CRITTER                  (ACCESS_MODER)
+#define GMT_ACCESS_ITEM                     (ACCESS_TESTER)
+#define GMT_ACCESS_MAP                      (ACCESS_TESTER)
+#define GMT_ACCESS_LOCATION                 (GMT_ACCESS_MAP)     // ->
+#define GMT_ACCESS_CHAT                     (ACCESS_TESTER)
+#define GMT_NOACCESS                        (0x42)
+
+// colors
+#define GMT_COLOR_DEFAULT                   (COLOR_LGREEN)
+#define GMT_COLOR_SERVER                    (COLOR_GREEN_RED)
+#define GMT_COLOR_NPC                       (COLOR_GREEN)
+#define GMT_COLOR_PLAYER                    (COLOR_LGREEN)
+#define GMT_COLOR_DEBUG                     (COLOR_RED)
+
+#define GMT_COLOR_CHAT                      (COLOR_CHANGE_ALPHA(GMT_COLOR_CHATFRAME, 150))
+#define GMT_COLOR_CHATFRAME                 (COLOR_RGB(0, 0, 0))
+#define GMT_COLOR_CHATTESTER                (COLOR_RGB(0xFF, 0xFF, 0))
+#define GMT_COLOR_CHATMODER                 (COLOR_RGB(0, 0x6A, 0xD5))
+#define GMT_COLOR_CHATADMIN                 (COLOR_RGB(0xFF, 0, 0))
+#define GMT_COLOR_CHATDEV                   (COLOR_RGB(0xFF, 0xFF, 0xFF))
+
+/***************************************************************************************************************/
+
+// OnScreen Display
+// settings
+#define GMT_OSD_X                           (10)
+#define GMT_OSD_Y                           (10)
+#define GMT_OSD_Y_TAB                       (30)
+#define GMT_OSD_WM_X                        (8)
+#define GMT_OSD_WM_Y                        (90)
+// flags
+#define GMT_OSD_INFO                        (0x01)
+#define GMT_OSD_INFOEX                      (0x02)
+#define GMT_OSD_CRITTER                     (0x04)
+
+/***** Menu *****/
+
+#define GMT_BUTTONS_FILE                    "GMTbuttons.txt"
+
+// button flags
+// primary
+#define GMT_BUTTON_ONCHOSEN                 (0x0000001)
+#define GMT_BUTTON_ONPLAYER                 (0x0000002)
+#define GMT_BUTTON_ONNPC                    (0x0000004)
+#define GMT_BUTTON_ONITEM                   (0x0000008)
+#define GMT_BUTTON_ONGROUND                 (0x0000010)
+// secondary - shared
+#define GMT_BUTTON_ISPID                    (0x0000020)
+// secondary - critter
+#define GMT_BUTTON_ISALIVE                  (0x0000040)
+#define GMT_BUTTON_ISKNOCK                  (0x0000080)
+#define GMT_BUTTON_ISNTKNOCK                (0x0000100)
+#define GMT_BUTTON_ISDEAD                   (0x0000200)
+#define GMT_BUTTON_ISPOSSESS                (0x0000400)
+// secondary - item
+#define GMT_BUTTON_ISCONTAINER              (0x0000800)
+// button
+#define GMT_BUTTON_SUBMENU                  (0x0001000)
+#define GMT_BUTTON_NOHIDE                   (0x0002000)
+#define GMT_BUTTON_DISABLED                 (0x0004000)
+
+/***** CSC: Client<->Server Communication *****/
+
+// question type
+#define GMT_GETACCESS                       (0)
+// #define GMT_QUESTION_PING			(1)
+#define GMT_QUESTION_COMMAND                (2)
+#define GMT_QUESTION_GAMEVARS               (3)
+#define GMT_QUESTION_CRITTER                (4)
+#define GMT_QUESTION_ITEM                   (5)
+#define GMT_QUESTION_MAP                    (6)
+#define GMT_QUESTION_LOCATION               (7)
+#define GMT_QUESTION_CHAT                   (8)
+#define GMT_QUESTION_BROADCAST              (9)
+
+// answer status
+#define GMT_STATUS_SEND                     (0)
+// <0
+#define GMT_STATUS_BAD                      (GMT_STATUS_SEND - 1)
+#define GMT_STATUS_DENIED                   (GMT_STATUS_BAD - 1)
+#define GMT_STATUS_UNKNOWN                  (GMT_STATUS_DENIED - 1)
+
+// >0
+#define GMT_STATUS_OK                       (GMT_STATUS_SEND + 1)
+#define GMT_STATUS_FORCE                    (GMT_STATUS_OK + 1)
+#define GMT_STATUS_OLD                      (GMT_STATUS_FORCE + 1)
+
+// answer data - one character, case sensitive
+// critter
+#define GMT_DATAFLAG_CRITTER_EX             (0x01)
+#define GMT_DATAFLAG_CRITTER_SPECIAL        (0x02)
+#define GMT_DATAFLAG_CRITTER_SKILLS         (0x04)
+#define GMT_DATA_CRITTER_ST                 "S"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_PE                 "P"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_EN                 "E"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_CH                 "C"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_IN                 "I"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_AG                 "A"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_LK                 "L"     // GMT_DATAFLAG_CRITTER_SPECIAL
+#define GMT_DATA_CRITTER_SMALLGUNS          "0"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_BIGGUNS            "1"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_ENERGYWEAPONS      "2"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_ENERGYWEAPONS      "2"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_UNARMED            "3"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "4"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "5"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "6"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "7"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "8"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "9"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "0"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "a"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "b"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "c"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "d"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "e"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "f"     // GMT_DATAFLAG_CRITTER_SKILLS
+#define GMT_DATA_CRITTER_MELEE              "g"     // GMT_DATAFLAG_CRITTER_SKILLS
+
+// item
+#define GMT_DATAFLAG_ITEM_EX                (0x01)
+
+// map
+#define GMT_DATAFLAG_MAP_EX                 (0x01)
+#define GMT_DATAFLAG_MAP_SIZE               (0x02)
+#define GMT_DATAFLAG_MAP_FACTION            (0x04)
+#define GMT_DATA_MAP_CREATED                "c"             // GMT_DATAFLAG_MAP_EX
+#define GMT_DATA_MAP_FACTION                "f"             // GMT_DATAFLAG_MAP_FACTION
+#define GMT_DATA_MAP_FACTIONAME             "F"             // GMT_DATAFLAG_MAP_FACTION
+#define GMT_DATA_MAP_FACTIONMEMBERS         "M"             // GMT_DATAFLAG_MAP_FACTION
+#define GMT_DATA_MAP_HEIGHT                 "h"             // GMT_DATAFLAG_MAP_SIZE
+#define GMT_DATA_MAP_ID                     "i"             // always send
+#define GMT_DATA_MAP_LOCATIONID             "I"             // always send
+#define GMT_DATA_MAP_LASTENTER              "e"             // GMT_DATAFLAG_MAP_EX
+#define GMT_DATA_MAP_OWNER                  "o"             // GMT_DATAFLAG_MAP_EX
+#define GMT_DATA_MAP_WIDTH                  "w"             // GMT_DATAFLAG_MAP_SIZE
+
+// location
+#define GMT_DATAFLAG_LOCATION_EX            (0x01)
+#define GMT_DATAFLAG_LOCATION_POSITION      (0x02)
+#define GMT_DATAFLAG_LOCATION_TYPE          (0x04)
+#define GMT_DATA_LOCATION_BASE              "b"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_CAVE              "c"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_CITYENCOUNTER     "E"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_ENCOUNTER         "e"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_ID                "i"     // always send
+#define GMT_DATA_LOCATION_INSTANCEDQUEST    "q"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_MAPCOUNT          "?"     // always send
+#define GMT_DATA_LOCATION_MINE              "m"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_PID               "I"     // always send
+#define GMT_DATA_LOCATION_REPLICATION       "r"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_TCTOWN            "*"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_TENT              "t"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_TOWN              "T"     // GMT_DATAFLAG_LOCATION_TYPE
+#define GMT_DATA_LOCATION_VISIBLE           "v"     // GMT_DATAFLAG_LOCATION_POSITION
+#define GMT_DATA_LOCATION_WORLDX            "x"     // GMT_DATAFLAG_LOCATION_POSITION
+#define GMT_DATA_LOCATION_WORLDY            "y"     // GMT_DATAFLAG_LOCATION_POSITION
+
+#define GMT_CHECKACCESS                     ((GMTOOLS_CONFIG_AUTHTIMER * 60) * 1000)
+
+#ifdef __DEBUG__
+# define GMTDebugMessage                    # (text)                 Message(text)
+# define GMTDebugSay                        # (type, text)Say(type, text)
+#endif
+#ifndef __DEBUG__
+# define GMTDebugMessage                    # (text);
+# define GMTDebugSay                        # (type, text);
+#endif
+#endif /* __GMTOOLS_H__ */

@@ -1,0 +1,81 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// sprite.fos
+//
+
+// Used in client
+
+#ifndef _SPRITE_
+#define _SPRITE_
+
+shared class Sprite
+{
+    Sprite()
+    {
+        Id = 0;
+        Width = 0;
+        Height = 0;
+        FrmCount = 0;
+    }
+
+    bool Load(string& name, int path)
+    {
+        if(name.length() > 0)
+        {
+            Id = LoadSprite(name, path);
+            Filename = name;
+        }
+        else
+            Id = 0;
+        RefreshData();
+        return Id != 0;
+    }
+
+    void LoadHash(uint nameHash, uint8 dir)
+    {
+        Id = LoadSprite(nameHash, dir);
+        RefreshData();
+    }
+
+    void LoadByIni(string& iniKey, int path)
+    {
+        string@ name = GetIfaceIniStr(iniKey);
+        if(@name != null && name.length() > 0)
+            Id = LoadSprite(name, path);
+        else
+            Id = 0;
+        RefreshData();
+    }
+
+    void Draw(int x, int y)
+    {
+        if(Id != 0)
+            DrawSprite(Id, -1, x, y, 0);
+    }
+
+    private void RefreshData()
+    {
+        if(Id != 0)
+        {
+            Width = GetSpriteWidth(Id, 0);
+            Height = GetSpriteHeight(Id, 0);
+            FrmCount = GetSpriteCount(Id);
+        }
+        else
+        {
+            Width = 0;
+            Height = 0;
+            FrmCount = 0;
+            Filename = "";
+        }
+    }
+
+    uint   Id;
+    int    Width;
+    int    Height;
+    uint   FrmCount;
+    string Filename;
+};
+#endif // _SPRITE_

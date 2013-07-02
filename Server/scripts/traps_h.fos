@@ -1,0 +1,56 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// traps_h.fos
+//
+
+#ifndef __TRAPS_H__
+#define __TRAPS_H__
+
+#define TRAPS_HIDE                # (traps)          ((traps) / 5 + 10)   // TODO!
+#define TRAP_CLEAR_EXPERIENCE     # (_it)            (50 + _Complexity(_it) / 6)
+
+// shared
+#define _Complexity               # (it)       (it.Val3) // everything
+#define _BonusDamage              # (it)      (it.Val4)  /// spear trap and bear trap
+
+// all explosives (explode.fos only)
+#define _ExplodeSetNumEvent       # (explode, eventNum)explode.Val1 = int(eventNum)
+#define _ExplodeGetNumEvent       # (explode) uint(explode.Val1)
+#define _ExplodeSetSwitch         # (explode, explSwitch)explSwitch.Val1 = int(explode.Id)
+#define _ExplodeGetExplode        # (explSwitch) GetItem(uint(explSwitch.Val1))
+#define _ExplodeSetOwner          # (explode, ownerId)explode.Val2 = int(ownerId)
+#define _ExplodeGetOwner          # (explode) uint(explode.Val2)
+#define _ExplodeSetBonusDamage    # (explode, value)explode.Val4 = (value)
+#define _ExplodeGetBonusDamage    # (explode) (explode.Val4)
+#define _ExplodeSetBonusRadius    # (explode, value)explode.Val5 = (value)
+#define _ExplodeGetBonusRadius    # (explode) (explode.Val5)
+
+// spear traps only
+#define _SpearCount               # (it)       (it.Val1)
+
+// generic shot trap only
+#define _Pid                      # (it)              (it.Val1)
+#define _DmgMin                   # (it)   (it.Val2)
+#define _DmgMax                   # (it)   (it.Val4)
+
+// alert trap only
+#define _SetPidNum                # (_it, _pid, _min, _max) do { _it.Val1 = ((_pid) << 16) | ((_min) << 8) | (_max); } while(false)
+#define _SetData                  # (_it, _bag, _level, _entire) do { _it.Val4 = ((_bag) << 16) | ((_level) << 8) | (_entire); } while(false)
+#define _GetPid                   # (_it) ((_it.Val1 & 0xFFFF0000) >> 16)
+#define _GetMin                   # (_it) ((_it.Val1 & 0xFF00) >> 8)
+#define _GetMax                   # (_it) (_it.Val1 & 0xFF)
+#define _GetBag                   # (_it) ((_it.Val4 & 0xFFFF0000) >> 16)
+#define _GetLevel                 # (_it) ((_it.Val4 & 0xFF00) >> 8)
+#define _GetEntire                # (_it) ((_it.Val4 & 0xFF))
+
+#ifndef __TRAPS_MODULE__
+import void MakeMine(Item& mine, uint explodeOwner, uint complexity, uint hideSkill, uint bonusDamage, uint bonusRadius) from "explode";
+import void MakeSpearTrap(Item& trap, uint complexity, uint hideSkill, uint spearcount) from "traps";
+import void MakeGenericShotTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint dmgmin, uint dmgmax) from "traps";
+import void MakeBearTrap(Item& trap, uint complexity, uint hideSkill, uint bonusDamage) from "traps";
+import void MakeAlarmTrap(Item& trap, uint complexity, uint hideSkill, uint16 pid, uint8 min, uint8 max, uint16 bag, uint8 level, uint8 entire) from "traps";
+import void ClearWalkTrap(Item& item) from "traps";
+#endif
+#endif

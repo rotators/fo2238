@@ -1,0 +1,380 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prices_server_client.fos
+//
+
+// this is inlined, shared by the server and the client
+
+#ifdef __SERVER
+# include "_defines.fos"
+# include "economy_h.fos"
+#endif
+
+#ifdef __CLIENT
+# define Item       ItemCl
+# define Critter    CritterCl
+#endif
+
+#ifdef __CLIENT
+
+// Fetches base price from item_prices_base array
+uint GetBasePrice(uint pid)
+{
+    /*bool found = false;
+       uint cost = 1;
+       for(uint i = 0, j = item_prices_base.length(); i < j; i+=2)
+       {
+            if(uint(item_prices_base[i]) == pid)
+            {
+                    cost = uint(item_prices_base[i+1]);
+                    found = true;
+                    break;
+            }
+       }
+       //if(!found)
+       //	Message("ERROR: Couldn't obtain base price for an item pid: " + pid);
+     */
+    return GetProtoItem(pid).Cost;     // cost;
+}
+#endif
+
+uint GetTraderMod(Critter& trader, Item& item)
+{
+    return GetTraderMod(trader, item.GetProtoId());
+}
+
+uint GetTraderMod(Critter& trader, uint16 pid)
+{
+    #ifdef __CLIENT
+    int appsum = ItemLevel(pid) - trader_levels[TradingItemType(pid)];
+    #endif
+    #ifdef __SERVER
+    int appsum = ItemLevel(pid) - GetTraderLevel(trader, TradingItemType(pid));
+    #endif
+    return 100 - 20 * ABS(appsum);
+}
+
+uint GetItemCost(Item& item, Critter& cr, Critter& trader, bool sell)
+{
+    if(cr.IsPlayer() && (trader.IsPlayer()))     // Player-to-player trade
+        return 0;
+
+    uint16 pid = item.GetProtoId();
+    if(pid == PID_BOTTLE_CAPS)   // Bottle caps
+        return 1;
+    if(pid == PID_GOLD_NUGGET)
+        return item.Proto.Cost;
+    if(pid == PID_DOLLAR)
+        return 1;
+
+    uint ammocost = 0;
+    uint tradermod = 100;
+    uint tradermodammo = 100;
+    uint cost = item.Proto.Cost;
+
+    // stuff with base price 0 will always cost 0
+    if(cost == 0 && sell)
+        return 0;
+
+    #ifdef __SERVER
+    DLog("Basecost: " + cost);
+    DLog("ItemLevel: " +  ItemLevel(item));
+    DLog("Trader level: " + GetTraderLevel(trader, TradingItemType(item)));
+    #endif
+
+    // When selling to trader we use dynamic prices, but never over BaseItemValue (5-95%)
+    // When buying from trader we use dynamic prices, but never under or equal to BaseItemValue (195-105%)
+    #ifdef __SERVER
+    uint usemod = sell ? GetItemSellModifier(cr, trader) : GetItemBuyModifier(cr, trader);
+    #endif
+    #ifdef __CLIENT
+    uint usemod = sell ? item_prices_sell_modifier : item_prices_buy_modifier;
+    #endif
+
+    if(item.IsDeteriorable())
+        cost = (cost * (MAX_DETERIORATION - item.Deterioration)) / MAX_DETERIORATION;
+
+    // do not trade if item not on list
+    // accept only trader levels and higher
+    #ifdef __CLIENT
+    uint trader_item_level = trader_levels[TradingItemType(item)];
+    if((trader_item_level == 0 || trader_item_level > ItemLevel(item)) && sell)
+    #endif
+    #ifdef __SERVER
+    uint trader_item_level = GetTraderLevel(trader, TradingItemType(item));
+    if((trader_item_level == 0 || trader_item_level > ItemLevel(item)) && sell)
+    #endif
+    {
+        return 0;         // don't care if ammo inside is on the list
+    }
+    else
+    {
+        uint tradermod = GetTraderMod(trader, item);
+        cost = (cost * tradermod) / 100;
+        cost = ((cost * usemod) / 100);
+    }
+
+    if(item.GetType() == ITEM_TYPE_WEAPON && item.AmmoPid != 0 && item.AmmoPid != 65535 && item.AmmoCount > 0)
+    {
+        uint ammopid = item.AmmoPid;
+        #ifdef __CLIENT
+        ammocost = GetBasePrice(ammopid);
+        #endif
+        #ifdef __SERVER
+        ammocost = (BaseItemValue(ammopid, false));
+        #endif
+        #ifdef __CLIENT
+        if(trader_levels[TradingItemType(ammopid)] == 0)
+        #endif
+        #ifdef __SERVER
+        if(GetTraderLevel(trader, TradingItemType(ammopid)) == 0)
+        #endif
+        {
+            uint tradermodammo = GetTraderMod(trader, ammopid);
+            ammocost = (ammocost * tradermodammo) / 100;
+            ammocost = (ammocost * usemod) / 100;
+        }
+        if(ammocost < 1)
+            ammocost = 1;
+        ammocost = ammocost * item.AmmoCount;
+    }
+
+    if(cost < 1)
+        cost = 1;
+    #ifdef __SERVER
+    DLog("Tradermod: " + tradermod);
+    DLog("Cost: " + cost);
+    DLog("AmmoCost=" + ammocost);
+    uint buysell;
+    if(sell)
+        buysell = 0;
+    else
+        buysell = 1;
+    // _TradeLog(cr.Id+","+trader.Id+","+buysell+","+pid+","+cost);
+    #endif
+    return cost + ammocost;
+}
+
+#ifdef __SERVER
+uint GetItemCostPlain(Item& item, Critter& cr, Critter& trader)
+{
+    if(cr.IsPlayer() && (trader.IsPlayer()))     // Player-to-player trade
+        return 0;
+
+    if(item.GetProtoId() == PID_BOTTLE_CAPS)     // Bottle caps
+        return 1;
+
+    uint ammocost = 0;
+    uint tradermod = 100;
+    uint tradermodammo = 100;
+    uint cost = item.Proto.Cost;
+
+    if(item.IsDeteriorable())
+        cost = (cost * (MAX_DETERIORATION - item.Deterioration)) / MAX_DETERIORATION;
+
+    if(GetTraderLevel(trader, TradingItemType(item)) == 0)
+    {
+        uint tradermod = GetTraderMod(trader, item);
+        cost = (cost * tradermod) / 100;
+    }
+
+    if(item.GetType() == ITEM_TYPE_WEAPON && item.AmmoPid != 0 && item.AmmoPid != 65535 && item.AmmoCount > 0)
+    {
+        uint ammopid = item.AmmoPid;
+        ammocost = (BaseItemValue(ammopid, false));
+        if(GetTraderLevel(trader, TradingItemType(ammopid)) == 0)
+        {
+            uint tradermodammo = GetTraderMod(trader, ammopid);
+            ammocost = (ammocost * tradermodammo) / 100;
+        }
+        if(ammocost < 1)
+            ammocost = 1;
+        ammocost = ammocost * item.AmmoCount;
+    }
+
+    if(cost < 1)
+        cost = 1;
+    return cost + ammocost;
+}
+#endif
+
+#ifdef __SERVER
+void SendLevelThresholds(Critter& cr)
+{
+    cr.RunClientScript("_ItemLevelThreshold1", 0, 0, 0, "", LevelThreshold1);
+    cr.RunClientScript("_ItemLevelThreshold2", 0, 0, 0, "", LevelThreshold2);
+}
+#endif
+
+uint TradingItemType(Item& item)
+{
+    return TradingItemType(item.GetProtoId());
+}
+
+uint TradingItemType(uint pid)
+{
+    ProtoItem@ pi = GetProtoItem(pid);
+    if(!valid(pi))
+    {
+        Log("Invalid pid: " + pid);
+        return ITEMTYPE_MISC;
+    }
+    uint type = pi.Type;
+    switch(type)
+    {
+    case ITEM_TYPE_WEAPON:
+    {
+        int skill = pi.Weapon_Skill_0;
+        switch(skill)
+        {
+        case SK_SMALL_GUNS:
+            return ITEMTYPE_SMALL_GUNS;
+        case SK_BIG_GUNS:
+            return ITEMTYPE_BIG_GUNS;
+        case SK_ENERGY_WEAPONS:
+            return ITEMTYPE_ENERGY;
+        default:
+            return ITEMTYPE_MISC;
+        }
+    }
+    case ITEM_TYPE_AMMO:
+        switch(pid)
+        {
+        case PID_4_7MM_CASELESS:
+        case PID_7_62MM_AMMO:
+        case PID_9MM_AMMO:
+        case PID_9MM_BALL:
+        case PID_10MM_JHP:
+        case PID_10MM_AP:
+        case PID_14MM_AP:
+        case PID_44_MAGNUM_JHP:
+        case PID_44_MAGNUM_FMJ:
+        case PID_45_CALIBER_AMMO:
+        case PID_22_AMMO:
+        case PID_223_FMJ:
+        case PID_SHOTGUN_SHELLS:
+        case PID_2MM_EC_AMMO:
+        case PID_BBS:
+        case PID_HN_NEEDLER_CARTRIDGE:
+        case PID_HN_AP_NEEDLER_CARTRIDGE:
+            return ITEMTYPE_SMALL_GUNS;
+
+        case PID_5MM_JHP:
+        case PID_5MM_AP:
+        case PID_EXPLOSIVE_ROCKET:
+        case PID_ROCKET_AP:
+        case PID_FLAMETHROWER_FUEL:
+        case PID_FLAMETHROWER_FUEL_MK_II:
+            return ITEMTYPE_BIG_GUNS;
+
+        case PID_SMALL_ENERGY_CELL:
+        case PID_MICRO_FUSION_CELL:
+            return ITEMTYPE_ENERGY;
+        default:
+            return ITEMTYPE_SMALL_GUNS;
+        }
+    case ITEM_TYPE_ARMOR:
+        return ITEMTYPE_ARMOR;
+    case ITEM_TYPE_DRUG:
+        switch(pid)
+        {
+        case PID_ANTIDOTE:
+        case PID_HEALING_POWDER:
+        case PID_STIMPAK:
+        case PID_SUPER_STIMPAK:
+        case PID_RADAWAY:
+        case PID_RAD_X:
+        case PID_JET_ANTIDOTE:
+            return ITEMTYPE_MEDICINE;
+
+        case PID_MUTATED_FRUIT:
+        case PID_GAMMA_GULP_BEER:
+        case PID_BEER:
+        case PID_BOOZE:
+        case PID_NUKA_COLA:
+        case PID_ROENTGEN_RUM:
+        case PID_ROT_GUT:
+        case PID_COOKIE:
+        case PID_IGUANA_ON_A_STICK:
+        case PID_MEAT_ON_A_STICK:
+        case PID_CIGARETTES:
+            return ITEMTYPE_MISC;
+
+        /*case PID_JET:
+           case PID_MENTATS:
+           case PID_PSYCHO:
+           case PID_BUFFOUT:*/
+        default:
+            return ITEMTYPE_DRUG;
+        }
+    case ITEM_TYPE_MISC:
+        switch(pid)
+        {
+        case PID_FIRST_AID_KIT:
+        case PID_FIELD_MEDIC_KIT:
+        case PID_DOCTORS_BAG:
+        case PID_PARAMEDICS_BAG:
+        case PID_MEDICAL_SUPPLIES:
+        case PID_BIO_GEL:
+            return ITEMTYPE_MEDICINE;
+        default:
+            return ITEMTYPE_MISC;
+        }
+    default:
+        return ITEMTYPE_MISC;
+    }
+    return ITEMTYPE_MISC;
+}
+
+array<int> LevelThreshold1(ITEMTYPE_MAX);
+array<int> LevelThreshold2(ITEMTYPE_MAX);
+// everything strictly cheaper than _level1 value will be level one
+// everything strictly cheaper than _level2 value and worth at least _level1 will be level two
+// everything else will be level three
+#define _DefineThreshold    # (_type, _level1, _level2)LevelThreshold1[(_type)] = GetProtoItem(_level1).Cost; LevelThreshold2[(_type)] = GetProtoItem(_level2).Cost
+#define _NoThresholds       # (_type) LevelThreshold1[(_type)] = 10000000
+void InitItemsLevels()
+{
+    _DefineThreshold(ITEMTYPE_SMALL_GUNS, PID_14MM_PISTOL, PID_SNIPER_RIFLE);
+    _DefineThreshold(ITEMTYPE_BIG_GUNS, PID_MINIGUN, PID_AVENGER_MINIGUN);
+    _DefineThreshold(ITEMTYPE_ENERGY, PID_PLASMA_PISTOL, PID_PLASMA_PISTOL_EXT_CART);
+    // _DefineThreshold(ITEMTYPE_WEAPON_UNARMED, PID_POWER_FIST, PID_MEGA_POWER_FIST);
+    // _DefineThreshold(ITEMTYPE_WEAPON_MELEE, PID_SUPER_CATTLE_PROD, PID_RIPPER);
+    // _DefineThreshold(ITEMTYPE_WEAPON_THROWING, PID_PLASMA_GRENADE, PID_DYNACORD);
+    _DefineThreshold(ITEMTYPE_ARMOR, PID_METAL_ARMOR, PID_TESLA_ARMOR);
+    _DefineThreshold(ITEMTYPE_DRUG, PID_BUFFOUT, PID_PSYCHO);
+    // _DefineThreshold(ITEMTYPE_AMMO, PID_5MM_AP, PID_14MM_AP);
+    _NoThresholds(ITEMTYPE_MISC);
+    _DefineThreshold(ITEMTYPE_MEDICINE, PID_STIMPAK, PID_SUPER_STIMPAK);
+    // _NoThresholds(ITEMTYPE_CONSUMABLE); // no levels
+}
+uint ItemLevel(Item& item)
+{
+    return ItemLevel(item.GetProtoId());
+}
+
+uint ItemLevel(uint pid)
+{
+    ProtoItem@ pi = GetProtoItem(pid);
+    uint       itemtype = TradingItemType(pid);
+    if(pi.Type == ITEM_TYPE_AMMO)
+    {
+        if(pid == PID_FLAMETHROWER_FUEL)
+            return 1;
+        if(pid == PID_FLAMETHROWER_FUEL_MK_II)
+            return 2;
+
+        if(pi.Cost < GetProtoItem(PID_5MM_AP).Cost)
+            return 1;
+        if(pi.Cost < GetProtoItem(PID_14MM_AP).Cost)
+            return 2;
+        return 3;
+    }
+    if(pi.Cost < uint(LevelThreshold1[itemtype]))
+        return 1;
+    if(pi.Cost < uint(LevelThreshold2[itemtype]))
+        return 2;
+    return 3;
+}

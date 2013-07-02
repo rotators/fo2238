@@ -1,0 +1,20 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// patrolling.fos
+//
+
+// This is a script for giving NPCs the ability to patrol between nodes.
+#ifndef __PATROLLING__
+#define __PATROLLING__
+
+#include "patrolling_h.fos"
+
+#define _GetRandomNode    # (critter, id)@patrolroute = GetPatrolRoute(id); @node = patrolroute.GetRandomNode(critter);
+#define _GetNextNode      # (critter, id)@patrolroute = GetPatrolRoute(id); @node = patrolroute.GetNextNode(critter);
+
+import IPatrolRoute@ GetPatrolRoute(uint id) from "patrolroutes";
+IPatrolRoute@ patrolroute;
+INode@        node;
+#endif

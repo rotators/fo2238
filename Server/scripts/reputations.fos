@@ -1,0 +1,168 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// reputations.fos
+//
+
+#define __REPUTATIONS_MODULE__
+#include "reputations_h.fos"
+#include "utils_h.fos"
+
+import void ApplyReputationModifiers(Critter& cr, uint index, int num, int den) from "reputations_modifiers";
+import int  GetReputationModifier(uint, uint) from "reputations_modifiers";
+import int  GetGroupsStatus(uint, uint) from "reputations_modifiers";
+
+/**
+ * \~english @defgroup ReputationsGroup Reputations
+ * Global functions used to modify critters' reputations.
+ * Include reputations_h.fos for usage.
+ * \~ @ingroup FOnline2238
+ */
+ /*@{*/
+
+/**
+ * Adds reputation points for the critter
+ * @param     cr        Critter which reputation should increase
+ * @param     index     Index of reputation group for which the change should occur
+ * @param     val       Amount of points
+ *
+ */
+void AddReputation(Critter@ cr, uint index, int val)
+{
+    _CheckValidIndex(index);
+    cr.ReputationBase[index] = cr.Reputation[index] + val;
+}
+
+/**
+ * Substracts reputation points for the critter
+ * @param     cr        Critter which reputation should decrease
+ * @param     index     Index of reputation group for which the change should occur
+ * @param     val       Amount of points
+ *
+ */
+void SubReputation(Critter@ cr, uint index, int val)
+{
+    _CheckValidIndex(index);
+    cr.ReputationBase[index] = cr.Reputation[index] - val;
+}
+
+// capped versions
+/**
+ * Adds reputation points to the critter, but not above the specified cap
+ * @param     cr        Critter which reputation should increase
+ * @param     index     Index of reputation group for which the change should occur
+ * @param     val       Amount of points
+ * @param     cap       Maximum level beyond which the reputation won't be increased, and if it is already higher, change will not occur
+ *
+ */
+void AddReputation(Critter@ cr, uint index, int val, int cap)
+{
+    _CheckValidIndex(index);
+    int rep = cr.Reputation[index];
+    if(rep >= cap)
+        return;
+    rep += val;
+    if(rep > cap)
+        rep = cap;
+    cr.ReputationBase[index] = rep;
+}
+
+/**
+ * Substracts reputation points for the critter
+ * @param     cr        Critter which reputation should decrease
+ * @param     index     Index of reputation group for which the change should occur
+ * @param     val       Amount of points
+ * @param     cap       Minimum level below which the reputation won't be increased, and if it is already lower, change will not occur
+ *
+ */
+void SubReputation(Critter@ cr, uint index, int val, int cap)
+{
+    _CheckValidIndex(index);
+    int rep = cr.Reputation[index];
+    if(rep <= cap)
+        return;
+    rep -= val;
+    if(rep < cap)
+        rep = cap;
+    cr.ReputationBase[index] = rep;
+}
+
+// todo: change to use map data faction
+/**
+ * Checks the reputation index of the location owners
+ * @param     locid     Location id
+ *
+ * @return    Reputation index
+ */
+uint ReputationIndex(uint locid)
+{
+    switch(locid)
+    {
+    case LOCATION_TheDen:
+        return FACTION_DEN;
+    case LOCATION_Klamath:
+        return FACTION_KLAMATH;
+    case LOCATION_Modoc:
+        return FACTION_MODOC;
+    case LOCATION_VaultCity:
+        return FACTION_VAULT_CITY;
+    case LOCATION_Gecko:
+        return FACTION_GECKO;
+    case LOCATION_BrokenHills:
+        return FACTION_BH_HUMANS;                        // oh well. Indeed
+    case LOCATION_NewReno:
+        return FACTION_NEW_RENO;
+    case LOCATION_NCR:
+        return FACTION_NCR;
+    case LOCATION_Cathedral:
+        return FACTION_UNITY;
+    case LOCATION_Redding:
+        return FACTION_REDDING;
+    case LOCATION_SanFrancisco:
+        return FACTION_COMMUNISTS;
+    case LOCATION_Navarro:
+        return FACTION_ENCLAVE;
+    case LOCATION_Junktown:
+        return FACTION_JUNKTOWN;
+    case LOCATION_BrotherhoodofSteel:
+        return FACTION_BOS;
+    case LOCATION_GhostFarm:
+        return FACTION_SLAGS;
+    case LOCATION_Necropolis:
+        return FACTION_NECROPOLIS;
+    case LOCATION_Hub:
+        return FACTION_HUB;
+    case LOCATION_Boneyard:
+        return FACTION_REGULATORS;
+    case LOCATION_Raiders:
+    case LOCATION_RaidersSouth:
+        return FACTION_RAIDERS;
+    default:
+    }
+    return FACTION_NONE;
+}
+/*@}*/
+
+void ProcessProfitReputation(Critter@ cr, uint index, int profit)
+{
+    _CheckValidIndex(index);
+    int points = cr.Reputation[index];
+    if(points >= REP_TRADE_CAP)
+        return;
+    points = points * ABS(points);   // points^2*sgn(points)
+    points += profit;
+    if(points < 0)
+    {
+        int sq = -int(sqrt(float(-points)));
+        if(sq <= cr.Reputation[index])
+            return;
+        cr.ReputationBase[index] = sq;
+        return;
+    }
+    int sq = int(sqrt(float(points)));
+    if(sq > REP_TRADE_CAP)
+        sq = REP_TRADE_CAP;
+    if(sq > cr.Reputation[index])
+        cr.ReputationBase[index] = sq;
+}

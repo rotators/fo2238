@@ -1,0 +1,217 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cutscene.fos
+//
+
+#ifndef __CUTSCENE__
+#define __CUTSCENE__
+
+#include "_defines.fos"
+#include "_macros.fos"
+#include "_vars.fos"
+
+#include "cutscene_h.fos"
+
+#include "debug_h.fos"
+
+#define CUT_RUNNING             (0x01)
+#define CUT_DISABLE_MOUSE       (0x02)
+#define CUT_DISABLE_CURSOR      (0x04)
+#define CUT_DISABLE_KEYBOARD    (0x08)
+
+import void SetChosenActions(Critter& cr, array<int>& actions) from "utils";
+import int  GetLvar(Critter& critter, uint lvar) from "utils";
+import void SetLvar(Critter& critter, uint lvar, uint value) from "utils";
+
+#define CUTFUNC                 # (func)  "client_cutscene@" + func
+
+class CutScene : ICutScene
+{
+    int id;
+
+    CutScene(int id)
+    {
+        this.id = id;
+    }
+
+    int get_ID()
+    {
+        return(this.id);
+    }
+};
+array<CutScene@> CutScenes;
+
+ICutScene@ NewCutScene(int id)
+{
+    for(uint c = 0, cLen = CutScenes.length(); c < cLen; c++)
+    {
+        if(CutScenes[c].ID == id)
+        {
+            WLog("cutscene", "CutScene with id<" + id + "> already exists");
+            return(null);
+        }
+    }
+
+    return(@CutScene(id));
+}
+
+void StartCutscene(Critter& cr)
+{
+    SetCutsceneFlag(cr, CUT_RUNNING);
+}
+
+void RefreshCutscene(Critter& cr)
+{
+    if(IsCutsceneFlag(cr, CUT_DISABLE_MOUSE))
+        DisableMouse(cr);
+    if(IsCutsceneFlag(cr, CUT_DISABLE_CURSOR))
+        DisableCursor(cr);
+    if(IsCutsceneFlag(cr, CUT_DISABLE_KEYBOARD))
+        DisableKeyboard(cr);
+}
+
+void EndCutscene(Critter& cr)
+{
+    EnableMouse(cr);
+    EnableCursor(cr);
+    EnableKeyboard(cr);
+
+    UnsetCutsceneFlag(cr, CUT_RUNNING);
+}
+
+bool InsideCutscene(Critter& cr)
+{
+    return(IsCutsceneFlag(cr, CUT_RUNNING));
+}
+
+void EnableMouse(Critter& cr)
+{
+    UnsetCutsceneFlag(cr, CUT_DISABLE_MOUSE);
+    cr.RunClientScript(CUTFUNC("mouse"), 1, 0, 0, null, null);
+}
+
+void DisableMouse(Critter& cr)
+{
+    SetCutsceneFlag(cr, CUT_DISABLE_MOUSE);
+    cr.RunClientScript(CUTFUNC("mouse"), 0, 0, 0, null, null);
+}
+
+void EnableCursor(Critter& cr)
+{
+    UnsetCutsceneFlag(cr, CUT_DISABLE_CURSOR);
+    cr.RunClientScript(CUTFUNC("cursor"), 1, 0, 0, null, null);
+}
+
+void DisableCursor(Critter& cr)
+{
+    SetCutsceneFlag(cr, CUT_DISABLE_CURSOR);
+    cr.RunClientScript(CUTFUNC("cursor"), 0, 0, 0, null, null);
+}
+
+void EnableKeyboard(Critter& cr)
+{
+    UnsetCutsceneFlag(cr, CUT_DISABLE_KEYBOARD);
+    cr.RunClientScript(CUTFUNC("keyboard"), 1, 0, 0, null, null);
+}
+
+void DisableKeyboard(Critter& cr)
+{
+    SetCutsceneFlag(cr, CUT_DISABLE_KEYBOARD);
+    cr.RunClientScript(CUTFUNC("keyboard"), 0, 0, 0, null, null);
+}
+
+bool IsCutsceneFlag(Critter& cr, uint8 flag)
+{
+    int flags = GetLvar(cr, LVAR_cutscene_flags);
+    return(FLAG(flags, flag));
+}
+
+void SetCutsceneFlag(Critter& cr, uint8 flag)
+{
+    int flags = GetLvar(cr, LVAR_cutscene_flags);
+    SETFLAG(flags, flag);
+    SetLvar(cr, LVAR_cutscene_flags, flags);
+}
+
+void UnsetCutsceneFlag(Critter& cr, uint8 flag)
+{
+    int flags = GetLvar(cr, LVAR_cutscene_flags);
+    UNSETFLAG(flags, flag);
+    SetLvar(cr, LVAR_cutscene_flags, flags);
+}
+
+#ifdef __DEBUG__
+void test_inout(Critter& cr, int, int, int)
+{
+    StartCutscene(cr);
+    cr.Say(SAY_NETMSG, "InsideCutscene() = " + InsideCutscene(cr));
+    EndCutscene(cr);
+    cr.Say(SAY_NETMSG, "InsideCutscene() = " + InsideCutscene(cr));
+}
+
+void test_disablers(Critter& cr, int, int, int)
+{
+    uint[] values = { cr.Id, 0 };
+    CreateTimeEvent(AFTER(REAL_MS(50)), "e_test_disablers", values, false);
+}
+
+uint e_test_disablers(array<uint>@ values)
+{
+    Critter@ cr = GetCritter(values[0]);
+    if(!valid(cr))
+    {
+        Log("!cr " + values[0]);
+        return(0);
+    }
+
+    values[1]++;
+
+    if(values[1] < 0)         // JIC
+    {
+        values[1] = 0;
+        return(REAL_MS(50));
+    }
+    else if(values[1] == 1)
+    {
+        cr.Say(SAY_NETMSG, "Disabling mouse");
+        DisableMouse(cr);
+        return(REAL_SECOND(10));
+    }
+    else if(values[1] == 2)
+    {
+        cr.Say(SAY_NETMSG, "Enabling mouse");
+        EnableMouse(cr);
+        return(REAL_SECOND(10));
+    }
+    else if(values[1] == 3)
+    {
+        cr.Say(SAY_NETMSG, "Disabling cursor");
+        DisableCursor(cr);
+        return(REAL_SECOND(10));
+    }
+    else if(values[1] == 4)
+    {
+        cr.Say(SAY_NETMSG, "Enabling cursor");
+        EnableCursor(cr);
+        return(REAL_SECOND(10));
+    }
+    else if(values[1] == 5)
+    {
+        cr.Say(SAY_NETMSG, "Disabling keyboard");
+        DisableKeyboard(cr);
+        return(REAL_SECOND(10));
+    }
+    else if(values[1] == 6)
+    {
+        cr.Say(SAY_NETMSG, "Enabling keyboard");
+        EnableKeyboard(cr);
+        return(REAL_SECOND(10));
+    }
+
+    cr.Say(SAY_NETMSG, "Test end");
+    return(0);
+}
+#endif // __DEBUG__
+#endif // __CUTSCENE__ //

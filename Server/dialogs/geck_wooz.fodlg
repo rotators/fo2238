@@ -1,0 +1,227 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 #
+4 1020 D _var p name_mem_npc_player = 1 #
+34 1030 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+7 2010 #
+3 2020 #
+6 2030 #
+65506 2040 #
+0 2050 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+7 4010 #
+3 4020 #
+25 4030 #
+5 4040 #
+6 4050 #
+0 4060 @
+5 5000 None 0 #
+9 5010 #
+65506 5020 #
+4 5030 #
+0 5040 @
+6 6000 None 0 #
+20 6010 #
+0 6020 @
+7 7000 None 0 #
+31 7010 D _item p PID_BOTTLE_CAPS > 4 R _item p PID_GAMMA_GULP_BEER + 1 R _script dialog@r_RemoveMoney 1 5 #
+31 7020 D _item p PID_BOTTLE_CAPS > 11 R _item p PID_ROENTGEN_RUM + 1 R _script dialog@r_RemoveMoney 1 12 #
+4 7030 #
+0 7040 @
+8 8000 None 0 #
+25 8010 #
+0 8020 @
+9 9000 None 0 #
+13 9010 #
+14 9020 #
+0 9030 @
+10 10000 None 0 #
+11 10010 #
+0 10020 @
+11 11000 None 0 #
+4 11010 #
+12 11020 @
+12 12000 None 0 #
+4 12010 #
+0 12020 @
+13 13000 None 0 #
+15 13010 D _var p loyality = 0 #
+4 13020 #
+0 13030 @
+14 14000 None 0 #
+13 14010 @
+15 15000 None 0 #
+16 15010 R _var p loyality + 5 R _item p PID_DECK_OF_TRAGIC_CARDS + 1 #
+0 15020 @
+16 16000 None 0 #
+17 16010 #
+4 16020 #
+0 16030 @
+17 17000 None 0 #
+18 17010 D _param p ST_INTELLECT > 7 R _item p PID_DECK_OF_TRAGIC_CARDS + 1 #
+19 17020 D _param p ST_INTELLECT < 8 D _item p PID_DECK_OF_TRAGIC_CARDS } 1 R _item p PID_DECK_OF_TRAGIC_CARDS - 1 #
+0 17030 @
+18 18000 None 0 #
+0 18010 #
+0 18020 @
+19 19000 None 0 #
+0 19010 #
+0 19020 @
+20 20000 None 0 #
+21 20010 #
+22 20020 @
+21 21000 None 0 #
+23 21010 #
+0 21020 @
+22 22000 None 0 #
+32 22010 #
+4 22020 @
+23 23000 None 0 #
+24 23010 @
+24 24000 None 0 #
+4 24010 #
+0 24020 @
+25 25000 None 0 #
+26 25010 @
+26 26000 None 0 #
+28 26010 @
+28 27000 None 0 #
+29 27010 @
+29 28000 None 0 #
+30 28010 #
+4 28020 @
+30 29000 None 0 #
+4 29010 #
+0 29020 @
+31 30000 None 0 #
+4 30010 #
+0 30020 @
+32 31000 None 0 #
+33 31010 @
+33 32000 None 0 #
+4 32010 @
+34 33000 None 0 &
+
+[engl]
+{100}{}{Wooz}
+{200}{}{You see a tall ghoul with long hair.}
+{210}{}{You see Wooz.}
+{210}{}{You see an extremely tall and lanky ghoul with long hair.}
+{1000}{}{Predialogue installations}
+{1010}{}{Unknown}
+{1020}{}{Known}
+{1030}{}{Dumb}
+{2000}{}{I am Wooz. What do you want?}
+{2010}{}{Booze, Wooz.}
+{2020}{}{What do you do here?}
+{2030}{}{Tell me about this place.}
+{2040}{}{I want to trade.}
+{2050}{}{I don’t want anything from you. Goodbye.}
+{3000}{}{I run this place. Are you dumb? I sell drinks, trade for things, tell stories, and play Tragic.}
+{3010}{}{Right, let me ask you something else.}
+{3020}{}{Gotta go, bye.}
+{4000}{}{What do you want now?}
+{4010}{}{Booze, Wooz.}
+{4020}{}{What do you do here?}
+{4030}{}{Tell stories?}
+{4040}{}{I want to trade.}
+{4050}{}{Tell me about this place.}
+{4060}{}{I guess I don’t need anything right now. Goodbye.}
+{5000}{}{Trade? I’m always ready to trade Tragic cards. I’ve got a couple of old Vox Mubies, a Black Dahlia, and some Rare Earths.}
+{5010}{}{What the hell are you talking about?}
+{5020}{}{Uh, I don’t know what you’re on, but I hope you have some in inventory to trade.}
+{5030}{}{Hmm... let me ask you about something else, first.}
+{5040}{}{I don’t need to trade right now. Goodbye.}
+{6000}{}{Not much to tell, really. Just a bunch of ghouls clinging tenaciously to the ass-end of life.}
+{6010}{}{No, I meant tell me about this bar.}
+{6020}{}{Well, that describes a lot of people. Nothing new in that. I wanted to know something else.}
+{7000}{}{You want a drink, huh? Well, we’ve got our very own Gamma Gulp Beer at $5 a bottle and, for special occasions, our Roentgen Rum at $12 a bottle. What’ll it be?}
+{7010}{}{I’d like a Gamma Gulp Beer. Is it supposed to glow like that?}
+{7020}{}{This is a special occasion, of a sort. I’d like a bottle of your Roentgen Rum.}
+{7030}{}{Can't afford it. Let me ask you something else.}
+{7040}{}{Uh uh, goodbye.}
+{8000}{}{I’ve got this great story. It’s really funny. You see there’s this head, right?}
+{8010}{}{A head?}
+{8020}{}{Uh, I think I’ve heard this one already. I don’t have the time to listen to this now. Goodbye.}
+{9000}{}{Are you dumb? Tragic the Garnering is the most addictive thing since Jet.}
+{9010}{}{Tell me more about this Tragic the Garnering.}
+{9020}{}{What’s Jet?}
+{9030}{}{I guess I’ll take your word for that. Goodbye.}
+{10000}{}{Hmm, sorry. That’s the only one I know of. By the way, have you seen an apple, lately?}
+{10010}{}{An apple?}
+{10020}{}{I’m too disappointed to talk right now. Goodbye.}
+{11000}{}{I just love apples, but there aren’t many left anywhere. I hardly ever see them.}
+{11010}{}{I didn’t know you were such a fruit fetishist. Tell me something else.}
+{11020}{}{I’ve heard that you could really savor an apple because they were so slow to eat.}
+{12000}{}{Slow?!? You are dumb. Fuck you! Apples are just as fast to eat as any other fruit. Apples rule. If it weren’t for a conspiracy on the part of fruit manufacturers we’d all have apples.}
+{12010}{}{You’re crazed, aren’t you? I think you’ve been sampling too much of your own brew here. Tell me about something else.}
+{12020}{}{Oh, yes... apples really are wonderful. (you back away slowly) Yes, that’s right. Good Wooz, easy there. Goodbye.}
+{13000}{}{Well, Tragic the Garnering isn’t just a game -- it’s an obsession. Not a cologne, either. Some think that the way it changes a person’s life is tragic, but they just don’t understand.}
+{13010}{}{Uh huh.}
+{13020}{}{Oh, THAT Tragic. Let me ask you something else, Wooz.}
+{13030}{}{I can't see why anyone would think that. Goodbye.}
+{14000}{}{Jet’s a drug that comes from New Reno. Were you born yesterday, or are you just dumb?}
+{14010}{}{Oh, that Jet. Well, sure I knew about that. Tell me more about this Tragic the Garnering.}
+{15000}{}{No, really. It’s wonderful. You should play. Just once. The first box of cards is free. A little something from me to you.}
+{15010}{}{Thanks. Hey, these look great. (you tear the wrapping off) Mmm, I just love that smell.}
+{15020}{}{I just say ‘No’ to Tragic. Goodbye.}
+{16000}{}{That’s just the first part. Now that you’re one of us, want to play a game?}
+{16010}{}{Sure, but you’re going to have to show me how.}
+{16020}{}{I don’t think I really have time for that right now. Let me ask you something, though.}
+{16030}{}{I’d love to stay and trade Tragic cards with you, but I’ve got things to do. You know, in real life? Goodbye.}
+{17000}{}{Well, it’s simple, really. Even someone dumb can understand it. First, you build a play deck out of the cards that you have, and then you…}
+{17010}{}{Uh, huh. You say you deal to the third player unless it’s Thursday? OK, I think I’ve got it now. Let’s play.}
+{17020}{}{Uh, huh. You say you deal to the third player unless it’s Thursday? OK, I think I’ve got it now. Let’s play.}
+{17030}{}{Maybe I’ll play later. Thanks for telling me how, though. Goodbye.}
+{18000}{}{You won? Fuck you! I need a ruling on that. You just got lucky, this time. This deck of mine just didn’t work. I’ve got to build a better one.}
+{18010}{}{Thanks for the cards, Wooz. And I thought you knew how to play this game? I guess you’re dumb.}
+{18020}{}{Well, them’s the breaks, Wooz. Goodbye.}
+{19000}{}{I won! Fuck you! You are dumb. I have crushed you. Now I can build an even better deck with your cards.}
+{19010}{}{Uh, yeah. You won. Goodbye.}
+{19020}{}{What a surprise. Well, at least I didn’t have to listen to one of your stories. Goodbye.}
+{20000}{}{Well, the Harp’s named after a favorite hangout that I used to have before the war. I guess it’s just a reminder of times past. Sort of a joke on the only way we’re going to get a better deal, too.}
+{20010}{}{Before the war? But that was a long time ago.}
+{20020}{}{Better deal? What do you mean?}
+{21000}{}{It sure was a long time ago. How do you think ghouls are made? You think some of us just got up one fine day and said to ourselves: "Gee, I wonder what it’d be like to have my flesh rotting off my fucking body?"}
+{21010}{}{Well, no, I didn’t. Say, how do you make a ghoul?}
+{21020}{}{You know, I just don’t give a flying fuck what made you that ugly. Goodbye.}
+{22000}{}{‘Bout the only way us ghouls are going to get an even break is when we’re toting a harp of our own.}
+{22010}{}{I didn’t know that ghouls were especially musical.}
+{22020}{}{Oh, I see. Heh, heh. Let me ask you something.}
+{23000}{}{With silver-bells and cockleshells and… Boy, you are dumb, aren’t you? Severe radiation. That’s how. How do you think? You know, many bombs go boom, flash of light and heat, flesh burns off, but you don’t-quite-die-type severe radiation?}
+{23010}{}{Uh well, I mean…}
+{24000}{}{Well, I didn’t think so. Fuck you very much for bringing back all those intensely painful memories. Asshole. We’re a town of fucking leftovers - slightly overcooked leftovers.}
+{24010}{}{I prefer medium-rare myself. Hey, let me ask you something else.}
+{24020}{}{Well, I uh, um. Sorry. I’ll just let you wallow in self-pity, then. Goodbye.}
+{25000}{}{Yeah, it’s a head. But it’s not attached to a body. You see, it’s been severed.}
+{25010}{}{A severed head. I see. And this becomes entertaining when?}
+{26000}{}{Just hold on a minute. This severed head, you see, it’s in Hell. (hah, hah) And it flies around there, you know, in Hell. And it runs into all kinds of famous people there… (ho, ho, ho)}
+{26010}{}{Wait, a severed head is in Hell, and it flies around…doing what?}
+{27000}{}{Well, it’s doing stuff. (hee, hee) You know. It’s got, things that it wants to do, or maybe things it's forced to do. The point is, it’s doing stuff, you know, there in Hell. Oh God, (hah, hah, hah) I just can’t stand it!}
+{27010}{}{You kind of obsess about this, don’t you? Hmm. Were you and your mother close? Did you ever have problems with bed-wetting?}
+{28000}{}{No, you just don’t understand. It’s all about a severed head. Get it? Heh, heh, heh, It’s funny! How can you think about a severed head, in Hell of all places, and not laugh?}
+{28010}{}{Wooz, I don’t know you very well, and I’m pretty sure I don’t want to. However, I think I can say, without fear of exaggeration, that you need help. Immediate, competent help.}
+{28020}{}{Oh. I see. Why, yes. Of course; that’s very funny. Heh heh. I just can’t contain my amusement… But enough enjoyment -- oh, my splitting sides -- I need to ask you something.}
+{29000}{}{Fuck you! You’re just like all the rest of them. I tell, you it’s hilariously funny. It’s not my fault that you don’t have a sense of humor.}
+{29010}{}{You’re right, Wooz. I guess I’m just not as clever as you are. You’re truly a pearl amongst swine. Now tell me something else.}
+{29020}{}{I have enough of a sense of humor to recognize the absence of one in others. Goodbye.}
+{30000}{}{Alright, enjoy. Hope your piss don't glow, hah!}
+{30010}{}{Uh, thanks Wooz. I had something I wanted to ask you.}
+{30020}{}{I look forward to it. Bye Wooz.}
+{31000}{}{Well, usually I just pound on the hollow heads of my customers — sort of like bongos. How the hell did they ever let you out of your shithole town? You’re a danger to yourself and others.}
+{31010}{}{Bongos?}
+{32000}{}{You fell out of the stupid tree and hit every damn branch on the way down, didn’t you?}
+{32010}{}{Tree? I guess I’m just not hip to your lingo… man. Uh, let me ask you something.}
+{33000}{}{You fell out of the stupid tree and hit every damn branch on the way down, didn’t you?}
+

@@ -1,0 +1,88 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+6 1010 D _var p q_la_train_caesar = 2 #
+4 1020 D _var p q_la_train_caesar > 0 D _var p q_la_train3 < 3 D _var n name_mem_player_npc = 0 #
+3 1030 D _script dialog@d_CheckNight 0  #
+2 1040 @
+2 2000 None 0 @
+3 3000 None 0 @
+4 4000 None 0 #
+5 4010 R _var p q_la_train3 + 1 R _var p q_la_train_count + 1 R _var n name_mem_player_npc + 1 #
+0 4020 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+7 6010 D _var n name_mem_npc_player = 1 #
+7 6020 D _var n name_mem_npc_player = 0 #
+0 6030 @
+7 7000 None 0 #
+9 7010 D _param p ST_CHARISMA > 4 #
+9 7020 D _param p SK_SMALL_GUNS > 89 #
+9 7030 D _param p ST_INTELLECT > 6 #
+9 7040 D _param p ST_CHARISMA < 4 D _param p ST_INTELLECT > 3 D _script dialog@d_WeaponInHand 0  #
+8 7050 #
+0 7060 @
+8 8000 None 0 @
+9 9000 None 0 #
+10 9010 #
+11 9020 @
+10 10000 None 0 #
+12 10010 #
+11 10020 #
+13 10030 @
+11 11000 None 0 #
+0 11010 R _var p q_la_train_caesar = 3 R _script quest_caesar_train@r_SpawnCamp 0  @
+12 12000 None 0 #
+13 12010 #
+11 12020 @
+13 13000 None 0 #
+11 13010 &
+
+[engl]
+{100}{}{Shady Person}
+{200}{}{You see a shady person.}
+{1000}{}{Predialogue installations}
+{1010}{}{caesars legion quest running, fuck, you found me and i tell you where that missing dude is!}
+{1020}{}{caesars legion quest running}
+{1030}{}{dark outside}
+{1040}{}{normal}
+{2000}{}{Don't bother me.}
+{3000}{}{Don't bother me.}
+{4000}{}{Yeah?}
+{4010}{}{I am searching for some guy. He looks like a middle-aged man with black hair and normal build, wears a old leather armor with a black bull on it. You saw him?@@Hey, a middle-aged man with black hair, normal build and a leather armor with a black bull on it. You saw him?@@Maybe you can help me. I am searching for a middle-aged man. He has a normal build, black hair and wears a leather armor with a black bull painted on it.}
+{4020}{}{Nothing. Bye.}
+{5000}{}{No, I've never seen this man.@@No, I don't know this man.@@Nope, never seen.}
+{5010}{}{Thanks anyway.}
+{6000}{}{Yeah? What do you want now?}
+{6010}{}{People told me you might know something about the person I am searching... You might remember him... middle-aged man, black hair, black bull on his armor. We talked about him already and you told me you don't know him...}
+{6020}{}{People told me you might know something about the person I am searching... You might remember him... middle-aged man, black hair, black bull on his armor. You know something, right?}
+{6030}{}{Nothing. }
+{7000}{}{Eh... Eh... I don't know what you are talking about. I never saw such a man.}
+{7010}{}{Don't try to shit on me. I know that you've talked to him. Now tell me where he is and I will leave you alone.}
+{7020}{}{See. This is my gun [You draw your gun.], this is your head [You point your gun at his head.] .... I just have to move my finger a little bit and BANG, your brain is on that wall. [You point to the wall behind him.] Now tell me what the fuck you know about the man, or ...}
+{7030}{}{As far as I can see, we both are pretty smart persons. I know you are smart too, because you look smart. So... we can do this the hard way or the easy way. It's really only up to you. Tell me what you know or I'll change my style.}
+{7040}{}{Do I look funny to you? Tell me, do I look funny?? Stop being a douche to me and stop lying! [You stroke your weapon while staring in his eyes.]}
+{7050}{}{You are lying! Tell me what you know!}
+{7060}{}{Okay, I should go then, I guess.}
+{8000}{}{I told you, I don't know what you are talking about. Now leave me alone.}
+{9000}{}{Please! I just wanted to help! I have nothing else to do with it. It's just that they needed to go away from here!}
+{9010}{}{"They"?}
+{9020}{}{I don't care about your excuses. Tell me where that man is. Fast!}
+{10000}{}{The man and the child of course!}
+{10010}{}{I don't know about any child. I am searching only a man with a black bull on the leather armor.}
+{10020}{}{Fine, tell me where they are. NOW!}
+{10030}{}{Tell me more about them.}
+{11000}{}{Okay, okay... please, don't hurt me. They are west of here, hiding between the mountains. I've told 'em to go there, because it's a good hideout.}
+{11010}{}{That's all I wanted to know. Bye...}
+{12000}{}{He... he is with the child. I mean, the child is with him. I don't know much, just that they needed help to go away.}
+{12010}{}{Tell me more about them.}
+{12020}{}{Fine, tell me where they are. NOW!}
+{13000}{}{I don't know much. He told me, they have to leave this place. They wanted to travel to the east. But gangs are blocking the rail lines and the NCR can't continue their work. Now they are hiding for the time being. This is all I know. Really.}
+{13010}{}{Tell me where they are, I want to talk to them.}
+

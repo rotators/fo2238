@@ -1,0 +1,161 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// all_brahmin.fos
+//
+
+#include "_animation.fos"
+#include "_macros.fos"
+#include "npc_common_h.fos"
+#include "npc_planes_h.fos"
+#include "utils_h.fos"
+
+// Moo-moos
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    _CritSetExtMode(npc, MODE_EXT_NO_SLAVE);
+}
+void _Domesticated(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    npc.ModeBase[MODE_NO_HOME] = 1;
+    _CritSetExtMode(npc, MODE_EXT_NO_SLAVE);
+    _CritSetExtMode(npc, MODE_EXT_PEN_BRAHMIN);
+}
+void _Wild(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+}
+
+
+uint Shitrate = 666;
+void change_shitrate(Critter& cr, int p0, int p1, int p2)
+{
+    Shitrate = p0;
+}
+
+void _Idle(Critter& npc)
+{
+    // Mooooo
+    if(Random(0, 199) == 0)
+        _CritAnimatePunch(npc);
+
+    // Walking around
+    int walking = Random(0, 99);
+    if(walking == 0)     // Return to home hex sometimes. Pen gates must be opened if brahmin is outside.
+    {
+        npc.DropPlanes();
+        uint   bMap;
+        uint16 bX = 0, bY = 0;
+        uint8  bDir = 0;
+        npc.GetHomePos(bMap, bX, bY, bDir);
+        AddWalkPlane(npc, AI_PLANE_WALK_PRIORITY, bX, bY, bDir, false, 0);
+    }
+    else if(walking < 33)     // Walk randomly in small steps - the exit is blocked by antiblock.
+    {
+        MoveRandom(npc, 14, 3, false);
+    }
+
+    if(Random(0, Shitrate) == 0)
+    {
+        if(IsTown(npc.GetMap()) || Random(0, 19) == 0)      // Brahmin outside towns produce shit 20 times slower
+            Shit(npc);
+    }
+
+    if(Random(0, 300000) == 0)
+        npc.Say(SAY_NORM_ON_HEAD, "Moo. Moo I say.");
+    // till next move
+    npc.Wait(Random(500, 20000));
+}
+
+//
+// Checks if item is brahmin crap
+//
+bool IsDung(Item@ item)
+{
+    for(uint i = 0; i < dung.length(); i++)
+        if(item.GetProtoId() == dung[i])
+            return true;
+    return false;
+}
+
+uint[] dung = { PID_BRAHMIN_SHIT_1, PID_BRAHMIN_SHIT_2, PID_BRAHMIN_SHIT_3, PID_BRAHMIN_SHIT_4 };
+
+void Shit(Critter& brahmin)
+{
+    uint pid = dung[Random(0, 3)];
+
+    Map@ map = brahmin.GetMap();
+
+    if(!valid(map))
+        // explode
+        return;
+    uint16 x = brahmin.HexX;
+    uint16 y = brahmin.HexY;
+    map.MoveHexByDir(x, y, (brahmin.Dir + 3) % 6, 1);
+
+    array<Item@> items;
+    uint         count = map.GetItems(x, y, items);
+    for(uint i = 0; i < count; i++)
+    {
+        for(uint j = 0, k = dung.length(); j < k; j++)
+        {
+            // place has been already shitted over
+            if(items[i].GetProtoId() == dung[j])
+                return;
+        }
+    }
+    Item@ dung = map.AddItem(x, y, pid, 1);
+    dung.SetEvent(ITEM_EVENT_SKILL, "item_brahmin_dung@_DungSkill");
+    dung.SetEvent(ITEM_EVENT_WALK, "item_brahmin_dung@_DungWalk");
+    dung.SetEvent(ITEM_EVENT_USE_ON_ME, "item_brahmin_dung@_UseOnDung");
+    // mark shit with map id
+    uint penId = 0;
+    // GetPenIDOfBrahmin(brahmin, penId);
+    dung.Val5 = brahmin.GetMapId();
+}
+
+
+
+/**
+ * plane AI_PLANE_MISC
+ * Domesticated brahmin gets agitated by someone and will try to ram into the target that pissed him/her off.
+ */
+void plane_agitated(Critter& brahmin)
+{
+    if(!valid(brahmin))
+        return;
+
+    NpcPlane@ plane = brahmin.GetCurPlane();
+
+    Critter@  target = GetCritter(plane.IdentifierExt);
+    if(!valid(target))
+        return;
+
+    uint dir = _TurnAround(GetDirection(target.HexX, target.HexY, brahmin.HexX, brahmin.HexY));
+    brahmin.SetDir(dir);
+    brahmin.SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(DIALOG_all_brahmin, 1));
+    AddWalkPlane(brahmin, AI_PLANE_ATTACK_PRIORITY, PLANE_RAM_INTO_CRITTER, target.Id, target.HexX, target.HexY, dir, true, 1);
+
+    brahmin.Wait(Random(50, 250));
+}
+
+/**
+ *  Brahmin blocker trigger (causes brahmin to return to home hex)
+ *
+ */
+void t_block(Critter& cr, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(_CritHasExtMode(cr, MODE_EXT_PEN_BRAHMIN))
+    {
+        cr.DropPlanes();
+        uint   bMap;
+        uint16 bX = 0, bY = 0;
+        uint8  bDir = 0;
+        cr.GetHomePos(bMap, bX, bY, bDir);
+        AddWalkPlane(cr, AI_PLANE_WALK_PRIORITY, bX, bY, bDir, false, 0);
+    }
+}

@@ -1,0 +1,121 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _param p ST_INTELLECT > 3 #
+3 1020 @
+2 2000 None 0 #
+104 2010 D _item p PID_TICKET > 0 R _script trains@r_IfNoTrains 1 102 #
+8 2020 #
+100 2030 #
+10 2040 @
+3 3000 None 0 #
+105 3010 D _item p PID_TICKET > 0 R _script trains@r_IfNoTrains 1 103 #
+9 3020 #
+101 3030 #
+10 3040 @
+8 4000 None 0 #
+10 4010 @
+9 5000 None 0 #
+10 5010 @
+10 6000 None 0 @
+11 7000 None 0 #
+10 7010 @
+12 8000 None 0 #
+0 8010 @
+13 9000 None 0 #
+0 9010 R _script trains@r_GetIntoTrain 3 11 14 16 @
+14 10000 None 0 #
+0 10010 @
+15 11000 None 0 #
+0 11010 @
+16 12000 None 0 #
+0 12010 @
+100 13000 trains@dlg_TrainInfo 0 #
+10 13010 @
+101 14000 trains@dlg_TrainInfo 0 #
+10 14010 @
+104 15000 trains@dlg_TrainInfo2 0 #
+13 15010 R _script trains@r_HereIsMyTicket 5 11 14 15 16 0 #
+13 15020 D _script trains@d_ShowNode 1 1 R _script trains@r_HereIsMyTicket 5 11 14 15 16 1 #
+13 15030 D _script trains@d_ShowNode 1 2 R _script trains@r_HereIsMyTicket 5 11 14 15 16 2 #
+13 15040 D _script trains@d_ShowNode 1 3 R _script trains@r_HereIsMyTicket 5 11 14 15 16 3 @
+105 16000 trains@dlg_TrainInfo3 0 #
+13 16010 R _script trains@r_HereIsMyTicket 5 11 14 15 16 0 #
+13 16020 D _script trains@d_ShowNode 1 1 R _script trains@r_HereIsMyTicket 5 11 14 15 16 1 #
+13 16030 D _script trains@d_ShowNode 1 2 R _script trains@r_HereIsMyTicket 5 11 14 15 16 2 #
+13 16040 D _script trains@d_ShowNode 1 3 R _script trains@r_HereIsMyTicket 5 11 14 15 16 3 @
+102 17000 None 0 #
+0 17010 @
+103 18000 None 0 #
+0 18010 &
+
+[engl]
+{100}{}{Conductor}
+{200}{}{You see the conductor.}
+{210}{}{The conductor checks the tickets and leads people on the train.}
+{1000}{}{Predialogue installations}
+{1010}{}{normal}
+{1020}{}{dumb}
+{2000}{}{Yes, what can I do for you?}
+{2010}{}{Here is my ticket, I want to use a train. }
+{2020}{}{I want to buy a train ticket.}
+{2030}{}{What trains are presently on the schedule?}
+{2040}{}{Nothing in the moment. Bye.}
+{3000}{}{Yes, what can I do for you?}
+{3010}{}{Here my ticked. Me want to use choo-choo.}
+{3020}{}{Me want ticked for choo-choo.}
+{3030}{}{Next choo-choo when goes?}
+{3040}{}{Me go.}
+{4000}{}{To buy a ticket, you have to go to the ticket seller inside of the train station.}
+{4010}{}{Alright. Bye.}
+{5000}{}{To buy a ticket, you have to go to the ticket seller inside of the train station.}
+{5010}{}{Okay.}
+{6000}{}{Have a nice day.}
+{7000}{}{The train isn't here yet. Come back later.}
+{7010}{}{[Leave]}
+{8000}{}{Then I cannot help you. I am sorry.}
+{8010}{}{[Leave]}
+{9000}{}{Very well. [You sit down in the train.]}
+{9010}{}{[Continue]}
+{10000}{}{I'm sorry, there is not enough place in this train.}
+{10010}{}{[Leave]}
+{11000}{}{I'm sorry, but the animals are not allowed here.}
+{11010}{}{[Leave]}
+{12000}{}{You need additional tickets for your companions.}
+{12010}{}{[Leave]}
+{13000}{}{@lex train0@
+@lex train1@
+@lex train2@
+@lex train3@}
+{13010}{}{Thanks for the information.}
+{14000}{}{@lex train0@
+@lex train1@
+@lex train2@
+@lex train3@}
+{14010}{}{Okay.}
+{15000}{}{@lex train0@
+@lex train1@
+@lex train2@
+@lex train3@}
+{15010}{}{@lex traina0@}
+{15020}{}{@lex traina1@}
+{15030}{}{@lex traina2@}
+{15040}{}{@lex traina3@}
+{16000}{}{@lex train0@
+@lex train1@
+@lex train2@
+@lex train3@}
+{16010}{}{@lex traina0@}
+{16020}{}{@lex traina1@}
+{16030}{}{@lex traina2@}
+{16040}{}{@lex traina3@}
+{17000}{}{Are you blind? There are no trains waiting for departure.}
+{17010}{}{Oh, sorry then.}
+{18000}{}{Not only you're stupid, but also blind? There are no trains waiting for departure.}
+{18010}{}{Ooooo...}
+

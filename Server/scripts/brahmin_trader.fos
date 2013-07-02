@@ -1,0 +1,278 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_trader.fos
+//
+
+// TODO: Deprecated in favor of merc_dialog
+#include "_basetypes.fos"
+#include "_macros.fos"
+#include "brahmin_pen_h.fos"
+#include "brahmin_trader_h.fos"
+#include "economy_h.fos"
+#include "follower_common_h.fos"
+#include "follower_h.fos"
+#include "utils_h.fos"
+
+#define FORCE_DIALOG_SUCCESS_SOLD     (16)
+#define FORCE_DIALOG_SUCCESS_BUY      (16)
+#define FORCE_DIALOG_ERROR            (6)
+#define FORCE_DIALOG_NOT_FOUND        (7)
+#define FORCE_DIALOG_TOO_EXPENSIVE    (8)
+#define FORCE_DIALOG_FULL_PARTY       (40)
+
+#define FORCE_DIALOG_BUY              (4)
+#define FORCE_DIALOG_SELL             (11)
+
+#define FORCE_DIALOG_NO_BRAHMINS      (20)
+#define FORCE_DIALOG_PEN_FULL         (21)
+
+#define BRAHMIN_HUB                   (9)
+#define BRAHMIN_MODOC                 (10)
+#define BRAHMIN_NCR                   (11)
+#define BRAHMIN_BROKEN                (12)
+#define BRAHMIN_KLAMATH               (13)
+#define BRAHMIN_FRISCO                (14)
+
+#define SELLPRICE                     (player.StatBase[ST_VAR0])
+#define BUYPRICE                      (player.StatBase[ST_VAR1])
+#define TRADER                        (player.StatBase[ST_VAR2])
+
+import IMerc@          GetMerc(uint id) from "mercs";
+import IBrahminTrader@ GetBrahminTrader(uint id) from "brahmin_traders";
+
+uint GetPrice(uint traderid, bool buyprice)
+{
+    IBrahminTrader@ trader = GetBrahminTrader(traderid);
+    IBrahminPen@    pen = GetBrahminPen(trader.GetPenID());
+
+    if(!valid(trader))
+    {
+        Log("Invalid trader");
+        return 0;
+    }
+
+    if(!valid(pen))
+    {
+        Log("Invalid brahmin pen");
+        return 0;
+    }
+
+    DLog("BrahminCount = " + pen.GetBrahminCount());
+
+    // DLog("Buyprice = " + (trader.GetBuyPrice() - (trader.GetModifier() * pen.GetBrahminCount()));
+    // DLog("Sellprice = " + (trader.GetSellPrice() - (trader.GetModifier() * pen.GetBrahminCount()));
+
+    if(buyprice)
+        return(trader.GetBuyPrice() - (trader.GetModifier() * pen.GetBrahminCount()));
+    else
+        return(trader.GetSellPrice() - (trader.GetModifier() * pen.GetBrahminCount()));
+}
+
+bool d_BrahminInPen(Critter& player, Critter@ npc, int val)
+{
+    IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+    IBrahminPen@    pen = GetBrahminPen(trader.GetPenID());
+
+    return(!pen.IsEmpty());
+}
+
+bool d_BrahminPenNotFull(Critter& player, Critter@ npc, int val)
+{
+    IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+    IBrahminPen@    pen = GetBrahminPen(trader.GetPenID());
+
+    return(!pen.IsFull());
+}
+
+bool d_CanAfford(Critter& player, Critter@ npc, int val)
+{
+    return(_CritCountItem(player, PID_BOTTLE_CAPS) >= GetPrice(TRADER, true));
+}
+
+bool d_PlayerHasBrahmin(Critter& player, Critter@ npc, int val)
+{
+    return(valid(GetPlayerBrahmin(player, npc)));
+}
+
+bool SellableBrahmin(Critter& critter)
+{
+    return(critter.CrType == CRTYPE_BRAHMIN);
+}
+
+// The brahmin must be close enough to the NPC we are selling to
+bool RightBrahminDistance(Critter& brahmin, Critter@ npc)
+{
+    return(GetCrittersDistantion(npc, brahmin) < 7);
+}
+
+Critter@ GetPlayerBrahmin(Critter& player, Critter@ npc)
+{
+    // IMerc@ brahminproto = GetMerc(uint(BRAHMIN_HUB));
+
+    array<Critter@> crits;
+    uint            num = player.GetMap().GetCritters(0, FIND_ALL | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < num; i++)
+    {
+        // Here we check to see if the critter matches our criteria.
+
+        /*if (GetFollowerType(crits[i]) != FOLLOWER_BRAHMIN)
+            continue;*/
+
+        if(!IsOwnersFollower(player, crits[i]))
+            continue;
+
+        if(!SellableBrahmin(crits[i]))
+            continue;
+
+        if(!RightBrahminDistance(crits[i], npc))
+            continue;
+
+        return crits[i];
+    }
+    return null;
+}
+
+void r_SetId(Critter& player, Critter@ npc, int val)
+{
+    TRADER = val;
+    BUYPRICE = GetPrice(val, true);
+    SELLPRICE = GetPrice(val, false);
+
+    IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+
+    if(!valid(trader))
+    {
+        Log("Invalid trader");
+    }
+
+    IBrahminPen@ pen = GetBrahminPen(trader.GetPenID());
+
+    if(valid(pen))
+        pen.CalculateBrahmins();
+    else
+        Log("Invalid brahmin pen");
+}
+
+void dlg_ShowBrahminSellPrice(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$price" + SELLPRICE;
+}
+
+void dlg_ShowBrahminBuyPrice(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    text += "$price" + BUYPRICE;
+}
+
+uint r_CheckBuy(Critter& player, Critter@ npc, int val)
+{
+    if(d_BrahminInPen(player, npc, val))
+        return FORCE_DIALOG_BUY;
+    else
+        return FORCE_DIALOG_NO_BRAHMINS;
+}
+
+uint r_CheckSell(Critter& player, Critter@ npc, int val)
+{
+    if(d_BrahminPenNotFull(player, npc, val))
+        return FORCE_DIALOG_SELL;
+    else
+        return FORCE_DIALOG_PEN_FULL;
+}
+
+uint r_SellBrahmin(Critter& player, Critter@ npc, int val)
+{
+    Critter@ brahmin = GetPlayerBrahmin(player, npc);
+    if(!valid(brahmin))
+    {
+        return 0;
+    }
+
+    DeleteNpc(brahmin);
+    player.AddItem(PID_BOTTLE_CAPS, SELLPRICE);
+
+    IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+    IBrahminPen@    pen = GetBrahminPen(trader.GetPenID());
+
+    pen.AddBrahmin();
+
+    r_SetId(player, npc, TRADER);   // Recalculate prices
+
+    return FORCE_DIALOG_SUCCESS_SOLD;
+}
+
+uint r_BuyBrahmin(Critter& player, Critter@ npc, int val)
+{
+    IMerc@ merc = GetMerc(uint(val));
+    if(!valid(merc))
+    {
+        return FORCE_DIALOG_NOT_FOUND;
+    }
+
+    if(uint(BUYPRICE) > _CritCountItem(player, PID_BOTTLE_CAPS))
+    {
+        return FORCE_DIALOG_TOO_EXPENSIVE;
+    }
+
+    if(!CanHaveMoreFollowers(player, FOLLOWER_TYPE_BRAHMIN))
+    {
+        return FORCE_DIALOG_FULL_PARTY;
+    }
+
+    if(!BanksTransferFromCritter(player, BUYPRICE, TRANSACTION_MERCBUY, false))
+    {
+        Log("Couldn't remove money");
+        return FORCE_DIALOG_ERROR;
+    }
+
+    if(!merc.Spawn(player))
+    {
+        return FORCE_DIALOG_ERROR;
+    }
+
+    IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+    IBrahminPen@    pen = GetBrahminPen(trader.GetPenID());
+    pen.RemoveBrahmin();
+
+    r_SetId(player, npc, TRADER);   // Recalculate prices
+
+    return FORCE_DIALOG_SUCCESS_BUY;
+}
+
+//
+// Pays money for cleaned dung
+// val - cash per shit
+void r_CleaningPayment(Critter& player, Critter@ npc, int val)
+{
+    // IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+
+    GameVar@ var = GetUnicumVar(UVAR_dung_cleaned, player.Id, npc.GetMapId());
+
+    if(valid(var) && var.GetValue() > 0)
+    {
+        BanksTransferToCritter(player, val * var.GetValue(), TRANSACTION_BRAHMINSHOVEL, false);
+        // player.AddItem(PID_BOTTLE_CAPS, );
+        var = 0;
+    }
+}
+
+//
+// Checks if player cleaned some crap for trader
+//
+bool d_CleanedSomeDung(Critter& player, Critter@ npc)
+{
+    // IBrahminTrader@ trader = GetBrahminTrader(TRADER);
+
+    GameVar@ var = GetUnicumVar(UVAR_dung_cleaned, player.Id, npc.GetMapId());
+    #ifdef __DEBUG__
+    player.Say(SAY_NETMSG, "Cleaned some crap for map: " + npc.GetMapId() + "?");
+    #endif
+    return(valid(var) && var.GetValue() > 0);
+}

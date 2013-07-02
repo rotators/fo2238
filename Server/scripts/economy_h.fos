@@ -1,0 +1,219 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// economy_h.fos
+//
+
+#include "_macros.fos"
+#ifndef __ECONOMY_INCLUDE__
+# define __ECONOMY_INCLUDE__
+
+# include "logging_h.fos"
+# include "debug_h.fos"
+
+# define _BankLog                               # (text) do { WLog("banks", text); FLog(LOG_BANKS, text); } while(false)
+# define _TradeLog                              # (text) do { WLog("banks", text); f.open("logs/trade.log", "a"); f.writeString(GetCurrentDateTimeString() + "> " + text + "\n"); f.close(); } while(false)
+
+# ifndef __ECONOMY__
+
+// Imported functions, use these.
+
+import void InitEconomy() from "economy";
+import void SendLevelThresholds(Critter&) from "economy";
+
+// Account functions
+import bool BankAccountExists(uint bankid, uint account) from "economy";
+import bool BankAccountRemoveMoney(uint bankid, uint account, uint amount) from "economy";
+import bool BankHasAccess(uint bankid, uint account, uint playerid) from "economy";
+import int  BankGetAccountBalance(uint bankid, uint account) from "economy";
+import int  BankGetAccountID(uint bankid, uint playerid) from "economy";
+import uint BankAddAccess(uint bankid, uint account, uint playerid) from "economy";
+import uint BankCreateAccount(uint bankid, uint playerid) from "economy";
+import uint BankDepositMoney(uint bankid, uint playerid, uint account, int amount) from "economy";
+import uint BankGetAccessCount(uint bankid, uint account) from "economy";
+import uint BankGetAccountOwner(uint bankid, uint account) from "economy";
+import uint BankGetAccountType(uint bankid, uint account) from "economy";
+import uint BankGetCreditRating(uint bankid, uint account) from "economy";
+import uint BankGetLoan(uint bankid, uint account) from "economy";
+import uint BankRemoveAccess(uint bankid, uint account, uint playerid) from "economy";
+import uint BankSetAccountType(uint bankid, uint account, uint accounttype) from "economy";
+import uint BankSetCreditRating(uint bankid, uint account, uint rating) from "economy";
+import uint BankSetLoan(uint bankid, uint account, uint loan) from "economy";
+import uint BankTakeLoan(uint bankid, uint account, uint amount) from "economy";
+import uint BankTransferMoney(uint bankid, uint fromaccount, uint toaccount, uint amount) from "economy";
+import uint BankWithdrawMoney(uint bankid, uint playerid, uint account, int amount) from "economy";
+
+// Banks function (affects all banks)
+import bool BanksTransferFromCritter(Critter& critter, uint amount, uint type, bool virtual) from "economy";
+import bool BanksTransferToCritter(Critter& critter, uint amount, uint type, bool virtual) from "economy";
+import uint BanksGetTotalMoney() from "economy";
+import void BanksAddMoney(uint amount) from "economy";
+import void BanksRemoveMoney(uint amount) from "economy";
+
+// Bank functions
+import bool  BankAddMoney(uint bankid, uint amount) from "economy";
+import bool  BankRemoveMoney(uint bankid, uint amount) from "economy";
+import bool  BankSetMoney(uint bankid, uint amount) from "economy";
+import uint  BankGetLoanInterest(uint bankid) from "economy";
+import uint  BankGetNumberOfAccounts(uint bankid) from "economy";
+import float BankGetSaveInterest(uint bankid) from "economy";
+import uint  BankGetTotalMoney(uint bankid) from "economy";
+import uint  BankGetTotalBalance(uint bankid) from "economy";
+import float BankGetReserveRatio(uint bankid) from "economy";
+import uint  BankSetLoanInterest(uint bankid, uint interest) from "economy";
+import uint  BankSetSaveInterest(uint bankid, float interest) from "economy";
+import bool  BankTransferFromCritter(uint bankId, Critter& critter, uint amount, uint type, bool virtual) from "economy";
+
+import void SaveBankData() from "economy";
+
+// Item price functions
+// import uint GetItemPrice(uint pid) from "economy";
+// import uint[] GetItemPrices(uint[] pids) from "economy";
+import int  GetItemSellModifier(Critter& player, Critter& trader) from "economy";
+import int  GetItemBuyModifier(Critter& player, Critter& trader) from "economy";
+import uint GetItemCost(Item& item, Critter& cr, Critter& trader, bool sell) from "economy";
+import uint GetItemCostPlain(Item& item, Critter& cr, Critter& trader) from "economy";
+
+import array<int> GetTraderLevels(Critter@ npc) from "economy";
+import uint       GetTraderLevel(Critter@ npc, uint type) from "economy";
+
+import uint ItemLevel(Item& item) from "economy";
+import uint ItemLevel(uint pid) from "economy";
+import uint TraderCapacity(Critter@ npc) from "economy";
+import uint TraderCapacity(Critter@ npc, uint type, uint level) from "economy";
+import uint TraderMoneyCapacity(Critter@ npc) from "economy";
+import uint TradingItemType(Item& item) from "economy";
+import uint TradingItemType(uint pid) from "economy";
+# endif // __ECONOMY__
+
+/**
+ * \~english @defgroup EconomyVars Economy variables
+ * Variables related to the economy system.
+ *
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+/** @name Banks */
+# define BANK_COUNT                             (6) // How many banks
+
+# define BANK_VAULTCITY                         (0)
+# define BANK_REDDING                           (1)
+# define BANK_BROKENHILLS                       (2)
+# define BANK_SANFRANCISCO                      (3)
+# define BANK_NCR                               (4)
+# define BANK_HUB                               (5)
+
+/** @name Update Intervals */
+# define INTEREST_UPDATE_INTERVAL               (REAL_DAY(1))
+# define MERC_UPDATE_INTERVAL                   (GAME_DAY(3))
+# define ECONOMY_UPDATE_INTERVAL                (REAL_HOUR(1))
+
+/** @name Options */
+# define LOAN_MODE                              (0) // Player can take loans in banks, 1 = Enabled, 0 = Disabled
+// #define DYNAMIC_PRICES                        // Prices change based on crafting activity
+
+/** @name General variables */
+# define BANK_MAX_MONEY                         (2147483647)              // Maximum amount of money a bank can store (in total, not per customer)
+# define BANK_START_MONEY                       (100000)                  // Startmoney.
+# define BANK_START_LOAN_INTEREST               (LOAN_RATE_LOW)           // Interest rate for loans
+# define BANK_START_SAVING_INTEREST             (SAVING_INTEREST_MAX / 2) // Interest rate for deposited money
+
+# define REGISTRATION_COST                      (100)                     // Cost for basic account
+# define JOINT_ACCOUNT_COST                     (10000)                   // Cost for multiple user account
+
+/** @name Loan percentages of available money */
+# define LOAN_MICRO_LOAN                        (1)
+# define LOAN_SMALL_LOAN                        (3)
+# define LOAN_MEDIUM_LOAN                       (7)
+# define LOAN_BIG_LOAN                          (15)
+
+/** @name Saving interest */
+# define SAVING_INTEREST_MIN_RESERVE_RATIO      (0.9f) // bank will try to never have less money than this value times balance of all account - freezing the interests if necessary. MUST NOT be outside (0,1) interval!
+# define SAVING_INTEREST_MAX                    (2.5f)
+
+/** @name Credit rating thresholds */
+# define CREDITVALUE_FIRST                      (1000)
+# define CREDITVALUE_SECOND                     (10000)
+# define CREDITVALUE_THIRD                      (100000)
+
+/** @name Credit rating */
+# define CREDITTYPE_NONE                        (0)
+# define CREDITTYPE_FIRST                       (1)
+# define CREDITTYPE_SECOND                      (2)
+# define CREDITTYPE_THIRD                       (3)
+
+/** @name Loan interest */
+# define LOAN_RATE_VERY_LOW                     (2)
+# define LOAN_RATE_LOW                          (5)
+# define LOAN_RATE_NORMAL                       (10)
+# define LOAN_RATE_HIGH                         (15)
+# define LOAN_RATE_VERY_HIGH                    (25)
+
+/** @name Threshold values for interest */
+# define INTEREST_THRESHOLD_VERY_LOW            (10000)
+# define INTEREST_THRESHOLD_LOW                 (100000)
+# define INTEREST_THRESHOLD_MEDIUM              (500000)
+# define INTEREST_THRESHOLD_HIGH                (1000000)
+# define INTEREST_THRESHOLD_VERY_HIGH           (1900000)
+# define INTEREST_THRESHOLD_HIGHEST             (2000000)
+
+/** @name Account types */
+# define ACCOUNT_TYPE_NORMAL                    (0) // Normal savings account.
+# define ACCOUNT_TYPE_JOINT                     (1) // Joint account which several people have access to.
+
+/** @name Transaction type */
+# define TRANSACTION_DEFAULT                    (0)
+# define TRANSACTION_BRAHMINSHOVEL              (1)
+# define TRANSACTION_MERCSELL                   (2)
+# define TRANSACTION_MERCBUY                    (3)
+# define TRANSACTION_MERCPAY                    (4)
+# define TRANSACTION_BASE                       (5)
+# define TRANSACTION_MINE                       (6)
+# define TRANSACTION_GUARDLOOT                  (7)
+
+/** @name Bank error codes */
+# define FD_BANK_RESULT_SUCCESS                 (1)
+# define FD_BANK_RESULT_UNKNOWN                 (2)  // Unknown error
+# define FD_BANK_RESULT_TOO_MANY_ACCOUNTS       (3)  // Too many accounts in the bank
+# define FD_BANK_RESULT_ALREADY_HAS_ACCOUNT     (4)  // The player already has an account in the bank
+# define FD_BANK_RESULT_NOT_ENOUGH_MONEY        (5)  // Not enough money to withdraw the specified sum
+# define FD_BANK_RESULT_BANK_FULL               (6)  // The bank has reached is maximum storage capability
+# define FD_BANK_RESULT_BANK_EMPTY              (7)  // The bank has no money.
+# define FD_BANK_RESULT_DATA_ERROR              (8)  // There was a problem with internal data storage
+# define FD_BANK_RESULT_INVALID_PLAYER          (9)  // Player pointer is invalid
+# define FD_BANK_RESULT_NO_ACCOUNT              (10) // Player doesn't have an account in the bank
+# define FD_BANK_RESULT_INVALID_INPUT           (11) // Input was invalid, for example the amount of money was negative
+# define FD_BANK_RESULT_ALREADY_HAS_ACCESS      (12) // The player already has access to the specified account
+# define FD_BANK_RESULT_ALREADY_NO_ACCESS       (13) // The player doesn't have any access
+# define FD_BANK_RESULT_INVALID_ACCOUNT_TYPE    (14) // The account type does not allow this action
+
+/*@}*/
+
+const string@ FD_Bank_Result2String(uint res)
+{
+    if(res == FD_BANK_RESULT_SUCCESS)
+        return "FD_BANK_RESULT_SUCCESS";
+    else if(res == FD_BANK_RESULT_UNKNOWN)
+        return "FD_BANK_RESULT_UNKNOWN";
+    else if(res == FD_BANK_RESULT_TOO_MANY_ACCOUNTS)
+        return "FD_BANK_RESULT_TOO_MANY_ACCOUNTS";
+    else if(res == FD_BANK_RESULT_ALREADY_HAS_ACCOUNT)
+        return "FD_BANK_RESULT_ALREADY_HAS_ACCOUNT";
+    else if(res == FD_BANK_RESULT_NOT_ENOUGH_MONEY)
+        return "FD_BANK_RESULT_NOT_ENOUGH_MONEY";
+    else if(res == FD_BANK_RESULT_BANK_FULL)
+        return "FD_BANK_RESULT_BANK_FULL";
+    else if(res == FD_BANK_RESULT_BANK_EMPTY)
+        return "FD_BANK_RESULT_BANK_EMPTY";
+    else if(res == FD_BANK_RESULT_DATA_ERROR)
+        return "FD_BANK_RESULT_DATA_ERROR";
+    else if(res == FD_BANK_RESULT_INVALID_PLAYER)
+        return "FD_BANK_RESULT_INVALID_PLAYER";
+    else if(res == FD_BANK_RESULT_NO_ACCOUNT)
+        return "FD_BANK_RESULT_NO_ACCOUNT";
+    else
+        return "FD_Result: Unknown error code";
+}
+#endif

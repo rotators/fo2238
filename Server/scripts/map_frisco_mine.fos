@@ -1,0 +1,63 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_frisco_mine.fos
+//
+
+#include "_macros.fos"
+#include "elevators_h.fos"
+#include "reinforcements_h.fos"
+
+array<CElevator> Elevator(3);
+bool ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(firstTime)
+    {
+        if(proto == MAP_SanFranciscoMiningSite)
+        {
+            uint[] maxes = { 20, 15 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_SanFranciscoMiningSiteInside)
+        {
+            uint[] maxes = { 5, 15 };
+            SetAlertMap(map, maxes);
+        }
+    }
+
+    if(!ElevatorsAdded)
+    {
+        ElevatorsAdded = true;
+        for(uint i = 0; i < 3; i++)
+        {
+            Elevator[i].type = ELEVATOR_BOS_01;
+            AddElevator(Elevator[i]);
+        }
+    }
+
+    uint16 x = 0, y = 0;
+    for(uint i = 1; i <= 3; i++)
+    {
+        if(map.GetEntireCoords(i, 0, x, y))
+            Elevator[i - 1].AddFloor(map.Id, i);
+    }
+}
+
+void t_Elevator0(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator[0], critter, entered);
+}
+
+void t_Elevator1(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator[1], critter, entered);
+}
+
+void t_Elevator2(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator[2], critter, entered);
+}

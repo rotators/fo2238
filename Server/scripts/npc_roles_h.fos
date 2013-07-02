@@ -1,0 +1,154 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_roles_h.fos
+//
+
+// Some global/local NPC roles
+
+// Todo: rename some entires, like the ones with ROLE_ prefix
+
+// note: all roles commented as "shouter" must have different numbers too
+
+// IMPORTANT: Roomkeeper roles are global, roomkeepers on various maps cannot have same roles
+
+// Global Roles /////////////
+#define ROLE_CARAVAN_BOX                   (50) // Quest giver
+#define ROLE_TOWN_LEADER                   (60) // Leader/head of town. Used for TC.
+#define ROLE_FACTION_FARMER                (70)
+#define ROLE_BOS_OUTPOST_GUARD             (80)
+#define ROLE_MOB_WAVE                      (90)
+#define ROLE_MOB_MINE                      (91)
+/////////////////////////////
+
+// Junktown
+#define ROLE_JNK_GUARD_GATE                (1)
+#define ROLE_JNK_DRUNKPRIEST               (2) // shouter
+#define ROLE_JNK_ROOMKEEPER                (3)
+#define ROLE_JNK_GATE_GUARD_NORTH          (4)
+#define ROLE_JNK_GATE_GUARD_SOUTH          (5)
+#define ROLE_JNK_BAR                       (10) // People in the bar
+#define ROLE_JNK_NEAL                      (11) // Bar owner
+#define ROLE_JNK_TYLER                     (20) // Duel guy
+
+#define ROLE_JNK_GUARD_1                   (15)
+
+// VC
+#define ROLE_VC_GUARD_GATE                 (1)
+#define ROLE_VC_GUARD_HQ                   (2)
+#define ROLE_VC_GUARD_HQ_STAIRCASE         (3)
+#define ROLE_VC_GUARD_COUNCIL              (4)
+#define ROLE_VC_GUARD_VAULT                (5)
+#define ROLE_VC_GUARD_COURTYARD            (6)
+#define ROLE_VC_HQ_TURRET                  (7)
+#define ROLE_VC_LILLY                      (8) // Bitchizen lilly
+#define ROLE_VC_GUARD_PATROL1              (9)
+#define ROLE_VC_GUARD_PATROL2              (10)
+#define ROLE_VC_GUARD_COURTYARD_PATHS      (11)
+
+// Hub
+#define ROLE_HUB_SHERRIF                   (1)
+#define ROLE_HUB_ROOMKEEPER                (8)
+#define ROLE_HUB_BARMAN                    (3) // shouter
+#define ROLE_HUB_PETE                      (4) // shouter
+#define ROLE_HUB_ARENA_ADVERTISER          (6) // shouter
+#define ROLE_HUB_GUARD_ENTRANCE1           (20)
+#define ROLE_HUB_GUARD_ENTRANCE2           (21)
+#define ROLE_HUB_GUARD_ENTRANCE3           (22)
+#define ROLE_HUB_GUARD_ENTRANCE4           (23)
+#define ROLE_HUB_GUARD_BRAHMIN1            (24)
+#define ROLE_HUB_METROGUARD_1              (25)
+#define ROLE_HUB_METROGUARD_2              (26)
+
+// NCR
+#define ROLE_NCR_GUARD_PATROL1             (1)
+#define ROLE_NCR_ROOMKEEPER                (2)
+
+// NCR Mine
+#define ROLE_NCR_MINE_OVERSEER             (1)
+
+// NCR Prison
+#define ROLE_NCR_GUARD_PRISON_PATROL1      (1)
+#define ROLE_NCR_GUARD_PRISON_PATROL2      (2)
+#define ROLE_NCR_GUARD_PRISON_PATROL3      (3)
+#define ROLE_NCR_GUARD_PRISON_PATROL4      (4)
+#define ROLE_NCR_GUARD_PRISON_PATROL5      (5)
+#define ROLE_NCR_GUARD_PRISON_PATROL6      (6)
+#define ROLE_NCR_GUARD_PRISON_PATROL7      (7)
+#define ROLE_NCR_GUARD_PRISON_PATROL8      (8)
+#define ROLE_NCR_GUARD_PRISON_PATROL9      (9)
+#define ROLE_NCR_GUARD_PRISON_PATROL10     (10)
+#define ROLE_NCR_GUARD_PRISON_PATROL11     (11)
+#define ROLE_NCR_GUARD_PRISON_PATROL12     (12)
+#define ROLE_NCR_GUARD_PRISON_PATROL13     (13)
+#define ROLE_NCR_GUARD_PRISON_DOORGUARD    (14)
+
+// BoS, Lost Hills
+#define ROLE_BOS_ENTRANCE_GUARD            (1)
+#define ROLE_BOS_STORAGE_GUARD             (3)
+#define ROLE_BOS_COMPUTER_GUARD            (4)
+
+// Cathedral
+#define ROLE_CATHEDRAL_ANOTHER_GUARD       (5)
+#define ROLE_CATHEDRAL_WANDERING_GUARD     (100) // no idea who they are, but they are the ones moving randomly
+
+// Gunrunners
+#define ROLE_GUNRUNNERS_OHREALLY           (333) // needed for some dialog option
+
+// LA
+#define ROLE_LA_GUARD_PATROL1              (1)
+#define ROLE_LA_GUARD                      (2)
+
+// Navarro
+#define ROLE_NAV_GATEGUARD                 (1503)
+#define ROLE_NAV_GUARD                     (1505)
+#define ROLE_NAV_TURRET                    (5045)
+
+// Raiders
+#define ROLE_RAIDERS_CAVEGUARD             (2700) // these are somehow to dialogs, i think
+#define ROLE_RAIDERS_CAGEGUARD             (2720) // these are somehow to dialogs, i think
+
+// Klamath
+#define ROLE_KLAM_ROOMKEEPER               (1)
+
+// Redding
+#define ROLE_REDD_ROOMKEEPER               (4)
+
+// Modoc
+#define ROLE_MODOC_ROOMKEEPER              (5)
+
+// SF
+#define ROLE_SF_ROOMKEEPER                 (6)
+
+// Broken Hills
+#define ROLE_BH_ROOMKEEPER                 (7)
+
+// New Reno
+#define ROLE_NR_SHEB                       (5) // shouter
+
+// Arena
+#define ROLE_ARENA_GUARD_TALK              (1)
+
+// Quest locations
+// Caesars Legion Quest Ambush
+#define ROLE_AMBUSH_LEADER                 (1)
+
+// Cathedral Basement Monk
+#define ROLE_BASEMENT_MONK                 (1)
+
+// BoS bunker quest
+#define ROLE_ROBOBRAIN                     (1)
+#define ROLE_ROBOBRAIN_NODEACT             (2)
+
+// Sha-enin
+#define ROLE_SHA_ENIN                      (1)
+
+// NCR Rail Line Gang
+#define ROLE_RAILGANG_THUG                 (1)
+
+// Special Encounter Truck
+#define ROLE_TRUCK_THUG_GUARD              (1)
+#define ROLE_TRUCK_THUG                    (2)
+#define ROLE_TRUCK_THUG_DRIVER             (3)
+#define ROLE_TRUCK_THUG_LEADER             (4)

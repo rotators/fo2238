@@ -1,0 +1,57 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// attach.fos
+//
+
+// special scripts
+#include "_macros.fos"
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+
+#define RADIATION_LOOP        (Random(10000, 20000))     // Radiation damage time, in milliseconds
+#define RADIATION_DOSE_MIN    (1)
+#define RADIATION_DOSE_MAX    (5)
+
+void _RadiotationTwoRectangleZone(Map& map, bool firstTime)
+{
+    map.SetLoopTime(0, RADIATION_LOOP / 10);
+    map.SetData(0, RADIATION_DOSE_MIN * 10);
+    map.SetData(1, RADIATION_DOSE_MAX * 10);
+    map.SetEvent(MAP_EVENT_LOOP_0, "_MapLoop0TwoRectangleZone");
+}
+
+void _MapLoop0TwoRectangleZone(Map& map)
+{
+    AffectRadiotationTwoRectangleZoneCritters(map, 0);
+    map.SetLoopTime(0, RADIATION_LOOP / 20);
+}
+
+void AffectRadiotationTwoRectangleZoneCritters(Map& map, int value1)
+{
+    // prvni obdelnik
+    uint minX1 = 200;
+    uint minY1 = 150;
+    uint maxX1 = 210;
+    uint maxY1 = 182;
+    // druhy obdelnik
+    uint minX2 = 186;
+    uint minY2 = 150;
+    uint maxX2 = 200;
+    uint maxY2 = 194;
+
+    if(value1 == 0)
+        value1 = Random(map.GetData(0), map.GetData(1));
+
+    array<Critter@> critters;
+    map.GetCritters(0, FIND_LIFE_AND_KO, critters);
+    for(uint i = 0, j = critters.length(); i < j; i++)
+    {
+        if(critters[i].IsPlayer() && ((critters[i].HexX >= minX1 && critters[i].HexX <= maxX1 && critters[i].HexY >= minY1 && critters[i].HexY <= maxY1) ||
+                                      (critters[i].HexX >= minX2 && critters[i].HexX <= maxX2 && critters[i].HexY >= minY2 && critters[i].HexY <= maxY2)))
+        {
+            AffectRadiation(critters[i], value1);
+        }
+    }
+}

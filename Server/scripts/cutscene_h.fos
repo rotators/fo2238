@@ -1,0 +1,25 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cutscene_h.fos
+//
+
+#ifndef __CUTSCENE_H__
+#define __CUTSCENE_H__
+
+interface ICutScene
+{
+    int ID { get; }
+};
+
+#ifndef __CUTSCENE__
+
+import ICutScene@ NewCutScene(int id) from "cutscene";
+
+import void StartCutscene(Critter& cr) from "cutscene";
+import void RefreshCutscene(Critter& cr) from "cutscene";
+import void EndCutscene(Critter& cr) from "cutscene";
+import bool InsideCutscene(Critter& cr) from "cutscene";
+#endif // __CUTSCENE__
+#endif // __CUTSCENE_H__ //

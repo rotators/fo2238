@@ -1,0 +1,63 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_rocks_uranium.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+// import void ModifyInfluenceBuffer(Critter& cr, int value) from "town";
+
+#define STR_TEXT    (3031)
+
+int TotalCount = 0;
+
+void item_init(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItem");
+    item.SetEvent(ITEM_EVENT_FINISH, "_Finish");
+    if(firstTime && AMOUNT(item) == 0)
+        AMOUNT(item) = __UraniumCapacity;
+    TotalCount++;
+    StartRegeneration(item, "e_Regen");
+}
+
+void _Finish(Item& item, bool)
+{
+    TotalCount--;
+    ReduceCounter(PID_URANIUM_ORE, COUNTER(item));
+}
+uint e_Regen(array<uint>@ values)
+{
+    Item@ item = GetItem(values[0]);
+    if(!valid(item))
+        return 0;
+    Regenerate(item, PID_URANIUM_ORE, __UraniumCapacity, __UraniumRegen, TotalCount);
+    return RegenerationInterval;
+}
+
+class GatherCallback : IGatherCallback
+{
+    void Callback(Item& item, Critter& cr, Item@ usedItem)
+    {
+        cr.Animate(ANIM1_HAMMER, ANIM2_SWING_1H, usedItem, true, true);
+        if(cr.Mode[MODE_HIDE] != 0 && cr.GetAccess() < ACCESS_TESTER)
+            cr.ModeBase[MODE_HIDE] = 0;
+
+        // ModifyInfluenceBuffer(cr, 10);
+    }
+};
+GatherCallback Callback;
+
+bool _UseItem(Item& item, Critter& cr, Item@ usedItem)
+{
+    if(usedItem.GetProtoId() == PID_SLEDGEHAMMER ||
+       usedItem.GetProtoId() == PID_SUPER_SLEDGE ||
+       usedItem.GetProtoId() == PID_PRIMITIVE_TOOL)
+    {
+        return Gather(item, cr, usedItem, PID_URANIUM_ORE, __UraniumBatch, STR_TEXT, STR_PROD_DEPLETED, Callback);
+    }
+    return false;
+}

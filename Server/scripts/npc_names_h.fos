@@ -1,0 +1,1023 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_names_h.fos
+//
+
+#ifndef __NPC_NAMES_H__
+#define __NPC_NAMES_H__
+
+#define NICK_CHANCE          (7)
+#define GENDERNICK_CHANCE    (35)
+
+#ifndef __NPC_NAMES__
+// helpers
+// get random name from table
+import string GetRandomFirstName(uint gender) from "npc_names";
+import string GetRandomFirstName(uint gender, int& index) from "npc_names";
+// get random nick from table
+import string GetRandomNick(uint gender) from "npc_names";
+// get random surname from table
+import string GetRandomSurname() from "npc_names";
+// get random name+(nick)+surname from table
+import string GetRandomFullName(uint gender) from "npc_names";
+import string GetRandomFullName(uint gender, int& firstName, bool& genderNick, int& nick, int& surname) from "npc_names";
+
+// retrieve name
+import string GetFirstName(uint gender, uint index) from "npc_names";
+import string GetNick(uint gender, uint index, bool genderNick) from "npc_names";
+import string GetSurname(uint index) from "npc_names";
+
+// other
+// save all possible combinations in logs/npc_names.log
+import void LogNames(bool printNames) from "npc_names";
+// ~run npc_names lognames 0 0 0 -- same as LogNames()
+#endif
+
+#ifdef __NPC_NAMES__
+string[] male =
+{
+    "Alan",
+    "Alex",
+    "Alexander",
+    "Angus",
+    "Andrei",
+    "Angelo",
+    "Anthony",
+    "Anton",
+    "Arnold",
+
+    "Barney",
+    "Bob",
+    "Boris",
+    "Brad",
+    "Brian",
+    "Bruce",
+    "Bruno",
+    "Bryan",
+    "Buck",
+
+    "Carl",
+    "Carlos",
+    "Charles",
+    "Charlie",
+    "Chris",
+    "Christopher",
+    "Colin",
+    "Corey",
+    "Curtis",
+
+    "Damien",
+    "Daniel",
+    "Danny",
+    "Darryl",
+    "Dave",
+    "David",
+    "Dennis",
+    "Dimitri",
+    "Donald",
+    "Donte",
+    "Douglas",
+    "Dusty",
+
+    "Ed",
+    "Eddie",
+    "Edward",
+    "Eric",
+    "Evan",
+
+    "Feargus",
+    "Francis",
+    "Frank",
+    "Fred",
+    "Freddy",
+
+    "Gary",
+    "George",
+    "Gordon",
+    "Gerald",     // :)
+    "Greg",
+    "Gregory",
+    "Guybrush",   // :)
+
+    "Harry",
+    "Henry",
+    "Hoss",
+    "Howard",
+
+    "Igor",
+    "Ike",
+    "Ivan",
+
+    "Jack",
+    "Jacob",
+    "James",
+    "Jamie",
+    "Jaroslav",
+    "Jason",
+    "Jay",
+    "Jeffrey",
+    "Jerry",
+    "Jesse",
+    "Jim",
+    "Jimmy",
+    "Joe",
+    "John",
+    "Johny",
+    "Jose",
+    "Joseph",
+
+    "Keith",
+    "Kenneth",
+    "Kevin",
+    "Kriss",
+    "Kurt",
+
+    "Larry",
+    "Lawrence",
+    "Lenny",
+    "Leo",
+    "Leonard",
+    "Leroy",
+
+    "Mark",
+    "Marko",
+    "Martin",
+    "Matt",
+    "Max",
+    "Michael",
+    "Mick",
+    "Mitch",
+    "Morgan",
+
+    "Nick",
+    "Norman",
+    "Norton",
+
+    "Otto",
+
+    "Patrick",
+    "Paul",
+    "Pete",
+    "Peter",
+    "Phil",
+    "Philip",
+
+    "Quentin",
+
+    "Randy",
+    "Ray",
+    "Raymond",
+    "Richard",
+    "Rick",
+    "Ricky",
+    "Rob",
+    "Robert",
+    "Rod",
+    "Rodd",
+    "Roger",
+    "Roland",
+    "Ron",
+    "Ronny",
+    "Ronald",
+    "Ross",
+    "Ryan",
+
+    "Sam",
+    "Scott",
+    "Scotty",
+    "Sean",
+    "Sergei",
+    "Simon",
+    "Stephen",
+    "Steve",
+    "Steven",
+
+    "Tamir",
+    "Ted",
+    "Terry",
+    "Theo",
+    "Thomas",
+    "Tim",
+    "Timmy",
+    "Timothy",
+    "Tom",
+    "Tony",
+    "Trevor",
+    "Tyrone",
+
+    "Victor",
+    "Vincent",
+    "Vinnie",
+    "Vlad",
+    "Vladimir",
+    "Vladislav",
+
+    "Wayne",
+    "Will",
+    "William",
+
+    "Zachary",
+    "Zack"
+};
+
+string[] female =
+{
+    "Ada",
+    "Agness",
+    "Alena",
+    "Alexis",
+    "Alisha",
+    "Alvina",
+    "Alyssa",
+    "Amber",
+    "Amy",
+    "Andrea",
+    "Angela",
+    "Angelina",
+    "Anissa",
+    "Anja",
+    "Anna",
+    "Anya",
+    "April",
+    "Arin",
+    "Ashley",
+    "Avrele",
+
+    "Barbara",
+    "Beth",
+    "Bethany",
+    "Beverly",
+
+    "Carmen",
+    "Carrie",
+    "Chelsea",
+    "Cheri",
+    "Cheryl",
+    "Christine",
+    "Christy",
+    "Cindy",
+    "Courtney",
+    "Cynthia",
+
+    "Darcy",
+    "Danielle",
+    "Debi",
+    "Deina",
+    "Debbie",
+    "Deborah",
+    "Debra",
+    "Delaney",
+    "Denise",
+    "Donna",
+    "Dora",
+
+    "Elina",
+    "Eliza",
+    "Ellen",
+    "Emily",
+    "Emma",
+    "Erica",
+    "Eve",
+    "Evelyn",
+
+    "Felice",
+    "Felicia",
+    "Flora",
+    "Frances",
+
+    "Georgia",
+    "Glenda",
+    "Gwen",
+
+    "Hanna",
+    "Hattie",
+    "Heidi",
+    "Helen",
+    "Holly",
+
+    "Irene",
+    "Isabela",
+    "Isabelle",
+
+    "Jacklyn",
+    "Janet",
+    "Janice",
+    "Jeanne",
+    "Jennifer",
+    "Jenn",
+    "Jenny",
+    "Jill",
+    "Jillian",
+    "Jo",
+    "Joyce",
+    "Judith",
+    "Judy",
+    "Julia",
+
+    "Karen",
+    "Karmin",     // :)
+    "Kate",
+    "Kathy",
+    "Katie",
+    "Katja",
+    "Katrese",
+    "Kelly",
+    "Kim",
+    "Kimberly",
+
+    "Lacey",
+    "Larissa",
+    "Laura",
+    "Lena",
+    "Leslie",
+    "Lily",
+    "Lina",
+    "Linda",
+    "Lisa",
+    "Liz",
+    "Lori",
+    "Lucy",
+    "Lynn",
+
+    "Madeline",
+    "Margeret",
+    "Marilyn",
+    "Martha",
+    "Mary",
+    "Meryl",     // :)
+    "Michelle",
+    "Mina",
+    "Miroslava",
+
+    "Nadia",
+    "Nancy",
+    "Naomi",
+    "Natasha",
+    "Nikita",
+    "Niki",
+    "Nikki",
+    "Nina",
+
+    "Ophelia",
+    "Olga",
+
+    "Pam",
+    "Pamela",
+    "Patricia",
+    "Patty",
+    "Paula",
+
+    "Rebecca",
+    "Roberta",
+    "Rose",
+    "Ruth",
+
+    "Sally",
+    "Sarah",
+    "Sasha",
+    "Secily",
+    "Sharon",
+    "Sharonna",
+    "Shawne",
+    "Shekira",
+    "Sherie",
+    "Shirley",
+    "Silvia",
+    "Simone",
+    "Sonia",
+    "Sonya",
+    "Stacy",
+    "Sue",
+    "Susan",
+    "Suzy",
+    "Svetlana",
+
+    "Tamara",
+    "Tara",
+    "Tanya",
+    "Tatyana",
+    "Tawni",
+    "Thelma",
+    "Tisha",
+    "Tonya",
+    "Traci",
+    "Trish",
+    "Trisha",
+
+    "Vanessa",
+    "Velvet",
+    "Veronica",
+    "Victoria",
+    "Virginia",
+    "Viviana",
+
+    "Yvonne",
+
+    "Zita"
+};
+
+/*
+   "'British Soot'"
+   "'Silver Bullet'"
+   "'The Frisco Kid'"
+   "'Flying Eagle'"
+   "'Flying Hawk'"
+   "'Looks Cloud'"
+   "'Apache'"
+   "'Feather'"
+   "'Sky Man'"
+   "'Sleeping Badger'"
+   "'Slithering Snake'"
+   "'Sly Snake'"
+   "'Snarling Wolf'"
+   "'Soaring Eagle'"
+   "'Soaring Hawk'"
+   "'Southern Paw'"
+   "'Spotted Eagle'"
+   "'Spotted Horn Bull'"
+   "'Slit Throat'"
+   "'Dances with Molerat'"
+   "'Leaping Lizard'"
+   "'Chubb'"
+   "'Paiute'"
+   "'Topper'"
+   "'Buckshot'"
+   "'White Dust'"
+ */
+
+string[] nick =
+{
+    "A.",
+    "B.",
+    "C.",
+    "D.",
+    "E.",
+    "F.",
+    "G.",
+    "H.",
+    "I.",
+    "J.",
+    "K.",
+    "L.",
+    "M.",
+    "N.",
+    "O.",
+    "P.",
+    "R.",
+    "S.",
+    "T.",
+    "W.",
+
+    "'Alamo'",
+    "'Avenger'",
+
+    "'Black Hand'",
+
+    "'Flying Arrow'",
+
+    "'Goodnight'",
+
+    "'Ko-Ko'",
+
+    "'Lightnin`'",
+
+    "'Meat Missile'",
+
+    "'Night Spirit'",
+
+    "'Phantom'",
+
+    "'Rising Sun'",
+
+    "'Shadow'",
+    "'Smoke'",
+    "'Snake'",
+
+    "'Tornado'",
+
+    "'Wolf'"
+};
+
+string[] malenick =
+{
+    "'Ace'",
+    "'Alpha'",
+
+    "'Big Stu'",
+    "'Black Jack'",
+    "'Bull'",
+    "'Butcher'",
+
+    "'Cactus'",
+    "'Curley'",
+
+    "'Duke'",
+
+    "'El Diablo'",
+
+    "'Flying Rock'",
+
+    "'Ginger'",
+
+    "'Joker'",
+    "Junior",
+
+    "'Looser'",
+
+    "'Mad Dog'",
+    "'Monkey Boy'",
+
+    "'Raven'",
+    "'Razor'",
+    "'Romeo'",
+
+    "'Shalashaska'",     // :)
+    "'Sheik'",
+    "'Snake'",
+    "'Speedy Bear'",
+    "'Spirit Dog'",
+
+    "'Tiger'",
+    "'Two-Minutes'",
+
+    "'Widow Maker'"
+};
+
+string[] femalenick =
+{
+    "'Angel'",
+
+    "'Big Mama'",
+    "'Black Rose'",
+    "'Blind Date'",
+
+    "'Dee-Dee'",
+
+    "'Fox'",
+    "'Foxy'",
+
+    "'Ice Queen'",
+
+    "'Kitty'",
+
+    "'Lovelace'",     // :)
+    "'Lucky Eye'",
+
+    "'Milady'",
+    "'Mommy'",
+    "'Mynx'",
+
+    "'Opium'",
+
+    "'Sleeping Beauty'",
+    "'Snow'",
+    "'Spray'",
+    "'Sugar'",
+    "'Summer'",
+    "'Sun'",
+    "'Sunlight'",
+
+    "'Witch'"
+};
+
+string[] surname =
+{
+    "Aaron",
+    "Aarons",
+    "Abbot",
+    "Abernethy",
+    "Adams",
+    "Adamson",
+    "Akerman",
+    "Allen",
+    "Ames",
+    "Amesbury",
+    "Ancliff",
+    "Anderson",
+    "Andrews",
+    "Aneley",
+    "Ankers",
+    "Annderton",
+    "Anset",
+    "Anshell",
+    "Anthiftle",
+    "Apsley",
+    "Armer",
+    "Armstrong",
+    "Arnell",
+    "Arnett",
+    "Arnott",
+    "Ashbury",
+    "Ashfield",
+    "Atherley",
+    "Atter",
+    "Attfield",
+    "Attridge",
+    "Attwood",
+    "Aubrey",
+    "Auger",
+    "Aulsford",
+    "Ayres",
+
+    "Babbet",
+    "Babbs",
+    "Bachman",
+    "Backwell",
+    "Backote",
+    "Badley",
+    "Bailey",
+    "Baker",
+    "Bannister",
+    "Barnes",
+    "Barwiss",
+    "Baskerville",
+    "Bassett",
+    "Bate",
+    "Bates",
+    "Battie",
+    "Becker",
+    "Bell",
+    "Benford",
+    "Bennett",
+    "Benton",
+    "Berkeley",
+    "Birks",
+    "Black",
+    "Blacksmith",
+    "Blackwood",
+    "Blade",
+    "Blaine",
+    "Blake",
+    "Blakemore",
+    "Blanton",
+    "Bloodworth",
+    "Blyth",
+    "Bollinger",
+    "Bolt",
+    "Bonny",     // :)
+    "Boon",
+    "Bordley",
+    "Bouley",
+    "Bowler",
+    "Boyd",
+    "Boyfield",
+    "Bowton",
+    "Bowyer",
+    "Braddock",
+    "Bradley",
+    "Brady",
+    "Breedlove",
+    "Brooks",
+    "Brown",
+    "Bradbury",
+    "Bryant",
+    "Burgess",
+    "Burns",
+    "Burton",
+    "Buster",
+    "Buston",
+    "Butler",
+
+    "Cadd",
+    "Cadell",
+    "Caiger",
+    "Calvey",
+    "Calveley",
+    "Cambell",
+    "Campbell",
+    "Carpenter",
+    "Carmack",     // :]
+    "Carroll",
+    "Carson",
+    "Carter",
+    "Cassil",     // :)
+    "Catterwood",
+    "Chasey",
+    "Chavez",
+    "Clarkson",
+    "Clavey",
+    "Clayton",
+    "Cole",
+    "Coleman",
+    "Collet",
+    "Collins",
+    "Cook",
+    "Cooper",
+    "Copper",
+    "Copps",
+    "Copson",
+    "Cossins",
+    "Costelle",
+    "Coundley",
+    "Cox",
+    "Coyle",
+    "Crawford",
+    "Cruz",
+    "Cunningham",
+
+    "Dalton",
+    "Daniels",
+    "Davis",
+    "Delaney",
+    "Dellinger",
+    "Diaz",
+    "Dixon",
+    "Dorey",
+    "Dunn",
+    "Dvorak",     // :)
+
+    "Edwards",
+    "Ellis",
+    "Evans",
+
+    "Ferguson",
+    "Finch",
+    "Fisher",
+    "Floe",     // :)
+    "Flores",
+    "Fogarty",
+    "Ford",
+    "Foster",
+    "Fox",
+    "Freeman",
+
+    "Garcia",
+    "Gardner",
+    "Gartner",
+    "Gibson",
+    "Gillat",
+    "Gleen",
+    "Glinsey",
+    "Gomez",
+    "Gondalez",
+    "Graham",
+    "Grant",
+    "Gray",
+    "Green",
+    "Greene",
+    "Griffin",
+
+    "Hall",
+    "Hamazaki",
+    "Hammilton",
+    "Harper",
+    "Harris",
+    "Harrison",
+    "Hart",
+    "Hawke",     // :)
+    "Hawkins",
+    "Hayes",
+    "Henderson",
+    "Hernandez",
+    "Hicks",
+    "Higgs",     // :)
+    "Hill",
+    "Holmes",
+    "Howerty",
+    "Hudson",
+    "Hughes",
+    "Hunt",
+
+    "Ishikawa",
+
+    "Jackson",
+    "Janitz",
+    "Jenkins",
+    "Jensen",
+    "Jobbs",
+    "Johns",
+    "Johnson",
+    "Jones",
+
+    "Karnatz",
+    "Karnette",
+    "Keddie",
+    "Keith",
+    "Keller",
+    "Kelley",
+    "Kent",
+    "King",
+    "Kirschenbaum",
+    "Knight",
+    "Knox",
+    "Kowalsky",
+
+    "LaMotta",
+    "Lane",
+    "Lang",
+    "Lark",
+    "Larkin",
+    "Larkins",
+    "Larson",
+    "Lawson",
+    "Lee",
+    "Leishan",
+    "Lewis",
+    "Linner",
+    "Linsell",
+    "Lobb",
+    "Long",
+    "Lopez",
+    "Lutton",
+    "Lutz",
+
+    "Mankowitz",
+    "Marshall",
+    "Martinez",
+    "Matthews",
+    "Mayer",
+    "McAbbot",
+    "McBain",
+    "McDonald",
+    "McGee",
+    "McGinley",
+    "McKenney",
+    "McKneely",
+    "Mifsud",
+    "Miller",
+    "Mills",
+    "Mitchell",
+    "Moore",
+    "Morales",
+    "Morgan",
+    "Morris",
+    "Murphy",
+    "Murray",
+    "Myers",
+    "Myren",
+
+    "Nakamura",
+    "Nelson",
+    "Netanyahu",
+    "Nettle",
+    "Netting",
+    "Nevil",
+    "Neville",
+    "Newby",
+    "Newman",
+    "Nguyen",
+    "Nicholds",
+    "Nicholl",
+    "Nicholls",
+    "Nichols",
+    "Nicholson",
+    "Nickalls",
+    "Nickel",
+    "Nickell",
+    "Nickells",
+    "Nickels",
+    "Nickerson",
+    "Nickinson",
+    "Nickle",
+    "Nickless",
+    "Nickolds",
+    "Nickolls",
+    "Nickols",
+    "Nicks",
+    "Nickson",
+    "Nicol",
+    "Nicoll",
+    "Nicolls",
+    "Nicolson",
+    "Nixson",
+    "Nobb",
+    "Nobbs",
+    "Nobes",
+    "Nolan",
+    "Norrie",
+    "Notaras",
+    "Nutter",
+
+    "O'Bree",
+    "O'Brian",
+    "O'Connell",
+    "O'Connor",
+    "O'Doherty",
+    "O'Hara",
+    "Offner",
+    "Okamoto",
+    "Olsen",
+    "Ongley",
+    "Ortis",
+    "Ortiz",
+    "Orton",
+    "Owens",
+    "Orr",
+
+    "Palmer",
+    "Pannell",
+    "Parker",
+    "Paterson",
+    "Patterson",
+    "Payne",
+    "Perez",
+    "Perkins",
+    "Peters",
+    "Peterson",
+    "Phillips",
+    "Pierce",
+    "Porter",
+    "Powell",
+    "Price",
+    "Pyle",
+
+    "Raines",
+    "Raikov",     // :)
+    "Ramirez",
+    "Ramos",
+    "Red",
+    "Reed",
+    "Reyes",
+    "Reynolds",
+    "Rice",
+    "Richardson",
+    "Riley",
+    "Rivera",
+    "Roberts",
+    "Robertson",
+    "Robinson",
+    "Roddy",
+    "Rodriguez",
+    "Romero",     // :]
+    "Rogers",
+    "Ruff",
+    "Ruiz",
+    "Russel",
+
+    "Sanchez",
+    "Sanders",
+    "Schiavo",
+    "Schlegel",
+    "Shaw",
+    "Simmons",
+    "Simpson",
+    "Sims",
+    "Smith",
+    "Snyder",
+    "Spencer",
+    "Stephens",
+    "Sterling",
+    "Steward",
+    "Stevens",
+    "Stinnett",
+    "Stinson",
+    "Stone",
+    "Sullivan",
+
+    "Tatler",
+    "Taylor",
+    "Thompson",
+    "Threepwood",     // :)
+    "Tobias",
+    "Torrance",
+    "Torres",
+    "Tucker",
+    "Turner",
+    "Twydell",
+
+    "Umbers",
+    "Underhill",
+    "Underwood",
+    "Uttley",
+
+    "Valenti",
+    "Varley",
+    "Varon",
+    "Vickerman",
+    "Vickers",
+    "Vines",
+    "Vixen",
+    "Vraithwaite",
+
+    "Wagner",
+    "Wallace",
+    "Walker",
+    "Ward",
+    "Warden",
+    "Warren",
+    "Washington",
+    "Watkins",
+    "Watkinson",
+    "Weaver",
+    "Webb",
+    "West",
+    "Watson",
+    "Webb",
+    "Wells",
+    "White",
+    "Williams",
+    "Willis",
+    "Willits",
+    "Wilson",
+    "Wood",
+    "Woods",
+    "Wright",
+
+    "Yamoto",
+    "Yarnowich",
+    "Young"
+};
+#endif // __NPC_NAMES__
+#endif // __NPC_NAMES_H__ //

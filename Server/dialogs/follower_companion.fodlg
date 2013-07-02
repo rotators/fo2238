@@ -1,0 +1,213 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _script follower@d_IsOwner 1 1 R _script follower@r_SetFaction 0  #
+10 1020 @
+2 2000 follower@dlg_ShowLoyality 0 #
+6 2010 D _script follower@d_IsNotMode 1 2 D _script follower@d_CanStay 0  R _script follower@r_FollowMode 1 2 #
+5 2020 D _script follower@d_IsNotMode 1 0 D _script follower@d_CanLeadMoreFollowers 0  D _script follower@d_IsNotMode 1 1 R _script follower@r_FollowMode 1 0 #
+7 2030 R _script npc_common@r_MoveRandom 1 0 #
+3 2040 #
+4 2050 #
+9 2060 D _script town@d_CanBecomeMilitia 0  R _script town_militia@r_BecomeMilitia 0  #
+18 2070 #
+17 2080 #
+20 2090 #
+2 2100 R _script follower@r_TellWeaponSkill 0  #
+7 2110 R _script follower@r_ArmBestWeapon 0  #
+7 2120 R _script follower@r_PutDownWeapon 0  #
+65506 2130 #
+0 2140 @
+3 3000 None 0 #
+2 3010 R _script follower@r_Distance 1 0 #
+2 3020 R _script follower@r_Distance 1 1 #
+2 3030 R _script follower@r_Distance 1 2 @
+4 4000 None 0 #
+2 4010 R _script follower@r_AttackPolicy 1 0 #
+2 4020 R _script follower@r_AttackPolicy 1 7 #
+2 4030 R _script follower@r_AttackPolicy 1 6 #
+2 4040 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 2 #
+2 4050 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 3 #
+2 4060 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 4 #
+2 4070 D _param p ST_STRENGTH > 99 R _script follower@r_AttackPolicy 1 5 @
+5 5000 None 0 #
+0 5010 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 @
+10 8000 None 0 @
+11 9000 None 0 #
+2 9010 @
+12 10000 None 0 #
+2 10010 @
+13 11000 None 0 #
+2 11010 @
+14 12000 None 0 #
+2 12010 @
+15 13000 None 0 #
+2 13010 @
+16 14000 None 0 #
+2 14010 @
+17 15000 None 0 #
+2 15010 D _script follower@d_IsSpawnPlaceAvailable 1 1 R _script follower@r_SetSpawnPlace 1 1 #
+2 15020 D _script follower@d_IsSpawnPlaceAvailable 1 2 R _script follower@r_SetSpawnPlace 1 2 #
+19 15030 D _script follower@d_IsSpawnPlaceAvailable 1 3 R _script follower@r_SetSpawnPlace 1 3 #
+2 15040 @
+18 16000 None 0 #
+22 16010 #
+2 16020 D _item n PID_PURPLE_ROBE > 0 R _script follower@r_SetArmor 1 113 #
+2 16030 D _item n PID_SAND_ROBE > 0 R _script follower@r_SetArmor 1 750 #
+2 16040 D _item n PID_LEATHER_JACKET > 0 R _script follower@r_SetArmor 1 74 #
+2 16050 D _item n PID_LEATHER_ARMOR > 0 R _script follower@r_SetArmor 1 1 #
+2 16060 D _item n PID_LEATHER_ARMOR_MK_II > 0 R _script follower@r_SetArmor 1 379 #
+2 16070 D _item n PID_CURED_LEATHER_ARMOR > 0 R _script follower@r_SetArmor 1 265 #
+2 16080 D _item n PID_METAL_ARMOR > 0 R _script follower@r_SetArmor 1 2 #
+2 16090 D _item n PID_METAL_ARMOR_MK_II > 0 R _script follower@r_SetArmor 1 380 #
+2 16100 D _item n PID_TESLA_ARMOR > 0 R _script follower@r_SetArmor 1 240 #
+2 16110 D _item n PID_COMBAT_ARMOR > 0 R _script follower@r_SetArmor 1 17 #
+2 16120 D _item n PID_COMBAT_ARMOR_MK_II > 0 R _script follower@r_SetArmor 1 381 #
+2 16130 D _item n PID_NCR_ARMOR > 0 R _script follower@r_SetArmor 1 9654 #
+2 16140 D _item n PID_BROTHERHOOD_COMBAT_ARMOR > 0 R _script follower@r_SetArmor 1 239 #
+2 16150 R _script follower@r_RemoveArmor 0  #
+2 16160 @
+19 17000 follower@dlg_ChooseBase 0 #
+2 17010 @
+20 18000 None 0 #
+21 18010 D _item p PID_NUKA_COLA > 0 R _script follower@r_IncreaseLoyality 2 1 2 R _item p PID_NUKA_COLA - 1 #
+21 18020 D _item p PID_BEER > 0 R _script follower@r_IncreaseLoyality 2 1 2 R _item p PID_BEER - 1 #
+21 18030 D _item p PID_COOKIE > 0 R _script follower@r_IncreaseLoyality 2 1 2 R _item p PID_COOKIE - 1 #
+21 18040 D _item p PID_IGUANA_ON_A_STICK > 0 R _script follower@r_IncreaseLoyality 2 1 2 R _item p PID_IGUANA_ON_A_STICK - 1 #
+21 18050 D _item p PID_BOOZE > 0 R _script follower@r_IncreaseLoyality 2 1 2 R _item p PID_BOOZE - 1 @
+21 19000 None 0 #
+20 19010 #
+2 19020 @
+22 20000 None 0 #
+18 20010 #
+2 20020 D _item n PID_LEATHER_JACKET_HELMET > 0 R _script follower@r_SetHelmet 1 728 #
+2 20030 D _item n PID_COMBAT_LEATHER_JACKET_HELMET > 0 R _script follower@r_SetHelmet 1 729 #
+2 20040 D _item n PID_LEATHER_ARMOR_HELMET > 0 R _script follower@r_SetHelmet 1 730 #
+2 20050 D _item n PID_LEATHER_ARMOR_HELMET_MK2 > 0 R _script follower@r_SetHelmet 1 731 #
+2 20060 D _item n PID_METAL_HELMET > 0 R _script follower@r_SetHelmet 1 732 #
+2 20070 D _item n PID_METAL_HELMET_MK2 > 0 R _script follower@r_SetHelmet 1 733 #
+2 20080 D _item n PID_TESLA_HELMET > 0 R _script follower@r_SetHelmet 1 734 #
+2 20090 D _item n PID_COMBAT_HELMET > 0 R _script follower@r_SetHelmet 1 725 #
+2 20100 D _item n PID_COMBAT_HELMET_MK_II > 0 R _script follower@r_SetHelmet 1 726 #
+2 20110 D _item n PID_BROTHERHOOD_HELMET > 0 R _script follower@r_SetHelmet 1 727 #
+2 20120 R _script follower@r_RemoveHelmet 0  #
+2 20130 &
+
+[engl]
+{100}{}{Wastelander}
+{200}{}{You see @lex name@, a well-travelled wastelander.}
+{210}{}{You see @lex name@, a well-travelled wastelander.}
+{240}{}{You see a dead @lex name@.}
+{250}{}{You see a dead @lex name@.}
+{260}{}{You see a dead @lex name@.}
+{270}{}{You see a dead @lex name@.}
+{1000}{}{Predialogue installations}
+{1010}{}{ Is owner}
+{1020}{}{Not owner}
+{2000}{}{What's up?
+@lex loyality@@@Yes my friend?
+@lex loyality@}
+{2010}{}{Stay here.}
+{2020}{}{Let's get going.}
+{2030}{}{You're blocking my way, could you please move?}
+{2040}{}{I want to talk to you about distance.}
+{2050}{}{I want to talk about combat.}
+{2060}{}{I want you to join the local militia to protect this town.}
+{2070}{}{Let's talk about your armor.}
+{2080}{}{If we ever get separated, I think we should agree to meet up at some place.}
+{2090}{}{I have some food for you.}
+{2100}{}{What kind of weapons are you most proficient with?}
+{2110}{}{Arm yourself.}
+{2120}{}{Put down your weapon.}
+{2130}{}{Let's see if we can exchange some stuff.}
+{2140}{}{Nevermind.}
+{3000}{}{Sure, how far do you want me to be?}
+{3010}{}{Stay close to me.}
+{3020}{}{Stick at medium range.}
+{3030}{}{Keep your distance, try and snipe them.}
+{4000}{}{I see, and what is it you want me to do?}
+{4010}{}{Protect me. Attack anyone who attacks us, unless it's our friend.}
+{4020}{}{Protect me and my land. I don't take kindly to strangers lurking 'bout.}
+{4030}{}{Stay out of combat, flee if hostile contacts are spotted.}
+{4040}{}{Kill any NPC you see. (disabled)}
+{4050}{}{Kill anyone, but don't touch me or my friends. (disabled)}
+{4060}{}{Attack enemies of our faction. (disabled)}
+{4070}{}{Attack anyone who isn't a member of our faction (disabled)}
+{5000}{}{Goddamn it, finally. Let's get going. I was starting to think you were dead or something.}
+{5010}{}{Alright.}
+{6000}{}{You're shittin' me, right? Fine. I guess I'll just wait here, then.}
+{6010}{}{See you later.}
+{7000}{}{Sure pal.@@I'll do anything for a friend like you}
+{8000}{}{Who are you?@@Who do you think you are?}
+{9000}{}{I prefer using my knuckles to beat the shit out of folks.}
+{9010}{}{Alright}
+{10000}{}{Give me a spear or a sledgehammer and I'm happy}
+{10010}{}{Alright.}
+{11000}{}{I like using shotguns, pistols and assault rifles. That sort of stuff.}
+{11010}{}{Alright.}
+{12000}{}{There's nothing better than seeing burning foes dance! Give me flamethrower or rocket launcher and I'm sold.}
+{12010}{}{Haha, I see.}
+{13000}{}{If I could, I'd rather zap my enemies with a laser pistol or something similar.}
+{13010}{}{Alright.}
+{14000}{}{Do I need to tell you that I love the smell of frag granades in the morning?}
+{14010}{}{Alright.}
+{15000}{}{Sure, where should we meet?}
+{15010}{}{It would be best if we could meet at the tent camp.}
+{15020}{}{At the hotel that I've rented.}
+{15030}{}{At a faction base.}
+{15040}{}{Nevermind, I forgot what to say.}
+{16000}{}{Which armor do you think I should wear?}
+{16010}{}{I think you should rather change your helmet.}
+{16020}{}{Robes.}
+{16030}{}{Sand Robes.}
+{16040}{}{Leather Jacket.}
+{16050}{}{Leather Armor.}
+{16060}{}{Leather Armor Mark II.}
+{16070}{}{Combat Leather Jacket.}
+{16080}{}{Metal Armor}
+{16090}{}{Metal Armor Mark II.}
+{16100}{}{Tesla Armor.}
+{16110}{}{Combat Armor.}
+{16120}{}{Combat Armor Mark II.}
+{16130}{}{NCR Ranger Armor.}
+{16140}{}{Brotherhood Armor.}
+{16150}{}{Remove your current armor.}
+{16160}{}{Nevermind.}
+{17000}{}{Which one? [Type the name of the base]
+-- Faction bases -- 
+@lex bases@}
+{17010}{}{Alright.}
+{18000}{}{Sure, what do you have?}
+{18010}{}{Here, take this bottle of Nuka.}
+{18020}{}{Hey, I've got a bottle of fresh beer.}
+{18030}{}{Looks like I've got a cookie leftover.}
+{18040}{}{Have this Iguana-on-a-stick, it's delicious!}
+{18050}{}{Here's some hard booze, hope you like it.}
+{19000}{}{Thanks, that's delicious!@@Yum yum!@@You have a great taste when it comes to food!}
+{19010}{}{Want some more?}
+{19020}{}{Let's see now...}
+{20000}{}{Which helmet do you think i should use?}
+{20010}{}{Let's talk about your armor again.}
+{20020}{}{Leather Helmet.}
+{20030}{}{Combat Leather Helmet.}
+{20040}{}{Leather Armor Helmet.}
+{20050}{}{Leather Armor Helmet Mark II.}
+{20060}{}{Metal Mask.}
+{20070}{}{Metal Mask Mark II.}
+{20080}{}{Tesla Helmet.}
+{20090}{}{Combat Helmet.}
+{20100}{}{Combat Helmet Mark II.}
+{20110}{}{Brotherhood Helmet.}
+{20120}{}{Remove your current helmet.}
+{20130}{}{Nevermind.}
+{100000001}{}{Time to kick some asses . . .@@Is it time again?@@It's time again!}
+

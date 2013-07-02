@@ -1,0 +1,26 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_dynamic_h.fos
+//
+
+#ifndef __ITEM_DYNAMIC_H__
+#define __ITEM_DYNAMIC_H__
+
+#ifndef __ITEM_DYNAMIC__
+
+import bool IsDynamicItem(Item& item) from "item_dynamic";
+import bool IsDynamicItem(Item& item, uint16 pid) from "item_dynamic";
+
+import bool ContainsDynamicItems(Location& location, uint16 pid) from "item_dynamic";
+import bool ContainsDynamicItems(Map& map, uint16 pid) from "item_dynamic";
+
+import void ShowAllDynamicItems(Location& location, uint16 pid) from "item_dynamic";
+import void ShowAllDynamicItems(Map& map, uint16 pid) from "item_dynamic";
+import void ShowAllDynamicItems(Location& location, uint16 pid, uint& found, uint& shown) from "item_dynamic";
+import void ShowAllDynamicItems(Map& map, uint16 pid, uint& found, uint& shown) from "item_dynamic";
+
+import bool ShowDynamicItem(Item& item) from "item_dynamic";
+#endif // __ITEM_DYNAMIC
+#endif // __ITEM_DYNAMIC_H__ //

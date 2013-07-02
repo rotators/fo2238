@@ -1,0 +1,69 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// npc_common_h.fos
+//
+
+#ifndef __NPC_COMMON_H__
+#define __NPC_COMMON_H__
+
+#define ATTACK_REASON_ATTACKING    (0)
+#define ATTACK_REASON_STEALING     (1)
+#define ATTACK_REASON_BLOCKING     (2)
+
+#define ILLEGAL_FLAG_STEALING      (0x00000001)
+#define ILLEGAL_FLAG_ATTACKING     (0x00000002)
+#define ILLEGAL_FLAG_BLOCKING      (0x00000004)
+#define ILLEGAL_FLAG_EXPLOSIVES    (0x00000008)
+
+#define IsDueling                  # (cr) (GetLvar(cr, LVAR_duel_status) == 1)
+
+#ifndef __NPC_COMMON__
+
+import void   AddWaitPlan(Critter& critter, uint waittime) from "npc_common";
+import bool   AttackCritter(Critter& attacker, Critter& target, uint minhp) from "npc_common";
+import bool   AttackCritter(Critter& attacker, Critter& target) from "npc_common";
+import bool   CanUseWeapon(Critter& critter, Item@ weapon) from "npc_common";
+import bool   CanUseWeapon(Critter& critter, uint proto) from "npc_common";
+import void   ClearIllegalFlags(Critter& critter) from "npc_common";
+import bool   HasIntelligentBrain(Critter& follower) from "npc_common";
+import void   SetCritterIllegalFlag(Critter& critter, int reason) from "npc_common";
+import void   SetCritterIllegalFlag(Critter& critter, int location, int reason) from "npc_common";
+import bool   HasSameScript(Critter& critter1, Critter& critter2) from "npc_common";
+import bool   IsFlaggedAsIllegal(Critter& critter) from "npc_common";
+import bool   IsFlaggedAsIllegal(Critter& critter, int location) from "npc_common";
+import bool   IsInLocation(Critter& critter, int locationPID) from "npc_common";
+import bool   MoveByDir(Critter& critter, uint8 dir, uint steps, bool run) from "npc_common";
+import void   MoveRandom(Critter& npc, uint maxDist) from "npc_common";
+import void   MoveRandom(Critter& npc, uint maxDist, bool Run) from "npc_common";
+import void   MoveRandom(Critter& npc, uint maxDist, uint stepDist, bool Run) from "npc_common";
+import void   TransferToNPCMap(Critter& critter) from "npc_common";
+import void   UnsetCritterIllegalFlag(Critter& critter) from "npc_common";
+import void   UnsetCritterIllegalFlag(Critter& critter, int location) from "npc_common";
+import void   UnsetCritterIllegalFlag(uint id, int location) from "npc_common";
+import int    GetCritterIllegalFlag(Critter& critter) from "npc_common";
+import int    GetCritterIllegalFlag(Critter& critter, int location) from "npc_common";
+import bool   HasUnusableWeapon(Critter& critter, uint bag) from "npc_common";
+import bool   HasUnusableWeapon(Critter& critter) from "npc_common";
+import bool   HasUnusableWeapon(uint crpid, uint bag) from "npc_common";
+import Item@  ArmBestWeapon(Critter& critter) from "npc_common";
+import Item@  ArmFavoriteWeapon(Critter& critter) from "npc_common";
+import void   PutAwayItems(Critter& critter) from "npc_common";
+import void   Heal(Critter& cr) from "npc_common";
+import void   TryReportOffense(Critter@ cr, Critter@ offender, int reputationdrop) from "npc_common";
+import uint   GetCrittersWithScript(Map& map, uint16 pid, uint findType, string& scriptName, string& funcDeclaration, array<Critter@>@ critters) from "npc_common";
+import uint   GetCrittersLoc(Location& loc, uint16 pid, uint findType, array<Critter@>@ critters) from "npc_common";
+import uint   GetNearGuards(Map@ map, uint16 hexX, uint16 hexY, uint radius, array<Critter@>@ crits) from "npc_common";
+import uint   GetNearFactionGuards(Map@ map, uint16 hexX, uint16 hexY, uint radius, uint faction, array<Critter@>@ crits) from "npc_common";
+import string GenerateNewName(Critter& critter) from "npc_common";
+import string GetStoredName(Critter& critter) from "npc_common";
+import string GetStoredFirstName(Critter& critter) from "npc_common";
+import bool   Flee(Critter& cr) from "npc_common";
+import bool   Flee(Critter& cr, bool Run) from "npc_common";
+import void   FindFreeHexes(Map@ map, uint16 hexX, uint16 hexY, int& num, array<uint16>& coordsX, array<uint16>& coordsY) from "npc_common";
+import bool   FindNearestFreeHex(Map@ map, uint16 hexX, uint16 hexY, uint16& outX, uint16& outY) from "npc_common";
+import void   SetDeleteEvent(Critter& cr, uint time) from "npc_common";
+import void   DropDeleteEvent(Critter& cr) from "npc_common";
+#endif
+#endif

@@ -1,0 +1,170 @@
+[comment]
+Maybe the node #5 could be used to make a "contraband" quest one day...
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+60 1010 D _script dialog@d_CheckNight 0  #
+50 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _script dialog@d_IsNotMember 0  #
+20 1040 @
+2 2000 None 0 #
+3 2010 #
+6 2020 #
+0 2030 @
+3 3000 None 0 #
+4 3010 #
+15 3020 D _item p PID_BOTTLE_CAPS > 9 R _script dialog@r_RemoveMoney 1 10 #
+15 3030 D _item p PID_BOTTLE_CAPS > 2 R _script dialog@r_RemoveMoney 1 3 #
+16 3040 D _item p PID_BOTTLE_CAPS > 2 R _script dialog@r_RemoveMoney 1 3 #
+6 3050 #
+0 3060 D _item p PID_BOTTLE_CAPS < 3 #
+0 3070 D _item p PID_BOTTLE_CAPS > 2 @
+4 4000 None 0 #
+5 4010 #
+6 4020 #
+0 4030 @
+5 5000 None 0 #
+2 5010 #
+0 5020 @
+6 6000 None 0 #
+7 6010 #
+8 6020 #
+9 6030 #
+10 6040 #
+3 6050 #
+0 6060 @
+7 7000 None 0 #
+6 7010 #
+0 7020 @
+8 8000 None 0 #
+6 8010 #
+0 8020 @
+9 9000 None 0 #
+6 9010 #
+65506 9020 @
+10 10000 None 0 #
+11 10010 R _script dialog@r_ShowLocation 1 6 #
+12 10020 R _script dialog@r_ShowLocation 1 7 #
+13 10030 R _script dialog@r_ShowLocation 1 13 #
+14 10040 R _script dialog@r_ShowLocation 1 5 #
+6 10050 #
+0 10060 @
+11 11000 None 0 #
+65505 11010 @
+12 12000 None 0 #
+65505 12010 @
+13 13000 None 0 #
+65505 13010 @
+14 14000 None 0 #
+65505 14010 @
+15 15000 None 0 #
+6 15010 #
+0 15020 @
+16 16000 None 0 #
+17 16010 #
+3 16020 #
+6 16030 #
+0 16040 @
+17 17000 None 0 #
+6 17010 #
+0 17020 @
+20 18000 None 0 #
+3 18010 #
+6 18020 #
+0 18030 @
+50 19000 None 0 #
+51 19010 #
+0 19020 @
+51 20000 None 0 #
+0 20010 #
+0 20020 @
+60 21000 None 0 &
+
+[engl]
+{100}{}{Lidia}
+{200}{}{You see Lydia.}
+{210}{}{You see a brown-haired woman dressed in brown fatigues. She looks like the bartender.}
+{1000}{}{Predialogue installations}
+{1010}{}{night}
+{1020}{}{dumb}
+{1030}{}{non-faction
+
+}
+{1040}{}{citizen}
+{2000}{}{Yes? How can I help you?}
+{2010}{}{What's on tap?}
+{2020}{}{I was looking for some information.}
+{2030}{}{Nothing today, thanks.}
+{3000}{}{We have synthetic beers and liquor...vodka-H, tequila derivatives W and W2. Oh, and water. And brahmin milk. Beer or liquor is ten bucks, water or milk's three bucks.}
+{3010}{}{Uh, do you have any real alcohol?}
+{3020}{}{Just give me anything synthetic...}
+{3030}{}{Some water'd be great.}
+{3040}{}{Brahmin's milk.}
+{3050}{}{Actually, I was looking for some information.}
+{3060}{}{I'll come back when I have more money.}
+{3070}{}{I think I'll pass, thanks.}
+{4000}{}{Why? You looking for something with some more kick than these synthetic drinks?}
+{4010}{}{Perhaps. Drinking synthetic alcohol can't really compare to the real thing.}
+{4020}{}{Not really. I was looking for some information instead...}
+{4030}{}{Not today.}
+{5000}{}{That's for sure. Look, there's a bar right outside in the courtyard, why don't you try there instead?}
+{5010}{}{Maybe I will, thanks. Could you tell me something else now...?}
+{5020}{}{I see. Well, it was good talking to you.}
+{6000}{}{Oh? Like what?}
+{6010}{}{Who's in charge of Vault City?}
+{6020}{}{Where's the Vault?}
+{6030}{}{Can you tell me about the slavery in Vault City?}
+{6040}{}{Does Vault City have much contact with the outside world?}
+{6050}{}{What have you got on tap?}
+{6060}{}{All right then. Good day.}
+{7000}{}{The First Citizen. The Office of the First Citizen is in the council building up north.}
+{7010}{}{I wanted to know something else...}
+{7020}{}{All right, thanks.}
+{8000}{}{It's that big hole in the mountain to the east of here. You can't miss it. You also can't get inside unless you're a Citizen, though. But I bet you already know this.}
+{8010}{}{I wanted to know something else...}
+{8020}{}{Hmmm. Thanks for the information.}
+{9000}{}{Look, first thing I have to say is that you better not call it "slavery" around here or you're going to get yourself in a whole mess of trouble. They're called "servants," not slaves. Just a word of advice.}
+{9010}{}{Point taken. Say, I wanted to know something else...}
+{9020}{}{Thanks. I'll keep that in mind.}
+{10000}{}{Not much. Most contact we have with Outsiders is merchants travelling the Big Circle caravan trail from Broken Hills, New Reno, and Redding. Only other place outside the caravan trail that I know of is Gecko.}
+{10010}{}{Tell me about Broken Hills.}
+{10020}{}{Tell me about New Reno.}
+{10030}{}{Tell me about Redding.}
+{10040}{}{Tell me about Gecko.}
+{10050}{}{I wanted to know something else...}
+{10060}{}{Thanks for the information.}
+{11000}{}{It's a mining community like Redding, except it's located to the far South. We get many of our uranium shipments from there.}
+{11010}{}{[Back]}
+{12000}{}{It's a ways to the southwest. I hear conflicting reports about Reno. Some merchants, especially the slavers, really love it there. Other merchants... don't. City with a lot of glitter... and a lot of trouble, I hear.}
+{12010}{}{[Back]}
+{13000}{}{It's a mining town far to the west. We haven't seen too many caravans from them recently, and it's got some of the high-ups a little worried. The deliveries are not regular, or so I heard.}
+{13010}{}{[Back]}
+{14000}{}{A town of ghouls less than a day's travel to the northeast, as I understand it. Rumor is they prey on any travelers that enter their territory. Best stay away.}
+{14010}{}{[Back]}
+{15000}{}{Here you go. Anything else?}
+{15010}{}{I was looking for some information.}
+{15020}{}{Not today, thank you.}
+{16000}{}{The brahmin milk's not on tap...well, not exactly. I'd have to go out and snag some really quick.}
+{16010}{}{That's fine. I don't mind waiting. I just feel like having a refreshing glass of milk. Mmmmm-mmm. That would really hit the spot.}
+{16020}{}{I think I'll try something else then.}
+{16030}{}{Never mind then. Say, I was looking for some information...}
+{16040}{}{Forget it. I'll come back some other time.}
+{17000}{}{[You keep waiting while Lydia hurries to bring you some fresh, warm milk. In just a few minutes a glass of yellowish-white fluid appears in front of you] Here you go. Anything else?}
+{17010}{}{I was looking for some information.}
+{17020}{}{Not today, thank you.}
+{18000}{}{What can I do for you, Citizen?}
+{18010}{}{What's on tap?}
+{18020}{}{I was looking for some information.}
+{18030}{}{Nothing today, thanks.}
+{19000}{}{Yes? Can I help you?}
+{19010}{}{You? Yoo? Yew? Yewwwww. E-yewwww is sound otherz make when see me}
+{19020}{}{[Shamble off]}
+{20000}{}{That is perhaps the most fascinating thing I've ever heard. Hold on a second...I want the guards to hear it, too.}
+{20010}{}{Too? Tew. Tewwwww. Tew-be-dew-be-dew}
+{20020}{}{[Shamble off]}
+{21000}{}{We're closed. Come back in the morning.@@Sorry, last call was a while ago. Come back in the morning.@@We're closed. Once I finish making this list of our stock, I'll be closing up.}
+

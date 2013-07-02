@@ -1,0 +1,1160 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gui_ex.fos
+//
+
+// scriptable client-side gui extended-edition
+// Compile with -client switch
+#define __CLIENT
+
+#ifndef __CLIENT_GUI_EX__
+# define __CLIENT_GUI_EX__
+
+# include "_macros.fos"
+# include "_client_defines.fos"
+# include "client_gui_h.fos"
+# include "MsgStr.h"
+# include "sprite.fos"
+
+//
+// Base interface for all controls
+//
+shared interface IControl
+{
+    void SetParent(IControl@ parent);
+
+    // invisible controls are inactive for input by default
+    bool IsVisible();
+    bool IsActive();
+
+    void Disable();
+    void Enable();
+
+    void Show(bool showAll = false);
+    void Show(int left, int top);
+    void Hide();
+
+    // for screen attached to control
+    void ShowWindow();
+    void ShowWindow(int left, int top);
+    void HideWindow();
+    void Center();
+
+    int Left();
+    int Right();
+    int Top();
+    int Bottom();
+    int Width();
+    int Height();
+
+    IControl@ Position(int, int);
+    IControl@ Position(string& iniKey);
+    IControl@ Left(int);
+    IControl@ Top(int);
+    IControl@ Width(int);
+    IControl@ Height(int);
+    IControl@ Size(int, int);
+
+    void Init();
+    void Draw();
+    void Update();
+    bool MouseDown(int x, int y, int click);
+    bool MouseUp(int x, int y, int click);
+    void MouseMove(int fromX, int fromY, int toX, int toY);
+    bool KeyDown(uint8 key);
+    void KeyUp(uint8 key);
+};
+
+//
+// Basic element of gui subsystem
+//
+class Control : IControl
+{
+    // parent control
+    IControl@        parent;
+    // list of child-controls
+    array<IControl@> controls;
+
+    // coordinates (relative to parent)
+    int left;
+    int top;
+    int width;
+    int height;
+
+    //
+    // states
+    //
+
+    // whether control should be processed by manager
+    bool active;
+    // whether control should be drawn
+    bool visible;
+    // control has a focus
+    bool focus;
+
+    // stored event info (captured when event occurs)
+    bool mousePressed;
+    int  mouseX;
+    int  mouseY;
+
+    Control()
+    {
+        active = true;
+        visible = true;
+        focus = false;
+
+        mousePressed = false;
+        mouseX = 0;
+        mouseY = 0;
+
+        left = top = width = height = 0;
+    }
+
+    Control(int left, int top, int width, int height)
+    {
+        active = true;
+        visible = true;
+        focus = false;
+
+        mousePressed = false;
+        mouseX = 0;
+        mouseY = 0;
+
+        this.left = left;
+        this.top = top;
+        this.width = width;
+        this.height = height;
+    }
+
+    ///////////////
+    // Properties
+    ///////////////
+
+    bool IsVisible() {      return visible; }
+    bool IsActive()  { return active; }
+
+    //
+    // Absolute coords
+    //
+    int Left()
+    {
+        if(valid(parent))
+            return parent.Left() + left;
+        else
+            return left;
+    }
+    int Top()
+    {
+        if(valid(parent))
+            return parent.Top() + top;
+        else
+            return top;
+    }
+    int Right()  { return Left() + Width();  }
+    int Bottom() { return Top() + Height(); }
+    int Height() { return height; }
+    int Width()  { return width; }
+
+    IControl@ Position(int x, int y) { left = x; top = y; return this; }
+    IControl@ Left(int x)            { left = x; return this; }
+    IControl@ Top(int y)             { top = y; return this; }
+    IControl@ Width(int w)           { width = w; return this; }
+    IControl@ Height(int h)          { height = h; return this; }
+    IControl@ Size(int w, int h)     { height = h; width = w; return this; }
+
+    IControl@ Position(string& iniKey)
+    {
+        left = 0;
+        top = 0;
+        width = 0;
+        height = 0;
+
+        // Parse four values from ini option
+        string@ str = GetIfaceIniStr(iniKey);
+        if(@str == null || str == "")
+            return this;
+
+        array<string@>@ valuesStr = split(str, " ");
+        if(valuesStr.length() != 4)
+            return this;
+
+        array<int> values(4);
+        for(int i = 0; i < 4; i++)
+            if(!StrToInt(valuesStr[i], values[i]))
+                return this;
+
+        left = values[0];
+        top = values[1];
+        width = values[2] - values[0] + 1;
+        height = values[3] - values[1] + 1;
+        return this;
+    }
+
+    //
+    // Checks if given coordinates are within control's bounds
+    //
+    bool IsInside(int x, int y)
+    {
+        return (x >= Left()) && (x < Right()) && (y >= Top()) && (y < Bottom());
+    }
+
+    //
+    // Assings parent control
+    //
+    void SetParent(IControl@ control)
+    {
+        @parent = control;
+    }
+
+    //
+    // Activating/deactivating
+    //
+    void Enable()
+    {
+        active = true;
+        OnEnabled();
+    }
+    void Disable()
+    {
+        active = false;
+        OnDisabled();
+    }
+
+    //
+    // Showing/hiding
+    //
+    void Show(bool showAll = false)
+    {
+        visible = true;
+        if(showAll)
+        {
+            for(uint i = 0, j = controls.length(); i < j; i++)
+                controls[i].Show(showAll);
+        }
+        OnShow();
+    }
+    void Show(int left, int top)
+    {
+        this.left = left;
+        this.top = top;
+        visible = true;
+        OnShow();
+    }
+    void Hide()
+    {
+        visible = false;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+            controls[i].Hide();
+        OnHide();
+    }
+
+    void ShowWindow()
+    {
+        Message("This control does not have window attached.");
+    }
+    void ShowWindow(int x, int y)
+    {
+        Message("This control does not have window attached.");
+    }
+    void HideWindow()
+    {
+        Message("This control does not have window attached.");
+    }
+    /**
+     * Centers control in parent control.
+     */
+    void Center()
+    {
+        Position(parent.Width() / 2 - Width() / 2, parent.Height() / 2 - Height() / 2);
+    }
+    void Init()
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+            controls[i].Init();
+    }
+    //
+    // Focus
+    //
+    void SetFocus(bool focused)
+    {
+        this.focus = focused;
+        // fire event
+        if(focused)
+            GotFocus();
+        else
+            LostFocus();
+    }
+    //
+    //
+    // Adds child control
+    //
+    void AddControl(IControl@ control)
+    {
+        control.SetParent(this);
+        controls.insertLast(@control);
+    }
+
+    /////////////
+    // Input handling
+    /////////////
+
+    bool MouseDown(int x, int y, int click)
+    {
+        bool intercepted = false;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                intercepted = controls[i].MouseDown(x, y, click) ? true : intercepted;
+        }
+        if(!intercepted)
+        {
+            if(click != MOUSE_CLICK_WHEEL_DOWN && click != MOUSE_CLICK_WHEEL_UP)
+            {
+                if(IsInside(x, y))
+                {
+                    mousePressed = true;
+                    mouseX = x;
+                    mouseY = y;
+                    SetFocus(true);
+                    intercepted = true;
+                }
+                else
+                {
+                    SetFocus(false);
+                }
+            }
+        }
+        return intercepted;
+    }
+    bool MouseUp(int x, int y, int click)
+    {
+        bool intercepted = false;
+        if(IsInside(x, y) && mousePressed)
+        {
+            // call click event
+            Click();
+            intercepted = true;
+        }
+        // TODO: MouseUp event?
+        mousePressed = false;
+
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                intercepted = controls[i].MouseUp(x, y, click) ? true : intercepted;
+        }
+        return intercepted;
+    }
+    void MouseMove(int fromX, int fromY, int toX, int toY)
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                controls[i].MouseMove(fromX, fromY, toX, toY);
+        }
+    }
+    bool KeyDown(uint8 key)
+    {
+        bool intercepted = false;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                intercepted = controls[i].KeyDown(key) ? true : intercepted;
+        }
+        return intercepted;
+    }
+    void KeyUp(uint8 key)
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                controls[i].KeyUp(key);
+        }
+    }
+
+    //
+    // Draws all visible subcontrols
+    //
+    void Draw()
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+            if(controls[i].IsVisible())
+                controls[i].Draw();
+    }
+    //
+    // Updates all active child controls
+    //
+    void Update()
+    {
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsActive())
+                controls[i].Update();
+        }
+    }
+
+
+    ////////////////
+    // 'Delegate' event functions
+    ////////////////
+
+    //
+    // Called on left click
+    //
+    void Click()
+    {}
+    //
+    // Called when clicked on control
+    //
+    void GotFocus()
+    {}
+    //
+    // Called when clicked outside control
+    //
+    void LostFocus()
+    {}
+    //
+    // Called when control is shown
+    //
+    void OnShow()
+    {}
+    //
+    // Called when control is being hidden.
+    //
+    void OnHide()
+    {}
+    //
+    // Called when contorl is being enabled
+    //
+    void OnEnabled()
+    {}
+    //
+    // Called when control is being disabled
+    //
+    void OnDisabled()
+    {}
+};
+
+///////////////////////////////////////////
+//
+// What would be gui without BUTTON
+//
+///////////////////////////////////////////
+
+class CButton : Control
+{
+    string caption;
+    Sprite spriteUp;
+    Sprite spriteDown;
+
+    int    textBorder;
+
+    CButton(int left, int top, string@ caption)
+    {
+        super(left, top, 119, 30);
+        spriteUp.Load("wm_tab.png", PT_ART_INTRFACE);
+        spriteDown.Load("wm_blanktab.png", PT_ART_INTRFACE);
+        this.caption = caption;
+        textBorder = 30;
+    }
+    CButton(int left, int top, int width, int height, string & down)
+    {
+        // if(valid(up))
+        //	spriteUp.Load(up, PT_ART_INTRFACE);
+        if(!spriteDown.Load(down, PT_ART_INTRFACE))
+            Message("Couldn't load sprite: " + down);
+        super(left, top, MAX(width, spriteDown.Width), MAX(height, spriteDown.Height));
+        textBorder = 0;
+    }
+    CButton(int left, int top, int width, int height, string & up, string & down)
+    {
+        if(!spriteUp.Load(up, PT_ART_INTRFACE))
+            Message("Couldn't load sprite(up): " + up);
+        if(!spriteDown.Load(down, PT_ART_INTRFACE))
+            Message("Couldn't load sprite(down): " + down);
+        super(left, top, MAX(width, spriteUp.Width), MAX(height, spriteUp.Height));
+        textBorder = 0;
+    }
+    CButton(string & iniKey, string & down)
+    {
+        // if(valid(up))
+        //	spriteUp.Load(up, PT_ART_INTRFACE);
+        if(!spriteDown.Load(down, PT_ART_INTRFACE))
+            Message("Couldn't load sprite: " + down);
+        Control::Position(iniKey);
+        textBorder = 0;
+    }
+    //
+    // Caption
+    //
+    void SetCaption(string@ caption) { this.caption = caption; }
+
+    void Draw()
+    {
+        if(mousePressed)
+        {
+            if(spriteDown.Id != 0)
+                DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+        }
+        else
+        {
+            if(spriteUp.Id != 0)
+                DrawSprite(spriteUp.Id, 0, Left(), Top(), 0);
+        }
+        int color = active ? 0 : int(0xffaaaaaa);
+        if(caption != "")
+            DrawText(caption, Left() + textBorder, Top(), Width() - textBorder, Height(), color, FONT_FALLOUT, FT_CENTERY | FT_BORDERED);
+    }
+};
+
+// this one uses dialog red button graphics when pressed
+class CDialogRedButton : Control
+{
+    Sprite spriteDown;
+
+    CDialogRedButton(int left, int top)
+    {
+        super(left, top, 16, 16);         // 16x16??? I can't check, it's frm
+        spriteDown.Load("di_rdbt1.frm", PT_ART_INTRFACE);
+    }
+    //
+    // Draw only when pressed
+    //
+    void Draw()
+    {
+        if(mousePressed)
+            DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+    }
+};
+// and that one uses smallbutton graphics when pressed
+class CSmallButton : Control
+{
+    Sprite spriteDown;
+
+    CSmallButton(int left, int top)
+    {
+        super(left, top, 16, 16);         // 16x16??? I can't check, it's frm
+        spriteDown.Load("lilreddn.frm", PT_ART_INTRFACE);
+    }
+    //
+    // Draw only when pressed
+    //
+    void Draw()
+    {
+        if(mousePressed)
+            DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+    }
+};
+// small arrow up
+class CSmallArrowUp : Control
+{
+    Sprite spriteDown;
+
+    CSmallArrowUp(int left, int top)
+    {
+        super(left, top, 16, 16);         // 16x16??? I can't check, it's frm
+        // TODO: don't know what to use
+        // spriteDown.Load("lilreddn.frm", PT_ART_INTRFACE);
+    }
+    //
+    // Draw only when pressed
+    //
+    void Draw()
+    {
+        // if(mousePressed)
+        //	DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+    }
+};
+// small arrow up
+class CSmallArrowDown : Control
+{
+    Sprite spriteDown;
+
+    CSmallArrowDown(int left, int top)
+    {
+        super(left, top, 16, 16);         // 16x16??? I can't check, it's frm
+        // TODO: don't know what to use
+        // spriteDown.Load("lilreddn.frm", PT_ART_INTRFACE);
+    }
+    //
+    // Draw only when pressed
+    //
+    void Draw()
+    {
+        // if(mousePressed)
+        //	DrawSprite(spriteDown.Id, 0, Left(), Top(), 0);
+    }
+};
+//////////////////
+// LABEL
+//////////////////
+
+class CLabel : Control
+{
+    int     font;
+    int     color;
+    int     format;
+    string@ caption;
+
+    CLabel(int left, int top, int width, int height, string@ caption)
+    {
+        super(left, top, width, height);
+        @this.caption = @caption;
+        this.color = 0;
+        font = FONT_FALLOUT;
+        format = FT_CENTERY | FT_BORDERED;
+    }
+    CLabel(int left, int top, int width, int height, string@ caption, int font)
+    {
+        super(left, top, width, height);
+        @this.caption = @caption;
+        this.color = 0;
+        this.font = font;
+        format = FT_CENTERY | FT_BORDERED;
+    }
+    void SetCaption(string@ caption)
+    {
+        @this.caption = @caption;
+    }
+    void set_Caption(string@ caption)
+    {
+        @this.caption = @caption;
+    }
+    string@ get_Caption()
+    {
+        return @caption;
+    }
+    void SetColor(uint color)
+    {
+        this.color = color;
+    }
+    void set_Color(uint color)
+    {
+        this.color = color;
+    }
+    void SetFont(uint font)
+    {
+        this.font = font;
+    }
+    void set_Font(uint font)
+    {
+        this.font = font;
+    }
+    void SetFormat(uint format)
+    {
+        this.format = format;
+    }
+    void Draw()
+    {
+        DrawText(caption, Left(), Top(), Width(), Height(), color, font, format);
+    }
+};
+
+///////////////////
+// TextBox
+///////////////////
+class CTextBox : Control
+{
+    // textbox' text
+    string text;
+    // drawn text (with cursor)
+    string drawnText;
+    uint   cursorPos;
+    // cursor blink time, miliseconds
+    uint   cursorTime;
+    // last changed
+    uint   cursorChangedTime;
+    // (0 - invisible, 1/2 - visible (switching))
+    int    showCursor;
+    // cursor characters
+    string cursor1;
+    string cursor2;
+
+    // text prop
+    int  color;
+    int  format;
+    int  font;
+    uint maxlength;
+
+    CTextBox(int left, int top, int width, int height, string@ text)
+    {
+        super(left, top, width, height);
+        this.text = text;
+        cursorPos = text.length();
+        cursorTime = 400;
+        cursorChangedTime = 0;
+        showCursor = 0;
+        cursor1 = "!";
+        cursor2 = ".";
+        drawnText = text;
+
+        color = 0;
+        font = FONT_FALLOUT;
+        format = FT_BORDERED;
+        maxlength = 0;
+    }
+    //
+    // Returns textbox' text
+    //
+    string@ Text()
+    {
+        return text;
+    }
+    //
+    // gets actually displayed cursor
+    //
+    string@ GetCursor()
+    {
+        if(showCursor == 0)
+            return "";
+        else if(showCursor == 1)
+            return cursor1;
+        else
+            return cursor2;
+    }
+    void SetColor(uint color)
+    {
+        this.color = color;
+    }
+    void SetFormat(uint format)
+    {
+        this.format = format;
+    }
+    void SetText(string@ text)
+    {
+        this.text = text;
+        cursorPos = text.length();
+        RefreshDrawnText();
+    }
+    void SetMaxLength(uint ml)
+    {
+        maxlength = ml;
+    }
+    //
+    // Shows/hides cursor in drawnText (0 - invisible, 1/2 - visible (switching))
+    //
+    void ShowCursor(int show)
+    {
+        showCursor = show;
+        RefreshDrawnText();
+    }
+    //
+    // Refreshes the drawn text
+    //
+    void RefreshDrawnText()
+    {
+        if(showCursor > 0)
+        {
+            if(cursorPos == text.length())
+                drawnText = text + GetCursor();
+            else
+                drawnText = substring(text, 0, cursorPos) + GetCursor() + substring(text, cursorPos, text.length() - cursorPos);
+        }
+        else
+            drawnText = text;
+    }
+    //
+    // Inserts character corresponding with pressed key
+    //
+    void InsertChar(uint8 key)
+    {
+        string c;
+        c.resize(1);
+        uint8  ch = GUI_GetCharacter(key);
+        if(ch == 0)
+            return;
+        c[0] = ch;
+        text = substring(text, 0, cursorPos) + c + substring(text, cursorPos, text.length() - cursorPos);
+        cursorPos++;
+    }
+
+    void Draw()
+    {
+        uint tick = GetTick();
+
+        if(tick - cursorChangedTime > cursorTime)
+        {
+            cursorChangedTime = tick;
+            if(showCursor == 1)
+                ShowCursor(2);
+            else if(focus)
+                ShowCursor(1);
+            else
+                ShowCursor(0);
+        }
+
+        // text
+        DrawText(drawnText, Left(), Top(), Width(), Height(), color, font, format);
+    }
+
+    bool KeyDown(uint8 key)
+    {
+        if(focus)
+        {
+            // remove char
+            if(key == DIK_BACK)
+            {
+                if(text.length() > 0 && cursorPos > 0)
+                {
+                    text = substring(text, 0, cursorPos - 1) + substring(text, cursorPos, text.length() - cursorPos);
+                    cursorPos--;
+                }
+            }
+            else if(key == DIK_DELETE)
+            {
+                if(text.length() > 0 && cursorPos < text.length())
+                {
+                    text = substring(text, 0, cursorPos) + substring(text, cursorPos + 1, text.length() - cursorPos - 1);
+                }
+            }
+            // setting cursor pos
+            else if(key == DIK_HOME)
+            {
+                cursorPos = 0;
+            }
+            else if(key == DIK_END)
+            {
+                cursorPos = text.length();
+            }
+            // cursor position
+            else if(key == DIK_LEFT)
+            {
+                if(cursorPos > 0)
+                    cursorPos--;
+            }
+            else if(key == DIK_RIGHT)
+            {
+                if(cursorPos < text.length())
+                    cursorPos++;
+            }
+            // remove focus
+            else if(key ==  DIK_ESCAPE || key == DIK_RETURN || key == DIK_NUMPADENTER)
+            {
+                SetFocus(false);
+            }
+            else
+            {
+                if(maxlength == 0 || maxlength > text.length())
+                    InsertChar(key);
+            }
+            // Control::KeyDown(key); // should it be called?
+            RefreshDrawnText();
+            return true;
+        }
+        return Control::KeyDown(key);
+    }
+};
+
+/////////////
+// Draws something
+/////////////
+class CSprite : Control
+{
+    Sprite sprite;
+
+    CSprite(string@ spriteName, int path = PT_ART_INTRFACE)
+    {
+        super();
+        sprite.Load(spriteName, path);
+    }
+    CSprite(uint nameHash, int path = PT_ART_INTRFACE)
+    {
+        super();
+        sprite.LoadHash(nameHash, path);
+    }
+    CSprite(int left, int top, int width, int height, string@ spriteName, int path = PT_ART_INTRFACE)
+    {
+        super(left, top, width, height);
+        sprite.Load(spriteName, path);
+    }
+
+    void Draw()
+    {
+        DrawSprite(sprite.Id, -1, Left(), Top(), 0);
+        Control::Draw();
+    }
+};
+
+/////////////
+// Draws something customizable
+/////////////
+class CSpriteEx : CSprite
+{
+    int  index;
+    bool scratch;
+    bool center;
+    uint color;
+    bool applyOffsets;
+
+    CSpriteEx(string@ spriteName)
+    {
+        super(spriteName);
+        Init();
+    }
+
+    CSpriteEx(uint nameHash, int path = PT_ART_INTRFACE)
+    {
+        super(nameHash, path);
+        Init();
+    }
+
+    CSpriteEx(int left, int top, int width, int height, string@ spriteName)
+    {
+        super(left, top, width, height, spriteName);
+        Init();
+    }
+
+    private void Init()
+    {
+        CSprite::Init();
+        this.index = -1;
+        this.scratch = false;
+        this.center = false;
+        this.color = 0;
+        this.applyOffsets = true;
+    }
+
+    void Draw()
+    {
+        if(this.sprite.Id > 0)
+            DrawSprite(this.sprite.Id, this.index, Left(), Top(), this.sprite.Width, this.sprite.Height, this.scratch, this.center, this.color, this.applyOffsets);
+        Control::Draw();
+    }
+};
+
+////////////////
+// List Box
+////////////////
+class CListBox : Control
+{
+    array<string@> elements;
+    // first visible element
+    uint           start;
+    // selected element
+    uint           index;
+
+    uint           textHeight;
+
+    CListBox(int left, int top, int width, int height)
+    {
+        super(left, top, width, height);
+        start = 0;
+        textHeight = 12;
+    }
+
+    //
+    // Gets number of visible elements
+    //
+    uint GetRowCount()
+    {
+        return height / textHeight;
+    }
+    //
+    // Gets index to selected item
+    //
+    uint GetIndex()
+    {
+        return index;
+    }
+    //
+    // Adds element to the list
+    //
+    void AddElement(string@ elem)
+    {
+        elements.insertLast(elem);
+    }
+    //
+    // Scrolls list by certain amount of elements
+    //
+    void Scroll(int d)
+    {
+        start = CLAMP(int(start) + d, 0, int(elements.length() - 1));
+    }
+    //
+    // Draws all visible elements
+    //
+    void Draw()
+    {
+        for(uint i = start, j = MIN(elements.length(), start + uint(Height() / textHeight)); i < j; i++)
+        {
+            DrawText(elements[i], Left(), Top() + (i - start) * textHeight, Width(), textHeight, i == index ? 0xffffffff : 0, FONT_FALLOUT, FT_BORDERED);
+        }
+    }
+
+    //
+    // Selects element
+    //
+    void Click()
+    {
+        uint el = start + (mouseY - Top()) / textHeight;
+        if(el < elements.length())
+            index = el;
+        Control::Click();
+    }
+};
+
+//
+// Control connected to some critter/item/hex depending on context
+//
+class CContextButton : CButton
+{
+    uint   crId;
+    uint   itemId;
+    uint16 hexX;
+    uint16 hexY;
+
+    CContextButton(string caption)
+    {
+        super(0, 0, caption);
+        hexX = 0;
+        hexY = 0;
+    }
+
+    //
+    // Assigns critter
+    //
+    void SetCritter(CritterCl@ cr)
+    {
+        crId = itemId = 0;
+        if(valid(cr))
+            crId = cr.Id;
+    }
+    //
+    // Assigns item
+    //
+    void SetItem(ItemCl@ item)
+    {
+        crId = itemId = 0;
+        if(valid(item))
+            itemId = item.Id;
+    }
+    //
+    // Assign hex
+    //
+    void SetHex(uint16 x, uint16 y)
+    {
+        this.hexX = x;
+        this.hexY = y;
+    }
+};
+
+//
+// Base class for new windows
+//
+class Window : Control, IGUIScreenCallbackFocus, IGUIScreenCallbackShow
+{
+    IGUIScreenOpt@ screen;
+
+    int Left()   { return screen.GetPosX(); }
+    int Top()    { return screen.GetPosY(); }
+    int Width()  { return screen.GetWidth(); }
+    int Height() { return screen.GetHeight(); }
+
+    bool autoMode;
+
+    Window()
+    {
+        super();
+        autoMode = false;
+    }
+
+    void Init()     // virtual
+    {
+        @screen = GUI_GetScreenOptions();
+        Control::Init();
+    }
+
+    IControl@ Position(int x, int y)
+    {
+        screen.Position(x, y);
+        return this;
+    }
+    IControl@ Size(int w, int h)
+    {
+        screen.Size(w, h);
+        return this;
+    }
+    /**
+     * Centers window on screen.
+     */
+    void Center()
+    {
+        Position(__ScreenWidth / 2 - Width() / 2, __ScreenHeight / 2 - Height() / 2);
+    }
+
+    // small compatilibity part with vanilla code...
+    void OnShow(int p0, int p1, int p2)
+    {
+        if(p0 != 0 || p1 != 0)
+            Show(p0, p1);
+        else
+            Show();
+    }
+
+    void Show(int x, int y)
+    {
+        screen.Position(x, y);
+        Control::Show(x, y);
+    }
+
+    // for use when access to parent-screen is needed via control
+    void ShowWindow()
+    {
+        GUI_ShowScreen(screen.GetIndex(), 0, 0, 0);
+    }
+    void ShowWindow(int x, int y)
+    {
+        screen.Position(x, y);
+        GUI_ShowScreen(screen.GetIndex(), x, y, 0);
+    }
+    void HideWindow()
+    {
+        GUI_HideScreen(screen.GetIndex(), 0, 0, 0);
+        Disable();
+    }
+    void OnLostFocus()
+    {
+        HideWindow();
+        Disable();
+    }
+
+    bool MouseDown(int x, int y, int click)
+    {
+        bool intercepted = false;
+        for(uint i = 0, j = controls.length(); i < j; i++)
+        {
+            if(controls[i].IsVisible() && controls[i].IsActive())
+                intercepted = controls[i].MouseDown(x, y, click) ? true : intercepted;
+        }
+        if(!intercepted)
+        {
+            if(click != MOUSE_CLICK_WHEEL_DOWN && click != MOUSE_CLICK_WHEEL_UP)
+            {
+                if(IsInside(x, y))
+                {
+                    mousePressed = true;
+                    mouseX = x;
+                    mouseY = y;
+                    SetFocus(true);
+                    intercepted = true;
+                }
+                else
+                {
+                    SetFocus(false);
+                }
+
+                return false;
+            }
+        }
+        return intercepted;
+    }
+
+    /**
+     * If in auto mode window uses previous values to spawn critter.
+     */
+    void Auto(bool v) { autoMode = v; }
+    bool Auto()       { return autoMode; }
+};
+#endif // __CLIENT_GUI_EX__

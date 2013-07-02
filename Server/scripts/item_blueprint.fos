@@ -1,0 +1,47 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// item_blueprint.fos
+//
+
+// Init script for blueprint items. A "random blueprint" item is replaced with an actual item.
+// See blueprints.fos for reference.
+
+#include "_macros.fos"
+#include "debug_h.fos"
+
+import void   ExplodeEx(Map& map, uint16 hexX, uint16 hexY, uint16 effectPid, uint effectRadius, uint damage, uint damageType, uint damageRadius, uint ownerId) from "explode";
+import void   ConsumeBlueprint(Critter& player, Item& item) from "blueprints";
+import bool   ConsumedBlueprint(Critter& player, uint pid) from "blueprints";
+import uint16 GetRandomTypeBlueprintPid(int8 type, uint8 level) from "blueprints";
+
+void _BlueprintInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_Used");
+}
+
+void _RandomBlueprintInit(Item& item, bool firstTime)
+{
+    uint16 pid = GetRandomTypeBlueprintPid(item.Proto.Blueprint_Type, item.Proto.Blueprint_Level);
+    if(pid == 0)
+    {
+        WLog("blueprints", "no blueprints for item type " + item.Proto.Blueprint_Type + ", level " + item.Proto.Blueprint_Level, DEBUG_ERROR);
+        DeleteItem(item);
+        return;
+    }
+    item.ChangeProto(pid);
+    item.SetScript("_BlueprintInit");
+    item.Update();
+}
+
+bool _Used(Item& item, Critter& player, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(valid(onCritter) || valid(onItem) || valid(onScenery))
+        return false;
+
+    if(ConsumedBlueprint(player, item.GetProtoId()))
+        return false;
+    ConsumeBlueprint(player, item);
+    return true;
+}

@@ -1,0 +1,74 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_ncr_prison.fos
+//
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "reinforcements_h.fos"
+#include "_maps.fos"
+
+//
+// Map Data:
+// faction id (NCR)
+//
+
+void map_init(Map& map, bool firstTime)
+{
+    uint proto = map.GetProtoId();
+    if(firstTime)
+    {
+        if(proto == MAP_NCRCF)
+        {
+            uint[] maxes = { 12, 16 };
+            SetAlertMap(map, maxes);
+        }
+        else if(proto == MAP_Rails)
+        {
+            uint[] maxes = { 12, 16 };
+            SetAlertMap(map, maxes);
+        }
+    }
+}
+
+// Player is crossing the first border in the map (ul_ncr_prison_rails), will get a warning.
+void t_BorderWarning(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    critter.Say(SAY_NETMSG, "If you go any further, the guards will open the fire!");
+
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_CONVICT_PLAYER_BORDER_WARNING, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// Player is crossing the second border in the map (ul_ncr_prison_rails), guards will attack him now.
+void t_BorderAttack(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_CONVICT_PLAYER_BORDER_ATTACK, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// If any player will step on this hex, the guards will attack him, doesn't matter what faction the player is.
+void t_GuardAttack(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_PRISON_GUARD_ATTACK, 0, MESSAGE_TO_VISIBLE_ME);
+}
+
+// Player is too close near the prison gate.
+void t_PrisonGate(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!critter.IsPlayer() || !entered)
+        return;
+
+    critter.SendMessage(MSG_PRISON_DOOR, 0, MESSAGE_TO_VISIBLE_ME);
+}

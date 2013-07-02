@@ -1,0 +1,75 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var n acquaintance = 0 #
+8 1020 D _var n acquaintance = 1 D _item p PID_PUMP_PARTS < 2 #
+9 1030 D _var n acquaintance = 1 D _item p PID_PUMP_PARTS > 1 #
+12 1040 D _var n acquaintance = 2 @
+2 2000 None 0 #
+3 2010 #
+0 2020 @
+3 3000 None 0 #
+4 3010 #
+0 3020 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 @
+6 6000 None 0 #
+7 6010 @
+7 7000 None 0 #
+0 7010 R _var n acquaintance = 1 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+10 9010 D _item p PID_PUMP_PARTS } 2 R _item p PID_PUMP_PARTS - 2 @
+10 10000 None 0 #
+11 10010 R _var n acquaintance = 2 R _item p PID_SLEDGEHAMMER + 1 R _param p ST_EXPERIENCE + 100 #
+11 10020 R _var n acquaintance = 2 R _item p PID_KNIFE + 1 R _param p ST_EXPERIENCE + 100 #
+11 10030 R _var n acquaintance = 2 R _item p PID_AXE + 1 R _param p ST_EXPERIENCE + 100 #
+11 10040 R _var n acquaintance = 2 R _param p ST_EXPERIENCE + 300 @
+11 11000 None 0 #
+0 11010 @
+12 12000 None 0 &
+
+[engl]
+{100}{}{Emma.}
+{200}{}{You see Emma.}
+{210}{}{You see a true wasteland girl.}
+{1000}{}{Predialogue installations}
+{1010}{}{First time}
+{1020}{}{No junks}
+{1030}{}{Junks}
+{1040}{}{Finished quest.}
+{2000}{}{How ya doing?}
+{2010}{}{Not bad thanks, and you?}
+{2020}{}{None of your beeswax!}
+{3000}{}{Yeah thanks not so bad myself. What's up?}
+{3010}{}{Same old same old. What's up with you?}
+{3020}{}{Same old same old. Later.}
+{4000}{}{Oh you know, this and that. Working my trade,}
+{4010}{}{What's your trade?}
+{5000}{}{Scavenging, y'know? In amongst all the scrap you can find something that'll make you rich if you know what to look for and what to do with it.}
+{5010}{}{I suppose that's not really such a bad life.}
+{6000}{}{Yeah yeah, I'm pretty good at it so it pays me alright. Say, you ever find some junk, I'll make it worth your while handing it over to me. }
+{6010}{}{You'll give me something if I hand you some junk? Sounds like a good deal!}
+{7000}{}{I know it does. How about you run along and get me a couple of pieces?}
+{7010}{}{Sure, I'll pick up a couple of pieces of junk for you.}
+{8000}{}{We meet again. Still waiting on that junk.}
+{8010}{}{Sorry, haven't found any worth picking up yet.}
+{9000}{}{[She smiles broadly.] Hey hey, looks like you got me something good. Let me take a look at that.}
+{9010}{}{[Hand it over.]}
+{10000}{}{Yeah, this is good, nice work friend. Deal's a deal, here's something in return.}
+{10010}{}{[Take sledgehammer]}
+{10020}{}{[Take knife]}
+{10030}{}{[Take hatchet]}
+{10040}{}{Thanks a lot!}
+{11000}{}{Pleasure doing business with ya.}
+{11010}{}{You too.}
+{12000}{}{Pickings are thinning out round here.@@Maybe I should just take off again.@@I should see what's up North.@@Cut my damn hand again.@@Howdy friend.@@Seen anything good in with the junk lately?@@Hope I taught you a thing or two about getting by.@@Can't depend on nobody but yourself, don't forget that.@@Howdy.@@::Nods::}
+

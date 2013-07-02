@@ -1,0 +1,42 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 #
+4 1020 @
+2 2000 None 0 #
+3 2010 D _param p ST_INTELLECT } 4 D _var p q_first_tent < 2 #
+3 2020 D _param p ST_INTELLECT < 4 D _var p q_first_tent < 2 #
+4 2030 D _param p ST_INTELLECT } 4 D _var p q_first_tent = 2 #
+4 2040 D _param p ST_INTELLECT < 4 D _var p q_first_tent = 2 #
+4 2050 D _param p ST_INTELLECT } 4 D _var p q_first_tent > 2 #
+4 2060 D _param p ST_INTELLECT < 4 D _var p q_first_tent > 2 @
+3 3000 None 0 #
+0 3010 D _param p ST_INTELLECT } 4 #
+0 3020 D _param p ST_INTELLECT < 4 @
+4 4000 None 0 &
+
+[engl]
+{100}{}{Sally}
+{200}{}{A little girl.}
+{210}{}{It's the daughter of the farmers. She appears to be the youngest child.}
+{1000}{}{Predialogue installations}
+{1010}{}{Talk}
+{1020}{}{Hooray! Here, it's for you @sex@|sir||ma'am|!}
+{2000}{}{Moooom, Eric says the rats will eat me! [she notices you and quickly wipes nose with her sleeve.] Oh, hello @sex@|sir||ma'am|.}
+{2010}{}{Hello, little one. Don't you worry, I'm sure your father will protect you from the rats.}
+{2020}{}{No worry. Your daddy here, look! He can hurt rats.}
+{2030}{}{Don't worry, I will take care of these pests.}
+{2040}{}{Me go smash rats. You no cry.}
+{2050}{}{Stop crying, I took care of it like I promised. They nasty rats are gone for good.}
+{2060}{}{No no, rats dead! Gift for you! [You give the little girl a mutated rat tail. Wonderful toy, you used to play with them in your childhood].}
+{3000}{}{No he won't. He is afraid of them more than me. *sobs*}
+{3010}{}{Maybe I will try to help.}
+{3020}{}{That bad. [you scratch your head]}
+{4000}{}{Thank you @sex@|sir||ma'am|!}
+

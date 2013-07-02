@@ -1,0 +1,92 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_raiders_cave_entrance.fos
+//
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+
+#include "elevators_h.fos"
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_RAIDERS);
+    }
+    // well I be damned
+
+}
+
+//
+// Area triggers
+//
+
+// This is bad. Very bad.
+void t_EnterBase(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(GetGroupIndex(critter) != FACTION_RAIDERS)
+        critter.SendMessage(MSG_RAIDER_AREA_NOT_ALLOWED, 0, MESSAGE_TO_VISIBLE_ME);
+    else
+    {
+        critter.SendMessage(MSG_RAIDER_WELCOME, 0, MESSAGE_TO_VISIBLE_ME);
+        return;
+    }
+}
+
+// This is telling you it will become bad if you keep going
+void t_NearGate(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(dir != 2 && dir != 3)
+    {
+        if(GetGroupIndex(critter) != FACTION_RAIDERS)           // send signal to Gate Guard
+            critter.SendMessage(MSG_RAIDER_TRESPASSER, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+    else
+        return;
+}
+
+// Slave Pen. Do not enter.
+void t_EnterSlavePen(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    critter.SendMessage(MSG_RAIDER_AREA_NOT_ALLOWED, 0, MESSAGE_TO_VISIBLE_ME);
+    return;
+}
+
+
+// Slave pen gate, a warning to not touch it from guard.
+void _SlaveGate(Item& gate, bool firstTime)
+{
+    gate.SetEvent(ITEM_EVENT_SKILL, "_SlavePenGateTouch");
+}
+
+bool _SlavePenGateTouch(Item& gate, Critter& cr, int skill)
+{
+    array<Critter@> npcs;
+    if(cr.GetMap().GetCritters(0, FIND_ONLY_NPC | FIND_LIFE, npcs) == 0)
+        return false;
+    for(uint i = 0, j = npcs.length(); i < j; i++)
+    {
+        if(npcs[i].Param[ST_DIALOG_ID] == 2720)     // raiders_ashdown
+        {
+            if(cr.IsSeenBy(npcs[i]))
+            {
+                npcs[i].SayMsg(SAY_NORM_ON_HEAD, TEXTMSG_DLG, DLGSTR(2720, 0));
+                return false;
+            }
+        }
+    }
+    return false;
+}

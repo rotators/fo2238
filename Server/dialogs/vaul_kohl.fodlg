@@ -1,0 +1,203 @@
+[comment]
+Only nodes number #100+ are added by myself, the rest is from F2
+Also, take a look at #12(100,102) - these are mine
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _script dialog@d_CheckNight 0  #
+40 1020 D _param p ST_INTELLECT < 4 #
+2 1030 D _var n name_mem_npc_player = 0 #
+15 1040 D _var n name_mem_npc_player > 0 @
+2 2000 None 0 #
+3 2010 D _var p factions_player_faction = 6 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 2020 D _script dialog@d_IsNotMember 0  #
+0 2030 @
+3 3000 None 0 #
+12 3010 #
+4 3020 #
+0 3030 @
+4 4000 None 0 #
+5 4010 #
+7 4020 #
+12 4030 #
+0 4040 @
+5 5000 None 0 #
+6 5010 #
+12 5020 @
+6 6000 None 0 #
+12 6010 #
+0 6020 @
+7 7000 None 0 #
+8 7010 D _param p ST_INTELLECT < 6 #
+9 7020 D _param p ST_INTELLECT > 5 @
+8 8000 None 0 #
+10 8010 #
+12 8020 #
+0 8030 @
+9 9000 None 0 #
+11 9010 R _var n acquaintance = 1 #
+12 9020 #
+0 9030 @
+10 10000 None 0 #
+12 10010 #
+0 10020 @
+11 11000 None 0 #
+12 11010 #
+0 11020 @
+12 12000 None 0 #
+3 12010 #
+13 12020 #
+100 12030 D _var p factions_q_vc_kohl_books = 1 #
+102 12040 D _var p factions_q_vc_kohl_books > 9 D _var p factions_q_vc_kohl_books < 11111 #
+0 12050 @
+13 13000 None 0 #
+14 13010 #
+0 13020 @
+14 14000 None 0 #
+6 14010 #
+0 14020 @
+15 15000 None 0 #
+3 15010 #
+12 15020 #
+100 15030 D _var p factions_q_vc_kohl_books = 1 #
+102 15040 D _var p factions_q_vc_kohl_books > 9 D _var p factions_q_vc_kohl_books < 11111 #
+0 15050 @
+20 16000 None 0 #
+65507 16010 #
+0 16020 @
+40 17000 None 0 #
+41 17010 #
+0 17020 @
+41 18000 None 0 #
+42 18010 #
+0 18020 @
+42 19000 None 0 #
+0 19010 @
+50 20000 None 0 @
+100 21000 None 0 #
+101 21010 #
+0 21020 @
+101 22000 None 0 #
+12 22010 R _var p factions_q_vc_kohl_books = 10 #
+0 22020 R _var p factions_q_vc_kohl_books = 10 @
+102 23000 None 0 #
+103 23010 D _item p PID_SCOUT_HANDBOOK > 0 D _item p PID_FIRST_AID_BOOK > 0 D _item p PID_DEANS_ELECTRONICS > 0 D _item p PID_BIG_BOOK_OF_SCIENCE > 0 R _var p factions_q_vc_kohl_books = 11111 R _item p PID_SCOUT_HANDBOOK - 1 R _item p PID_FIRST_AID_BOOK - 1 R _item p PID_DEANS_ELECTRONICS - 1 R _item p PID_BIG_BOOK_OF_SCIENCE - 1 #
+0 23020 @
+103 24000 None 0 #
+12 24010 D _var n acquaintance = 0 #
+105 24020 D _var n acquaintance = 1 #
+0 24030 @
+105 25000 None 0 #
+106 25010 D _param p ST_INTELLECT < 7 R _item p PID_SCOUT_HANDBOOK + 1 #
+106 25020 D _param p ST_INTELLECT = 7 R _item p PID_FIRST_AID_BOOK + 1 #
+106 25030 D _param p ST_INTELLECT = 8 R _item p PID_DEANS_ELECTRONICS + 1 #
+106 25040 D _param p ST_INTELLECT > 8 R _item p PID_BIG_BOOK_OF_SCIENCE + 1 #
+0 25050 @
+106 26000 None 0 #
+12 26010 #
+0 26020 &
+
+[engl]
+{100}{}{Kohl}
+{200}{}{You see Chief Librarian Kohl.}
+{210}{}{You see a gentle-looking man in a Vault City uniform.}
+{1000}{}{Predialogue installations}
+{1010}{}{night floaters}
+{1020}{}{dumb}
+{1030}{}{-}
+{1040}{}{-}
+{2000}{}{Oh... hello! Was there something I could help you with?}
+{2010}{}{What is this place?}
+{2020}{}{What is this place?}
+{2030}{}{Nothing. Sorry to disturb you.}
+{3000}{}{This is the Information Center for Vault City. Is this the place you were looking for?}
+{3010}{}{Yes, actually. I had some questions maybe you can answer.}
+{3020}{}{Information Center? Do you have any books or manuals?}
+{3030}{}{Not really. Sorry to disturb you.}
+{4000}{}{Unfortunately, our books have been transcribed into electronic format. The extras are being shipped to the Amenities Offices down the street. You might try there.}
+{4010}{}{Where are these electronically-formatted books stored?}
+{4020}{}{All the books are gone?}
+{4030}{}{Oh. I have a few questions...}
+{4040}{}{Maybe I'll check there, then.}
+{5000}{}{Hmmmm. Well, you know, the Central Computer down in the Vault might have some information about it. We keep most
+ of the older archives down there.}
+{5010}{}{How can I get down to the Vault?}
+{5020}{}{Can I ask you some other questions?}
+{6000}{}{Well, you are a Citizen of the City, aren't you? You are permitted to walk down there.}
+{6010}{}{Can I ask you some other questions?}
+{6020}{}{Thanks for the information.}
+{7000}{}{Yes, well, everything is being transcribed because... hmmm. This is a somewhat delicate matter, but I believe my post here in Vault City has become obsolete.}
+{7010}{}{Ob-so-lete? What do you mean?}
+{7020}{}{Obsolete?}
+{8000}{}{It means my post here is no longer necessary. It's all for the best.}
+{8010}{}{Are you sure?}
+{8020}{}{Oh. I had some other questions...}
+{8030}{}{Sorry to hear it. I have to go.}
+{9000}{}{They are discussing putting information terminals in every household. These new terminals would all be tied to the List
+ Server and the Information Archives. Although the discussion took ages, it has to be done once. Then the information center... and I... will be unnecessary. It's all for the best, really.}
+{9010}{}{Oh. Well, I'm sorry to hear that all the books were transcribed. I'd much rather read a book than stare at a computer screen.}
+{9020}{}{Oh. I had some other questions...}
+{9030}{}{Sorry to hear it. I have to go.}
+{10000}{}{Oh my, yes. The First Citizen is rarely wrong in such matters. Still, I will be sorry to leave this place. I heard they have a position waiting for me in the List Office.}
+{10010}{}{Oh. I had some other questions...}
+{10020}{}{Sorry to hear it. I have to go.}
+{11000}{}{That's how I feel as well! I have nothing against electronic format mind you, but there is a certain... solidity... in having a book in your hands and turning the pages one by one. Hmmm. You know... I'd give you a book or two, if I had any here.}
+{11010}{}{Good to know it. I had some other questions...}
+{11020}{}{I see. Thanks anyway, I have to go now.}
+{12000}{}{Certainly. What questions did you have?}
+{12010}{}{Could you tell me once again what is this place?}
+{12020}{}{Do you know where I could find the Vault?}
+{12030}{}{Lilly told me you might need help.}
+{12040}{}{About those books...}
+{12050}{}{Never mind. Maybe we'll talk some other time.}
+{13000}{}{The Vault? Why, the entrance is just down the street... it's the large hole in the side of the mountain.}
+{13010}{}{Do you know of any other Vaults?}
+{13020}{}{Thanks for the information.}
+{14000}{}{Other Vaults? Hmmm. No, not really. I know other Vaults were built, but we have never come across any of them. There may be some mention of them in the Central Computer in the Vault.}
+{14010}{}{How can I get down to the Vault?}
+{14020}{}{Thanks for the information.}
+{15000}{}{Hello, again. Did you need help finding anything?}
+{15010}{}{Could you tell me once again what is this place?}
+{15020}{}{Yes, actually. I had some questions maybe you can answer.}
+{15030}{}{Lilly told me you might need some help.}
+{15040}{}{About those books...}
+{15050}{}{Nothing. Sorry to disturb you.}
+{16000}{}{This is the Information Center for Vault City. I am sorry, but I am not allowed to serve the Outworlders. Have a nice day.}
+{16010}{}{That's what you think, pal! [Draw your weapon]}
+{16020}{}{Yeah, just like everyone else...}
+{17000}{}{Oh... hello! Was there something I could help you with?}
+{17010}{}{Frazz-urb-luuw!}
+{17020}{}{[Shamble off]}
+{18000}{}{Uh... pardon me?}
+{18010}{}{Cripple-cripple creep.}
+{18020}{}{[Shamble off]}
+{19000}{}{Oh my, you must be one of the Servants. You should REALLY head back to Master Barkus at once, or he'll be quite irate!}
+{19010}{}{Okee!}
+{20000}{}{The Information Office is closed for the evening. I'll be heading home after I tabulate all these lists.@@The Information Office is closed for the evening. Come back in the morning.@@Shhhhh.@@Tread quietly, please.@@Silence IS a virtue.}
+{21000}{}{You heard correctly. We've transcribed almost all of Vault City's books into electronical format, but some entries are missing. Now I need to transcribe a few of them once again, but since all of our old books have been sent to Randal in the Amenities Office, I haven't got any.}
+{21010}{}{I could help you get them. What books are you looking for?}
+{21020}{}{Sorry to hear it, but I have to go now.}
+{22000}{}{We're looking for copies of... let me see, The Scout Handbook, The Big Book of Science, Deans Electronics and a First Aid Manual. I don't care where you find them, just bring them over here once you do.}
+{22010}{}{Roger that. You'll get your books, don't worry. Let me ask you something else now...}
+{22020}{}{I'll see what I can do.}
+{23000}{}{Yes, did you find them?}
+{23010}{}{There you go, each and every single one of them.}
+{23020}{}{No, not yet. Sorry.}
+{24000}{}{Okay, let me see them... well, they're not exactly in good shape, but it looks like I'll still be able to use them. Thank you, you have my eternal gratitude!}
+{24010}{}{You're welcome. Say, I had a few more questions...}
+{24020}{}{You're welcome. Say, you mentioned something about giving me a book or two before...}
+{24030}{}{Not a problem.}
+{25000}{}{Oh, right. Hold on, I'll transcribe one of these immediately, then you can keep the original for yourself. The others will be probably sent later to Randal, so you can maybe ask him if you're looking for the rest. [He quickly begins the transcription]}
+{25010}{}{[Wait]}
+{25020}{}{[Wait]}
+{25030}{}{[Wait]}
+{25040}{}{[Wait]}
+{25050}{}{I just remembered I have an important appointment. See you later.}
+{26000}{}{I'm done with this one, there was only one page missing. Here, take it.}
+{26010}{}{Thanks once again. Just one more question...}
+{26020}{}{Thanks.}
+

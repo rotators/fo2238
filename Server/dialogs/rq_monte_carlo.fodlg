@@ -1,0 +1,107 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 D _script rq_fetcher@d_None 0  #
+0 2020 #
+2 2030 D _script rq_fetcher@d_CanAsk 0  R _script rq_fetcher@r_ShowQuest 0  #
+20 2040 D _script rq_fetcher@d_HasStuff 0  R _script rq_fetcher@r_CompleteQuest 0  @
+3 3000 None 0 #
+4 3010 R _script rq_fetcher@r_GenerateFetchQuest 0  @
+4 4000 None 0 #
+0 4010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 4020 @
+5 5000 None 0 #
+0 5010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 5020 @
+6 6000 None 0 #
+0 6010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 6020 @
+7 7000 None 0 #
+0 7010 #
+0 7020 R _script rq_fetcher@r_AcceptQuest 0  @
+8 8000 rq_fetcher@dlg_ShowNum 0 #
+0 8010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 8020 @
+9 9000 rq_fetcher@dlg_ShowNum 0 #
+0 9010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 9020 @
+10 10000 rq_fetcher@dlg_ShowNum 0 #
+0 10010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 10020 @
+11 11000 rq_fetcher@dlg_ShowNum 0 #
+0 11010 R _script rq_fetcher@r_AcceptQuest 0  #
+0 11020 @
+12 12000 rq_fetcher@dlg_ShowNum 0 #
+0 12010 #
+0 12020 R _script rq_fetcher@r_AcceptQuest 0  @
+13 13000 rq_fetcher@dlg_ShowNum 0 #
+0 13010 #
+0 13020 R _script rq_fetcher@r_AcceptQuest 0  @
+20 14000 None 0 #
+0 14010 #
+0 14020 #
+0 14030 #
+0 14040 #
+0 14050 &
+
+[engl]
+{100}{}{Monte Carlo}
+{200}{}{You see Monte Carlo.}
+{210}{}{You see Monte Carlo.}
+{240}{}{You see the body of Monte Carlo.}
+{250}{}{You see the body of Monte Carlo.}
+{260}{}{You see a dismembered corpse of Monte Carlo.}
+{270}{}{You see a dismembered corpse of Monte Carlo, looks really grotesque.}
+{1000}{}{Predialogue installations}
+{1010}{}{-}
+{2000}{}{Hello, how can I help you?@@Yes? What is it?@@What do you need?}
+{2010}{}{Do you have some work for me, Monte?}
+{2020}{}{Nevermind, nothing.}
+{2030}{}{That quest you talked about before... what was it again?}
+{2040}{}{I'm back and I've got the stuff you wanted me to bring.}
+{3000}{}{Yes, hmm, in fact I do. Let me think...}
+{3010}{}{[Wait]...}
+{4000}{}{I want you to find me a copy of a cat's paw magazine. Any issue will do for my purposes...}
+{4010}{}{Uh, sure, whatever you wish.}
+{4020}{}{No way.}
+{5000}{}{I need you to fetch me a good book on science. I heard they have some down there in Hub, but I ain't sure. Be sure it contains some valuable information on computational physics or quantum chromodynamics.}
+{5010}{}{Uh, sure, whatever you wish.}
+{5020}{}{No way.}
+{6000}{}{I need a lighter, can't find it, and I really need a smoke. Hurry up!}
+{6010}{}{Ok, I'll try find one.}
+{6020}{}{No way.}
+{7000}{}{Could you please get me a green condom? Don't ask why, it's important for an... err... probabilistic field theory experiment.}
+{7010}{}{You pervert, I ain't helping you!}
+{7020}{}{Hehehe, I think we understand each other perfectly well then. I'll be back shortly.}
+{8000}{}{I need you to find me @lex num@ scorpion tails. I'm trying to come up with a new drug. I'll tell you more about it for sure... once you're back with those tails.}
+{8010}{}{Alright, pal, I'll try to see if I can find them on my next journey.}
+{8020}{}{No way.}
+{9000}{}{Why don't you go grab me a bunch of nuka colas, I'm thirsty. I want @lex num@ to be exact.}
+{9010}{}{Sure thing. I'll grab you a bunch of cold ones on my way back.}
+{9020}{}{I'm a nuka cola collector, I ain't giving you even one bottle. Consider this a big no!}
+{10000}{}{Why don't you go grab me a bunch of beers, I'm thirsty. I want @lex num@ to be exact.}
+{10010}{}{Okay, pal, but only for you.}
+{10020}{}{My dad was killed by a drunk driver, I hate alcohol. I'm outta here.}
+{11000}{}{I could use a few rotguts for an experiment I'm conducting. Bring me @lex num@ bottles. Will you please?}
+{11010}{}{Shouldn't be a problem, I'll be back.}
+{11020}{}{I think I'll have to decline, no offense, but it sounds like a big waste of time. I gotta go farm some more XP...}
+{12000}{}{I'm nearly outta smokes. Bring me @lex num@ packs of cigarettes and you're fine in my book.}
+{12010}{}{No thanks. I hate smokers.}
+{12020}{}{Sure, I could fetch a few packs for ya.}
+{13000}{}{Uh, I need you to bring me some flowers for a little investigation in the higher planes of existence. Could you find me @lex num@ flowers?}
+{13010}{}{I'm no fag, bye.}
+{13020}{}{Uh, sure, I mean flowers are great... and all.}
+{14000}{}{Excellent... hmm, yes, excellent! You've done a most excellent job...and now the reward... hmm... oh yes, here!}
+{14010}{}{Whatever...}
+{14020}{}{I'm out of here, NOW.}
+{14030}{}{Thanks, but, man, you ARE crazy!}
+{14040}{}{I need to go now, it was most pleasant speaking to you, Monte.}
+{14050}{}{I like you Monte. I'll be back if you have some more work for me later.}
+

@@ -1,0 +1,239 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+30 1010 D _param p ST_INTELLECT < 4 #
+2 1020 @
+2 2000 None 0 #
+4 2010 #
+5 2020 D _var p q_ncr_rail_gang = 1 D _param p ST_LEVEL } 4 #
+5 2030 D _var p q_ncr_rail_gang = 1 D _param p ST_LEVEL < 4 #
+3 2040 #
+18 2050 D _var p q_ncr_rail_gang > 2 D _var p q_ncr_rail_gang < 6 #
+24 2060 D _var p q_ncr_trainstation_known = 0 D _var p q_ncr_rail_gang > 9 #
+0 2070 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+3 4010 #
+5 4020 D _var p q_ncr_rail_gang = 1 D _param p ST_LEVEL } 3 #
+17 4030 D _param p ST_LEVEL < 2 D _param p ST_LEVEL < 3 #
+0 4040 @
+5 5000 None 0 #
+6 5010 #
+34 5020 @
+6 6000 None 0 #
+10 6010 #
+0 6020 @
+7 7000 None 0 #
+9 7010 R _var p q_ncr_rail_gang = 2 R _script quest_railgang@r_SpawnCamp 0  #
+15 7020 #
+16 7030 @
+9 8000 None 0 #
+0 8010 #
+0 8020 @
+10 9000 None 0 #
+11 9010 @
+11 10000 None 0 #
+12 10010 #
+12 10020 #
+0 10030 @
+12 11000 None 0 #
+13 11010 @
+13 12000 None 0 #
+7 12010 #
+14 12020 @
+14 13000 None 0 #
+0 13010 #
+7 13020 @
+15 14000 None 0 #
+16 14010 #
+9 14020 R _var p q_ncr_rail_gang = 2 R _script quest_railgang@r_SpawnCamp 0  @
+16 15000 None 0 #
+15 15010 #
+9 15020 R _var p q_ncr_rail_gang = 2 R _script quest_railgang@r_SpawnCamp 0  @
+17 16000 None 0 #
+0 16010 @
+18 17000 None 0 #
+19 17010 D _var p q_ncr_rail_gang = 5 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 1000 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p REPUTATION_NCR + 100 #
+23 17020 D _var p q_ncr_rail_gang = 3 D _param p ST_INTELLECT > 3 R _param p ST_EXPERIENCE + 1000 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p REPUTATION_NCR + 100 #
+22 17030 D _var p q_ncr_rail_gang = 4 D _param p ST_INTELLECT > 3 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p ST_EXPERIENCE + 3000 R _param p REPUTATION_NCR + 100 #
+19 17040 D _param p ST_INTELLECT < 4 D _var p q_ncr_rail_gang = 5 R _param p ST_EXPERIENCE + 1000 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p REPUTATION_NCR + 100 #
+23 17050 D _param p ST_INTELLECT < 4 D _var p q_ncr_rail_gang = 3 R _param p ST_EXPERIENCE + 1000 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p REPUTATION_NCR + 100 #
+22 17060 D _param p ST_INTELLECT < 4 D _var p q_ncr_rail_gang = 4 R _param p ST_EXPERIENCE + 1000 R _script quest_railgang@r_DeleteCamp 0  R _var p q_ncr_rail_gang = 10 R _param p REPUTATION_NCR + 100 @
+19 18000 None 0 #
+0 18010 D _param p ST_INTELLECT > 3 #
+21 18020 D _param p ST_INTELLECT > 3 #
+20 18030 D _param p ST_INTELLECT > 3 #
+0 18040 D _param p ST_INTELLECT < 4 #
+21 18050 D _param p ST_INTELLECT < 4 @
+22 19000 None 0 #
+0 19010 D _param p ST_INTELLECT > 3 #
+21 19020 D _param p ST_INTELLECT > 3 #
+20 19030 D _param p ST_INTELLECT > 3 #
+0 19040 D _param p ST_INTELLECT < 4 #
+21 19050 D _param p ST_INTELLECT < 4 @
+23 20000 None 0 #
+0 20010 D _param p ST_INTELLECT > 3 #
+21 20020 D _param p ST_INTELLECT > 3 #
+20 20030 D _param p ST_INTELLECT > 3 #
+0 20040 D _param p ST_INTELLECT < 4 #
+21 20050 D _param p ST_INTELLECT < 4 @
+21 21000 None 0 #
+24 21010 D _param p ST_INTELLECT > 3 #
+0 21020 D _param p ST_INTELLECT > 3 #
+24 21030 D _param p ST_INTELLECT < 4 #
+0 21040 D _param p ST_INTELLECT < 4 @
+20 22000 None 0 #
+0 22010 #
+21 22020 @
+24 23000 None 0 #
+25 23010 D _param p ST_INTELLECT > 3 #
+25 23020 D _param p ST_INTELLECT < 4 #
+0 23030 @
+25 24000 None 0 #
+0 24010 D _param p ST_INTELLECT > 3 R _script dialog@r_ShowLocation 1 354 #
+0 24020 D _param p ST_INTELLECT < 4 R _script dialog@r_ShowLocation 1 354 @
+30 25000 None 0 #
+0 25010 #
+31 25020 D _var p q_ncr_rail_gang = 1 D _param p ST_LEVEL } 4 #
+35 25030 D _param p ST_LEVEL < 4 D _var p q_ncr_rail_gang = 1 #
+18 25040 D _var p q_ncr_rail_gang > 2 D _var p q_ncr_rail_gang < 6 #
+24 25050 D _var p q_ncr_rail_gang > 9 D _var p q_ncr_trainstation_known = 0 @
+31 26000 None 0 #
+32 26010 #
+0 26020 @
+32 27000 None 0 #
+33 27010 @
+33 28000 None 0 #
+0 28010 R _var p q_ncr_rail_gang = 2 R _script quest_railgang@r_SpawnCamp 0  @
+34 29000 None 0 #
+7 29010 #
+6 29020 #
+0 29030 @
+35 30000 None 0 #
+0 30010 &
+
+[engl]
+{100}{}{Gunther}
+{200}{}{You see a slender young man wearing glasses.}
+{210}{}{It's Gunther, aide to President Tandi. At least that's what the sign on the door said.}
+{210}{}{He looks officious and busy, the type born to be a bureaucrat that other folks hate.}
+{1000}{}{Predialogue installations}
+{1010}{}{dumb}
+{1020}{}{2}
+{2000}{}{Can I help you?}
+{2010}{}{Who are you?}
+{2020}{}{I've been told there might be a job for me.}
+{2030}{}{I've been told there might be a job for me.}
+{2040}{}{I'm here to see President Tandi, I'm looking for work.}
+{2050}{}{I've dealt with the rail line gang...}
+{2060}{}{About that rail lines...}
+{2070}{}{You can't. Goodbye.}
+{3000}{}{Well, I'm sorry, but Madam President is very busy. Why don't you try downtown?}
+{3010}{}{Okay, fine.}
+{4000}{}{My name is Gunther, personal assistant to President Tandi. Now, what can I do for you?}
+{4010}{}{I'm here to see President Tandi, I'm looking for work.}
+{4020}{}{I've been told there might be a job for me.}
+{4030}{}{I've been told there might be a job for me.}
+{4040}{}{Nothing. Bye.}
+{5000}{}{I guess you talked to Feargus. Did he tell you anything?}
+{5010}{}{Nothing, really.}
+{5020}{}{Yes, everything.}
+{6000}{}{You have to understand, this is not an easy task to do. We have problems with some gang of crazies and to work it out you have to be either smart or a man with many friends. Do you think that you are capable to solve a gang related problem?}
+{6010}{}{Sure, tell me what's the job about.}
+{6020}{}{Huh, this doesn't really sound like me. Maybe I will come back later. See you.}
+{7000}{}{Good. So... Our scouts have reported the position of the gang [He points on a map with his finger, a location close-by the borders of the NCR] You should go now. We can't wait any longer.}
+{7010}{}{I am on my way...}
+{7020}{}{What kind of gang is this?}
+{7030}{}{Why not just send some rangers to them and clean up that place?}
+{8000}{}{One thing... You should really consider to hire yourself some backup, because these people are dangerous.}
+{8010}{}{We will see. Bye.}
+{8020}{}{If you say so. Bye.}
+{9000}{}{Our republic is growing each day and we have to find new forms of transportation of people and resources. At the moment, we are doing intensive clearing of roadways and rail lines to make them usable again.}
+{9010}{}{And?}
+{10000}{}{We already managed to get a lot of the rail lines to work again in more or less good condition. Anyway... While our efforts to continue into the eastern areas are ongoing, we've now stumbled upon in, well, we've met some resistance.}
+{10010}{}{Interesting.}
+{10020}{}{Resistance in what kind of way?}
+{10030}{}{Man, this sounds boring. I am all outa here now... [Leave]}
+{11000}{}{Well, more and more raider gangs and other groups have been showing up and they've started attacks against our workers. And by doing that, they have succeeded in shattering the morale. Also, it doesn't really help the situation that all of the workers are convicted criminals. We are afraid that the continuing attacks are causing rebellious atmosphere among the working force. That we can't allow to happen.}
+{11010}{}{You want me to get rid of the workers?}
+{12000}{}{God no! Your job is to get rid of the gangs by any means necessary. As long as it won't take long to do so.}
+{12010}{}{Hey, this is exactly the kind of job I am searching for!}
+{12020}{}{I think this is too dangerous for me. }
+{13000}{}{This is the only 'job offer' we have. You can take it or leave it.}
+{13010}{}{Then I am out. Bye.}
+{13020}{}{Wait, did I said it's too dangerous for me? I mean, it fits exactly my style! Count me in.}
+{14000}{}{They are calling themselves The Horatius gang, or something like that. At this moment, they are still more or less passive, except for making a lot of noise to scare the workers }
+{14010}{}{Why not just send some rangers to them and clean up that place?}
+{14020}{}{I am on my way...}
+{15000}{}{That would cause a mess and could harm us more than by doing nothing.}
+{15010}{}{What kind of gang is this?}
+{15020}{}{I am on my way...}
+{16000}{}{Sorry, but this is no job for a rookie. Come back if you are somewhat stronger.}
+{16010}{}{Okay, fine.}
+{17000}{}{Good. What is the status now?}
+{17010}{}{They are all dead and will never make any problems again.}
+{17020}{}{I've killed their leader. The rest was running away like scared chicken.}
+{17030}{}{I've convinced them to leave this area. They will not come back. }
+{17040}{}{Me done, all dead.}
+{17050}{}{Big man dead. Other run away.}
+{17060}{}{They all going away.}
+{18000}{}{Well done. Now we can continue. I will send out new workers as soon as possible. Thank you for your help, the NCR reciprocates.}
+{18010}{}{No problem. That's what I am for. Bye. }
+{18020}{}{Where is my reward for this?}
+{18030}{}{I want to talk to President Tandi now.}
+{18040}{}{Me good in this. Me going now.}
+{18050}{}{Where my reward? Me want.}
+{19000}{}{This is not exactly what we've expected, but well. Good work. Someone who is able to persuade a gang of rowdies in a diplomatic way is what we could need more. Anyway... I will send out new workers as soon as possible. Thank you for your help, the NCR reciprocates.}
+{19010}{}{No problem. That's what I am for. Bye. }
+{19020}{}{Where is my reward for this?}
+{19030}{}{I want to talk to President Tandi now.}
+{19040}{}{Me good in this. Me going now.}
+{19050}{}{Where my reward? Me want.}
+{20000}{}{To let the other gang members run away was not a good move. They could reform themself and come back stronger or they could do other harm. Good work anyway. I will send out new workers as soon as possible. Thank you for your help, the NCR reciprocates.}
+{20010}{}{Good. I have to go now. Bye.}
+{20020}{}{Where is my reward for this?}
+{20030}{}{I want to talk to President Tandi now.}
+{20040}{}{Me good in this. Me going now.}
+{20050}{}{Where my reward? Me want.}
+{21000}{}{Talk to Fergus in the anteroom, he will reward you.}
+{21010}{}{I have something more. About that rail lines...}
+{21020}{}{Thanks and bye.}
+{21030}{}{Me have question about rai-lines.}
+{21040}{}{Good.}
+{22000}{}{I'm sorry, but Madam President is very busy and doesn't have the time to talk to everyone.}
+{22010}{}{Okay, fine.}
+{22020}{}{Where is my reward for this?}
+{23000}{}{What?}
+{23010}{}{Can you tell me, where the next train station is?}
+{23020}{}{Where train is?}
+{23030}{}{Nothing. Bye.}
+{24000}{}{The closest NCR outpost is in the south of here. It works also as a train station, so this might be what you are searching for.}
+{24010}{}{I will check it out.}
+{24020}{}{Me will look.}
+{25000}{}{Can I he-- wait, who has let you in here?}
+{25010}{}{Nobody, me going.}
+{25020}{}{Stupid man from outside said you have work.}
+{25030}{}{Stupid man from outside said you have work.}
+{25040}{}{Me done with rail gang.}
+{25050}{}{Me have question about rai-lines.}
+{26000}{}{I guess you mean Feargus. Oh well... I have a job offer, but I am not sure if you... are the right... one, for this. But then again, maybe it will suit you well.}
+{26010}{}{Tell me what work about.}
+{26020}{}{Me going, this no good.}
+{27000}{}{There are evil man outside in the desert. Go and get them away. [He marks a spot on a map with his fingers.] They interrupt our work on the rail lines. Do whatever you want with them and then come back to me.}
+{27010}{}{Rai... lines?}
+{28000}{}{Rail lines. Yes. Go there [He shows you the spot on the map again] and then come back to me.}
+{28010}{}{Okay.}
+{29000}{}{Really? That would be the first time that he explains *anything* at all.}
+{29010}{}{But he has done it. Let's come to the point.}
+{29020}{}{Maybe... you should tell me again, what's up with that job.}
+{29030}{}{I changed my mind anyway. Bye.}
+{30000}{}{I guess you talked to Feargus, but... I don't think you are exactly what we are looking for. In fact, what we are looking for is someone with a little bit more expertise.}
+{30010}{}{Goodbye.}
+

@@ -1,0 +1,186 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+25 1010 D _param p ST_CHARISMA > 99 #
+12 1020 D _var n name_mem_npc_player = 1 #
+2 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+11 1040 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+3 2010 #
+5 2020 #
+8 2030 #
+9 2040 #
+20 2050 D _script rooms@d_NotRentingHere 1 0 D _script rooms@d_IsFreeRoom 1 0 R _var p name_mem_npc_player = 1 #
+21 2060 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 R _var p name_mem_npc_player = 1 #
+0 2070 @
+3 3000 None 0 #
+4 3010 #
+17 3020 #
+65506 3030 #
+20 3040 D _script rooms@d_IsFreeRoom 1 0 D _script rooms@d_NotRentingHere 1 0 #
+21 3050 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 #
+0 3060 @
+4 4000 None 0 #
+12 4010 #
+18 4020 D _item p PID_BOTTLE_CAPS > 39 R _script dialog@r_RemoveMoney 1 40 #
+12 4030 D _item p PID_BOTTLE_CAPS < 40 @
+5 5000 None 0 #
+6 5010 #
+7 5020 #
+12 5030 @
+6 6000 None 0 #
+7 6010 #
+12 6020 @
+7 7000 None 0 #
+6 7010 #
+12 7020 @
+8 8000 None 0 #
+12 8010 #
+0 8020 @
+9 9000 None 0 #
+10 9010 #
+12 9020 #
+0 9030 @
+10 10000 None 0 #
+16 10010 #
+0 10020 @
+11 11000 None 0 #
+13 11010 #
+15 11020 #
+0 11030 @
+12 12000 None 0 #
+3 12010 #
+5 12020 #
+8 12030 #
+9 12040 #
+20 12050 D _script rooms@d_NotRentingHere 1 0 D _script rooms@d_IsFreeRoom 1 0 R _var p name_mem_npc_player = 1 #
+21 12060 D _script rooms@d_NoFreeRooms 1 0 D _script rooms@d_NotRentingHere 1 0 R _var p name_mem_npc_player = 1 #
+0 12070 @
+13 13000 None 0 #
+14 13010 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 10 #
+15 13020 #
+0 13030 @
+14 14000 None 0 #
+0 14010 @
+15 15000 None 0 #
+0 15010 D _item p PID_BOTTLE_CAPS > 49 R _script dialog@r_RemoveMoney 1 50 #
+13 15020 #
+0 15030 @
+16 16000 None 0 #
+12 16010 #
+0 16020 @
+17 17000 None 0 #
+0 17010 #
+0 17020 @
+18 18000 None 0 @
+20 19000 rooms@dlg_ShowInfo 0 #
+22 19010 D _script rooms@d_HasMoneyForRent 1 0 R _script rooms@r_RentRoom 1 25 #
+23 19020 D _script rooms@d_NoMoneyForRent 1 0 #
+0 19030 @
+21 20000 None 0 #
+12 20010 #
+0 20020 @
+22 21000 None 0 #
+0 21010 R _script rooms@r_ShowRoom 1 1 @
+23 22000 None 0 #
+0 22010 @
+25 23000 None 0 &
+
+[engl]
+{100}{}{Lou}
+{200}{}{You see a tired woman who might have been quite a looker when she was younger.}
+{210}{}{You see Lou, the owner of the Malamute Saloon.}
+{210}{}{You see an older woman wearing quite a bit of rouge.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Known}
+{1030}{}{Unknown}
+{1040}{}{Stupid}
+{2000}{}{Hello there. I'm Lou. Owner of the Malamute Saloon, finest house north of San Fran.}
+{2010}{}{Hello, Lou. I'm interested in getting something.}
+{2020}{}{Hello, Lou. What's going on in this town?}
+{2030}{}{What's a Malamute?}
+{2040}{}{Where's San Fran from here?}
+{2050}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{2060}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{2070}{}{I gotta go, Lou. Goodbye,}
+{3000}{}{What can I do for you? You want an empty bed, a full one? Maybe some booze or other goods?}
+{3010}{}{I'd like a room with an empty bed, Lou.}
+{3020}{}{A full bed? That sounds good. Tell me more about that.}
+{3030}{}{Booze and other goods. Let's barter.}
+{3040}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{3050}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{3060}{}{Nothing for now, Lou. Goodbye.}
+{4000}{}{You wanna get some sleep, huh? Well, that's going to cost you $40. Includes fresh, mostly clean sheets too. You still interested?}
+{4010}{}{Hmm, I guess I'm not that tired. Let me ask you about something else.}
+{4020}{}{I'll take it, Lou.}
+{4030}{}{I don't have enough money for that right now. Let me ask you about something, though.}
+{5000}{}{Well, mostly we mine gold ore here and trade it to other areas.}
+{5010}{}{You mine gold ore here?}
+{5020}{}{Where do you trade the ore?}
+{5030}{}{That's interesting. Tell me something else, though.}
+{6000}{}{Yup. Just in the north part of town alone there are working gold mines.}
+{6010}{}{You said that you trade the ore?}
+{6020}{}{Interesting. Let me ask you about something else, though.}
+{7000}{}{Well, we trade gold ore to Vault City in return for medical supplies. We trade ore to the New California Republic in return for fresh brahmin and other victuals, and we trade gold to New Reno for drugs and booze.}
+{7010}{}{You mine the gold here?}
+{7020}{}{Interesting. Let me ask you about something else, though.}
+{8000}{}{Jist a big dog.}
+{8010}{}{Oh, I see. Hmm, let me ask you about something else.}
+{8020}{}{Of course. That's all I really wanted to know. Thanks. Goodbye.}
+{9000}{}{San Francisco is quite a ways south of here. You're a long ways from there. South and jist a tich to the west. It's right next to the ocean, don'tcha know. Don't know why any sane person'd want to go there for.}
+{9010}{}{Why? Is it dangerous?}
+{9020}{}{Interesting. Let me ask you about something else, though.}
+{9030}{}{Thanks for the information. Goodbye.}
+{10000}{}{Well, I hear all kinds of things about the whole city bein' full o' nuthin' but crazy guys with all kinds of fancy technology.}
+{10010}{}{Fancy technology?}
+{10020}{}{Crazy world, huh? Well, don't let it get you down. Goodbye.}
+{11000}{}{Sorry, I don't have much time or patience for stupid people. What do you want?}
+{11010}{}{Grink?}
+{11020}{}{Room?}
+{11030}{}{Bye bye.}
+{12000}{}{What now?}
+{12010}{}{Lou, I'm interested in getting something here.}
+{12020}{}{Hello, Lou. What's going on in this town?}
+{12030}{}{What's a Malamute?}
+{12040}{}{Where's San Fran from here?}
+{12050}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{12060}{}{I need a good night's sleep.@@Can I get a room?@@I want to rent a room.}
+{12070}{}{I gotta go, Lou. Bye.}
+{13000}{}{A drink huh? Well that'll be 10 caps for a nice cold bottle of beer. I'm giving you the special discount price too, 'cause I have a soft spot in my heart for the simple.}
+{13010}{}{Grink? (you hold out your purse in your hand)}
+{13020}{}{Room?}
+{13030}{}{No grink. Bye bye.}
+{14000}{}{There you go, sweetie. Be careful now.}
+{14010}{}{Heee.}
+{15000}{}{You want a room, huh? Well I might have some room somewheres for you. It'll cost you $50 for a
+ cozy spot.}
+{15010}{}{Room. (you hold out your purse in your hand)}
+{15020}{}{Grink?}
+{15030}{}{No room. Bye bye.}
+{16000}{}{Somethin' like that. It's been a while since someone came from down them ways. Talkin' about some Central Comittee and a commune or something'. Don't know much for certain. It's a long ways off.}
+{16010}{}{I've got a couple other questions.}
+{16020}{}{That's all I need to know for now. Thanks. Goodbye.}
+{17000}{}{Looking for someone to help you warm up that big lonely bed, huh? Let me see who I've got available. Hmm, why don't you try Fannie Mae? She oughta be around here somewheres. You can make the arrangements with her yourself.}
+{17010}{}{Sounds like a good idea. I'll go do that. Goodbye.}
+{17020}{}{But I didn't…okay. Goodbye.}
+{18000}{}{Just head out back, there'll be a place free.}
+{19000}{}{We still have a room free and this will cost you @lex price@ caps for @lex time@ days. You want it?}
+{19010}{}{Sounds like a fair price to me. I’ll take it.@@Yes, I'll take the room.}
+{19020}{}{Uh, this is a little rich for me. You couldn't let me sleep there on the house, could ya?}
+{19030}{}{I don’t think I’ll take you up on that offer just now. Maybe later.}
+{20000}{}{Sorry, but we don't have any rooms free. Maybe you should try later again.}
+{20010}{}{Oh well...}
+{20020}{}{[Leave] Damn!}
+{21000}{}{No problem. This room, follow me.@@No problem. This room, follow me. Don't be shooting any guns in here, okay?}
+{21010}{}{[Follow her.]}
+{22000}{}{You need some money before I can rent you a room. Nothing else works.@@You need some money before I can rent you a room. It only works this way.}
+{22010}{}{Alright, I'm leaving.}
+{23000}{}{You're scaring off all my business!@@Go on, git!@@Someone git this freak outta here!@@We don't let no freakshows drink here.}
+

@@ -1,0 +1,239 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// poison.fos
+//
+
+// Original Fallout2 system
+
+// import void AffectPoison(Critter& cr, int value) from "poison";
+// import void DropPoison(Critter& cr) from "poison";
+
+#include "_macros.fos"
+
+#define POISON_BASE_DURATION    (505)  // In game seconds, need div on 60
+#define POISON_DURATION_SUB     (5)    // In game seconds, need div on 60
+
+#define STR_POISON_GAIN         (12810)
+#define STR_POISON_PROCESS      (12811)
+#define STR_POISON_REDUCE       (12812)
+#define STR_POISON_FREE         (12813)
+#define STR_POISON_DEATH        (12814)
+
+
+void AffectPoison(Critter& cr, int value)   // Export
+{
+    if(cr.IsDead())
+        return;
+
+    array<uint> indexes;
+    array<uint> durations;
+    bool        isActive = cr.GetTimeEvents(CTE_POISON, indexes, durations, null) != 0;
+    int         levelVal = cr.Stat[ST_POISONING_LEVEL];
+    int         resistVal = cr.Stat[ST_POISON_RESISTANCE];
+
+    if(value > 0)
+        value -= value * resistVal / 100;
+    else if(levelVal == 0)
+        return;
+    cr.StatBase[ST_POISONING_LEVEL] = CLAMP(levelVal + value, 0, 2000);
+    levelVal = cr.Stat[ST_POISONING_LEVEL];
+
+    uint strNum = 0;
+    if(levelVal == 0)
+        strNum = STR_POISON_FREE;
+    else if(value > 0)
+        strNum = STR_POISON_GAIN;
+    else if(value < 0)
+        strNum = STR_POISON_REDUCE;
+    if(strNum != 0)
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, strNum);
+
+    if(levelVal > 0)
+    {
+        if(cr.Damage[DAMAGE_POISONED] == 0)
+            cr.DamageBase[DAMAGE_POISONED] = 1;
+
+        if(levelVal > 100)
+        {
+            int hp = levelVal - 100;
+            cr.StatBase[ST_CURRENT_HP] -= hp;
+            if(cr.Stat[ST_CURRENT_HP] <= 0)
+            {
+                cr.ToDead(Random(0, 1) == 0 ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK, null);         // buggy, make macro for safety
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_POISON_DEATH);
+            }
+            cr.StatBase[ST_POISONING_LEVEL] = 100;
+        }
+    }
+    else
+    {
+        if(cr.Damage[DAMAGE_POISONED] != 0)
+            cr.DamageBase[DAMAGE_POISONED] = 0;
+    }
+
+    if(isActive)       // Try hurry event, if new stage aviable
+    {
+        if(levelVal == 0)
+        {
+            cr.EraseTimeEvents(CTE_POISON);
+        }
+        else
+        {
+            uint oldDuration = durations[0];
+            uint newDuration = GetPoisonDuration(cr);
+            if(newDuration < oldDuration)
+                cr.ChangeTimeEvent(indexes[0], newDuration, 0);
+        }
+    }
+    else     // Try start new event
+    {
+        cr.AddTimeEvent("cte_Poison", GetPoisonDuration(cr), CTE_POISON);
+    }
+}
+
+void DropPoison(Critter& cr)   // Export
+{
+    cr.EraseTimeEvents(CTE_POISON);
+    cr.StatBase[ST_POISONING_LEVEL] = 0;
+    if(cr.Damage[DAMAGE_POISONED] != 0)
+        cr.DamageBase[DAMAGE_POISONED] = 0;
+}
+
+uint cte_Poison(Critter& cr, int identifier, uint& rate)
+{
+    if(cr.IsDead())
+        return GAME_MINUTE(100);
+
+    int levelVal = cr.Stat[ST_POISONING_LEVEL];
+    if(levelVal > 0)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_POISON_PROCESS);
+        cr.StatBase[ST_POISONING_LEVEL] = CLAMP(levelVal - 2, 0, 2000);
+        cr.StatBase[ST_CURRENT_HP]--;
+        if(cr.Stat[ST_CURRENT_HP] <= 0)
+            cr.ToDead(Random(0, 1) == 0 ? ANIM2_DEAD_FRONT : ANIM2_DEAD_BACK, null);                           // buggy, make macro for safety
+    }
+
+    if(cr.Stat[ST_POISONING_LEVEL] == 0)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_POISON_FREE);
+        if(cr.Damage[DAMAGE_POISONED] != 0)
+            cr.DamageBase[DAMAGE_POISONED] = 0;
+        return 0;
+    }
+
+    return GetPoisonDuration(cr);
+}
+
+uint GetPoisonDuration(Critter& cr)
+{
+    int duration = POISON_BASE_DURATION;
+    int levelVal = cr.Stat[ST_POISONING_LEVEL];
+    if(levelVal == 0)
+        return 0;
+    duration -= levelVal * POISON_DURATION_SUB;
+    duration /= 60;
+    if(duration <= 0)
+        duration = 1;
+    return GAME_MINUTE(duration);
+}
+
+
+/* fallout2 revers engineering by Atom
+
+   One "tick" = 0.1 seconds (fallout's unit of time),
+
+   Each time the poison level is adjusted by N (N can be >0 or <0), the following happens:
+
+   adjust_poison(int N) // original fallout version
+   {
+   if (N <= 0)
+   {
+    poison_level+=N;
+    if (poison_level<0) poison_level=0;
+   }
+   if (N>0) poison_level += N * (100 - poison_resistance) / 100;
+
+   if (poison_level > 0)
+   {
+    delete time event "check poison", if there is one;
+    add new time event "check poison" MAX(5050-50*poison_level,0) ticks from now;
+   }
+   }
+
+   "check poison" event does the following:
+   {
+   adjust_poison(-2);
+   injure_critter(1); // this is "uncalled" damage
+   }
+
+   -------------
+   Note: it's often the case that fallout add events with time = 0, but they can be resolved immediately. this is always the case if poison_level>100, so adjust_poison can be easily changed to this:
+
+   adjust_poison(int N)  // simplified fallout version
+   {
+   if (N <= 0)
+   {
+    poison_level+=N;
+    if (poison_level<0) poison_level=0;
+   }
+   if (N>0) then poison_level += N * (100 - poison_resistance) / 100;
+
+   if (poison_level > 0)
+   {
+    if (poison_level > 100)
+    {
+      injure_critter(poison_level - 100);
+      poison_level=100;
+    }
+    delete time event "check poison", if there is one;
+    add new time event "check poison" MAX(5050-50*poison_level,0) ticks from now;
+   }
+   }
+
+   Note: now about the next problem - even if in one moment the "check poison" event is scheduled 1 second from now, adjusting (e.g. taking) the poison will delete this event and place a new one. but it's better to take min(previous time, new time).
+   Also, another bug (or maybe it's not a bug?): if there is an event placed, and someone drinks anditode and set his poison_level to 0, event is not deleted. So:
+
+   adjust_poison(int N)  // modified and debugged fallout version
+   {
+   if (N <= 0)
+   {
+    poison_level+=N;
+    if (poison_level<0) poison_level=0;
+    if (poison_level==0) delete time event "check poison", if there is one; // this line is questionable
+   }
+   if (N>0) then poison_level += N * (100 - poison_resistance) / 100;
+
+
+
+   if (poison_level > 0)
+   {
+    if (poison_level > 100)
+    {
+      injure_critter(poison_level - 100);
+      poison_level=100;
+    }
+    int time = 5050-50*poison_level;
+    if (there is an "check poison" event)
+    {
+      int oldtime = old_event_time
+      if (time<oldtime)
+      {
+        delete time event "check poison", if there is one;
+        add new time event "check poison" (5050-50*poison_level) ticks from now;
+      }
+    }
+    else
+      add new time event "check poison" (5050-50*poison_level) ticks from now;
+   }
+   else
+    delete time event "check poison", if there is one;
+   }
+
+   {12810}{}{You have been poisoned!}
+   {12811}{}{You take damage from poison.}
+   {12812}{}{You feel a little better.}
+   {12813}{}{You feel better.}
+ */

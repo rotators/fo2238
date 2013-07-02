@@ -1,0 +1,211 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// geiger.fos
+//
+
+// Geiger counter
+#include "_macros.fos"
+#include "_colors.fos"
+
+/*
+ # Geiger
+   {10350}{}{Geiger counter has no charges left.}
+   {10351}{}{Geiger counter is on.}
+   {10352}{}{Geiger counter is off.}
+   {10353}{}{You pass the Geiger counter over your body. The rem counter reads: @lex rem@.}
+   {10354}{}{The rem counter reads: @lex rem@.}
+   {10355}{}{Nothing happens.}
+   {10356}{}{Geiger counter charged.}
+   {10357}{}{Geiger counter charge is @lex cur@/@lex max@.}
+
+
+   {10350}{}{%s has no charges left.}  -- При попытке использовать, когда не осталось зарядов. Заряды выводятся зеленой полоской, так же как патроны у оружия.
+   {10351}{}{%s is on.}  -- При включении счетчика гейгера. (Полоижть в руку и кликнуть по нему. Не используется из открытого инвентаря.)
+   {10352}{}{%s is off.}  -- При выключении счетчика гейгера.
+   {10353}{}{You pass the Geiger counter over your body. The rem counter reads: %d}  -- При включении счетчика гейгера. Покащзывает уровень радиауции.
+   {10354}{}{This item can only be used from the interface bar.}  -- При попытке использовать внутри инвентаря.
+   {10355}{}{Nothing happens.}
+
+   sound\SFX\GEIGER.ACM
+
+   PID_GEIGER_COUNTER
+   PID_ACTIVE_GEIGER_COUNTER
+
+   Val1 - capacity counter
+   Val2 - 0 off, 1 on
+   Val3 - time event id
+ */
+
+#define GEIGER_DURATION           (REAL_SECOND(12))
+#define GEIGER_HEX_RANGE          (20)     // Range of critters collect
+#define GEIGER_ENERGY_CHARGE      (10)
+#define GEIGER_FUSION_CHARGE      (50)
+
+#define STR_GEIGER_NO_CHARGES     (10350)
+#define STR_GEIGER_ON             (10351)
+#define STR_GEIGER_OFF            (10352)
+#define STR_GEIGER_FIRST_CHECK    (10353)
+#define STR_GEIGER_LOOP_CHECK     (10354)
+#define STR_GEIGER_NOTHING        (10355)
+#define STR_GEIGER_ADD_CHARGE     (10356)
+#define STR_GEIGER_CUR_CHARGE     (10357)
+
+void _GeigerInit(Item& item, bool firstTime)
+{
+    item.SetEvent(ITEM_EVENT_USE, "_UseGeiger");
+    item.SetEvent(ITEM_EVENT_USE_ON_ME, "_UseItemOnGeiger");
+    item.SetEvent(ITEM_EVENT_SKILL, "_UseSkillOnGeiger");
+}
+
+bool _UseGeiger(Item& geiger, Critter& cr, Critter@ onCritter, Item@ onItem, Scenery@ onScenery)
+{
+    if(!valid(onCritter) || onCritter.Id != cr.Id)
+        return false;
+    if(geiger.Val1 == 1)
+    {
+        geiger.Val1 = 0;
+        geiger.ChangeProto(PID_GEIGER_COUNTER);
+        if(geiger.Val3 != 0)
+            EraseTimeEvent(geiger.Val3);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_OFF);
+    }
+    else
+    {
+        if(geiger.Val2 == 0)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_NO_CHARGES);
+            return true;
+        }
+
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_FIRST_CHECK, "$rem" + cr.Stat[ST_RADIATION_LEVEL]);
+
+        geiger.Val2--;
+        if(geiger.Val2 == 0)
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_NO_CHARGES);
+        }
+        else
+        {
+            // Turn on and loop
+            geiger.Val1 = 1;
+            geiger.ChangeProto(PID_ACTIVE_GEIGER_COUNTER);
+            geiger.Val3 = CreateTimeEvent(AFTER(GEIGER_DURATION), "e_Geiger", geiger.Id, true);
+            cr.PlaySound("GEIGER.ACM", true);
+        }
+    }
+
+    geiger.Update();
+    return true;
+}
+
+bool _UseItemOnGeiger(Item& geiger, Critter& cr, Item@ item)
+{
+    if(!valid(item))
+        return false;
+    uint16 itemPid = item.GetProtoId();
+    if((itemPid == PID_SMALL_ENERGY_CELL || itemPid == PID_MICRO_FUSION_CELL) && geiger.Val2 < int(geiger.Proto.StartValue_2))
+    {
+        uint needCharge = geiger.Proto.StartValue_2 - geiger.Val2;
+        uint charge = (itemPid == PID_SMALL_ENERGY_CELL ? GEIGER_ENERGY_CHARGE : GEIGER_FUSION_CHARGE);
+        uint needItems = needCharge / charge;
+        if((needCharge % charge) != 0)
+            needItems++;
+        if(needItems > item.GetCount())
+            needItems = item.GetCount();
+        geiger.Val2 += needItems * charge;
+        if(geiger.Val2 > int(geiger.Proto.StartValue_2))
+            geiger.Val2 = geiger.Proto.StartValue_2;
+        geiger.Update();
+        _SubItem(item, needItems);
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_ADD_CHARGE);
+    }
+    else
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_NOTHING);
+    }
+    return true;
+}
+
+bool _UseSkillOnGeiger(Item& geiger, Critter& cr, int skill)
+{
+    if(skill < 0)
+        return false;             // Pick, move
+
+    if(skill == SK_SCIENCE)
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_CUR_CHARGE, "$cur" + geiger.Val2 + "$max" + geiger.Proto.StartValue_2);
+    }
+    else
+    {
+        cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_NOTHING);
+    }
+    return true;
+}
+
+uint e_Geiger(array<uint>@ values)
+{
+    _TIMEBEGIN;
+    Item@ geiger = GetItem(values[0]);
+    if(!valid(geiger))
+    {
+        _TIMEEND;
+        return 0;
+    }
+
+    if(geiger.Val1 == 0)
+    {
+        _TIMEEND;
+        return 0;
+    }                                           // Off
+    if(geiger.Val2 > 0)
+        geiger.Val2--;
+
+    // Show rems
+    if(geiger.Accessory == ACCESSORY_CRITTER)
+    {
+        Critter@ cr = GetCritter(geiger.CritId);
+        if(valid(cr))
+        {
+            cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_LOOP_CHECK, "$rem" + cr.Stat[ST_RADIATION_LEVEL]);
+            if(geiger.Val2 == 0)
+            {
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_NO_CHARGES);
+                cr.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_GEIGER_OFF);
+                cr.PlaySound("GEIGER.ACM", true);
+            }
+        }
+    }
+    else if(geiger.Accessory == ACCESSORY_HEX)
+    {
+        uint16 hx = 0, hy = 0;
+        Map@   map = geiger.GetMapPosition(hx, hy);
+        if(valid(map))
+        {
+            array<Critter@> critters;
+            map.GetCrittersHex(hx, hy, GEIGER_HEX_RANGE - 1, FIND_ALL, critters);
+            // Calculate aprox value of radiation
+            uint aproxValue = 0;
+            for(uint i = 0, j = critters.length(); i < j; i++)
+            {
+                Critter@ cr = critters[i];
+                uint     value = cr.Stat[ST_RADIATION_LEVEL] * (GEIGER_HEX_RANGE - GetDistantion(cr.HexX, cr.HexY, hx, hy)) / GEIGER_HEX_RANGE;
+                if(value > aproxValue)
+                    aproxValue = value;
+            }
+            // Show to all
+            map.SetTextMsg(hx, hy, COLOR_GRAY, TEXTMSG_GAME, STR_GEIGER_LOOP_CHECK, "$rem" + aproxValue);
+        }
+    }
+
+    if(geiger.Val2 == 0)     // Turn off
+    {
+        geiger.Val1 = 0;
+        geiger.Val3 = 0;
+    }
+
+    geiger.Update();
+    _TIMEEND;
+    return geiger.Val2 == 0 ? 0 : GEIGER_DURATION;
+}

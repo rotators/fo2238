@@ -1,0 +1,202 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+17 1010 D _var p q_la_train_caesar = 7 #
+16 1020 D _var n name_mem_npc_player = 1 #
+2 1030 R _var n name_mem_npc_player = 1 @
+17 2000 None 0 #
+0 2010 #
+65507 2020 @
+16 3000 None 0 #
+65507 3010 #
+3 3020 #
+18 3030 R _var p q_la_train_caesar = 7 @
+2 4000 None 0 #
+65507 4010 #
+3 4020 @
+3 5000 None 0 #
+15 5010 #
+4 5020 #
+65507 5030 @
+4 6000 None 0 #
+5 6010 @
+5 7000 None 0 #
+6 7010 @
+6 8000 None 0 #
+7 8010 #
+9 8020 #
+10 8030 #
+65507 8040 @
+7 9000 None 0 #
+8 9010 #
+19 9020 D _param p ST_INTELLECT > 5 #
+19 9030 D _param p ST_STRENGTH > 7 @
+8 10000 None 0 #
+9 10010 #
+10 10020 D _var p q_la_train_caesar < 7 R _var p q_la_train_caesar = 7 @
+9 11000 None 0 #
+65507 11010 #
+10 11020 D _var p q_la_train_caesar < 7 R _var p q_la_train_caesar = 7 #
+14 11030 #
+0 11040 D _var p q_la_train_caesar > 6 #
+25 11050 D _var p q_la_train_caesar < 7 @
+10 12000 None 0 #
+11 12010 D _param p SK_DOCTOR > 79 D _var p q_la_train_caesar_leg = 0 #
+0 12020 D _var p q_la_train_caesar < 7 R _var p q_la_train_caesar = 7 #
+0 12030 D _var p q_la_train_caesar > 6 #
+25 12040 D _var p q_la_train_caesar < 7 @
+11 13000 None 0 #
+12 13010 R _param p ST_EXPERIENCE + 250 R _var p q_la_train_caesar_leg = 1 @
+12 14000 None 0 #
+13 14010 @
+13 15000 None 0 #
+0 15010 @
+14 16000 None 0 #
+18 16010 D _var p q_la_train_caesar < 7 R _var p q_la_train_caesar = 7 #
+0 16020 D _var p q_la_train_caesar > 6 #
+19 16030 D _param p ST_INTELLECT > 5 @
+15 17000 None 0 #
+65507 17010 #
+4 17020 @
+18 18000 None 0 #
+0 18010 #
+9 18020 #
+4 18030 @
+19 19000 None 0 #
+21 19010 #
+20 19020 #
+18 19030 D _var p q_la_train_caesar < 7 R _var p q_la_train_caesar = 7 #
+0 19040 D _var p q_la_train_caesar > 6 #
+25 19050 D _var p q_la_train_caesar < 7 @
+20 20000 None 0 #
+22 20010 #
+21 20020 #
+23 20030 @
+21 21000 None 0 #
+24 21010 #
+22 21020 #
+23 21030 #
+0 21040 D _var p q_la_train_caesar > 6 #
+25 21050 D _var p q_la_train_caesar < 7 @
+22 22000 None 0 #
+23 22010 #
+24 22020 #
+0 22030 D _var p q_la_train_caesar > 6 #
+25 22040 D _var p q_la_train_caesar < 7 @
+23 23000 None 0 #
+24 23010 #
+0 23020 D _var p q_la_train_caesar > 6 #
+25 23030 D _var p q_la_train_caesar < 7 @
+24 24000 None 0 #
+22 24010 #
+9 24020 @
+25 25000 None 0 #
+65507 25010 #
+18 25020 R _var p q_la_train_caesar = 7 #
+0 25030 &
+
+[engl]
+{100}{}{Greg}
+{200}{}{You see a wounded man.}
+{210}{}{You see a man in a leather armor with a black bull painted on it. It looks like his leg is wounded.}
+{1000}{}{Predialogue installations}
+{1010}{}{we are cool}
+{1020}{}{Talked already}
+{1030}{}{Answer text}
+{2000}{}{Hello again. We will leave this place in a few days. Going to head off east and never come back...}
+{2010}{}{Good. Take care of yourself. Bye.}
+{2020}{}{I've changed my mind. See you in hell. [Attack]}
+{3000}{}{Please! Don't kill me!}
+{3010}{}{Stop whining, I'll kill you if I feel like it. And I feel like it. [Attack]}
+{3020}{}{So, looks like we still have something to do. Hammilton sent me...}
+{3030}{}{Okay, so I decided not to kill you. Isn't it just your lucky day?}
+{4000}{}{Who are you? Please! Don't kill me!}
+{4010}{}{Shut up and prepare to die! [Attack]}
+{4020}{}{Hammilton sent me.}
+{5000}{}{No, please, let me go! I didn't do anything, I was just at the wrong door at the wrong time.}
+{5010}{}{Shut up! I know your kind, always trying to weasle their way out of trouble when their back's against the wall. That shit wont work on me.}
+{5020}{}{If you tell me what happened, maybe I wont kill you.}
+{5030}{}{I'm not the right guy to try your whining on... [You draw your weapon.]}
+{6000}{}{That asshole tricked me and now he wants me to disappear. I had his position before, you know? That's right, me. Then all of a sudden, one day he just turns up with his goons. Tells me I'm out, just like that. Unbelievable. Shit hit the fan immediately. Guns were drawn, fired. Wasn't pretty.}
+{6010}{}{So that's why you're here now?}
+{7000}{}{Right. I barely even made it out alive. I had to jump out the god damn window, can you believe that?  One of those bastards shot me in the leg while I was doing it too. Hurt so much you don't even know. But I didn't have time to think about the pain. Me against all those guys? I didn't have a chance. I got my daughter and ran. I'm not ashamed of it, it was the only choice I had.}
+{7010}{}{Why did Hamilton want to kill you? Something like that doesn't just happen for no reason. You must have pissed him off pretty hard.}
+{8000}{}{It's nothing exciting. He wanted my position. Envy. Same stuff that's been happening for centuries. I had a good life and he wanted it for himself.}
+{8010}{}{What *was* your position?}
+{8020}{}{And where do you want to go now?}
+{8030}{}{I guess it looks like Hammilton is the asshole. I think your life might be safe, from me at least.}
+{8040}{}{Enough of your bullshit monologue! [Attack]}
+{9000}{}{I... I managed the... local contacts. }
+{9010}{}{… of your tea-party club?}
+{9020}{}{You can't bullshit a bullshitter. And I don't have time for jokes.}
+{9030}{}{BULLSHIT! Tell me what's this all about, *NOW*!}
+{10000}{}{Something like that. But anyway... I've done nothing bad, really. And now Hammilton wants me dead. Please, just let me go and this will all go away. I want to leave anyway. Let me live and I'll be gone from your life, and Hammilton's.}
+{10010}{}{Where do you want to go?}
+{10020}{}{Fine. You seem like an okay guy to me. I'll see what I can do with Hammilton.}
+{11000}{}{Somewhere to the east. Maybe Hoover Dam, maybe even further. Not like it matters. Anywhere beats here.}
+{11010}{}{No chance. Tell this shit to someone else. Only place you're going to visit is my fist. In about a second. [Attack]}
+{11020}{}{Fine. You seem like an okay guy to me. I'll see what I can do with Hammilton.}
+{11030}{}{Tell me about Hoover Dam}
+{11040}{}{I need to think about this. I'll be back later. Don't go anywhere.}
+{11050}{}{I need to think about this. I'll be back later. Don't go anywhere.}
+{12000}{}{Thanks! I can't thank you enough! Just hope my leg gets better quick enough to walk me out of here.}
+{12010}{}{I might not look or sound like it, but I'm a pretty shit-hot doctor. Maybe I can take a look at your leg?}
+{12020}{}{Ok, I wont kill you. But you should leave this place as fast as possible. If I can find you, so can anyone.}
+{12030}{}{That's all from my side. Bye.}
+{12040}{}{That's all from my side. Bye.}
+{13000}{}{Sure, why not... after all, not like it can get any worse.}
+{13010}{}{[You examine the wound on his leg. After cleaning the wound and setting the bone, you can't do much more.]}
+{14000}{}{Aaarg! [He screams of pain.] Uhg...}
+{14010}{}{That's all I can do. It's not much, but at least you'll walk straight when it mends.}
+{15000}{}{Thanks... Again. }
+{15010}{}{I am going now. Bye.}
+{16000}{}{I don't know much about it, but It's a rundown place. I've heard the NCR is talking about sending expeditions into the east. Heh, this sounds like something for me, eh?}
+{16010}{}{Okay, I've decided to let you go... It's your lucky day, I guess.}
+{16020}{}{Fine. I have to go now. Bye.}
+{16030}{}{This sounds good. And now... Tell me what you are hiding and don't bullshit me. }
+{17000}{}{You don't understand! Hammilton wants to kill me, only because of my position!}
+{17010}{}{I understand, I just don't give a shit. Hopefully you shut up when you're dead. [Attack]}
+{17020}{}{If you tell me what happened, I will decide if I kill you or not.}
+{18000}{}{Thanks! Thank you! Really! I can't tell you...}
+{18010}{}{Yeah. We will see... Bye.}
+{18020}{}{Where do you want to go now?}
+{18030}{}{Why does Hammilton want to see you dead?}
+{19000}{}{I... No... I... [He makes a short break] ... Okay. I am a scout. I mean, I was a scout. An informant. My job was to overview the Boneyard area and report everything more or less noteworthy.}
+{19010}{}{You got anything to report so far?}
+{19020}{}{Who were you working for?}
+{19030}{}{Okay. I'll trust you and will not kill you... }
+{19040}{}{That's all I wanted to know now... I will come back later.}
+{19050}{}{That's all I wanted to know now... I will come back later.}
+{20000}{}{For an... organisation... It's still a small faction, with not much influence. But thanks to our contacts with the Followers, we can keep an eye on the west coast, without needing to keep a noticeable presence.}
+{20010}{}{I've never heard of that.}
+{20020}{}{Do you have anything to report so far?}
+{20030}{}{The Followers?}
+{21000}{}{Not much. The Regulators are building up their presence a lot in the Boneyard. One can say that they are everywhere... }
+{21010}{}{I've worked for them already. They don't seem to be that bad.}
+{21020}{}{I've never heard of such ominous organisation before.}
+{21030}{}{Who are the Followers?}
+{21040}{}{That's all I wanted to know. Bye.}
+{21050}{}{That's all I wanted to know. Bye.}
+{22000}{}{The organisation isn't very big yet and they mainly operate at the mid-western side, behind the colorado river, far away in Arizona.}
+{22010}{}{Who are the Followers?}
+{22020}{}{I've worked for the Regulators already. They don't seem to be that bad.}
+{22030}{}{That's all I wanted to know. Bye.}
+{22040}{}{That's all I wanted to know. Bye.}
+{23000}{}{The Followers of the Apocalypse. You know, the library. Hammilton took my place there now.}
+{23010}{}{I've worked for the Regulators already. They don't seem to be that bad.}
+{23020}{}{That's all I wanted to know. Bye.}
+{23030}{}{That's all I wanted to know. }
+{24000}{}{They aren't at first glance. But it doesn't take a genius to see that they're like every other unrestricted police force. Power corrupts, right? If they don't like you, they hang you up or whatever they want. No one to tell them to stop. Anyway, we don't really care about that.}
+{24010}{}{What is the organisation?}
+{24020}{}{Where do you want to go now?}
+{25000}{}{What do you want to do now? }
+{25010}{}{I think, I will exterminate you now. [Attack]}
+{25020}{}{You can go. I will not kill you or your daughter...}
+{25030}{}{I will think about it and come back later again...}
+{100000001}{}{Get him, boys!}
+

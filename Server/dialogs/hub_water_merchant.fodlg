@@ -1,0 +1,58 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 @
+2 2000 None 0 #
+3 2010 #
+4 2020 D _var p q_hub_watertaxes = 1 #
+0 2030 @
+3 3000 None 0 #
+0 3010 @
+4 4000 None 0 #
+5 4010 @
+5 5000 None 0 #
+6 5010 D _param p SK_BARTER } 60 D or D _param p ST_CHARISMA } 5 R _var p q_hub_watertaxes = 3 R _param p ST_EXPERIENCE + 500 R _param p REPUTATION_HUB + 50 #
+7 5020 R _var p q_hub_watertaxes = 2 R _param p ST_EXPERIENCE + 100 R _param p REPUTATION_HUB + 5 #
+8 5030 D _param p SK_SPEECH } 35 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+0 7010 @
+8 8000 None 0 #
+6 8010 D _param p SK_SPEECH } 40 R _var p q_hub_watertaxes = 3 R _param p ST_EXPERIENCE + 500 R _param p REPUTATION_HUB + 50 #
+6 8020 D _param p SK_BARTER } 50 R _var p q_hub_watertaxes = 3 R _param p ST_EXPERIENCE + 500 R _param p REPUTATION_HUB + 50 #
+7 8030 D _param p SK_BARTER < 50 R _var p q_hub_watertaxes = 2 R _param p ST_EXPERIENCE + 100 R _param p REPUTATION_HUB + 5 #
+0 8040 R _var p q_hub_watertaxes = 2 &
+
+[engl]
+{100}{}{Master Merchant}
+{200}{}{You see a Master Merchant.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{...I don't care what they say.  We need new... Oh, yes.  Sorry. What can I do for you?}
+{2010}{}{I want a job.}
+{2020}{}{I want to talk with someone about the water contracts with the independent merchants in the Hub.}
+{2030}{}{Nothing, bye.}
+{3000}{}{Sure, great.  You're hired.  Wait.  What position?  Oh, wait, I see we don't have any open positions... right now. You might want to check back later.}
+{3010}{}{Goodbye.}
+{4000}{}{Oh, this again.  Sorry, but the contracts are clear and rubber-stamped by the Hub's Central Council.}
+{4010}{}{Can't you give a temporary discount on the taxes?}
+{5000}{}{No. As I told you, the contracts are clear.}
+{5010}{}{Strengthen the wealth of the independent parties in the Hub will higher their chance of survival, which in return will strengthen the wealth of the whole Hub region. It can't be bad for the Water Merchants.}
+{5020}{}{Your contracts are weakening the Hub's independent merchants. That's not what I'd call a fair move.}
+{5030}{}{What will the Council do, if the independent merchants are breaking away due to the taxes they can't pay?}
+{6000}{}{Maybe you are right. I am going to submit your arguments for the next Council conference.  Now, please, I have a lot of work to do.}
+{6010}{}{Goodbye.}
+{7000}{}{This really is not my problem. The Council has made its decisions clear to everyone and everyone else agreed with it.  Now, please, I have a lot work to do.}
+{7010}{}{Goodbye.}
+{8000}{}{The Council has made its decision clear already. The next conference about water contracts will be in a few months. Until then, the contracts will not be altered or otherwise modified in any way.}
+{8010}{}{The farmers need water for their crops. Without water, no crops, without crops, no food and without food... I'll guess you get the picture. The water on the fields mainly runs from the independent merchants.}
+{8020}{}{Giving the farmers an option to actually water their fields will be necessary to keep the Hub alive in a longer run. The water at the northern part of the Hub mainly comes from the independent merchants.}
+{8030}{}{Giving the farmers an option to actually water their fields will be necessary to keep the Hub alive in a longer run. The water at the northern part of the Hub mainly comes from the independent merchants.}
+{8040}{}{Whatever.}
+

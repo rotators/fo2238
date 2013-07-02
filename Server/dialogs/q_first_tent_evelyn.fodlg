@@ -1,0 +1,122 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+10 1010 D _var p q_first_tent = 1 D _var p acquaintance = 0 D _script dialog@d_IsLocationOwner 0  #
+30 1020 D _var p q_first_tent = 1 D _var p acquaintance > 0 D _script dialog@d_IsLocationOwner 0  #
+50 1030 D _var p q_first_tent = 2 D _script dialog@d_IsLocationOwner 0  #
+60 1040 D _var p q_first_tent = 3 D _script dialog@d_IsLocationOwner 0  #
+2 1050 @
+2 2000 None 0 #
+0 2010 @
+10 3000 None 0 #
+11 3010 D _param p ST_INTELLECT } 4 #
+11 3020 D _param p ST_INTELLECT < 4 @
+11 4000 None 0 #
+12 4010 D _param p ST_INTELLECT } 4 #
+65507 4020 D _param p ST_INTELLECT } 4 #
+13 4030 D _param p ST_INTELLECT < 4 #
+65507 4040 D _param p ST_INTELLECT < 4 @
+12 5000 None 0 #
+14 5010 R _var p acquaintance = 1 @
+13 6000 None 0 #
+15 6010 R _var p acquaintance = 1 @
+14 7000 None 0 #
+16 7010 @
+15 8000 None 0 #
+17 8010 @
+16 9000 None 0 #
+18 9010 #
+65507 9020 #
+0 9030 @
+17 10000 None 0 #
+19 10010 #
+65507 10020 #
+0 10030 @
+18 11000 None 0 #
+20 11010 R _script quest_first_tent@r_SpawnFarmhouse 0  R _item p PID_IGUANA_ON_A_STICK + 2 #
+0 11020 @
+19 12000 None 0 #
+20 12010 R _script quest_first_tent@r_SpawnFarmhouse 0  R _item p PID_IGUANA_ON_A_STICK + 2 #
+0 12020 @
+20 13000 None 0 #
+0 13010 D _param p ST_INTELLECT } 4 #
+0 13020 D _param p ST_INTELLECT < 4 @
+30 14000 None 0 #
+14 14010 D _param p ST_INTELLECT } 4 #
+15 14020 D _param p ST_INTELLECT < 4 @
+50 15000 None 0 #
+0 15010 D _param p ST_INTELLECT } 4 #
+0 15020 D _param p ST_INTELLECT < 4 @
+60 16000 None 0 #
+61 16010 D _param p ST_INTELLECT } 4 #
+62 16020 D _param p ST_INTELLECT < 4 @
+61 17000 None 0 #
+0 17010 R _script quest_first_tent@r_FamilyLeave 0  @
+62 18000 None 0 #
+0 18010 R _script quest_first_tent@r_FamilyLeave 0  &
+
+[engl]
+{100}{}{Evelyn}
+{200}{}{Farmer woman}
+{210}{}{A woman in her thirties with long black hair. She looks troubled.}
+{1000}{}{Predialogue installations}
+{1010}{}{First talk, didn't take quest.}
+{1020}{}{Second talk, didn't take quest.}
+{1030}{}{Took quest, didn't kill rats.}
+{1040}{}{Killed all rats.}
+{1050}{}{Not location owner or some weird thingy.}
+{2000}{}{Please, leave me alone.}
+{2010}{}{Okay.}
+{3000}{}{[The woman inside the tent hasn't noticed you, busy with preparing ingredients for some kind of a wasteland stew.]}
+{3010}{}{Hello.}
+{3020}{}{Peek-a-boo!}
+{4000}{}{[She gasps.] Who... who are you? }
+{4010}{}{I'm sorry, I didn't mean to scare you. My name is @pname@. I noticed this tent when traveling. The man outside doesn't seem to be in the best shape, I thought maybe you need some help.}
+{4020}{}{I came to kill you. Nothing personal, I just like to kill. [Attack]}
+{4030}{}{No afraid. Me wannuh knocked but no door! Me @pname@. Man outside is strange. Is all alrighty?}
+{4040}{}{Me will smash your head. Me hungry. [Attack]}
+{5000}{}{You really shouldn't approach strangers like that, it can be dangerous. I'm Evelyn and the man outside is my husband. I'm afraid the remains of his sanity have left him when we had to move out from our farm.}
+{5010}{}{Move out from your farm? Why?}
+{6000}{}{The man outside is my husband. He does not feel good. We had to move out from our farm.}
+{6010}{}{Why?}
+{7000}{}{A horde of mutated rats was migrating through our farm and a few dozens of them infested our house. It may sound like not a big deal, but trust me, they aren't like the ordinary rats. They are twice the size of the normal ones, very aggressive and can easily bite off a large chunk of your flesh. [She points at her bandaged arm.]}
+{7010}{}{I see. You couldn't hunt them down or poison them?}
+{8000}{}{Many rats came to our farm. Big rats. We were scared, we run away!}
+{8010}{}{You try squash rats?}
+{9000}{}{I tried, but it's not easy to kill a mutated rat, let alone a dozen of them. What's worse Hasso, my husband, has a rat phobia. It got worse after our first son died bitten by a rabid rat six years ago. Since then my husband started to have periods of insanity. Actually recently you could tell that he has periods of sanity. I'm afraid after the last events he will lose his mind permanently.}
+{9010}{}{I could try to help you get rid of the rats in your farmhouse. It won't solve all your problems, but it's a start.}
+{9020}{}{You are pathetic creatures, you and your family. I think removing you from the gene pool will be a good deed. [Attack]}
+{9030}{}{I have to go now, goodbye.}
+{10000}{}{Yes, I tried to... squash them, but they are too strong.}
+{10010}{}{Me can squash rats.}
+{10020}{}{Me bored. Me think me just kill you. [Attack]}
+{10030}{}{Me have to go. Bye.}
+{11000}{}{Really, you could? Thank you! Our farm is a few miles west from here. There should be a BB rifle there, it's not a very good weapon but maybe it will help you.}
+{11010}{}{Sure, show me on a map where your farm is located.}
+{11020}{}{No, sorry. I changed my mind. Goodbye.}
+{12000}{}{Really, you can? Thank you! Farm is in the west... right... just follow the bright thing in the sky. Oh, there is a pew-pew on the farm. It might be useful.}
+{12010}{}{Me go kill rats now. Show where.}
+{12020}{}{No, me change mind. Bye.}
+{13000}{}{[She shows you the location of the farmhouse on a  map and gives you a few rations of food.]}
+{13010}{}{I will be back after I get rid of these pests. Goodbye.}
+{13020}{}{When me kill rats, me will be back. Ug!}
+{14000}{}{Hello again, traveler.}
+{14010}{}{Hello, could you tell me again about the rats on your farm?}
+{14020}{}{Tell about rats. Me forgot.}
+{15000}{}{Hello again. Did you kill all the rats in our farm?}
+{15010}{}{Not yet.}
+{15020}{}{Ugh, no.}
+{16000}{}{Hello again. Did you kill all the rats in our farm?}
+{16010}{}{Yes, ma'am. You can come back home safely. Let's hope your family will get better.}
+{16020}{}{Yes. You go back now. Farm safe.}
+{17000}{}{Thank you for helping us! We are in your debt... here take our tent, hopefully we won't need it anymore. It's a sturdy shelter, made from a good quality leather. You can use it to make a safe campsite in the wasteland. [She shows you how to pack and pitch the tent, then the family leaves.]}
+{17010}{}{You are welcome and thanks. Farewell!}
+{18000}{}{Thank you! Take this tent, it's good. You can use it to make safe campsites in the wasteland. [She shows you how to pack and pitch the tent, then the family leaves.]}
+{18010}{}{Ug! [You smile and wave hand until they disappear on the horizon.]}
+

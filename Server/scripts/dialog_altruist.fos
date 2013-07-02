@@ -1,0 +1,74 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// dialog_altruist.fos
+//
+
+#include "_macros.fos"
+
+import void DropDrugEffects(Critter& cr) from "drugs";
+import bool SupportPerkCheck(Critter& cr, uint perk) from "perks";
+import void PerkUp(Critter& cr, uint perk, int fromlevel) from "perks";
+
+bool d_CanTakePerk(Critter& cr, Critter@ npc, int val)
+{
+    if(val >= PE_PROFESSION_BEGIN && val <= PE_PROFESSION_END)
+        return false;
+    return SupportPerkCheck(cr, val);
+}
+
+void r_GivePerk(Critter& cr, Critter@ npc, int val)
+{
+    if(val >= PE_PROFESSION_BEGIN && val <= PE_PROFESSION_END)
+        return;
+    if(SupportPerkCheck(cr, val))
+        cr.PerkBase[val] += 1;
+}
+
+void r_Give(Critter& player, Critter@ npc, int val)
+{
+    switch(val)
+    {
+    case 0:
+    {
+        int level = player.Stat[ST_LEVEL];
+        if(level > 23)
+        {
+            player.Say(SAY_NORM_ON_HEAD, "Wait, it can't be that good.");
+            return;
+        }
+        level++;
+        int exp = level * (level - 1) * 500;
+        player.StatBase[ST_EXPERIENCE] += (exp - player.StatBase[ST_EXPERIENCE]);
+        return;
+    }
+    case 1:
+    {
+        int level = player.Stat[ST_LEVEL];
+        if(level > 21)
+        {
+            player.Say(SAY_NORM_ON_HEAD, "No, wait.");
+            return;
+        }
+        level += 3;
+        if(level > 24)
+            level = 24;
+        int exp = level * (level - 1) * 500;
+        player.StatBase[ST_EXPERIENCE] += (exp - player.StatBase[ST_EXPERIENCE]);
+        return;
+    }
+    case 2:
+        player.AddItem(41, 100000);
+        break;
+    case 3:
+        for(uint i = 0; i < REPUTATION_COUNT; i++)
+            if(player.Reputation[i] != 0)
+                player.ReputationBase[i] = 0;
+        break;
+    case 4:
+        DropDrugEffects(player);
+        break;
+    default:
+    }
+}

@@ -1,0 +1,77 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// cavelog.fos
+//
+
+#include "_macros.fos"
+
+// 6 hour cycle
+#define CAVE_TIME    (REAL_HOUR(6))
+
+// Script to datamine cave stuff.
+uint CavesGenerated = 0;
+uint CrittersGenerated = 0;
+uint CrittersKilled = 0;
+uint PlayerDeaths = 0;
+uint ItemsGenerated = 0;
+uint ItemsPicked = 0;
+
+void AddCaveGenerated()     { CavesGenerated++; }
+void AddCrittersGenerated() { CrittersGenerated++; }
+void AddCrittersKilled()    { CrittersKilled++; }
+void AddPlayerDeaths()      { PlayerDeaths++; }
+void AddItemsGenerated()    { ItemsGenerated++; }
+void AddItemsPicked()       { ItemsPicked++; }
+
+void InitCaveLog()
+{
+    // file f;
+    // f.open("logs/cavelog.txt", "a");
+    // f.writeString("----------- Cavelog Initialized -----------\n");
+    // f.close();
+    // CreateTimeEvent(__FullMinute+CAVE_TIME, "e_CaveLog", 0, false);
+}
+
+void CritterEnterCave(Critter& critter)
+{
+    if(!critter.IsPlayer())
+        return;
+
+    file f;
+    f.open("logs/cavelog.txt", "a");
+    // Output data format: <player name>,<player id>,<player level>,<cave pid>
+    // f.writeString("Player entered cave:" + GetSafePlayerName(critter.Id)+","+critter.Id+","+critter.Stat[ST_LEVEL]+","+critter.GetMap().GetProtoId()+ "\n");
+    f.close();
+}
+
+void ClearVariables()
+{
+    CavesGenerated = 0;
+    CrittersGenerated = 0;
+    CrittersKilled = 0;
+    PlayerDeaths = 0;
+    ItemsGenerated = 0;
+    ItemsPicked = 0;
+}
+
+/*uint e_CaveLog(uint[]@ values)
+   {
+   _TIMEBEGIN;
+    file f;
+    f.open("logs/cavelog.txt", "a");
+    f.writeString("Caves generated:" + CavesGenerated + "\n");
+    f.writeString("Critters generated:" + CrittersGenerated + "\n");
+    f.writeString("Critters killed:" + CrittersKilled +"\n");
+    f.writeString("Players killed:" + PlayerDeaths + "\n");
+    f.writeString("Items generated:" + ItemsGenerated + "\n");
+    if (PlayerDeaths>0)
+        f.writeString("Death rate:" + (CavesGenerated/PlayerDeaths) + "\n");
+    //f.writeString("Items picked:" + ItemsPicked+ "\n");
+    f.writeString("--------------------------------------------------------\n");
+    f.close();
+    ClearVariables();
+    _TIMEEND;
+    return CAVE_TIME;
+   }*/

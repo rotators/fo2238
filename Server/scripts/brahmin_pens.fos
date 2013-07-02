@@ -1,0 +1,58 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// brahmin_pens.fos
+//
+
+#ifndef __BRAHMIN_PENS__
+#define __BRAHMIN_PENS__
+
+#include "_macros.fos"
+#include "_maps.fos"
+#include "_entires.fos"
+#include "groups_h.fos"
+
+#define __BRAHMIN_PEN_MODULE__
+#include "brahmin_pen_h.fos"
+
+#define ADD_PEN    # (name, map, entire, properties) CBrahminPen name(map, entire); name.properties; AddBrahminPen(name)
+
+array<IBrahminPen@> BrahminPens;
+
+IBrahminPen@ GetBrahminPen(uint id)
+{
+    for(uint i = 0; i < uint(BrahminPens.length()); i++)
+    {
+        if(id == BrahminPens[i].GetID())
+        {
+            return BrahminPens[i];
+        }
+    }
+    return null;
+}
+
+void AddBrahminPen(CBrahminPen& pen)
+{
+    BrahminPens.insertLast(pen);
+}
+
+void SaveBrahminPenData()
+{
+    for(uint i = 0; i < BrahminPens.length(); i++)
+        BrahminPens[i].SaveData();
+}
+
+void InitBrahminPens()
+{
+    Log("Initializing brahmin pens");
+
+    ADD_PEN(modoc_pen,  MAP_ModocLarge, ENTIRE_BRAHMIN_PEN_MODOC,        SetID(1).TeamID(FACTION_MODOC).MaxAmount(10).AddBrahmins(5));
+    ADD_PEN(hub_pen,    MAP_HubDowntown,        ENTIRE_BRAHMIN_PEN_HUB,          SetID(2).TeamID(FACTION_HUB).MaxAmount(10).AddBrahmins(5));
+    ADD_PEN(broken_pen, MAP_BrokenHills,     ENTIRE_BRAHMIN_PEN_BROKEN_HILLS, SetID(3).TeamID(FACTION_BH_GHOULS).MaxAmount(10).AddBrahmins(5));
+    ADD_PEN(ncr_pen,    MAP_NCR,        ENTIRE_BRAHMIN_PEN_NCR,          SetID(4).TeamID(FACTION_NCR).MaxAmount(10).AddBrahmins(5));
+    ADD_PEN(frisco_pen, MAP_SanFranChina,   ENTIRE_BRAHMIN_PEN_SF,           SetID(5).TeamID(FACTION_COMMUNISTS).MaxAmount(10).AddBrahmins(5));
+
+    Log("Brahmin pens initialized successfully");
+}
+#endif

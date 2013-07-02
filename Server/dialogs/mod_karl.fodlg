@@ -1,0 +1,51 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+5 1010 D _param p ST_INTELLECT < 4 #
+2 1020 @
+2 2000 None 0 #
+3 2010 #
+4 2020 #
+0 2030 @
+3 3000 None 0 #
+6 3010 D _item p PID_BOTTLE_CAPS > 999 R _script dialog@r_RemoveMoney 1 1000 R _param p ST_KARMA + 50 #
+6 3020 D _item p PID_BOTTLE_CAPS > 24 R _script dialog@r_RemoveMoney 1 25 #
+6 3030 D _item p PID_BOTTLE_CAPS > 0 R _script dialog@r_RemoveMoney 1 1 #
+4 3040 @
+4 4000 None 0 @
+5 5000 None 0 #
+0 5010 #
+0 5020 #
+0 5030 @
+6 6000 None 0 &
+
+[engl]
+{100}{}{Karl}
+{200}{}{A very drunk man.}
+{210}{}{Karl.}
+{1000}{}{Predialogue installations}
+{1010}{}{idiot}
+{1020}{}{normal}
+{2000}{}{Spare some change for (hic) an out-of-work farmer?}
+{2010}{}{Sure thing, fella; how much do you need?}
+{2020}{}{How about I buy you a hot meal?}
+{2030}{}{Sorry, I don’t have anything for you. Bye.}
+{3000}{}{Karl’s mouth drops open in surprise] Thanks! You’re a (hic) very generous person… (hic) }
+{3010}{}{Here. Here's $1000.}
+{3020}{}{Here. Here's $25.}
+{3030}{}{Here. Here's $1.}
+{3040}{}{Sorry, I don’t have any money.}
+{4000}{}{Hey cheapskate! (hic) Come on, I know you gots money… (hic) Just some spare change then… (hic)
+ something, anything! Show some compassion.}
+{5000}{}{Spare some change for (hic) an out-of-work farmer?}
+{5010}{}{Cha-ange?}
+{5020}{}{Jooky.}
+{5030}{}{Me go.}
+{6000}{}{You are truly (hic) my bestest friend in this whole (hic) cursed world. [Karl proceeds to drink, at which point he then passes out]}
+

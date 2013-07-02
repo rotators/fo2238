@@ -1,0 +1,129 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_vcity_hq.fos
+//
+
+#include "_macros.fos"
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+
+#define DOOR_IN_X     (52)
+#define DOOR_IN_Y     (75)
+
+#define DOOR_OUT_X    (52)
+#define DOOR_OUT_Y    (89)
+
+import bool LockerOpen(Item& item) from "lockers";
+import bool LockerClose(Item& item) from "lockers";
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_VAULT_CITY);
+    }
+
+    // better be sure to close the doors to war room, 1st door
+    // one door at a time !!!
+    Item@ door1 = map.GetDoor(DOOR_IN_X, DOOR_IN_Y);
+
+    if(!valid(door1))
+    {
+        Log("Couldn't get the doors to cloose");
+        return;
+    }
+    // close the doors if needed
+    if(_LockerIsOpen(door1))
+        LockerClose(door1);
+
+    // 2nd door
+    Item@ door2 = map.GetDoor(DOOR_OUT_X, DOOR_OUT_Y);
+
+    if(!valid(door2))
+
+        if(_LockerIsOpen(door2))
+            LockerClose(door2);
+}
+
+//
+// Functions for retina scanner in the hq that opens the corridor to the war room
+//
+bool s_RetinaScanner1(Critter& cr, Scenery& scanner, int skill, Item@ item)
+{
+    if(!cr.IsPlayer())
+        return false;
+
+    // check the player's faction and rank(only rank4 allowed)
+    if(GetGroupIndex(cr) != FACTION_VAULT_CITY ||
+       GetPlayerRank(cr.Id) != RANK_IMPORTANT)
+    {
+        // not authorized
+        cr.Say(SAY_NETMSG, "Not authorized.");
+        return false;
+    }
+
+    // open the door
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    // Get the doors
+    Item@ door1 = map.GetDoor(DOOR_IN_X, DOOR_IN_Y);
+    if(!valid(door1))
+    {
+        Log("Couldn't get the doors to open");
+        return false;
+    }
+
+    // open the doors if needed
+    if(_LockerIsClose(door1))
+        LockerOpen(door1);
+
+    // add event that will close them after some time
+    CreateTimeEvent(AFTER(REAL_SECOND(10)), "lockers@e_CloseDoor", door1.Id, false);
+
+    return true;
+}
+
+bool s_RetinaScanner2(Critter& cr, Scenery& scanner, int skill, Item@ item)
+{
+    if(!cr.IsPlayer())
+        return false;
+
+    // check the player's faction and rank(only rank4 allowed)
+    if(GetGroupIndex(cr) != FACTION_VAULT_CITY ||
+       GetPlayerRank(cr.Id) != RANK_IMPORTANT)
+    {
+        // not authorized
+        cr.Say(SAY_NETMSG, "Not authorized.");
+        return false;
+    }
+
+    // open the door
+
+    Map@ map = cr.GetMap();
+    if(!valid(map))
+        return false;
+
+    // Get the doors
+    Item@ door2 = map.GetDoor(DOOR_OUT_X, DOOR_OUT_Y);
+
+    if(!valid(door2))
+    {
+        Log("Couldn't get the doors to open");
+        return false;
+    }
+
+    // open the doors if needed
+    if(_LockerIsClose(door2))
+        LockerOpen(door2);
+
+    // add event that will close them after some time
+    CreateTimeEvent(AFTER(REAL_SECOND(10)), "lockers@e_CloseDoor", door2.Id, false);
+
+    return true;
+}

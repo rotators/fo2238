@@ -1,0 +1,111 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 D _var p q_raiders_hernandez_sister = 0 #
+3 1020 D _var p q_raiders_hernandez_sister = 1 #
+17 1030 D _var p q_raiders_hernandez_sister > 1 @
+2 2000 None 0 @
+3 3000 None 0 #
+4 3010 #
+4 3020 #
+65507 3030 R _var p q_raiders_hernandez_sister + 1 @
+4 4000 None 0 #
+5 4010 D _param p SK_SPEECH < 80 #
+6 4020 D _param p SK_SPEECH > 79 #
+7 4030 #
+8 4040 @
+5 5000 None 0 #
+7 5010 #
+8 5020 @
+6 6000 None 0 #
+9 6010 #
+10 6020 @
+7 7000 None 0 #
+10 7010 #
+11 7020 @
+8 8000 None 0 #
+0 8010 R _var p q_raiders_hernandez_sister + 1 #
+7 8020 @
+9 9000 None 0 #
+12 9010 #
+13 9020 @
+10 10000 None 0 #
+11 10010 #
+14 10020 #
+13 10030 @
+11 11000 None 0 #
+15 11010 #
+0 11020 R _var p q_raiders_hernandez_sister + 1 @
+12 12000 None 0 #
+16 12010 @
+13 13000 None 0 #
+0 13010 R _var p q_raiders_hernandez_sister + 1 R _param p ST_EXPERIENCE + 500 @
+14 14000 None 0 #
+0 14010 R _var p q_raiders_hernandez_sister + 1 @
+15 15000 None 0 #
+0 15010 R _var p q_raiders_hernandez_sister + 1 R _item p PID_CURED_LEATHER_ARMOR + 1 @
+16 16000 None 0 #
+0 16010 R _var p q_raiders_hernandez_sister + 2 R _param p ST_EXPERIENCE + 1000 @
+17 17000 None 0 &
+
+[engl]
+{100}{}{Lucy}
+{200}{}{You see a young woman.}
+{210}{}{You see a girl who is pretty in a way that evokes absolutely no response in you.}
+{240}{}{You see some dead girl.}
+{250}{}{She's all dead and shit.}
+{260}{}{You see some dead girl.}
+{270}{}{She's all dead and shit.}
+{1000}{}{Predialogue installations}
+{1010}{}{Not started quest}
+{1020}{}{Mid quest}
+{1030}{}{Finished quest}
+{2000}{}{Hello@@Who are you?@@I don't like the Duntons@@Do I know you?@@Is there something on my face?@@What are you doing here?@@Do you got a nuka-cola?@@It gets cold at night@@We get a lot of rats}
+{3000}{}{Umm Hi?  Do I know you?}
+{3010}{}{No I don't think you do. My name's @pname@. You're Lucy?}
+{3020}{}{No I don't think you do. Lucy, right? I'm @pname@, I need to talk to you.}
+{3030}{}{I'm here to kill you. Maybe there's going to be some rape involved too, I haven't thought that far ahead.}
+{4000}{}{How do you know my name?}
+{4010}{}{That's not important. Are you doing ok?}
+{4020}{}{That's not important. Are you doing ok?}
+{4030}{}{Your brother sent me.}
+{4040}{}{Just checking you're alive.}
+{5000}{}{Who are you?}
+{5010}{}{I'm a friend of your brother.}
+{5020}{}{I'm just here to make sure you're still alive.}
+{6000}{}{Well yeah, I guess I'm doing fine.  It's not perfect, but it's better than it was. Why?}
+{6010}{}{Someone sent me to check up on you.}
+{6020}{}{Your brother sent me to check up on you.}
+{7000}{}{My brother's alive? Where is he? Is he okay?}
+{7010}{}{He's doing just fine. He's worried about you though.}
+{7020}{}{I'm sorry, but he died. He told me if anything ever happened to him, I had to seek you out and make sure you were okay.}
+{8000}{}{Making sure I'm alive?}
+{8010}{}{Yeah. Looks like you're doing just dandy here. That'll be all.}
+{8020}{}{Yeah. Your brother asked me to check up on you.}
+{9000}{}{Well yeah, I'm fine.  I'm guessing you're not allowed to tell me who wants to know, huh?}
+{9010}{}{It's your brother.}
+{9020}{}{Yeah, I'm sorry. I'm just a middle-man here. I don't ask questions.}
+{10000}{}{Is he in some kind of trouble? I haven't seen him in so long! I'm so worried.}
+{10010}{}{He's dead.}
+{10020}{}{He joined the Raiders.}
+{10030}{}{He's fine, he just can't come and visit you right now.  I'm sorry I can't say more.  Just remember that he's thinking about you a lot.}
+{11000}{}{[Lucy starts to cry.  You're such a great guy.]  I can't believe he's dead...but...I guess at the back of my mind I always knew it. I guess now at least I have closure.}
+{11010}{}{I'm sorry to be the bearer of bad news.}
+{11020}{}{Life's a bitch, huh? Later crybaby.}
+{12000}{}{[Her eyes brighten up a little.] Is he on some kind of secret mission or something?}
+{12010}{}{Yeah that's right. A top secret mission. Real important work.}
+{13000}{}{Well mister...you tell him that I'm doing just fine.  And tell him that I want to meet him.}
+{13010}{}{Will do.}
+{14000}{}{The Raiders?  He couldn't.....why would he do that?  No, no...that means you're a raider too? Get out of here! Tell my brother I never want to see him again.}
+{14010}{}{Sounds like another quest successfully completed! Bye!}
+{15000}{}{No...I'm glad you told me.  Now at least I can stop thinking about it and move on.  Hey...I guess you should have this.  It was his.  He left it here the last time I saw him.  I was keeping it around to give to him the next time he came back...but I guess that's not going to happen, is it?  So you might as well have it.}
+{15010}{}{Thanks.  And, once again, I'm really sorry. He talked about you a lot. Take care now.}
+{16000}{}{I always knew he'd end up doing something like that. Don't worry, my lips are sealed. Tell him I miss him, though. And when he's finished, tell him to come back and see me. I don't care how long it takes, I don't mind waiting. Tell him I'll still be here.}
+{16010}{}{I'll go right back to him. Glad you understand. Take care, Lucy.}
+{17000}{}{Hernandez...}
+

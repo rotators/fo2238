@@ -1,0 +1,535 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_gmtools_macro.fos
+//
+
+// Game Master tools, macros handling
+
+/* This file is included in client_gmtools.fos */
+
+/*
+   TODO
+        internal funcs: givexp, spawncritter?
+ */
+
+
+#ifdef __CLIENT
+
+class CGMTMacro
+{
+    string        name;                 /**< macro filename (without (.rec")*/
+    array<string> lines;                /**< */
+    uint          all;                  /**< number */
+    uint          current;              /**< currently processed line */
+    bool          fixcritter;           /**< variable fix: $[Critter] -> $[Chosen] */
+    uint          wait;                 /**< suspend macro for given time (in ticks) */
+    bool          swait;                /**< suspend macro, wait for server (internal) */
+
+    // for menu
+    uint critter;                       /**< assigned critter ID */
+    uint item;                          /**< assigned item ID */
+    uint hexX;                          /**< assigned hex */
+    uint hexY;                          /**< assigned hex */
+
+    /**
+     * Constructor.
+     *
+     * @param name			@copydoc CGMTMacro::name
+     * @param critter		@copydoc CGMTMacro::critter
+     * @param item			@copydoc CGMTMacro::item
+     * @param hexX			@copydoc CGMTMacro::hexX
+     * @param hexY			@copydoc CGMTMacro::hexY
+     * @param fixcritter	@copydoc CGMTMacro::fixcritter
+     */
+    CGMTMacro(string name, uint critter, uint item, int hexX, int hexY, bool fixcritter)
+    {
+        this.name               = name;
+        this.current    = 0;
+        this.all                = 0;
+        this.fixcritter = fixcritter;
+        this.wait               = 0;
+        this.swait              = false;
+
+        this.critter    = critter;
+        this.item               = item;
+        this.hexX               = hexX;
+        this.hexY               = hexY;
+
+        #ifdef __DEBUG__
+        if(this.critter > 0)
+            Message("CGMTMacro: " + this.critter);
+        if(this.item > 0)
+            Message("CGMTMacro: " + this.item);
+        if(this.hexX + this.hexY >= 2)
+            Message("CGMTMacro: " + this.hexX + "," + this.hexY);
+        #endif
+    }
+
+    /**
+     * Add @e line to macro commands.
+     */
+    void add(string line)
+    {
+        this.lines.insertLast(line);
+        this.all = this.lines.length();
+    }
+};
+array<CGMTMacro> GMTmacro;
+
+
+/** currently processed macro (@a GMTMacro index) */
+int GMTmacro_current = -1;
+
+/**
+ * Load and add macro to stack.
+ *
+ * @param filename		@copydoc CGMTMacro::name
+ * @param critter		@copydoc CGMTMacro::critter
+ * @param item			@copydoc CGMTMacro::item
+ * @param hexX			@copydoc CGMTMacro::hexX
+ * @param hexY			@copydoc CGMTMacro::hexY
+ * @param fixcritter	@copydoc CGMTMacro::fixcritter
+ *
+ * @return @e true: macro added to @a GMTMacro
+ * @return @e false: macro file can't opened (or empty)
+ */
+bool GMToolsAddMacro(string& filename, uint critter, uint item, uint hexX, uint hexY, bool fixcritter)
+{
+    file f;
+    if(f.open(filename + ".rec", "r") >= 0)
+    {
+        string str;
+
+        f.readString(f.getSize(), str);
+        array<string@>@ lines = splitEx(str, "\n");
+
+        // dont add empty files
+        if(lines.length() > 0)
+        {
+            GMTmacro.insertLast(CGMTMacro(filename, critter, item, hexX, hexY, fixcritter));
+
+            for(uint i = 0, j = lines.length(); i < j; i++)
+            {
+                if(valid(lines[i]) && lines[i] != "" && lines[i] != " ")
+                    GMTmacro[GMTmacro.length() - 1].add(lines[i]);
+            }
+        }
+        else
+        {
+            Message("GMT: Empty macro, ignoring (" + filename + ")");
+            return(false);
+        }
+
+        // re-check
+        if(GMTmacro[GMTmacro.length() - 1].lines.length() == 0)
+        {
+            Message("GMT: Empty macro, ignoring (" + filename + ")");
+            GMTmacro.removeAt(GMTmacro.length() - 1);
+            return(false);
+        }
+        Message("GMT: Added macro (" + filename + ")");
+
+        if(GMTmacro.length() == 1)
+            GMTmacro_current = 0;
+
+        return(true);
+    }
+    else
+    {
+        Message("GMT: Can't load macro (" + filename + ")");
+        return(false);
+    }
+}
+
+/**
+ * @note called by: @a @e loop() -> @a @e GMToolsProcess()
+ */
+void GMToolsProcessMacros() // loop -> GMToolsProcess
+{
+    if(GMTconfig.Enabled)
+    {
+        if(GMTmacro_current < 0)
+            return;
+
+        if(GMTmacro.length() == 0)
+        {
+            GMTmacro_current = -1;
+            return;
+        }
+
+        for(uint m = 0; m < GMTmacro.length(); m++)
+        {
+            if(GMTmacro[m].lines.length() == 0)
+            {
+                Message("GMT: Macro finished (" + GMTmacro[m].name + ")");
+                GMTmacro.removeAt(m);
+            }
+        }
+
+        if(GMTmacro_current > int(GMTmacro.length() - 1))
+        {
+            GMTmacro_current = GMTmacro.length() - 1;
+            return;
+        }
+
+        for(uint q = 0; q < GMTquestion.length(); q++)
+        {
+            if(GMTquestion[q].type == GMT_QUESTION_COMMAND)
+            {
+                if(!GMTquestion[q].old)                   // wait until question become old
+                    return;
+                else
+                    break;
+            }
+        }
+
+        CGMTMacro@ macro = GMTmacro[GMTmacro_current];
+        string     line = macro.lines.first();
+        if(macro.fixcritter)             // KISS translation of ONCRITTER macros to ONCHOSEN
+        {
+            line = ReplaceText(line, "$[Critter", "$[Chosen");
+        }
+
+        if((line.length() >= 6 && substring(line, 0, 5) == "wait ") ||
+           (line.length() >= 7 && substring(line, 0, 6) == "sleep "))
+        {
+            array<string@>@ sleep = splitEx(line, " ");
+            int delay = -1;
+            if(StrToInt(sleep[1], delay))
+            {
+                Message("GMT: Suspending macro '" + macro.name + "' for " + delay + " second" + (delay == 1 ? "" : "s"));
+                macro.wait = GetTick() + (delay * 1000);
+
+                macro.current++;
+                macro.lines.removeFirst();
+            }
+            else
+            {
+                Message("GMT: wrong line: " + line);
+            }
+        }
+
+        if((GetTick() < macro.wait) || macro.swait)
+        {}
+        else
+        {
+            macro.wait = 0;
+            macro.current++;
+
+            SendCommand(line,
+                        macro.critter, macro.item,
+                        macro.hexX, macro.hexY);
+
+            if((line.length() >= 10 && substring(line, 0, 9) == "runscript ") ||
+               (line.length() >= 17 && substring(line, 0, 16) == "runscript_unsafe "))
+            {
+                macro.swait = true;
+            }
+
+            macro.lines.removeFirst();
+        }
+
+        GMTmacro_current++;
+        if(GMTmacro_current == int(GMTmacro.length()))
+            GMTmacro_current = 0;
+    }
+    return;
+}
+
+/**
+ * Display informations about running/suspended macros.
+ *
+ * @param x		current X position
+ * @param y		current Y position
+ * @note                called by: @a @e render_iface() -> @a @e GMToolsDraw()
+ *
+ * @return new Y position
+ */
+int GMToolsDrawMacros(int x, int y)   // render_iface -> GMToolsDraw
+{
+    if(GMTconfig.Enabled)
+    {
+        // show running macros
+        for(uint m = 0; m < GMTmacro.length(); m++)
+        {
+            CGMTMacro@ macro = GMTmacro[m];
+            string     text = "Macro: " + macro.name + " [" + macro.current + "/" + macro.all + "]";
+
+            // add information about suspended macros
+            if(macro.wait > 0 && GetTick() < macro.wait)
+            {
+                uint s = uint((macro.wait - GetTick()) / 1000) + 1;
+                text += " (suspended for " + s + " second" + (s == 1 ? "" : "s") + ")";
+            }
+            else if(macro.swait)
+                text += " (waiting for server)";
+
+            y = draw(text, x, y);
+        }
+    }
+    return(y);
+}
+
+/**
+ * Final process of macro line before sending to server.
+ *
+ * @param command		command to execute/send (raw form)
+ * @param critter		@copydoc CGMTMacro::critter
+ * @param item			@copydoc CGMTMacro::item
+ * @param hexX			@copydoc CGMTMacro::hexX
+ * @param hexY			@copydoc CGMTMacro::hexY
+ */
+void SendCommand(string command, uint& critter, uint& item, uint& hexX, uint& hexY)
+{
+    // Message( "SendCommand("+command+"): "+critter+", "+item+", "+hexX+", "+hexY );
+
+    // JIC
+    command = ReplaceText(command, "\n", "");
+    command = ReplaceText(command, "\r", "");
+
+    command = GetVars(command, critter, item, hexX, hexY);
+    GMTDebugMessage("SendCommand = " + command);
+
+    array<string@>@ args = split(command, " ");
+
+    if(args[0] == "internal" && args.length() == 2 && args[1].length() > 0)
+    {
+        // internal menu -> CButtonEx::Click()
+        // TODO: inject devmenu screens here
+        if((args[1] == "givexp") ||
+           (args[1] == "spawncritter"))
+        {
+            Message(args[1] + " not implemented");
+        }
+        else if(args[1] == "possess")
+        {
+            if(!GMToolsPossess(critter))
+                Message("GMT: Possess fail: " + critter);
+        }
+        else
+            Message("GMT: Unknown internal action '" + args[1] + "'");
+    }
+    else if(args[0] == "command" && args.length() >= 2 && args[1].length() > 0)
+    {
+        GMTDebugMessage("SendCommand(Command): " + command);
+        question(0, GMT_QUESTION_COMMAND, 0, command);
+    }
+    else if(args[0] == "macro" && args.length() == 2 && args[1].length() > 0)
+    {
+        GMTDebugMessage("SendCommand(Macro): " + args[1]);
+        Message("GMT: Loading macro '" + args[1] + "'");
+        GMToolsAddMacro(args[1], critter, item, hexX, hexY, false);
+    }
+    else if((args[0] == "runscript" || args[0] == "runscript_unsafe") &&
+            (args.length() >= 5 && args.length() <= 7))
+    {
+        // args[1]: module@function
+        // TODO: @ check
+
+        // args[2] - arg[4]: params
+        int x = 0;
+        int y = 0;
+        int z = 0;
+        if(!StrToInt(args[2], x) ||
+           !StrToInt(args[3], y) ||
+           !StrToInt(args[4], z))
+        {
+            return;
+        }
+
+        // args[5]: additional text
+        string str = " ";
+        if((args.length() >= 6) && (args[5].length() > 0))
+            str = args[5];
+
+        // args[6]: additional data
+        array<int> data;
+        if((args.length() >= 7) && (args[6].length() > 0))
+        {
+            array<string@>@ data_txt = split(args[6], ",");
+            for(uint d = 0; d < data_txt.length(); d++)
+            {
+                int dd = 0;
+                if(!StrToInt(data_txt[d], dd))
+                    break;
+                else
+                    data.insertLast(dd);
+            }
+        }
+
+        GMTDebugMessage("SendCommand(RunScript): " + command);
+
+        // TODO: sanity checks heres
+        if(args[0] == "runscript")
+        {
+            if(GMTconfig.Access >= GMT_ACCESS_RUNSCRIPT)
+            {
+                // question( 0, GMT_QUESTION_COMMAND, GMT_ACCESS_RUNSCRIPT, ""+GMTmacro_current );
+                RunServerScriptUnsafe("unsafe_client@unsafe_ExecCommandEntered", 0, 0, 0, "GMT: " + command, null);
+                RunServerScript(args[1], x, y, z, str, data);
+            }
+        }
+        else if(args[0] == "runscript_unsafe")
+        {
+            if(GMTconfig.Access >= GMT_ACCESS_RUNSCRIPT_UNSAFE)
+            {
+                // question( 0, GMT_QUESTION_COMMAND, GMT_ACCESS_RUNSCRIPT_UNSAFE, ""+GMTmacro_current );
+                RunServerScriptUnsafe("unsafe_client@unsafe_ExecCommandEntered", 0, 0, 0, "GMT: " + command, null);
+                RunServerScriptUnsafe(args[1], x, y, z, str, data);
+            }
+        }
+    }
+    else if(args[0] == "nop" || args[0] == "NOP")
+    {
+        GMTDebugMessage("SendCommand(): NOP");
+    }
+    #ifdef __DEBUG__
+    else
+        Message("SendCommand() FAIL: <" + command + ">");
+    #endif
+}
+
+/**
+ * Stop all running macros.
+ */
+void GMToolsStopMacros()
+{
+    while(GMTmacro.length() > 0)
+    {
+        Message("GMTools: removing macro \"" + GMTmacro[0].name + "\"");
+        GMTmacro.removeAt(0);
+    }
+    ;
+}
+
+/**
+ * Translate all $[Vars] in macro file to real values.
+ *
+ * @return Translated line.
+ */
+string GetVars(string raw, uint cr, uint it, uint hexX, uint hexY)
+{
+    // Message( "GetVars("+raw+"): "+cr+", "+it+", "+hexX+", "+hexY );
+
+    // Message( "GetVars(): GetChosen" );
+    CritterCl@ chosen  = GetChosen();
+
+    if(!valid(chosen))
+    {
+        Message("GetVars: no chosen, panic.");
+        return("nop");
+    }
+
+    CritterCl@ critter;
+    ItemCl@    item;
+
+    if(cr > 0)
+        @critter = GetCritter(cr);
+
+    if(it > 0)
+        @item = GetItem(it);
+
+    // JIC
+    raw = ReplaceText(raw, "\n", "");
+    raw = ReplaceText(raw, "\r", "");
+
+    raw = ReplaceText(raw, "$[Chosen.Id]", chosen.Id);
+    raw = ReplaceText(raw, "$[Chosen.Name]", chosen.Name);
+    raw = ReplaceText(raw, "$[Chosen.HexX]", chosen.HexX);
+    raw = ReplaceText(raw, "$[Chosen.HexY]", chosen.HexX);
+    raw = ReplaceTextCalc(raw, "$[Chosen.HexX", "]", chosen.HexX);
+    raw = ReplaceTextCalc(raw, "$[Chosen.HexY", "]", chosen.HexY);
+
+    if(valid(critter))
+    {
+        raw = ReplaceText(raw, "$[Critter.Id]", critter.Id);
+        raw = ReplaceText(raw, "$[Critter.NpcId]", critter.Id - NPC_BASE_ID);
+        raw = ReplaceText(raw, "$[Critter.Name]", critter.Name);
+        raw = ReplaceText(raw, "$[Critter.HexX]", critter.HexX);
+        raw = ReplaceText(raw, "$[Critter.HexY]", critter.HexY);
+        raw = ReplaceTextCalc(raw, "$[Critter.HexX", "]", critter.HexX);
+        raw = ReplaceTextCalc(raw, "$[Critter.HexY", "]", critter.HexY);
+        raw = ReplaceTextCalc(raw, "$[Critter.Dir", "]", critter.Dir);
+    }
+    #ifdef __DEBUG__
+    else
+        Message("GetVars: !critter");
+    #endif
+
+    if(valid(item))
+    {
+        raw = ReplaceText(raw, "$[Item.Id]", "" + item.Id);
+        // raw = ReplaceText( raw, "${Item.Name}", item.name );
+    }
+    #ifdef __DEBUG__
+    else
+        Message("GetVars: !item");
+    #endif
+
+    raw = ReplaceText(raw, "$[HexX]", hexX);
+    raw = ReplaceText(raw, "$[HexY]", hexY);
+
+    raw = ReplaceTextCalc(raw, "$[HexX", "]", hexX);
+    raw = ReplaceTextCalc(raw, "$[HexY", "]", hexY);
+
+    raw = ReplaceText(raw, "$[Possessed.Id]", GMTconfig.Possess);
+
+    int p;
+    if((p = findFirst(raw, "$[")) > 0)
+        Message("GMT: GetVars: not all variables was translated <" + raw + ">");
+
+    GMTDebugMessage("GetVars returns <" + raw + ">");
+    return(raw);
+}
+
+/**
+ * Helper function for GetVars - translate vars like @e $[Var+N]
+ *
+ * @note allowed operations: @e "+" @e "-" @e "*" @e "/".
+ * @note N: @e 0 - @e 9999
+ *
+ * @return real value
+ */
+string ReplaceTextCalc(string text, string begin, string end, int var)
+{
+    int pos = findFirst(text, begin, 0);
+    if(pos > 0)
+    {
+        if((
+               (substring(text, pos + begin.length(), 1) == "+") ||
+               (substring(text, pos + begin.length(), 1) == "-") ||
+               (substring(text, pos + begin.length(), 1) == "*") ||
+               (substring(text, pos + begin.length(), 1) == "/")
+               )
+           &&
+           (
+               (substring(text, pos + begin.length() + 1, end.length()) == end) ||
+               (substring(text, pos + begin.length() + 2, end.length()) == end) ||
+               (substring(text, pos + begin.length() + 3, end.length()) == end) ||
+               (substring(text, pos + begin.length() + 4, end.length()) == end)
+           )
+           )
+        {
+            int x;
+            for(uint i = 1; i < 5; i++)
+            {
+                uint z = 0;
+                if(!StrToInt(substring(text, pos + begin.length() + 1, i), z))
+                    break;
+                else
+                    x = z;
+            }
+            if(x > 0)
+            {
+                text = ReplaceText(text, begin + "+" + x + end, "" + (var + x));
+                text = ReplaceText(text, begin + "-" + x + end, "" + (var - x));
+                text = ReplaceText(text, begin + "/" + x + end, "" + (var / x));
+                text = ReplaceText(text, begin + "*" + x + end, "" + (var * x));
+            }
+        }
+    }
+    return(text);
+}
+#endif /* __CLIENT */

@@ -1,0 +1,368 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+2 1010 #
+3 1020 D _param p ST_INTELLECT < 4 @
+2 2000 None 0 #
+5 2010 #
+5 2020 #
+7 2030 #
+8 2040 #
+19 2050 D _item p PID_BOOZE > 0 R _item p PID_BOOZE - 1 #
+19 2060 D _item p PID_BEER > 0 R _item p PID_BEER - 1 #
+0 2070 @
+3 3000 None 0 #
+4 3010 #
+6 3020 #
+6 3030 #
+0 3040 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+7 5010 #
+8 5020 #
+0 5030 @
+6 6000 None 0 #
+0 6010 @
+7 7000 None 0 #
+8 7010 #
+10 7020 #
+0 7030 @
+8 8000 None 0 #
+11 8010 #
+11 8020 #
+11 8030 @
+9 9000 None 0 #
+10 9010 @
+10 10000 None 0 #
+13 10010 #
+0 10020 @
+11 11000 None 0 #
+10 11010 #
+12 11020 #
+9 11030 #
+9 11040 #
+0 11050 @
+12 12000 None 0 #
+10 12010 #
+0 12020 @
+13 13000 None 0 #
+14 13010 @
+14 14000 None 0 #
+19 14010 D _item p PID_BEER > 0 #
+19 14020 D _item p PID_BOOZE > 0 #
+15 14030 #
+16 14040 @
+15 15000 None 0 #
+16 15010 #
+0 15020 @
+16 16000 None 0 #
+0 16010 #
+17 16020 @
+17 17000 None 0 #
+18 17010 R _param p ST_KARMA - 20 #
+0 17020 R _param p ST_KARMA + 5 @
+18 18000 None 0 #
+0 18010 @
+19 19000 None 0 #
+20 19010 #
+30 19020 #
+38 19030 #
+45 19040 #
+0 19050 @
+20 20000 None 0 #
+21 20010 @
+21 21000 None 0 #
+22 21010 #
+26 21020 #
+27 21030 #
+0 21040 @
+22 22000 None 0 #
+23 22010 #
+23 22020 #
+23 22030 #
+0 22040 @
+23 23000 None 0 #
+24 23010 #
+24 23020 @
+24 24000 None 0 #
+21 24010 #
+37 24020 #
+0 24030 @
+26 25000 None 0 #
+37 25010 #
+0 25020 @
+27 26000 None 0 #
+28 26010 #
+21 26020 #
+37 26030 #
+0 26040 @
+28 27000 None 0 #
+29 27010 #
+37 27020 #
+0 27030 @
+29 28000 None 0 #
+38 28010 #
+0 28020 @
+30 29000 None 0 #
+31 29010 #
+0 29020 @
+31 30000 None 0 #
+32 30010 #
+34 30020 #
+35 30030 #
+0 30040 @
+32 31000 None 0 #
+33 31010 #
+31 31020 #
+37 31030 #
+0 31040 @
+33 32000 None 0 #
+31 32010 #
+37 32020 #
+0 32030 @
+34 33000 None 0 #
+32 33010 #
+31 33020 #
+0 33030 @
+35 34000 None 0 #
+31 34010 #
+0 34020 @
+37 35000 None 0 #
+19 35010 D _item p PID_BOOZE > 0 R _item p PID_BOOZE - 1 #
+19 35020 D _item p PID_BEER > 0 R _item p PID_BEER - 1 #
+15 35030 #
+16 35040 #
+0 35050 @
+38 36000 None 0 #
+39 36010 #
+40 36020 #
+0 36030 @
+39 37000 None 0 #
+40 37010 #
+41 37020 #
+37 37030 #
+0 37040 @
+40 38000 None 0 #
+41 38010 #
+0 38020 @
+41 39000 None 0 #
+42 39010 #
+0 39020 @
+42 40000 None 0 #
+43 40010 #
+44 40020 #
+0 40030 @
+43 41000 None 0 #
+44 41010 #
+0 41020 @
+44 42000 None 0 #
+43 42010 #
+37 42020 #
+0 42030 @
+45 43000 None 0 #
+46 43010 #
+0 43020 @
+46 44000 None 0 #
+48 44010 D _param p ST_INTELLECT < 6 #
+47 44020 D _param p SK_SCIENCE > 50 #
+0 44030 @
+47 45000 None 0 #
+48 45010 #
+0 45020 @
+48 46000 None 0 #
+49 46010 #
+0 46020 @
+49 47000 None 0 #
+37 47010 #
+0 47020 &
+
+[engl]
+{100}{}{Father Tully}
+{200}{}{You see Father Tully.}
+{210}{}{You see an elderly man in brown robes with whiskey blotches on his cheeks. He looks a leeeettle unsteady.}
+{210}{}{You see Father Tully. He looks like he's tipped back a few wet ones.}
+{1000}{}{Predialogue installations}
+{1010}{}{2}
+{1020}{}{Idiot}
+{2000}{}{Greetingzz, my child. Whazit Father Tully can do for youz on thiz fine, fine, Reno night?@@Greetingzz, my child. Whazit Father Tully can do for youz on thiz fine, fine, Reno day?}
+{2010}{}{Uh, it's actually day time, Father.}
+{2020}{}{Uh, it's actually night time, Father.}
+{2030}{}{Who are you?}
+{2040}{}{Are you drunk?}
+{2050}{}{I've got you some booze, Father.}
+{2060}{}{I've got you a beer, Father.}
+{2070}{}{Nothing, sorry to bother you.}
+{3000}{}{Greetingzz, my son. Whazit Father Tully can do for youz on thiz fine, fine, Reno night?@@Greetingzz, my son. Whazit Father Tully can do for youz on thiz fine, fine Reno day?}
+{3010}{}{Hee-hee. You stink like still. You stink like pee-pee}
+{3020}{}{Me like mister sun}
+{3030}{}{Nightie-night.}
+{3040}{}{Byebye}
+{4000}{}{(Sniffs his armpits, then his robes.) My word, I sure smell strongly, don't I? Damnation, I smell like a still! Better get clean 'fore Missuz Wright catchez me…}
+{4010}{}{Bye bye pee pee man}
+{5000}{}{Hell, musta over-slept…woulda noticed otherwise…what th' hell was I saying?}
+{5010}{}{Who are you?}
+{5020}{}{Are you drunk?}
+{5030}{}{Nothing. Sorry to bother you.}
+{6000}{}{Hell, musta over-slept…woulda noticed otherwise…what th' hell was I saying?}
+{6010}{}{Byeeee}
+{7000}{}{Father Tully, at yer service. I'm th' spiritual advisor to the good p…well, to th' people of New Reno.}
+{7010}{}{Is being drunk the only way that you can accomplish that?}
+{7020}{}{I had some questions about New Reno…}
+{7030}{}{I see. Well, thanks for talking with me.}
+{8000}{}{Certintly not! In th' PAST, I was known to indulge in th'spirits, but th' Temperance Union has helped me break th' filthy habit!}
+{8010}{}{The Temper --?}
+{8020}{}{Oh. I didn't --}
+{8030}{}{Break th --?}
+{9000}{}{Temprance Union, Misssus Wright…same pershun. Tryin' ta clean up New Reeno. Done a pretty good job with me.}
+{9010}{}{Sure has. I had some other questions…}
+{10000}{}{Queshions? Can't say I know tooo much 'bout them. But ast away.}
+{10010}{}{Can you tell me a little bit about New Reno?}
+{10020}{}{Maybe I'll come back when you're a little drier.}
+{11000}{}{Now I'm onna straight and narrow, thankz to Missus Wright...bless her soul. I've been clean fer almost a...uh, month. Or wazzit a week? Aw, hell, I don't know.}
+{11010}{}{A week might be pushing it. Say, I had some questions for you…}
+{11020}{}{Dry as sand, huh? How many fingers am I holding up?}
+{11030}{}{Temperance Union?}
+{11040}{}{Missus Wright?}
+{11050}{}{Maybe I'll come back when you're sober.}
+{12000}{}{(Stares at your hand.) Izzat six? Or izzit three…}
+{12010}{}{Very good. Both of those are right. I wanted to ask you something.}
+{12020}{}{Maybe I'll come back when you sober up.}
+{13000}{}{Well… Reno... itz… well, itz... well... um, say...}
+{13010}{}{Yes...?}
+{14000}{}{Pardon me for asking, do you happenta have a bottle on you? I need sum fer th' services…and, eh, my throatz a little dry.}
+{14010}{}{Sure. Here ya go.}
+{14020}{}{Sure. Here have a bottle of booze.}
+{14030}{}{Not on me, I'm afraid.}
+{14040}{}{I could go snag some, if you want.}
+{15000}{}{Oh. All right then. No harm in asking…so…uh…I'm sorry, who are you again?}
+{15010}{}{You know, I could go snag some hootch for you, if you want.}
+{15020}{}{Nobody, bye.}
+{16000}{}{Now there's a fine idea! May you be thrice-blesst! Eh…I happen t'know a PLACE on th' East Side, at the old train station, that sells th' kind of holy water I need.}
+{16010}{}{Okay. I'll go get some. Be right back.}
+{16020}{}{Okay. I'll go get some. But I'll need some chips to buy it.}
+{17000}{}{Courze, a courze…chipz, chipz…where do I keep the chipz…(His eyes turn to the poor box beside the podium.) Ah! Don't know why I didn't think of this before...Houl onna minute...}
+{17010}{}{(Patiently wait for him to make the withdrawal from the poor box.)}
+{17020}{}{Uh, nevermind, Father. This one's on me.}
+{18000}{}{(Tully stumbles over to the poor box beside the podium, and fishes around inside.) }
+{18010}{}{Uh…hmmnn. (His hands come up empty.) Afraid I haven't got any chipz afterall.}
+{19000}{}{Thank you kindly! (Takes bottle, takes a swig.) Ahhh…sorry…what in the hells was I talking about?@@Eh…well, now, most certintly! (Takes bottle.) Don't usually touch the stuff, y'know…(Takes a deep drink.)...ahhhh…um, sorry, what waz I saying?@@Eh…damn kind of you! (Takes bottle.) Don't usually drink this much, y'know…(Takes a long swig.) Ahhhh…I'm sorry, what was I saying?}
+{19010}{}{You were talking about family Bishop.}
+{19020}{}{You were talking about family Wright.}
+{19030}{}{You were talking about family Mordino.}
+{19040}{}{You were talking about family Salvatore.}
+{19050}{}{I'll come back when you're sober.}
+{20000}{}{Eh? The Bishops, right…power-hungry's the lotta 'em, itz in th' blood. Thing is, ol' John Bischop iz so concerned 'bout taking over everthin' he ain't taking care of business at hoome...}
+{20010}{}{Business at home?}
+{21000}{}{Don't give two secondz to 'is whife n' daughter...no wonder both o' em have grown up wiiild. Heh-heh...all comez out in th' confessional, y'know…}
+{21010}{}{Oh, and what does Mr. Bishop say in the confessional?}
+{21020}{}{Oh, and what does Mrs. Bishop say in the confessional?}
+{21030}{}{Oh, and what does Bishop's daughter say in the confessional?}
+{21040}{}{I imagine. Can I ask you some other questions, Father?}
+{22000}{}{Well, not much, but I hear thingz OUSSIDE th' confessional about oul' Bishop. Crafty devil. Got iron ballz, he does...must clink when he walkz. I figger he wuz behind thosse raidz on Vault City way back when…you heard 'bout those?}
+{22010}{}{No.}
+{22020}{}{Yes.}
+{22030}{}{Father, keep it down. That kind of talk could get you killed in this town…}
+{22040}{}{Look, maybe I'll come back when you're sober.}
+{23000}{}{(Ignores you.) See, a few months back, oul' Bishop sends a caravan to Vault City, SUGGESTING a marriage o' convenience 'tween Vault City n' New Reno.}
+{23010}{}{Did they reach an agreement?}
+{23020}{}{I trust they didn't reach an agreement?}
+{24000}{}{Naw, Vault City told him ta STICK it up his poopchute. So...not long after, Vault City starts getting raided. Fast. Hard. An' all th' while, right there is Bischop, telling 'em, "I COULD help, IF you join with New Reno."}
+{24010}{}{Hmmm. What else can you tell me about the Bishops?}
+{24020}{}{Can I ask you some other questions, Father?}
+{24030}{}{Very interesting, Father. Thanks for talking with me.}
+{25000}{}{Mostly what you'd 'xpect from a neglected wifey-o with a body whoose curves could cure th' blind. Mostly adultery. I mean, have you SEEN her rack? My word!}
+{25010}{}{Uh…what else can you tell me about the Bishops, Father?}
+{25020}{}{Agreed. Well, thanks for talking with me.}
+{26000}{}{Oooh, sweeeet little Angela? Little HELLION more like it! Girl's got too mucha deevil in her britches. Always floozying around, banging her father's help n' pumping herself fulla jet…}
+{26010}{}{Jet?}
+{26020}{}{This sounds like a great family. What else can you tell me about the Bishops?}
+{26030}{}{I had some other questions, Father…}
+{26040}{}{I guess children will be children. Well, thanks for talking with me.}
+{27000}{}{Devil's blood! Wickedness! Foul secretion from th' very teat of evil!}
+{27010}{}{So…you don't like Jet then?}
+{27020}{}{Uh, yes. Teat of evil. Can I ask you some other questions, Father?}
+{27030}{}{All right then. Talk to you later, Father.}
+{28000}{}{That drug'll be th' death of us. Can't think of another drug…(Drinks, belches.)…that doess more damage than Jet…Killz
+ th' mind and th' body. Damn Mordinos…}
+{28010}{}{What was that about the Mordinos?}
+{28020}{}{Uh, I'd nurse that bottle a little longer next time, Father. Talk to you later.}
+{29000}{}{Heh-heh! Wright, eh? (Smiles, wiggles eyebrows.) Lemme tell you a lit-tle sumthin' about th' WRIGHTS…they're a split bunch of horny drunks and stonefast puritans, they are!}
+{29010}{}{Oh, really?}
+{29020}{}{I think I've heard enough, Father. Thanks for talking with me.}
+{30000}{}{Those Wrights just keep squeezing out kids…oul' Orville Wright must wanna re-pop-ulate th' world. Hope Missus Wright can take th' strain. Heh-heh. An' the thingz they SAY in th' confessional…}
+{30010}{}{Oh, really? What does Missus Wright say in the confessional?}
+{30020}{}{Oh, really? What does ol' Orville Wright say in the confessional?}
+{30030}{}{What does the Wright Family control in New Reno?}
+{30040}{}{Oh, I bet it's really juicy stuff. Maybe we can talk about it some other time.}
+{31000}{}{ETHYL Wright? That blesst woman! Keeps me off th' drink, an' on th' straight n' narrow. (Takes a swig.) She can drive th' sin outta you, she can…uh, but…what in hell waz I saying?}
+{31010}{}{About Missus Wright in the confessional…}
+{31020}{}{You were talking about the Wright Family…}
+{31030}{}{Nevermind. I had some other questions…}
+{31040}{}{Nothing much more, I think. Thanks for talking with me.}
+{32000}{}{Oh, right, right. Well, uh, in th' confessional, she ain't got much t'say. Mostly guilt 'bout stepping on bugs…or 'bout enjoying sex with her hubbie too much. Heh-heh. (Takes a swig.) I looove guilt.}
+{32010}{}{I had some other questions about the Wrights…}
+{32020}{}{I see. I had some other questions…}
+{32030}{}{It shows. Thanks for talking with me.}
+{33000}{}{Oul' Orville? Well, he's got a lotta guilt on his shoulders. See, he promised th' Missus he'd quit the alcohol biz, but he has a secret still in th' train station behind th' house! She'll beat him uglier than he is if she finds it…}
+{33010}{}{Tell me about Mrs. Wright…}
+{33020}{}{Tell me more about the Wrights…}
+{33030}{}{A secret still in the train station behind the house, huh? Very interesting, Father. Thanks for the info.}
+{34000}{}{Nuthin'! (Takes a drink.) They're the weakest of th' families, cuz they only brew alke-hol. Barely turn a cent, they do. Th' other families buy alke-hol offa them mostly outta pity.}
+{34010}{}{Interesting. Tell me more about the Wrights…}
+{34020}{}{Very interesting, Father. Thanks for the info.}
+{35000}{}{(Father Tully glances at the...now...empty bottle in his hands.) Say, don't mean to impose, friend: would yoo happenta have 'nother bottle of that fine vintage on you? All thiz talkin' is making me parsched.}
+{35010}{}{Sure, I think I have a bottle of booze for ya.}
+{35020}{}{Have a brew on me, Father.}
+{35030}{}{Nothing on me, sorry Father.}
+{35040}{}{I could go snag some, if you want.}
+{35050}{}{I'll come back when you're sober, Father.}
+{36000}{}{Th'Mordinos? (Holds up three fingers.) Therez two o' them. (Holds hand up high.) Big Jeezus… (Holds hand down low.) …an' Leetle
+ Jeezus. The Father n' the Son. They control th' drugs and the whoa-men in Reno.}
+{36010}{}{Tell me about Big Jesus.}
+{36020}{}{Tell me about Little Jesus.}
+{36030}{}{So they are the source of drugs and control most of the whores in New Reno?}
+{37000}{}{Jesus? He's one bad muthuh…(Takes a swig, swishes it around in cheeks.) Deals in slavez, Jet, n' whores. Only person worse'n him is hiz filthy son.}
+{37010}{}{His son?}
+{37020}{}{So Jesus Mordino Senior controls most of the drugs and whores in New Reno?}
+{37030}{}{Great family. Can I ask you some other questions, Father?}
+{37040}{}{Like father, like son. Well, thanks for talking with me, Father.}
+{38000}{}{Leetle Jezus? Bastard! He's like a prairie tick, sucking blood from hiz Dad's work. Be trouble for alla Reno if he took charge. Couldn't hold it toogether, drugz, whorez...all fall down.}
+{38010}{}{The Mordinos are the source of drugs and most of the whores in New Reno?}
+{38020}{}{Just like you in a few seconds. Well, thanks for talking with me.}
+{39000}{}{Yesss… (Smiles, licks lips.) …whoresss… (Begins stroking neck of the bottle.)}
+{39010}{}{(Snap your fingers) Uh, Father? About the drugs?}
+{39020}{}{I think I better go. Thanks for talking with me, Father.}
+{40000}{}{Eh? Drugz…yes, the drugs. Jet. Filthy Jet. Do horrible thingz with it, horrible…Redding…the Stables. (Takes a swig.) All fer gold…}
+{40010}{}{What about Redding?}
+{40020}{}{What about the Stables?}
+{40030}{}{Interesting. Thanks for talking with me, Father.}
+{41000}{}{(Makes a walking motion with his two fingers.) Jet leavez town, goez ta Redding. Gold leavez Redding, goez to Mordino. (Takes a swig.) Miners die, Mordinos lie.}
+{41010}{}{What were you saying about the Stables?}
+{41020}{}{So the Mordinos are selling Jet to Redding, huh? Interesting. Thanks, Father.}
+{42000}{}{Mordinos havva…farm…ousside of town. Keep slaves there. Test…Jet…on them. Killz them in drovez. (Shudders.) Only th' Mordinos know where th' Stables are. Theyzz in the business ov' hirin' eggheads now they los' their boy genius, Marvin.}
+{42010}{}{What were you saying about Redding?}
+{42020}{}{I had some other questions, Father.}
+{42030}{}{The Mordinos are hiring new scientists to work on Jet production? Interesting. Thanks, Father.}
+{43000}{}{I wuz talking 'bout the Salvatores? (Blinks, shrugs, then drinks.) Can't imagine what I was saying. Family's as silent as death. An' you don't wanna cross 'em, either…know why?}
+{43010}{}{Don't really need to know why right now, Father. Can I ask you some other questions}
+{43020}{}{Look, maybe I'll come back when you're sober.}
+{44000}{}{(Lumbers on drunkenly.) Cuz they got weapons like fires from heaven, weapons no one's ever SEEN before in New Reno or nowhere. Shoot beams of light, cut a man in two, leave him twitching in the dust.}
+{44010}{}{Shoot beams of light?}
+{44020}{}{Shoot beams of light? You mean laser weapons?}
+{44030}{}{Wow...maybe I should try and get a hold of one. Well, thanks for talking with me.}
+{45000}{}{Thaz what I heard them call them…lay-sers….but ta me, those weapons are the devil's own, foul lightbringers, tools meant for nuthin but death!}
+{45010}{}{Yes, of course, Father. Tools of the devil and all that. What do the other families think of these 'lightbringers?'}
+{45020}{}{Tools of the devil, huh? Maybe I should try and get a hold of one. Well, thanks for talking with me.}
+{46000}{}{One of them lightbringers can kill a dozen men…Other families useta fight with th' Salvatores, but now no one messes with 'em. Itz a peace of sorts…good as long azzit holds out, I s'pose.}
+{46010}{}{Who's in charge of the Salvatores, Father?}
+{46020}{}{I suppose. Well, thanks for talking with me, Father.}
+{47000}{}{Louie…LOUIS…Salvatore runz th' show. (Drains bottle, coughs slightly.) Cripple. Needz an oxygen tank ta keep breathin'... his  lungs are messed up. Stays in th' top floor of his establisshment, never comes out.}
+{47010}{}{Interesting. Can I ask you some other questions, Father?}
+{47020}{}{Hmmmm. Tank of oxygen, huh? Interesting. Well, thanks for talking with me, Father.}
+

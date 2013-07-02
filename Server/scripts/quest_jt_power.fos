@@ -1,0 +1,197 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// quest_jt_power.fos
+//
+
+#include "_maps.fos"
+#include "_vars.fos"
+#include "_macros.fos"
+#include "mapdata_h.fos"
+#include "utils_h.fos"
+
+#define FLAG_GENERATOR_REPAIRED     # (__n) (1 << (__n))    // 1,2,4
+#define FLAG_GENERATOR_OPTIMIZED    # (__n) (8 << (__n))    // 8,16,32
+#define FLAG_GENERATOR_POWERED      # (__n) (64 << (__n))   // 64,128,256
+
+// =============================================
+// Junktown Power House
+// =============================================
+
+// Fix generator either with 1 electronic parts (PID_ELECTRONIC_PARTS) OR with skill (repair skill roll -20)
+// set LVAR_q_jt_power_house == 2
+
+// If generator is fixed, optimize it with science skill roll (-50)
+// set LVAR_q_jt_power_house == 3
+
+// After generator is fixed + optimized, use switches to turn them on.
+// set LVAR_q_jt_power_house == 4
+
+bool IsQuestActive(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_jt_power_house, player.Id);
+    return var.GetValue() > 0;
+}
+
+// written like that so it's not spamming the script too much
+bool IsFlag(Critter& player, uint flag)        { GameVar@ var = GetLocalVar(LVAR_q_jt_generators_flags, player.Id); return (var.GetValue() & flag) == flag; }
+void SetFlag(Critter& player, uint flag)       { GameVar@ var = GetLocalVar(LVAR_q_jt_generators_flags, player.Id); var = var.GetValue() | flag; }
+bool IsRepaired(Critter& player, int number)   { return IsFlag(player, FLAG_GENERATOR_REPAIRED(number)); }
+bool IsOptimized(Critter& player, int number)  { return IsFlag(player, FLAG_GENERATOR_OPTIMIZED(number)); }
+bool IsPowered(Critter& player, int number)    { return IsFlag(player, FLAG_GENERATOR_POWERED(number)); }
+void SetRepaired(Critter& player, int number)  { SetFlag(player, FLAG_GENERATOR_REPAIRED(number)); }
+void SetOptimized(Critter& player, int number) { SetFlag(player, FLAG_GENERATOR_OPTIMIZED(number)); }
+void SetPowered(Critter& player, int number)   { SetFlag(player, FLAG_GENERATOR_POWERED(number)); }
+uint CountRepaired(Critter& player)
+{
+    uint ret = 0;
+    for(uint i = 0; i < 3; i++)
+        if(IsRepaired(player, i))
+            ret++;
+    return ret;
+}
+uint CountOptimized(Critter& player)
+{
+    uint ret = 0;
+    for(uint i = 0; i < 3; i++)
+        if(IsOptimized(player, i))
+            ret++;
+    return ret;
+}
+uint CountPowered(Critter& player)
+{
+    uint ret = 0;
+    for(uint i = 0; i < 3; i++)
+        if(IsPowered(player, i))
+            ret++;
+    return ret;
+}
+
+string@[] Remaining = { "", "Two", "One" };
+
+void RepairGenerator(Critter& player, int number)
+{
+    SetRepaired(player, number);
+    uint done = CountRepaired(player);
+    if(done < 3)
+        player.Say(SAY_NETMSG, "You have repaired the generator number " + (number + 1) + ". " + Remaining[done] + " more to go.");
+    else
+    {
+        // player.Say(SAY_NETMSG,"You have repaired all generators.");
+        player.StatBase[ST_EXPERIENCE] += 50;
+        GameVar@ var = GetLocalVar(LVAR_q_jt_power_house, player.Id);
+        var = 2;
+    }
+}
+
+void OptimizeGenerator(Critter& player, int number)
+{
+    SetOptimized(player, number);
+    uint done = CountOptimized(player);
+    if(done < 3)
+        player.Say(SAY_NETMSG, "You have optimized the generator number " + (number + 1) + ". " + Remaining[done] + " more to go.");
+    else
+    {
+        // player.Say(SAY_NETMSG,"You have optimized all generators.");
+        player.StatBase[ST_EXPERIENCE] += 100;
+        GameVar@ var = GetLocalVar(LVAR_q_jt_power_house, player.Id);
+        var = 3;
+    }
+}
+
+void PowerGenerator(Critter& player, int number)
+{
+    SetPowered(player, number);
+    uint done = CountPowered(player);
+    if(done < 3)
+        player.Say(SAY_NETMSG, "You have powered up the generator number " + (number + 1) + ". " + Remaining[done] + " more to go.");
+    else
+    {
+        // All switches turned on.
+        player.StatBase[ST_EXPERIENCE] += 100;
+        GameVar@ var = GetLocalVar(LVAR_q_jt_power_house, player.Id);
+        var = 4;
+    }
+}
+
+bool s_Generator(Critter& player, Scenery& table, int skill, Item@ item, int number)
+{
+    if(!IsQuestActive(player))
+        return false;
+
+    if(!IsRepaired(player, number))
+    {
+        if(valid(item))
+        {
+            if(item.GetProtoId() == PID_ELECTRONIC_PARTS)
+            {
+                _SubItem(item, 1);
+                RepairGenerator(player, number);
+                return true;
+            }
+        }
+        if(skill != SK_REPAIR)
+            return false;
+
+        // todo: assert no timeout, move to utils!
+        TrySetTimeout(player);
+
+        if(SkillRoll(player, SK_REPAIR, -70))
+        {
+            RepairGenerator(player, number);
+            return true;
+        }
+        player.Say(SAY_NETMSG, "You've failed to repair the generator.");
+        return true;
+    }
+
+    if(!IsOptimized(player, number))
+    {
+        if(skill != SK_SCIENCE)
+            return false;
+        // todo: assert no timeout, move to utils!
+        TrySetTimeout(player);
+        if(SkillRoll(player, SK_SCIENCE, -100))
+        {
+            OptimizeGenerator(player, number);
+            return true;
+        }
+        player.Say(SAY_NETMSG, "You've failed to optimize the generator.");
+        return true;
+    }
+    return false;
+}
+
+bool s_Switch(Critter& player, Scenery& valve, int skill, Item@ item, int number)
+{
+    if(!IsQuestActive(player))
+        return false;
+    if(!IsOptimized(player, number))
+    {
+        player.Say(SAY_NETMSG, "Turning the switche before optimizing the generator will have no effect.");
+        return true;
+    }
+    if(valid(item))
+        return false;
+    if(skill != -1)
+        return false;
+    if(!IsPowered(player, number))
+    {
+        PowerGenerator(player, number);
+        return true;
+    }
+    return false;
+}
+
+void TrySetTimeout(Critter& player)
+{
+    GameVar@ var = GetLocalVar(LVAR_q_jt_power_house_attempts, player.Id);
+    var = var + 1;
+    if(var.GetValue() == 5)
+    {
+        _SetTimeout(player, TO_SK_REPAIR, REAL_MINUTE(30));
+        var = 0;
+        player.Say(SAY_NETMSG, "The repairs made you tired.");
+    }
+}

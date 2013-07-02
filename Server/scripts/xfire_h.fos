@@ -1,0 +1,17 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// xfire_h.fos
+//
+
+#ifndef __XFIRE_H__
+#define __XFIRE_H__
+
+import void XFireClient_Update(Critter& player)                                                                               from "online_stats";
+
+import void XFireClient_SetInfo(Critter& player, string& name, string& value)                 from "online_stats";
+import void XFireClient_SetInfoRaw(Critter& player, string& raw)                                              from "online_stats";
+import void XFireClient_SetInfoMsg(Critter& player, string& name, int msg, int id)    from "online_stats";
+import void XFireClient_ClearInfo(Critter& player)                                                                    from "online_stats";
+#endif /* __XFIRE_H__ */

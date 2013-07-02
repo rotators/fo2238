@@ -1,0 +1,16 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_ghostfarm.fos
+//
+
+#include "_macros.fos"
+
+
+
+void map_init(Map& map, bool firstTime)
+{
+    // production
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "quest_bos_initiate@_GhostFarmCritterIn");
+}

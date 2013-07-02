@@ -1,0 +1,93 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+9 1010 D _var p q_mb_location_state > 8 #
+4 1020 D _var p q_mb_location_state > 2 #
+2 1030 @
+2 2000 None 0 #
+3 2010 D _var p q_mb_location_state = 2 R _var p q_mb_location_state = 3 @
+3 3000 None 0 #
+4 3010 @
+4 4000 None 0 #
+5 4010 D _var p q_mb_location_state = 3 R _var p q_mb_location_state = 4 #
+6 4020 D _var p q_mb_location_state = 4 R _var p q_mb_location_state = 5 #
+7 4030 #
+8 4040 D _var p q_mb_location_state > 4 R _script quest_mb@r_rDoorOuter 2 10 11 #
+0 4050 @
+5 5000 None 0 #
+4 5010 @
+7 6000 None 0 #
+4 6010 @
+6 7000 None 0 #
+4 7010 @
+8 8000 None 0 #
+0 8010 @
+9 9000 None 0 #
+8 9010 R _script quest_mb@r_rDoorOuter 2 10 11 #
+0 9020 &
+
+[engl]
+{100}{}{none}
+{1000}{}{Predialogue installations}
+{1010}{}{}
+{1020}{}{ }
+{1030}{}{ }
+{2000}{}{Energetics Control
+system  rebooted.
+Reconnection to devices required.}
+{2010}{}{Reconnect}
+{3000}{}{Reconnecting. . . . . . . . . . . . . . . . . . . . . .
+Energetics control 
+Reactor control
+Security measures control
+-----Done-----
+}
+{3010}{}{continue}
+{4000}{}{Status:
+External power detected.
+Warning: insufficient power
+Level 1: 15%
+Level 2: 0%
+Warning: Radiation leak detected
+}
+{4010}{}{Check reactors}
+{4020}{}{Access reactors control}
+{4030}{}{Whats with radiation}
+{4040}{}{Open airlock door.}
+{4050}{}{exit}
+{5000}{}{Reactor status:
+Reactor 1: Error,          0MW
+Reactor 2: Shut down, 0MW 
+}
+{5010}{}{back}
+{6000}{}{Warning extreme levels of radiation detected
+Reactor room
+Reactor control room - lockdown
+Generators room
+}
+{6010}{}{back}
+{7000}{}{Cannot execute
+This station has not acces to reactor control}
+{7010}{}{back}
+{8000}{}{Opening
+Warning high radiation levels detected.
+}
+{8010}{}{exit}
+{9000}{}{Status:
+External power detected.
+Level 1: 100%
+Level 2: 100%
+Warning: Radiation leak detected
+
+}
+{9010}{}{Open airlock door.
+}
+{9020}{}{exit
+}
+

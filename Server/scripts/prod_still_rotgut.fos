@@ -1,0 +1,159 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_still_rotgut.fos
+//
+
+#include "_macros.fos"
+#include "production_h.fos"
+
+#define FIREWOODS    # (it) (it.Val1)
+#define FRUITS       # (it) (it.Val2)
+
+void item_init(Item& item, bool firstTime)
+{
+    // redirect:
+    item.SetScript("prod_machine@_Rotgut");
+    // item.SetEvent(ITEM_EVENT_SKILL, "_Skill");
+    // item.SetEvent(ITEM_EVENT_USE_ON_ME, "_Item");
+}
+
+//
+// Using still
+//
+bool _Skill(Item& item, Critter& crit, int skill)
+{
+    if(skill == -1)
+    {
+        if(IsReady(item))
+        {
+            if(crit.Timeout[TO_GATHERING] > TIMEOUT_CUMULATIVE)
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_SKILL_WEARINESS);
+                return true;
+            }
+            if(IsOverweighted(crit))
+            {
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_GAME, STR_OVERWEIGHT);
+                return true;
+            }
+            else
+            {
+                item.Animate(0, 0);   // ??????????
+                crit.AddItem(PID_ROT_GUT, 1);
+                // say that rotgut is ready
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3017);
+                // restart
+                FIREWOODS(item) = FRUITS(item) = 0;
+            }
+        }
+        else
+        {
+            if(FireReady(item))
+            {
+                // fire ready, ingredients needed
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3025);
+            }
+            else if(IngredientsReady(item))
+            {
+                // start a fire
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3019);
+            }
+            else
+            {
+                // say that you need to prepare it first
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3018);
+            }
+        }
+        return true;
+    }
+    else
+        return false;
+}
+
+//
+// Using item on still (inserting ingredients)
+//
+bool _Item(Item& item, Critter& crit, Item@ usedItem)
+{
+
+    // crit.Say(SAY_NETMSG, "" + fruits + "fruits, " + firewoods + " firewoods.");
+    if(usedItem.GetProtoId() == PID_FIREWOOD)
+    {
+        if(FireReady(item))
+        {
+            // fire already set up
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3022);
+        }
+        else if(IngredientsReady(item))
+        {
+            FIREWOODS(item)++;
+            // fire started, product will be ready soon
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3023);
+            // remove ingredient
+            _CritDeleteItem(crit, usedItem.GetProtoId(), 1);
+        }
+        else
+        {
+            // fire started, time to put ingredients
+            FIREWOODS(item)++;
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3020);
+            // remove ingredient
+            _CritDeleteItem(crit, usedItem.GetProtoId(), 1);
+        }
+        return true;
+    }
+    else if(usedItem.GetProtoId() == PID_MUTATED_FRUIT)
+    {
+        if(IngredientsReady(item))
+        {
+            // ingredients already inserted
+            crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3024);
+        }
+        else
+        {
+            // add fruits
+            // you can put 2 fruits at one use
+            if(FRUITS(item) == 0 && usedItem.GetCount() >= 2)
+            {
+                FRUITS(item) += 2;
+                _CritDeleteItem(crit, usedItem.GetProtoId(), 2);
+                // you added all needed ingredients
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3027);
+            }
+            else
+            {
+                FRUITS(item)++;
+                _CritDeleteItem(crit, usedItem.GetProtoId(), 1);
+                // 'you've added ingredient'
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3021);
+            }
+
+            // 'everything ready'
+            if(IsReady(item))
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3026);
+            else if(IngredientsReady(item))
+                // fire needed
+                crit.SayMsg(SAY_NETMSG, TEXTMSG_TEXT, 3019);
+        }
+        return true;
+    }
+    // "that does nothing"
+    return false;
+}
+//
+// Checks if still is ready to be used
+//
+bool IsReady(Item& item)
+{
+    return FRUITS(item) == 2 && FIREWOODS(item) == 1;
+}
+bool IngredientsReady(Item& item)
+{
+    return FRUITS(item) == 2;
+}
+bool FireReady(Item& item)
+{
+    return FIREWOODS(item) == 1;
+}

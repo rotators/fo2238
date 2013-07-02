@@ -1,0 +1,62 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// slaverun_slave_hostile.fos
+//
+
+// This is the script with slave runs' hostile slaves event handlers.
+// See slaverun.fos for the list of all involved files.
+
+#include "_macros.fos"
+#include "slaverun_h.fos"
+
+import void StartSlaverunCombat(Map@ map) from "slaverun";
+import void SlaversAnnounceSuccess(Map@ map) from "slaverun";
+
+void critter_init(Critter& npc, bool firstTime)
+{
+    npc.SetEvent(CRITTER_EVENT_DEAD, "_SlaveHostileOnDead");
+    npc.SetEvent(CRITTER_EVENT_ATTACKED, "_SlaveHostileOnAttacked");
+    npc.SetEvent(CRITTER_EVENT_IDLE, "_Idle");
+    _CritSetExtMode(npc, MODE_EXT_SLAVE_HOSTILE);
+}
+
+void _SlaveHostileOnDead(Critter& crit, Critter@ killer)
+{
+    uint     id = crit.GetMap().GetData(MAP_DATA_SLAVERUN_PLAYER);
+    GameVar@ hostiles_killed = GetLocalVar(LVAR_slaverun_hostiles_killed, id);
+    GameVar@ hostiles = GetLocalVar(LVAR_slaverun_hostiles, id);
+    hostiles_killed += 1;
+    // Log("hostile killed, # = "+hostiles_killed.GetValue());
+    GameVar@ status = GetLocalVar(LVAR_slaverun_status, id);
+    Critter@ player = GetCritter(id);
+
+    uint     ustatus = status.GetValue();
+
+    if(FLAG(ustatus, SLAVERUN_BOTCHED))
+        return;
+    if(hostiles_killed.GetValue() == hostiles.GetValue())
+    {
+        SETFLAG(ustatus, SLAVERUN_COMPLETED);
+        SlaversAnnounceSuccess(crit.GetMap());
+        if(valid(player))
+            player.Say(SAY_NETMSG, "You've killed all hostile slaves. Your work here is complete.");
+    }
+
+    status = ustatus;
+}
+
+bool _SlaveHostileOnAttacked(Critter& crit, Critter& attacker)
+{
+    // Log("Trying to start combat");
+    StartSlaverunCombat(crit.GetMap());
+    return false;
+}
+
+void _Idle(Critter& npc)
+{
+    if(Random(0, 5) == 0)
+        npc.MoveRandom();
+    npc.Wait(Random(2000, 10000));
+}

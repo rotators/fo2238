@@ -1,0 +1,28 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// client_smart_cursor_h.fos
+//
+
+#ifndef __CLIENT_SMART_CURSOR_H__
+#define __CLIENT_SMART_CURSOR_H__
+
+#define SMART_NULL                 (0)
+#define SMART_EXTRACT_ORE          (1)
+#define SMART_EXTRACT_ORE2         (2)
+#define SMART_EXTRACT_MINERALS     (3)
+#define SMART_EXTRACT_MINERALS2    (4)
+#define SMART_EXTRACT_URANIUM      (5)
+#define SMART_EXTRACT_GOLD         (6)
+#define SMART_EXTRACT_FIBRES       (7)
+#define SMART_SHOVEL_DUNG          (8)
+#define SMART_CHOP_WOOD            (9)
+#define SMART_DIG_GRAVE            (10)
+
+#ifndef __CLIENT_SMART_CURSOR__
+import uint ValidToolForTarget(ItemCl@ tool, ItemCl@ target) from "client_smart_cursor";
+import bool TryUseSmartCursor(int click) from "client_smart_cursor";
+import void TryDrawSmartCursor() from "client_smart_cursor";
+#endif     // __CLIENT_SMART_CURSOR__
+#endif // __CLIENT_SMART_CURSOR_H__

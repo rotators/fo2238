@@ -1,0 +1,75 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// casino.fos
+//
+
+#include "_macros.fos"
+
+#define START_BET             (5)
+#define MIN_BET               (1)
+#define MAX_BET               (50)
+#define STR_ONEHANDED_RING    (2000)
+
+int OnehandedMoney = 0;
+
+
+bool s_Onehanded(Critter& cr, Scenery& onehanded, int skill, Item@ item)
+{
+    // Disabled, for now.
+
+    /*if(skill!=-1) return true;
+
+       // Count bet
+       uint bet=START_BET;
+       if(valid(item) && item.GetProtoId()==PID_BOTTLE_CAPS)
+       {
+            // Set all money
+            bet=item.GetCount();
+       }
+       else
+       {
+            // Check money
+            uint money=_CritCountItem(cr,PID_BOTTLE_CAPS);
+            if(money<MIN_BET) return true;
+       }
+
+       // Check max bet
+       if(bet>MAX_BET) bet=MAX_BET;
+
+       // Set text
+       Map@ map=cr.GetMap();
+       if(valid(map)) map.SetTextMsg(onehanded.HexX,onehanded.HexY,COLOR_GRAY,TEXTMSG_TEXT,STR_ONEHANDED_RING);
+
+       // Calculate
+       int gambling=cr.Skill[SK_GAMBLING];
+       gambling+=OnehandedMoney;
+       gambling=CLAMP(gambling,6,95);
+
+       // Win
+       /*if(gambling>=Random(1,100))
+       {
+            // Bonuses
+            if(Random(0,99)==77) bet*=10;
+            if(Random(0,999)==777) bet*=100;
+            if(Random(0,9999)==7777) bet*=1000;
+
+            // Add money
+            cr.AddItem(PID_BOTTLE_CAPS,bet);
+            if(bet>MAX_BET) cr.Say(SAY_NETMSG,"***JACKPOT***");
+            cr.Say(SAY_NETMSG,"+"+bet+"$");
+            OnehandedMoney-=bet;
+       }
+       // Loose
+       else
+       {
+            // Sub money
+            cr.DeleteItem(PID_BOTTLE_CAPS,bet);
+            cr.Say(SAY_NETMSG,"-"+bet+"$");
+            OnehandedMoney+=bet;
+       }*/
+
+    // OnehandedMoney+=10; // Infusion of money to game
+    return true;
+}

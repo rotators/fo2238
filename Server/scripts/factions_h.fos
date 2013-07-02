@@ -1,0 +1,300 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// factions_h.fos
+//
+
+#ifndef __FACTIONS__
+#define __FACTIONS__
+
+#include "_macros.fos"
+
+// Factions
+
+// Fixed factions and groups
+#include "groups_h.fos"
+
+// mainly for GetGroupIndex
+#include "utils_h.fos"
+
+// checks if number represents valid faction
+#define FACTION_COUNT                 (4096)
+#define FACTION_VALID                 # (f)    (f < (FACTION_COUNT))
+
+// Ranks
+
+#define RANK_UNKNOWN                  (0) // in case of non-members, we may don't know the rank, or just don't care about it
+#define RANK_ROOKIE                   (1)
+#define RANK_ACCEPTED                 (2)
+#define RANK_TRUSTED                  (3)
+#define RANK_IMPORTANT                (4)
+#define RANK_LEADER                   (5)                   // in case of player-driven factions only
+
+#define FIRST_RANK                    # (f)             (1) // initiates, recruits etc...
+#define RANK_VALID                    # (r)             (r <= 5)
+
+// BOS
+#define RANK_BOS_INITIATE             (1)
+#define RANK_BOS_APPRENTICE           (2)
+#define RANK_BOS_SENIOR               (3)
+#define RANK_BOS_ELDER                (4)
+
+// ENCLAVE
+#define RANK_ENCLAVE_BOOT             (1)
+#define RANK_ENCLAVE_TROOPER          (2)
+#define RANK_ENCLAVE_SERGEANT         (3)
+#define RANK_ENCLAVE_OFFICER          (4)
+
+// UNITY
+#define RANK_UNITY_INITIATE           (1)
+#define RANK_UNITY_CHILD              (2)
+#define RANK_UNITY_PRIEST             (3)
+#define RANK_UNITY_ELDER              (4)
+
+// NCR
+#define RANK_NCR_DEMOCRAT             (1) // democracy promoter
+#define RANK_NCR_CITIZEN              (2)
+#define RANK_NCR_MAGISTRATE           (3)
+#define RANK_NCR_MARSHAL              (4)
+
+// VAULTCITY
+#define RANK_VC_ADMITTED              (1)
+#define RANK_VC_CITIZEN               (2)
+#define RANK_VC_REGULATOR             (3)
+#define RANK_VC_PROCONSUL             (4)
+
+// Status
+#define STATUS_UNKNOWN                (0) // in case when we are adding info about player, and we don't know his status (whether he's an enemy or not...)
+#define STATUS_FRIEND                 (1)
+#define STATUS_NEUTRAL                (2)
+#define STATUS_ENEMY                  (3)
+#define STATUS_INVITED                (4)
+// checks if number represents valid status
+#define STATUS_VALID                  # (s)    (s <= 4)
+
+// util defines, need to be updated after certain changes in previous defines
+#define FIRST_FACTION                 (2)
+// #define LAST_FACTION            (6)
+
+#define FACTION_PLAYER_START          (200)
+
+#define REP_VALID                     # (r)             (-100 <= r && r <= 100)
+
+// news types
+
+// player x joined faction
+#define NEWS_JOINED                   (1)
+// player x resigned faction
+#define NEWS_RESIGNED                 (2)
+// player x was expelled by player y
+#define NEWS_EXPELLED                 (3)
+// player x was promoted/demoted by player y
+#define NEWS_PROMOTED                 (4)
+// #define NEWS_PROMOTED23             (5)
+// #define NEWS_PROMOTED34             (6)
+#define NEWS_DEMOTED                  (7)
+// #define NEWS_DEMOTED43              (8)
+// player x claimed leadership
+#define NEWS_CLAIMED                  (9)
+// player x became leader
+#define NEWS_LEADER                   (10)
+// player x cease to be leader
+#define NEWS_OVERTHROWN               (11)
+
+// error codes
+
+#define FD_RESULT_SUCCESS             (0) // everything ok
+#define FD_RESULT_ALREADY_EXISTS      (1) // value already exists in db, no reason to add
+#define FD_RESULT_NOT_FOUND           (2) // id not found in db
+#define FD_RESULT_ANY_DATA_ERROR      (3) // operation related to AnyData failed
+#define FD_RESULT_INVALID_ARGUMENT    (4) // one of the function argument was wrong (either null, or just wrong value)
+#define FD_RESULT_LVAR_ERROR          (5) // operation related to LVARs failed
+#define FD_RESULT_DB_NOT_FOUND        (6) // faction database object couldn't be obtained
+#define FD_RESULT_DB_FULL             (7) // can't add another record
+#define FD_RESULT_DB_EMPTY            (8) // nothing to browse
+
+// Register funcation errorcodes
+#define REGRESULT_SUCCESS             (0)
+// already registered
+#define REGRESULT_ALREADY_TAKEN       (1)
+// name not found
+#define REGRESULT_WRONG_NAME          (2)
+// limit of number of factions reached
+#define REGRESULT_MAXLIMIT            (3)
+// lack of gvar, or anydata error
+#define REGRESULT_EXCEPTION           (4)
+
+// converts proper FD_RESULT value to string
+const string@ FD_Result2String(int res)
+{
+    if(res == FD_RESULT_SUCCESS)
+        return "FD_RESULT_SUCCESS";
+    else if(res == FD_RESULT_ALREADY_EXISTS)
+        return "FD_RESULT_ALREADY_EXISTS";
+    else if(res == FD_RESULT_NOT_FOUND)
+        return "FD_RESULT_NOT_FOUND";
+    else if(res == FD_RESULT_ANY_DATA_ERROR)
+        return "FD_RESULT_ANY_DATA_ERROR";
+    else if(res == FD_RESULT_INVALID_ARGUMENT)
+        return "FD_RESULT_INVALID_ARGUMENT";
+    else if(res == FD_RESULT_LVAR_ERROR)
+        return "FD_RESULT_LVAR_ERROR";
+    else if(res == FD_RESULT_DB_NOT_FOUND)
+        return "FD_RESULT_DB_NOT_FOUND";
+    else if(res == FD_RESULT_DB_FULL)
+        return "FD_RESULT_DB_FULL";
+    else if(res == FD_RESULT_DB_EMPTY)
+        return "FD_RESULT_DB_EMPTY";
+    else
+        return "FD_Result: Unknown error code";
+}
+
+// following imports will be only defined when this file will be included from other
+// files than faction_data.fos
+
+#ifndef __FACTIONS_MODULE__
+
+// old factions_common
+import bool IsBigFaction(uint faction) from "factions";
+import bool IsTheSameFaction(uint player1Id, uint player2Id) from "factions";
+import void _Resign(uint playerId) from "factions";
+
+// registering faction
+import int RegisterFaction(uint id, const string@ name, bool playerDriven) from "factions";
+import int RegisterFaction(const string@ name, bool playerDriven, uint& out id) from "factions";
+
+import bool RemoveFaction(uint faction) from "factions";
+
+// faction name as string
+import bool GetFactionNameStr(uint faction, string& out name) from "factions";
+import bool GetFactionId(const string@ name, uint& out id) from "factions";
+
+// name checks
+import bool IsFactionNameFree(const string&) from "factions";
+import bool IsFactionNameValid(const string&) from "factions";
+
+import bool IsGang(uint faction) from "factions";
+
+import uint16 GetFactionRadioChannel(uint faction) from "factions";
+import void   SetFactionRadioChannel(uint faction, uint16 channel) from "factions";
+
+// adding to db
+import int AddPlayer(uint faction, uint id)  from "factions";
+import int AddPlayer(uint faction, uint id, uint playerFaction)  from "factions";
+import int AddPlayer(uint faction, uint id, uint playerFaction, uint rank)  from "factions";
+import int AddPlayer(uint faction, uint id, uint playerFaction, uint rank, uint status)  from "factions";
+
+// removing player from db
+import int RemovePlayer(uint faction, uint id) from "factions";
+
+// retrieving data from db
+import int  GetFaction(uint faction, uint id)  from "factions";
+import int  GetStatus(uint faction, uint id) from "factions";
+import int  GetRank(uint faction, uint id)  from "factions";
+import bool IsMember(uint faction, Critter& cr) from "factions";
+import bool IsMemberOffline(uint faction, uint id) from "factions";
+import bool StoredInDB(uint faction, uint id) from "factions";
+import uint GetRecordsCount(uint faction) from "factions";
+import uint GetMembersCount(uint faction) from "factions";
+import uint GetMembers(uint faction, array<uint>& ids) from "factions";
+import uint GetLeaderId(uint faction) from "factions";
+import void SetLeaderId(uint faction, uint id) from "factions";
+import uint GetClaimId(uint faction) from "factions";
+import void SetClaimId(uint faction, uint id) from "factions";
+import uint GetLeaderTime(uint faction) from "factions";
+import void SetLeaderTime(uint faction, uint time) from "factions";
+import uint GetClaimTime(uint faction) from "factions";
+import void SetClaimTime(uint faction, uint time) from "factions";
+import uint GetFactionLocationId(uint faction) from "factions";
+import bool GetFactionLocation(uint faction, uint& out locId, uint& out pid, uint& out x, uint& out y) from "factions";
+// import void SetFactionLocation(uint faction, uint locId, uint pid, uint x, uint y) from "factions";
+import void GetFactionLocationCoords(uint faction, uint& out x, uint& out y) from "factions";
+// import void SetFactionLocationCoords(uint faction, uint x, uint y) from "factions";
+import uint GetFactionScore(uint faction) from "factions";
+import void ModifyFactionScore(uint faction, int amount) from "factions";
+import void UpdateLastUsed(uint faction) from "factions";
+import uint GetFactionsCount() from "factions";
+
+// browsing
+import int GetPrevId(uint faction, uint currId, bool members, uint& out prevId) from "factions";
+import int GetNextId(uint faction, uint currId, bool members, uint& out nextId) from "factions";
+import int GetFirstId(uint faction, bool members, uint& out id) from "factions";
+
+// modifying data stored in db
+import int ModifyRank(uint faction, uint id, uint newRank) from "factions";
+import int ModifyStatus(uint faction, uint id, uint newStatus)  from "factions";
+import int ModifyFaction(uint faction, uint id, uint newFaction)  from "factions";
+
+// members stuff
+import int InvitePlayer(uint faction, uint playerId) from "factions";
+import int ConfirmInvitation(uint faction, uint playerId) from "factions";
+import int AddMember(uint faction, uint playerId) from "factions";
+import int AddMember(uint faction, uint playerId, bool applyModifiers) from "factions";
+import int ChangeRank(uint faction, uint playerId, uint newRank) from "factions";
+import int ExpelMember(uint faction, uint playerId) from "factions";
+import int ExpelMember(uint faction, uint playerId, bool applyModifiers) from "factions";
+
+import uint GetPlayerFaction(uint playerId) from "factions";
+import uint GetPlayerRank(uint playerId) from "factions";
+
+// news
+import void AddFactionNews(uint faction, uint master, uint slave, uint type) from "factions";
+import bool GetFactionNews(uint faction, uint index, uint& out master, uint& out slave, uint& out type, uint16& out year, uint8& out month, uint8& out day, uint8& out hour, uint8& out minute) from "factions";
+import uint GetFactionNewsCount(uint faction) from "factions";
+
+// locations encounter checking
+import uint CheckFactionBaseCoords(uint x, uint y) from "factions";
+
+import bool SaveFactionData(uint faction) from "factions";   // Run only on world_save
+import bool FactionExists(uint faction) from "factions";
+
+// debug
+import uint GetFactionLog(uint faction, bool fullLog, array<string>& strings, uint begin, uint end) from "factions";
+#endif
+
+#ifndef __FACTIONS_MODULE__
+
+import void      InitFactions() from "factions";
+import void      UpdateFactionsInfo(Critter& cr) from "factions";
+import IFaction@ GetFaction(int) from "factions";
+import IFaction@ GetFaction(const string&) from "factions";
+import IFaction@ GetFactionByIdx(int idx) from "factions";
+import void      UpdateGroupVars(Critter& player) from "factions";
+#endif
+
+/////////////////////////
+// new stff
+/////////////////////////
+
+shared interface IFaction
+{
+    int    get_Id() const;
+    string get_Name() const;
+    int    get_StringId() const;
+    string get_Database() const;
+    int    get_UpdateSeq() const;
+    void   set_UpdateSeq(int);
+
+    int  GetStatus(int id) const;
+    void SetStatus(int id, int status);
+    int  GetRank(int id) const;
+    void SetRank(int id, int rank);
+
+    /**
+     * Retrieves the array of id numbers for all members of the faction
+     */
+    int GetMembers(array<uint>&) const;
+    int GetRecords(array<uint>&) const;
+    /**
+     * Adds faction to the list of known factions.
+     */
+    void AddKnownFaction(int);
+    /**
+     * Retrieves the list of factions that players have entered into their terminal
+     * and are therefore recognized by them.
+     */
+    int  GetKnownFactions(array<int>&) const;
+    void Remove();
+};
+#endif __FACTIONS__

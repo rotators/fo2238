@@ -1,0 +1,92 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_redding_lost.fos
+//
+
+#include "_macros.fos"
+
+#include "factions_h.fos"
+#include "mapdata_h.fos"
+
+#define TERMINAL_DIALOG    (9060)
+#define COMPUTER_DIALOG    (1334)
+
+uint FACTION = FACTION_REDDING_GUTTERSNIPES;
+
+import void ReddingAddElevators() from "map_redding_mine";
+import void ReddingAddFloor(uint elev, uint mapid, uint entirenum) from "map_redding_mine";
+import bool s_Terminal(Critter& player, Scenery& terminal, int skill, Item@ item) from "factions_terminal";
+
+//
+// map.Data:
+// 0 - faction id
+// 1 - leader chosen (0-not chosen, 1-chosen)
+//
+
+//
+// Initialize map, and store The Redding Guttersnipes faction id
+// to be read by their terminal
+//
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION);
+        // no leader yet
+        map.SetData(MAP_DATA_LEADER, 0);
+    }
+    // assign event handlers
+    map.SetEvent(MAP_EVENT_IN_CRITTER, "map_playerfaction_hq@_OnInCritter");
+
+    ReddingAddElevators();
+    uint16 x = 0, y = 0;
+    if(map.GetEntireCoords(11, 0, x, y))
+        ReddingAddFloor(0, map.Id, 11);
+}
+
+//
+// Instead of calling factions_terminal, we will use that function
+// to assign first player who will find this terminal to that faction
+//
+bool s_Computer(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != -1 || valid(item))
+        return false;
+    Map@ map = player.GetMap();
+
+    // run redding computer dialog
+    if(map.GetData(MAP_DATA_LEADER) == 0)
+    {
+        RunDialog(player, COMPUTER_DIALOG, terminal.HexX, terminal.HexY, false);
+    }
+    // run normal terminal dialog
+    else
+    {
+        s_Terminal(player, terminal, skill, item);
+    }
+    return true;
+}
+
+//
+// Just some hint for the player where to click
+//
+bool s_Desk(Critter& player, Scenery& terminal, int skill, Item@ item)
+{
+    if(!player.IsPlayer() || skill != -1 || valid(item))
+        return false;
+    player.Say(SAY_NETMSG, "Better check the computer");
+    return true;
+}
+//
+// This (called by computer dialog) will make player a leader
+//
+void r_Leader(Critter& player, Critter@ computer, int value)
+{
+    AddMember(FACTION, player.Id);
+    ChangeRank(FACTION, player.Id, RANK_LEADER);
+    Map@ map = player.GetMap();
+    map.SetData(MAP_DATA_LEADER, 1);
+}

@@ -1,0 +1,79 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+3 1010 @
+3 2000 None 0 #
+4 2010 #
+7 2020 #
+9 2030 D _var p cath_job_flowers = 0 #
+11 2040 D _var p cath_job_flowers = 13 #
+12 2050 D _var p cath_job_flowers > 0 D _var p cath_job_flowers < 13 #
+0 2060 @
+4 3000 None 0 #
+5 3010 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_LHD_JUMPSUIT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_LHD_JUMPSUIT #
+5 3020 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_MALE_DEFAULT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_MALE_DEFAULT #
+5 3030 D _item p PID_BOTTLE_CAPS > 49 D _param p ST_GENDER = 0 D _script npc_barber@d_IsNotCrType 1 CRTYPE_BHD_JUMPSUIT R _script dialog@r_RemoveMoney 1 50 R _script npc_barber@r_Haircut 1 CRTYPE_BHD_JUMPSUIT #
+6 3040 D _item p PID_BOTTLE_CAPS < 50 #
+0 3050 @
+5 4000 None 0 #
+0 4010 @
+6 5000 None 0 #
+0 5010 @
+7 6000 None 0 #
+8 6010 D _item p PID_BOTTLE_CAPS } 100 R _item p PID_SAND_ROBE + 1 R _script dialog@r_RemoveMoney 1 100 #
+0 6020 @
+8 7000 None 0 #
+0 7010 @
+9 8000 None 0 #
+10 8010 #
+0 8020 @
+10 9000 None 0 #
+0 9010 R _var p cath_job_flowers = 1 R _item p PID_FLOWER + 12 @
+11 10000 None 0 #
+0 10010 R _item p PID_FLOWER + 1 R _item p PID_WATERBAG + 1 R _var p cath_job_flowers = 14 R _param p REPUTATION_CATHEDRAL + 100 R _item p PID_SAND_ROBE + 1 @
+12 11000 None 0 #
+0 11010 R _var p cath_job_flowers = 14 &
+
+[engl]
+{100}{}{Scrubber}
+{200}{}{You see a scrubber.}
+{1000}{}{Predialogue installations}
+{1010}{}{Answer text}
+{2000}{}{[She squints at you, like she is expecting something big.] Oh, hello! How may I help you, friend?}
+{2010}{}{What is this room?}
+{2020}{}{Can I buy new clothes from you?}
+{2030}{}{I am looking for some work that needs to be done. You've got something?}
+{2040}{}{I have given out all flowers to the people.}
+{2050}{}{I don't want to run around, giving out your flowers anymore.}
+{2060}{}{Not yet, maybe later. See you around.}
+{3000}{}{This here is the bath-room. Here our faithful residents can wash themself from the dirt they catch up all around in the outside world. What about you? Maybe you want me to take care of your scrubby hair? For only 50 caps, what do you say? You would look like a new born, after I am done with it! }
+{3010}{}{[You give her the 50 caps.] I want to have long hair!@@Fine. [You give her the 50 caps.] I want to have long hair!}
+{3020}{}{[You give her the 50 caps.] I want to have short hair!@@Fine. [You give her the 50 caps.] I want to have short hair!}
+{3030}{}{[You give her the 50 caps.] I want to have a bald head!@@Fine. [You give her the 50 caps.] I want to have a bald head!}
+{3040}{}{Sorry, but I don't have enough money.@@I don't have enough money.}
+{3050}{}{Not yet, maybe later. See you around.}
+{4000}{}{So then, take place! [She beginns to fiddle around in your hair. You have absolutly no clue what happens right now. After a few minutes, she seems to be done.] }
+{4010}{}{Thanks! See you later again. Maybe.}
+{5000}{}{You maybe want to come back later then, I am here most of my time!}
+{5010}{}{See you around.}
+{6000}{}{We aren't selling clothes here normally, but for 100 caps, I can hand you over one of our robes.}
+{6010}{}{Give me one of your robes! [You give her 100 caps.]}
+{6020}{}{Don't have enough money right now, will come back later.}
+{7000}{}{Thank you for the money. Here is your robe. [She gives you the cloth.]}
+{7010}{}{[End]}
+{8000}{}{There is something you could do for me, yes... [She holds on for a second, then nods.] You most likely saw all the people outside of the cathedral when you came in, didn't you? Would you give them these flowers? Normally I have done it all the time, but I am getting quite old and all the walking around isn't good for my clunky bones.}
+{8010}{}{Give me the flowers and I'm on my way.}
+{8020}{}{As fancy as this sounds like, I can't do this right now. See you around anyway.}
+{9000}{}{Here, take the flowers. [She hands you over a bunch of flowers.] Come back to me when you are done.}
+{9010}{}{[End]}
+{10000}{}{Thank you for helping me out with this! Here, I don't have much, but please, take this as a gift.}
+{10010}{}{See you around.}
+{11000}{}{[She nods.] I can accept this. Thank you for trying anyway.}
+{11010}{}{See you around.}
+

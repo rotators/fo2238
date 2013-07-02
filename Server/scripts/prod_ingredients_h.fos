@@ -1,0 +1,39 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// prod_ingredients_h.fos
+//
+
+#ifndef __PROD_INGREDIENTS_H__
+#define __PROD_INGREDIENTS_H__
+
+// shared!
+
+enum Ingredients // used internally, do NOT change name
+{
+    // remember to update item prototypes
+    // loweracased valuename is visible in client (without INGREDIENT_ prefix)
+    INGREDIENT_NONE = 0,
+    // value for ObjectEditor
+    INGREDIENT_WATER,                   // 1
+    INGREDIENT_WOOD,                    // 2
+    INGREDIENT_RADIATED_FOOD,           // 3
+    INGREDIENT_BARLEY,                  // 4
+    INGREDIENT_TOBACCO,                 // 5
+    INGREDIENT_FIBRE                    // 6
+};
+
+#ifndef __PROD_INGREDIENTS__
+
+# ifdef __CLIENT
+#  define Item    ItemCl
+# endif
+
+import bool   HaveAnyIngredient(Item& item) from "prod_ingredients";
+import bool   HaveIngredient(Item& item, uint8 ingredient) from "prod_ingredients";
+import uint16 GetIngredientReturnItem(Item& item, uint8 ingredient) from "prod_ingredients";
+import string IngredientName(uint8 ingredient) from "prod_ingredients";
+import uint   IngredientsNames(Item& item, array<string>& names) from "prod_ingredients";
+#endif // __PROD_INGREDIENTS__
+#endif // __PROD_INGREDIENTS_H__ //

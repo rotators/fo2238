@@ -1,0 +1,180 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+22 1010 D _param p ST_INTELLECT < 4 #
+18 1020 D _var p q_ncr_geigercounter = 2 #
+2 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+20 1040 @
+22 2000 None 0 @
+20 3000 None 0 #
+8 3010 #
+6 3020 D _var p q_ncr_geigercounter = 0 #
+3 3030 #
+30 3040 D _param p SK_OUTDOORSMAN } 150 D _script dialog@d_ExploredWasteland 0  D _var p q_ncr_explorer_perk = 1 #
+0 3050 @
+2 4000 None 0 #
+3 4010 #
+4 4020 D _var p q_ncr_explorer_perk = 0 R _var p q_ncr_explorer_perk = 1 #
+0 4030 @
+3 5000 None 0 #
+4 5010 D _var p q_ncr_explorer_perk = 0 R _var p q_ncr_explorer_perk = 1 #
+8 5020 #
+0 5030 @
+4 6000 None 0 #
+23 6010 #
+5 6020 #
+8 6030 #
+0 6040 @
+5 7000 None 0 #
+6 7010 #
+8 7020 @
+6 8000 None 0 #
+7 8010 #
+14 8020 @
+7 9000 None 0 #
+15 9010 #
+9 9020 #
+8 9030 @
+8 10000 None 0 #
+6 10010 #
+9 10020 #
+4 10030 D _var p q_ncr_explorer_perk = 0 R _var p q_ncr_explorer_perk = 1 #
+30 10040 D _param p SK_OUTDOORSMAN } 150 D _script dialog@d_ExploredWasteland 0  D _var p q_ncr_explorer_perk = 1 #
+0 10050 @
+9 11000 None 0 #
+10 11010 #
+12 11020 #
+8 11030 @
+10 12000 None 0 #
+11 12010 @
+11 13000 None 0 #
+21 13010 #
+8 13020 @
+12 14000 None 0 #
+13 14010 #
+8 14020 @
+13 15000 None 0 #
+8 15010 @
+14 16000 None 0 #
+15 16010 #
+8 16020 @
+15 17000 None 0 #
+16 17010 D _param p SK_REPAIR > 89 D _var p q_ncr_geigercounter = 0 #
+8 17020 #
+0 17030 @
+16 18000 None 0 #
+19 18010 R _var p q_ncr_geigercounter = 1 R _param p ST_EXPERIENCE + 100 #
+17 18020 @
+17 19000 None 0 #
+19 19010 R _var p q_ncr_geigercounter = 1 R _param p ST_EXPERIENCE + 100 #
+18 19020 R _var p q_ncr_geigercounter = 2 R _param p ST_EXPERIENCE + 100 R _item p PID_GEIGER_COUNTER + 1 R _param p REPUTATION_NCR_RANGERS - 5 @
+18 20000 None 0 @
+19 21000 None 0 #
+8 21010 #
+0 21020 @
+21 22000 None 0 #
+8 22010 @
+23 23000 None 0 #
+14 23010 #
+8 23020 @
+30 24000 None 0 #
+31 24010 R _var p q_ncr_explorer_perk = 2 R _param p PE_EXPLORER = 1 R _param p ST_EXPERIENCE + 250 #
+0 24020 @
+31 25000 None 0 #
+8 25010 #
+0 25020 &
+
+[engl]
+{100}{}{Mantis}
+{200}{}{You see Mantis, the ghoul.}
+{210}{}{She looks muddy and... ghoulish. And maybe she is a he, you are not sure though.}
+{1000}{}{Predialogue installations}
+{1010}{}{player is stupid.}
+{1020}{}{angry}
+{1030}{}{Talking first time}
+{1040}{}{Talked already}
+{2000}{}{You've got waaaay too much radiation, didn't ya, smoothskin?}
+{3000}{}{Yeah, smoothskin. You want to know something more?}
+{3010}{}{Yes, I have a question.}
+{3020}{}{Can you tell me more about the radioactive cyclons?}
+{3030}{}{What is a ghoul doing here?}
+{3040}{}{You seem to come around a lot. Got any spare tip for me?}
+{3050}{}{I'm just looking around, thanks.}
+{4000}{}{Hello smoothskin! What canna do for ya?}
+{4010}{}{What is a ghoul doing here?}
+{4020}{}{Who are you?}
+{4030}{}{I'm just looking around, thanks.}
+{5000}{}{What do ya think? I am a traveller who's gonna make a break in that 'lil establishment here!}
+{5010}{}{Who are you?}
+{5020}{}{I've got some question.}
+{5030}{}{Interesting. See you later.}
+{6000}{}{The people call me Mantis. I'm coming from the far east. Far far east.}
+{6010}{}{And where is that?}
+{6020}{}{This sounds cool. Can you tell me some stories from far east?}
+{6030}{}{I've got some other question.}
+{6040}{}{Cool story, bro. See you later.}
+{7000}{}{Well, not much to say 'bout the east. Many slavers there, and the sand storms, damn. Did you ever saw a radiated cyclon heading towards you? Boy, that's what I'll call a lota action!}
+{7010}{}{Tell me about the radiated cyclons!}
+{7020}{}{I've got some other question.}
+{8000}{}{They are legendary! Really big shit and they are raging most of the year in the midwest. 's hard to pass through them and without a 'lil protection, they eat you the flesh from the bones, because of the wind speed.}
+{8010}{}{How could you pass them?}
+{8020}{}{You mean, there are big storms in the midwest?}
+{9000}{}{Guess I was just a lucky girl, hah! 'was travelling in the wind shadow, behind the mountains. It was hard and tiresome, but as you can see, I made it! The rest of the way was just travelling by train anyway.}
+{9010}{}{But you managed it.}
+{9020}{}{Can you tell me what you know about the train?}
+{9030}{}{I've got some other question.}
+{10000}{}{What canna do for ya?}
+{10010}{}{Can you tell me more about the radioactive cyclons?}
+{10020}{}{What do you know about the train?}
+{10030}{}{Tell me something about you.}
+{10040}{}{You seem to come around a lot. Got any spare tip for me?}
+{10050}{}{Thanks for the chat. See you later.}
+{11000}{}{It's some months or years ago, when the NCR started to invest really a lot in rebuilding rail infrastructure all around. It's the most efficient way for everyone to traverse long distances across the desert, after all! Didn't you saw it already? Worker all around!}
+{11010}{}{Not really. Who are the workers?}
+{11020}{}{I mean more technical. How's that train running?}
+{11030}{}{Some other question...}
+{12000}{}{They use NCR prisoners, criminals for the work. Cleaning the rail lines.}
+{12010}{}{What if someone can flee?}
+{13000}{}{What do ya think? They are guarded well. Don't think anything will happen there. If ya think it's good to do silly things, they get shot by the warder.}
+{13010}{}{You really think this helps?}
+{13020}{}{I've got some other question.}
+{14000}{}{The trains are running on energy cells, ye know? This means, it eats a lotta micro fusion cells. It's simply the most easiest and effective way. If really needed, they can run the train with a steam engine that can be attached in front of it.}
+{14010}{}{How many trains are running?}
+{14020}{}{Some other question, if you don't mind.}
+{15000}{}{I think they have three right now. Some time ago, it even was just one... Said, it's 'lready hard enough to keep the rails clean for that one.}
+{15010}{}{Some other question...}
+{16000}{}{I tell ya! They are not simple normal storms, they carry around the radiation and without some real protection, you can't pass them. Hell, even with protection you can't pass them!}
+{16010}{}{But you managed it.}
+{16020}{}{Can I ask you something else?}
+{17000}{}{Just close. And to be honest, it wasn't a full blown cyclon, ya. And while this, ma' geiger counter is broken. }
+{17010}{}{You geiger counter is broken? I think I'm pretty good in repairing stuff. If you want to, I can try to fix it.}
+{17020}{}{That's a pitty. I have another question.}
+{17030}{}{Thanks for answering my questions. I have to go now. See you.}
+{18000}{}{That would ya do? Okay... [He hands you over his broken geiger counter from his bag. You fiddle around a bit with it and check the mechanics. Then you can hear a *clack* sound and it seems to work again.]}
+{18010}{}{Here, I've fixed it. [You give him the geiger counter back.]}
+{18020}{}{I think I've fixed it. And now it's mine. }
+{19000}{}{What ya saying? Give me ma' geiger counter back!}
+{19010}{}{Okay, here. [You give him the geiger counter back.]}
+{19020}{}{No!}
+{20000}{}{Bugger off, smoothskin.}
+{21000}{}{Thanks, smoothskin! [He places the geiger counter back in his bag.]}
+{21010}{}{No problem. I have another question.}
+{21020}{}{Thanks for answering my questions. I have to go now. See you.}
+{22000}{}{Who knows. At least for now it works.}
+{22010}{}{I've got some other question.}
+{23000}{}{Are you a bit slow, smoothskin? The east is there... [He points into a random direction.] It's past the desert, behind the mountains. }
+{23010}{}{And there are big storms?}
+{23020}{}{Some other question...}
+{24000}{}{Looking at yer appearance, I don't think there is much new I can tell ya! You look like you've got around a lot already as well, maybe even as much as I did!}
+{24010}{}{What should I say, the road is my home...}
+{24020}{}{Interesting, but I need to go somewhere... Will be back later!}
+{25000}{}{Not only yours, not only yours! ... [She nods.] But always keep in mind where you've put yer feed on! Nobody likes squatters and nobody likes claim jumpers. Could get you a lead from a shotgun right into your chest! And sneaking past lots of angry folks will always slow you down, regardless of how well you know the area...}
+{25010}{}{Mind you if I ask another question?}
+{25020}{}{Thanks! Goodbye.}
+

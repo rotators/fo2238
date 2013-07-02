@@ -1,0 +1,1397 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// dialog.fos
+//
+
+#ifndef __DIALOG__
+#define __DIALOG__
+
+#include "_macros.fos"
+#include "economy_h.fos"
+#include "factions_h.fos"
+#include "follower_common_h.fos"
+#include "lexems_h.fos"
+#include "mapdata_h.fos"
+#include "messages_h.fos"
+#include "npc_common_h.fos"
+#include "npc_roles_h.fos"
+#include "world_common_h.fos"
+
+/**
+ * \~english @defgroup DialogFuncs Dialog module
+ * List of dialog module dialog functions.
+ * \~ @ingroup FOnline2238
+ */
+/*@{*/
+
+
+#include "dialog_factions.fos"
+#include "dialog_reputations.fos"
+
+
+import void AffectRadiation(Critter& cr, int value) from "radiation";
+import void DropPoison(Critter& cr) from "poison";
+import void DropRadiation(Critter& cr) from "radiation";
+import void FlushScreen(Critter& cr, bool fadeOut, uint timeMs) from "effects";
+import void PlaySound(Critter& cr, string& soundName) from "media";
+
+import int stringReplaceText(string& s, string@ f, string@ t) from "config_file";
+
+/**
+ * \~english @name General
+ *
+ * \~ @weight 550
+ */
+// @{
+
+/**
+ * Check if the player is the owner of the currently occupied location
+ */
+bool d_IsLocationOwner(Critter& player, Critter@ npc)
+{
+    Map@ map = player.GetMap();
+    if(!valid(map))
+        return false;
+    return int(player.Id) == GetRootMapData(map, MAP_DATA_OWNER);
+}
+
+/**
+ * Check if the player is not the owner of the currently occupied location
+ */
+bool d_IsNotLocationOwner(Critter& player, Critter@ npc)
+{
+    return !d_IsLocationOwner(player, npc);
+}
+
+/**
+ * Check if a player is already talking to the NPC.
+ */
+bool d_IsBusy(Critter& player, Critter@ npc)
+{
+    return(npc.GetTalkedPlayers(null) > 0);
+}
+
+/**
+ * Add some caps to the player.
+ * This is the prefered method to add caps, instead of doing it manually in dialog editor.
+ * @param val Amount of money to add
+ */
+void r_AddMoney(Critter& player, Critter@ npc, int val)
+{
+    BanksTransferToCritter(player, val, TRANSACTION_DEFAULT, false);
+}
+
+/**
+ * Flush the screen black and back.
+ */
+void r_FlushScreen(Critter& cr, Critter@ tray)
+{
+    FlushScreen(cr, false, 500);
+    FlushScreen(cr, true, 5000);
+}
+
+/**
+ * Remove some caps from the player.
+ * This is the prefered method to remove caps, instead of doing it manually in dialog editor.
+ * @param val Amount of money to subtract
+ */
+void r_RemoveMoney(Critter& player, Critter@ npc, int val)
+{
+    BanksTransferFromCritter(player, val, TRANSACTION_DEFAULT, false);
+}
+
+/**
+ * Check if the amount of money is available in all banks combined.
+ * @param val The given amount.
+ */
+bool d_IsMoneyAvailable(Critter& player, Critter@ npc, int val)
+{
+    return(int(BanksGetTotalMoney()) >= val);
+}
+
+bool d_IsWearingArmor(Critter& player, Critter@ npc)
+{
+    uint8 dummy = 0;
+    return valid(player.GetSlotProto(SLOT_ARMOR, dummy));
+}
+
+bool d_IsWearingScaryHelmet(Critter& player, Critter@ npc)
+{
+    uint16[] scaryHelmets =
+    {
+        PID_METAL_HELMET,
+        PID_METAL_HELMET_MK2
+    };
+
+    Item@ helmet = player.GetItem(0, SLOT_HEAD);
+    if(valid(helmet) && Present(helmet.GetProtoId(), scaryHelmets))
+        return(true);
+    else
+        return(false);
+}
+
+/**
+ * Remove the items the player has in Slot1 and 2. 1 drops to ground, 2 goes to inv.
+ */
+void r_RemoveWeapon(Critter& player, Critter@ tray)
+{
+    Item@ item = player.GetItem(0, SLOT_HAND1);
+    if(valid(item))
+        player.MoveItem(item.Id, 0, SLOT_GROUND);
+    @item = player.GetItem(0, SLOT_HAND2);
+    if(valid(item))
+        player.MoveItem(item.Id, 0, SLOT_INV);
+}
+
+/**
+ * Drops armor to ground.
+ */
+void r_RemoveArmor(Critter& player, Critter@ tray)
+{
+    Item@ armor = player.GetItem(0, SLOT_ARMOR);
+    if(valid(armor))
+        player.MoveItem(armor.Id, 0, SLOT_GROUND);
+}
+
+/**
+ * Send messages to everyone that sees the player, ordering them to attack.
+ */
+void r_Alert(Critter& player, Critter@npc)
+{
+    player.SendMessage(MSG_ATTACK_ME, 0, MESSAGE_TO_WHO_SEES_ME);
+}
+
+/**
+ * Teleport player to a map.
+ * @param mappid PID of map to teleport to
+ * @param entid Entire id on map, 0 is default entry point.
+ */
+void r_TeleportToMap(Critter& player, Critter@npc, int mappid, int entid)
+{
+    Map@ map = GetMapByPid(mappid, 0);
+    if(!valid(map))
+    {
+        Log("r_TeleportToMap failed, map " + mappid + " not found.");
+        return;
+    }
+    player.TransitToMap(map.Id, entid);
+}
+
+void r_TeleportToMapFollowers(Critter& player, Critter@npc, int mappid, int entid)
+{
+    array<Critter@> followers;
+    uint            num = GetFollowers(player, player.GetMap(), followers);
+    Map@            map = GetMapByPid(mappid, 0);
+    if(!valid(map))
+    {
+        Log("r_TeleportToMapFollowers failed, map " + mappid + " not found.");
+        return;
+    }
+    for(uint i = 0; i < num; i++)
+        followers[i].TransitToMap(map.Id, entid);
+}
+
+/**
+ * Delete all items in player's inventory
+ */
+void r_ClearInventory(Critter& player, Critter@npc)
+{
+    array<Item@> items;
+    int          count = player.GetItems(-1, items);
+    DeleteItems(items);
+}
+
+void r_RunAway(Critter& player, Critter@ npc)
+{
+    r_RunAway(player, npc, 10, 20);
+}
+
+void r_RunAway(Critter& player, Critter@ npc, int distance)
+{
+    r_RunAway(player, npc, distance, distance);
+}
+
+void r_RunAway(Critter& player, Critter@ npc, int minDistance, int maxDistance)
+{
+    if(valid(npc))
+        MoveRandom(npc, Random(minDistance, maxDistance), true);
+}
+
+// @}
+
+/**
+ * \~english @name World related
+ *
+ * \~ @weight 530
+ */
+// @{
+
+/**
+ * Check if it's night in the world. Night is defined as 22:00-06:59.
+ */
+bool d_CheckNight(Critter& player, Critter@ npc)
+{
+    return(IsNight());
+}
+
+/**
+ * Check if it's day in the world. Day is defined as 07:00-21:59.
+ */
+bool d_CheckDay(Critter& player, Critter@ npc)
+{
+    return(!IsNight());
+}
+
+/**
+ * Check if it's morning in the world. Morning is defined as 07:00-11:59.
+ */
+bool d_CheckMorning(Critter& player, Critter@ npc)
+{
+    return(IsMorning());
+}
+
+/**
+ * Check if it's afternoon in the world. Afternoon is defined as 12:00-17:59.
+ */
+bool d_CheckAfternoon(Critter& player, Critter@ npc)
+{
+    return(IsAfternoon());
+}
+
+/**
+ * Check if it's evening in the world. Evening is defined as 18:00-21:59.
+ */
+bool d_CheckEvening(Critter& player, Critter@ npc)
+{
+    return(IsEvening());
+}
+
+/**
+ * Check if a player can see a location.
+ * @param locationId Unique id of the location.
+ */
+bool d_IsLocationVisible(Critter& player, Critter@ npc, int locationId)
+{
+    return player.IsKnownLoc(false, locationId);
+}
+
+/**
+ * Check if a player can not see a location.
+ * @param locationId Unique id of the location.
+ */
+bool d_IsLocationNotVisible(Critter& player, Critter@ npc, int locationId)
+{
+    return !player.IsKnownLoc(false, locationId);
+}
+
+/**
+ * Show location to the player.
+ * @param locationId Unique id of the location.
+ */
+void r_ShowLocation(Critter& player, Critter@ npc, int locationId)
+{
+    player.SetKnownLoc(false, locationId);
+}
+
+/**
+ * Mark the current location as autogarbage-ready.
+ */
+void r_RetireLocation(Critter& player, Critter@ npc)
+{
+    Location@ loc = player.GetMap().GetLocation();
+    if(!loc.IsInstancedQuest())
+        return;
+    loc.AutoGarbage = true;
+}
+
+// @}
+
+/**
+ * \~english @name Critter state
+ *
+ * \~ @weight 545
+ */
+// @{
+
+/**
+ * Check if player's current HP is under 25% of his maximum HP.
+ */
+bool d_HpVeryLow(Critter& player, Critter@ npc)   // these functions return Hit Points
+{
+    // there are 4 levels: <25%, <50%, <75%, <100%
+    return player.Stat[ST_CURRENT_HP] < player.Stat[ST_MAX_LIFE] / 4;
+}
+
+/**
+ * Check if player's current HP is under 50% of his maximum HP.
+ */
+bool d_HpLow(Critter& player, Critter@ npc)
+{
+    return player.Stat[ST_CURRENT_HP] < player.Stat[ST_MAX_LIFE] * 2 / 4;
+}
+
+/**
+ * Check if player's current HP is under 75% of his maximum HP.
+ */
+bool d_HpAverage(Critter& player, Critter@ npc)
+{
+    return player.Stat[ST_CURRENT_HP] < player.Stat[ST_MAX_LIFE] * 3 / 4;
+}
+
+/**
+ * Check if player's current HP is under 100% of his maximum HP.
+ */
+bool d_HpHigh(Critter& player, Critter@ npc)
+{
+    return player.Stat[ST_CURRENT_HP] < player.Stat[ST_MAX_LIFE]; // use them in this order to get something useful
+}                                                                 // it can be used with d_IsToHeal too
+
+/**
+ * Check if NPC's current HP is under 25% of his maximum HP.
+ */
+bool d_NPCHpVeryLow(Critter& player, Critter@ npc)                // these functions return Hit Points
+{
+    // there are 4 levels: <25%, <50%, <75%, <100%
+    return npc.Stat[ST_CURRENT_HP] < npc.Stat[ST_MAX_LIFE] / 4;
+}
+
+/**
+ * Check if NPC's current HP is under 50% of his maximum HP.
+ */
+bool d_NPCHpLow(Critter& player, Critter@ npc)
+{
+    return npc.Stat[ST_CURRENT_HP] < npc.Stat[ST_MAX_LIFE] * 2 / 4;
+}
+
+/**
+ * Check if NPC's current HP is under 75% of his maximum HP.
+ */
+bool d_NPCHpAverage(Critter& player, Critter@ npc)
+{
+    return npc.Stat[ST_CURRENT_HP] < npc.Stat[ST_MAX_LIFE] * 3 / 4;
+}
+
+/**
+ * Check if NPC's current HP is under 100% of his maximum HP.
+ */
+bool d_NPCHpHigh(Critter& player, Critter@ npc)
+{
+    return npc.Stat[ST_CURRENT_HP] < npc.Stat[ST_MAX_LIFE];     // use them in this order to get something useful
+}
+
+// Define healing price
+
+// #define HEALING_PRICE #(player) (player.Stat[ST_LEVEL] * 50)	// money needed for healing
+#define HEALING_PRICE                                                                                                                              \
+    # (player)                                                                                                                                     \
+    (                                                                                                                                              \
+        ((player.Param[ST_MAX_LIFE] - player.Param[ST_CURRENT_HP]) * 2) +                                                                          \
+        ((player.Param[DAMAGE_LEFT_ARM] + player.Param[DAMAGE_RIGHT_ARM] + player.Param[DAMAGE_LEFT_LEG] + player.Param[DAMAGE_RIGHT_LEG]) * 40) + \
+        (player.Param[DAMAGE_EYE] * 50) +                                                                                                          \
+        (player.Param[ST_RADIATION_LEVEL] + (player.Param[ST_RADIATION_LEVEL] > 0 ? 100 : 0)) +                                                    \
+        (player.Param[ST_POISONING_LEVEL] * 3)                                                                                                     \
+    )
+
+/**
+ * Check if player has enough caps for healing.
+ */
+bool d_HealingMoney(Critter& player, Critter@ npc)
+{
+    uint price = HEALING_PRICE(player);
+
+    return _CritCountItem(player, PID_BOTTLE_CAPS) >= price;
+}
+
+/**
+ * Check if player can be healed.
+ */
+bool d_IsToHeal(Critter& player, Critter@ npc)
+{
+    return player.Stat[ST_CURRENT_HP] < player.Stat[ST_MAX_LIFE] ||
+           _CritIsInjured(player) ||
+           player.Stat[ST_POISONING_LEVEL] > 0 ||
+           player.Stat[ST_RADIATION_LEVEL] > 0;
+}
+
+/**
+ * Removes poision, radiation, heals limbs and returns HP to max.
+ */
+void r_DocHeal(Critter& player, Critter@ npc)             // use this for healing Docs only, it fixes limbs too
+{
+    uint price = HEALING_PRICE(player);
+
+    player.DamageBase[DAMAGE_EYE] = 0;
+    player.DamageBase[DAMAGE_RIGHT_ARM] = 0;
+    player.DamageBase[DAMAGE_LEFT_ARM] = 0;
+    player.DamageBase[DAMAGE_RIGHT_LEG] = 0;
+    player.DamageBase[DAMAGE_LEFT_LEG] = 0;
+    player.StatBase[ST_CURRENT_HP] = player.Stat[ST_MAX_LIFE];
+
+    DropPoison(player);
+    DropRadiation(player);
+
+    // reduce money
+    _CritDeleteItem(player, PID_BOTTLE_CAPS, price);
+}
+
+/**
+ * Show how much healing costs. @lex price@ is used.
+ */
+void dlg_ShowHealingPrice(Critter& player, Critter@ npc, string@ text)    // shows the price for healing
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    uint price = HEALING_PRICE(player);
+    text = "$price" + price;
+}
+
+/**
+ * Check if a player is addicted to anything.
+ * This includes: Nuka Cola, Buffout, Mentats, Psycho, Radaway, Jet or Tragic (the card game).
+ */
+bool d_IsAddict(Critter& player, Critter@ npc)
+{
+    return player.Addiction[ADDICTION_NUKA_COLA] > 0 ||
+           player.Addiction[ADDICTION_BUFFOUT] > 0 ||
+           player.Addiction[ADDICTION_MENTATS] > 0 ||
+           player.Addiction[ADDICTION_PSYCHO] > 0 ||
+           player.Addiction[ADDICTION_RADAWAY] > 0 ||
+           player.Addiction[ADDICTION_JET] > 0 ||
+           player.Addiction[ADDICTION_TRAGIC] > 0;
+}
+
+/**
+ * Checks if player is not addicted to anything.
+ * @see d_IsAddict
+ */
+bool d_IsNotAddict(Critter& player, Critter@ npc)
+{
+    return !d_IsAddict(player, npc);
+}
+
+/**
+ * Checks if player have any weapon in active slot
+ */
+bool d_WeaponInHand(Critter& player, Critter@ npc)
+{
+    Item@ item = _CritGetItemHand(player);
+    if(!valid(item))
+        return false;
+    return item.GetType() == ITEM_TYPE_WEAPON;
+}
+
+/**
+ * Checks if player DOESNT have any weapon in active slot
+ */
+bool d_NoWeaponInHand(Critter& player, Critter@ npc)
+{
+    return !d_WeaponInHand(player, npc);
+}
+
+/**
+ * Checks if player have specified item in active slot
+ */
+bool d_ItemInHand(Critter& player, Critter@ npc, int pid)
+{
+    Item@ item = _CritGetItemHand(player);
+    if(!valid(item))
+        return false;
+    return item.GetProtoId() == uint(pid);
+}
+
+/**
+ * Heal HP to players' maximum.
+ */
+void r_ToHeal(Critter& player, Critter@ npc)
+{
+    player.StatBase[ST_CURRENT_HP] = player.Stat[ST_MAX_LIFE];
+}
+
+/**
+ * Kill the player with a given animation
+ * @param val Animation number
+ */
+void r_ToDead(Critter& player, Critter@ npc, int val)
+{
+    player.ToDead(val, null);
+}
+
+/**
+ * Kills the NPC, player is the killer.
+ * @param val Death animation number
+ */
+void r_KillNpc(Critter& player, Critter@ npc, int val)
+{
+    npc.ToDead(val, player);
+}
+/**
+ * Kills the NPC, no one is the killer.
+ * @param val Death animation number
+ */
+void r_NinjaKillNpc(Critter& player, Critter@ npc, int val)
+{
+    npc.ToDead(val, null);
+}
+
+/**
+ * Checks whether npc is on a map with given protoid
+ */
+bool d_NpcOnMap(Critter& player, Critter@ npc, int mappid)
+{
+    if(!valid(npc) || !valid(npc.GetMap()))
+        return false;
+    return npc.GetMapProtoId() == uint(mappid);
+}
+/**
+ * Checks whether npc is in location with given protoid.
+ */
+bool d_NpcInLocation(Critter& player, Critter@ npc, int locpid)
+{
+    if(!valid(npc) || !valid(npc.GetMap()))
+        return false;
+    return npc.GetMap().GetLocation().GetProtoId() == uint(locpid);
+}
+
+/////////////
+// RADIATION
+/////////////
+
+
+/**
+ * Irradiate or de-radiate the player.
+ * @param val Amount of radiation to receive (negative value will result in radiation decrease)
+ */
+void r_Irradiate(Critter& player, Critter@ npc, int val)
+{
+    AffectRadiation(player, val);
+}
+
+// @}
+
+/**
+ * \~english @name Stat checks and random rolls
+ *
+ * \~ @weight 540
+ */
+// @{
+
+
+/**
+ * Jump to a node between min and max nodes.
+ * @param min Minimum node.
+ * @param max Maximum node.
+ * @param multiplier Multiplier. If multiplier is 10 and minimum node is 1 and maximum node is 5, then 10,20,30,40,50 are nodes that can be randomized
+ */
+uint r_JumpToRandomNode(Critter& player, Critter@ npc, int min, int max, int multiplier)
+{
+    return Random(min, max) * multiplier;
+}
+
+/**
+ * Jump to a node between min and max nodes.
+ * @param min Minimum node.
+ * @param max Maximum node.
+ */
+uint r_JumpToRandomNode(Critter& player, Critter@ npc, int min, int max)
+{
+    return Random(min, max);
+}
+
+uint r_NodeChancePercent(Critter& player, Critter@ npc, int chance, int node)
+{
+    if(Random(1, 100) <= chance)
+        return(node);
+
+    return(0);
+}
+
+uint r_NodeChancePercent(Critter& player, Critter@ npc, int chance, int nodeOK, int nodeFAIL)
+{
+    if(Random(1, 100) <= chance)
+        return(nodeOK);
+
+    return(nodeFAIL);
+}
+
+/**
+ * Make a random dice roll which is true only if 1==n
+ * @param n As in the function description.
+ * n is the input value you provide
+ * Some example of chances when providing different values:
+ * 1 - Always true.
+ * 2 - Will be true in 50% of cases
+ * 5 - Will be true in 20% of cases.
+ */
+bool d_Random(Critter& player, Critter@ npc, int n)
+{
+    return Random(1, n) == 1;
+}
+
+/**
+ * Make a random roll which has a certain % chance of being true.
+ * @param chance A number between 0 and 100.
+ */
+bool d_RandomPercent(Critter& player, Critter@ npc, int chance)
+{
+    chance = CLAMP(chance, 0, 100);
+    return Random(1, 100) <= chance;
+}
+
+uint r_Roll(Critter& player, Critter@ npc, int from, int to, int need, int jump)
+{
+    if(Random(from, to) == need)
+        return(jump);
+    return(0);
+}
+
+/**
+ * Does a roll for skill, then redirects the dialog in case of success
+ * @param     skill           Skill to be checked
+ * @param     successnode     Node to redirect to in case of success
+ */
+uint r_SkillRoll(Critter& player, Critter@ npc, int skill, int successnode)
+{
+    if(SkillRoll(player, skill, 0))
+        return successnode;
+    return 0;
+}
+
+/**
+ * Does a roll for skill with specified skill bonus, then redirects the dialog in case of success
+ * @param     skill           Skill to be checked
+ * @param     skillbonus      Bonus to the checked skill
+ * @param     successnode     Node to redirect to in case of success
+ */
+uint r_SkillRoll(Critter& player, Critter@ npc, int skill, int bonus, int successnode)
+{
+    if(SkillRoll(player, skill, bonus))
+        return successnode;
+    return 0;
+}
+
+/**
+ * Does a roll for stat, then redirects the dialog in case of success
+ * @param     stat            Stat to be checked
+ * @param     successnode     Node to redirect to in case of success
+ */
+uint r_StatRoll(Critter& player, Critter@ npc, int stat, int successnode)
+{
+    if(player.Stat[stat] >= Random(1, 10))
+        return successnode;
+    return 0;
+}
+
+/**
+ * Does  aroll for stat with specified stat bonus, then redirects the dialog in case of success
+ * @param     stat            Stat to be checked
+ * @param     statbonus       Bonus to the checked stat
+ * @param     successnode     Node to redirect to in case of success
+ */
+uint r_StatRoll(Critter& player, Critter@ npc, int stat, int bonus, int successnode)
+{
+    if(player.Stat[stat] + bonus >= Random(1, 10))
+        return successnode;
+    return 0;
+}
+
+// @}
+
+/**
+ * \~english @name Special
+ *
+ * \~ @weight 510
+ */
+// @{
+
+/**
+ * Add Vault City daypass to player.
+ */
+void r_ReceiveDayPass(Critter& player, Critter@ npc)
+{
+    Item@ daypass = player.AddItem(PID_DAY_PASS2, 1);
+    daypass.Val5 = player.Id;
+}
+
+/**
+ * Check if player has a valid Vault City daypass.
+ */
+bool d_HasValidDayPass(Critter& player, Critter@ npc)
+{
+    Item@ daypass = player.GetItem(PID_DAY_PASS2, -1);
+    if(!valid(daypass))
+        return false;
+    return(uint(daypass.Val5) == player.Id);
+}
+
+//
+// lisac
+// These functions test different checks in game
+//
+
+// JUNK
+bool d_LillyCheckQuest(Critter& player, Critter@ npc, int val)
+{
+    return((GetLocalVar(val, player.Id) == 1) || (GetLocalVar(val, player.Id) > 3));
+}
+
+bool d_VCCheckLK(Critter& player, Critter@ npc, int val)
+{
+    return(Random(0, val) < player.Stat[ST_LUCK]);
+}
+
+void r_TransferItemsToContainer(Critter& player, Critter@npc, int mappid, int entid, int contpid, int itemtypes)
+{
+    Map@ map = GetMapByPid(mappid, 0);
+    if(!valid(map))
+        return;
+
+    TransferItemsToContOnMap(player, map, entid, contpid, itemtypes);
+}
+
+void r_TransferItemsFromContainer(Critter& player, Critter@npc, int mappid, int entid, int contpid)
+{
+    Map@ map = GetMapByPid(mappid, 0);
+    if(!valid(map))
+        return;
+
+    TransferItemsFromContOnMap(player, map, entid, contpid);
+}
+
+/////////////////
+//  Scenarios  //
+/////////////////
+
+// A general purpose function, gives all num party members val/num exp (rounded down)
+// Used by:
+// Scenario: MFC Crafting - Gives XP according to MFC you hand over to your superiors (Enclave/BoS)
+void r_AddExpTeam(Critter& player, Critter@ npc, int val)
+{
+    AddExpTeam(player, val);
+
+    Location@ loc = GetLocation(LOCATION_Navarro);
+    Map@      map = loc.GetMapByIndex(1);   // Navarro sublevel
+    Item@     locker;                       // = map.GetItem(63, 90, PID_LOCKER_CLEAN_RIGHT);	// Commander's locker
+    int       mfc = val / 25;               // 20% for Enclave, do not edit! val/25 is correct!
+    locker.AddItem(PID_MICRO_FUSION_CELL, mfc, 0);
+
+    // the rest 80% go to Renesco's inventory (not to new reno limbo, but his inventory)
+
+}
+
+/////////////////
+//   SOUNDS    //
+/////////////////
+
+// lisac2k
+// ugly for now, maybe I bother with this later
+// wipe
+// made it bit better
+void r_PlaySound(Critter& player, Critter@ npc, int val)
+{
+    // passing 1 and 2 for duel atmosphere with Tamira
+    if(val == 1)
+        PlaySound(player, "flute_duel.ogg");
+    else if(val == 2)
+        PlaySound(player, "crickets_duel.ogg");
+}
+
+/////////////////
+//    MISC     //
+/////////////////
+
+void r_GunRunnerInsult(Critter& player, Critter@ npc)
+{
+    array<Critter@> crits;
+    uint            n = player.GetMap().GetCritters(0, FIND_LIFE | FIND_ONLY_NPC, crits);
+    for(uint i = 0; i < n; i++)
+        if(crits[i].Stat[ST_NPC_ROLE] == ROLE_GUNRUNNERS_OHREALLY)
+        {
+            crits[i].Say(SAY_NORM_ON_HEAD, "Oh really?");
+            AttackCritter(crits[i], player);
+        }
+}
+
+void r_DogsQuestReward(Critter& player, Critter@ npc)
+{
+    switch(Random(0, 6))
+    {
+    case 0:
+        player.AddItem(PID_5MM_JHP, 50);
+        break;                                    // 12
+    case 1:
+        player.AddItem(PID_5MM_AP, 45);
+        break;                                    // 14
+    case 2:
+        player.AddItem(PID_10MM_JHP, 60);
+        break;                                    // 10
+    case 3:
+        player.AddItem(PID_10MM_AP, 50);
+        break;                                    // 12
+    case 4:
+        player.AddItem(PID_9MM_BALL, 100);
+        break;                                    // 6
+    case 5:
+        player.AddItem(PID_EXPLOSIVE_ROCKET, 1);
+        player.AddItem(PID_ROCKET_AP, 1);
+        break;
+    case 6:
+        player.AddItem(PID_SHOTGUN_SHELLS, 45);
+        break;                                            // 14
+    default:
+        break;
+    }
+    if(Random(1, 1000000) == 1)
+        player.AddItem(PID_HOWITZER_SHELL, 1);
+}
+/**
+ * Places item in random container on map with given pid.
+ * @param	mapPid		PID of map to spawn the item in (MAPS.TXT) - Val1.
+ * @param	itemPid		PID of item to be spawned - Val2.
+ * @remarks	Since it uses GetMapByPid with skipCount 0, it takes first map with given pid.
+ */
+void r_SpawnInRandomContainer(Critter& player, Critter@ npc, int mapPid, int itemPid)
+{
+    Map@ map = GetMapByPid(mapPid, 0);
+    if(!valid(map))
+    {
+        Log("ERR: Incorrect mapPid");
+        player.Say(SAY_NETMSG, "Dialog error, wrong map proto: " + mapPid);
+        return;
+    }
+    array<Item@> items;
+    array<Item@> containers;
+    uint         num = map.GetItems(0, items);
+    for(uint i = 0; i < num; i++)
+    {
+        if(items[i].GetType() == ITEM_TYPE_CONTAINER)
+            containers.insertLast(items[i]);
+    }
+    Item@ cont = random_from_array(containers);
+    Item@ item = npc.AddItem(itemPid, 1);
+    if(!valid(item))
+    {
+        Log("ERR: Incorrect itemPid");
+        player.Say(SAY_NETMSG, "Dialog error, wrong itemPid: " + itemPid);
+        return;
+    }
+    MoveItem(item, 0, cont, 0);
+    #ifdef __DEBUG__
+    player.StatBase[ST_VAR0] = cont.Id;
+    #endif
+}
+void test_SpawnInRandomContainer(Critter& cr, int p0, int p1, int p2)
+{
+    r_SpawnInRandomContainer(cr, cr, p0, p1);
+    Item@  cont = GetItem(cr.Stat[ST_VAR0]);
+    Map@   map;
+    uint16 hx = 0, hy = 0;
+    @map = cont.GetMapPosition(hx, hy);
+    cr.TransitToMap(map.Id, hx, hy, 0);
+}
+
+// @}
+
+/**
+ * \~english @name Quest timeouts
+ *
+ * \~ @weight 525
+ */
+// @{
+
+/**
+ * Checks timeout for given npc, in order to check if some repeatable quest can be given again.
+ * It works per npc-player, so you can't make it for each quest. But it's simplier that way.
+ * @return true - quest can be given, false - need to wait
+ */
+bool d_QuestTimeoutReady(Critter& player, Critter@ npc)
+{
+    if(!valid(player) || !valid(npc))
+        return true;
+
+    GameVar@ var = GetUnicumVar(UVAR_quest_timeout, npc.Id, player.Id);
+    DLog("var value: " + var.GetValue());
+    return var.GetValue() == 0 || uint(var.GetValue()) <= ELAPSED_TIME;
+}
+
+/**
+ * Checks timeout for given npc, in order to check if some repeatable quest can NOT be given again.
+ * It works per npc-player, so you can't make it for each quest. But it's simplier that way.
+ * @return true - quest cannot be given, false - quest is available
+ */
+bool d_QuestTimeoutNotReady(Critter& player, Critter@ npc)
+{
+    if(!valid(player) || !valid(npc))
+        return false;
+
+    GameVar@ var = GetUnicumVar(UVAR_quest_timeout, npc.Id, player.Id);
+
+    return var.GetValue() != 0 && uint(var.GetValue()) > ELAPSED_TIME;
+}
+/**
+ * Assignes timeout for given npc so he will remember that player made some quest for him lately.
+ * @param timeout       Quest timeout in ingame hours
+ */
+void r_QuestTimeout(Critter& player, Critter@ npc, int timeout)
+{
+    if(!valid(player) || !valid(npc))
+        return;
+
+    GameVar@ var = GetUnicumVar(UVAR_quest_timeout, npc.Id, player.Id);
+    var = AFTER(GAME_HOUR(timeout));
+}
+
+/**
+ * Checks timeout for given npc, in order to check if some repeatable quest can be given again.
+ * It works per npc, so you can't make it for each quest. But it's simplier that way.
+ * @return true - quest can be given, false - need to wait
+ */
+bool d_CommonTimeoutReady(Critter& player, Critter@ npc)
+{
+    if(!valid(player) || !valid(npc))
+        return true;
+
+    GameVar@ var = GetLocalVar(LVAR_common_timeout, npc.Id);
+    DLog("var value: " + var.GetValue());
+    return var.GetValue() == 0 || uint(var.GetValue()) <= ELAPSED_TIME;
+}
+
+/**
+ * Checks timeout for given npc, in order to check if some repeatable quest can NOT be given again.
+ * It works per npc, so you can't make it for each quest. But it's simplier that way.
+ * @return true - quest cannot be given, false - quest is available
+ */
+bool d_CommonTimeoutNotReady(Critter& player, Critter@ npc)
+{
+    if(!valid(player) || !valid(npc))
+        return false;
+
+    GameVar@ var = GetLocalVar(LVAR_common_timeout, npc.Id);
+
+    return var.GetValue() != 0 && uint(var.GetValue()) > ELAPSED_TIME;
+}
+/**
+ * Assignes timeout for given npc so he will remember that player made some quest for him lately.
+ * @param timeout       Quest timeout in ingame hours
+ */
+void r_CommonTimeout(Critter& player, Critter@ npc, int timeout)
+{
+    if(!valid(player) || !valid(npc))
+        return;
+
+    GameVar@ var = GetLocalVar(LVAR_common_timeout, npc.Id);
+    var = AFTER(GAME_HOUR(timeout));
+}
+
+/**
+ * \~english @name Holodisks
+ *
+ * \~ @weight 400
+ */
+// @{
+
+/**
+ * Checks if the player has holodisk containing specific information.
+ * @param val   Number of holodisk information
+ */
+bool d_HasHolodisk(Critter& player, Critter@ npc, int val)
+{
+    array<Item@> items;
+    uint         n = player.GetItemsByType(ITEM_TYPE_MISC, items);     // how about proto without slot?
+    for(uint i = 0; i < n; i++)
+        if(items[i].GetProtoId() == PID_HOLODISK && items[i].HolodiskNumber == uint(val))
+            return true;
+    return false;
+}
+
+/**
+ * Checks if the player has specific holodisk information stored in pipboy.
+ * @param val   Number of holodisk information
+ */
+bool d_HasHoloInfo(Critter& player, Critter@ npc, int val)
+{
+    return player.IsHolodiskInfo(val);
+}
+
+/**
+ * Gives the player a holodisk containing specific information.
+ * @param val   Number of holodisk information
+ */
+void r_GiveHolodisk(Critter& player, Critter@ npc, int val)
+{
+    Item@ item = player.AddItem(PID_HOLODISK, 1);
+    item.HolodiskNumber = val;
+    item.Update();
+}
+
+// @}
+
+/**
+ * \~english @name Professions
+ *
+ * \~ @weight 515
+ */
+// @{
+
+///////////////////
+//  Professions  //
+///////////////////
+
+// Check if player has still some profession point that he can acquire profession for
+
+bool d_CheckProfession(Critter& player, Critter@ npc, int val)
+{
+    return true;
+    /*uint count = 0;
+       for(uint i = PE_PROFESSION_BEGIN; i <= PE_PROFESSION_END; i++)
+       {
+            count += player.Perk[i];
+       }
+       if(count > PROFESSIONS_MAX)
+            // assert;)
+            Log("ERR: Too many professions...you cheater.");
+       return count < PROFESSIONS_MAX;*/
+}
+
+// todo: move to perks
+bool CheckProfession(Critter& player, int prof, int currentLevel)
+{
+    if(currentLevel > 1)
+        return false;
+    if(player.Perk[prof] != currentLevel)
+        return false;
+    if(!d_CheckProfession(player, null, 0))
+        return false;
+
+    int skill = SK_REPAIR;
+    switch(prof)
+    {
+    case PE_PROFESSION_DOCTOR:
+        skill = SK_DOCTOR;
+        break;
+    case PE_PROFESSION_ENERGY_EXPERT:
+        skill = SK_SCIENCE;
+        break;
+    case PE_PROFESSION_DEMOLITION_EXPERT:
+        skill = SK_TRAPS;
+        break;
+    default:
+        ;
+    }
+
+    return player.Skill[skill] >= 50 * (currentLevel + 1);
+}
+
+// check Armorer
+bool d_CheckArmorer0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ARMORER, 0);
+}
+
+bool d_CheckArmorer1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ARMORER, 1);
+}
+
+bool d_CheckArmorer2(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ARMORER, 2);
+}
+
+// check Gunsmith Small Guns
+
+bool d_CheckGunsmithS0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_S, 0);
+}
+
+bool d_CheckGunsmithS1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_S, 1);
+}
+
+bool d_CheckGunsmithS2(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_S, 2);
+}
+
+// check Gunsmith Big Guns
+
+bool d_CheckGunsmithB0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_B, 0);
+}
+
+bool d_CheckGunsmithB1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_B, 1);
+}
+
+bool d_CheckGunsmithB2(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_GUNSMITH_B, 2);
+}
+
+// check Energy Expert
+
+bool d_CheckEnergyExpert0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ENERGY_EXPERT, 0);
+}
+
+bool d_CheckEnergyExpert1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ENERGY_EXPERT, 1);
+}
+
+bool d_CheckEnergyExpert2(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_ENERGY_EXPERT, 2);
+}
+
+// check Demolition Expert
+
+bool d_CheckDemolitionExpert0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_DEMOLITION_EXPERT, 0);
+}
+
+bool d_CheckDemolitionExpert1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_DEMOLITION_EXPERT, 1);
+}
+
+// check Doctor
+
+bool d_CheckDoctor0(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_DOCTOR, 0);
+}
+
+bool d_CheckDoctor1(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_DOCTOR, 1);
+}
+
+bool d_CheckDoctor2(Critter& player, Critter@ npc, int val)
+{
+    return CheckProfession(player, PE_PROFESSION_DOCTOR, 2);
+}
+
+// @}
+
+/*@}*/
+
+// undocumented
+// for Shren child, in Hub
+void dlg_ShrenRumour(Critter& player, Critter@ npc, string@ text)
+{
+    if(!IS_DIALOG_GENERATED(text))
+        return;
+
+    float interests = 0;
+    uint  bank = 0;
+    for(uint i = 1; i < BANK_COUNT; i++)
+    {
+        float newinterests = BankGetSaveInterest(i);
+        if(interests < newinterests)
+        {
+            interests = newinterests;
+            bank = i;
+        }
+    }
+    text = "$bank";
+    if(interests == 0)
+        bank = Random(0, BANK_COUNT - 1);
+    switch(bank)
+    {
+    case BANK_VAULTCITY:
+        text += "Vault City";
+        break;
+    case BANK_REDDING:
+        text += "Redding";
+        break;
+    case BANK_BROKENHILLS:
+        text += "Broken Hills";
+        break;
+    case BANK_SANFRANCISCO:
+        text += "San Francisco";
+        break;
+    case BANK_NCR:
+        text += "NCR";
+        break;
+    case BANK_HUB:
+        text += "Hub";
+        break;
+    default:
+    }
+
+}
+
+
+/**
+ * Checks if PC can see all locations needed to take the Explorer perk.
+ */
+bool d_ExploredWasteland(Critter& player, Critter@ npc)
+{
+    if
+    (
+        player.IsKnownLoc(false, LOCATION_TheDen)       &&
+        player.IsKnownLoc(false, LOCATION_Klamath)      &&
+        player.IsKnownLoc(false, LOCATION_Modoc)        &&
+        player.IsKnownLoc(false, LOCATION_VaultCity)    &&
+        player.IsKnownLoc(false, LOCATION_Gecko)        &&
+        player.IsKnownLoc(false, LOCATION_BrokenHills)  &&
+        player.IsKnownLoc(false, LOCATION_NewReno)      &&
+        player.IsKnownLoc(false, LOCATION_NCR)          &&
+        player.IsKnownLoc(false, LOCATION_Redding)      &&
+        player.IsKnownLoc(false, LOCATION_SanFrancisco) &&
+        player.IsKnownLoc(false, LOCATION_Junktown)     &&
+        player.IsKnownLoc(false, LOCATION_Necropolis)   &&
+        player.IsKnownLoc(false, LOCATION_Hub)          &&
+        player.IsKnownLoc(false, LOCATION_Boneyard)     &&
+        player.IsKnownLoc(false, LOCATION_Trainyard1)   &&
+        player.IsKnownLoc(false, LOCATION_Trainyard2)   &&
+        player.IsKnownLoc(false, LOCATION_Trainyard3)   &&
+        player.IsKnownLoc(false, LOCATION_Trainyard4)
+    )
+        return true;
+    return false;
+}
+
+
+
+
+//////////////
+//  Tatoos  //
+//////////////
+
+bool d_IsTatoo(Critter& player, Critter@ npc)
+{
+    if(IsLexem(player, "$tatoo") && GetLexem(player, "$tatoo").length() > 0)
+        return(true);
+    else
+        return(false);
+}
+
+bool d_NoTatoo(Critter& player, Critter@ npc)
+{
+    return(!d_IsTatoo(player, npc));
+}
+
+// fight against typos
+#define _Tatoo_Corsican    "Corsican Brothers"
+
+bool d_HaveCorsicanBrothersTatoo(Critter& player, Critter@ npc)
+{
+    if(d_IsTatoo(player, npc) && GetLexem(player, "$tatoo") == _Tatoo_Corsican)
+        return(true);
+    else
+        return(false);
+}
+
+void r_SetCorsicanBrothersTatoo(Critter& player, Critter@ npc)
+{
+    SetLexem(player, "$tatoo", _Tatoo_Corsican);
+}
+
+uint dlg_EnterTatoo(Critter& player, Critter@ npc, string@ say)
+{
+    if(!IS_DIALOG_SAY_MODE(say))
+        return 0;
+
+    if(!valid(say) || say.length() == 0 || say.length() > 12)
+        return(14);
+    else
+    {
+        stringReplaceText(say, "@pname@", "" + player.Name);
+
+        SetLexem(player, "$tatoo", say);
+        return(12);
+    }
+}
+
+bool d_SetDialogImage(Critter& player, Critter@ npc, int x, int y, int imageId)
+{
+    player.RunClientScript("client_interface@_DialogImage", x, y, imageId, null, null);
+    return(false);
+}
+
+// Returns true if a param in specific param range has the highest value.
+// It can be used for example to test if a skill is the best combat skill.
+bool d_IsHighestParamInRange(Critter& player, Critter@ npc, int param, int paramFrom, int paramTo)
+{
+    for(int i = paramFrom; i <= paramTo; i++)
+    {
+        if(player.Param[i] > player.Param[param])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+/**
+ * Outfitter - gives NOT LEGIT items to players and sets outfitted var
+ */
+
+array<array<uint16> > outfitData =
+{
+    { PID_METAL_ARMOR_MK_II, 1, PID_METAL_HELMET_MK2, 1, PID_ASSAULT_RIFLE_EXT_MAG, 1, PID_5MM_AP, 480, PID_5MM_JHP, 240 },
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_HK_P90C, 2, PID_10MM_AP, 480, PID_10MM_JHP, 240 },
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_PANCOR_JACKHAMMER, 1, PID_SHOTGUN_SHELLS, 300 },
+    { PID_METAL_ARMOR_MK_II, 1, PID_METAL_HELMET_MK2, 1, PID_223_PISTOL, 1, PID_223_FMJ, 100 },
+    { PID_CURED_LEATHER_ARMOR, 1, PID_COMBAT_LEATHER_JACKET_HELMET, 1, PID_SNIPER_RIFLE, 1, PID_223_FMJ, 100 },
+
+    { PID_COMBAT_ARMOR, 1, PID_COMBAT_HELMET, 1, PID_LIGHT_SUPPORT_WEAPON, 1, PID_223_FMJ, 500 },
+    { PID_COMBAT_ARMOR, 1, PID_COMBAT_HELMET, 1, PID_AVENGER_MINIGUN, 1, PID_5MM_AP, 960, PID_5MM_JHP, 480 },
+    { PID_METAL_ARMOR_MK_II, 1, PID_METAL_HELMET_MK2, 1, PID_M60, 1, PID_7_62MM_AMMO, 600 },
+    { PID_METAL_ARMOR, 1, PID_METAL_HELMET, 1, PID_ROCKET_LAUNCHER, 1, PID_ROCKET_AP, 25 },
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_IMPROVED_FLAMETHROWER, 1, PID_FLAMETHROWER_FUEL_MK_II, 40 },
+
+    { PID_METAL_ARMOR_MK_II, 1, PID_METAL_HELMET_MK2, 1, PID_PLASMA_RIFLE, 1, PID_MICRO_FUSION_CELL, 100 },
+    { PID_METAL_ARMOR, 1, PID_METAL_HELMET, 1, PID_LASER_RIFLE_EXT_CAP, 1, PID_MICRO_FUSION_CELL, 100 },
+    { PID_METAL_ARMOR_MK_II, 1, PID_METAL_HELMET_MK2, 1, PID_GATLING_LASER, 1, PID_MICRO_FUSION_CELL, 600 },
+    { PID_COMBAT_ARMOR, 1, PID_COMBAT_HELMET, 1, PID_MAGNETO_LASER_PISTOL, 1, PID_PLASMA_PISTOL, 1, PID_SMALL_ENERGY_CELL, 120 },
+
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_MEGA_POWER_FIST, 1, PID_SMALL_ENERGY_CELL, 200 },
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_ROCK, 1 },
+
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_SUPER_SLEDGE, 1 },
+    { PID_COMBAT_ARMOR_MK_II, 1, PID_COMBAT_HELMET_MK_II, 1, PID_SUPER_CATTLE_PROD, 1, PID_SMALL_ENERGY_CELL, 200 },
+
+    { PID_CURED_LEATHER_ARMOR, 1, PID_COMBAT_LEATHER_JACKET_HELMET, 1, PID_FRAG_GRENADE, 30, PID_PLASMA_GRENADE, 15 },
+    { PID_CURED_LEATHER_ARMOR, 1, PID_COMBAT_LEATHER_JACKET_HELMET, 1, PID_THROWING_KNIFE, 40 },
+
+    { PID_SUPER_STIMPAK, 6 },
+    { PID_CIGARETTES, 2, PID_LIGHTER, 1 },
+    { PID_NUKA_COLA, 2 },
+    { PID_BUFFOUT, 1 },
+    { PID_PSYCHO, 1 },
+    { PID_JET, 3 },
+    { PID_MENTATS, 1 },
+
+    { PID_TESLA_HELMET, 1 },
+    { PID_SPECTACLES, 1 },
+    { PID_MOTION_SENSOR, 1, PID_GOGGLES, 1 },
+    { PID_SUPER_STIMPAK, 3 },
+    { PID_COOKIE, 10 },
+    { PID_MIRROR_SHADES, 1 }
+};
+
+
+void r_Outfitter(Critter& player, Critter@npc, int outfitId)
+{
+    for(uint i = 0, j = outfitData[outfitId].length(); i < j; i += 2)
+    {
+        Item@ item = player.AddItem(outfitData[outfitId][i], outfitData[outfitId][i + 1]);
+        item.Val9 = int(0xFFFFFFFF);
+    }
+    GameVar@ outfitted = GetLocalVar(LVAR_event_outfitted, player.Id);
+    outfitted = 1;
+}
+#endif // __DIALOG__ //

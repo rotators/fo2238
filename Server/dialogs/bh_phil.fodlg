@@ -1,0 +1,231 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+50 1010 D _param p ST_CHARISMA > 99 #
+2 1020 D _param p ST_INTELLECT < 4 #
+3 1030 D _var n name_mem_npc_player = 0 R _var n name_mem_npc_player = 1 #
+23 1040 D _var n name_mem_npc_player = 1 #
+16 1050 D _param p ST_INTELLECT < 4 #
+15 1060 D _var p name_mem_npc_player = 1 D _param p ST_INTELLECT < 4 #
+32 1070 D _param p ST_KARMA < -100 D _param p ST_INTELLECT > 3 @
+2 2000 None 0 #
+4 2010 #
+5 2020 R _var p name_mem_npc_player = 1 @
+3 3000 None 0 #
+6 3010 #
+7 3020 #
+8 3030 @
+4 4000 None 0 #
+0 4010 @
+5 5000 None 0 #
+9 5010 #
+0 5020 @
+6 6000 None 0 #
+17 6010 #
+18 6020 #
+31 6030 #
+0 6040 @
+7 7000 None 0 #
+17 7010 #
+18 7020 #
+19 7030 #
+2 7040 #
+0 7050 @
+8 8000 None 0 #
+17 8010 #
+18 8020 #
+19 8030 #
+2 8040 #
+0 8050 @
+9 9000 None 0 #
+11 9010 #
+13 9020 #
+10 9030 @
+10 10000 None 0 #
+0 10010 @
+11 11000 None 0 #
+11 11010 D _item p PID_BOTTLE_CAPS > 10 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 11 #
+0 11020 @
+13 12000 None 0 #
+2 12010 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_NUKA_COLA + 1 R _script dialog@r_RemoveMoney 1 100 #
+0 12020 @
+15 13000 None 0 #
+9 13010 #
+0 13020 @
+16 14000 None 0 #
+9 14010 #
+0 14020 @
+17 15000 None 0 #
+21 15010 D _item p PID_BOTTLE_CAPS > 99 R _item p PID_NUKA_COLA + 1 R _script dialog@r_RemoveMoney 1 100 #
+24 15020 D _item p PID_BOTTLE_CAPS > 100 R _var p loyality + 1 R _item p PID_NUKA_COLA + 1 R _script dialog@r_RemoveMoney 1 101 #
+25 15030 D _item p PID_BOTTLE_CAPS > 101 R _var p loyality + 2 R _item p PID_NUKA_COLA + 1 R _script dialog@r_RemoveMoney 1 102 #
+20 15040 @
+18 16000 None 0 #
+21 16010 D _item p PID_BOTTLE_CAPS > 9 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 10 #
+24 16020 D _item p PID_BOTTLE_CAPS > 10 R _var p loyality + 1 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 11 #
+25 16030 D _item p PID_BOTTLE_CAPS > 11 R _var p loyality + 2 R _item p PID_BEER + 1 R _script dialog@r_RemoveMoney 1 12 #
+20 16040 @
+20 17000 None 0 #
+0 17010 @
+21 18000 None 0 #
+22 18010 #
+26 18020 #
+28 18030 #
+0 18040 @
+24 19000 None 0 #
+22 19010 #
+26 19020 #
+28 19030 #
+0 19040 @
+25 20000 None 0 #
+22 20010 #
+26 20020 #
+28 20030 #
+0 20040 @
+26 21000 None 0 #
+21 21010 #
+0 21020 @
+28 22000 None 0 #
+21 22010 #
+0 22020 @
+31 23000 None 0 #
+17 23010 #
+18 23020 #
+19 23030 #
+0 23040 @
+32 24000 None 0 #
+0 24010 @
+22 25000 None 0 #
+17 25010 #
+18 25020 #
+31 25030 #
+0 25040 @
+23 26000 None 0 #
+22 26010 #
+27 26020 #
+0 26030 @
+27 27000 None 0 #
+22 27010 #
+0 27020 @
+50 28000 None 0 &
+
+[engl]
+{100}{}{Phil}
+{200}{}{You see a ghoul wearing an apron.}
+{210}{}{You see Phil, the bartender. He’s washing a glass.}
+{210}{}{You see a ghoul wearing an apron and washing a glass. Seeing as he’s right behind the bar, you assume he’s the bartender of this saloon.}
+{1000}{}{Predialogue installations}
+{1010}{}{ugly}
+{1020}{}{Ioaao}
+{1030}{}{Ia ciaeii}
+{1040}{}{Ciaeii}
+{1050}{}{Idiot unknown}
+{1060}{}{Idiot known}
+{1070}{}{Low karma}
+{2000}{}{Howdy, stranger. Welcome to town. What’s your name?}
+{2010}{}{Doi?}
+{2020}{}{@pname@!}
+{3000}{}{Howdy, stranger. Welcome to town. What’s your name?}
+{3010}{}{@pname@.}
+{3020}{}{None of your business, pal.}
+{3030}{}{Well, I’m kind of undercover right now.}
+{4000}{}{Doi’s your name? Ha! Just kidding, pal. Try not to disturb the other customers.}
+{4010}{}{Ganks!}
+{5000}{}{@pname@, eh? Well, pleased to meet you, bucko. Want something to drink?}
+{5010}{}{Grink yes!}
+{5020}{}{Oh no. No no no no.}
+{6000}{}{@pname@, pleased to meet you. I’m Phil. I own this place. Now… what’ll it be?}
+{6010}{}{Nuka-Cola.}
+{6020}{}{Beer.}
+{6030}{}{Nothing.}
+{6040}{}{Nothing, sorry. Bye!}
+{7000}{}{Fine, pal. Be that way. I’m Phil. I own this place and run it. What’ll it be?}
+{7010}{}{Nuka-Cola.}
+{7020}{}{Beer.}
+{7030}{}{Rotgut.}
+{7040}{}{Nothing.}
+{7050}{}{Nothing, sorry. Bye!}
+{8000}{}{Undercover, eh? I guess I can understand that. I’m Phil, by the way. What’ll it be?}
+{8010}{}{Nuka-Cola.}
+{8020}{}{Beer.}
+{8030}{}{Rotgut.}
+{8040}{}{Nothing.}
+{8050}{}{Nothing, sorry. Bye!}
+{9000}{}{You want beer? Nuka-Cola?}
+{9010}{}{Deer!}
+{9020}{}{Gola!}
+{9030}{}{Nuffiiiink.}
+{10000}{}{Well, you just let me know when you want something and I’ll get you set up, friend. Try not to disturb the other customers, all right?}
+{10010}{}{O-tay!}
+{11000}{}{One beer it is. That’ll be 10 caps, plus one cap tip for me. That’s 11 caps, kiddo.}
+{11010}{}{‘Ere!}
+{11020}{}{No have.}
+{12000}{}{Good for you, good for your skin. That’s 100 caps. I’ll even let you off without tipping me. That’s 100 caps, straight up.}
+{12010}{}{‘Ere!}
+{12020}{}{No have.}
+{13000}{}{@pname@! You want something to drink?}
+{13010}{}{Grink ‘es!}
+{13020}{}{Grink no!}
+{14000}{}{Hey, Doi! Welcome back. Got your seat all warmed up for you back there.}
+{14010}{}{Grink?}
+{14020}{}{Anks. Byefil.}
+{15000}{}{That’ll be 100 caps.}
+{15010}{}{Thanks.}
+{15020}{}{[Give Phil a $1 Tip] Here you go, Phil.}
+{15030}{}{[Give Phil a $2 Tip] Thanks, Phil.}
+{15040}{}{Oops, I’m tapped.}
+{16000}{}{That’ll be 10 caps.}
+{16010}{}{Thanks.}
+{16020}{}{[Give Phil a $1 Tip] Here you go, Phil.}
+{16030}{}{[Give Phil a $2 Tip] Thanks, Phil.}
+{16040}{}{Oops, I’m tapped.}
+{17000}{}{Tapped, eh? Too bad. You can stick around here, but don’t bug the customers. I got work to do. See you.}
+{17010}{}{Fine, bye.}
+{18000}{}{Anything else?}
+{18010}{}{I want more to drink.}
+{18020}{}{What’s been going on in town?}
+{18030}{}{What’s there to do around here?}
+{18040}{}{Nothing. Forget it.}
+{19000}{}{Hey, thanks! Anything else?}
+{19010}{}{I want more to drink.}
+{19020}{}{What’s been going on in town?}
+{19030}{}{What’s there to do around here?}
+{19040}{}{Nothing. Forget it.}
+{20000}{}{Wow! Thanks! Anything else I can do for you?}
+{20010}{}{I want more to drink.}
+{20020}{}{What’s been going on in town?}
+{20030}{}{What’s there to do around here?}
+{20040}{}{Nothing. Forget it.}
+{21000}{}{What’s been going on in town? Well… a couple of loons’ve been locked up for spreading hate propaganda. Caravans all over the place. That’s about normal.}
+{21010}{}{Thanks. I have more questions.}
+{21020}{}{Thanks. Bye.}
+{22000}{}{There’s always a caravan headed out someplace. If you wanna be part of one of those, you can talk to the Bill, the Outfitter. Other than that, we haven’t got much to do in this place. Sorry.}
+{22010}{}{Thanks! I have a few more questions.}
+{22020}{}{All right. Well, I’m outta here. See ya.}
+{23000}{}{‘Til you’re buying, I ain’t talking. What’s your pleasure?}
+{23010}{}{Nuka-Cola.}
+{23020}{}{Beer.}
+{23030}{}{Rotgut.}
+{23040}{}{Forget this, I'm going.}
+{24000}{}{Get out of my bar. Now. Scumbag.}
+{24010}{}{Fine.}
+{25000}{}{What'll it be?}
+{25010}{}{Nuka-Cola.}
+{25020}{}{Beer.}
+{25030}{}{Nothing.}
+{25040}{}{Nothing, bye.}
+{26000}{}{Welcome back, what can I do for you?}
+{26010}{}{I want a drink, Phil.}
+{26020}{}{Nothing, I've got a few questions.}
+{26030}{}{Nothing, bye.}
+{27000}{}{Nothing? Ha. Ha. You don’t park yourself here without drinking something, friend. I gotta pay the bills, too. Let’s try that again. SO! What’ll it be?}
+{27010}{}{Fine, I'll buy a drink.}
+{27020}{}{Forget it. I’m out of here.}
+{28000}{}{Get the heck outta my bar@@No, I don't want to be your friend.@@Just 'cause I'm a ghoul don't mean I don't got standards.@@Sheesh, I gotta wonder why I attract the freaks. Like flies to shit, y'know?}
+

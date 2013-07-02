@@ -1,0 +1,474 @@
+[comment]
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+6 1010 D _script slaverun_dialog@d_SlaverunAttempted 1 0 D _param p KARMA_SLAVER > 0 R _script slaverun_dialog@r_SelectRewardNode 1 0 #
+38 1020 D _var p q_mordinos_metzger_delivery = 1 D _item p PID_METZGERS_CASE = 1 D _param p KARMA_SLAVER = 1 #
+33 1030 D _var p q_mordinos_metzger_delivery = 1 D _item p PID_METZGERS_CASE = 1 #
+19 1040 D _param p KARMA_SLAVER > 0 #
+22 1050 D _param p ST_INTELLECT < 4 #
+26 1060 D _param p ST_CHARISMA < 4 D _var n name_mem_npc_player = 0 #
+50 1070 D _var n name_mem_npc_player = 1 D _item p PID_NUKA_COLA > 0 D _var n acquaintance < 1 #
+12 1080 D _var n name_mem_npc_player > 0 D _var n acquaintance > 0 #
+3 1090 R _var n name_mem_npc_player = 1 @
+22 2000 None 0 #
+41 2010 #
+65507 2020 #
+0 2030 @
+26 3000 None 0 #
+3 3010 R _var n name_mem_npc_player = 1 #
+65507 3020 #
+0 3030 @
+2 4000 None 0 #
+0 4010 #
+65507 4020 @
+3 5000 None 0 #
+42 5010 #
+4 5020 #
+14 5030 D _param p REPUTATION_SLAVERS_GUILD > 119 D _var p q_raiders_induction < 2 #
+0 5040 #
+0 5050 @
+4 6000 None 0 #
+44 6010 #
+0 6020 #
+43 6030 D _param p ST_CHARISMA > 3 D _var p den_metzger_blind = 0 D _param p DAMAGE_EYE > 0 R _var p den_metzger_blind = 1 @
+40 7000 None 0 #
+65505 7010 #
+0 7020 #
+65507 7030 @
+41 8000 None 0 #
+0 8010 @
+42 9000 None 0 #
+3 9010 @
+43 10000 None 0 #
+0 10010 R _param p ST_EXPERIENCE + 300 @
+44 11000 None 0 #
+40 11010 #
+13 11020 #
+90 11030 D _script town@d_CanRecruitMilitia 0  #
+0 11040 @
+50 12000 None 0 #
+51 12010 D _item p PID_NUKA_COLA } 1 R _item p PID_NUKA_COLA - 1 @
+51 13000 None 0 #
+0 13010 R _item p PID_JET + 2 R _var n acquaintance + 1 R _param p ST_EXPERIENCE + 300 @
+12 14000 dialog@dlg_ShowFaction 0 #
+44 14010 #
+2 14020 D _script dialog@d_IsGangMember 0  D _script town@d_IsNotControllingTown 1 1 R _script town@r_ClaimControl 1 0 #
+120 14030 D _script town@d_IsControllingTown 1 1 #
+14 14040 D _param p REPUTATION_SLAVERS_GUILD > 119 D _var p q_raiders_induction < 2 #
+500 14050 D _script town@d_CanChangeLaws 0  #
+0 14060 @
+13 15000 None 0 #
+15 15010 #
+0 15020 @
+14 16000 None 0 #
+0 16010 R _var p q_raiders_induction = 1 #
+0 16020 #
+65505 16030 @
+15 17000 None 0 #
+16 17010 @
+16 18000 None 0 #
+23 18010 #
+0 18020 @
+23 19000 None 0 #
+24 19010 R _var p slaverun_status = 0 R _script dialog@r_ApplyReputationModifiers 2 1 1 R _param p REPUTATION_SLAVERS_GUILD + 100 R _param p KARMA_SLAVER = 1 #
+0 19020 @
+24 20000 None 0 #
+0 20010 @
+19 21000 dialog@dlg_ShowFaction 0 #
+29 21010 #
+21 21020 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+2 21030 D _script dialog@d_IsGangMember 0  D _script town@d_IsNotControllingTown 1 1 D _script town@d_CanTakeOver 0  R _script town@r_ClaimControl 1 0 #
+58 21040 D _script slaverun_dialog@d_NotStatusFlag 1 2 R _script slaverun_dialog@r_SelectNode 1 0 #
+14 21050 D _param p REPUTATION_SLAVERS_GUILD > 119 D _var p q_raiders_induction < 2 #
+0 21060 @
+20 22000 None 0 #
+21 22010 #
+0 22020 @
+21 23000 None 0 #
+25 23010 #
+27 23020 #
+28 23030 #
+0 23040 @
+25 24000 None 0 #
+32 24010 D _script merc_dialog@d_IsSlavePresent 1 14 R _script merc_dialog@r_SetMerc 1 14 #
+32 24020 D _script merc_dialog@d_IsSlavePresent 1 13 R _script merc_dialog@r_SetMerc 1 13 #
+32 24030 D _script merc_dialog@d_IsSlavePresent 1 12 R _script merc_dialog@r_SetMerc 1 12 #
+32 24040 D _script merc_dialog@d_IsSlavePresent 1 21 R _script merc_dialog@r_SetMerc 1 21 #
+65505 24050 @
+27 25000 None 0 #
+32 25010 D _script merc_dialog@d_IsSlavePresent 1 17 R _script merc_dialog@r_SetMerc 1 17 #
+32 25020 D _script merc_dialog@d_IsSlavePresent 1 16 R _script merc_dialog@r_SetMerc 1 16 #
+32 25030 D _script merc_dialog@d_IsSlavePresent 1 15 R _script merc_dialog@r_SetMerc 1 15 #
+32 25040 D _script merc_dialog@d_IsSlavePresent 1 22 R _script merc_dialog@r_SetMerc 1 22 #
+65505 25050 @
+28 26000 None 0 #
+32 26010 D _script merc_dialog@d_IsSlavePresent 1 20 R _script merc_dialog@r_SetMerc 1 20 #
+65505 26020 @
+29 27000 None 0 #
+30 27010 #
+31 27020 #
+0 27030 @
+30 28000 merc_dialog@dlg_ShowFemaleSlavesPrices 1 #
+6 28010 D _script merc_dialog@d_CanAffordMerc 1 15 R _script merc_dialog@r_HireMerc 1 15 #
+6 28020 D _script merc_dialog@d_CanAffordMerc 1 16 R _script merc_dialog@r_HireMerc 1 16 #
+6 28030 D _script merc_dialog@d_CanAffordMerc 1 17 R _script merc_dialog@r_HireMerc 1 17 #
+65505 28040 @
+31 29000 merc_dialog@dlg_ShowMaleSlavesPrices 1 #
+6 29010 D _script merc_dialog@d_CanAffordMerc 1 12 R _script merc_dialog@r_HireMerc 1 12 #
+6 29020 D _script merc_dialog@d_CanAffordMerc 1 13 R _script merc_dialog@r_HireMerc 1 13 #
+6 29030 D _script merc_dialog@d_CanAffordMerc 1 14 R _script merc_dialog@r_HireMerc 1 14 #
+65505 29040 @
+5 30000 None 0 @
+6 31000 None 0 #
+0 31010 @
+7 32000 None 0 #
+0 32010 @
+8 33000 None 0 #
+0 33010 #
+65507 33020 @
+9 34000 None 0 #
+0 34010 @
+302 35000 dialog@dlg_ShowFaction 0 #
+0 35010 #
+130 35020 D _script town@d_MembersAlmost 1 0 R _script town@r_TakeoverCheck 1 0 #
+111 35030 @
+301 36000 None 0 #
+0 36010 #
+130 36020 D _script town@d_PresentAlmost 1 0 R _script town@r_TakeoverCheck 1 0 @
+310 37000 None 0 #
+0 37010 D _script town@d_GainControl 1 1 @
+320 38000 None 0 #
+0 38010 D _script town@d_GainControl 1 1 @
+130 39000 None 0 #
+0 39010 #
+65507 39020 @
+111 40000 Attack 0 #
+65507 40010 @
+120 41000 None 0 #
+12 41010 @
+32 42000 merc_dialog@dlg_ShowMercSellPrice 0 #
+11 42010 R _script merc_dialog@r_SellCurrentMerc 1 0 R _script dialog@r_AddReputation 2 6 300 #
+0 42020 @
+11 43000 None 0 #
+21 43010 R _script merc_dialog@r_GetSlaveTypes 1 0 #
+0 43020 @
+33 44000 None 0 #
+34 44010 #
+65507 44020 @
+34 45000 None 0 #
+35 45010 D _item p PID_METZGERS_CASE } 1 R _item p PID_METZGERS_CASE - 1 R _var p q_mordinos_metzger_delivery = 2 @
+35 46000 None 0 #
+36 46010 @
+36 47000 None 0 #
+37 47010 R _item p PID_SHOTGUN + 1 R _item p PID_SHOTGUN_SHELLS + 20 R _param p REPUTATION_SLAVERS_GUILD + 150 @
+37 48000 None 0 #
+0 48010 R _param p ST_EXPERIENCE + 800 @
+52 49000 None 0 #
+53 49010 @
+53 50000 None 0 #
+55 50010 #
+54 50020 #
+0 50030 @
+54 51000 None 0 #
+55 51010 @
+55 52000 None 0 #
+57 52010 R _script slaverun_dialog@r_ActivateQuest 1 0 @
+56 53000 None 0 #
+57 53010 R _script slaverun_dialog@r_ActivateQuest 1 0 #
+0 53020 @
+57 54000 None 0 #
+0 54010 @
+58 55000 None 0 #
+0 55010 @
+59 56000 None 0 #
+0 56010 #
+62 56020 @
+60 57000 slaverun_dialog@dlg_ShowReward 0 #
+0 57010 @
+61 58000 slaverun_dialog@dlg_ShowReward 0 #
+0 58010 #
+62 58020 R _script slaverun_dialog@r_SpeechSlaver 1 0 @
+62 59000 None 0 #
+0 59010 #
+65507 59020 @
+63 60000 slaverun_dialog@dlg_ShowReward 0 #
+0 60010 @
+64 61000 slaverun_dialog@dlg_ShowReward 0 #
+62 61010 R _script slaverun_dialog@r_SpeechBoldStupid 1 0 #
+0 61020 @
+65 62000 None 0 #
+0 62010 @
+66 63000 None 0 #
+0 63010 #
+65507 63020 @
+500 64000 town@dlg_ShowPolicies 0 #
+500 64010 D _script town@d_IsPolicy 1 2 R _script town@r_SetPolicy 2 2 0 #
+500 64020 D _script town@d_IsNotPolicy 1 2 R _script town@r_SetPolicy 2 2 1 #
+500 64030 D _script town@d_IsNotPolicy 1 1 R _script town@r_SetPolicy 2 1 1 #
+500 64040 D _script town@d_IsPolicy 1 1 R _script town@r_SetPolicy 2 1 0 #
+500 64050 D _script town@d_IsNotPolicy 1 3 R _script town@r_SetPolicy 2 3 1 #
+500 64060 D _script town@d_IsPolicy 1 3 R _script town@r_SetPolicy 2 3 0 #
+12 64070 D _param p KARMA_SLAVER = 0 #
+19 64080 D _param p KARMA_SLAVER > 0 @
+38 65000 None 0 #
+34 65010 @
+90 66000 town@dlg_ShowMilitiaCost 0 #
+90 66010 R _script town@r_RecruitMilitia 0  #
+2 66020 @
+410 67000 None 0 #
+0 67010 @
+420 68000 None 0 #
+0 68010 @
+430 69000 None 0 #
+0 69010 @
+440 70000 None 0 @
+450 71000 None 0 #
+0 71010 @
+330 72000 None 0 &
+
+[engl]
+{100}{}{Metzger}
+{200}{}{You see a mean looking man.}
+{200}{}{You see Metzger.}
+{200}{}{You see Metzger the slaver.}
+{210}{}{You see Metzger, leader of the Slaver's Guild. A tattoo covers most of his face.}
+{210}{}{You see the mean leader of the Slaver's Guild.}
+{210}{}{He looks like he enjoys causing suffering.}
+{240}{}{You see Metzger. He is dead.}
+{250}{}{OH MY GOD METZGER ARE YOU OKAY?  TALK TO ME METZGER!!! NOOOOOOOOOOOOOOOO!}
+{260}{}{You see Metzger. He's really dead.}
+{270}{}{Someone kicked the absolute shit out of Metzger, you'd guess.  Either that or someone left a little pile of ruined and maimed body parts where Metzger normally stands.}
+{1000}{}{Predialogue installations}
+{1010}{}{slaverun}
+{1020}{}{mordino delivery quest, slaver}
+{1030}{}{mordino delivery quest, non-slaver}
+{1040}{}{Slaver}
+{1050}{}{Idiot}
+{1060}{}{Ugly, F.T.O.}
+{1070}{}{Player has cola}
+{1080}{}{Cola buddies already, normal chats}
+{1090}{}{Default, since karma doesn't work}
+{2000}{}{Hoo boy. What do we have here?}
+{2010}{}{I wann be slava!!}
+{2020}{}{Yu bad man! Die!}
+{2030}{}{[Dribble.]}
+{3000}{}{Well if it isn't the ugliest piece of shit I've ever seen in my life. This ain't a beauty salon, and that's the only place I can imagine you wanting to go.}
+{3010}{}{Uh, I just wanted to ask you some questions.}
+{3020}{}{Uh, that was mean. Die.}
+{3030}{}{Uh, that was mean. I'm going.}
+{4000}{}{Fuck off, I don't talk to little bitches.}
+{4010}{}{[Leave.]}
+{4020}{}{FUCK YOU ASSHOLE! No one talks to @pname@ like that, motherfucker!  I AM BRINGING THE PAIN!}
+{5000}{}{What?}
+{5010}{}{Who are you?}
+{5020}{}{What is this place?}
+{5030}{}{Do you do anything outside of the slave trade? I'm sick of these disgusting slaves following me everywhere.}
+{5040}{}{Nothing, just poking around.  Catch you later.}
+{5050}{}{I'm looking for a G.E.C.K.  I need to save my shitty camp site. Wait, that's not true at all.  What the fuck am I talking about? [Wander off mumbling.]}
+{6000}{}{It's the fucking Slaver's Guild.  Are you blind?}
+{6010}{}{Uh yeah I guess that was pretty dumb of me.  Can I ask you something else?}
+{6020}{}{Right.  Later.}
+{6030}{}{Yes I am, you insensitive jerk, can't you tell?}
+{7000}{}{I'm not your boyfriend.  I run a business. If you want to stop and chat, fuck off and die.}
+{7010}{}{Alright I get it. Can I ask something else?}
+{7020}{}{[Cry and run off]}
+{7030}{}{Yeah? No shit! I run a business too! It's called FUCK YOU METZGER! FUCK YOU IN YOUR STUPID BALD FACE!}
+{8000}{}{Yeah? That's sweet. Only problem is, you're a fucking moron. You can be a slave if you want. }
+{8010}{}{[Burst in to tears and leave.]}
+{9000}{}{I'm Metzger. I run this place.}
+{9010}{}{Hi Metzger. Can I ask you something else?}
+{10000}{}{Oh shit I guess you're right.  Didn't mean to offend.  Real sorry like.}
+{10010}{}{It's cool.  Your apology has made me feel a lot better.}
+{11000}{}{What do ya want?}
+{11010}{}{Well, what's up, you know?  Anything cool going on lately?}
+{11020}{}{I want to be a slaver.}
+{11030}{}{We need some volunteers to secure the town.}
+{11040}{}{Nothing, actually. bye.}
+{12000}{}{Shit, it's a real nice day.  I could go for a nuka cola and a smoke out on the patio.  You see that shit out there?  I got a patio, and sometimes I like to sit out on it and drink a cola and smoke.  Didn't expect that did you?  Hey, you got a nuka cola? Our fridge is all out.}
+{12010}{}{Have a nuka cola on me Metzger [hand it over]}
+{13000}{}{Yeah this looks good.  Good job.  I'll trade you a dose for it. Yeah, I'm gonna have myself a nice drink on the patio when shit settles down for a few minutes.}
+{13010}{}{No problem, Metzger.  Pleasure to help out a fellow Brother in Awesome.}
+{14000}{}{What's cookin?}
+{14010}{}{Mostly nothing.  Ask you something?}
+{14020}{}{Enough of the slaving for a minute. Got a vacancy for a team of bad asses like us @lex faction@?}
+{14030}{}{So, where is our piece of the action?}
+{14040}{}{Do you have any jobs I could do that don't involve slaving? That shit is getting old.}
+{14050}{}{Hey, let's change the laws around here.}
+{14060}{}{Fuck all dude.  I am bored as shit.  Going to go shoot molerats catch you later.}
+{15000}{}{You interested in becoming a slaver? Hmm, I dunno. I just had to flush the last bunch of new recruits. They weren't worth shit. Figure we're better off lean and mean. But if you really think you're up to it, we could give you a shot. This shit is for life though. No wimping out.}
+{15010}{}{Let me in, I won't let you down.}
+{15020}{}{Yeah on second thought, no thanks.}
+{16000}{}{Why did you walk in here if you were gonna act like that? Well, I suppose I do have something. I got a business contact in town right now though, name's Stokes. He's staying over at The Hole, tell him I sent you and don't act like a bitch, he doesn't fuck about with anyone he don't wanna.}
+{16010}{}{Thanks, I'll look him up.}
+{16020}{}{Not interested in that either. Bye.}
+{16030}{}{Not interested in that either. What was that about slaves again?}
+{17000}{}{Alright. Well, if you fuck up it's your funeral. No skin off my nose. You'll be running freelance. You're still a slaver, but you're not one of my boys. You get to do business with all of us but you're on your own otherwise.}
+{17010}{}{Do I have to get a Slaver Tattoo?}
+{18000}{}{Yeah, of course. Why, you turning faggot? I ain't hiring anyone in to my guild proper right now, but if you're dealing in people, you gotta wear the tattoo. Wear it with pride and don't be a wimp.}
+{18010}{}{I'm prepared for that.}
+{18020}{}{I really don't want a giant tattoo all over my face that will make every normal person hate me. Bye.}
+{19000}{}{Tattoo time. [He shouts to the man to his left.] Hey Double Date, get over here, need a tattoo on this one. ['Double Date' walks over, pulling a rather crude looking needle from a pouch on his waist which contains various tattooing implements and ink.]}
+{19010}{}{I hope this isn't as horrific as it looks like it will be. [Receive permanent Slaver Tattoo.]}
+{19020}{}{Yeah.....no.  Goodbye! [Run off.]}
+{20000}{}{[The man works his 'magic' over your previously pleasant face. It's fast and painful, but actually quite adept. He's probably done it a hundred times. He grins when he's done, and gives you a look at yourself in a cracked mirror. The unmistakable Slaver tattoo now covers most of your face.]}
+{20010}{}{Glad I'll never have to do that again. Thanks.}
+{21000}{}{Howdy, slaver. What can my guild do for you today?}
+{21010}{}{I want to purchase some stock from you.}
+{21020}{}{I got some stock to sell.}
+{21030}{}{Enough of the slaving for a minute. Got a vacancy for a team of bad asses like us @lex faction@?}
+{21040}{}{Do you have a vacancy in your Guild, Metzger? I'm tired of being a solo slaver. I have big plans!}
+{21050}{}{Do you have any jobs I could do that don't involve slaving? That shit is getting old.}
+{21060}{}{Nothing, actually. Just stopping by.}
+{22000}{}{Sorry cutter, we're full right now. Check back later, if we get a vacancy I'll let you try out.}
+{22010}{}{Okay. Can I just sell some slaves then?}
+{22020}{}{Okay. Just checking. Goodbye Metzger.}
+{23000}{}{Alright, let's see what you've got.}
+{23010}{}{Let's take a look at my guys.}
+{23020}{}{Got a few girls going.}
+{23030}{}{Got some young ones.}
+{23040}{}{Uh, cancel that actually, I got nothin.}
+{24000}{}{Always need males. Let's take a look.}
+{24010}{}{I got a good one.}
+{24020}{}{Take a look at this one, he's alright.}
+{24030}{}{This one's a bit of a mess but I'm sure you can get some use out of him.}
+{24040}{}{Picked this shit up in the waste. Might be worth a handful of caps.}
+{24050}{}{Actually, I don't have any male slaves.}
+{25000}{}{Right, ladies. What you got?}
+{25010}{}{Got a real nice one here for you.}
+{25020}{}{Got a decent girl here.}
+{25030}{}{This one's nothing to write home about, but she aint a trainwreck.}
+{25040}{}{Can't say much for this one, but well, at least she's alive right?}
+{25050}{}{Actually, I don't have any female slaves.}
+{26000}{}{Kids? Not much money in them. It's a fuckin' investment for me, you know. I gotta feed all those mouths. What you got?}
+{26010}{}{Take a look at this kid I got.}
+{26020}{}{Actually, I don't have any child slaves.}
+{27000}{}{Alright let's get down to business. You looking for male or female stock today?}
+{27010}{}{Let's take a look at the girls.}
+{27020}{}{Show me your guys. No homo.}
+{27030}{}{Just realised I don't actually want to buy slaves. Bye.}
+{28000}{}{Girls? Like that is it? Haha right. Yeah I got some. @lex price2@ caps for a good one, @lex price1@ for the bad ones, and @lex price0@ for the real ugly, bottom-of-the-barrel retard ones.}
+{28010}{}{Let me take one of those horrible ugly stupid ones for @lex price0@.}
+{28020}{}{Give me one of those @lex price1@ cap girls.}
+{28030}{}{Nothing but the best for me. One of those @lex price2@ ones, Metzger.}
+{28040}{}{Actually, that's not what I had in mind.}
+{29000}{}{Alright we got some decent guys in stock. @lex price2@ for the big strong ones, @lex price1@ for your average guy, @lex price0@ for those flimsy little dumbasses the tribals don't even mind us taking. Watcha want?}
+{29010}{}{I like the sound of a feeble idiot, here's @lex price0@ caps.}
+{29020}{}{Just a regular one for @lex price1@.}
+{29030}{}{Yeah, one of those @lex price2@ ones, I got work needs doing.}
+{29040}{}{Actually, that's not what I had in mind.}
+{30000}{}{Alright, here's your meat. Take care of it, or don't, what the fuck. I don't care.}
+{31000}{}{Some error occured. Report this to admins.}
+{31010}{}{Shit! Damn admins! Always ruining my fun! I guess I'll talk to them. WITH MY FISTS!!!! No seriously, I will write them a nice email or make a thread on the forums or something. Thanks!}
+{32000}{}{Error, merc not found. Report this to admins.}
+{32010}{}{Shit! Damn admins! Always ruining my fun! I guess I'll talk to them. WITH MY FISTS!!!! No seriously, I will write them a nice email or make a thread on the forums or something. Thanks!}
+{33000}{}{Yeah, you actually have to pay me, dumbass. You can't just say 'Yeah I'll have this one,' if you don't have the money. Fuck off and come back when you got the caps.}
+{33010}{}{Okay, geez! I'll be back when I have the money.}
+{33020}{}{Hey, suck my dick, fuckhead! Yeah I'm talking to you! Metzger goin doooooown! Bring it motherfucker! WOOO}
+{34000}{}{Damn, you're fucking hideous. Outta my face before you dribble on me.}
+{34010}{}{I just want to love! [Shamble off.]}
+{35000}{}{Sure do, but all I'm seeing here is a bunch of assholes. Fuck off out of it.}
+{35010}{}{When we come back, we'll be bigger and better.}
+{35020}{}{All due respect, Metzger, but look again. We might be small, but that's because we don't have any wimps around slowing us down. Everyone in @lex faction@ is a lean, mean, killing machine.}
+{35030}{}{Call ME an asshole, you good-for-nothing slaver?}
+{36000}{}{This isn't some piss-about job. If you're not serious about it you can fuck right off. No time for people fucking with my shit. Get your whole crew here, then we'll talk.}
+{36010}{}{Okay.}
+{36020}{}{We are taking it seriously. That's why we only have our very best right here, Metzger. No one around to make any mistakes. Official bad asses only.}
+{37000}{}{Alright. You guard my shit. My boys are busy with slaving, so you gotta make sure no dumb shit happens in the whole Den, right? People getting wasted is bad for business. You keep shit running tight, you get paid. Alright?}
+{37010}{}{Alright.}
+{38000}{}{Alright. You guard my shit. My boys are busy with slaving, so you gotta make sure no dumb shit happens in the whole Den, right? People getting wasted is bad for business. You keep shit running tight, you get paid. Alright?}
+{38010}{}{Alright.}
+{39000}{}{You shitting me? At first I just thought you looked like a bunch of faggots. Now I see you talk like them too. This aint some kid's job I'm offering here - you work to my rules or you don't work. And you don't work. So fuck off.}
+{39010}{}{Right. Bye.}
+{39020}{}{Oh Metzger. Metzger, Metzger, Metzger...[pull out your gun.]}
+{40000}{}{Sure did, asshole.}
+{40010}{}{Ohhhh you're so dead.}
+{41000}{}{Just check the locker behind me.}
+{41010}{}{Sure.}
+{42000}{}{Ok, I'll give you @lex price@ for that one.}
+{42010}{}{Okay, deal.}
+{42020}{}{No thanks.}
+{43000}{}{Pleasure doing business. Any more?}
+{43010}{}{Yeah.}
+{43020}{}{No.}
+{44000}{}{Who the fuck are you, walking in here like I'm supposed to give a fuck?}
+{44010}{}{I brought your case from the Mordinos.}
+{44020}{}{I'm the guy who's going to kill you. Right now, by the way.}
+{45000}{}{Oh that's you? So you go the case or what?}
+{45010}{}{Yeah it's right here.}
+{46000}{}{So what the fuck, you just ran here?}
+{46010}{}{Pretty much, why?}
+{47000}{}{I don't want you getting killed and losing my shit. Look, take this, don't need anybody fucking with my business.}
+{47010}{}{Whoa a gun? For me? Sweet! Thanks Metzger!}
+{48000}{}{Yeah yeah. Fuck off back to Reno.}
+{48010}{}{Will do.}
+{49000}{}{Ha ha! Think you got what it takes? [He pauses for a moment. You assume he's thinking, but his facial expression doesn't change from its perpetual scowl.] Well, we did scout out a little spot a few days ago that looks like it's got some pretty juicy stock in it, ripe for the taking.}
+{49010}{}{How come you've been sitting on it? Waiting for me?}
+{50000}{}{We didn't quite have enough boys to knock it over, until you showed up to help out. Think you're up for it? It's a good location to hit, but they're not gonna be defenseless. You'll have a fight on your hands.}
+{50010}{}{Hell yeah I'm up for it.}
+{50020}{}{Alright, so I go in there and kill everyone?}
+{50030}{}{Not really, sorry.}
+{51000}{}{No you fucking moron. What the fuck? Not looked in a mirror recently?}
+{51010}{}{Oh yeah, right. I'm a slaver.}
+{52000}{}{Right. Knock off anyone who's too much of a problem, then hogtie the rest and get them back to me.}
+{52010}{}{Okay, let's do this.}
+{53000}{}{You wanna be up again? Fuck, alright with me; it's your ass. We got another location. Same deal as ever. The guys are already there.}
+{53010}{}{Alright, feed me the intel.}
+{53020}{}{Nah, not right now Metzger.}
+{54000}{}{Okay, here's the spot. [He marks it on your map.] Get in, grab what you can, kill what you can't, and get the fuck out. Make it quick, who knows if they'll still be living here in a couple of days. Don't fuck up. Dead slavers don't make us look good. Can't have you fucking up my jobs and my reputation.}
+{54010}{}{I'm on my way. Thanks for the tip off. Back soon.}
+{55000}{}{Nah, we ain't got any fresh leads recently. Guess we over-harvested the local stock [Metzger produces something that sounds a little bit like a laugh. It is quite horrific]. Check back with me later, we'll pick something up eventually.}
+{55010}{}{Okay, I'll check back later.}
+{56000}{}{Are you a fucking cripple or something? You didn't even show up! You're a fuck up.}
+{56010}{}{I'm sorry Metzger.}
+{56020}{}{Man, we got attacked by those fucking molerats, then some asshole tried to kill me and take my shit, it was crazy! Of course I was late!}
+{57000}{}{Smooth op. Here's your pay. [He hands you your cut, @lex price@.]}
+{57010}{}{That's how I work, Metzger. Thanks for the pay.}
+{58000}{}{Fuck man, one of ours dropped. How could you let that shit happen? Shit like that makes us all look bad. Sort that fucking shit out before you come back again. [He spits on the floor, and hands you a reduced cut, @lex price@.]}
+{58010}{}{Sorry Metzger.}
+{58020}{}{That guy sucked, big time. He had no fucking idea what he was doing. He got himself killed by being a fuck up.}
+{59000}{}{Don't feed me that horseshit. Get the fuck out of my face.}
+{59010}{}{Sorry Metzger.}
+{59020}{}{[Try and draw your gun and blast this fucker's face off before anyone else can react.]}
+{60000}{}{No shit? Well, that guy was always a bit of a fuck up. Alright, shit happens. No hard feelings. [He hands over the rest of your pay, @lex price@.]}
+{60010}{}{Well at least you don't have to worry about him anymore. Later Metzger.}
+{61000}{}{You gotta clean up your moves, man. You dropped a lot of fucking stock today. Too much. That eats in to my profits, asshole. So I'm eating in to yours. [He hands you a reduced cut, @lex price@.]}
+{61010}{}{Those fuckers were crazy. Would not lie down, would not back down. Tried what we could, but they're like fucking animals.}
+{61020}{}{Sorry.}
+{62000}{}{Fuckin scum is getting bolder and stupider every day. I've seen it myself sometimes. Alright, take the rest of your pay, but keep those fuckers in line next time, it's what I'm paying you for. [He hands over the rest of your pay.]}
+{62010}{}{I'm sure some fucked up shit like that won't happen again.}
+{63000}{}{What the FUCK!? You piece of shit! I want to rip that tattoo off your fucking face. Get the fuck out of here before I try.}
+{63010}{}{[Leave. Quickly.]}
+{63020}{}{Well, since I'm here, I might as well kill you, eh?}
+{64000}{}{Here's the current laws in Den:
+Stealing is prosecuted: @lex stealing@
+Carrying weapons openly is illegal: @lex weapons@
+Attacking criminals on sight: @lex attackflagged@}
+{64010}{}{I want it to be legal to carry weapons openly.}
+{64020}{}{I want it to be illegal to carry weapons openly.}
+{64030}{}{I've seen enough thieves by now, let's punish every last one of them!}
+{64040}{}{I don't think guards should look for thieves, we have higher priorities...}
+{64050}{}{I want every last criminal dead, don't let them enter our city under any circumstances!}
+{64060}{}{I don't think we have time to go after every little petty criminal, let's relax the laws a bit regarding this...}
+{64070}{}{Ok, looks good.}
+{64080}{}{Ok, looks good.}
+{65000}{}{Yeah, what now?}
+{65010}{}{I brought your case from the Mordinos.}
+{66000}{}{This is not a problem, there's plenty of people ready to join the militia, but you'll have to pay for the equipments and training. This costs about @lex cost@ caps.}
+{66010}{}{Sounds good, here's @lex cost@ caps.}
+{66020}{}{Nah, I think we're doing fine as it is now.}
+{67000}{}{Alright, there you go.}
+{67010}{}{Right.}
+{68000}{}{I'm afraid there's no more volunteers, come back later and check again.}
+{68010}{}{Ok.}
+{69000}{}{Like I said, training and equipment isn't free. Come back when you have the caps.}
+{69010}{}{Yeah, yeah...}
+{70000}{}{Error. Report this.}
+{71000}{}{Are you crazy? We are in the middle of an ongoing attack, start protecting us instead of jerking around in here!}
+{71010}{}{Uh, sure!}
+{72000}{}{Guards, get those retards!}
+

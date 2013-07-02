@@ -1,0 +1,634 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// config_file.fos
+//
+
+// read cfg files in following format:
+// [section]
+// var=value
+// ;comment
+// #comment
+
+#ifndef __CONFIG_FILE__
+#define __CONFIG_FILE__
+
+#ifdef __SERVER
+# include "_defines.fos"        // for version()
+#endif
+
+#include "_macros.fos"
+#include "config_file_h.fos"
+
+#ifdef __ASCOMPILER
+# define ASCLog    # (what) { Log(what); }
+#endif
+#ifndef __ASCOMPILER
+# define ASCLog    # (what) {}
+#endif
+
+#ifdef __ASCOMPILER
+# ifdef __TEST
+#  include "config_file_test.fos"
+# endif
+#endif
+
+class CConfigVar : IConfigVar
+{
+    string name;
+    string value;
+
+    CConfigVar(string myname, string myvalue)
+    {
+        this.name       = myname;
+        this.value      = myvalue;
+    }
+
+    string GetName()
+    {
+        return(this.name);
+    }
+
+    string GetValue()
+    {
+        return(this.value);
+    }
+
+    array<string> GetValueAsArray()
+    {
+        return(this.GetValueAsArray(CONFIG_FILE_DELIMETER));
+    }
+
+    array<string> GetValueAsArray(string& delimeter)
+    {
+        array<string> result;
+        array<string@>@ tmp = split(this.value, delimeter);
+
+        if(!valid(tmp))
+            return(result);
+
+        for(uint t = 0, tlen = tmp.length(); t < tlen; t++)
+        {
+            if(!valid(tmp[t]))
+                continue;
+            result.insertLast(tmp[t]);
+        }
+
+        return(result);
+    }
+
+    void SetValue(int val)
+    {
+        this.value = "" + val;
+    }
+
+    void SetValue(uint val)
+    {
+        this.value = "" + val;
+    }
+
+    void SetValue(string& val)
+    {
+        this.value = val;
+    }
+
+    void SetValue(array<string>& val)
+    {
+        this.SetValue(val, CONFIG_FILE_DELIMETER);
+    }
+
+    void SetValue(array<string>& val, string& delimeter)
+    {
+        this.SetValue("");
+        for(uint v = 0, vlen = val.length(); v < vlen; v++)
+        {
+            if(v > 0)
+                this.value += delimeter;
+
+            this.value += val[v];
+        }
+    }
+};
+
+class CConfigSection : IConfigSection
+{
+    string             name;
+    array<CConfigVar@> vars;
+
+    CConfigSection(string sectioname)
+    {
+        this.name = sectioname;
+    }
+
+    string GetName()
+    {
+        return(this.name);
+    }
+
+    bool AddVar(string& varname, string& val)
+    {
+        if(!this.VarExists(varname))
+        {
+            this.vars.insertLast(CConfigVar(varname, val));
+            return(true);
+        }
+        else
+            return(false);
+    }
+
+    bool DeleteVar(string& varname)
+    {
+        return(this.DeleteVar(varname, true));
+    }
+
+    bool DeleteVar(string& varname, bool caseSensitive)
+    {
+        if(this.VarExists(varname))
+        {
+            for(uint v = 0; v < this.vars.length(); v++)
+            {
+                if((caseSensitive && this.vars[v].GetName() == varname) ||
+                   (!caseSensitive && strlwr(this.vars[v].GetName()) == strlwr(varname)))
+                {
+                    this.vars.removeAt(v);
+                    return(true);
+                }
+            }
+        }
+        return(false);
+    }
+
+    IConfigVar@ GetVar(string& varname)
+    {
+        return(this.GetVar(varname, true));
+    }
+
+    IConfigVar@ GetVar(string& varname, bool caseSensitive)
+    {
+        for(uint v = 0; v < this.vars.length(); v++)
+        {
+            if(caseSensitive && this.vars[v].GetName() == varname)
+                return(this.vars[v]);
+            else if(!caseSensitive && strlwr(this.vars[v].GetName()) == strlwr(varname))
+                return(this.vars[v]);
+        }
+        return(null);
+    }
+
+    void GetVars(array<string>& list)
+    {
+        for(uint v = 0; v < this.vars.length(); v++)
+        {
+            list.insertLast(this.vars[v].GetName());
+        }
+    }
+
+    bool SetVar(string& varname, string val)
+    {
+        if(this.VarExists(varname))
+        {
+            IConfigVar@ var = this.GetVar(varname);
+            if(valid(var))
+            {
+                var.SetValue(val);
+                return(true);
+            }
+        }
+        else if(this.AddVar(varname, val))
+            return(true);
+
+        return(false);
+    }
+
+    bool VarExists(string& varname)
+    {
+        return(this.VarExists(varname, true));
+    }
+
+    bool VarExists(string& varname, bool caseSensitive)
+    {
+        for(uint v = 0; v < vars.length(); v++)
+        {
+            if(caseSensitive && vars[v].GetName() == varname)
+                return(true);
+            else if(!caseSensitive && strlwr(vars[v].GetName()) == strlwr(varname))
+                return(true);
+        }
+        return(false);
+    }
+};
+
+class CConfigFile : IConfigFile
+{
+    string                 name;
+    array<CConfigSection@> sections;
+    bool                   virtual;
+
+    // 2km long function ahead
+    CConfigFile(string filename)
+    {
+        file f;
+        if(f.open(filename, "r") >= 0)
+        {
+            this.name               = filename;
+            this.virtual    = false;
+
+            uint   _sections  = 0;
+            uint   _vars              = 0;
+
+            string str;
+            f.readString(f.getSize(), str);
+            f.close();
+            array<string@>@ lines = split(str, "\n");
+            str = str + "\n";
+
+            string section = "";
+            for(uint linenum = 0, j = lines.length(); linenum < j; linenum++)
+            {
+                string@ line = lines[linenum];
+                if(linenum == 0)
+                {
+                    // UTF-8 BOM
+                    if(line.length() >= 3 &&
+                       line[0] == 0xEF &&
+                       line[1] == 0xBB &&
+                       line[2] == 0xBF)
+                        line = substring(line, 3, line.length() - 3);
+                }
+
+                if(!valid(line) || line == "")
+                    continue;
+
+                // JIC
+                stringReplaceText(line, "\n", "");
+                stringReplaceText(line, "\r", "");
+
+                // comment/blank line
+                if(line.length() == 0 ||
+                   line[0] == ';' || line[0] == '#')
+                {
+                    continue;
+                }
+
+                // section
+                else if(line[0] == '[')
+                {
+                    // JIC
+                    stringReplaceText(line, "\n", "");
+                    stringReplaceText(line, "\r", "");
+
+                    string name = substring(line, 1, line.length() - 2);
+                    this.sections.insertLast(CConfigSection(name));
+                    section = name;
+                    _sections++;
+                }
+
+                // property (i hope)
+                else
+                {
+                    if(section != "")
+                    {
+                        // JIC
+                        stringReplaceText(line, "\n", "");
+                        stringReplaceText(line, "\r", "");
+
+                        array<string@>@ prop = split(line, "=");
+                        if(prop.length() == 2)
+                        {
+                            SetConfigValue(filename, section, prop[0], prop[1]);
+                            _vars++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    CConfigFile(string filename, bool virtual)
+    {
+        this.name               = filename;
+        this.virtual    = true;
+    }
+
+    bool IsVirtual()
+    {
+        return(this.virtual);
+    }
+
+    string GetName()
+    {
+        return(this.name);
+    }
+
+    bool AddSection(string& sectioname)
+    {
+        if(!this.SectionExists(sectioname))
+        {
+            this.sections.insertLast(CConfigSection(sectioname));
+            return(true);
+        }
+        else
+            return(false);
+    }
+
+    IConfigSection@ GetSection(string& sectioname)
+    {
+        return(this.GetSection(sectioname, true));
+    }
+
+    IConfigSection@ GetSection(string& sectioname, bool caseSensitive)
+    {
+        for(uint s = 0; s < sections.length(); s++)
+        {
+            if(caseSensitive && sections[s].GetName() == sectioname)
+                return(sections[s]);
+            else if(!caseSensitive && strlwr(sections[s].GetName()) == strlwr(sectioname))
+                return(sections[s]);
+        }
+        return(null);
+    }
+
+    void GetSections(array<string>& list)
+    {
+        for(uint s = 0; s < this.sections.length(); s++)
+        {
+            list.insertLast(this.sections[s].GetName());
+        }
+    }
+
+    bool SectionExists(string& sectioname)
+    {
+        return(this.SectionExists(sectioname, true));
+    }
+
+    bool SectionExists(string& sectioname, bool caseSensitive)
+    {
+        for(uint s = 0; s < sections.length(); s++)
+        {
+            if(caseSensitive && sections[s].GetName() == sectioname)
+                return(true);
+            else if(!caseSensitive && strlwr(sections[s].GetName()) == strlwr(sectioname))
+                return(true);
+        }
+        return(false);
+    }
+};
+
+array<CConfigFile@> ConfigFiles;
+
+int stringReplaceText(string& s, string@ f, string@ t)
+{
+    int ch = 0;
+    while(findFirst(s, f) != -1)
+    {
+        int p = findFirst(s, f);
+        s = substring(s, 0, p) + t + substring(s, p + f.length(), s.length() - (p + f.length()));
+        ch++;
+    }
+    return(ch);
+}
+
+IConfigFile@ NewConfig(string& filename)
+{
+    CConfigFile@ config = CConfigFile(filename, true);
+
+    return(config);
+}
+
+bool LoadConfig(string& filename)
+{
+    for(uint f = 0; f < ConfigFiles.length(); f++)
+    {
+        if(ConfigFiles[f].GetName() == filename)
+            return(false);
+    }
+
+    file cfg;
+    if(cfg.open(filename, "r") >= 0)
+        cfg.close();
+    else
+        return(false);
+
+    CConfigFile@ config = CConfigFile(filename);
+    if(valid(config))
+    {
+        ConfigFiles.insertLast(config);
+        return(true);
+    }
+
+    return(false);
+}
+
+void SaveConfigFiles()
+{
+    IConfigFile@ config;
+
+    for(uint f = 0; f < ConfigFiles.length(); f++)
+    {
+        SaveConfig(ConfigFiles[f].GetName());
+    }
+}
+
+bool SaveConfig(string& filename)
+{
+    IConfigFile@ config = GetConfigFile(filename);
+
+    if(valid(config))
+    {
+        file org;
+        file bak;
+        // backup, anyone?
+        if(org.open(config.GetName(), "r") >= 0)
+        {
+            string str;
+            int    len = org.readString(org.getSize(), str);
+            org.close();
+
+            if(bak.open(config.GetName() + ".bak", "w") >= 0)
+            {
+                bak.writeString(str);
+                bak.close();
+
+                // save current config
+                if(org.open(config.GetName(), "w") >= 0)
+                {
+                    array<string> sections;
+                    config.GetSections(sections);
+
+                    for(uint s = 0; s < sections.length(); s++)
+                    {
+                        IConfigSection@ section = config.GetSection(sections[s]);
+                        if(valid(section))
+                        {
+                            org.writeString("[" + section.GetName() + "]\r\n");
+
+                            array<string> vars;
+                            section.GetVars(vars);
+
+                            for(uint v = 0; v < vars.length(); v++)
+                            {
+                                IConfigVar@ var = section.GetVar(vars[v]);
+                                if(valid(var))
+                                    org.writeString(var.GetName() + "=" + var.GetValue() + "\r\n");
+                            }
+                            org.writeString("\r\n");
+                        }
+                    }
+                }
+                else
+                    return(false);
+            }
+            else
+                return(false);
+        }
+        else
+            return(false);
+    }
+    else
+        Log("Config file not loaded: " + filename);
+
+    return(false);
+}
+
+bool UnloadConfig(string& filename)
+{
+    for(uint f = 0; f < ConfigFiles.length(); f++)
+    {
+        if(ConfigFiles[f].GetName() == filename)
+        {
+            Log("Unloaded: " + filename);
+            ConfigFiles.removeAt(f);
+            return(true);
+        }
+    }
+    return(false);
+}
+
+IConfigFile@ GetConfigFile(string& filename)
+{
+    return(GetConfigFile(filename, true));
+}
+
+IConfigFile@ GetConfigFile(string& filename, bool caseSensitive)
+{
+    for(uint f = 0; f < ConfigFiles.length(); f++)
+    {
+        if(caseSensitive && ConfigFiles[f].GetName() == filename)
+            return(ConfigFiles[f]);
+        else if(!caseSensitive && strlwr(ConfigFiles[f].GetName()) == strlwr(filename))
+            return(ConfigFiles[f]);
+    }
+    return(null);
+}
+
+IConfigSection@ GetConfigSection(string& filename, string& sectioname)
+{
+    return(GetConfigSection(filename, sectioname, true));
+}
+
+IConfigSection@ GetConfigSection(string& filename, string& sectioname, bool caseSensitive)
+{
+    IConfigFile@ cfile = GetConfigFile(filename);
+    if(valid(cfile))
+    {
+        IConfigSection@ section = cfile.GetSection(sectioname, caseSensitive);
+        if(valid(section))
+            return(section);
+        else
+            return(null);
+    }
+    else
+        return(null);
+}
+
+IConfigVar@ GetConfigVar(string& filename, string& sectioname, string@ varname)
+{
+    return(GetConfigVar(filename, sectioname, varname, true));
+}
+
+IConfigVar@ GetConfigVar(string& filename, string& sectioname, string@ varname, bool caseSensitive)
+{
+    IConfigSection@ section = GetConfigSection(filename, sectioname, caseSensitive);
+    if(valid(section))
+    {
+        IConfigVar@ var = section.GetVar(varname, caseSensitive);
+        if(valid(var))
+            return(var);
+        else
+            return(null);
+    }
+    else
+        return(null);
+}
+
+string@ GetConfigValue(string& filename, string& sectioname, string@ varname)
+{
+    return(GetConfigValue(filename, sectioname, varname, true));
+}
+
+string@ GetConfigValue(string& filename, string& sectioname, string@ varname, bool caseSensitive)
+{
+    IConfigVar@ var = GetConfigVar(filename, sectioname, varname, caseSensitive);
+    if(valid(var))
+        return(var.GetValue());
+    else
+        return(null);
+}
+
+bool SetConfigValue(string& filename, string& sectioname, string@ varname, bool value)
+{
+    return(SetConfigValue(filename, sectioname, varname, (value ? "true" : "false")));
+}
+
+bool SetConfigValue(string& filename, string& sectioname, string@ varname, int value)
+{
+    return(SetConfigValue(filename, sectioname, varname, "" + value));
+}
+
+bool SetConfigValue(string& filename, string& sectioname, string@ varname, uint value)
+{
+    return(SetConfigValue(filename, sectioname, varname, "" + value));
+}
+
+bool SetConfigValue(string& filename, string& sectioname, string@ varname, string& value)
+{
+    IConfigFile@ config = GetConfigFile(filename);
+
+    if(!valid(config))
+    {
+        CConfigFile@ cfgfile = CConfigFile(filename, true);
+        @config = @cfgfile;
+        // paranoia
+        if(!valid(config))
+            return(false);
+        ConfigFiles.insertLast(cfgfile);
+    }
+
+    IConfigSection@ section = GetConfigSection(filename, sectioname);
+
+    if(!valid(section))
+    {
+        if(!config.AddSection(sectioname))
+            return(false);
+
+        @section = config.GetSection(sectioname);
+        if(!valid(section))
+            return false;
+    }
+
+    bool result = section.SetVar(varname, value);
+
+    return(result);
+}
+
+#ifdef __SERVER
+void version(Critter& player, int, int, int)
+{
+    uint major = uint(CONFIG_FILE_VERSION / 1000);
+    uint minor = uint((CONFIG_FILE_VERSION - (major * 1000)) / 100);
+    uint fix   = uint((CONFIG_FILE_VERSION - (major * 1000)) - (minor * 100));
+    player.Say(SAY_NETMSG, "config_file.fos, v" + major + "." + minor + (fix > 0 ? "." + fix : ""));
+}
+#endif // __SERVER
+#endif // __CONFIG_FILE__

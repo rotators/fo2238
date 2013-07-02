@@ -1,0 +1,177 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 0 #
+22 1010 D _param p KARMA_SLAVER > 0 #
+24 1020 D _param p ST_CHARISMA > 99 #
+13 1030 D _var p name_mem_npc_player = 1 #
+2 1040 D _var p name_mem_npc_player = 0 R _var p name_mem_npc_player = 1 @
+2 2000 None 0 #
+3 2010 R _var n loyality = 7 #
+8 2020 R _var n loyality = 7 #
+23 2030 D _var p q_klam_aldobooze = 0 D _script dialog@d_QuestTimeoutReady 0  #
+26 2040 D _var p q_klam_aldobooze = 1 D _script dialog@d_QuestTimeoutReady 0  @
+3 3000 None 0 #
+8 3010 #
+6 3020 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 R _var n loyality = 10 #
+8 3030 #
+23 3040 D _var p q_klam_aldobooze = 0 D _script dialog@d_QuestTimeoutReady 0  #
+26 3050 D _var p q_klam_aldobooze = 1 D _script dialog@d_QuestTimeoutReady 0  @
+6 4000 None 0 #
+15 4010 #
+7 4020 @
+7 5000 None 0 #
+9 5010 #
+11 5020 #
+17 5030 #
+15 5040 #
+25 5050 D _var p q_klam_aldobooze = 0 D _script dialog@d_QuestTimeoutReady 0  #
+26 5060 D _var p q_klam_aldobooze = 1 D _script dialog@d_QuestTimeoutReady 0  @
+8 6000 None 0 @
+9 7000 None 0 #
+10 7010 #
+15 7020 #
+7 7030 @
+10 8000 None 0 #
+15 8010 #
+7 8020 @
+11 9000 None 0 #
+15 9010 #
+7 9020 @
+12 10000 None 0 #
+6 10010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 R _var n loyality = 10 #
+16 10020 #
+23 10030 D _var p q_klam_aldobooze = 0 D _script dialog@d_QuestTimeoutReady 0  #
+26 10040 D _var p q_klam_aldobooze = 1 D _script dialog@d_QuestTimeoutReady 0  @
+13 11000 None 0 #
+6 11010 D _item p PID_BOTTLE_CAPS > 4 R _script dialog@r_RemoveMoney 1 5 R _var p loyality = 10 #
+16 11020 #
+23 11030 D _var p q_klam_aldobooze = 0 D _script dialog@d_QuestTimeoutReady 0  #
+26 11040 D _var p q_klam_aldobooze = 1 D _script dialog@d_QuestTimeoutReady 0  @
+14 12000 None 0 @
+15 13000 None 0 @
+16 14000 None 0 @
+17 15000 None 0 #
+15 15010 #
+18 15020 #
+7 15030 @
+18 16000 None 0 #
+15 16010 #
+7 16020 @
+19 17000 None 0 #
+20 17010 #
+14 17020 @
+20 18000 None 0 #
+14 18010 #
+21 18020 D _item p PID_BOTTLE_CAPS > 19 R _script dialog@r_RemoveMoney 1 20 @
+21 19000 None 0 @
+22 20000 None 0 @
+23 21000 None 0 #
+25 21010 @
+24 22000 None 0 @
+25 23000 None 0 #
+0 23010 R _var p q_klam_aldobooze = 1 #
+0 23020 @
+26 24000 None 0 #
+28 24010 D _item p PID_BEER > 4 R _item p PID_BEER - 5 R _script dialog@r_QuestTimeout 1 20 R _script town@r_ModifyInfluenceBuffer 1 5 #
+28 24020 D _item p PID_BOOZE > 4 R _item p PID_BOOZE - 5 R _script dialog@r_QuestTimeout 1 20 R _script town@r_ModifyInfluenceBuffer 1 5 #
+28 24030 D _item p PID_ROT_GUT > 4 R _item p PID_ROT_GUT - 5 R _script dialog@r_QuestTimeout 1 20 R _script town@r_ModifyInfluenceBuffer 1 5 #
+27 24040 @
+27 25000 None 0 #
+0 25010 @
+28 26000 None 0 #
+0 26010 D _item p PID_10MM_JHP < 75 R _script dialog@r_AddMoney 1 85 R _param p ST_EXPERIENCE + 250 R _item p PID_KNIFE + 1 R _item p PID_SPRINGER_RIFLE + 1 R _item p PID_10MM_JHP + 25 #
+0 26020 D _item p PID_10MM_JHP > 74 R _script dialog@r_AddMoney 1 85 R _param p ST_EXPERIENCE + 250 R _item p PID_KNIFE + 1 R _item p PID_SPRINGER_RIFLE + 1 &
+
+[engl]
+{100}{}{Aldo}
+{200}{}{You see a sickly man dressed in very dirty robes.}
+{210}{}{You see Aldo, the Town Greeter. You think you can smell his breath from here.}
+{1000}{}{Predialogue installations}
+{1010}{}{Slaver}
+{1020}{}{ugly}
+{1030}{}{known}
+{1040}{}{unknown}
+{2000}{}{Hello there, I haven't seen you in Klamath before. I'm Aldo, the town greeter. (hic) It's my job to greet anyone new in town and to answer any questions they might have about
+ our bucolic little burg. Welcome to Klamath. (hic) Who might you be?}
+{2010}{}{Oh, hi there. I'm @pname@.}
+{2020}{}{You don’t need to know my name or anything else about me. Go away, you filthy drunkard.}
+{2030}{}{There any work to be had in this town?}
+{2040}{}{I got you some 'medicine', Aldo.}
+{3000}{}{@pname@, you say? You seem like a seasoned traveller. Someone who's seen and done (hic) great things. Surely one of your great (hic) stature would be happy to follow our custom of tipping the town greeter. (urp)}
+{3010}{}{Tip? Get out of here before I kick your ass.}
+{3020}{}{A tip, huh? Well I guess it’s worth $5 to get you off my back.}
+{3030}{}{Sorry buddy, I haven't got the cash.}
+{3040}{}{Nevermind that, you got any work that needs doing?}
+{3050}{}{I got you some 'medicine', Aldo.}
+{4000}{}{Thanks for the money, friend. (urp) I’m going to use it to get some (hic) medicine for my dry throat. Consider yourself officially (hic) greeted to the town of Klamath. Do you have any questions about our fair (urp) metropolis?}
+{4010}{}{No thanks, I think I can figure things out here on my own.}
+{4020}{}{Well, actually, I was curious about a thing or two.}
+{5000}{}{Ask away, oh (burp) benefactor of mine.}
+{5010}{}{What do folks do here in Klamath?}
+{5020}{}{Where can I trade things or find healing?}
+{5030}{}{Where do you buy your booze?}
+{5040}{}{Thanks, I think that’s all I need to know for now.}
+{5050}{}{How about you set me up with some work?}
+{5060}{}{I got you some 'medicine', Aldo.}
+{6000}{}{Thanks for nothing. How can you be so cruel to someone as unwell as myself? (Aldo spits on the ground at your feet, dribbling a bit on his scruffy chin)}
+{7000}{}{Here in Klamath some people farm, some raise brahmin, but trapping geckos is what (hic) most of the people do.}
+{7010}{}{What’s a gecko?}
+{7020}{}{Oh, thanks. I guess that’s all I need to know.}
+{7030}{}{That’s interesting. I have another question, though.}
+{8000}{}{A gecko is a large lizard that’s hunted by the trappers round these parts for its meat and hide. But, it sure is a lot of work to catch them dang critters - and (bleargh) dangerous too. My advice to a friend...avoid it. It's far too much work.}
+{8010}{}{Oh, thanks. I guess that’s all I need to know.}
+{8020}{}{Hmm. One more thing, Aldo.}
+{9000}{}{You can buy or trade things at Buckner House and also the Golden Gecko. Sometimes they even have healing herbs available -- not that they’d give me any for my (hic) condition. They’re both run by real skinflints. Just get a little behind on your (hic) tab and out you go, into the cold and rain.}
+{9010}{}{Thanks for the information, that’s all I need for now.}
+{9020}{}{I’ve always found the fresh air invigorating. Hmm, I have another question for you.}
+{10000}{}{I know that you couldn’t spare any money for the official town greeter earlier, but perhaps (hic) this time you are feeling more generous and are ready to be greeted ‘officially’ to Klamath.}
+{10010}{}{I felt that something was missing. Here’s $5; I’m ready to be Greeted.}
+{10020}{}{No, thanks, I don’t think I need your official greeting.}
+{10030}{}{There any work to be had in this town?}
+{10040}{}{I got you some 'medicine', Aldo.}
+{11000}{}{Hey there, friend, good to see you again. Can you spare some money for a bit of medicine? My throat is getting dryer and scratchier (hic) all the time. I could even throw in another official (urp) greeting.}
+{11010}{}{Sure, I can always spare $5 for a friend’s medicine.}
+{11020}{}{Sorry, Aldo I can’t spare any right now.}
+{11030}{}{You got any work for me?}
+{11040}{}{I got you some 'medicine', Aldo.}
+{12000}{}{What the (urp) hell? We don't need your kind around here. Scram.}
+{13000}{}{I’m certain that your generosity to someone as needful as myself (hic) will bring you good luck. I hope to see you again soon.}
+{14000}{}{I could sure use some money for medicine. I feel pretty weak - but if you can’t (cough, cough) spare any (cough), I guess I understand. Maybe next time, if I’m still around (cough) by then.}
+{15000}{}{You mean my much needed medicine? (hic) Well, I used to buy it at either the Golden Gecko or the Buckner Place (urp), but they won’t sell it to me until I pay some money on my bill. Lucky for me, Whiskey Bob's been making a bit of medicine for some of his friends}
+{15010}{}{I’m glad you found a source for your medicine. I guess that’s all I need to know for now.}
+{15020}{}{Interesting. Where would I find this Whiskey Bob?}
+{15030}{}{Thanks, Aldo. Tell me about something else, though.}
+{16000}{}{Whiskey Bob is usually (urp) at Buckner’s Place right here in downtown. I don't think he's often able to get out to tend his still lately. He's just not a reliable source of medicine for someone as (hic) unwell as myself.}
+{16010}{}{Thanks for the information, Aldo. That’s about all I need to know.}
+{16020}{}{Glad you found another supplier. Uh, could you breathe a bit more downwind? I’ve got another question for you.}
+{17000}{}{Hello there, Friend -- you look a bit perplexed. What you need is an friend here in town. (hic) I’m Aldo, the town greeter.}
+{17010}{}{Friend? Heh, heh, me @pname@}
+{17020}{}{Urk, (sniff, sniff) bad smell. Go away now.}
+{18000}{}{If you give me $20 I’ll be your friend and I’ll make sure everyone else is, too. That’s how it works here in the (urp) big city.}
+{18010}{}{Me no haff munny. You wann pretty leef?}
+{18020}{}{Toowa-eee-nty? Ook?  Beeg Cee-tee? Ook?}
+{19000}{}{Thanks, idiot. I'll be sure they look after you as well as I do.}
+{20000}{}{Nothing to say today.}
+{21000}{}{Work? Sure thing! (hic) I'm alwaysh... on the lookout fer shum more medicine. (hic) The barsh kicked me out. Get a little behind on your (hic) tab and out you go, into the cold and rain.}
+{21010}{}{Medicine, huh? How much of this 'medicine' are you looking for?}
+{22000}{}{Get the fuck outta mah... mah town, freak.@@::spits::@@Yeh's... yeh's hideous.}
+{23000}{}{Only a couple-a... couple bottles. (Urp) Five should do it. Beers, booze or... some of that rotgut. Bring 'em back here and I'll... (hic) reward yeh handsomely.}
+{23010}{}{Five bottles of beer, booze, or rotgut. I got it. You take care Aldo.}
+{23020}{}{Forget it. I'm not getting booze for you, you filthy drunk.}
+{24000}{}{Yeh did? You're a saint. What do you got fer ol' Aldo? I need my (hic) medicine.}
+{24010}{}{Just a few beers, Aldo.}
+{24020}{}{Some booze.}
+{24030}{}{Five bottles of rotgut.}
+{24040}{}{Oh, I guess I didn't have quite as much as I thought. Five bottles, right? I better get going.}
+{25000}{}{What're you (hic) doing? Mocking someone with my (cough, cough) condition. Go get me some. If I'm still (cough) around by then.}
+{25010}{}{Yeah, sure Aldo. Bye.}
+{26000}{}{Yeh're a saint. (He drains a bottle in one gulp) Ahhh. My (hic) throat is soothed. Now, I figure I owe yeh your dues. I won't be needing any of this (hic) shit. (Aldo hands you some filth encrusted gear, and a few caps) Be sure to come back. I'm always lookin' fer more medicine.}
+{26010}{}{Thanks Aldo. Maybe I'll get you some more later. See you around.}
+{26020}{}{Thanks Aldo. Maybe I'll get you some more later. See you around.}
+

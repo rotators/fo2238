@@ -1,0 +1,82 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// lexems_h.fos
+//
+
+#ifndef __LEXEMS_H__
+#define __LEXEMS_H__
+
+// shared!
+
+/*
+   Critter
+   -------
+        $~		- overwrites player description
+                        - overwrites npc description, "You see [name]. [+text if long description]"
+                          enforces using $name or Critter::Name (in that order) for all look types
+        $@		overwrites name over head, can be empty. player only
+        $name	overwrites name used in long/short description and combat messages
+        $tatoo
+
+   Item
+   ----
+        $+		CONFLICT
+                        Map::PlaySound() filename, during ITEM_EVENT_WALK (entered = true)
+                added after long description
+        $-		CONFLICT
+                        Map::PlaySound() filename, during ITEM_EVENT_WALK (entered = false)
+                        overwrites short description
+        $!		Map::PlaySound() radius, during ITEM_EVENT_WALK, default: 5
+        $~		overwrites long description
+
+        $desc	key description
+
+   Special Item
+   -------------
+   Dogtags
+        $owner	name of player/npc
+                        military   "[surname], [name]"
+                        custom
+                                player "[name]"
+                                npc    "[name] [nickWithSpace_or_nothing][surname]"
+        $info	extra info
+                        military "[id]/[birth_month]/[birth_year]/[blood_type]"
+                        custom   "[birth_month]/[birth_year]/[blood_type]"
+ */
+
+#ifdef __SERVER
+# define CritterMutual    Critter
+# define ItemMutual       Item
+#endif
+
+#ifdef __CLIENT
+# define CritterMutual    CritterCl
+# define ItemMutual       ItemCl
+#endif
+
+#ifndef __LEXEMS__
+
+import string GetCritterLexems(CritterMutual& critter) from "lexems";
+import string GetItemLexems(ItemMutual& item) from "lexems";
+
+import bool IsLexem(CritterMutual& critter, string& lex) from "lexems";
+import bool IsLexem(ItemMutual& it, string& lex) from "lexems";
+import bool IsLexem(string& lexems, string& lex) from "lexems";
+
+import string GetLexem(CritterMutual& critter, string& lex) from "lexems";
+import string GetLexem(ItemMutual& item, string& lex) from "lexems";
+import string GetLexem(string& lexems, string& lex) from "lexems";
+
+# ifdef __SERVER
+import void   SetLexem(CritterMutual& critter, string& lex, string& value) from "lexems";
+import void   SetLexem(ItemMutual& item, string& lex, string& value) from "lexems";
+import string SetLexem(string& lexems, string& lex, string& value) from "lexems";
+
+import void   UnsetLexem(CritterMutual& critter, string& lex) from "lexems";
+import void   UnsetLexem(ItemMutual& item, string& lex) from "lexems";
+import string UnsetLexem(string& lexems, string& lex) from "lexems";
+# endif // __SERVER
+#endif  // !__LEXEMS__
+#endif  // __LEXEMS_H__ //

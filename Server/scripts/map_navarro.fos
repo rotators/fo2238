@@ -1,0 +1,116 @@
+//
+// FOnline: 2238
+// Rotators
+//
+// map_navarro.fos
+//
+
+#include "_macros.fos"
+#include "elevators_h.fos"
+#include "_maps.fos"
+#include "factions_h.fos"
+#include "messages_h.fos"
+#include "mapdata_h.fos"
+
+import bool HasFactionUniform(Critter& cr, int faction, int minStatus) from "reputations_modifiers";
+
+// top-most elevator
+CElevator Elevator1;
+// technician room
+CElevator Elevator2;
+// kitchen
+CElevator Elevator3;
+// powersub
+CElevator Elevator4;
+
+bool      ElevatorsAdded = false;
+
+void map_init(Map& map, bool firstTime)
+{
+    if(firstTime)
+    {
+        // this map belongs to that faction
+        map.SetData(MAP_DATA_FACTION, FACTION_ENCLAVE);
+    }
+
+    // to add only one for all floors
+    if(!ElevatorsAdded)
+    {
+        // add elevators
+        AddElevator(Elevator1);
+        AddElevator(Elevator2);
+        AddElevator(Elevator3);
+        AddElevator(Elevator4);
+        ElevatorsAdded = true;
+    }
+    // parse elevators floors
+    if(map.GetProtoId() == MAP_Navarro ||
+       map.GetProtoId() == MAP_NavarroSublevel)
+    {
+        uint16 x = 0, y = 0;
+        // 1 - topmost elevator
+        if(map.GetEntireCoords(1, 0, x, y))
+            Elevator1.AddFloor(map.Id, 1);
+        // 2 - technician rooms elevator
+        if(map.GetEntireCoords(2, 0, x, y))
+            Elevator2.AddFloor(map.Id, 2);
+        // 3 - kitchen
+        if(map.GetEntireCoords(3, 0, x, y))
+            Elevator3.AddFloor(map.Id, 3);
+        // 4 - powersub
+        if(map.GetEntireCoords(4, 0, x, y))
+            Elevator4.AddFloor(map.Id, 4);
+    }
+}
+
+//
+// Elevator triggers
+//
+void t_Elevator1(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator1, critter, entered);
+}
+void t_Elevator2(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator2, critter, entered);
+}
+void t_Elevator3(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator3, critter, entered);
+}
+void t_Elevator4(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    HandleElevator(Elevator4, critter, entered);
+}
+
+//
+// Area triggers
+//
+
+// This is bad. Very bad.
+void t_EnterBase(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(GetGroupIndex(critter) != FACTION_ENCLAVE && !HasFactionUniform(critter, FACTION_ENCLAVE, UNIFORM_BODY_ONLY))
+        critter.SendMessage(MSG_NAV_AREA_NOT_ALLOWED, 0, MESSAGE_TO_VISIBLE_ME);
+    else
+        return;
+}
+
+// This is telling you it will become bad if you keep going
+void t_NearGate(Critter& critter, Scenery& trigger, bool entered, uint8 dir)
+{
+    if(!entered || !critter.IsPlayer())
+        return;
+
+    if(((trigger.HexX != 209) && (dir == 0 || dir == 4 || dir == 5)) ||
+       ((trigger.HexX == 209) && (dir > 2)))
+    {
+        if(GetGroupIndex(critter) != FACTION_ENCLAVE && !HasFactionUniform(critter, FACTION_ENCLAVE, UNIFORM_BODY_ONLY))                // send signal to Gate Guard
+            critter.SendMessage(MSG_NAV_TRESPASSER, 0, MESSAGE_TO_VISIBLE_ME);
+    }
+    else
+        return;
+}

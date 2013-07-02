@@ -1,0 +1,94 @@
+[comment]
+
+
+[data]
+lang=engl
+
+[dialog]
+&
+1 1000 None 1 #
+2 1010 D _script dialog@d_NoTatoo 0  #
+3 1020 D _script dialog@d_IsTatoo 0  @
+2 2000 None 1 #
+4 2010 #
+31 2020 D _var p q_nr_corsican_tattoo = 1 D _script dialog@d_NpcInLocation 1 7 #
+0 2030 @
+4 3000 None 1 #
+5 3010 D _param p ST_AGE } 18 #
+7 3020 D _param p ST_AGE { 18 #
+0 3030 @
+5 4000 None 0 #
+6 4010 #
+0 4020 @
+6 5000 None 0 #
+13 5010 D _item p PID_BOTTLE_CAPS } 500 R _script dialog@r_RemoveMoney 1 500 #
+10 5020 D _item p PID_BOTTLE_CAPS { 500 #
+11 5030 D _item p PID_BOTTLE_CAPS } 300 D _param p SK_SPEECH } 80 #
+9 5040 D _param p SK_SPEECH { 80 @
+7 6000 None 0 #
+0 6010 @
+3 7000 None 0 @
+11 8000 None 0 #
+13 8010 R _script dialog@r_RemoveMoney 1 300 @
+9 9000 None 0 @
+10 10000 None 0 @
+13 11000 dialog@dlg_EnterTatoo 0 #
+13 11010 @
+14 12000 dialog@dlg_EnterTatoo 0 #
+14 12010 @
+12 13000 None 0 #
+0 13010 @
+30 14000 None 0 @
+31 15000 None 0 #
+32 15010 #
+0 15020 @
+32 16000 None 0 #
+12 16010 R _script dialog@r_SetCorsicanBrothersTatoo 0  R _var p q_nr_corsican_tattoo = 2 #
+0 16020 &
+
+[engl]
+{100}{}{Ron}
+{200}{}{You see a tattooer.}
+{200}{}{You see Ron.}
+{210}{}{You see one of those self-proclaimed tattoo-artists. Artist or not, this one shines with some fancy skin decorations.}
+{210}{}{It's the local tattoo artist.}
+{1000}{}{Predialogue installations}
+{1010}{}{Player has no tattoo}
+{1020}{}{Player already has tattoo}
+{2000}{}{[You see a baldheaded man, bending over a table and sorting out busily several hand mixed tinctures, knife-like tools and ink cans. He seems to be some sort of tattoo artist]}
+{2010}{}{Excuse me, mister.. ?}
+{2020}{}{Bald, sweaty, buffed up... by the description I'd say the place is right.}
+{2030}{}{[Turn your back and leave him alone]}
+{3000}{}{[He doesn't even look up from his work] What is it? You better tell me you want one of my famous tats, else you can turn around and leave just right there where you stand, I'm not here to serve random people's chit-chat adventures.}
+{3010}{}{What sort of tattoos do you provide? I might be interested in having one.}
+{3020}{}{@sex@|I want to be a cool guy! Could you do me some tattoo please?||I want to look like a real badass-bitch, could you do me some tattoo please?|}
+{3030}{}{Too bad, I actually just wanted to came here to annoy you with loads of inane questions. I'm gone then. [Exit]}
+{4000}{}{Now you're talking business man.. [He shows you some examples in his old worn book. You can see finely drawn patterns, symbols... You can even spot an anchor!] 'tis all I have. If you want some fancy stuff, it'll cost you some extra caps.}
+{4010}{}{This is all cool and stuff, but I don't need anything fancy, just some words, some motto or a badass gang-name, could you do that for me, or would it hurt your aesthetic sense too much?}
+{4020}{}{I.. uh, don't like them at all. I better be going. [Exit]}
+{5000}{}{Aesthetics sense? Pah. It's you having to keep the cap a-rolling, so I don't care as long as I have something to eat. It's 500 caps, damn ink is fucking expensive man. What now, do you want it or not?}
+{5010}{}{[You pay him the caps] Here's the coin, hopefully I won't regret that later.}
+{5020}{}{I, uh, don't have that much money right now.}
+{5030}{}{500 caps? These knifes aren't sterile at all, this place looks messy and dirty and I'll most probably catch some sickness of a guy you've tattooed earlier. You won't get more then 300 of me.}
+{5040}{}{500 caps? These knifes aren't sterile at all, this place looks messy and dirty and I'll most probably catch some sickness of a guy you've tattooed earlier. You won't get more then 300 of me.}
+{6000}{}{@sex@|What? Grow some pubes already, before you want to get a tat! Come back when you're grown up, little boy.||You kidding me? I won't touch the underage girl, no tat for you little princess.|}
+{6010}{}{Bollocks!! Peh, I'm gone, your tattoos look like shit anyway! [Exit]}
+{7000}{}{@@You're already full of them tats, wiseass.@@No place left for a new tat.@@No.New.Tattoo.For.You.@@Don'tcha be wasting my time, you've got enough tats already.@@You're full of them tats already, don't waste my time.@@There's more tat then skin on your body already, leg it.}
+{8000}{}{Hm, well you could be right.. That guy's arm didn't look too well last time, shouldn't experiment with this special ink aswell. Dammit, allright, you got me, hand me the caps. But be warned, if you badmouth my business elsewhere...}
+{8010}{}{[Toss him the caps]}
+{9000}{}{What the.. Take it or leave it, this is not a fucking surgery room.. People walk in an' out all day long here without dying from the needle, so get lost.}
+{10000}{}{Say what? Why are you still harassing me with this bullshit then? Get some caps or get lost!}
+{11000}{}{[He counts the caps] Allrighto, what letters you want to be put on your arm then.. And they better be not more then 12, I've got more shit to do today.}
+{11010}{}{[Tell him the title of your tattoo by using the "Say" button]}
+{12000}{}{Allrighto, what letters you want to be put on your arm then.. And they better be not more then 12, I've got more shit to do today.}
+{12010}{}{[Tell him the title of your tattoo by using the "Say" button]}
+{13000}{}{Isn't it a damn beauty? And it didn't even hurt, aight?! Now get off that chair, I've got more customers to take care of today.}
+{13010}{}{[Your skin actually *does* hurt a lot] Thanks man, now I look like a real badass! Gotta go show it off in front of my friends now.}
+{14000}{}{- - - - - - - - - - CORSICAN BROTHERS TATOO - - - - - - - - - -}
+{15000}{}{And who the hell are you?}
+{15010}{}{Marty sends his greetings. He wants you to provide me with the stuff reserved for the Corsican Brothers only.}
+{15020}{}{Erhm -- nobody special. Gotta go, bye!}
+{16000}{}{Right, there was a tramp here today babbling something about it, must've been Marty's pigeon. Take a seat over there, we'll start in a minute.}
+{16010}{}{[Take a seat, wait and let him do his job]}
+{16020}{}{[Leave]}
+
