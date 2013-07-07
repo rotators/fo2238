@@ -36,15 +36,17 @@ WE has a fully featured scripting engine which exposes the internal API, enablin
 5. Credits & Authors
 --------
 WorldEditor + base extensions by Ghosthack
+
 Critter Proto editor by Atom
-http://www.fonline2238.net
+
+http://www.fodev.net
 
 WorldEditor uses the following libraries and code:
 
-C# Script execution engine, (c) 2004-2011 Oleg Shiro.
+C# Script execution engine, (c) 2004-2013 Oleg Shilo.
 http://www.csscript.net
 
-ObjectListView, (c) 2006-2011 Phillip Piper.
+ObjectListView, (c) 2006-2013 Phillip Piper.
 http://objectlistview.sourceforge.net
 
 .NET 4.0 framework, (c) Microsoft
