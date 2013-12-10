@@ -3,6 +3,7 @@
 
 void RegisterDevConnect();
 
+#ifdef FO_WINDOWS
 int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 {
 	switch(reason)
@@ -18,6 +19,7 @@ int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 	}
 	return 1;
 }
+#endif
 
 FONLINE_DLL_ENTRY(compiler)
 {

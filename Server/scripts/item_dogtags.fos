@@ -172,7 +172,7 @@ Item@ DogTag(Critter@ holder, Critter@ target)
         }
         if(picture.length() > 0)
         {
-            dogtag.PicInv = GetStrHash("art\\inven\\" + picture);
+            dogtag.PicInv = GetStrHash("art/inven/" + picture);
             dogtag.Update();
         }
     }

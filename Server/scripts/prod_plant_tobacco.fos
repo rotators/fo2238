@@ -36,9 +36,9 @@ uint e_Regen(array<uint>@ values)
     UpdatePic(item);
     return RegenerationInterval;
 }
-array<string@> NormalPics = { "art\\items\\tobacco1.fofrm", "art\\items\\tobacco2.fofrm" };
+array<string@> NormalPics = { "art/items/tobacco1.fofrm", "art/items/tobacco2.fofrm" };
 PicHashes NormalPicHashes(NormalPics);
-array<string@> FarmedPics = { "art\\items\\tobacco3.fofrm" };
+array<string@> FarmedPics = { "art/items/tobacco3.fofrm" };
 PicHashes FarmedPicHashes(FarmedPics);
 
 void UpdatePic(Item& item)

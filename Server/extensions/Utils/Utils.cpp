@@ -21,6 +21,7 @@ EXPORT int FloatToInt(float value)
 
 EXPORT unsigned long long getticks()
 {
+#if defined(FO_WINDOWS)
     LARGE_INTEGER t;
     unsigned long long ret=0;
     QueryPerformanceCounter(&t);
@@ -28,6 +29,10 @@ EXPORT unsigned long long getticks()
     ret<<=32;
     ret+=t.LowPart;
 	return ret;
+#elif defined(FO_LINUX)
+    Log( "ERROR : not implemented" );
+    return( 0 );
+#endif
 }
 
 EXPORT int Critter_GetSocket(Critter& cr)
@@ -67,7 +72,11 @@ EXPORT void Critter_SetAccess( Critter& player, int access )
   if( !player.CritterIsNpc )
   {
 	  Client* cl=(Client*)&player;
+#ifdef FO_GCC
+	  *((uint8*)(&cl->Access)) = access;
+#else
 	  (uint8)(cl->Access) = access; // 1 << (access);
+#endif
   }
 }
 

@@ -7855,12 +7855,12 @@ void ExecPlaySoundCommand(array<string@>@ command, Critter@ player, bool speech)
                     y = player.HexY;
                 if(r == 0)
                     r = 10;
-                map.PlaySound((speech ? "sound\\speech\\" : "") + sound, x, y, r);
+                map.PlaySound((speech ? "sound/speech/" : "") + sound, x, y, r);
                 return;
             }
             else
             {
-                map.PlaySound((speech ? "sound\\speech\\" : "") + sound);
+                map.PlaySound((speech ? "sound/speech/" : "") + sound);
                 return;
             }
         }
@@ -8969,8 +8969,8 @@ uint cte_Aura(Critter& cr, int identifier, uint& value)
             if(valid(stake))
             {
                 int num = Random(1, 12);
-                stake.PicMap = GetStrHash("art\\scenery\\stake" + (num < 10 ? "0" : "") + num + ".frm");
-                stake.PicInv = GetStrHash("art\\scenery\\stake" + (num < 10 ? "0" : "") + num + ".frm");
+                stake.PicMap = GetStrHash("art/scenery/stake" + (num < 10 ? "0" : "") + num + ".frm");
+                stake.PicInv = GetStrHash("art/scenery/stake" + (num < 10 ? "0" : "") + num + ".frm");
                 stake.Val8 = SPECIAL_ITEM_AURA;
                 _SetSpawner(stake, cr);                // it's never legit ;)
                 stake.Update();
@@ -8982,8 +8982,8 @@ uint cte_Aura(Critter& cr, int identifier, uint& value)
             if(valid(tree))
             {
                 int num = Random(1, 11);
-                tree.PicMap = GetStrHash("art\\scenery\\tree" + num + ".frm");
-                tree.PicInv = GetStrHash("art\\scenery\\tree" + num + ".frm");
+                tree.PicMap = GetStrHash("art/scenery/tree" + num + ".frm");
+                tree.PicInv = GetStrHash("art/scenery/tree" + num + ".frm");
                 tree.Val8 = SPECIAL_ITEM_AURA;
                 _SetSpawner(tree, cr);                // it's never legit ;)
                 tree.Update();

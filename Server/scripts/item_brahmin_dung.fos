@@ -18,7 +18,7 @@ import void AddScore(Critter@ cr, uint score, uint points) from "utils";
 
 #define TEXT    (3015)
 
-array<string@> NormalPics = { "art\\items\\mstr49.fofrm", "art\\items\\mstr50.fofrm", "art\\items\\mstr51.fofrm", "art\\items\\mstr52.fofrm" };
+array<string@> NormalPics = { "art/items/mstr49.fofrm", "art/items/mstr50.fofrm", "art/items/mstr51.fofrm", "art/items/mstr52.fofrm" };
 PicHashes NormalPicHashes(NormalPics);
 
 void item_init(Item& item, bool firstTime)

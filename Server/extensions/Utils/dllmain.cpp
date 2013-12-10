@@ -10,6 +10,7 @@ void FinishMapLocationExt();
 void TryInitNoob();
 void RegisterAngelScriptExtensions();
 
+#if defined(FO_WINDOWS)
 int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 {
 	switch(reason)
@@ -27,6 +28,17 @@ int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 	}
 	return 1;
 }
+#elif defined(FO_LINUX)
+__attribute__((constructor)) void process_attach()
+{
+	setlocale(LC_ALL, "English");
+}
+
+__attribute__((destructor)) void process_detach()
+{
+	if(!isCompiler) FinishMapLocationExt();
+}
+#endif
 
 FONLINE_DLL_ENTRY(compiler)
 {

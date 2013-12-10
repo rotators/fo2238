@@ -26,7 +26,7 @@
  *	if value == 1 - save as: [param_number]
  *	anything else - save as: [param_number]:[param_value]
  */
-void SaveParamBlock( FILE *f, char *key, Critter& player, uint begin, uint end )
+void SaveParamBlock( FILE *f, const char *key, Critter& player, uint begin, uint end )
 {
 	bool found = false;
 	for( uint param = begin; param <= end; param++ )
@@ -59,7 +59,7 @@ EXPORT void OnlineStats_CharDelete( Critter& player, ScriptString& directory )
 #ifdef _MSC_VER
 	fopen_s(&f, filename, "r");
 #else
-	f=fopen( filename, "r" )
+	f=fopen( filename, "r" );
 #endif
 	if(f)
 	{
@@ -75,7 +75,7 @@ EXPORT void OnlineStats_CharDelete( Critter& player, ScriptString& directory )
 #ifdef _MSC_VER
 	fopen_s(&f, filename, "r");
 #else
-	f=fopen( filename, "r" )
+	f=fopen( filename, "r" );
 #endif
 	if(f)
 	{
@@ -99,7 +99,7 @@ EXPORT void OnlineStats_CharSave( Critter& player, int settings, ScriptString& d
 #ifdef _MSC_VER
 	fopen_s(&f, filename, "w");
 #else
-	f=fopen( filename, "w" )
+	f=fopen( filename, "w" );
 #endif
 	if(f)
 	{

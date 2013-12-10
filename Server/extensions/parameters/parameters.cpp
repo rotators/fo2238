@@ -10,9 +10,12 @@
 #ifdef __SERVER
 #include <strstream>
 #include <string>
+
+#ifdef FO_WINDOWS
 #include <windows.h>
 #include <Mmsystem.h>
 #endif
+#endif // __SERVER
 
 // Slot/parameters allowing
 EXPORT bool allowSlot_Hand1(uint8, Item&, Critter&, Critter& toCr);
@@ -89,11 +92,13 @@ extern void RegisterAngelScriptExtensions();
 /* Initialization                                                       */
 /************************************************************************/
 
+#ifdef FO_WINDOWS
 int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 {
 	// In this function all global variables is NOT initialized, use DllMainEx instead
 	return 1;
 }
+#endif
 
 FONLINE_DLL_ENTRY(compiler)
 {
@@ -781,11 +786,11 @@ int GetArmorDT(CritterMutual& cr, int dmgType, const Item* armor)
 #ifdef __SERVER
 
 int WalkTime[MAX_CRIT_TYPES];
-int TickDiff=0;
+//int TickDiff=0;
 
 EXPORT bool InitWalkProcessing(Critter& cr)
 {
-	TickDiff=(int)timeGetTime()-cr.WaitEndTick;
+//	TickDiff=(int)timeGetTime()-cr.WaitEndTick;
 
 	// read critter types
 	FILE* f=NULL;
@@ -851,7 +856,7 @@ EXPORT bool InitWalkProcessing(Critter& cr)
 
 EXPORT bool Critter_IsMoving(Critter& cr)
 {
-	return (int)timeGetTime()-TickDiff-(int)cr.PrevHexTick<WalkTime[cr.BaseType];
+	return (int)FOnline->GetTick()-(int)cr.PrevHexTick<WalkTime[cr.BaseType];
 }
 
 #endif

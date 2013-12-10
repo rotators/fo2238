@@ -958,7 +958,7 @@ void disguise999(int, int, int, string@ str, array<int>@)
 {
     if(valid(str) && str.length() > 0)
     {
-        @_disguise999 = "art\\" + str;
+        @_disguise999 = "art/" + str;
         Message("disguise999=<" + _disguise999 + ">");
     }
     else

@@ -1,15 +1,18 @@
 #include <strstream>
 #include <string>
-#include <windows.h>
 #include "../fonline2238.h"
 #include <stdio.h>
 
+#ifdef FO_WINDOWS
+#include <windows.h>
+#endif
+
 int WalkTime[MAX_CRIT_TYPES];
-int TickDiff=0;
+//int TickDiff=0;
 
 EXPORT bool InitWalkProcessing2(Critter& cr)
 {
-	TickDiff=(int)timeGetTime()-cr.WaitEndTick;
+//	TickDiff=(int)timeGetTime()-cr.WaitEndTick;
 
 	// read critter types
 #ifdef _MSC_VER
@@ -75,5 +78,6 @@ EXPORT bool InitWalkProcessing2(Critter& cr)
 
 bool IsMoving(Critter& cr)
 {
-	return (int)timeGetTime()-TickDiff-(int)cr.PrevHexTick<WalkTime[cr.BaseType];
+//	return (int)timeGetTime()-TickDiff-(int)cr.PrevHexTick<WalkTime[cr.BaseType];
+	return (int)FOnline->GetTick()-(int)cr.PrevHexTick<WalkTime[cr.BaseType];
 }

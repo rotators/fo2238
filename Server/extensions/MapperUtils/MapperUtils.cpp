@@ -2,10 +2,12 @@
 #pragma warning(disable: 4005)
 #include "../../scripts/_mapper_defines.fos"
 
+#ifdef FO_WINDOWS
 int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 {
 	return 1;
 }
+#endif
 
 struct MapObjectEx : MapObject
 {
@@ -36,7 +38,11 @@ EXPORT void MapObject_CritterCl_SetParam(MapObject& mobj, uint16 param, int val)
 {
 	CritterCl* cr=GetCritterCl(mobj);
 	if(!cr) return;
+#ifdef FO_GCC
+	*((int**)(&cr->Params))[param]=val;
+#else
 	const_cast<int*>(cr->Params)[param]=val;
+#endif
 }
 
 EXPORT int MapObject_CritterCl_GetParam(MapObject& mobj, uint16 param)
@@ -50,7 +56,11 @@ EXPORT void MapObject_CritterCl_SetBaseType(MapObject& mobj, uint crtype)
 {
 	CritterCl* cr=GetCritterCl(mobj);
 	if(!cr) return;
+#ifdef FO_GCC
+	*((uint*)(&cr->BaseType))=crtype;
+#else
 	(uint)(cr->BaseType)=crtype;
+#endif
 	// todo: alias ctype
 }
 

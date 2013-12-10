@@ -11,6 +11,7 @@
 #include "../fonline2238.h"
 //#include "online_stats.h"
 
+#if defined(FO_WINDOWS)
 #include "xfiregameclient.h"
 
 #include <windows.h>
@@ -23,10 +24,18 @@ EXPORT void OnlineStats_URL( ScriptString& url )
 	ShellExecute( NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL );
 };
 
+#elif defined(FO_LINUX)
+EXPORT void OnlineStats_URL( ScriptString& url )
+{
+	// TODO
+};
+#endif
+
 /*****************
  * XFire support *
  *****************/
  
+#if defined(FO_WINDOWS)
 bool Init=false;
 const char *names[NAMES_MAX];
 const char *values[NAMES_MAX];
@@ -72,5 +81,10 @@ EXPORT void XFireDLL_InfoCleanup( void )
 		}
 	};
 };
+#elif defined(FO_LINUX)
+EXPORT void XFireDLL_InfoSet( uint id, ScriptString& name, ScriptString& value ) {}
+EXPORT void XFireDLL_InfoSend( void ) {}
+EXPORT void XFireDLL_InfoCleanup( void ) {}
+#endif
 
 #endif /* __CLIENT_ONLINE_STATS_CPP__ */

@@ -8,9 +8,8 @@
 #ifndef __BACKEND__
 #define __BACKEND__
 
-#pragma bindfunc "void Dummy() -> Backend.dll Dummy"
-
 #ifndef __DEBUG_DISABLE_SQL__
+# pragma bindfunc "void Dummy() -> Backend.dll Dummy"
 # pragma bindfunc "bool dbInitTable(string@+,string@+) -> Backend.dll dbInitTable"
 # pragma bindfunc "bool dbLog(string@+, string@+) -> Backend.dll dbLog"
 #endif

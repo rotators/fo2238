@@ -384,9 +384,9 @@ void show(Critter& cr, int i, int, int)
         for(uint i = 0; i < num; i++)
         {
             if(FLAG(mHexes[i].Flags, ITEM_NO_BLOCK))
-                mHexes[i].PicMap = GetStrHash("art\\intrface\\HLGRN.FRM");
+                mHexes[i].PicMap = GetStrHash("art/intrface/HLGRN.FRM");
             else
-                mHexes[i].PicMap = GetStrHash("art\\intrface\\HLRED.FRM");
+                mHexes[i].PicMap = GetStrHash("art/intrface/HLRED.FRM");
             mHexes[i].Update();
         }
     }
@@ -407,7 +407,7 @@ void hide(Critter& cr, int i, int, int)
         uint         num = GetMHexes(item, mHexes);
         for(uint i = 0; i < num; i++)
         {
-            mHexes[i].PicMap = GetStrHash("art\\intrface\\BLANK.FRM");
+            mHexes[i].PicMap = GetStrHash("art/intrface/BLANK.FRM");
             mHexes[i].Update();
         }
     }

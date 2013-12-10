@@ -1,0 +1,46 @@
+.DEFAULT_GOAL = all
+
+DIR_TOP ?= .
+
+DIR_BUILD = $(DIR_TOP)/Release/$(TARGET)
+DIR_OUT   = $(DIR_TOP)/Release
+
+DIR_STLPORT        = $(DIR_TOP)/3rdParty/StlPort
+DIR_ANGELSCRIPT    = $(DIR_TOP)/3rdParty/angelscripts/include
+DIR_ANGELSCRIPT_FO = $(DIR_TOP)/AngelScript
+DIR_SCRIPTS        = $(DIR_TOP)/../scripts
+
+OBJ = $(addprefix $(DIR_BUILD)/, $(notdir $(SRC:.cpp=.o)))
+DEP = $(OBJ:.o=.d)
+-include $(DEP)
+
+SO = $(addprefix $(DIR_OUT)/, $(addsuffix .so, $(TARGET)))
+
+DIRS_INCLUDE := $(DIR_STLPORT) $(DIR_SCRIPTS) . $(DIRS_INCLUDE)
+DIRS_LIB     := $(DIRS_LIBS) $(DIR_STLPORT)
+LIBS         := rt pthread $(LIBS)
+
+CXX         ?= g++
+CXXFLAGS    := -std=gnu++11 $(addprefix -I, $(DIRS_INCLUDE)) $(addprefix -D, $(DEFINES)) -MMD -O2 $(CXXFLAGS)
+CXXFLAGS_SO := -shared -fPIC $(CXXFLAGS_SO)
+
+$(SO): $(OBJ) | $(DIR_OUT) $(notdir $(SO))
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_SO) -o $@ $(OBJ) $(addprefix ../lib/lib,$(addsuffix .a,$(LIBS_A))) $(addprefix -L,$(DIRS_LIBS)) $(addprefix -l, $(LIBS))
+
+$(notdir $(SO)):
+	ln -sr $< $(SO)
+
+$(DIR_BUILD) $(DIR_OUT):
+	mkdir -p $@
+
+$(DIR_BUILD)/%.o: %.cpp | $(DIR_BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(DIR_BUILD)/%.o: $(DIR_TOP)/*/%.cpp | $(DIR_BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJ) $(SO) $(notdir $(SO))
+	rm -rf $(DIR_BUILD)
+
+again: clean all

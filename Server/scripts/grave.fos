@@ -23,9 +23,9 @@ import void SwitchState(Item& locker) from "lockers";
 void GraveRandomPic(Item@ grave)
 {
     if(grave.GetProtoId() == PID_GRAVESITE_V)
-        grave.PicMap = GetStrHash("art\\items\\grave" + Random(1, 4) + ".frm");
+        grave.PicMap = GetStrHash("art/items/grave" + Random(1, 4) + ".frm");
     else
-        grave.PicMap = GetStrHash("art\\items\\grave" + Random(5, 7) + ".frm");
+        grave.PicMap = GetStrHash("art/items/grave" + Random(5, 7) + ".frm");
 }
 
 

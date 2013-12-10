@@ -51,9 +51,9 @@ void UpdatePic(Item& item)
     item.Update();
 }
 
-array<string@> NormalPics = { "art\\items\\apptree1.fofrm" };
+array<string@> NormalPics = { "art/items/apptree1.fofrm" };
 PicHashes NormalPicHashes(NormalPics);
-array<string@> FarmedPics = { "art\\scenery\\tre1000.frm" };
+array<string@> FarmedPics = { "art/scenery/tre1000.frm" };
 PicHashes FarmedPicHashes(FarmedPics);
 
 class GatherCallback : IGatherCallback
@@ -73,15 +73,15 @@ bool _UsePlant(Item& item, Critter& cr, int skill)
 }
 
 /* // Old Corn images
-   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn1.frm") );
-   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn2.frm") );
-   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn3.frm") );
-   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn4.frm") );
-   NormalPicHashes.insertLast( GetStrHash("art\\items\\corn5.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art/items/corn1.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art/items/corn2.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art/items/corn3.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art/items/corn4.frm") );
+   NormalPicHashes.insertLast( GetStrHash("art/items/corn5.frm") );
 
-   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn1.fofrm") );
-   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn2.fofrm") );
-   FarmedPicHashes.insertLast( GetStrHash("art\\items\\farmedcorn3.fofrm") );
+   FarmedPicHashes.insertLast( GetStrHash("art/items/farmedcorn1.fofrm") );
+   FarmedPicHashes.insertLast( GetStrHash("art/items/farmedcorn2.fofrm") );
+   FarmedPicHashes.insertLast( GetStrHash("art/items/farmedcorn3.fofrm") );
  */
 
 

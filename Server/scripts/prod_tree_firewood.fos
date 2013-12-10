@@ -60,11 +60,11 @@ uint e_Regen(array<uint>@ values)
     return RegenerationInterval;
 }
 
-array<string@> NormalPics = { "art\\items\\TREE7.FRM", "art\\items\\TREE8.FRM", "art\\items\\TREE9.FRM" };
+array<string@> NormalPics = { "art/items/TREE7.FRM", "art/items/TREE8.FRM", "art/items/TREE9.FRM" };
 PicHashes NormalPicHashes(NormalPics);
-array<string@> GrowingPics = { "art\\items\\tree4.fofrm", "art\\items\\tree5.fofrm", "art\\items\\tree6.fofrm" };
+array<string@> GrowingPics = { "art/items/tree4.fofrm", "art/items/tree5.fofrm", "art/items/tree6.fofrm" };
 PicHashes GrowingPicHashes(GrowingPics);
-array<string@> ChoppedPics = { "art\\items\\treechopped1.fofrm" };
+array<string@> ChoppedPics = { "art/items/treechopped1.fofrm" };
 PicHashes ChoppedPicHashes(ChoppedPics);
 
 class GatherCallback : IGatherCallback

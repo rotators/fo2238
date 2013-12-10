@@ -2427,7 +2427,7 @@ uint e_DeathSpeech(array<uint>@ values)
         "7",         // The radiation has taken its toll. Your death was lingering and extremely painful. Your adventure is done.
     };
 
-    PlaySound(cr, "sound\\speech\\narrator\\nar_" + death[Random(0, death.length() - 1)] + ".acm");
+    PlaySound(cr, "sound/speech/narrator/nar_" + death[Random(0, death.length() - 1)] + ".acm");
 
     return(0);
 }

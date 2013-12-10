@@ -101,9 +101,9 @@ uint e_SwitchSign(array<uint>@ values)
     {
         UNSETFLAG(item.Flags, ITEM_LIGHT);
         if(pid == 9922)                                         // east-west sign
-            item.PicMap = GetStrHash("art\\items\\tattoo_sign_day.fofrm");
+            item.PicMap = GetStrHash("art/items/tattoo_sign_day.fofrm");
         else if(pid == 9923)                                    // north-south sign
-            item.PicMap = GetStrHash("art\\items\\tattoo_sign_day_w.fofrm");
+            item.PicMap = GetStrHash("art/items/tattoo_sign_day_w.fofrm");
 
         item.Update();
         return REAL_MINUTE(1);
@@ -113,9 +113,9 @@ uint e_SwitchSign(array<uint>@ values)
     {
         SETFLAG(item.Flags, ITEM_LIGHT);
         if(pid == 9922)
-            item.PicMap = GetStrHash("art\\items\\tattoo_sign_night.frm");
+            item.PicMap = GetStrHash("art/items/tattoo_sign_night.frm");
         else if(pid == 9923)
-            item.PicMap = GetStrHash("art\\items\\tattoo_sign_night_w.frm");
+            item.PicMap = GetStrHash("art/items/tattoo_sign_night_w.frm");
 
         item.Update();
         return REAL_MINUTE(1);

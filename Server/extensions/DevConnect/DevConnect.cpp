@@ -1,15 +1,19 @@
-#ifdef _MSC_VER
+#define SKIP_PRAGMA
+#include "../fonline2238.h"
+
+#if defined(FO_WINDOWS)
 	#include <WinSock2.h>
 	#define socklen_t int
 	#pragma comment(lib, "Ws2_32.lib")
 	#define strdup _strdup
 
 	#define _FUNC_  __FUNCTION__
-#else // linux
+#elif defined(FO_LINUX)
 	#include <arpa/inet.h>
 	#include <netinet/in.h>
 	#include <sys/socket.h>
 	#include <sys/types.h>
+	#include <fcntl.h>
 	#include <netdb.h>
 	#include <unistd.h>
 
@@ -26,9 +30,6 @@
 
 #include <string>
 #include <vector>
-
-#define SKIP_PRAGMA
-#include "../fonline2238.h"
 
 #define _(x) if( (ASEngine->x) < 0 ) { Log( "DevConnect : ASSERT %s %d\n", __FILE__, __LINE__ ); }
 #define __ DevClient::Script::
@@ -199,8 +200,8 @@ void DevConnectWork()
 				dev->Id = ++DevId;
 				dev->Name = "none";
 				dev->State = DevConnected;
-				dev->LastActive = GetTickCount();
-				dev->LastProcess = GetTickCount();
+				dev->LastActive = FOnline->GetTick();
+				dev->LastProcess = FOnline->GetTick();
 				dev->Sock = sock;
 				dev->From = from;
 
@@ -240,9 +241,9 @@ void DevConnectWork()
 		}
 		else
 		{
-			if( GetTickCount() - dev->LastProcess >= 1000 )
+			if( FOnline->GetTick() - dev->LastProcess >= 1000 )
 			{
-				dev->LastProcess = GetTickCount();
+				dev->LastProcess = FOnline->GetTick();
 
 				switch( dev->State )
 				{
@@ -344,14 +345,14 @@ const char* DevClient::ReadSocket()
 	{
 		if( len == 0 ) // graceful close
 		{
-			Log( "DevConnect : %s : socket closed\n", Name );
+			Log( "DevConnect : %s : socket closed\n", Name.c_str() );
 			State = DevDisconnect;
 		}
 		//Log( "len <= 0 (%d)\n", len );
 		return( NULL );
 	}
 
-	LastActive = GetTickCount();
+	LastActive = FOnline->GetTick();
 	cmd[ len ] = 0;
 
 	char* front = cmd;
@@ -387,7 +388,7 @@ void DevClient::WriteSocket( const char* str )
 	size_t buf_len = strlen( buf ) + 1;
 	if( send( Sock, buf, buf_len, 0 ) != (int)buf_len )
 	{
-		Log( "DevConnect : %s : WriteSocket() fail, disconnecting\n", Name );
+		Log( "DevConnect : %s : WriteSocket() fail, disconnecting\n", Name.c_str() );
 		State = DevDisconnect;
 	}
 }
@@ -397,7 +398,11 @@ void DevClient::OnConnect()
 	int bindId = FOnline->ScriptBind( DevModule.c_str(), "bool dev_connect(uint)", true );
 	if( bindId && FOnline->ScriptPrepare( bindId ))
 	{
+#if defined(FO_WINDOWS)
 		FOnline->ScriptSetArgUInt( From.sin_addr.S_un.S_addr );
+#elif defined(FO_LINUX)
+		FOnline->ScriptSetArgUInt( From.sin_addr.s_addr );
+#endif
 		FOnline->ScriptRunPrepared();
 		if( FOnline->ScriptGetReturnedBool() )
 			State = DevAuthName;
@@ -528,7 +533,11 @@ void DevClient::OnWork()
 
 uint DevClient::Script::GetIp( DevClient* dev )
 {
+#if defined(FO_WINDOWS)
 	return( (uint)dev->From.sin_addr.S_un.S_addr );
+#elif defined(FO_LINUX)
+	return( (uint)dev->From.sin_addr.s_addr );
+#endif
 }
 
 void DevClient::Script::Disconnect( DevClient* dev )

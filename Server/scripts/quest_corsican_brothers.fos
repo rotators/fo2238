@@ -64,7 +64,7 @@ bool _UseItemOnDeadbody(Item& item, Critter& cr, Item@ usedItem)
             cr.Say(SAY_NETMSG, "Using the lighter, you set the body on fire.");
             UNSETFLAG(item.Flags, ITEM_ALWAYS_VIEW);
             UNSETFLAG(item.Flags, ITEM_CAN_PICKUP);
-            item.PicMap = GetStrHash("art\\items\\QuestBurningBody.fofrm");
+            item.PicMap = GetStrHash("art/items/QuestBurningBody.fofrm");
             item.Update();
             item.Animate(0, 21);
             uint[] values = { item.Id, 0 };
@@ -85,7 +85,7 @@ uint e_RemoveRests(array<uint>@ values)
     if(!valid(item))
         return 0;
 
-    item.PicMap = GetStrHash("art\\items\\QuestBurningBodySingle.fofrm");
+    item.PicMap = GetStrHash("art/items/QuestBurningBodySingle.fofrm");
     item.Update();
     DeleteItem(item);
     return 0;

@@ -492,7 +492,7 @@ bool CreateTent(Critter& leader, uint var, uint& out id, uint locationpid, bool 
                     if(valid(tree))
                     {
                         tree.Flags = ITEM_ALWAYS_VIEW | ITEM_NO_HIGHLIGHT | ITEM_CAN_LOOK;
-                        tree.PicMap = tree.PicInv = GetStrHash("art\\scenery\\newtree2.fofrm");
+                        tree.PicMap = tree.PicInv = GetStrHash("art/scenery/newtree2.fofrm");
                         SetLexem(tree, "$-", "Tree");
                         SetLexem(tree, "$~", "It is just an old tree, what more do you expect of it?");
                         tree.Update();
@@ -774,7 +774,7 @@ bool IsTentOwner(Map& tent, Critter& cr)
 
 void _RegenItem(Item& item, bool firstTime)
 {
-    item.PicMap = GetStrHash("art\\items\\ground_tent.png");
+    item.PicMap = GetStrHash("art/items/ground_tent.png");
     item.Flags = ITEM_LIGHT_THRU | ITEM_SHOOT_THRU | ITEM_ALWAYS_VIEW | ITEM_NO_HIGHLIGHT | ITEM_BAD_ITEM | ITEM_CAN_LOOK | ITEM_CAN_USE;
     for(int e = 0; e < ITEM_EVENT_MAX; e++)
     {
@@ -821,7 +821,7 @@ void SetCampfireLight(Item& campfire, uint8 value)
 
 void MakeCampfireUsuable(Item& campfire)
 {
-    campfire.PicMap = GetStrHash("art\\items\\fireplace.frm");
+    campfire.PicMap = GetStrHash("art/items/fireplace.frm");
     if(campfire.LightIntensity < 50)
         SetCampfireLight(campfire, 50);
     campfire.LightColor = 99975000;
@@ -831,7 +831,7 @@ void MakeCampfireUsuable(Item& campfire)
 
 void MakeCampfireUnusuable(Item& campfire)
 {
-    campfire.PicMap = GetStrHash("art\\scenery\\woodfire.frm");
+    campfire.PicMap = GetStrHash("art/scenery/woodfire.frm");
     campfire.LightIntensity = 0;
     campfire.LightDistance = 0;
     campfire.LightColor = 0;

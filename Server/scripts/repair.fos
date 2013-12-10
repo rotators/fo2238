@@ -376,8 +376,8 @@ void SetMinWear(Item& item, int wearProcent)   // Export
 
                         if( base.length() > 0 )
                         {
-                                item.PicMap = GetStrHash( "art\\items\\map_"+base+(broken?"_broken":"")+".fofrm" );
-                                item.PicInv = GetStrHash( "art\\inven\\inv_"+base+(broken?"_broken":"")+".fofrm" );
+                                item.PicMap = GetStrHash( "art/items/map_"+base+(broken?"_broken":"")+".fofrm" );
+                                item.PicInv = GetStrHash( "art/inven/inv_"+base+(broken?"_broken":"")+".fofrm" );
                         }
 
                         // Item::Update() must be executed outside of this function

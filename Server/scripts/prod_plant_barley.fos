@@ -52,9 +52,9 @@ bool _UseSkill(Item& item, Critter& cr, int skill)
     return false;
 }
 
-array<string@> NormalPics = { "art\\items\\barley1.fofrm", "art\\items\\barley2.fofrm", "art\\items\\barley3.fofrm" };
+array<string@> NormalPics = { "art/items/barley1.fofrm", "art/items/barley2.fofrm", "art/items/barley3.fofrm" };
 PicHashes NormalPicHashes(NormalPics);
-array<string@> FarmedPics = { "art\\items\\farmedbarley1.fofrm", "art\\items\\farmedbarley2.fofrm", "art\\items\\farmedbarley3.fofrm" };
+array<string@> FarmedPics = { "art/items/farmedbarley1.fofrm", "art/items/farmedbarley2.fofrm", "art/items/farmedbarley3.fofrm" };
 PicHashes FarmedPicHashes(FarmedPics);
 
 void UpdatePic(Item& item)

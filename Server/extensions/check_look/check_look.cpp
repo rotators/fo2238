@@ -29,6 +29,7 @@ void InitLook() // generation
 	Init=true;
 }
 
+#if defined(FO_WINDOWS)
 int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 {
 	switch(reason)
@@ -51,6 +52,16 @@ int __stdcall DllMain(void* module, unsigned long reason, void* reserved)
 	}
 	return 1;
 }
+#elif defined(FO_LINUX)
+__attribute((destructor)) void process_detach()
+{
+	if(!isCompiler)
+	{
+		FinishLookup();
+		FinishDists();
+	}
+}
+#endif
 
 FONLINE_DLL_ENTRY(compiler)
 {
