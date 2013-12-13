@@ -1,0 +1,23 @@
+#!/bin/sh
+###
+#
+# pre-commit.scripts
+#
+# Tries to compile all modified scripts before commiting; in case of error, commit is halted.
+# Preprocessed files are separated from these used by server.
+#
+# Copy/include in .git/hooks/pre-commit to use, see http://git-scm.com/docs/githooks
+#
+###
+
+echo "pre-commit: started scripts check"
+make -C Server/scripts -f ../../.githooks/pre-commit.scripts.mk
+status=$?
+
+if [ $status == 0 ]; then
+	echo "pre-commit: finished scripts check"
+else
+	echo "pre-commit: failed scripts check, aborting commit"
+fi
+
+exit $status

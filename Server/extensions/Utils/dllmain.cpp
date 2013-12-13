@@ -45,8 +45,8 @@ FONLINE_DLL_ENTRY(compiler)
 	isCompiler=compiler;
 	if(!isCompiler)
 	{
-		InitLocationEx();
 		TryInitNoob();
 	}
+	InitLocationEx();
 	RegisterAngelScriptExtensions();
 }
