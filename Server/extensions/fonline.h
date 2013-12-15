@@ -3,8 +3,8 @@
 
 //
 // FOnline engine structures, for native working
-// Last update 07.04.2013
-// Server version 507, MSVS 2010, GCC 4.7.2
+// Last update 08.04.2013
+// Server version 508, MSVS 2010, GCC 4.7.2
 // Default calling convention - cdecl
 //
 
@@ -1389,6 +1389,7 @@ struct CritterCl
     const uint          BaseType, BaseTypeAlias;
     const uint          ApRegenerationTick;
     const int16         Multihex;
+    void*               DrawEffect;
 
     const ScriptString  Name;
     const ScriptString  NameOnHead;
@@ -1755,7 +1756,7 @@ struct SpriteInfo
     const uint16 Height;
     const int16  OffsX;
     const int16  OffsY;
-    const void*  Effect;
+    const void*  DrawEffect;
     const void*  Anim3d;     // If Anim3d != NULL than this is pure 3d animation
 };
 
@@ -1788,6 +1789,7 @@ struct Sprite
     const uint    ContourColor;
     const uint    Color;
     const uint    FlashMask;
+    const void*   DrawEffect;
     const bool*   ValidCallback;
     const bool    Valid;     // If Valid == false than this sprite not valid
 
@@ -1944,9 +1946,9 @@ inline void static_asserts()
     STATIC_ASSERT( sizeof( SpriteInfo )   == 36   );
     STATIC_ASSERT( sizeof( Field )        == 76   );
     # ifdef __MAPPER
-    STATIC_ASSERT( sizeof( Sprite )       == 116  );
+    STATIC_ASSERT( sizeof( Sprite )       == 120  );
     # else
-    STATIC_ASSERT( sizeof( Sprite )       == 108  );
+    STATIC_ASSERT( sizeof( Sprite )       == 112  );
     # endif
 
     STATIC_ASSERT( offsetof( TemplateVar, Flags )              == 68   );
@@ -1957,7 +1959,7 @@ inline void static_asserts()
     STATIC_ASSERT( offsetof( Critter, RefCounter )             == 9388 );
     STATIC_ASSERT( offsetof( Client, LanguageMsg )             == 9456 );
     STATIC_ASSERT( offsetof( Npc, Reserved )                   == 9408 );
-    STATIC_ASSERT( offsetof( CritterCl, MoveSteps )            == 5704 );
+    STATIC_ASSERT( offsetof( CritterCl, MoveSteps )            == 5708 );
     STATIC_ASSERT( offsetof( MapEntire, Dir )                  == 8    );
     STATIC_ASSERT( offsetof( SceneryToClient, Reserved1 )      == 30   );
     STATIC_ASSERT( offsetof( Map, RefCounter )                 == 774  );

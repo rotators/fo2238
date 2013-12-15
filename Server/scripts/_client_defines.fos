@@ -366,28 +366,25 @@
 // DEAD = +4
 // any type of hit: >=4, <=11
 
-// Effect types (OGL - only for OpenGL rendering)
-#define EFFECT_2D                          (0)
-#define EFFECT_3D                          (1)
-#define EFFECT_INTERFACE                   (2)
-#define EFFECT_FONT                        (3)
-#define EFFECT_PRIMITIVE                   (4)
-#define EFFECT_FLUSH                       (5) // OGL
-
-// Effect subtypes (OGL - only for OpenGL rendering)
-#define EFFECT_2D_GENERIC                  (1)
-#define EFFECT_2D_TILE                     (2) // OGL
-#define EFFECT_2D_ROOF                     (4) // OGL
-#define EFFECT_3D_SIMPLE                   (1)
-#define EFFECT_3D_SKINNED                  (2)
-#define EFFECT_INTERFACE_BASE              (1)
-#define EFFECT_INTERFACE_CONTOUR           (2) // OGL
-
-// For font subtype use font type (FONT_*)
-#define EFFECT_FLUSH_RENDER_TARGET         (1) // OGL
-#define EFFECT_FLUSH_RENDER_TARGET_MS      (2) // Multisample, OGL
-#define EFFECT_FLUSH_PRIMITIVE             (4) // OGL
-#define EFFECT_FLUSH_MAP                   (8) // OGL
+// Effect types
+#define EFFECT_2D_GENERIC                  (0x00000001)   // Subtype can be item id, zero for all items
+#define EFFECT_2D_CRITTER                  (0x00000002)   // Subtype can be critter id, zero for all critters
+#define EFFECT_2D_TILE                     (0x00000004)
+#define EFFECT_2D_ROOF                     (0x00000008)
+#define EFFECT_2D_RAIN                     (0x00000010)
+#define EFFECT_3D_SIMPLE                   (0x00000100)   // Only for OpenGL
+#define EFFECT_3D_SIMPLE_SHADOW            (0x00000200)   // Only for OpenGL
+#define EFFECT_3D_SKINNED                  (0x00000400)
+#define EFFECT_3D_SKINNED_SHADOW           (0x00000800)   // Only for OpenGL
+#define EFFECT_INTERFACE_BASE              (0x00001000)
+#define EFFECT_INTERFACE_CONTOUR           (0x00002000)   // Only for OpenGL
+#define EFFECT_FONT                        (0x00010000)   // Subtype is FONT_*, -1 default for all fonts
+#define EFFECT_PRIMITIVE_GENERIC           (0x00100000)
+#define EFFECT_PRIMITIVE_LIGHT             (0x00200000)
+#define EFFECT_FLUSH_RENDER_TARGET         (0x01000000)   // Only for OpenGL
+#define EFFECT_FLUSH_RENDER_TARGET_MS      (0x02000000)   // Multisample, Only for OpenGL
+#define EFFECT_FLUSH_PRIMITIVE             (0x04000000)   // Only for OpenGL
+#define EFFECT_FLUSH_MAP                   (0x08000000)   // Only for OpenGL
 
 ////////
 // NOTE: chosen actions defines moved to chosen_actions_h.fos
