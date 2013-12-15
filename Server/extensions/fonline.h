@@ -3,8 +3,8 @@
 
 //
 // FOnline engine structures, for native working
-// Last update 08.04.2013
-// Server version 508, MSVS 2010, GCC 4.7.2
+// Last update 16.04.2013
+// Server version 510, MSVS 2010, GCC 4.7.2
 // Default calling convention - cdecl
 //
 
@@ -13,6 +13,8 @@
 # define FO_WINDOWS
 #elif defined ( __linux__ )
 # define FO_LINUX
+#elif defined ( __APPLE__ )
+# define FO_MACOSX
 #else
 # error "Unknown operating system."
 #endif
@@ -31,6 +33,7 @@
 # define FO_X86
 #elif ( defined ( FO_MSVC ) && defined ( _M_X64 ) ) || ( defined ( FO_GCC ) && defined ( __LP64__ ) )
 # define FO_X64
+# error "X64 CPU not supported for now."
 #else
 # error "Unknown CPU."
 #endif
@@ -627,7 +630,8 @@ EXPORT_UNINITIALIZED GameOptions* FOnline;
 
 struct Mutex
 {
-    const int Locker[ 6 ];      // CRITICAL_SECTION, include Windows.h
+    const int Locker1[ 6 ];      // Windows - CRITICAL_SECTION (Locker1), Linux - pthread_mutex_t (Locker1)
+    const int Locker2[ 5 ];      // MacOSX - pthread_mutex_t (Locker1 + Locker2)
 };
 
 struct Spinlock
@@ -1941,7 +1945,7 @@ inline void static_asserts()
     STATIC_ASSERT( sizeof( IntSet )       == 24   );
     STATIC_ASSERT( sizeof( IntPair )      == 8    );
     STATIC_ASSERT( sizeof( ProtoItem )    == 908  );
-    STATIC_ASSERT( sizeof( Mutex )        == 24   );
+    STATIC_ASSERT( sizeof( Mutex )        == 44   );
     STATIC_ASSERT( sizeof( GameOptions )  == 1344 );
     STATIC_ASSERT( sizeof( SpriteInfo )   == 36   );
     STATIC_ASSERT( sizeof( Field )        == 76   );
@@ -1962,7 +1966,7 @@ inline void static_asserts()
     STATIC_ASSERT( offsetof( CritterCl, MoveSteps )            == 5708 );
     STATIC_ASSERT( offsetof( MapEntire, Dir )                  == 8    );
     STATIC_ASSERT( offsetof( SceneryToClient, Reserved1 )      == 30   );
-    STATIC_ASSERT( offsetof( Map, RefCounter )                 == 774  );
+    STATIC_ASSERT( offsetof( Map, RefCounter )                 == 794  );
     STATIC_ASSERT( offsetof( ProtoLocation, GeckVisible )      == 76   );
     STATIC_ASSERT( offsetof( Location, RefCounter )            == 282  );
 
