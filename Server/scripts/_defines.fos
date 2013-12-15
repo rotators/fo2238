@@ -6,37 +6,37 @@
 //
 
 #ifndef __DEFINES__
-# define __DEFINES__
+#define __DEFINES__
 
-# ifdef _MSC_VER
-#  ifndef __EXTENSIONS_SOLUTION__
+#ifdef _MSC_VER
+# ifndef __EXTENSIONS_SOLUTION__
 // here we put whatever will make intellisense smarter
 // it is advisable to comment out these lines while running ProjectCreator to reduce the processing time
-#   ifdef __SERVER
-#    include "solution/intellisense.h"
-#   endif
-#   ifdef __CLIENT
-#    include "solution/intellisense_client.h"
-#   endif
-#   ifdef __MAPPER
-#    include "solution/intellisense_mapper.h"
-#   endif
-#   define import                                extern
-#   define interface                             class
-#   define shared
-#   define private
-#   define final
+#  ifdef __SERVER
+#   include "solution/intellisense.h"
 #  endif
+#  ifdef __CLIENT
+#   include "solution/intellisense_client.h"
+#  endif
+#  ifdef __MAPPER
+#   include "solution/intellisense_mapper.h"
+#  endif
+#  define import                                 extern
+#  define interface                              class
+#  define shared
+#  define private
+#  define final
 # endif
+#endif
 
-# include "_basetypes.fos"
+#include "_basetypes.fos"
 
 // closed beta (if defined)
 // #define __TEST__
 // debug output
-# ifndef _MSC_VER
-//#define __DEBUG__
-# endif
+#ifndef _MSC_VER
+// #define __DEBUG__
+#endif
 
 #define __DEBUG_DISABLE_SQL__
 // #define PLAYERS_3D // Registration of 3d players / head slot / etc

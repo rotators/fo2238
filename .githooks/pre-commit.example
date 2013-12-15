@@ -1,0 +1,42 @@
+#!/bin/sh
+###
+#
+# pre-commit.example
+#
+# Main hook example, for running all other sub-scripts
+# 
+# Copy to .git/hooks/pre-commit to use, see http://git-scm.com/docs/githooks
+#
+###
+
+self=$0
+top=`pwd`
+path=.githooks/pre-commit
+
+function sub()
+{
+	cd $top
+
+	sub=$1
+	shift
+	args=$*
+	
+	if [ "x$sub" == "x" ]; then
+		echo "$self: invalid arguments for run()"
+		exit 1
+	fi
+	if [ ! -f $path.$sub ]; then
+		echo "pre-commit: sub-script does not exists: $path.$sub"
+		exit 1
+	fi
+
+	$path.$sub $args
+	status=$?
+
+	if [ $status != 0 ]; then
+		exit $status
+	fi
+}
+
+sub uncrustify -q
+sub scripts

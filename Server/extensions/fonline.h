@@ -3,8 +3,8 @@
 
 //
 // FOnline engine structures, for native working
-// Last update 20.10.2012
-// Server version 504, MSVS, GCC
+// Last update 07.04.2013
+// Server version 507, MSVS 2010, GCC 4.7.2
 // Default calling convention - cdecl
 //
 
@@ -463,6 +463,7 @@ struct GameOptions
 
     // Client and Mapper
     const bool         Quit;
+    const bool         OpenGLRendering;
     const bool         OpenGLDebug;
     const bool         AssimpLogging;
     const int          MouseX;
@@ -510,6 +511,9 @@ struct GameOptions
     const bool         ScrollCheck;
     const ScriptString FoDataPath;
     const int          FixedFPS;
+    const uint         FPS;
+    const uint         PingPeriod;
+    const uint         Ping;
     const bool         MsgboxInvert;
     const int          ChangeLang;
     const uint8        DefaultCombatMode;
@@ -532,7 +536,6 @@ struct GameOptions
     const bool         HidePassword;
     const ScriptString PlayerOffAppendix;
     const int          CombatMessagesType;
-    const bool         DisableDrawScreens;
     const uint         Animation3dSmoothTime;
     const uint         Animation3dFPS;
     const int          RunModMul;
@@ -613,6 +616,7 @@ struct GameOptions
 
     int                ( * Random )( int minimum, int maximumInclusive );
     uint               ( * GetTick )();
+    void               ( * SetLogCallback )( void ( * function )( const char* ), bool enable );
 
     // Callbacks
     uint               ( * GetUseApCost )( CritterMutual& cr, Item& item, uint8 mode );
@@ -1936,7 +1940,7 @@ inline void static_asserts()
     STATIC_ASSERT( sizeof( IntPair )      == 8    );
     STATIC_ASSERT( sizeof( ProtoItem )    == 908  );
     STATIC_ASSERT( sizeof( Mutex )        == 24   );
-    STATIC_ASSERT( sizeof( GameOptions )  == 1332 );
+    STATIC_ASSERT( sizeof( GameOptions )  == 1344 );
     STATIC_ASSERT( sizeof( SpriteInfo )   == 36   );
     STATIC_ASSERT( sizeof( Field )        == 76   );
     # ifdef __MAPPER

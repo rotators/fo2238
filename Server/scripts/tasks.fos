@@ -17,9 +17,9 @@
 import uint GetNearFullSecond(uint16 year, uint16 month, uint16 day, uint16 hour, uint16 minute, uint16 second) from "time";
 
 #define _AddTaskTimer    # (name, hours, minutes) { int[] data = { hours, minutes }; CreateTimeEvent(GetNearFullSecond(0, 0, 0, hours, minutes, 0), name, data, false);  }
-#define _AddTask                                                                                       \
+#define _AddTask                                                                                           \
     # (name, id, mappid, role, entire, dir, condition) uint name(array<uint>@ values) { if(!valid(values)) \
-                                                                                        return 0; if(condition) { MoveToTask(id, mappid, role, entire, dir); } _ReturnTime(values[0], values[1]); }
+                                                                                            return 0; if(condition) { MoveToTask(id, mappid, role, entire, dir); } _ReturnTime(values[0], values[1]); }
 #define _ReturnTime                                                                                     \
     # (hours, minutes) uint nexttime = GetNearFullSecond(0, 0, 0, hours, minutes, 0); if(nexttime == 0) \
         nexttime = 24 * 60; return nexttime

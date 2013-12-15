@@ -32,8 +32,8 @@
 #define SLAVERS     (5)
 
 // now it's the time for the most ugly macro ever:
-#define TAKEENTIRES                                                              \
-    # (arr, max, current)array<uint> arr(max); for(int __i = 0; __i < max; __i++) \
+#define TAKEENTIRES                                                                \
+    # (arr, max, current) array<uint> arr(max); for(int __i = 0; __i < max; __i++) \
         arr[__i] = __i; for(int __i = 0; __i < current; __i++) { newindex = Random(__i, max - 1); temp = arr[__i]; arr[__i] = arr[newindex]; arr[newindex] = temp; }
 
 import bool AddAttackPlane(Critter& npc, uint priority, Critter& target) from "npc_planes";

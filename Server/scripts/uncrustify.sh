@@ -1,5 +1,10 @@
 #!/bin/bash
 
+args=$*
+
 for f in *.fos; do
-    uncrustify -c uncrustify.cfg --no-backup $f
+	if [ $f == "critical_table.fos" ]; then 
+		continue;
+	fi
+	uncrustify -c uncrustify.cfg --no-backup $args $f
 done

@@ -1,0 +1,20 @@
+#!/bin/sh
+###
+#
+# pre-commit.uncrustify
+#
+# Format scripts before commit
+#
+# Copy/include in .git/hooks/pre-commit to use, see http://git-scm.com/docs/githooks
+#
+###
+
+echo "pre-commit: started uncrustify"
+args=$*
+
+cd Server/scripts/
+./uncrustify.sh $args
+
+echo "pre-commit: finished uncrustify"
+
+exit 0

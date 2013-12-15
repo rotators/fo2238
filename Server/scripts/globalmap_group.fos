@@ -64,7 +64,7 @@ void global_process(int processType, Critter& cr, Item@ car,
     switch(processType)
     {
     case GLOBAL_PROCESS_MOVE:
-	case GLOBAL_PROCESS_SET_MOVE:
+    case GLOBAL_PROCESS_SET_MOVE:
     {
         if(speed != 0)
             WMNotIdle(cr);
@@ -81,7 +81,7 @@ void global_process(int processType, Critter& cr, Item@ car,
         break;
     }
     case GLOBAL_PROCESS_STOPPED:
-	case GLOBAL_PROCESS_KICK:
+    case GLOBAL_PROCESS_KICK:
     {
         WMIdle(cr);
         break;
@@ -91,7 +91,7 @@ void global_process(int processType, Critter& cr, Item@ car,
         DecumulateSleepiness(cr);
         break;
     }
-	default:
+    default:
     }
 }
 

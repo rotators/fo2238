@@ -59,9 +59,9 @@ uint8[] FOART_SIGNATURE = { 0x46, 0x4F, 0x41, 0x52, 0x54, 0x00, 0x17, 0x14 };
 
 class FOArt_Base : FOArt
 {
-    uint8 version;
-    uint16 map_pid;
-    bool hexes_relative;
+    uint8                   version;
+    uint16                  map_pid;
+    bool                    hexes_relative;
 
     array<FOArtDefinition@> definitions;
 
@@ -264,7 +264,7 @@ class FOArt_Definition : FOArtDefinition
         return(this.item_pid);
     }
 
-    array<int16> hexes;
+    array<int16>            hexes;
 
     array<FOArt_AddonData@> addon_data;
 
