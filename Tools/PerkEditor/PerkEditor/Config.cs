@@ -91,7 +91,7 @@ namespace PerkEditor
             {
                 StreamReader reader = new StreamReader(ServerPath + "/scripts/_defines.fos");
 
-                Regex expr = new Regex(@"#pragma[\s]+crdata[\s]+""[\s]*([^\s]+)[\s]+([^\s]+)[\s]+([^\s]+)[\s]*""");
+                Regex expr = new Regex(@"[\s]*#[\s]*pragma[\s]+crdata[\s]+""[\s]*([^\s]+)[\s]+([^\s]+)[\s]+([^\s]+)[\s]*""");
                 while (!reader.EndOfStream)
                 {
                     string s = reader.ReadLine();
@@ -117,7 +117,7 @@ namespace PerkEditor
             }
             catch (Exception)
             {
-                MessageBox.Show("Cannot open _defines.fos.");
+                MessageBox.Show("Cannot parse _defines.fos.");
                 return false;
             }
             MakeNames();
